@@ -7200,10 +7200,9 @@
           stations: () => [],
           features: () => cityBoundaries.bayarea || [],
           boundaries: ['/data/us-bayarea-cities.json'],
-          // No inset yet: data/usa-locator.json marks New York alone, so it
-          // would caption the Bay Area "New York City". Null is the registry's
-          // handled no-inset state; a marker needs build_locator.py re-run.
-          locator: null,
+          // The US inset carries a Bay Area marker since 2026-10-05: rebuilt by
+          // build_locator.py from the Census's state outlines (cb_2023_us_state_20m).
+          locator: '/data/usa-locator.json',
         },
         westmidlands: {
           label: 'West Midlands',
@@ -13440,6 +13439,7 @@
         London: 'london',
         'Greater Manchester': 'manchester',
         'New York City': 'nyc',
+        'San Francisco Bay Area': 'bayarea',
         'West Midlands': 'westmidlands',
         'West Yorkshire': 'westyorkshire',
         'South Yorkshire': 'southyorkshire',

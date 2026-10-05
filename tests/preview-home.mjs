@@ -125,6 +125,20 @@ ok(onSkip, 'the first Tab reaches "Skip to the search" (audit I-5: the box was s
 // Enter only on the skip link: on anything else the first stop is a header link, and Enter would leave the page.
 if (onSkip) await page.keyboard.press('Enter');
 ok(onSkip && (await page.evaluate(() => document.activeElement?.id === 'pc')), 'and Enter on it lands in the search box');
+// And without the skip link, Tab reaches the search before any council area
+// (I-5): the panel came after the map in the page, so the map's thirty-odd
+// controls came first, and on a phone focus order ran against visual order.
+{
+  await page.locator('a.brand').focus();
+  let pcAt = -1, boroAt = -1;
+  for (let i = 1; i <= 80 && (pcAt < 0 || boroAt < 0); i++) {
+    await page.keyboard.press('Tab');
+    const here = await page.evaluate(() => (document.activeElement?.id === 'pc' ? 'pc' : document.activeElement?.classList.contains('boro') ? 'boro' : ''));
+    if (here === 'pc' && pcAt < 0) pcAt = i;
+    if (here === 'boro' && boroAt < 0) boroAt = i;
+  }
+  ok(pcAt > 0 && (boroAt < 0 || pcAt < boroAt), 'Tab reaches the search box before any council area', `search at ${pcAt}, first area at ${boroAt}`);
+}
 // The postcode -> city lookup is the PREVIEW's own copy, so the 86 real postcodes.io spellings the live map is
 // held to (tests/fixtures/postcodes-io-districts.json) are run through it too. It missed Barking and Dagenham.
 const spellings = JSON.parse(await readFile(join(ROOT, 'tests', 'fixtures', 'postcodes-io-districts.json'), 'utf8')).districts;
@@ -135,6 +149,32 @@ const derived = await page.evaluate(async (ds) => {
 }, spellings);
 const wrong = derived ? derived.filter((d) => d.got !== d.city) : [{ admin_district: 'the engine exports no cityOf', got: '' }];
 ok(spellings.length >= 80 && wrong.length === 0, `all ${spellings.length} postcodes.io district spellings resolve to their own city (audit I-1)`, wrong.map((d) => `${d.admin_district} -> ${d.got}`).join('; '));
+
+// 1b. ASK FIRST, THEN THE TOOL (Bill, 2026-10-05). On a wide screen the page opens as
+// v3 - the question centred over a faded map, the map's controls out of the way -
+// and the first use makes it v2: the panel at the side, the map refitted beside it.
+const introState = () =>
+  page.evaluate(() => {
+    const hero = document.querySelector('.hero').getBoundingClientRect();
+    const panel = document.querySelector('.panel').getBoundingClientRect();
+    return {
+      intro: document.querySelector('.hero').classList.contains('is-intro'),
+      centred: Math.abs(panel.left + panel.width / 2 - (hero.left + hero.width / 2)) < 4,
+      atLeft: panel.left - hero.left < 40,
+      legend: getComputedStyle(document.querySelector('.legend')).visibility,
+      mapOpacity: Number(getComputedStyle(document.querySelector('#map')).opacity),
+    };
+  });
+const before = await introState();
+ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpacity < 0.5, 'on a wide screen the page opens as the question, centred over a faded map', JSON.stringify(before));
+// The first use, here by keyboard: on the opening screen the question covers most of
+// London (that is the design: the map is the backdrop until someone asks), and every
+// council area stays reachable by Tab and Enter.
+await page.locator('#map .boro[aria-label^="Havering"]').focus();
+await page.keyboard.press('Enter');
+await page.waitForSelector('#borough.is-open', { timeout: 5000 });
+const after = await introState();
+ok(!after.intro && after.atLeft && after.legend === 'visible' && after.mapOpacity === 1, 'the first use turns it into the tool: panel at the side, map and controls back', JSON.stringify(after));
 
 // 2. Click Camden: the card opens with the CSV's score and components, and the URL says so.
 await page.locator('#map .boro[aria-label^="Camden"]').click();
@@ -405,6 +445,11 @@ ok((await boroCount()) === 33 && !/Not on the map yet/.test(mismatchWhere), 'a c
 await page.goto(`${BASE}?postcode=TW9+3PZ`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#answer.is-open', { timeout: 20000 });
 ok((await page.locator('#ans-title').textContent()) === 'TW9 3PZ' && (await page.inputValue('#pc')) === 'TW9 3PZ', '?postcode= runs the search on load');
+// A link that names a city came for that city's map: it opens on the tool, chips showing,
+// not the question over a faded map. A city it cannot open is not a city, so it does not.
+await page.goto(`${BASE}?city=teesside`, { waitUntil: 'domcontentloaded' });
+await waitMap();
+ok(!(await page.evaluate(() => document.querySelector('.hero').classList.contains('is-intro'))) && (await page.evaluate(() => getComputedStyle(document.querySelector('.chips')).visibility)) === 'visible', '?city=teesside opens on the tool, not the opening question');
 await page.goto(`${BASE}?city=constructor`, { waitUntil: 'domcontentloaded' });
 await waitMap();
 ok((await boroCount()) === 33 && !/could not load/.test(await page.locator('#status').textContent()), '?city=constructor opens London, not a map that cannot load (audit M-6)');

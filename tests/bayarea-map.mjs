@@ -247,9 +247,14 @@ for (const vp of [
   await page.waitForTimeout(2500);
   const inset = await page.evaluate(() => {
     const box = document.getElementById('locator');
-    return { hidden: !box || box.hidden || getComputedStyle(box).display === 'none', region: document.querySelector('.locator-region')?.textContent || '' };
+    const shown = !!box && !box.hidden && getComputedStyle(box).display !== 'none';
+    return { shown, region: document.querySelector('.locator-region')?.textContent || '', bay: !!document.querySelector('#locator-cities [data-city="bayarea"]') };
   });
-  ok(inset.hidden, `${L} a ?city=bayarea link shows no inset, not England's arriving late`, inset.region);
+  // The inset is hidden at 900px and below by design (no room beside the map). Above
+  // that it must show, and be the US's with the Bay Area marked - never England's
+  // arriving after the switch, and never absent, which is how it shipped on 5 Oct.
+  const insetWanted = vp.width > 900;
+  ok(insetWanted ? inset.shown && inset.region === 'Contiguous United States' && inset.bay : !inset.shown, `${L} a ?city=bayarea link shows ${insetWanted ? 'the US inset with the Bay Area marked' : 'no inset, as at every phone width'}`, JSON.stringify(inset));
   const hint = await page.evaluate(() => {
     const h = document.getElementById('first-hint');
     return !h || getComputedStyle(h).display === 'none' ? '' : h.textContent.replace(/\s+/g, ' ').trim();

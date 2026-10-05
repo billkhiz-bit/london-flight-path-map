@@ -30,6 +30,20 @@ const CITY_NAME = Object.fromEntries(CITIES);
 // Own keys only: `CITY_NAME.constructor` is truthy, so ?city=constructor
 // once opened a map that could not load (audit 2026-10-05 M-6).
 const isMapCity = (k) => Object.hasOwn(CITY_NAME, k);
+
+// ---- ask first, then the tool (Bill, 2026-10-05) ----
+// The page opens as v3 (the question over a faded map) and becomes v2 (the tool)
+// the first time someone uses it. One way in, one way out: leaveIntro().
+const hero = document.querySelector('.hero');
+// STACKED is declared further down; this runs only after the module has loaded.
+const inIntro = () => Boolean(hero?.classList.contains('is-intro')) && !window.matchMedia(STACKED).matches;
+function leaveIntro() {
+  if (!hero?.classList.contains('is-intro')) return;
+  const wasIntro = inIntro();
+  hero.classList.remove('is-intro');
+  // The map refits beside the panel; on a stacked layout nothing moved.
+  if (wasIntro && state.boroughs) draw(state.pin);
+}
 // The Bay Area is not a city on the live map yet: its outlines are the Census
 // places the /bay-area/ page is built from, its routes the FAA record, its
 // noise picture the one that page serves. Drawn here to show what "on the
@@ -152,7 +166,7 @@ function renderChips() {
   for (const [key, name] of CITIES) {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = name; b.dataset.city = key; b.setAttribute('aria-pressed', 'false');
-    b.addEventListener('click', () => { show(key); setQuery({ city: key }); });
+    b.addEventListener('click', () => { leaveIntro(); show(key); setQuery({ city: key }); });
     box.append(b);
   }
   for (const [href, name] of [['/?city=nyc', 'New York']]) {
@@ -187,6 +201,10 @@ async function bootFromQuery() {
   const row = borough ? rowFor(borough) : null;
   // A council area names its own city: ?city=manchester&borough=Camden opens London.
   const start = row && isMapCity(row.city) ? row.city : isMapCity(city) ? city : 'london';
+  // A link that names a city came for that city's map: it opens on the tool, not the
+  // question over a faded map with the city chips hidden. (A postcode or council area
+  // leaves the question by itself, through search() and selectBorough().)
+  if (isMapCity(city)) leaveIntro();
   await show(start);
   if (postcode) {
     const input = byId('pc');
@@ -260,7 +278,9 @@ function draw(pin) {
   hideTip();
   svg.attr('viewBox', `0 0 ${W} ${H}`).selectAll('*').remove();
   // Each layout says how much of the map a floating panel covers, in pixels at desktop width.
-  const inset = document.body.dataset.mapInset ? JSON.parse(document.body.dataset.mapInset) : { left: 0, top: 0, right: 0, bottom: 0 };
+  const zero = { left: 0, top: 0, right: 0, bottom: 0 };
+  // While the question sits centred over the map (.is-intro), the map fills the box.
+  const inset = !inIntro() && document.body.dataset.mapInset ? JSON.parse(document.body.dataset.mapInset) : zero;
   const wide = !window.matchMedia(STACKED).matches;
   const planar = state.boroughs.features.some((f) => f.properties.planar);
   const projection = d3.geoMercator().fitExtent(
@@ -567,6 +587,7 @@ function selectBorough(name, opts = {}) {
   const f = state.boroughs?.features.find((x) => norm(featureName(x)) === norm(name));
   const row = rowFor(name);
   if (!f && !row) return false;
+  leaveIntro();
   state.selected = f ? featureName(f) : row.borough;
   svg.selectAll('.boro').classed('is-selected', (d) => featureName(d) === state.selected);
   byId('answer')?.classList.remove('is-open');
@@ -758,6 +779,7 @@ form?.addEventListener('submit', (ev) => { ev.preventDefault(); search(byId('pc'
 async function search(raw) {
   const text = raw.trim();
   if (!text) return;
+  leaveIntro();
   answer?.classList.remove('is-open');
   clearPin();
   // A place name first: a borough, a Bay Area city or a city region.

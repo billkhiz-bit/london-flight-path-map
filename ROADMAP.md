@@ -637,7 +637,7 @@ Strike a row here in the commit that closes it.
 | ~~I-2~~ | ~~`/preview/` "Nearest runway" reads three airports only: say "nearest of SFO, OAK and SJC" or read the page's own airfield list; the test asserts the old wording~~ **Fixed 2026-10-05** | Done |
 | I-3 | Privacy notice has no section on email, and the register says Cloudflare sees no payload while it routes the mail | Claude drafts, **Bill approves the wording** (legal page) |
 | ~~I-4~~ | ~~`/preview/` layout collides from 761px to about 1180px wide~~ **Fixed 2026-10-05**: stacked below 1280px and on short screens, one query for CSS and engine | Done; worth a look on a tablet |
-| I-5 | `/preview/` search box is tab stop 56, no skip link. **Part-fixed 2026-10-05** (skip link); phone DOM order left | Claude, small |
+| ~~I-5~~ | ~~`/preview/` search box is tab stop 56, no skip link~~ **Fixed 2026-10-05**: skip link, and the panel first in the page | Done |
 | I-6 | `/preview/` placeholder is the only visible label, at 3.50:1, cut off under 390px. **Part-fixed 2026-10-05** (contrast); truncation under 390px left | Claude, small |
 | I-7 | Focus rings at 2.1-2.7:1 on the new pages and on the main map (1.4.11 asks 3:1) | Claude, small; the ring colour is a brand call |
 | I-8 | **Decision:** the borough Quiet skies band says 0.0 for Hillingdon while most of its postcodes estimate 8-10. Keep "worst exposure in the borough" and say so where it is printed, or re-derive the band from the postcode tier (a methodology version) | **Bill** |
@@ -748,8 +748,9 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       verified from the origin at desktop and phone: BTS tiles paint, ZIP 94066 opens
       San Bruno's facts, no inset, no page errors). Bill ruled the same day:
       facts and no number, ranking by noise-map share). Done: items 1-4 and 6 below,
-      bar the locator marker (the Bay Area has no inset: `usa-locator.json` marks
-      New York alone); item 5 turned out moot, because the parity gates read
+      bar the locator marker (done later the same day: `usa-locator.json` is rebuilt
+      by `scripts/build_us_locator.py` from the Census state outlines and marks both
+      cities, gated at desktop by `tests/bayarea-map.mjs`); item 5 turned out moot, because the parity gates read
       `borough-extra.json`, which a facts-only city is not in. Gates:
       `build_bayarea_map_data.py --check` and `tests/bayarea-map.mjs`, both
       blocking. Left for release 2: the Lambda entry, a score, prices.
@@ -1003,7 +1004,16 @@ reference; nothing is built or promised.
 - **Where it would fit**: as part of the Bay Area release, where the best
   evidence and a local audience both are, before any UK version.
 
-Open, Bill's (the choice among the six is made: v2, 2 Oct): whether it replaces `/` and where the full map
+**Ruled 2026-10-05 (Bill): "combinations of v2 and v3" - ASK FIRST, THEN THE TOOL.**
+On a wide screen `/preview/` opens as v3 (the question and a large search centred
+over the map, faded, its controls out of the way) and the first search, council-area
+tap, city chip or `?city=` link turns it into v2 (panel at the side, map refitted
+beside it). One class, `.is-intro`, inside the complement of the engine's `STACKED`
+query, so tablets and phones (already stacked: question above, map below) are
+unchanged. Built at `/preview/` first, by Bill's choice; making it the front page is
+the separate step below. Gated in `tests/preview-home.mjs`.
+
+Open, Bill's (the choice among the six is made: v2, 2 Oct; the v2+v3 combination, 5 Oct): whether it replaces `/` and where the full map
 then lives (the same `index.html` runs in the native app, about twenty gates
 and 103 area-page links assume the map at `/`); build under "Sky Score" or
 after the rename. Audiences on every version follow the Constraints above.
