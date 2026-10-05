@@ -13299,7 +13299,10 @@
         const legendTop = legend.getBoundingClientRect().top - mapBox.getBoundingClientRect().top;
         const needed = top + loc.offsetHeight;
         // 8px of breathing room, so "just touching" is not treated as fitting.
-        loc.hidden = legendTop > 0 && needed + 8 > legendTop;
+        // Hidden when it would sit on the legend, AND whenever the box holds no
+        // silhouette for the city on screen: this function is not the one that
+        // decides whether a city HAS an inset, renderLocator() is.
+        loc.hidden = loc.dataset.drawnFor !== currentCity || (legendTop > 0 && needed + 8 > legendTop);
       }
 
       function updateCityStripFade() {
@@ -13446,15 +13449,28 @@
         // `country !== 'United Kingdom'`, which hid the inset from New York
         // altogether rather than drawing New York's own map.
         const url = cityOf(city).locator;
+        // `drawnFor` records which city's silhouette the box holds, and is what
+        // updateLocatorOffset() reads: that function decides by SPACE alone and
+        // used to un-hide the box whenever the legend fitted, so a city with no
+        // inset got an empty one (the Bay Area, 2026-10-05).
         if (!url) {
+          box.dataset.drawnFor = '';
           box.hidden = true;
           return;
         }
         const data = await loadLocator(url);
+        // The city may have changed while the silhouette was fetched. A
+        // ?city=bayarea link starts drawing London's inset, switches, hides
+        // the box for the Bay Area (which has none), and then London's file
+        // landed and un-hid it with England on it - live, 2026-10-05. A late
+        // silhouette is for a map no longer on screen: drop it.
+        if (city !== currentCity) return;
         if (!data) {
+          box.dataset.drawnFor = '';
           box.hidden = true;
           return;
         }
+        box.dataset.drawnFor = city;
         box.hidden = false;
         // The viewBox is per silhouette, not a constant: England & Wales is
         // portrait at 130x148 and the contiguous US is landscape at 170x107.

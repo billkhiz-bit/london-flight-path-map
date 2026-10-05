@@ -17,7 +17,8 @@
 //   5. A Bay Area city NAME typed from London does too.
 //   6. A ZIP in no drawn city says so, on screen.
 //   7. A ZIP in neither table names both places Sky Score covers.
-//   8. No page errors.
+//   8. A ?city=bayarea link ends with no inset, not England's arriving late.
+//   9. No page errors.
 //
 //   node tests/bayarea-map.mjs
 
@@ -163,13 +164,29 @@ for (const vp of [
   const none = await panel(page);
   ok(none.title === 'NOT FOUND' && none.onScreen && /New York City/.test(none.text) && /Bay Area/.test(none.text), `${L} a ZIP in neither table names both places covered`, none.text.slice(0, 160));
 
+  // 8. A ?city=bayarea link must not end with England's inset on screen. London's
+  // silhouette is fetched at boot and held back here, so it lands AFTER the
+  // switch, which is how the live page came to show it (2026-10-05).
+  await page.route('**/data/uk-locator.json', async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.continue();
+  });
+  await page.goto(`${BASE}?city=bayarea`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.querySelectorAll('path.borough').length >= 50, null, { timeout: 20000 }).catch(() => {});
+  await page.waitForTimeout(2500);
+  const inset = await page.evaluate(() => {
+    const box = document.getElementById('locator');
+    return { hidden: !box || box.hidden || getComputedStyle(box).display === 'none', region: document.querySelector('.locator-region')?.textContent || '' };
+  });
+  ok(inset.hidden, `${L} a ?city=bayarea link shows no inset, not England's arriving late`, inset.region);
+
   ok(errors.length === 0, `${L} no page errors`, errors.join(' | '));
   await ctx.close();
 }
 await browser.close();
 server.close();
 
-const EXPECTED = 2 * 10;
+const EXPECTED = 2 * 11;
 if (checks < EXPECTED) {
   console.error(`\nFAIL: ran ${checks} checks, expected ${EXPECTED}.`);
   process.exit(1);
