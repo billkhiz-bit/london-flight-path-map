@@ -262,6 +262,10 @@ check "Bay Area ZIPs == Census"        python scripts/build_bayarea_zips.py --ch
 # routes, re-derived from the /bay-area/ page builder's own functions and
 # compared with data/us-bayarea-cities.json and the BAYAREA-MAP block.
 check "Bay Area map data == page"     python scripts/build_bayarea_map_data.py --check
+# The neighbourhood and ZIP tiers beneath it, measured by the same page functions.
+# Re-measures the stored outlines offline; re-derives them too when the DataSF and
+# Census source files are on disk (data/datasf/, data/census/, both ignored).
+check "Bay Area tiers == page"        python scripts/build_bayarea_areas.py --check
 # Each city's DEFRA aircraft PNG must exist, paint pixels, and be positioned at
 # the box it was rendered for (2026-09-26). A transparent PNG would be marked
 # loaded and advertised under a decibel scale; a hand-edited box would slide

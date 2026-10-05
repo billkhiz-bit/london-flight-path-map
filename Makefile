@@ -299,6 +299,14 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-zips.json \
 		s3://$(S3_BUCKET)/data/us-bayarea-zips.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# The tiers beneath a Bay Area city (2026-10-05): San Francisco's 41
+	# neighbourhoods and the 165 ZIP areas, from scripts/build_bayarea_areas.py.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-sf-neighbourhoods.json \
+		s3://$(S3_BUCKET)/data/us-sf-neighbourhoods.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-zip-areas.json \
+		s3://$(S3_BUCKET)/data/us-bayarea-zip-areas.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/westmidlands-boroughs.json \
 		s3://$(S3_BUCKET)/data/westmidlands-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)

@@ -778,6 +778,16 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
          than weakening them.
       6. Locator marker, `make data-deploy` line, drift check, then every
          gate that clicks a chip (`city-switch`, `map-fit`, `layer-honesty`).
+- [x] **Layer 1 of the deeper Bay Area, BUILT 2026-10-05** (Bill: "a more in depth
+      preview of ZIP, area and borough like we do for New York, London"). The same
+      facts as a city, one tier down: San Francisco's 41 neighbourhoods (DataSF
+      Analysis Neighborhoods, PDDL) and the 165 ZIP areas measured over each ZIP's
+      whole area (Census 2020 ZCTA boundaries), by `scripts/build_bayarea_areas.py`
+      with the page's own functions (blocking `--check`, offline). On the map: a
+      ZIP opens its area's facts and dashed outline above its city's; San
+      Francisco's card lists its neighbourhoods; neighbourhood names search; the
+      ranking toggles to them. Gated in `tests/bayarea-map.mjs`. **Layer 2 (prices,
+      crime, a score) waits for the Census and api.data.gov keys, both Bill's.**
 - [ ] **Prices by the public-domain route need a free Census API key**
       (American Community Survey median home values, with FHFA for the
       trend), which avoids Zillow's unread terms. Bill's to request at

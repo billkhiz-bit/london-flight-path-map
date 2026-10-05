@@ -142,7 +142,53 @@ for (const vp of [
   await page.evaluate(() => triggerSearch('94301'));
   await page.waitForFunction(() => /PALO ALTO/i.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
   const zip = await panel(page);
-  ok(/PALO ALTO/i.test(zip.title) && zip.onScreen && /ZIP 94301 In Palo Alto\./.test(zip.text), `${L} ZIP 94301 typed on London's map opens Palo Alto with its ZIP line`, `${zip.title} / ${zip.text.slice(0, 160)}`);
+  ok(/PALO ALTO/i.test(zip.title) && zip.onScreen && /ZIP 94301[\s\S]*In Palo Alto\./i.test(zip.text), `${L} ZIP 94301 typed on London's map opens Palo Alto with its ZIP line`, `${zip.title} / ${zip.text.slice(0, 160)}`);
+
+  // 4a. The ZIP tier: its own AREA's facts and outline, then its city's (layer 1, 2026-10-05).
+  await page.evaluate(() => switchCity('london'));
+  await page.waitForFunction(() => document.querySelectorAll('path.borough').length === 33, null, { timeout: 20000 });
+  await page.evaluate(() => triggerSearch('94066'));
+  await page.waitForFunction(() => /ZIP 94066/i.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  const zipTier = await panel(page);
+  const zipOutline = await page.evaluate(() => document.querySelectorAll('.tier-outline').length);
+  ok(
+    zipTier.onScreen && /89% of the ZIP area, from San Francisco International/.test(zipTier.text) && /94% of the city/.test(zipTier.text) && zipOutline === 1,
+    `${L} ZIP 94066 shows its own area's facts and outline, then San Bruno's`,
+    `outline ${zipOutline} / ${zipTier.text.slice(0, 220)}`
+  );
+
+  // 4b. The neighbourhood tier: a name typed on London's map.
+  await page.evaluate(() => switchCity('london'));
+  await page.waitForFunction(() => document.querySelectorAll('path.borough').length === 33, null, { timeout: 20000 });
+  await page.evaluate(() => triggerSearch('Excelsior'));
+  await page.waitForFunction(() => /EXCELSIOR/i.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  const nh = await panel(page);
+  const nhOutline = await page.evaluate(() => document.querySelectorAll('.tier-outline').length);
+  ok(
+    /EXCELSIOR/i.test(nh.title) && nh.onScreen && /A neighbourhood of San Francisco/.test(nh.text) && /60% of the neighbourhood/.test(nh.text) && nhOutline === 1,
+    `${L} "Excelsior" opens a San Francisco neighbourhood card with its own facts and outline`,
+    `${nh.title} / outline ${nhOutline} / ${nh.text.slice(0, 160)}`
+  );
+
+  // 4c. San Francisco's card names its neighbourhoods; the ranking toggles to them.
+  await page.evaluate(() => selectBoroughByName('San Francisco'));
+  await page.waitForFunction(() => document.querySelectorAll('#sidebar-content [data-nhood]').length > 0, null, { timeout: 15000 }).catch(() => {});
+  const listed = await page.evaluate(() => ({
+    n: document.querySelectorAll('#sidebar-content [data-nhood]').length,
+    outline: document.querySelectorAll('.tier-outline').length,
+  }));
+  ok(listed.n === 41 && listed.outline === 0, `${L} San Francisco's card lists its 41 neighbourhoods, and drops the last outline`, JSON.stringify(listed));
+  const nhRank = await page.evaluate(async () => {
+    renderBoroughRanking();
+    document.getElementById('bay-ranking-toggle').click();
+    for (let i = 0; i < 50 && !document.querySelector('#borough-ranking tr[data-rank-action="neighbourhood"]'); i++) await new Promise((r) => setTimeout(r, 100));
+    const rows = [...document.querySelectorAll('#borough-ranking tbody tr')].map((tr) => tr.dataset.rankName);
+    document.getElementById('bay-ranking-toggle').click(); // back to the cities, as the next checks expect
+    return { n: rows.length, first: rows[0] };
+  });
+  ok(nhRank.n === 41 && nhRank.first === 'Visitacion Valley', `${L} the ranking toggles to San Francisco's 41 neighbourhoods, noise-map order`, JSON.stringify(nhRank));
 
   // 5. A Bay Area city name from London (postcodes.io answers 404, so only the Bay Area can find it).
   await page.evaluate(() => switchCity('london'));
@@ -191,7 +237,7 @@ for (const vp of [
 await browser.close();
 server.close();
 
-const EXPECTED = 2 * 12;
+const EXPECTED = 2 * 16;
 if (checks < EXPECTED) {
   console.error(`\nFAIL: ran ${checks} checks, expected ${EXPECTED}.`);
   process.exit(1);

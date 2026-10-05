@@ -1013,6 +1013,13 @@
       .place-facts > div { padding: 8px 0; border-bottom: 1px solid rgba(20, 20, 20, 0.12); }
       .place-facts dt { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); margin-bottom: 2px; }
       .place-facts dd { margin: 0; font-size: 13px; line-height: 1.5; color: var(--dark); }
+      .place-facts-head { margin: 14px 0 2px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dark); }
+      .place-nhoods { margin-top: 12px; }
+      .place-nhoods summary { cursor: pointer; font-size: 13px; padding: 6px 0; }
+      .place-nhoods ul { list-style: none; margin: 6px 0 0; padding: 0; }
+      .place-nhoods li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; font-size: 13px; }
+      .nhood-btn { background: none; border: 1px solid var(--mid); color: var(--dark); font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px; cursor: pointer; min-height: 24px; }
+      .place-nhoods .nhood-btn { border: none; padding: 2px 0; text-align: left; text-decoration: underline; }
       .empty-state a {
         color: inherit;
         font-weight: 600;
@@ -11472,6 +11479,11 @@
               return;
             }
           }
+          if (!/\d/.test(q)) {
+            const nh = await bayAreaNeighbourhoodNamed(q);
+            if (!isCurrentSearch(search)) return;
+            if (nh && (await openNeighbourhood(nh))) return;
+          }
           panelSubject = { kind: 'none' };
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
           document.title = 'Not found - Sky Score';
@@ -13736,6 +13748,7 @@
         // and covers any future transition added under g.
         g.selectAll('*').interrupt().remove();
         selectedBorough = null;
+        tierOutlineFeature = null; // the outline was the previous city's
 
         if (city === 'london') {
           // London alone keeps its own path: loadGeoJson() fetched it at init,
@@ -14360,50 +14373,207 @@
         return `${pct}% of the ZIP area's land is in ${zip.place}; the rest is in other cities or in none.`;
       }
 
-      function renderPlaceFacts(p, { switchToAnalysis = true, zip = null } = {}) {
-        panelSubject = { kind: 'borough' };
-        setPanelSubject(p.name);
-        announceResult('Flight-path facts loaded for ' + p.name + '. Not scored.');
-        if (switchToAnalysis) switchTab('analysis');
-        revealSheetIfMobile();
+      // THE TWO TIERS BENEATH A CITY (layer 1, 2026-10-05): San Francisco's 41
+      // neighbourhoods and the 165 ZIP areas, each with the SAME facts as a
+      // city, measured by scripts/build_bayarea_areas.py with the /bay-area/
+      // page's own functions over the neighbourhood's or the ZIP's whole area.
+      // Fetched on first use, like the ZIP table, so a visitor who never opens
+      // the Bay Area pays nothing.
+      const BAY_TIERS = { neighbourhoods: '/data/us-sf-neighbourhoods.json', zipAreas: '/data/us-bayarea-zip-areas.json' };
+      const bayTiers = {};
+      async function loadBayTier(key) {
+        if (!bayTiers[key]) {
+          bayTiers[key] = d3.json(BAY_TIERS[key]).catch((e) => {
+            bayTiers[key] = null; // a failed fetch is retried next time
+            throw e;
+          });
+        }
+        return bayTiers[key];
+      }
+
+      // The tier's outline on the map, dashed over the city outlines. One at a
+      // time; a city's own card clears it.
+      // Held as state because a phone's layout redraws the map when the card
+      // opens (redrawForViewport() rebuilds every layer), which wiped a path
+      // drawn once: the outline showed at desktop width and never on a phone.
+      let tierOutlineFeature = null;
+      function showTierOutline(feature) {
+        tierOutlineFeature = feature || null;
+        if (!g) return;
+        g.selectAll('.tier-outline').remove();
+        if (!feature || !pathGenerator) return;
+        g.append('path')
+          .attr('class', 'tier-outline')
+          .attr('d', pathGenerator(feature))
+          .attr('fill', 'none')
+          .attr('stroke', '#141414')
+          .attr('stroke-width', 1.6)
+          .attr('stroke-dasharray', '4 3')
+          .style('pointer-events', 'none');
+      }
+
+      // The page's own four facts for any area: city, neighbourhood or ZIP.
+      function placeFactRows(p, of) {
         const row = (label, value) =>
           value ? `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>` : '';
         const noise =
           p.noise === 'None' || p.noise === 'Under 1%'
-            ? `${p.noise} of the city`
-            : `${p.noise} of the city${p.noise_from ? ', from ' + p.noise_from : ''}`;
-        document.getElementById('sidebar-content').innerHTML = `
-    <div class="sidebar-section">
-      <p class="property-note" style="margin:0 0 10px;">${escapeHtml(p.county)} County, California. <strong>Not scored:</strong> these are the flight-path facts from the Bay Area page, not a Sky Score.</p>
-      <dl class="place-facts">
-        ${zip ? row(`ZIP ${zip.code}`, zip.place ? zipShareText(zip) : 'In no city.') : ''}
-        ${row('On the federal aircraft noise map', noise)}
-        ${row('Final approach overhead', p.approach)}
-        ${row('Departure overhead', p.departure)}
-        ${row('Nearest drawn route', p.nearest_route)}
-      </dl>
-      <p class="property-note" style="margin:10px 0 0;font-size:11px;">Routes: FAA Coded Instrument Flight Procedures, supplied "as is", without warranty; not for navigation. Noise shading: US Bureau of Transportation Statistics, 2022, which BTS says should not be used to judge noise at an individual location. They show where routes are, not how many aircraft use them. <a href="/bay-area/">The Bay Area page</a> has every city.</p>
-    </div>`;
+            ? `${p.noise} of the ${of}`
+            : `${p.noise} of the ${of}${p.noise_from ? ', from ' + p.noise_from : ''}`;
+        return (
+          row('On the federal aircraft noise map', noise) +
+          row('Final approach overhead', p.approach) +
+          row('Departure overhead', p.departure) +
+          row('Nearest drawn route', p.nearest_route)
+        );
       }
 
-      // The ranking is the page's own order - by share of the city on the
+      const PLACE_SOURCES =
+        '<p class="property-note" style="margin:10px 0 0;font-size:11px;">Routes: FAA Coded Instrument Flight Procedures, supplied "as is", without warranty; not for navigation. Noise shading: US Bureau of Transportation Statistics, 2022, which BTS says should not be used to judge noise at an individual location. They show where routes are, not how many aircraft use them. <a href="/bay-area/">The Bay Area page</a> has every city.</p>';
+
+      // tier: 'city' (the default), 'neighbourhood'. A ZIP is shown ON its
+      // city's card: its own area first, then the city's.
+      function renderPlaceFacts(p, { switchToAnalysis = true, zip = null, zipArea = null, tier = 'city' } = {}) {
+        panelSubject = { kind: 'borough' };
+        setPanelSubject(zip ? `${p.name} · ZIP ${zip.code}` : p.name);
+        announceResult('Flight-path facts loaded for ' + (zip ? `ZIP ${zip.code}, ` : '') + p.name + '. Not scored.');
+        if (switchToAnalysis) switchTab('analysis');
+        revealSheetIfMobile();
+        if (tier === 'city' && !zipArea) showTierOutline(null);
+        const row = (label, value) =>
+          value ? `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>` : '';
+        const where =
+          tier === 'neighbourhood'
+            ? `A neighbourhood of San Francisco, California (DataSF's analysis neighbourhoods).`
+            : `${escapeHtml(p.county)} County, California.`;
+        const zipBlock = zip
+          ? `<h3 class="place-facts-head">ZIP ${escapeHtml(zip.code)}</h3>
+      <dl class="place-facts">
+        ${row('Which city', zip.place ? zipShareText(zip) : 'In no city.')}
+        ${zipArea ? placeFactRows(zipArea, 'ZIP area') : ''}
+      </dl>
+      <h3 class="place-facts-head">${escapeHtml(p.name)}, the city</h3>`
+          : '';
+        // San Francisco's card names its neighbourhoods, in the noise-map order.
+        const isSf = tier === 'city' && p.name === 'San Francisco';
+        const nhoodList =
+          isSf && bayTiers.loaded
+            ? `<details class="place-nhoods"><summary>San Francisco's ${bayTiers.loaded.features.length} neighbourhoods</summary><ul>${bayTiers.loaded.features
+                .slice()
+                .sort((a, b) => a.properties.rank - b.properties.rank)
+                .map(
+                  (f) =>
+                    `<li><button type="button" class="nhood-btn" data-nhood="${escapeHtmlAttr(f.properties.name)}">${escapeHtml(f.properties.name)}</button> <span>${escapeHtml(f.properties.noise)}</span></li>`
+                )
+                .join('')}</ul></details>`
+            : '';
+        const backToCity =
+          tier === 'neighbourhood'
+            ? '<p class="property-note" style="margin:10px 0 0;"><button type="button" class="nhood-btn" data-city-facts="San Francisco">San Francisco, the whole city</button></p>'
+            : '';
+        document.getElementById('sidebar-content').innerHTML = `
+    <div class="sidebar-section">
+      <p class="property-note" style="margin:0 0 10px;">${where} <strong>Not scored:</strong> these are the flight-path facts from the Bay Area page, not a Sky Score.</p>
+      ${zipBlock}
+      <dl class="place-facts">
+        ${placeFactRows(p, tier === 'neighbourhood' ? 'neighbourhood' : 'city')}
+      </dl>
+      ${nhoodList}${backToCity}
+      ${PLACE_SOURCES}
+    </div>`;
+        document.querySelectorAll('#sidebar-content [data-nhood]').forEach((b) =>
+          b.addEventListener('click', () => openNeighbourhood(b.dataset.nhood))
+        );
+        document.querySelectorAll('#sidebar-content [data-city-facts]').forEach((b) =>
+          b.addEventListener('click', () => selectBoroughByName(b.dataset.cityFacts))
+        );
+        // The neighbourhood list needs the tier file; fetch it and redraw once.
+        if (isSf && !bayTiers.loaded) {
+          loadBayTier('neighbourhoods')
+            .then((fc) => {
+              bayTiers.loaded = fc;
+              if (selectedBorough === 'San Francisco' && currentCity === 'bayarea') renderPlaceFacts(p, { switchToAnalysis: false });
+            })
+            .catch(() => {});
+        }
+      }
+
+      async function openNeighbourhood(name) {
+        let fc;
+        try {
+          fc = await loadBayTier('neighbourhoods');
+        } catch {
+          return false;
+        }
+        bayTiers.loaded = fc;
+        const f = fc.features.find((x) => x.properties.name === name);
+        if (!f) return false;
+        if (currentCity !== 'bayarea') await switchCity('bayarea');
+        selectedBorough = 'San Francisco';
+        paintBoroughSelection();
+        renderPlaceFacts(f.properties, { tier: 'neighbourhood' });
+        showTierOutline(f);
+        return true;
+      }
+
+      // "Mission", or either half of "Castro/Upper Market".
+      async function bayAreaNeighbourhoodNamed(q) {
+        let fc;
+        try {
+          fc = await loadBayTier('neighbourhoods');
+        } catch {
+          return null;
+        }
+        const want = q.toLowerCase().replace(/\./g, '').trim();
+        const hit = fc.features.find((f) => {
+          const n = f.properties.name.toLowerCase();
+          return n === want || n.split('/').some((part) => part.trim() === want);
+        });
+        return hit ? hit.properties.name : null;
+      }
+
+      // The ranking is the page's own order - by share of the area on the
       // federal noise map - and says so. No score column: there is no score.
+      // Cities by default; San Francisco's neighbourhoods on the toggle.
+      let bayRankingView = 'city';
+      function toggleBayRanking() {
+        bayRankingView = bayRankingView === 'city' ? 'neighbourhood' : 'city';
+        renderBoroughRanking();
+      }
       function renderFactsRanking(activeData) {
-        const rows = Object.values(activeData).sort((a, b) => a.rank - b.rank);
+        const nhoods = bayRankingView === 'neighbourhood';
+        if (nhoods && !bayTiers.loaded) {
+          document.getElementById('borough-ranking').innerHTML = '<p class="property-note">Loading the neighbourhoods...</p>';
+          loadBayTier('neighbourhoods')
+            .then((fc) => {
+              bayTiers.loaded = fc;
+              if (currentCity === 'bayarea') renderBoroughRanking();
+            })
+            .catch(() => {
+              document.getElementById('borough-ranking').innerHTML = '<p class="property-note">The neighbourhoods could not be loaded just now.</p>';
+            });
+          return;
+        }
+        const rows = nhoods
+          ? bayTiers.loaded.features.map((f) => f.properties).sort((a, b) => a.rank - b.rank)
+          : Object.values(activeData).sort((a, b) => a.rank - b.rank);
         const body = rows
           .map(
             (r) =>
-              `<tr data-rank-name="${escapeHtmlAttr(r.name)}" data-rank-action="borough"><td>${r.rank}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.noise)}</td><td>${r.approach === 'No' ? 'No' : 'Yes'}</td></tr>`
+              `<tr data-rank-name="${escapeHtmlAttr(r.name)}" data-rank-action="${nhoods ? 'neighbourhood' : 'borough'}"><td>${r.rank}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.noise)}</td><td>${r.approach === 'No' ? 'No' : 'Yes'}</td></tr>`
           )
           .join('');
+        const what = nhoods ? 'neighbourhood' : 'city';
         document.getElementById('borough-ranking').innerHTML =
-          '<p class="property-note" style="margin:0 0 10px;font-size:11px;">Ordered by how much of each city the federal aircraft noise map shades, as the Bay Area page orders it. <strong>Not scored.</strong> That map covers every airfield, not only the three whose routes are drawn.</p>' +
-          '<table class="rank-table"><thead><tr><th>#</th><th>City</th><th>On the noise map</th><th>Approach overhead</th></tr></thead><tbody>' +
+          `<p class="property-note" style="margin:0 0 10px;font-size:11px;">Ordered by how much of each ${what} the federal aircraft noise map shades, as the Bay Area page orders its cities. <strong>Not scored.</strong> That map covers every airfield, not only the three whose routes are drawn.</p>` +
+          `<div style="margin-bottom:10px;"><button type="button" id="bay-ranking-toggle" class="nhood-btn">${nhoods ? 'Show the 50 cities' : "Show San Francisco's neighbourhoods"}</button></div>` +
+          `<table class="rank-table"><thead><tr><th>#</th><th>${nhoods ? 'Neighbourhood' : 'City'}</th><th>On the noise map</th><th>Approach overhead</th></tr></thead><tbody>` +
           body +
           '</tbody></table>';
+        document.getElementById('bay-ranking-toggle')?.addEventListener('click', toggleBayRanking);
         document.querySelectorAll('#borough-ranking tbody tr[data-rank-name]').forEach((tr) => {
           const name = tr.dataset.rankName;
-          makeKeyActivatable(tr, () => selectBoroughByName(name), {
+          makeKeyActivatable(tr, () => (tr.dataset.rankAction === 'neighbourhood' ? openNeighbourhood(name) : selectBoroughByName(name)), {
             label: `Show flight-path facts for ${name}`,
             asButton: false,
           });
@@ -14427,10 +14597,17 @@
         if (currentCity !== 'bayarea') await switchCity('bayarea');
         const zip = { code, ...z };
         const data = z.place ? getActiveBoroughData()[z.place] : null;
+        let zipArea = null;
+        try {
+          zipArea = (await loadBayTier('zipAreas')).features.find((f) => f.properties.zip === code) || null;
+        } catch {
+          zipArea = null; // the city facts still stand; the ZIP-area rows are simply absent
+        }
         if (data) {
           selectedBorough = z.place;
           paintBoroughSelection();
-          renderPlaceFacts(data, { zip });
+          renderPlaceFacts(data, { zip, zipArea: zipArea ? zipArea.properties : null });
+          showTierOutline(zipArea);
           return true;
         }
         // In no city the map draws (an unincorporated community, or none at all).
@@ -15093,6 +15270,7 @@
           renderCityFlightPaths();
           renderCityAirports();
           renderLabels();
+          if (tierOutlineFeature && currentCity === 'bayarea') showTierOutline(tierOutlineFeature);
         }
         // Audit I-0521-5: redrawForViewport() tears down and rebuilds every
         // layer - boroughs, DEFRA tiles, flight paths, airports, transport,
