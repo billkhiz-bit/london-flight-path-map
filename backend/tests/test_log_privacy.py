@@ -83,7 +83,10 @@ class LogPrivacyTests(unittest.TestCase):
             if hasattr(app, '_log_district'):
                 seen += 1
                 for full, district in (('SW11 1AA', 'SW11'), ('sw111aa', 'SW11'), ('M1 1AE', 'M1'),
-                                       ('EC1A 1BB', 'EC1A'), ('', '?'), (None, '?'), ('ZZ', '?')):
+                                       ('EC1A 1BB', 'EC1A'), ('', '?'), (None, '?'), ('ZZ', '?'),
+                                       # Free text is not a postcode (audit 2026-10-05 M-2).
+                                       ('10 Downing Street, London SW1A 2AA', '?'),
+                                       ('jane.doe@example.com', '?')):
                     self.assertEqual(app._log_district(full), district, f'{name}: {full!r}')
             if hasattr(app, '_log_coarse'):
                 seen += 1
@@ -91,6 +94,26 @@ class LogPrivacyTests(unittest.TestCase):
                 self.assertEqual(app._log_coarse('x', None), '?', name)
         # score has both, sold_prices one, nhs one.
         self.assertEqual(seen, 4)
+
+    def test_sold_prices_refuses_free_text_before_land_registry(self):
+        """A non-postcode never reaches Land Registry or a log line (audit 2026-10-05 M-2).
+
+        The scrubber alone left free text nearly verbatim in the log whenever
+        Land Registry failed; the handler now refuses it first, as the score
+        Lambda's lookup_postcode() always did.
+        """
+        from unittest.mock import patch
+
+        app = _import('sold_prices')
+        with patch.object(app, 'urlopen') as upstream:
+            r = app.handler({'queryStringParameters': {'postcode': '10 Downing Street, London SW1A 2AA'}}, None)
+        self.assertEqual(r['statusCode'], 400)
+        upstream.assert_not_called()
+        with patch.object(app, 'urlopen') as upstream:
+            upstream.side_effect = TimeoutError('slow')
+            r = app.handler({'queryStringParameters': {'postcode': 'SW11 1AA'}}, None)
+        self.assertNotEqual(r['statusCode'], 400, 'a real postcode must still reach Land Registry')
+        upstream.assert_called_once()
 
     def test_a_degraded_lookup_logs_the_district_not_the_postcode(self):
         """Through the real code path, not the helper: the line users' data reaches."""

@@ -88,6 +88,7 @@ const norm = (s) =>
     .replace(/\./g, '')
     .replace(/^city of |, city of$/g, '')
     .trim();
+const ALIASES = { 'barking and dagenham': 'barking' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const ord = (n) => {
   const s = ['th', 'st', 'nd', 'rd'];
@@ -117,7 +118,11 @@ function boroughContext(extra, district) {
   for (const [city, boroughs] of Object.entries(extra)) {
     if (!CITY_LABEL[city] || typeof boroughs !== 'object') continue;
     const names = Object.keys(boroughs).filter((b) => typeof boroughs[b] === 'object');
-    const hit = names.find((b) => norm(b) === norm(district)) || names.find((b) => norm(district).startsWith(norm(b)));
+    // An explicit alias, not a prefix match: "starts with" gave Brentwood (Essex)
+    // Brent's figures under Brentwood's name (audit 2026-10-05 M-10). Barking and
+    // Dagenham is the one district the borough file holds under a shorter name.
+    const want = ALIASES[norm(district)] || norm(district);
+    const hit = names.find((b) => norm(b) === want);
     if (!hit) continue;
     const rank = (field) => {
       const vals = names.filter((b) => typeof boroughs[b][field] === 'number');

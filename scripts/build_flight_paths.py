@@ -706,6 +706,12 @@ def do_check_or_write(write):
     by_city = corridors(data)
     if not by_city:
         raise SystemExit('the procedures file produced no corridors - refusing to report a pass')
+    # Every holder city, not "at least one": with Manchester's airport emptied of
+    # its city this printed "both holders match" and checked 11 cities, leaving
+    # Manchester's blocks in both holders compared by nothing (audit 2026-10-05 M-9).
+    missing = sorted(set(HOLDERS) - set(by_city))
+    if missing:
+        raise SystemExit(f'no corridors derived for {missing}: an airport lost its city, or a city lost its airport')
     stale = []
     for city, paths in by_city.items():
         if city not in HOLDERS:

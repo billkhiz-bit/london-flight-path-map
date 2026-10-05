@@ -649,6 +649,10 @@ check "preview home is a tool, not a picture" node tests/preview-home.mjs
 # duplicated ones are worse than none (doorway pages), so this asserts
 # CONTENT and that the sitemap agrees in both directions.
 check "area pages carry real data"    node tests/area-pages.mjs
+# The builder's own --check: the open-data CSV and the scorecard table in
+# index.html equal a fresh build. It was run by nothing (audit 2026-10-05
+# M-8) while the Makefile said it "reds while either is stale". Offline, fast.
+check "area builder == its outputs"   python scripts/build_area_pages.py --check
 # The area pages BAKE their scores at build time - that is what makes them
 # indexable without JS, and what lets them go stale when a data vintage
 # lands. No other gate can see it: `area pages carry real data` checks

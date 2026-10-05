@@ -21,7 +21,12 @@ def _log_district(postcode):
     all of them to the same rule.
     """
     clean = re.sub(r'\s', '', str(postcode or '')).upper()
-    return clean[:-3] if len(clean) >= 5 else '?'
+    # A postcode's SHAPE or nothing: on a free-text input the old rule (drop the
+    # last three characters) logged '10DOWNINGSTREET,LONDONSW1A' (audit
+    # 2026-10-05 M-2).
+    if not re.fullmatch(r'[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}', clean):
+        return '?'
+    return clean[:-3]
 
 OGL_ATTRIBUTION = (
     'Sold prices: HM Land Registry. Contains public sector information licensed under the Open Government Licence v3.0.'
@@ -93,6 +98,10 @@ def handler(event, context):
         #
         # quote() already encodes a space as %20 and Land Registry accepts that.
         clean = postcode.strip().upper()
+        # A UK postcode's shape before it reaches Land Registry or a log line, as
+        # the score Lambda's lookup_postcode() requires (audit 2026-10-05 M-2).
+        if not re.fullmatch(r'[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}', re.sub(r'\s', '', clean)):
+            return response(400, {'error': 'postcode must be a UK postcode, e.g. SW11 1AA'})
 
         # HM Land Registry Price Paid Data - official free API
         url = (

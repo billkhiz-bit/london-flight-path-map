@@ -695,7 +695,12 @@ postcode SHAPE reaches the email body. `ScannerSafeConfirmTests`,
 `SendCapTests`, `EmailPostcodeTests` in `backend/tests/test_signup_verify.py`,
 the first proven red on the old GET-consumes behaviour. **Branch
 `i17-flip-verification-on` predates this and must be rebased onto master
-before it is merged.** The detail below is kept as the reasoning.
+before it is merged.** **One residual, from the 2026-10-05 audit (M-3):** the
+cap counts an exact address string, so `name+1@`, `name+2@` and dotted
+Gmail variants each get their own three sends, and there is no overall daily
+ceiling (the route throttle allows ~86k sends a day). Before the flip, add a
+global daily counter beside the per-address one and normalise sub-addresses
+for the count. The detail below is kept as the reasoning.
 
 - **The confirm link must not consume its token on a GET.** `handle_confirm`
   deletes the pending row, mints the key and shows it once, all on the GET.
