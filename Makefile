@@ -290,6 +290,15 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
 		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)
+	# The Bay Area on the live map (2026-10-05): its 50 city outlines with the
+	# /bay-area/ page's facts, and the ZIP table the search reads. Both are
+	# written by blocking --check builders, so no-cache, as stations.json is.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-cities.json \
+		s3://$(S3_BUCKET)/data/us-bayarea-cities.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-zips.json \
+		s3://$(S3_BUCKET)/data/us-bayarea-zips.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/westmidlands-boroughs.json \
 		s3://$(S3_BUCKET)/data/westmidlands-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)

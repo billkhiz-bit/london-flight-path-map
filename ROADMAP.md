@@ -744,7 +744,14 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       with no page error, and on `/preview/` 94301 opens Palo Alto with its
       pin, 95014 says 44% of it is in Cupertino and 90210 is told it is not
       covered, at desktop and phone widths.
-- [ ] **Release 1 on the LIVE map: the checklist** (read off the code 2026-10-05,
+- [x] **Release 1 on the LIVE map, BUILT 2026-10-05** (Bill ruled the same day:
+      facts and no number, ranking by noise-map share). Done: items 1-4 and 6 below,
+      bar the locator marker (the Bay Area has no inset: `usa-locator.json` marks
+      New York alone); item 5 turned out moot, because the parity gates read
+      `borough-extra.json`, which a facts-only city is not in. Gates:
+      `build_bayarea_map_data.py --check` and `tests/bayarea-map.mjs`, both
+      blocking. Left for release 2: the Lambda entry, a score, prices.
+- [x] **Release 1 on the LIVE map: the checklist** (read off the code 2026-10-05,
       when Bill asked for it before the AI Tinkerers newsletter and it was
       judged a day or two, not hours; `/preview/?city=bayarea` was made safe to
       share instead). In order:

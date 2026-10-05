@@ -263,8 +263,14 @@ if (rows.length < 10) {
 if (ledRows.length < 10) {
   failures.push(`only ${ledRows.length} cities produced a neighbourhood ranking`);
 }
-if (chips.length < cities.length - 1) {
-  failures.push(`only ${chips.length} chips rendered against ${cities.length} cities in the registry`);
+// Every city of the country on screen, read from the registry. This was
+// `cities.length - 1`, a count that assumed New York was the only city outside
+// the UK, and went red the day the Bay Area became a second (2026-10-05).
+const defaultCountry = await page.evaluate(() => CITY_DATA.london.country);
+const sameCountry = await page.evaluate((country) => Object.keys(CITY_DATA).filter((k) => CITY_DATA[k].country === country), defaultCountry);
+const missingChips = sameCountry.filter((c) => !chips.includes(c));
+if (missingChips.length || chips.length < 10) {
+  failures.push(`${chips.length} chips rendered; no chip for ${missingChips.join(', ') || '(none)'} of the ${sameCountry.length} ${defaultCountry} cities in the registry`);
 }
 
 await browser.close();
