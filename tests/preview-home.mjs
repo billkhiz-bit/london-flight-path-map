@@ -167,6 +167,9 @@ await page.keyboard.press('Enter');
 await page.waitForSelector('#borough.is-open');
 ok((await page.locator('#borough h2').textContent()) === 'Ealing', 'Enter on a focused council area opens it');
 ok(await page.evaluate(() => document.activeElement?.tagName === 'H2'), 'focus moves to the card heading');
+await page.keyboard.press('Escape');
+const backTo = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') || document.activeElement?.tagName || '');
+ok((await cardOpen().count()) === 0 && backTo.startsWith('Ealing'), 'Escape from inside the card returns focus to the council area that opened it (audit M-17)', backTo);
 
 // 5. Every council area in every UK city has a CSV row, so no card can say "not scored" by accident.
 const missing = [];
@@ -263,6 +266,7 @@ await page.waitForSelector('#answer.is-open', { timeout: 10000 });
 const vals = await page.locator('#ans-rows .val').allTextContents();
 ok(vals.length === 4 && vals[0].startsWith('56 dB') && vals[0].includes('measured') && vals[1].startsWith('53.1 dB'), 'measured postcode renders four rows with the DEFRA readings', vals.join(' | '));
 const routes = await page.locator('#ans-routes').textContent();
+ok((await page.locator('#status').textContent()) === 'Showing the figures for TW9 3PZ.', 'a found postcode is announced in the live region, not left silent (audit M-14)', await page.locator('#status').textContent());
 ok(/Nearest airport on the map: Heathrow, [\d.]+ km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance and direction', routes);
 ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.test(routes), 'Kew is reported under a Heathrow 27 final approach at a height', routes);
 const area = await page.locator('#ans-area').textContent();
@@ -416,6 +420,23 @@ await page.waitForSelector('#borough.is-open');
 await page.waitForTimeout(700);
 const cardTop = await page.locator('#borough').evaluate((e) => e.getBoundingClientRect().top);
 ok(cardTop >= -1 && cardTop < 844, 'on a phone the card is brought into view', `top ${Math.round(cardTop)}px`);
+// A real TAP, in a touch context: the tap focuses the area, its focus handler
+// shows the tooltip, and nothing on a phone moves a pointer off it, so it stayed
+// on the map until the next tap (audit M-15). An emulated mouse click cannot
+// show this: the card's scroll fires a mouse-leave, and that check passed on the
+// defect.
+{
+  const touch = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await touch.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+  const tp = await touch.newPage();
+  await tp.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await tp.waitForSelector('#map .boro', { timeout: 20000 });
+  await tp.locator('#map .boro[aria-label^="Camden"]').tap({ force: true });
+  await tp.waitForSelector('#borough.is-open');
+  await tp.waitForTimeout(700);
+  ok(await tp.locator('#tip').isHidden(), 'on a phone, a tapped council area takes its tooltip off the map (audit M-15)');
+  await touch.close();
+}
 const inside = await page.locator('#toggle-noise, #zoom-in, #zoom-out, #zoom-reset').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= 390; }));
 ok(inside.every(Boolean), 'layer and zoom controls are inside a phone viewport');
 

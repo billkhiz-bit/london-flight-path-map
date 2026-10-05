@@ -517,7 +517,22 @@ function bindControls() {
     drawStreets();
   });
   byId('borough-close')?.addEventListener('click', () => closeBorough(true));
-  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') { hideTip(); closeBorough(false); } });
+  // Escape closes the card and puts focus back where the card came from: the
+  // council area that opened it, or the search box. It closed the card and
+  // left focus on <body>, so a keyboard user restarted from the header
+  // (audit 2026-10-05 M-17). Close (the button) keeps its tested rule: the
+  // search box.
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Escape') return;
+    hideTip();
+    const card = byId('borough');
+    const wasOpen = card?.classList.contains('is-open');
+    const inCard = card?.contains(document.activeElement);
+    closeBorough(false);
+    if (wasOpen && (inCard || document.activeElement === document.body)) {
+      (state.opener?.isConnected ? state.opener : byId('pc'))?.focus();
+    }
+  });
   window.addEventListener('resize', () => { if (state.boroughs) draw(state.pin); });
 }
 
@@ -545,8 +560,13 @@ function selectBorough(name, opts = {}) {
   byId('answer')?.classList.remove('is-open');
   // A ZIP search opens its city's card WITH the ZIP's pin; any other way in, the pin's answer has closed.
   if (!opts.zip) clearPin();
+  // The tooltip goes with the tap that opened the card: it was left on the map,
+  // 260x105 px, until the next tap (audit 2026-10-05 M-15).
+  hideTip();
   const card = byId('borough');
   if (!card) return true;
+  // Where Escape returns focus to (M-17): whatever had it, unless that was nothing.
+  state.opener = document.activeElement !== document.body ? document.activeElement : null;
   openCard(f?.properties.planar ? placeCardHtml(f, opts.zip) : boroughCardHtml(row || { borough: name, city: state.city }, f));
   setQuery(opts.zip ? { city: state.city, postcode: opts.zip.code } : { city: row ? row.city : state.city, borough: state.selected });
   if (opts.scroll && window.matchMedia('(max-width: 760px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -756,7 +776,10 @@ async function search(raw) {
     if (city && city !== state.city) await show(city, { lat, lon }); else if (city) draw({ lat, lon });
     const env = await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
     if (!env.environment) { say(env.error || 'No figures for that spot.'); return; }
-    say(city ? '' : `${geo.result.postcode} is outside the cities on the map. Here are the figures we hold for it.`);
+    // A success is announced too: the status line is the page's live region,
+    // and it went from "Looking it up..." to empty, so a screen-reader user
+    // heard nothing when the figures arrived (audit 2026-10-05 M-14).
+    say(city ? `Showing the figures for ${geo.result.postcode}.` : `${geo.result.postcode} is outside the cities on the map. Here are the figures we hold for it.`);
     render(geo.result.postcode, district, city, env.environment, lat, lon);
     setQuery({ city: city || state.city, postcode: geo.result.postcode });
   } catch {
