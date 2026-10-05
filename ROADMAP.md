@@ -632,13 +632,13 @@ Strike a row here in the commit that closes it.
 
 | # | Item | Owner / size |
 |---|---|---|
-| C-1 | On a phone the main map showed nothing for a search that did not succeed. **Fixed in source 2026-10-05** (`.no-result-yet`), gate red-then-green; needs `web-deploy`, then a native binary for the App Store copy | Claude done; deploy on Bill's word |
-| I-1 | `/preview/` tells Barking and Dagenham postcodes they are outside the map: derive the city from the open-data row, and run the 86-spelling fixture against the preview | Claude, small |
-| I-2 | `/preview/` "Nearest runway" reads three airports only: say "nearest of SFO, OAK and SJC" or read the page's own airfield list; the test asserts the old wording | Claude, small |
+| ~~C-1~~ | ~~On a phone the main map showed nothing for a search that did not succeed.~~ **FIXED AND DEPLOYED 2026-10-05** (`d6de92b`, `.no-result-yet`; gate red-then-green; live page verified at phone and landscape widths; master level). Left: the App Store copy keeps the defect until its next binary | Done, bar the binary |
+| ~~I-1~~ | ~~`/preview/` tells Barking and Dagenham postcodes they are outside the map: derive the city from the open-data row, and run the 86-spelling fixture against the preview~~ **Fixed 2026-10-05** | Done |
+| ~~I-2~~ | ~~`/preview/` "Nearest runway" reads three airports only: say "nearest of SFO, OAK and SJC" or read the page's own airfield list; the test asserts the old wording~~ **Fixed 2026-10-05** | Done |
 | I-3 | Privacy notice has no section on email, and the register says Cloudflare sees no payload while it routes the mail | Claude drafts, **Bill approves the wording** (legal page) |
 | I-4 | `/preview/` layout collides from 761px to about 1180px wide (panel over the toggles, chips and map) | Claude, medium; Bill looks at the result |
-| I-5 | `/preview/` search box is tab stop 56, no skip link | Claude, small |
-| I-6 | `/preview/` placeholder is the only visible label, at 3.50:1, cut off under 390px | Claude, small |
+| I-5 | `/preview/` search box is tab stop 56, no skip link. **Part-fixed 2026-10-05** (skip link); phone DOM order left | Claude, small |
+| I-6 | `/preview/` placeholder is the only visible label, at 3.50:1, cut off under 390px. **Part-fixed 2026-10-05** (contrast); truncation under 390px left | Claude, small |
 | I-7 | Focus rings at 2.1-2.7:1 on the new pages and on the main map (1.4.11 asks 3:1) | Claude, small; the ring colour is a brand call |
 | I-8 | **Decision:** the borough Quiet skies band says 0.0 for Hillingdon while most of its postcodes estimate 8-10. Keep "worst exposure in the borough" and say so where it is printed, or re-derive the band from the postcode tier (a methodology version) | **Bill** |
 | Minors | 20, of which M-4 (names in `OUTREACH_LOG.md`) and M-1 (the OS key in the service worker's cache) are the two worth doing first | Claude, an hour or two in all |
@@ -744,6 +744,31 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       with no page error, and on `/preview/` 94301 opens Palo Alto with its
       pin, 95014 says 44% of it is in Cupertino and 90210 is told it is not
       covered, at desktop and phone widths.
+- [ ] **Release 1 on the LIVE map: the checklist** (read off the code 2026-10-05,
+      when Bill asked for it before the AI Tinkerers newsletter and it was
+      judged a day or two, not hours; `/preview/?city=bayarea` was made safe to
+      share instead). In order:
+      1. A generator (`scripts/build_bayarea_map_data.py --write|--check`, made
+         blocking) writing `data/us-bayarea-cities.json` (GeoJSON of the 50
+         cities, rings REWOUND for d3's spherical paths, which the preview
+         dodges by drawing planar; never `*-boroughs.json`) and an index.html
+         block between markers: airports, routes in New York's shape
+         (`coordinates` as [lon, lat]), and a quiet estimate per city.
+      2. The `bayarea` CITY_DATA entry with every key New York has (smoke-local
+         asserts parity); `center`/`scale` from `fit_city_projection.py`,
+         which globs `*-boroughs.json` and needs a path argument; `noiseScale:
+         NOISE_SCALE_BTS` (the tile layer is already generic); the FAA warranty
+         disclaimer in the legend explainer.
+      3. The "no overall score" state in `calcScores`, the sidebar, both
+         ranking tables, favourites and share text (seven places).
+      4. Registry fields replacing the six by-name New York branches
+         (`tests/test_us_city_branches.py`), starting with the ZIP table and
+         the property links (a Bay Area city falls to Rightmove today).
+      5. A SITE-ONLY city is a new kind: the parity gates assume every site
+         city is in the API. Declare it beside `BACKEND_ONLY_CITIES` rather
+         than weakening them.
+      6. Locator marker, `make data-deploy` line, drift check, then every
+         gate that clicks a chip (`city-switch`, `map-fit`, `layer-honesty`).
 - [ ] **Prices by the public-domain route need a free Census API key**
       (American Community Survey median home values, with FHFA for the
       trend), which avoids Zillow's unread terms. Bill's to request at

@@ -119,6 +119,22 @@ const labels = await page.locator('#map .boro').evaluateAll((els) => els.map((e)
 ok(labels.every(([r, t]) => r === 'button' && t === '0'), 'every council area is role=button and in the tab order');
 ok((await page.locator('#map').getAttribute('role')) !== 'img', 'the svg is not role=img (its children are buttons)');
 ok((await page.locator('#chips button').count()) === 11 && (await page.locator('#chips a').count()) === 1, 'eleven city chips plus the New York link');
+await page.keyboard.press('Tab');
+const onSkip = await page.evaluate(() => document.activeElement?.matches('a.skip[href="#pc"]'));
+ok(onSkip, 'the first Tab reaches "Skip to the search" (audit I-5: the box was stop 56)');
+// Enter only on the skip link: on anything else the first stop is a header link, and Enter would leave the page.
+if (onSkip) await page.keyboard.press('Enter');
+ok(onSkip && (await page.evaluate(() => document.activeElement?.id === 'pc')), 'and Enter on it lands in the search box');
+// The postcode -> city lookup is the PREVIEW's own copy, so the 86 real postcodes.io spellings the live map is
+// held to (tests/fixtures/postcodes-io-districts.json) are run through it too. It missed Barking and Dagenham.
+const spellings = JSON.parse(await readFile(join(ROOT, 'tests', 'fixtures', 'postcodes-io-districts.json'), 'utf8')).districts;
+const derived = await page.evaluate(async (ds) => {
+  const engine = await import('/preview/hp-engine.js');
+  if (typeof engine.cityOf !== 'function') return null;
+  return ds.map((d) => ({ ...d, got: engine.cityOf(d.admin_district) }));
+}, spellings);
+const wrong = derived ? derived.filter((d) => d.got !== d.city) : [{ admin_district: 'the engine exports no cityOf', got: '' }];
+ok(spellings.length >= 80 && wrong.length === 0, `all ${spellings.length} postcodes.io district spellings resolve to their own city (audit I-1)`, wrong.map((d) => `${d.admin_district} -> ${d.got}`).join('; '));
 
 // 2. Click Camden: the card opens with the CSV's score and components, and the URL says so.
 await page.locator('#map .boro[aria-label^="Camden"]').click();
@@ -247,7 +263,7 @@ await page.waitForSelector('#answer.is-open', { timeout: 10000 });
 const vals = await page.locator('#ans-rows .val').allTextContents();
 ok(vals.length === 4 && vals[0].startsWith('56 dB') && vals[0].includes('measured') && vals[1].startsWith('53.1 dB'), 'measured postcode renders four rows with the DEFRA readings', vals.join(' | '));
 const routes = await page.locator('#ans-routes').textContent();
-ok(/Nearest runway: Heathrow, [\d.]+ km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest runway with distance and direction', routes);
+ok(/Nearest airport on the map: Heathrow, [\d.]+ km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance and direction', routes);
 ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.test(routes), 'Kew is reported under a Heathrow 27 final approach at a height', routes);
 const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
@@ -285,6 +301,7 @@ ok((await page.locator('#map .pin').count()) === 0, 'outside coverage: no pin on
 ok(/outside the cities on the map/.test(await page.locator('#status').textContent()), 'outside coverage: the status says so');
 ok((await page.locator('#ans-area').textContent()) === '' && (await page.locator('#ans-routes').textContent()) === '', 'outside coverage: no council-area or runway line is invented');
 ok((await boroCount()) === 33, 'the map stayed on the city that was on screen');
+ok(!(await page.locator('#ans-link').isVisible()), 'outside coverage: no "see the full picture on the map" link to a map it is not on (audit M-18)');
 await page.locator('#chips button[data-city="manchester"]').click();
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10);
 
@@ -297,7 +314,7 @@ await page.waitForFunction(() => document.querySelectorAll('#map .boro').length 
 await page.fill('#pc', 'M22 5RX');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10 && document.querySelector('#answer.is-open'), null, { timeout: 10000 });
-ok(/Nearest runway: Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
+ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
 
 // 12. Place names: a borough opens its card (switching city), a Bay Area city opens the Bay Area, a city name switches.
 await page.fill('#pc', 'Trafford');
@@ -311,8 +328,18 @@ ok(true, 'a borough name in another city switches the map and opens its card');
 await page.fill('#pc', 'Palo Alto');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Palo Alto', null, { timeout: 15000 });
-const palo = await page.locator('#borough .facts dd').first().textContent();
-ok(/SJC 12R, [\d.]+ km to the/.test(palo), 'Palo Alto card names SJC 12R as the nearest runway (as the Bay Area page does)', palo);
+const fact = (label) => page.locator('#borough .facts div', { has: page.locator('dt', { hasText: label }) }).locator('dd').textContent();
+const paloField = await fact('Nearest airfield');
+ok(/^Palo Alto \(KPAO\), [\d.]+ km to the/.test(paloField), 'Palo Alto card names its own airfield as the nearest (audit I-2: it named SJC)', paloField);
+ok(/^SJC 12R, [\d.]+ km to the/.test(await fact('Nearest of SFO, OAK and SJC')), 'and SJC 12R as the nearest of the three airports whose routes are drawn', await fact('Nearest of SFO, OAK and SJC'));
+const BTS = ['#FFC107', '#FF8000', '#FF0000', '#FF3399', '#A300CC', '#5200CC', '#0000FF'];
+const rampHex = () => page.locator('#ramp b').evaluateAll((bs) => bs.map((b) => '#' + getComputedStyle(b).backgroundColor.match(/\d+/g).slice(0, 3).map((v) => (+v).toString(16).padStart(2, '0')).join('').toUpperCase()));
+ok(JSON.stringify(await rampHex()) === JSON.stringify(BTS), "the Bay Area legend ramp is BTS's seven colours, the picture it sits over (audit M-11)", (await rampHex()).join(' '));
+await page.fill('#pc', 'Livermore');
+await page.press('#pc', 'Enter');
+await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Livermore', null, { timeout: 10000 });
+const liv = await fact('Nearest airfield');
+ok(/^Livermore Municipal \(KLVK\), [\d.]+ km/.test(liv) && /none within 30 km/.test(await fact('Nearest of SFO, OAK and SJC')), 'Livermore names its own airport, and says the three drawn airports are all further than 30 km', liv);
 ok((await page.locator('#chips button[data-city="bayarea"]').getAttribute('aria-pressed')) === 'true', 'the Bay Area chip is pressed');
 // A Bay Area ZIP opens its city with the ZIP's own pin, and says how much of the ZIP is in that city.
 const zipFact = (label) => page.locator('#borough .facts div', { has: page.locator('dt', { hasText: label }) }).locator('dd').textContent();
@@ -322,7 +349,7 @@ const searchZip = async (code, heading) => {
   await page.waitForFunction((h) => document.querySelector('#borough.is-open h2')?.textContent === h, heading, { timeout: 10000 });
 };
 await searchZip('94301', 'Palo Alto');
-ok(/^In Palo Alto\./.test(await zipFact('ZIP 94301')) && /Nearest runway: (SJC|SFO|OAK)/.test(await zipFact('At its centre')), 'ZIP 94301 opens Palo Alto, says it is in it, and names the nearest runway from its centre', `${await zipFact('ZIP 94301')} | ${await zipFact('At its centre')}`);
+ok(/^In Palo Alto\./.test(await zipFact('ZIP 94301')) && /Nearest airport on the map: (SJC|SFO|OAK)/.test(await zipFact('At its centre')) && /^Palo Alto \(KPAO\)/.test(await zipFact('Nearest airfield')), 'ZIP 94301 opens Palo Alto, says it is in it, and names the nearest runway from its centre', `${await zipFact('ZIP 94301')} | ${await zipFact('At its centre')}`);
 // The Census centre point and the drawn outline are two sources: the pin must land on the city it names.
 const underPin = await page.locator('#map .pin').evaluate((c) => {
   const r = c.getBoundingClientRect();
@@ -373,6 +400,9 @@ ok((await boroCount()) === 33 && !/Not on the map yet/.test(mismatchWhere), 'a c
 await page.goto(`${BASE}?postcode=TW9+3PZ`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#answer.is-open', { timeout: 20000 });
 ok((await page.locator('#ans-title').textContent()) === 'TW9 3PZ' && (await page.inputValue('#pc')) === 'TW9 3PZ', '?postcode= runs the search on load');
+await page.goto(`${BASE}?city=constructor`, { waitUntil: 'domcontentloaded' });
+await waitMap();
+ok((await boroCount()) === 33 && !/could not load/.test(await page.locator('#status').textContent()), '?city=constructor opens London, not a map that cannot load (audit M-6)');
 await page.goto(`${BASE}?city=bayarea&postcode=94612`, { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Oakland', null, { timeout: 20000 });
 ok((await page.locator('#map .pin').count()) === 1 && (await page.locator('#chips button[data-city="bayarea"]').getAttribute('aria-pressed')) === 'true', 'a ZIP in the URL boots the Bay Area with its city open and its pin drawn');

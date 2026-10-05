@@ -69,7 +69,13 @@
       .panel p.lead { margin: 0 0 16px; color: var(--mid); font-size: 16px; max-width: 46ch; }
       form.check { display: flex; gap: 8px; }
       form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
-      form.check input::placeholder { color: #8a8985; }
+      /* --mid, 7.4:1 on white. The placeholder is the field's only visible label,
+         and #8a8985 measured 3.50:1 (audit 2026-10-05 I-6). */
+      form.check input::placeholder { color: var(--mid); }
+      /* Thirty-odd map controls come before the search box in the tab order
+         (it was stop 56, audit 2026-10-05 I-5); this is the way past them. */
+      .skip { position: absolute; left: 12px; top: -48px; z-index: 50; background: var(--dark); color: #fff; padding: 10px 14px; border-radius: 8px; font: 600 14px var(--font-body); text-decoration: none; }
+      .skip:focus { top: 12px; }
       form.check button { font: 600 16px var(--font-body); padding: 14px 20px; border: 0; border-radius: 12px; background: var(--orange); color: var(--dark); cursor: pointer; white-space: nowrap; }
       form.check button:hover { background: #ff9440; }
       .try { margin: 10px 0 0; font-size: 13px; color: var(--mid); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
@@ -182,6 +188,7 @@
     </style>
   </head>
   <body data-map-inset='{"left":566,"top":0,"right":0,"bottom":0}'>
+    <a class="skip" href="#pc">Skip to the search</a>
     <span class="mock" aria-hidden="true">Preview</span>
     <header class="top">
       <a class="brand" href="/">Sky Score</a>
@@ -242,7 +249,7 @@
           <article class="card">
             <h3>Check an address</h3>
             <p>Aircraft and road noise, air quality and flood risk for any postcode in the cities we cover, with the public body behind each figure.</p>
-            <div class="fig">97<small>council areas across England and New York, and 50 Bay Area cities</small></div>
+            <div class="fig">97<small>council areas across England and Wales, and 50 Bay Area cities</small></div>
             <div class="go-row"><a class="go" href="#pc">Check a postcode</a><a class="also" href="/area/">Every council area</a></div>
           </article>
           <article class="card" id="reports">

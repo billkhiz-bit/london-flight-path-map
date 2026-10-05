@@ -18,6 +18,8 @@ import { AIRPORT_NAME, compass, plane, routesNear, towards } from '/js/flight_ge
 
 // ---- what the page knows: the same data files the live site ships ----
 const DEFRA = ['#B8D6D1', '#CEE4CC', '#E2F2BF', '#F3C683', '#E87E4D', '#CD463E', '#A11A4D', '#75085C', '#430A4A'];
+// BTS's seven colours, as NOISE_SCALE_BTS in index.html: the Bay Area's picture.
+const BTS = ['#FFC107', '#FF8000', '#FF0000', '#FF3399', '#A300CC', '#5200CC', '#0000FF'];
 const CITIES = [
   ['london', 'London'], ['manchester', 'Greater Manchester'], ['westmidlands', 'West Midlands'],
   ['westyorkshire', 'West Yorkshire'], ['southyorkshire', 'South Yorkshire'], ['merseyside', 'Merseyside'],
@@ -25,6 +27,9 @@ const CITIES = [
   ['bayarea', 'San Francisco Bay Area'],
 ];
 const CITY_NAME = Object.fromEntries(CITIES);
+// Own keys only: `CITY_NAME.constructor` is truthy, so ?city=constructor
+// once opened a map that could not load (audit 2026-10-05 M-6).
+const isMapCity = (k) => Object.hasOwn(CITY_NAME, k);
 // The Bay Area is not a city on the live map yet: its outlines are the Census
 // places the /bay-area/ page is built from, its routes the FAA record, its
 // noise picture the one that page serves. Drawn here to show what "on the
@@ -74,7 +79,13 @@ const state = {
 };
 
 const ramp = byId('ramp');
-if (ramp) ramp.innerHTML = DEFRA.map((c) => `<b style="background:${c}"></b>`).join('');
+// The ramp is the palette of the picture on the map: DEFRA's in England, BTS's
+// in the Bay Area. It was DEFRA's everywhere, so not one colour painted over
+// the Bay Area appeared in its legend (audit 2026-10-05 M-11).
+const paintRamp = (key) => {
+  if (ramp) ramp.innerHTML = (key === 'bayarea' ? BTS : DEFRA).map((c) => `<b style="background:${c}"></b>`).join('');
+};
+paintRamp('london');
 
 const dest = (lat, lon, brg, km) => {
   const R = 6371.0088, d = km / R, b = (brg * Math.PI) / 180, la = (lat * Math.PI) / 180, lo = (lon * Math.PI) / 180;
@@ -163,7 +174,7 @@ async function bootFromQuery() {
   const borough = (q.get('borough') || '').trim();
   const row = borough ? rowFor(borough) : null;
   // A council area names its own city: ?city=manchester&borough=Camden opens London.
-  const start = row && CITY_NAME[row.city] ? row.city : CITY_NAME[city] ? city : 'london';
+  const start = row && isMapCity(row.city) ? row.city : isMapCity(city) ? city : 'london';
   await show(start);
   if (postcode) {
     const input = byId('pc');
@@ -220,6 +231,7 @@ async function show(key, pin) {
   if (seq !== showSeq) return;
   state.city = key;
   state.boroughs = boroughs;
+  paintRamp(key);
   document.querySelectorAll('#chips button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.city === key)));
   // The reset below ends a zoom, which re-tiles the street map: with no
   // projection it has nothing to tile, so the old city's tiles are not fetched.
@@ -609,8 +621,34 @@ function placeCardHtml(f, zip) {
   return `${closeButton}
     <h2 tabindex="-1">${esc(name)}</h2>
     <p class="where">${esc(f.properties.county)} County, California. Not scored: the Bay Area page shows where the routes are, not a score.</p>
-    <dl class="facts">${zip ? zipFactsHtml(zip) : ''}<div><dt>Nearest runway</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : 'none within 30 km'}</dd></div></dl>
+    <dl class="facts">${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div></dl>
     <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
+}
+// The routes on the map are SFO's, OAK's and SJC's, but the FAA holds 23 more
+// airfields round the bay, and a card that named only the three told Livermore
+// "none within 30 km" with its own airport 5.5 km away (audit 2026-10-05 I-2).
+// The list is the one the Bay Area page reads: FAA airport records, any size.
+// Airport reference points, so the distance is to the airfield, not a runway.
+const FAA_WORDS = { Muni: 'Municipal', Exec: 'Executive', Intl: 'International', Fld: 'Field', Rgnl: 'Regional' };
+// As airfield_name() in scripts/build_bay_area_page.py: the FAA record's name
+// field is 30 characters, so a name that fills it ends in a fragment.
+function airfieldName(raw) {
+  const words = raw.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase()).split(/\s+/);
+  if (raw.length >= 30) words.pop();
+  return words.map((w) => FAA_WORDS[w] || (w === 'Of' || w === 'The' ? w.toLowerCase() : w)).join(' ');
+}
+function nearestAirfield(lat, lon) {
+  const fields = state.usPlaces?.airfields;
+  if (!fields?.length) return null;
+  const pl = plane(lat, lon);
+  const best = d3.least(fields.map((a) => ({ a, v: pl.xy(...a.ref) })), (x) => Math.hypot(...x.v));
+  const dist = Math.hypot(...best.v);
+  return dist > AIRPORT_SCOPE_KM ? null : { name: airfieldName(best.a.name), ident: best.a.ident, dist, dir: compass(best.v) };
+}
+function airfieldFactHtml(lat, lon, from) {
+  const a = nearestAirfield(lat, lon);
+  const text = a ? `${a.name} (${a.ident}), ${km(a.dist)} to the ${a.dir} of ${from}` : `none within ${AIRPORT_SCOPE_KM} km`;
+  return `<div><dt>Nearest airfield</dt><dd>${esc(text)} <small>any size, FAA records</small></dd></div>`;
 }
 // A ZIP is a Census ZIP area, and its share of land in the city is what keeps
 // the city's name honest: 94301 is Palo Alto, 95014 is 44% Cupertino and
@@ -623,7 +661,8 @@ function zipShareText(zip) {
 }
 function zipFactsHtml(zip) {
   return `<div><dt>ZIP ${esc(zip.code)}</dt><dd>${esc(zip.place ? zipShareText(zip) : 'In no city.')} <small>US Census, 2020</small></dd></div>
-    <div><dt>At its centre</dt><dd>${esc(routesText(state.usProc, zip.lat, zip.lon))}</dd></div>`;
+    <div><dt>At its centre</dt><dd>${esc(routesText(state.usProc, zip.lat, zip.lon))}</dd></div>
+    ${airfieldFactHtml(zip.lat, zip.lon, 'its centre')}`;
 }
 // A ZIP area that lies in no city we hold still has a centre and a nearest runway.
 function zipCardHtml(zip) {
@@ -653,11 +692,13 @@ function routesText(proc, lat, lon) {
   const pl = plane(lat, lon);
   const near = routesNear(proc, pl, AIRPORT_SCOPE_KM);
   const ap = near.scope[0];
-  if (!ap) return `No runway within ${AIRPORT_SCOPE_KM} km.`;
+  // "On the map", not "nearest runway": the record holds the airports whose
+  // routes are drawn, and a smaller airfield can be nearer (audit 2026-10-05 I-2).
+  if (!ap) return `No airport on the map within ${AIRPORT_SCOPE_KM} km.`;
   const name = AIRPORT_NAME[ap.code] || ap.code;
   const under = near.finals.filter((x) => x.beside && x.dist <= UNDER_LINE_KM).sort((a, b) => a.dist - b.dist)[0];
   const nearestFinal = near.finals.sort((a, b) => a.dist - b.dist)[0];
-  const parts = [`Nearest runway: ${name}, ${km(ap.dist)} to the ${compass(ap.q)}.`];
+  const parts = [`Nearest airport on the map: ${name}, ${km(ap.dist)} to the ${compass(ap.q)}.`];
   if (under) {
     parts.push(`Under the ${AIRPORT_NAME[under.code] || under.code} ${under.rwy} final approach, ${under.dist < 0.05 ? 'on the centreline' : `${km(under.dist)} from the centreline`}, aircraft at about ${(Math.round(under.heightFt / 100) * 100).toLocaleString('en-GB')} ft here.`);
   } else if (nearestFinal && nearestFinal.dist <= AIRPORT_SCOPE_KM) {
@@ -688,8 +729,10 @@ async function search(raw) {
     selectBorough(row.borough, { scroll: true });
     return;
   }
+  // No Bay Area city has a digit in its name, so a postcode or ZIP never waits
+  // on the 257 KB Bay Area file (audit 2026-10-05 M-12).
   const place = state.usPlaces?.places.find((p) => p.kind !== 'cdp' && norm(p.name) === norm(text))
-    || (await bayAreaPlace(text));
+    || (/\d/.test(text) ? null : await bayAreaPlace(text));
   if (place) {
     say('');
     if (state.city !== 'bayarea') await show('bayarea');
@@ -751,20 +794,32 @@ async function searchZip(code) {
   openCard(zipCardHtml(zip));
   setQuery({ city: 'bayarea', postcode: code });
 }
+let bayAreaNames = null;
 async function bayAreaPlace(text) {
   if (state.usPlaces) return null;
-  // Only fetch the Bay Area file for a name that found no UK match.
+  // Only fetch the Bay Area file for a name that found no UK match, and once.
   try {
-    const places = await d3.json(US.bayarea.places);
+    bayAreaNames ??= d3.json(US.bayarea.places);
+    const places = await bayAreaNames;
     return places.places.find((p) => p.kind !== 'cdp' && norm(p.name) === norm(text)) || null;
-  } catch { return null; }
+  } catch {
+    bayAreaNames = null; // a failed fetch is retried on the next search
+    return null;
+  }
 }
 
-function cityOf(district) {
+// postcodes.io's district name -> the map city holding it, or null. Exported
+// so tests/preview-home.mjs can hold it to every real postcodes.io spelling.
+export function cityOf(district) {
   for (const [key, boroughs] of Object.entries(state.extra)) {
-    if (Object.keys(boroughs).some((b) => norm(b) === norm(district))) return CITY_NAME[key] ? key : null;
+    if (Object.keys(boroughs).some((b) => norm(b) === norm(district))) return isMapCity(key) ? key : null;
   }
-  return null;
+  // The open-data CSV names a council area as postcodes.io does where
+  // borough-extra.json shortens it: "Barking and Dagenham" is held there as
+  // "Barking", so every IG11 postcode was told it was off the map (audit
+  // 2026-10-05 I-1).
+  const row = rowFor(district);
+  return row && isMapCity(row.city) ? row.city : null;
 }
 
 function render(postcode, district, city, e, lat, lon) {
@@ -815,7 +870,13 @@ function render(postcode, district, city, e, lat, lon) {
     area.querySelector('#ans-open-area')?.addEventListener('click', () => selectBorough(row.borough, { scroll: true, focus: true }));
   }
   const link = byId('ans-link');
-  if (link) link.href = city ? `/?city=${city}&postcode=${encodeURIComponent(postcode)}` : '/';
+  if (link) {
+    link.href = city ? `/?city=${city}&postcode=${encodeURIComponent(postcode)}` : '/';
+    // "See the full picture on the map" for a postcode just called not on the
+    // map contradicted itself (audit 2026-10-05 M-18): no map, no link.
+    const more = link.closest('p');
+    if (more) more.hidden = !city;
+  }
   answer?.classList.add('is-open');
   panelState();
   // Two layout hooks: a panel that only exists once there is an answer (v2b),
