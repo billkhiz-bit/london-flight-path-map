@@ -318,6 +318,7 @@ await page.waitForFunction(() => document.querySelectorAll('#map .boro').length 
 await page.fill('#pc', 'M22 5RX');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10 && document.querySelector('#answer.is-open'), null, { timeout: 10000 });
+ok(/published only as charts and are not drawn here/.test(await page.locator('#ans-routes').textContent()), 'Manchester\'s undrawn departures are said, not left silent (audit M-7)', await page.locator('#ans-routes').textContent());
 ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
 
 // 12. Place names: a borough opens its card (switching city), a Bay Area city opens the Bay Area, a city name switches.
@@ -440,6 +441,28 @@ ok(cardTop >= -1 && cardTop < 844, 'on a phone the card is brought into view', `
 const inside = await page.locator('#toggle-noise, #zoom-in, #zoom-out, #zoom-reset').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= 390; }));
 ok(inside.every(Boolean), 'layer and zoom controls are inside a phone viewport');
 
+// 14a. Tablets and landscape phones stack the panel above the map (audit I-4): the
+// floating panel lay over the toggles and chips from 761px to about 1180px wide.
+// One query decides it in the CSS and the engine, held to one string here.
+{
+  const engine = await readFile(join(ROOT, 'preview', 'hp-engine.js'), 'utf8');
+  const html = await readFile(join(ROOT, 'preview', 'index.html'), 'utf8');
+  const q = engine.match(/const STACKED = '([^']+)'/)?.[1];
+  ok(Boolean(q) && html.includes(`@media ${q} {`), 'the CSS and the engine stack the panel on one query', q || 'no STACKED');
+}
+for (const vp of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }, { width: 844, height: 390 }]) {
+  await page.setViewportSize(vp);
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitMap();
+  const lay = await page.evaluate(() => {
+    const hit = (id) => { const el = document.getElementById(id); const r = el.getBoundingClientRect(); const t = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!t && (t === el || el.contains(t)); };
+    const panel = document.querySelector('.panel').getBoundingClientRect();
+    const map = document.querySelector('.mapwrap').getBoundingClientRect();
+    return { toggles: hit('toggle-lines') && hit('toggle-noise'), overlap: Math.max(0, Math.min(panel.bottom, map.bottom) - Math.max(panel.top, map.top)) > 1 && Math.max(0, Math.min(panel.right, map.right) - Math.max(panel.left, map.left)) > 1 };
+  });
+  ok(lay.toggles && !lay.overlap, `${vp.width}x${vp.height}: the panel stacks clear of the map and the layer toggles answer`, JSON.stringify(lay));
+}
+
 // 15. Every file this run fetched is one a Makefile target uploads. This gate serves the working tree, where
 // a file no target deploys looks exactly like one that is live: on 2026-10-03 four data files the engine reads
 // had no upload line (the live map carries their contents inline), and the deployed page would have opened on
@@ -489,9 +512,17 @@ for (const p of ['/pricing', '/area/']) ok((await page.request.get(`http://127.0
 ok(osTiles.length === 0, 'nothing was requested from api.os.uk in the whole run without a key', osTiles.slice(0, 2).join(' '));
 ok(await page.locator('#toggle-streets').isHidden(), 'the Streets button is hidden without a key');
 await page.setViewportSize({ width: 1366, height: 820 });
-await page.goto(`${BASE}?oskey=TESTKEY1234`, { waitUntil: 'domcontentloaded' });
+// A key in the QUERY is dropped unread: a query reaches the server and the service
+// worker's page cache, a fragment reaches neither (audit M-1).
+await page.goto(`${BASE}?oskey=PLANTED12345`, { waitUntil: 'domcontentloaded' });
 await waitMap();
-ok(!(await page.evaluate(() => location.search)).includes('oskey'), 'the key leaves the address bar');
+ok((await page.evaluate(() => localStorage.getItem('osMapsKey'))) === null && !(await page.evaluate(() => location.href)).includes('oskey'), 'a ?oskey= in the query is dropped, not stored (audit M-1)');
+// Arrive fresh, as someone opening the link does: from /preview/ itself a
+// fragment-only change is a same-page jump, and the page never re-reads it.
+await page.goto('about:blank');
+await page.goto(`${BASE}#oskey=TESTKEY1234`, { waitUntil: 'domcontentloaded' });
+await waitMap();
+ok(!(await page.evaluate(() => location.href)).includes('oskey'), 'the key leaves the address bar');
 await page.fill('#pc', 'TW9 3PZ');
 await page.press('#pc', 'Enter');
 await page.waitForSelector('#map .pin', { timeout: 10000 });
@@ -520,9 +551,10 @@ await page.locator('#chips button[data-city="bayarea"]').click();
 await page.waitForFunction(() => document.querySelector('#chips button[data-city="bayarea"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length > 20, null, { timeout: 15000 });
 await page.waitForTimeout(300);
 ok((await page.locator('#toggle-streets').isDisabled()) && (await page.locator('#map .streets image').count()) === 0 && osTiles.length === beforeBay, 'the Bay Area asks Ordnance Survey for nothing: it maps Great Britain only', `${osTiles.length - beforeBay} requests`);
-await page.goto(`${BASE}?oskey=off`, { waitUntil: 'domcontentloaded' });
+await page.goto('about:blank');
+await page.goto(`${BASE}#oskey=off`, { waitUntil: 'domcontentloaded' });
 await waitMap();
-ok((await page.locator('#toggle-streets').isHidden()) && (await page.locator('#map .streets image').count()) === 0, '?oskey=off forgets the key');
+ok((await page.locator('#toggle-streets').isHidden()) && (await page.locator('#map .streets image').count()) === 0, '#oskey=off forgets the key');
 
 ok(errors.length === 0, 'no page errors', errors.join(' | '));
 await browser.close();

@@ -623,7 +623,7 @@ Most of what matters now is not code. Owner in brackets.
 
 Parked on purpose: phase 2 departures (until the CAA data - the v5.4 fit showed DEFRA cannot reward them); Norwich on the map (watch scorecard traffic first); I17 (**28 Sep: IAM paste DONE - probe 23 granted, 0 denied; SES identity VERIFIED, DKIM SUCCESS; I17 code landed on master with the flag off.** **29 Sep: TTL deployed on master (live table reads ENABLED); PR #15 rebased, reworded to "press Confirm", and GREEN.** Left: SPF merge + DMARC in Cloudflare and the SES sandbox-exit request, both Bill's; then merge PR #15, which IS the flip - OPERATIONS s3.9); the Android rebuild (after the rename, so it goes through review once). Optional: `CITIES=norwich sh scripts/load_road_rasters.sh` for the per-postcode road tier on `/v1/environment`.
 
-**Added 2026-10-03, all Bill's and all short:** (a) a free OS Data Hub key on the OpenData plan, then open `/preview/?oskey=<key>` once on each device to judge the street-map trial; (b) before the first PAID report, indemnity insurance and NATS AIS's written confirmation on reusing AIP-derived routes (`LICENSING.md`); (c) a free Census API key, after the Bay Area map release; (d) try `/preview/` on a phone and rule on when it replaces `/`.
+**Added 2026-10-03, all Bill's and all short:** (a) a free OS Data Hub key on the OpenData plan, then open `/preview/#oskey=<key>` once on each device (the FRAGMENT since 2026-10-05, audit M-1: a `?oskey=` is now ignored) to judge the street-map trial; (b) before the first PAID report, indemnity insurance and NATS AIS's written confirmation on reusing AIP-derived routes (`LICENSING.md`); (c) a free Census API key, after the Bay Area map release; (d) try `/preview/` on a phone and rule on when it replaces `/`.
 
 ### Audit 2026-10-05: what it left open
 
@@ -636,7 +636,7 @@ Strike a row here in the commit that closes it.
 | ~~I-1~~ | ~~`/preview/` tells Barking and Dagenham postcodes they are outside the map: derive the city from the open-data row, and run the 86-spelling fixture against the preview~~ **Fixed 2026-10-05** | Done |
 | ~~I-2~~ | ~~`/preview/` "Nearest runway" reads three airports only: say "nearest of SFO, OAK and SJC" or read the page's own airfield list; the test asserts the old wording~~ **Fixed 2026-10-05** | Done |
 | I-3 | Privacy notice has no section on email, and the register says Cloudflare sees no payload while it routes the mail | Claude drafts, **Bill approves the wording** (legal page) |
-| I-4 | `/preview/` layout collides from 761px to about 1180px wide (panel over the toggles, chips and map) | Claude, medium; Bill looks at the result |
+| ~~I-4~~ | ~~`/preview/` layout collides from 761px to about 1180px wide~~ **Fixed 2026-10-05**: stacked below 1280px and on short screens, one query for CSS and engine | Done; worth a look on a tablet |
 | I-5 | `/preview/` search box is tab stop 56, no skip link. **Part-fixed 2026-10-05** (skip link); phone DOM order left | Claude, small |
 | I-6 | `/preview/` placeholder is the only visible label, at 3.50:1, cut off under 390px. **Part-fixed 2026-10-05** (contrast); truncation under 390px left | Claude, small |
 | I-7 | Focus rings at 2.1-2.7:1 on the new pages and on the main map (1.4.11 asks 3:1) | Claude, small; the ring colour is a brand call |

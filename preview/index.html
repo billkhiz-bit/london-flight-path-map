@@ -163,7 +163,13 @@
       footer a { color: var(--mid); }
       .mock { position: fixed; pointer-events: none; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
 
-      @media (max-width: 760px) {
+      /* STACKED below 1280px and on short screens (audit 2026-10-05 I-4): from 761px
+         to about 1180px the floating 520px panel lay over the layer toggles, the city
+         chips and most of the map, and a landscape phone gave it a 520px panel in a
+         390px screen. The engine reads this same query (STACKED in hp-engine.js) to
+         decide whether the panel covers the map; tests/preview-home.mjs holds the two
+         to one string. */
+      @media (max-width: 1279px), (max-height: 500px) {
         .hero { margin: 0 12px; height: auto; min-height: 0; display: flex; flex-direction: column; border-radius: 14px; }
         /* On a phone the question, the search and the answer come first and the map follows: measured, the answer otherwise opened a whole screen below the box. */
         .panel { position: static; order: -1; width: auto; border-radius: 0; box-shadow: none; backdrop-filter: none; background: var(--paper); padding: 20px 18px 16px; }

@@ -9013,6 +9013,12 @@
       // that check asserts a field is DEFINED, not that it has substance, which
       // is a real limit worth knowing when reading it.
       let projection, pathGenerator, svg, g, zoom;
+      // Resolved once init() has built the projection and the map's group. A
+      // search fired in the first instant after the page opened (a ZIP typed
+      // before the map drew) reached switchCity() with no projection and threw
+      // "reading 'center'"; it waits for the map instead (2026-10-05).
+      let markMapBuilt;
+      const mapBuilt = new Promise((resolve) => (markMapBuilt = resolve));
 
       // THE MAP'S SCALE IS FITTED TO THE BOX IT IS DRAWN IN (2026-08-24).
       //
@@ -13704,6 +13710,7 @@
 
       async function switchCity(city) {
         if (city === currentCity) return;
+        if (!projection || !g) await mapBuilt;
         // The `city === currentCity` guard only stops a repeat click on the
         // SAME city, and currentCity is mutated before the NYC GeoJSON await
         // below - so London→NYC→London during that fetch used to let the
@@ -14885,6 +14892,7 @@
         svg.call(zoom);
 
         g = svg.append('g');
+        markMapBuilt();
 
         // Defs
         const defs = svg.append('defs');

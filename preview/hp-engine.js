@@ -41,9 +41,15 @@ const LONDON_PNG = { png: '/data/aircraft-noise-london-lden.png', bbox: { minLon
 const ENV = `${window.API_BASE || 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'}/v1/environment`;
 const CSV = '/open-data/sky-score-boroughs.csv';
 const FT_KM = 0.0003048;
+// When the panel stacks above the map rather than floating over it: the SAME
+// query as the @media rule in preview/index.html (audit 2026-10-05 I-4). The
+// engine used to decide on the map's own width (> 760px) while the CSS tested
+// the viewport, so 761-826px got the floating CSS with a full-width map beneath.
+const STACKED = '(max-width: 1279px), (max-height: 500px)';
 // How far out an airport counts as "near" a searched postcode, and how close to
 // an approach line a street must be to be called "under" it. The street report
-// (scripts/address_noise_report.mjs) uses the same two cut-offs.
+// (scripts/address_noise_report.mjs) uses its own, wider ones (40 km and 5 km):
+// it is read for one address, this is glanced at for a postcode.
 const AIRPORT_SCOPE_KM = 30;
 const UNDER_LINE_KM = 1.0;
 const ZOOM_MAX = 6;
@@ -52,8 +58,11 @@ const ZOOM_STEP = 1.6;
 // ---- trial (2026-10-03): an Ordnance Survey street background ----
 // The OS Maps API's OpenData layers cost nothing at any zoom this map reaches
 // (ROADMAP "OS open maps API"), but need a Data Hub key. No key is in the
-// source: opening /preview/?oskey=<key> once stores it on that device and
-// takes it out of the address bar; ?oskey=off forgets it. Without a key the
+// source: opening /preview/#oskey=<key> once stores it on that device and
+// takes it out of the address bar; #oskey=off forgets it. The FRAGMENT, not the
+// query (audit 2026-10-05 M-1): a query string reaches the server and the service
+// worker's page cache, which kept the key after #oskey=off; a fragment reaches
+// neither. A ?oskey= in the query is dropped unread. Without a key the
 // Streets button stays hidden and nothing is asked of api.os.uk.
 const OS_LAYER = 'Light_3857'; // the muted style, so the noise picture reads over it; Road_3857 and Outdoor_3857 also exist
 const OS_ZOOM = [7, 16]; // the OpenData band; Premium starts at 17
@@ -154,11 +163,14 @@ function renderChips() {
 // ?oskey= is read once and removed, so a key is never left in a link that gets
 // shared or bookmarked. Anything that is not a plain token is ignored.
 function readOsKey() {
+  const given = new URLSearchParams(location.hash.slice(1)).get('oskey');
   const q = new URLSearchParams(location.search);
-  const given = q.get('oskey');
+  const inQuery = q.has('oskey');
   if (given != null) {
     if (given === 'off') osKey.set('');
     else if (/^[A-Za-z0-9]{8,64}$/.test(given)) osKey.set(given);
+  }
+  if (given != null || inQuery) {
     q.delete('oskey');
     const s = q.toString();
     history.replaceState(null, '', s ? `?${s}` : location.pathname);
@@ -249,7 +261,7 @@ function draw(pin) {
   svg.attr('viewBox', `0 0 ${W} ${H}`).selectAll('*').remove();
   // Each layout says how much of the map a floating panel covers, in pixels at desktop width.
   const inset = document.body.dataset.mapInset ? JSON.parse(document.body.dataset.mapInset) : { left: 0, top: 0, right: 0, bottom: 0 };
-  const wide = W > 760;
+  const wide = !window.matchMedia(STACKED).matches;
   const planar = state.boroughs.features.some((f) => f.properties.planar);
   const projection = d3.geoMercator().fitExtent(
     [[(wide ? inset.left : 0) + 24, (wide ? inset.top : 0) + 24], [W - (wide ? inset.right : 0) - 24, H - (wide ? inset.bottom : 0) - 64]],
@@ -569,7 +581,7 @@ function selectBorough(name, opts = {}) {
   state.opener = document.activeElement !== document.body ? document.activeElement : null;
   openCard(f?.properties.planar ? placeCardHtml(f, opts.zip) : boroughCardHtml(row || { borough: name, city: state.city }, f));
   setQuery(opts.zip ? { city: state.city, postcode: opts.zip.code } : { city: row ? row.city : state.city, borough: state.selected });
-  if (opts.scroll && window.matchMedia('(max-width: 760px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (opts.scroll && window.matchMedia(STACKED).matches) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (opts.focus) card.querySelector('h2')?.focus();
   return true;
 }
@@ -724,7 +736,14 @@ function routesText(proc, lat, lon) {
   } else if (nearestFinal && nearestFinal.dist <= AIRPORT_SCOPE_KM) {
     parts.push(`Nearest published approach: ${AIRPORT_NAME[nearestFinal.code] || nearestFinal.code} ${nearestFinal.rwy}, ${km(nearestFinal.dist)} to the ${compass(nearestFinal.q)}.`);
   }
-  if (ap.method === 'none') parts.push('Departure routes: none published for this airport.');
+  // Say which routes the data lacks, as the street report does, so an
+  // undrawn route never reads as one that is not there (audit 2026-10-05 M-7).
+  const gap = {
+    none: 'Departure routes: none published for this airport.',
+    conventional: `Departure routes: ${name}'s are published only as charts and are not drawn here.`,
+    'not-drawn': `Routes: ${name}'s are not drawn here.`,
+  }[ap.method];
+  if (gap) parts.push(gap);
   return parts.join(' ');
 }
 

@@ -259,10 +259,33 @@ for (const vp of [
   ok(errors.length === 0, `${L} no page errors`, errors.join(' | '));
   await ctx.close();
 }
+// 10. A search fired the instant the page's script runs, before the map is built:
+// it reached switchCity() with no projection and threw "reading 'center'" (seen
+// live, 2026-10-05). It must wait for the map and land.
+{
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => route.abort());
+  // init() awaits London's outlines before it builds the projection; held back,
+  // the window a slow connection opens is reproduced on a fast one.
+  await page.route('**/data/london-boroughs.json', async (route) => {
+    await new Promise((r) => setTimeout(r, 2000));
+    await route.continue();
+  });
+  await page.goto(BASE, { waitUntil: 'commit' });
+  await page.waitForFunction(() => typeof triggerSearch === 'function', null, { timeout: 20000, polling: 5 });
+  await page.evaluate(() => { triggerSearch('94066').catch((e) => { window.__early = String(e); }); });
+  await page.waitForFunction(() => /ZIP 94066/i.test(document.getElementById('sidebar-title')?.textContent || '') || window.__early, null, { timeout: 25000 }).catch(() => {});
+  const early = await page.evaluate(() => ({ title: document.getElementById('sidebar-title').textContent.trim(), err: window.__early || '' }));
+  ok(/ZIP 94066/i.test(early.title) && !early.err && errors.length === 0, 'a ZIP searched before the map is built waits for it and lands', `${early.title} / ${early.err} / ${errors.join(' | ')}`);
+  await page.close();
+}
+
 await browser.close();
 server.close();
 
-const EXPECTED = 2 * 21;
+const EXPECTED = 2 * 21 + 1;
 if (checks < EXPECTED) {
   console.error(`\nFAIL: ran ${checks} checks, expected ${EXPECTED}.`);
   process.exit(1);
