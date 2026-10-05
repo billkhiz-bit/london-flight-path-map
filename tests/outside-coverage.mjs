@@ -155,54 +155,119 @@ async function search(vp, query) {
   await page
     .waitForFunction(() => !/SEARCHING/.test(document.getElementById('sidebar-title').textContent), { timeout: 20000 })
     .catch(() => {});
-  const state = await page.evaluate(() => ({
-    title: document.getElementById('sidebar-title').textContent.trim(),
-    text: document.getElementById('sidebar-content').innerText.replace(/\s+/g, ' '),
-    city: document.querySelector('.city-selector .city-btn.active')?.textContent?.trim() ?? '',
-    link: document.querySelector('#sidebar-content .empty-state a')?.getAttribute('href') ?? null,
-  }));
+  const state = await page.evaluate(() => {
+    const content = document.getElementById('sidebar-content');
+    const titleEl = document.getElementById('sidebar-title');
+    // SHOWN means a sighted visitor can see it and a finger can reach it: the
+    // element has a box inside the viewport and is what is under its own
+    // centre. Until 2026-10-05 this gate read `innerText` alone, and for an
+    // element that is not rendered `innerText` returns the text anyway - so
+    // "phone Exeter says not covered" passed for nine days on a panel that
+    // was `display: none` at every width up to 900px.
+    // The FIRST line box, not the bounding box: a link that wraps onto a
+    // second line has a bounding box whose centre is on neither line.
+    const shown = (el) => {
+      if (!el) return false;
+      const r = el.getClientRects()[0];
+      if (!r || !r.width || !r.height) return false;
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return false;
+      const top = document.elementFromPoint(x, y);
+      return !!top && (top === el || el.contains(top));
+    };
+    const link = content.querySelector('.empty-state a');
+    const box = content.getBoundingClientRect();
+    return {
+      title: titleEl.textContent.trim(),
+      // Text only from a panel that is rendered; text nobody can see is not said.
+      text: box.width && box.height ? content.innerText.replace(/\s+/g, ' ') : '',
+      domText: content.textContent.replace(/\s+/g, ' ').trim(),
+      // An outcome message is short and opens the panel, so its first
+      // paragraph must be on screen. (A full analysis is long and its first
+      // paragraph may sit below a landscape card's fold: not asked of it.)
+      messageShown: shown(content.querySelector('.empty-state p')),
+      titleShown: shown(titleEl),
+      city: document.querySelector('.city-selector .city-btn.active')?.textContent?.trim() ?? '',
+      link: link?.getAttribute('href') ?? null,
+      linkShown: shown(link),
+      retryShown: shown(document.getElementById('search-retry-btn')),
+    };
+  });
   await ctx.close();
   return state;
 }
 
-for (const vp of [
+// What a failed read looks like in the report: the DOM held the words and the
+// screen did not.
+const seen = (r) => (r.text && r.messageShown ? `text "${r.text.slice(0, 120)}"` : `NOTHING SHOWN (the DOM holds "${r.domText.slice(0, 80)}")`);
+
+// Landscape is here because three mobile rules in this file's history were
+// keyed on width while height was the failing dimension.
+const VIEWPORTS = [
   { width: 1440, height: 900, label: 'desktop' },
   { width: 390, height: 844, label: 'phone' },
-]) {
+  { width: 844, height: 390, label: 'landscape' },
+];
+const PER_VIEWPORT = 5;
+
+for (const vp of VIEWPORTS) {
   const x = await search(vp, 'EX1 1HS');
   checks++;
   const xOk =
     x.title === 'NOT COVERED YET' &&
+    x.titleShown &&
+    x.messageShown &&
     /Exeter/.test(x.text) &&
     !/nearest airport/i.test(x.text) &&
     /Greater Manchester/.test(x.text) &&
     x.link === null;
-  if (!xOk) failures.push(`${vp.label} EX1 1HS: title "${x.title}", link ${x.link}, text "${x.text.slice(0, 160)}"`);
-  console.log(`  ${xOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(8)} Exeter says not covered, links nothing, claims no airport`);
+  if (!xOk) failures.push(`${vp.label} EX1 1HS: title "${x.title}" (shown ${x.titleShown}), link ${x.link}, ${seen(x)}`);
+  console.log(`  ${xOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(9)} Exeter is SHOWN as not covered, links nothing, claims no airport`);
 
   const n = await search(vp, 'NR2 1NE');
   checks++;
   const nOk =
     n.title === 'NOT ON THE MAP YET' &&
+    n.titleShown &&
+    n.messageShown &&
     /Norwich/.test(n.text) &&
     !/nearest airport/i.test(n.text) &&
-    n.link === '/area/norwich/norwich/';
-  if (!nOk) failures.push(`${vp.label} NR2 1NE: title "${n.title}", link ${n.link}, text "${n.text.slice(0, 160)}"`);
-  console.log(`  ${nOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(8)} Norwich links its scorecard, claims no airport`);
+    n.link === '/area/norwich/norwich/' &&
+    n.linkShown;
+  if (!nOk) failures.push(`${vp.label} NR2 1NE: title "${n.title}", link ${n.link} (shown ${n.linkShown}), ${seen(n)}`);
+  console.log(`  ${nOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(9)} Norwich's scorecard link is SHOWN, with no airport claim`);
 
   const s = await search(vp, sthelens.postcode);
   checks++;
   const sOk = s.title !== 'NOT COVERED YET' && s.city === 'Merseyside' && /nearest airport/i.test(s.text);
   if (!sOk) failures.push(`${vp.label} ${sthelens.postcode}: title "${s.title}", city "${s.city}"`);
-  console.log(`  ${sOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(8)} "St. Helens" lands on Merseyside with an analysis`);
+  console.log(`  ${sOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(9)} "St. Helens" lands on Merseyside with an analysis`);
+
+  // The two outcomes that are not about coverage live behind the same panel
+  // and were hidden by the same rule: a name nothing matches, and a lookup
+  // that could not be reached (postcodes.io is aborted for any postcode this
+  // file does not stub, which is exactly that).
+  const nf = await search(vp, 'qwertyplace');
+  checks++;
+  const nfOk = nf.title === 'NOT FOUND' && nf.titleShown && nf.messageShown && /not found/i.test(nf.text);
+  if (!nfOk) failures.push(`${vp.label} qwertyplace: title "${nf.title}" (shown ${nf.titleShown}), ${seen(nf)}`);
+  console.log(`  ${nfOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(9)} a name nothing matches is SHOWN as not found`);
+
+  const cf = await search(vp, 'ZZ1 1ZZ');
+  checks++;
+  const cfOk = cf.title === 'CONNECTION ISSUE' && cf.titleShown && cf.messageShown && /connection problem/i.test(cf.text) && cf.retryShown;
+  if (!cfOk) failures.push(`${vp.label} ZZ1 1ZZ (lookup unreachable): title "${cf.title}", retry shown ${cf.retryShown}, ${seen(cf)}`);
+  console.log(`  ${cfOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(9)} an unreachable lookup is SHOWN, with its retry button`);
 }
 
 await browser.close();
 server.close();
 
-// districts + table size + at least 3 page fetches + lookups + 3 per viewport x 2.
-if (checks < fixture.districts.length + 11) {
-  console.error(`\nFAIL: ran ${checks} checks, expected at least ${fixture.districts.length + 11}.`);
+// districts + table size + at least 3 page fetches + lookups + PER_VIEWPORT per viewport.
+const expected = fixture.districts.length + 5 + PER_VIEWPORT * VIEWPORTS.length;
+if (checks < expected) {
+  console.error(`\nFAIL: ran ${checks} checks, expected at least ${expected}.`);
   process.exit(1);
 }
 if (failures.length) {

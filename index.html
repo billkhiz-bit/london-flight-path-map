@@ -3401,10 +3401,19 @@
         .app[data-mview='search'] > .sidebar > .sheet-footer {
           pointer-events: none;
         }
+        /* `.no-result-yet`, NOT `.empty-state` (2026-10-05, audit C-1). These
+           rules hid `.empty-state`, which says how a panel LOOKS and came to
+           wrap every search outcome too: not covered, not on the map, not
+           found, connection issue. So at every width up to 900px a search
+           that did not succeed showed the visitor nothing at all, while the
+           live region announced it. `.no-result-yet` is carried by the two
+           placeholders only (the boot markup and switchCity()'s reset), so a
+           message that forgets a class is SHOWN, where before it was hidden.
+           tests/outside-coverage.mjs asserts each outcome is on screen. */
         .app[data-mview='search'] .sidebar-header,
         .app[data-mview='search'] .install-prompt,
         .app[data-mview='search'] .disclaimer,
-        .app[data-mview='search'] .empty-state,
+        .app[data-mview='search'] .empty-state.no-result-yet,
         /* The first-time hint ("type a postcode or click a borough") is
            redundant on mobile search view - the floating search card
            shows the same guidance, and the hint banner overlaps it. */
@@ -3443,12 +3452,15 @@
         .app[data-mview='search'] > .sidebar > .search-box {
           order: -2;
         }
-        /* Revealed ONLY when a result exists. `.empty-state` inside
-           `#tab-analysis` is this file's own existing marker for "no result"
-           (already used by the `.result-close` rules below), so the condition
+        /* Revealed whenever the panel has something to say: a result, or a
+           search outcome (not covered, not found, connection issue), whose
+           title is the first thing that names what happened. `.no-result-yet`
+           inside `#tab-analysis` is the marker for "nothing searched yet"
+           (also used by the `.result-close` rules below), so the condition
            cannot drift from what the panel actually renders. `#sidebar-title`
-           stays the single holder, written only by `setPanelSubject()`. */
-        .app[data-mview='search'] > .sidebar:not(:has(#tab-analysis .empty-state)) > .sidebar-header {
+           stays the single holder, written only by `setPanelSubject()` and
+           the outcome renderers. */
+        .app[data-mview='search'] > .sidebar:not(:has(#tab-analysis .no-result-yet)) > .sidebar-header {
           display: block;
           order: -1;
           margin: 8px 8px 0;
@@ -3460,7 +3472,7 @@
         }
         /* ...and the card joins onto it, so the two read as one object rather
            than a floating label above a floating card. */
-        .app[data-mview='search'] > .sidebar:not(:has(#tab-analysis .empty-state)) > #tab-analysis {
+        .app[data-mview='search'] > .sidebar:not(:has(#tab-analysis .no-result-yet)) > #tab-analysis {
           margin-top: 0;
           border-top: none;
           border-radius: 0 0 12px 12px;
@@ -3594,17 +3606,37 @@
           outline-offset: -2px;
           border-radius: 4px;
         }
-        /* Hide the close button when the empty-state is showing
-           (nothing to close). */
-        .app[data-mview='search'] #tab-analysis:has(.empty-state) .result-close {
+        /* Hide the close button when the placeholder is showing
+           (nothing to close). An outcome message keeps it: closing is how
+           the visitor gets the clean map back. */
+        .app[data-mview='search'] #tab-analysis:has(.no-result-yet) .result-close {
           display: none;
         }
-        /* If the analysis tab still only holds the empty-state (no result),
-           hide its entire wrapper so the map is fully visible. !important
-           is needed because switchTab() sets inline style.display='block'
-           on the active tab, which beats this selector by specificity. */
-        .app[data-mview='search'] #tab-analysis:has(.empty-state) {
+        /* If the analysis tab still only holds the placeholder (nothing
+           searched yet), hide its entire wrapper so the map is fully visible.
+           !important is needed because switchTab() sets inline
+           style.display='block' on the active tab, which beats this selector
+           by specificity. */
+        .app[data-mview='search'] #tab-analysis:has(.no-result-yet) {
           display: none !important;
+        }
+        /* A search OUTCOME is three sentences, not an analysis. The result
+           card's `min-height` floor exists to give a long analysis the whole
+           sidebar; left on, it would lay a full-height cream card over the
+           map to say "not covered yet". So the floor becomes a CAP: the card
+           takes its content's height, the map stays in view beneath it, and
+           on a short screen it stops where a result card would and scrolls
+           inside. `flex-shrink: 0` is load-bearing: with `min-height: 0`
+           alone the footer below took its share first and squeezed the card
+           to a 52px sliver at 844x390, the close button clipped out of it
+           (measured before this rule was settled). */
+        .app[data-mview='search'] #tab-analysis:has(.empty-state:not(.no-result-yet)) {
+          min-height: 0;
+          max-height: calc(100% - 201px);
+          flex-shrink: 0;
+        }
+        .app[data-mview='search'] #tab-analysis .empty-state:not(.no-result-yet) {
+          padding: 4px 8px 8px;
         }
 
         /* === RANKING / SAVED views: opaque sidebar, map hidden === */
@@ -4451,7 +4483,7 @@
             &times;
           </button>
           <div id="sidebar-content">
-            <div class="empty-state">
+            <div class="empty-state no-result-yet">
               <div class="icon">&#9678;</div>
               <p>
                 Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to
@@ -13567,7 +13599,7 @@
         // it here would throw away the newer, correct result.
         if (searchSeq === searchAtStart) {
           document.getElementById('sidebar-content').innerHTML =
-            `<div class="empty-state"><div class="icon">&#9678;</div>
+            `<div class="empty-state no-result-yet"><div class="icon">&#9678;</div>
     <p>${escapeHtml(cityOf(city).emptyStateHint)}</p></div>`;
           setPanelSubject(null);
         }
@@ -14850,7 +14882,7 @@
         });
 
         // Close-result button: restores the empty-state so the user
-        // returns to a clean map. The :has(.empty-state) CSS rule then
+        // returns to a clean map. The :has(.no-result-yet) CSS rule then
         // re-hides the analysis-card wrapper automatically.
         const closeBtn = document.getElementById('result-close');
         if (closeBtn && sidebarContent && emptyStateNode) {

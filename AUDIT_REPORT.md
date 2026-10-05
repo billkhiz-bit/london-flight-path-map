@@ -1,6 +1,12 @@
 # Audit Report — Sky Score
 
-> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-09-25.md`
+> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-05.md`
+>
+> **2026-10-05:** 1 Critical (on a phone the main map showed nothing for a
+> search that did not succeed), 8 Important (five on the `/preview/` trial
+> page, one a decision), 20 Minor. Statuses live in that file.
+>
+> ### Previously: `AUDIT_REPORT_2026-09-25.md`
 >
 > **2026-09-25:** 0 Critical, 5 Important (4 fixed, I-5 open and latent behind
 > `SignupVerify=off`), 14 Minor (9 fixed). The paragraph below is the history
