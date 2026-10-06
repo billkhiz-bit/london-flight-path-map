@@ -1182,6 +1182,21 @@ dissolves when you compute the real one.*
 >   copy for personal use, not for use with clients". The PDF is the paid product for
 >   firms (`scripts/address_noise_report.mjs`, which never gets those additions, so it
 >   stays byte-identical to the module).
+> - **EVERY PRICE LIVES ON `/pricing`** (Bill, 2026-10-06: "one pricing page, in the top bar").
+>   The report tiers moved there as `#reports`; `/reports/` states no figure (the gate fails on
+>   any `£` digit there) and every old `/reports/#prices` link points at `/pricing#reports`. A price
+>   shown twice (the pilot on both ladders, the API tiers on `/api/`) carries one `data-price` key.
+> - **The free copy is protected, never by the shared module** (Bill: "people can screenshot and
+>   maybe edit it"): `js/street_report_page.mjs` adds a watermark, a REFERENCE (8 chars of a SHA-256
+>   over the postcode, the day it was made, the AIRAC cycle and the seven figures the copy states), a
+>   check link + QR code, and the terms line. The check stores NOTHING: `?postcode=&made=&ref=`
+>   re-makes the report from today's data and recomputes with the copy's date; a mismatch says the
+>   figures moved OR the copy was changed, because it cannot tell which. The QR is vendored
+>   qrcode-generator 2.0.4 (MIT) and `tests/front-page.mjs` DECODES it with OpenCV. The frame REFITS
+>   as its body resizes: measured once, it was cut off when the web fonts arrived.
+> - **The top bar marks the current page with an UNDERLINE, never a fill**, and Full map is an
+>   OUTLINED button: an orange block beside a grey box read as two selected tabs. The underline is
+>   `#d35a12` (3.61:1); the brand orange is 2.44:1, under WCAG 1.4.11's 3:1 for a state cue.
 > - **"Cubitt33" stays on `privacy.html` and `terms.html` ONLY.** Bill asked for it off the
 >   site for now; the legal pages must still name the company (trading disclosures, and
 >   the controller in the privacy notice). Footers say "All figures from official public

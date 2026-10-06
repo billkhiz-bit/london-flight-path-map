@@ -24,7 +24,8 @@
 import { chromium } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { extname, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -676,30 +677,31 @@ ok(pdfs.length >= 2 && pdfs.every((p) => fetched.has(p) && p.startsWith('/report
   ok(!/noindex/.test(front) && front.includes('<link rel="canonical" href="https://skyscore.co.uk/" />') && !/class="mock"/.test(front), 'the front page is indexable, names / as its address and carries no preview badge');
 }
 
-// 16. What a report costs lives on the reports page alone, and both pages reach pricing and the council areas.
+// 16. EVERY PRICE LIVES ON /pricing (Bill, 2026-10-06: "one pricing page, in the top bar"). The reports
+// page states no figure and links there; the front page links there and repeats nothing.
 const reportsText = await page.locator('main').textContent();
-// Read off the tier cards (2026-10-06), each card's own heading and price, so a price
-// moved under the wrong heading fails rather than still matching somewhere on the page.
-const tiers = await page.locator('#prices + .tiers .tier').evaluateAll((cards) =>
-  cards.map((c) => [c.querySelector('h3')?.textContent.trim(), c.querySelector('.price')?.textContent.replace(/\s+/g, ' ').trim()])
-);
-const tierOf = Object.fromEntries(tiers);
-// The SET of headings, not a count (a count in an assertion is scheduled staleness): the
-// councils card joined on 2026-10-06, and its price is a mirror checked against /pricing below.
-const tierNames = tiers.map(([h]) => h).sort().join('|');
 ok(
-  tierNames === ['Councils', 'Firms', "Residents' groups", 'Your own home'].join('|') &&
-    tierOf['Your own home'] === 'Free' &&
-    tierOf["Residents' groups"] === 'Free' &&
-    tierOf.Firms === '£35 a report' &&
-    /^From £[\d,]+ an area study$/.test(tierOf.Councils || '') &&
+  !/£\s?\d/.test(reportsText) &&
+    (await page.locator('main a[href="/pricing#reports"]').count()) > 0 &&
     /not a conveyancing search/.test(reportsText) &&
     !/\+ ?VAT/.test(reportsText),
-  "the reports page prices a report for your own home, residents' groups, firms (£35) and councils, no VAT added, not a conveyancing search",
-  JSON.stringify(tiers)
+  'the reports page states no price, links to the pricing page, and says a report is not a conveyancing search',
+  reportsText.match(/£\s?\d\S*/)?.[0] || ''
 );
-// A price shown in more than one place carries one data-price key wherever it appears.
-// Read without its <small> qualifier, which may differ by page ("one-off", "an area study").
+const footReports = await page.locator('footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+await waitMap();
+const frontText = await page.locator('body').textContent();
+const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+ok(!/£35/.test(frontText) && frontLinks.includes('/pricing#reports'), 'the front page links to the report prices and does not repeat them');
+ok(frontLinks.includes('/reports/street/'), 'the front page links to the free street report');
+ok(['/pricing', '/area/', '/map/'].every((h) => frontLinks.includes(h) && footReports.includes(h)), 'pricing, the council areas and the full map are linked from both pages', `${frontLinks.join(' ')} | ${footReports.join(' ')}`);
+// Their LIVE addresses: this server routes as the site does, so /pricing is pricing.html.
+for (const p of ['/pricing', '/area/', '/map/']) ok((await page.request.get(`http://127.0.0.1:${PORT}${p}`)).status() === 200, `${p} is a page that exists`);
+
+// 16b. /pricing: a ladder per buyer, and a price shown in two places reads one way. /api/ carries its own
+// copy of the API ladder; each mirrored price carries one data-price key wherever it appears, read
+// without its <small> qualifier, which may differ by page.
 const pricesOn = () =>
   page.locator('[data-price]').evaluateAll((els) =>
     els.map((e) => {
@@ -708,29 +710,13 @@ const pricesOn = () =>
       return [e.dataset.price, c.textContent.replace(/\s+/g, ' ').trim()];
     })
   );
-const reportsPrices = await pricesOn();
-const homeTier = await page.locator('#prices + .tiers .tier').first().locator('a').getAttribute('href');
-ok(homeTier === '/reports/street/', 'the free tier for your own home leads straight to making the report', homeTier);
-const footReports = await page.locator('footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
-await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-await waitMap();
-const frontText = await page.locator('body').textContent();
-const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
-ok(!/£35/.test(frontText) && frontLinks.includes('/reports/#prices'), 'the front page links to the price and does not repeat it');
-ok(frontLinks.includes('/reports/street/'), 'the front page links to the free street report');
-ok(['/pricing', '/area/', '/map/'].every((h) => frontLinks.includes(h) && footReports.includes(h)), 'pricing, the council areas and the full map are linked from both pages', `${frontLinks.join(' ')} | ${footReports.join(' ')}`);
-// Their LIVE addresses: this server routes as the site does, so /pricing is pricing.html.
-for (const p of ['/pricing', '/area/', '/map/']) ok((await page.request.get(`http://127.0.0.1:${PORT}${p}`)).status() === 200, `${p} is a page that exists`);
-
-// 16b. The pricing page (2026-10-06): one ladder per buyer, and every mirrored price reading one way
-// across /pricing, /reports/ and /api/ (which carries its own copy of the API ladder).
 await page.goto(`http://127.0.0.1:${PORT}/api/`, { waitUntil: 'domcontentloaded' });
 const apiPrices = await pricesOn();
 await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentloaded' });
 const pricingPrices = await pricesOn();
 const priceText = {};
 const clashes = [];
-for (const [key, text] of [...pricingPrices, ...reportsPrices, ...apiPrices]) {
+for (const [key, text] of [...pricingPrices, ...apiPrices]) {
   if (key in priceText && priceText[key] !== text) clashes.push(`${key}: "${priceText[key]}" vs "${text}"`);
   priceText[key] ??= text;
 }
@@ -741,27 +727,77 @@ ok(
   clashes.length === 0 &&
     pricingKeys.filter((k) => k === 'pilot').length === 2 &&
     ['council-area-study', 'council-licence', ...apiLadder].every((k) => pricingKeys.includes(k)) &&
-    apiLadder.every((k) => apiKeys.includes(k)) &&
-    reportsPrices.some(([k]) => k === 'council-area-study'),
-  'every price on /pricing, /reports/ and /api/ that shares a key reads the same (the pilot, the API tiers, the council area study)',
+    apiLadder.every((k) => apiKeys.includes(k)),
+  'every price on /pricing and /api/ that shares a key reads the same (the pilot on both ladders, the API tiers on both pages)',
   clashes.join('; ') || JSON.stringify({ pricingPrices, apiPrices })
 );
+// The report tiers, read card by card so a price moved under the wrong heading fails. The SET of
+// headings, never a count: a count in an assertion is scheduled staleness.
+const tiers = await page.locator('#reports .tier').evaluateAll((cards) =>
+  cards.map((c) => [c.querySelector('h3')?.textContent.trim(), c.querySelector('.price')?.textContent.replace(/\s+/g, ' ').trim()])
+);
+const tierOf = Object.fromEntries(tiers);
+ok(
+  tiers.map(([h]) => h).sort().join('|') === ['Firms', "Residents' groups", 'Your own home'].join('|') &&
+    tierOf['Your own home'] === 'Free' &&
+    tierOf["Residents' groups"] === 'Free' &&
+    tierOf.Firms === '£35 a report',
+  "the pricing page prices a report: free for your own home and for residents' groups, £35 for firms",
+  JSON.stringify(tiers)
+);
+const homeTier = await page.locator('#reports .tier').first().locator('a').getAttribute('href');
+ok(homeTier === '/reports/street/', 'the free tier for your own home leads straight to making the report', homeTier);
 const councilCards = await page.locator('#councils .tier h3').allTextContents();
 const pricingText = await page.locator('main').textContent();
 ok(
   ['Area study', '90-day pilot', 'Annual licence'].every((h) => councilCards.includes(h)) &&
-    !/£35/.test(pricingText) &&
-    (await page.locator('main a[href="/reports/#prices"]').count()) > 0 &&
+    /not a conveyancing search/.test(pricingText) &&
     !/\+ ?VAT/.test(pricingText),
-  'the pricing page gives councils a study, a pilot and a licence, links to the report prices rather than repeating them, and adds no VAT',
+  'the pricing page gives councils a study, a pilot and a licence, and adds no VAT anywhere',
   councilCards.join(' | ')
 );
-const pricingNav = await page.locator('nav[aria-label="Site"] a').evaluateAll((as) => as.map((a) => [a.getAttribute('href'), a.className]));
-ok(
-  pricingNav[0]?.[0] === '/map/' && /nav-cta/.test(pricingNav[0]?.[1]) && !pricingNav.some(([h]) => h === '/bay-area/'),
-  'the pricing page carries the site bar, led by the full map',
-  JSON.stringify(pricingNav)
-);
+
+// 16c. THE TOP BAR (Bill, 2026-10-06: an orange block and a grey box "confusing"). On every page that
+// carries it: Pricing is in it; Full map is an OUTLINED button, never a filled block; the page you are
+// on is an underline, never a filled box, and only that page is marked. Read from computed style, so a
+// rule that stops applying fails here even with the markup unchanged.
+for (const [path, here] of [
+  ['/', null],
+  ['/reports/', '/reports/'],
+  ['/pricing', '/pricing'],
+  ['/api/', '/api/'],
+  ['/open-data/', '/open-data/'],
+  ['/area/london/camden/', null],
+]) {
+  await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+  await page.mouse.move(0, 0); // no link hovered
+  const bar = await page.evaluate(() => {
+    const nav = document.querySelector('nav[aria-label="Site"]');
+    if (!nav) return null;
+    const cs = (el) => getComputedStyle(el);
+    const cta = nav.querySelector('a.nav-cta');
+    const current = [...nav.querySelectorAll('a[aria-current]')];
+    return {
+      hrefs: [...nav.querySelectorAll('a')].map((a) => a.getAttribute('href')),
+      ctaFill: cta && cs(cta).backgroundColor,
+      ctaRing: cta && cs(cta).boxShadow,
+      current: current.map((a) => a.getAttribute('href')),
+      filled: current.filter((a) => cs(a).backgroundColor !== 'rgba(0, 0, 0, 0)').length,
+      underlined: current.every((a) => cs(a).textDecorationLine.includes('underline')),
+    };
+  });
+  ok(
+    bar &&
+      bar.hrefs.includes('/pricing') &&
+      bar.ctaFill === 'rgba(0, 0, 0, 0)' &&
+      /inset/.test(bar.ctaRing) &&
+      JSON.stringify(bar.current) === JSON.stringify(here ? [here] : []) &&
+      bar.filled === 0 &&
+      bar.underlined,
+    `${path}: the bar lists Pricing, Full map is outlined, and ${here ? 'this page is underlined, not filled' : 'no page is marked'}`,
+    JSON.stringify(bar)
+  );
+}
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass
 // vacuously on a page that has no such button.
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
@@ -856,6 +892,77 @@ const makeReport = async (pc) => {
   ok(!printed.report && printed.note && !printed.frameHeading, 'printing the page or the report frame gives the firms note, not the report', JSON.stringify(printed));
   const foot = ready ? await sheetDoc().locator('footer').textContent() : '';
   ok(/Free copy for personal use, not for use with clients/.test(foot), 'the free copy says on its face that it is for personal use, not for clients', foot.slice(-140));
+  // PROTECTION FOR THE FREE COPY (Bill, 2026-10-06: "people can screenshot and maybe edit it"): a
+  // watermark, a reference tied to the figures and the day, a check link with a QR code, the terms line.
+  const today = new Date().toISOString().slice(0, 10);
+  const free = await page.evaluate(() => {
+    const d = document.getElementById('sheet').contentDocument;
+    const m = d.querySelector('.free-copy-mark');
+    const box = d.querySelector('.free-copy-check');
+    return {
+      marks: m ? m.children.length : 0,
+      line: m?.children[0]?.textContent || '',
+      hidden: m?.getAttribute('aria-hidden'),
+      events: m ? d.defaultView.getComputedStyle(m).pointerEvents : '',
+      ref: (box?.textContent.match(/Reference ([A-Z2-9]{4}-[A-Z2-9]{4})/) || [])[1] || '',
+      link: box?.querySelector('a')?.getAttribute('href') || '',
+      terms: /section 4, skyscore\.co\.uk\/terms/.test(box?.textContent || ''),
+    };
+  });
+  // Nothing of the report is cut off: the frame is as tall as its content once the fonts are in.
+  // It was measured once, before the fonts arrived, and the check block landed in the clipped strip.
+  await page.evaluate(() => document.getElementById('sheet').contentDocument.fonts.ready);
+  await page.waitForTimeout(150);
+  const clip = await page.evaluate(() => {
+    const f = document.getElementById('sheet');
+    const box = f.contentDocument.querySelector('.free-copy-check').getBoundingClientRect();
+    return { frame: f.clientHeight, checkBottom: Math.ceil(box.bottom) };
+  });
+  ok(clip.checkBottom <= clip.frame, 'the whole report shows in its frame, the check block included, once the fonts have arrived', JSON.stringify(clip));
+  ok(
+    free.marks >= 20 && free.line.startsWith('Personal use only · TW9 3PZ · ') && free.hidden === 'true' && free.events === 'none',
+    'the free copy is watermarked with its postcode and date, out of the way of screen readers and the pointer',
+    JSON.stringify(free)
+  );
+  const wantLink = `https://skyscore.co.uk/reports/street/?postcode=TW9%203PZ&made=${today}&ref=${free.ref.replace('-', '')}`;
+  ok(free.ref !== '' && free.link === wantLink && free.terms, 'the free copy carries a reference, a check link for that reference and day, and the terms line', `${free.ref} ${free.link}`);
+  // The QR code is DECODED, by OpenCV: a code that scans to the wrong address would be worse than none.
+  // Enlarged first (nearest-neighbour, on a white border): at 132 px a module is about 3 px.
+  let decoded = '';
+  const png = join(tmpdir(), `skyscore-qr-${process.pid}.png`);
+  try {
+    await sheetDoc().locator('.free-copy-check svg').screenshot({ path: png });
+    decoded = execFileSync(
+      'python',
+      [
+        '-c',
+        'import cv2,sys\nimg=cv2.imread(sys.argv[1])\nimg=cv2.resize(img,None,fx=4,fy=4,interpolation=cv2.INTER_NEAREST)\nimg=cv2.copyMakeBorder(img,40,40,40,40,cv2.BORDER_CONSTANT,value=(255,255,255))\nprint(cv2.QRCodeDetector().detectAndDecode(img)[0])',
+        png,
+      ],
+      { encoding: 'utf8' }
+    ).trim();
+  } catch (e) {
+    decoded = `(could not decode: ${String(e.message).split('\n')[0]})`;
+  }
+  await unlink(png).catch(() => {});
+  ok(decoded === wantLink, 'its QR code scans to exactly that check link', decoded);
+  // The check: the genuine reference matches, one changed character does not, a malformed one is ignored.
+  const checkWith = async (ref) => {
+    await page.goto(`${BASE}reports/street/?postcode=TW9%203PZ&made=${today}&ref=${ref}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => /ready below|outside the city|answered|reached/.test(document.getElementById('status').textContent), null, { timeout: 20000 });
+    return page.locator('#check-result').evaluate((el) => ({ hidden: el.hidden, cls: el.className, text: el.textContent }));
+  };
+  const genuine = free.ref.replace('-', '');
+  const okCheck = await checkWith(genuine);
+  const badCheck = await checkWith(genuine.slice(0, 7) + (genuine[7] === 'A' ? 'B' : 'A'));
+  const junk = await checkWith('NOT-A-REF');
+  ok(
+    !okCheck.hidden && /\bok\b/.test(okCheck.cls) && /matches/.test(okCheck.text) &&
+      !badCheck.hidden && /\bbad\b/.test(badCheck.cls) && /does not match/.test(badCheck.text) &&
+      junk.hidden,
+    'a check link confirms the genuine reference, flags one changed character, and ignores a malformed one',
+    JSON.stringify({ okCheck, badCheck, junk: junk.hidden })
+  );
   const img = await sheetDoc().locator('svg image').getAttribute('href');
   ok(img === '/data/aircraft-noise-london-lden.png' && (await page.request.get(`${BASE}data/aircraft-noise-london-lden.png`)).status() === 200, 'its map draws DEFRA\'s London picture from an address the site serves', img);
   const est = await makeReport('NW1 7PJ');

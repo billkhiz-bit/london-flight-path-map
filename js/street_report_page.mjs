@@ -16,14 +16,49 @@ import {
   rasterFor,
   reportDocument,
 } from '/js/street_report.mjs';
+// MIT, Kazuhiko Arase; vendored unmodified, version in the name (LICENSING.md, code shipped to browsers).
+import qrcode from '/js/vendor/qrcode-generator-2.0.4.mjs';
 
 const byId = (id) => document.getElementById(id);
 const form = byId('make');
 const input = byId('pc');
 const go = byId('go');
 const status = byId('status');
+const checkResult = byId('check-result');
 const result = byId('result');
 const sheet = byId('sheet');
+
+// ---- A free copy can be screenshotted and edited (Bill, 2026-10-06), so it says what it is ----
+// Every free copy carries a watermark, a reference and a link (with a QR code) that reopens the
+// genuine figures. The reference is a hash of the figures the copy states, the postcode and the day
+// it was made, so anyone handed a screenshot can check it in seconds. Nothing is stored: the check
+// re-makes the report from today's official data and recomputes the hash with the original date.
+const SITE = 'https://skyscore.co.uk';
+const STATED = [
+  'aircraftQuiet',
+  'aircraftQuietEstimated',
+  'aircraftNoiseLdenDb',
+  'roadNoiseLdenDb',
+  'roadNoiseBelowDb',
+  'no2AnnualMeanUgm3',
+  'pm25AnnualMeanUgm3',
+];
+const REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I to misread
+const MADE = /^\d{4}-\d{2}-\d{2}$/;
+const REF = /^[A-HJ-NP-Z2-9]{4}-?[A-HJ-NP-Z2-9]{4}$/;
+
+/** The reference for a copy: 8 characters of a SHA-256 over what the copy states. */
+export async function reportReference(postcode, made, airac, env) {
+  const text = JSON.stringify([postcode, made, airac ?? null, ...STATED.map((k) => (typeof env[k] === 'number' ? env[k] : null))]);
+  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
+  let out = '';
+  for (let i = 0; i < 8; i++) out += REF_ALPHABET[d[i] & 31];
+  return `${out.slice(0, 4)}-${out.slice(4)}`;
+}
+const checkLink = (postcode, made, ref) =>
+  `${SITE}/reports/street/?postcode=${encodeURIComponent(postcode)}&made=${made}&ref=${ref.replace('-', '')}`;
+const longDate = (iso) =>
+  new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 // js/api-base.js is the one holder of the API host.
 const ENV = `${window.API_BASE || 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'}/v1/environment`;
@@ -73,7 +108,7 @@ async function livePostcodes(codes) {
   return live;
 }
 
-async function make(raw) {
+async function make(raw, check = null) {
   const postcode = raw.trim().toUpperCase().replace(/\s+/g, ' ');
   if (!POSTCODE.test(postcode)) {
     say('That does not look like a UK postcode. Try one such as TW9 3PZ.');
@@ -163,31 +198,74 @@ async function make(raw) {
       },
       '/fonts/geist.woff2'
     );
+    // The day this copy is made, and the reference that ties its figures to that day.
+    const made = new Date().toISOString().slice(0, 10);
+    const ref = await reportReference(loc.postcode, made, proc.airac, env);
+    const link = checkLink(loc.postcode, made, ref);
+
     sheet.srcdoc = html;
     await new Promise((resolve) => sheet.addEventListener('load', resolve, { once: true }));
     const doc = sheet.contentDocument;
     if (doc) {
-      // The report's margins are the A4 page's (@page), which a screen does not
-      // draw. Added here, screen only, so the page the PDF script prints is
-      // untouched (its HTML is held byte-identical to the module's).
+      // Everything below is added to the FREE copy only, never to the shared module, so the
+      // PDF script's output (the paid product for firms) stays byte-identical and clean.
       const pad = doc.createElement('style');
-      // On screen only: printing the frame itself (the browser's route to "Save as PDF")
-      // gets the firms note, not the report. The PDF is the paid product for firms.
       pad.textContent =
-        '@media screen { body { padding: 13mm 15mm; } }' +
-        '@media print { body > * { display: none !important; } body::before { content: "A printed or PDF copy of a report is part of the service for firms: skyscore.co.uk/reports"; font: 14pt system-ui, sans-serif; } }';
+        // The report's margins are the A4 page's (@page), which a screen does not draw.
+        '@media screen { body { padding: 13mm 15mm; position: relative; } }' +
+        // On screen only: printing the frame itself (the browser's route to "Save as PDF")
+        // gets the firms note, not the report.
+        '@media print { body > * { display: none !important; } body::before { content: "A printed or PDF copy of a report is part of the service for firms: skyscore.co.uk/pricing"; font: 14pt system-ui, sans-serif; } }' +
+        // The watermark: faint enough to read through, there on every screenshot.
+        '.free-copy-mark { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 110px 70px; padding: 60px 20px; }' +
+        '.free-copy-mark span { transform: rotate(-28deg); font: 600 15px system-ui, sans-serif; color: rgba(20, 20, 20, 0.09); white-space: nowrap; }' +
+        // The check block sits ABOVE the watermark on white, so faint text never crosses the QR code.
+        '.free-copy-check { position: relative; z-index: 6; background: #fff; display: flex; gap: 14px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #dedcd6; }' +
+        '.free-copy-check svg { flex: 0 0 auto; width: 132px; height: 132px; }' +
+        '.free-copy-check p { margin: 0; }';
       doc.head.append(pad);
-      // On the free copy only, and on the page itself so it travels with the PDF: a firm
-      // handing this to a client is visibly using it outside its terms (Bill, 2026-10-06:
-      // "can't firms just pretend to be a resident?"). Not in the shared module, so the
-      // sample PDFs stay byte-identical to what the script prints.
-      const use = doc.createElement('strong');
-      use.textContent = ' Free copy for personal use, not for use with clients: reports for firms are at skyscore.co.uk/reports.';
-      doc.querySelector('footer')?.append(use);
-      // As tall as the report, so the page scrolls rather than the frame.
-      sheet.style.height = `${Math.max(1123, doc.documentElement.scrollHeight + 8)}px`;
+
+      const mark = doc.createElement('div');
+      mark.className = 'free-copy-mark';
+      mark.setAttribute('aria-hidden', 'true');
+      const line = `Personal use only · ${loc.postcode} · ${longDate(made)}`;
+      for (let i = 0; i < 60; i++) {
+        const span = doc.createElement('span');
+        span.textContent = line;
+        mark.append(span);
+      }
+      doc.body.append(mark);
+
+      // The reference, the check link and its QR code, and the terms line. Bill, 2026-10-06:
+      // "can't firms just pretend to be a resident?", then "people can screenshot and maybe
+      // edit it". The terms (section 4) already limit free use to personal, non-commercial use.
+      const qr = qrcode(0, 'M');
+      qr.addData(link);
+      qr.make();
+      const block = doc.createElement('div');
+      block.className = 'free-copy-check';
+      block.innerHTML =
+        qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true, alt: 'QR code to check this report' }) +
+        `<p><strong>Reference ${esc(ref)}</strong>, made ${esc(longDate(made))}. To check a copy against the official figures, scan the code or open <a href="${esc(link)}">${esc(link.replace('https://', ''))}</a>.` +
+        ' <strong>Free copy for personal use, not for use with clients</strong>, under our terms (section 4, skyscore.co.uk/terms). Reports for firms: skyscore.co.uk/pricing.</p>';
+      (doc.querySelector('footer') || doc.body).append(block);
+      // As tall as the report, so the page scrolls rather than the frame, and KEPT so: the web
+      // fonts arrive after the first measure and make the text taller, which clipped the foot
+      // of the report (found 2026-10-06, when the check block landed in the clipped strip).
+      // Measured from the BODY, whose height does not depend on the frame's: measuring the
+      // document element would grow with each fit and never settle.
+      const fit = () => {
+        const cs = doc.defaultView.getComputedStyle(doc.body);
+        const tall = doc.body.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+        sheet.style.height = `${Math.max(1123, Math.ceil(tall) + 8)}px`;
+      };
+      fit();
+      new doc.defaultView.ResizeObserver(fit).observe(doc.body);
+      doc.fonts?.ready.then(fit);
     }
     result.classList.add('is-open');
+    // The check's verdict before "ready": whoever waits for ready sees the verdict with it.
+    if (check) await showCheck(check, loc.postcode, proc.airac, env);
     say(`Your report for ${esc(loc.postcode)} is ready below.`);
     window.goatcounter?.count?.({ path: 'event/street-report-made', title: 'street-report-made', event: true });
   } catch (e) {
@@ -197,13 +275,38 @@ async function make(raw) {
   }
 }
 
+/**
+ * Someone opened a check link from a copy they were shown: re-make the report from today's
+ * official data and recompute the reference with the copy's own date. A match means the copy
+ * states today's figures; a mismatch means the figures have moved since, or the copy was changed,
+ * and the page says both, because it cannot tell which.
+ */
+async function showCheck(check, postcode, airac, env) {
+  const expected = (await reportReference(postcode, check.made, airac, env)).replace('-', '');
+  const shown = `${check.ref.slice(0, 4)}-${check.ref.slice(4)}`;
+  const when = esc(longDate(check.made));
+  const ok = expected === check.ref;
+  checkResult.className = `check-result ${ok ? 'ok' : 'bad'}`;
+  checkResult.innerHTML = ok
+    ? `Reference ${esc(shown)} matches. A copy made for ${esc(postcode)} on ${when} with this reference states the same official figures as the report below.`
+    : `Reference ${esc(shown)} does not match today's figures for ${esc(postcode)}. Either the official figures have been updated since ${when}, or the copy you were shown was changed. The report below is made from today's official data.`;
+  checkResult.hidden = false;
+}
+
 form.addEventListener('submit', (e) => {
   e.preventDefault();
+  checkResult.hidden = true;
   make(input.value);
 });
-// ?postcode= from a link (the front page's answer, a shared URL) makes the report at once.
-const given = new URLSearchParams(location.search).get('postcode');
+// ?postcode= from a link (the front page's answer, a shared URL) makes the report at once, and
+// &made=&ref= (the check link printed on every free copy) checks a copy against it. A malformed
+// date or reference is ignored rather than trusted.
+const params = new URLSearchParams(location.search);
+const given = params.get('postcode');
 if (given) {
+  const made = params.get('made') || '';
+  const ref = (params.get('ref') || '').toUpperCase().replace('-', '');
+  const check = MADE.test(made) && REF.test(ref) ? { made, ref } : null;
   input.value = given;
-  make(given);
+  make(given, check);
 }

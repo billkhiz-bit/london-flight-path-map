@@ -53,9 +53,13 @@
       /* Full-strength links with an orange hover, and the map as the one button in the bar
          (Bill, 2026-10-06: "highlight this in a colour ... to make it more interactive"). */
       nav.top-nav a { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dark); }
-      nav.top-nav a.nav-cta { background: var(--orange); color: var(--dark); font-weight: 600; }
-      nav.top-nav a.nav-cta:hover { background: #ff9440; }
+      /* The page you are on is an orange underline and Full map an outlined button (Bill, 2026-10-06):
+         an orange block and a grey box together read as two selected tabs. The underline is #d35a12,
+         3.61:1 on the page: a state cue needs 3:1 (WCAG 1.4.11) and the brand orange is 2.44:1. */
+      nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight: 600; }
+      nav.top-nav a.nav-cta:hover { background: #ffe6cf; }
       nav.top-nav a:hover { background: #ffe6cf; color: var(--dark); }
+      nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: #d35a12; text-decoration-thickness: 3px; text-underline-offset: 7px; }
 
       /* The hero IS the map. Everything else floats on it. */
       .hero { position: relative; margin: 0 var(--gutter); height: min(72vh, 760px); min-height: 520px; border-radius: 18px; overflow: hidden; background: var(--water); }
@@ -244,6 +248,7 @@
       <nav class="top-nav" aria-label="Site">
         <a class="nav-cta" href="/map/">Full map</a>
         <a href="/reports/">Reports</a>
+        <a href="/pricing">Pricing</a>
         <a href="/api/">API</a>
         <a href="/open-data/">Open data</a>
       </nav>
@@ -311,7 +316,7 @@
             <h3>Reports for your street</h3>
             <p>One page of the official figures for the streets you name. Free for your own home and for residents' groups; for buying agents and surveyors, a sourced answer to hand to a client.</p>
             <div class="fig">1 page<small>every number with its source and its date</small></div>
-            <div class="go-row"><a class="go" href="/reports/street/">Make yours, free</a><a class="also" href="/reports/#prices">What it costs</a></div>
+            <div class="go-row"><a class="go" href="/reports/street/">Make yours, free</a><a class="also" href="/pricing#reports">What it costs</a></div>
           </article>
           <article class="card">
             <h3>Data for your business</h3>

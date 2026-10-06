@@ -129,6 +129,17 @@ Not "data sources" but listed for completeness.
 
 ---
 
+## Code shipped to visitors' browsers
+
+Third-party code the site serves from its own origin (vendored in `js/vendor/`, bytes kept exact by `js/vendor/* -text` in `.gitattributes`). Fonts are self-hosted too; see `scripts/vendor_fonts.py`.
+
+| Code | Licence | Where it runs | Obligation |
+|---|---|---|---|
+| **d3** v7 (`js/vendor/d3.v7.min.js`) | ISC | The full map (`/map/`), the front page | Keep the copyright notice in the file (it is in its header) |
+| **qrcode-generator** 2.0.4 by Kazuhiko Arase (`js/vendor/qrcode-generator-2.0.4.mjs`). **Added 2026-10-06** | MIT | The free street report (`/reports/street/`): the QR code that opens a copy's check link | Keep the copyright and licence notice in the file (it is in its header). Audited before vendoring: no network calls, no dynamic code. "QR Code" is a registered trademark of DENSO WAVE, as its header says |
+
+---
+
 ## Attribution surfacing — where the OGL boilerplate appears
 
 | Surface | How attribution is shown |

@@ -92,10 +92,13 @@
   .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
   nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
   nav.top-nav a { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dark); }
-  nav.top-nav a.nav-cta { background: var(--orange); color: var(--dark); font-weight: 600; }
-  nav.top-nav a.nav-cta:hover { background: #ff9440; }
+  /* The page you are on is an orange underline and Full map an outlined button (Bill, 2026-10-06):
+     an orange block and a grey box together read as two selected tabs. The underline is #d35a12,
+     3.61:1 on the page: a state cue needs 3:1 (WCAG 1.4.11) and the brand orange is 2.44:1. */
+  nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight: 600; }
+  nav.top-nav a.nav-cta:hover { background: #ffe6cf; }
   nav.top-nav a:hover { background: #ffe6cf; color: var(--dark); }
-  nav.top-nav a[aria-current] { background: #e9e8e3; }
+  nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: #d35a12; text-decoration-thickness: 3px; text-underline-offset: 7px; }
 
   main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
   h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 12px; }
@@ -159,6 +162,7 @@
   <nav class="top-nav" aria-label="Site">
     <a class="nav-cta" href="/map/">Full map</a>
     <a href="/reports/">Reports</a>
+    <a href="/pricing">Pricing</a>
     <a href="/api/" aria-current="page">API</a>
     <a href="/open-data/">Open data</a>
   </nav>

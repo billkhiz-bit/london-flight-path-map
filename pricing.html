@@ -29,10 +29,10 @@
   to start approval. The annual licence is ON REQUEST, priced to the size of the authority
   after a pilot (the pilot fee credited, as it has always promised). Licence figures stay off
   every public page; the reasoning is in Bill's notes, not here (this comment ships).
+  ONE HOLDER (Bill, 2026-10-06): every price on the site lives on this page; the report
+  prices moved here from /reports/, which now links to #reports.
   MIRRORS: a price that appears in more than one place carries the same data-price key
-  everywhere it appears (the pilot twice on this page and once on /api/; the API tiers here and on /api/; the
-  council area study here and on /reports/). tests/front-page.mjs fails if one key reads two ways. Report prices for firms
-  are NOT repeated here: /reports/#prices is their one holder.
+  everywhere it appears (the pilot twice on this page and once on /api/, and the API tiers here and on /api/). tests/front-page.mjs fails if one key reads two ways.
   The API quota wording ("10,000 requests a month", "100,000 requests") is read by
   FreeTierQuotaDriftTests in backend/tests/test_handlers.py; change it there too.
 -->
@@ -55,9 +55,13 @@
   .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
   nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
   nav.top-nav a { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dark); }
-  nav.top-nav a.nav-cta { background: var(--orange); color: var(--dark); font-weight: 600; }
-  nav.top-nav a.nav-cta:hover { background: #ff9440; }
+  /* The page you are on is an orange underline and Full map an outlined button (Bill, 2026-10-06):
+     an orange block and a grey box together read as two selected tabs. The underline is #d35a12,
+     3.61:1 on the page: a state cue needs 3:1 (WCAG 1.4.11) and the brand orange is 2.44:1. */
+  nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight: 600; }
+  nav.top-nav a.nav-cta:hover { background: #ffe6cf; }
   nav.top-nav a:hover { background: #ffe6cf; color: var(--dark); }
+  nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: #d35a12; text-decoration-thickness: 3px; text-underline-offset: 7px; }
 
   /* Wider than the reports page's 1080px: the platform ladder is four cards side by side. */
   main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
@@ -119,6 +123,7 @@
   <nav class="top-nav" aria-label="Site">
     <a class="nav-cta" href="/map/">Full map</a>
     <a href="/reports/">Reports</a>
+    <a href="/pricing" aria-current="page">Pricing</a>
     <a href="/api/">API</a>
     <a href="/open-data/">Open data</a>
   </nav>
@@ -130,11 +135,43 @@
 
   <nav aria-label="On this page">
     <ul class="jump">
+      <li><a href="#reports">Reports for an address</a></li>
       <li><a href="#councils">Councils and public bodies</a></li>
       <li><a href="#platforms">Platforms and developers</a></li>
-      <li><a href="#firms">Firms and homeowners</a></li>
     </ul>
   </nav>
+
+  <section id="reports" aria-labelledby="reports-heading">
+    <h2 class="sec" id="reports-heading">Reports for an address</h2>
+    <p class="intro">One page of official figures for an address: what the noise map reads there, the published flight paths that pass it, and how it compares with its neighbours. <a href="/reports/">What a report contains</a>.</p>
+    <div class="tiers">
+      <article class="tier">
+        <h3>Your own home</h3>
+        <p class="price">Free</p>
+        <p>For a buyer or a renter checking one address: your report on screen, one at a time, for your own use.</p>
+        <a class="go" data-event="pricing-street-report-cta" href="/reports/street/">Make yours now</a>
+      </article>
+      <article class="tier">
+        <h3>Residents' groups</h3>
+        <p class="price">Free</p>
+        <p>Area summaries for a funding bid, a consultation response or a meeting.</p>
+        <a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Area%20summary">Ask for one</a>
+      </article>
+      <article class="tier tier-featured">
+        <h3>Firms</h3>
+        <p class="price">£35 <small>a report</small></p>
+        <ul>
+          <li>A PDF to hand to your client</li>
+          <li>Your first report is free</li>
+          <li>Ten reports for £250</li>
+          <li>An area or site study from £150</li>
+        </ul>
+        <p>For buying agents, relocation firms, conveyancers and surveyors.</p>
+        <a class="go quiet" data-event="pricing-firm-reports-cta" href="mailto:support@skyscore.co.uk?subject=Reports%20for%20a%20firm">Ask for one</a>
+      </article>
+    </div>
+    <p class="note">For an area summary, or a report for a client, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> with the postcode or the streets, and say whether it is for a residents' group or a firm. The prices are what you pay: we are not registered for VAT. A report is not a conveyancing search or a survey and does not replace either.</p>
+  </section>
 
   <section id="councils" aria-labelledby="councils-heading">
     <h2 class="sec" id="councils-heading">Councils and public bodies</h2>
@@ -217,11 +254,6 @@
       <li><b>Day 90</b>A written evidence report: what the data moved, by how much, with the workings. Yours to keep whether or not you continue.</li>
     </ol>
     <p class="note">You pay for the convenience (a service level, structured JSON, batch, an audit trail, a pinned methodology), not for exclusive data: the public site keeps every feature.</p>
-  </section>
-
-  <section id="firms" aria-labelledby="firms-heading">
-    <h2 class="sec" id="firms-heading">Firms and homeowners: reports</h2>
-    <p class="intro">A one-page report of the official figures for an address. Free to read on screen for your own home, and free for residents' groups. Buying agents, relocation firms, conveyancers and surveyors get a PDF to hand to their clients: <a href="/reports/#prices">see what a report costs</a>.</p>
   </section>
 
   <section aria-labelledby="founder-heading">

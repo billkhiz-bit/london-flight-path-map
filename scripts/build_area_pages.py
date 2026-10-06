@@ -360,9 +360,12 @@ PAGE = """<!doctype html>
   .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
   .site-top .site-nav {{ align-items:center; }}
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
-  .site-top .site-nav a.nav-cta {{ background:#f27d26; color:#141414; font-weight:600; }}
-  .site-top .site-nav a.nav-cta:hover {{ background:#ff9440; color:#141414; }}
-  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] {{ background:var(--line); color:var(--dark); }}
+  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06). These
+     pages' --orange is #c2410c light / #fb923c dark, both past the 3:1 a state cue needs. */
+  .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
+  .site-top .site-nav a.nav-cta:hover {{ background:var(--line); }}
+  .site-top .site-nav a:hover {{ background:var(--line); color:var(--dark); }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
     :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
     body {{ background:#141414; }}
@@ -371,9 +374,9 @@ PAGE = """<!doctype html>
 </head>
 <body>
 <!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
-<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a></div></nav>
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/open-data/">Open data</a></div></nav>
 <div class="wrap">
-<nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; {city_label}</nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; {city_label}</nav>
 <main data-city="{city}" data-borough="{borough}">
 <h1>{borough} noise and liveability</h1>
 <p class="sub">{city_label}. Aircraft and road noise, affordability, schools, crime and access, from published sources.</p>
@@ -529,16 +532,19 @@ INDEX = """<!doctype html>
   .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
   .site-top .site-nav {{ align-items:center; }}
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
-  .site-top .site-nav a.nav-cta {{ background:#f27d26; color:#141414; font-weight:600; }}
-  .site-top .site-nav a.nav-cta:hover {{ background:#ff9440; color:#141414; }}
-  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] {{ background:var(--line); color:var(--dark); }}
+  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06). These
+     pages' --orange is #c2410c light / #fb923c dark, both past the 3:1 a state cue needs. */
+  .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
+  .site-top .site-nav a.nav-cta:hover {{ background:var(--line); }}
+  .site-top .site-nav a:hover {{ background:var(--line); color:var(--dark); }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
 </style>
 </head>
 <body>
 <!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
-<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a></div></nav>
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/open-data/">Open data</a></div></nav>
 <div class="wrap">
-<nav class="sub"><a href="/">Sky Score</a> &rsaquo; Areas</nav>
+<nav class="sub" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; Areas</nav>
 <main>
 <h1>Every area we cover</h1>
 <p class="sub">{n} boroughs across {c} city regions. Each page carries the published measurements behind that area's score.</p>
@@ -834,9 +840,12 @@ OPEN_DATA_PAGE = """<!doctype html>
   .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
   .site-top .site-nav {{ align-items:center; }}
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
-  .site-top .site-nav a.nav-cta {{ background:#f27d26; color:#141414; font-weight:600; }}
-  .site-top .site-nav a.nav-cta:hover {{ background:#ff9440; color:#141414; }}
-  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] {{ background:var(--line); color:var(--dark); }}
+  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06). These
+     pages' --orange is #c2410c light / #fb923c dark, both past the 3:1 a state cue needs. */
+  .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
+  .site-top .site-nav a.nav-cta:hover {{ background:var(--line); }}
+  .site-top .site-nav a:hover {{ background:var(--line); color:var(--dark); }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
     :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
     body {{ background:#141414; }}
@@ -845,9 +854,9 @@ OPEN_DATA_PAGE = """<!doctype html>
 </head>
 <body>
 <!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
-<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/" aria-current="page">Open data</a></div></nav>
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/open-data/" aria-current="page">Open data</a></div></nav>
 <div class="wrap">
-<nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; Open data</nav>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; Open data</nav>
 <main>
 <h1>Open data</h1>
 <p class="sub">Every UK area Sky Score covers, in one file: the published score, its five components and the measurements behind them. {n} areas across {c} city regions. Prices: {vintage} UK House Price Index. Methodology version {methodology}.</p>
