@@ -684,12 +684,31 @@ const tiers = await page.locator('#prices + .tiers .tier').evaluateAll((cards) =
   cards.map((c) => [c.querySelector('h3')?.textContent.trim(), c.querySelector('.price')?.textContent.replace(/\s+/g, ' ').trim()])
 );
 const tierOf = Object.fromEntries(tiers);
+// The SET of headings, not a count (a count in an assertion is scheduled staleness): the
+// councils card joined on 2026-10-06, and its price is a mirror checked against /pricing below.
+const tierNames = tiers.map(([h]) => h).sort().join('|');
 ok(
-  tiers.length === 3 && tierOf['Your own home'] === 'Free' && tierOf["Residents' groups"] === 'Free' && tierOf.Firms === '£35 a report' &&
-    /not a conveyancing search/.test(reportsText) && !/\+ ?VAT/.test(reportsText),
-  'the reports page prices a report in three tiers: free for your own home and for residents\' groups, £35 for firms, no VAT added, not a conveyancing search',
+  tierNames === ['Councils', 'Firms', "Residents' groups", 'Your own home'].join('|') &&
+    tierOf['Your own home'] === 'Free' &&
+    tierOf["Residents' groups"] === 'Free' &&
+    tierOf.Firms === '£35 a report' &&
+    /^From £[\d,]+ an area study$/.test(tierOf.Councils || '') &&
+    /not a conveyancing search/.test(reportsText) &&
+    !/\+ ?VAT/.test(reportsText),
+  "the reports page prices a report for your own home, residents' groups, firms (£35) and councils, no VAT added, not a conveyancing search",
   JSON.stringify(tiers)
 );
+// A price shown in more than one place carries one data-price key wherever it appears.
+// Read without its <small> qualifier, which may differ by page ("one-off", "an area study").
+const pricesOn = () =>
+  page.locator('[data-price]').evaluateAll((els) =>
+    els.map((e) => {
+      const c = e.cloneNode(true);
+      c.querySelector('small')?.remove();
+      return [e.dataset.price, c.textContent.replace(/\s+/g, ' ').trim()];
+    })
+  );
+const reportsPrices = await pricesOn();
 const homeTier = await page.locator('#prices + .tiers .tier').first().locator('a').getAttribute('href');
 ok(homeTier === '/reports/street/', 'the free tier for your own home leads straight to making the report', homeTier);
 const footReports = await page.locator('footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
@@ -702,6 +721,51 @@ ok(frontLinks.includes('/reports/street/'), 'the front page links to the free st
 ok(['/pricing', '/area/', '/map/'].every((h) => frontLinks.includes(h) && footReports.includes(h)), 'pricing, the council areas and the full map are linked from both pages', `${frontLinks.join(' ')} | ${footReports.join(' ')}`);
 // Their LIVE addresses: this server routes as the site does, so /pricing is pricing.html.
 for (const p of ['/pricing', '/area/', '/map/']) ok((await page.request.get(`http://127.0.0.1:${PORT}${p}`)).status() === 200, `${p} is a page that exists`);
+
+// 16b. The pricing page (2026-10-06): one ladder per buyer, and every mirrored price reading one way
+// across /pricing, /reports/ and /api/ (which carries its own copy of the API ladder).
+await page.goto(`http://127.0.0.1:${PORT}/api/`, { waitUntil: 'domcontentloaded' });
+const apiPrices = await pricesOn();
+await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentloaded' });
+const pricingPrices = await pricesOn();
+const priceText = {};
+const clashes = [];
+for (const [key, text] of [...pricingPrices, ...reportsPrices, ...apiPrices]) {
+  if (key in priceText && priceText[key] !== text) clashes.push(`${key}: "${priceText[key]}" vs "${text}"`);
+  priceText[key] ??= text;
+}
+const pricingKeys = pricingPrices.map(([k]) => k);
+const apiKeys = apiPrices.map(([k]) => k);
+const apiLadder = ['api-free', 'pilot', 'api-professional', 'api-enterprise'];
+ok(
+  clashes.length === 0 &&
+    pricingKeys.filter((k) => k === 'pilot').length === 2 &&
+    ['council-area-study', 'council-licence', ...apiLadder].every((k) => pricingKeys.includes(k)) &&
+    apiLadder.every((k) => apiKeys.includes(k)) &&
+    reportsPrices.some(([k]) => k === 'council-area-study'),
+  'every price on /pricing, /reports/ and /api/ that shares a key reads the same (the pilot, the API tiers, the council area study)',
+  clashes.join('; ') || JSON.stringify({ pricingPrices, apiPrices })
+);
+const councilCards = await page.locator('#councils .tier h3').allTextContents();
+const pricingText = await page.locator('main').textContent();
+ok(
+  ['Area study', '90-day pilot', 'Annual licence'].every((h) => councilCards.includes(h)) &&
+    !/£35/.test(pricingText) &&
+    (await page.locator('main a[href="/reports/#prices"]').count()) > 0 &&
+    !/\+ ?VAT/.test(pricingText),
+  'the pricing page gives councils a study, a pilot and a licence, links to the report prices rather than repeating them, and adds no VAT',
+  councilCards.join(' | ')
+);
+const pricingNav = await page.locator('nav[aria-label="Site"] a').evaluateAll((as) => as.map((a) => [a.getAttribute('href'), a.className]));
+ok(
+  pricingNav[0]?.[0] === '/map/' && /nav-cta/.test(pricingNav[0]?.[1]) && !pricingNav.some(([h]) => h === '/bay-area/'),
+  'the pricing page carries the site bar, led by the full map',
+  JSON.stringify(pricingNav)
+);
+// Back to the front page: section 17's first check ("the Streets button is hidden") would pass
+// vacuously on a page that has no such button.
+await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+await waitMap();
 
 // 17. The OS street-map trial. No key is in the source: nothing is asked of api.os.uk until a device is given
 // one, the key leaves the address bar, and each tile sits where web-mercator says it should - checked against

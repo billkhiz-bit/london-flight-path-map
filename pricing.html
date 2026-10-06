@@ -5,308 +5,243 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <!-- Content Security Policy (enforcing - same rationale as /api/index.html).
-     Static B2B pricing page; only fonts + analytics, no fetches. -->
+     Static pricing page; only fonts + analytics, no fetches. -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
 <title>Sky Score · Pricing</title>
-<meta name="description" content="Sky Score pricing: free consumer site and apps, free API tier (10,000 requests a month, 10,000 scores), a 90-day paid pilot at £2,500 with a written evidence report, and annual licences for integrators.">
+<meta name="description" content="Sky Score pricing: free for your own street. Councils and public bodies: area studies from £750, a 90-day pilot at £2,500 and annual licences. Platforms: a free API tier (10,000 requests a month), Professional at £499 a month and enterprise licences.">
 <link rel="canonical" href="https://skyscore.co.uk/pricing">
-<meta name="theme-color" content="#06070d">
+<meta name="theme-color" content="#f4f3ef">
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://skyscore.co.uk/pricing">
 <meta property="og:title" content="Sky Score · Pricing">
-<meta property="og:description" content="Free consumer site and apps. Free API tier. 90-day paid pilot with a written evidence report. Annual licences for integrators.">
+<meta property="og:description" content="Free for your own street. Area studies, pilots and annual licences for councils. A free API tier and paid plans for platforms.">
 <meta property="og:site_name" content="Sky Score">
+
+<!--
+  Redesigned 2026-10-06 into the front page's light look (it was the last dark B2B page
+  beside /api/), and grouped by BUYER: councils first, then platforms, then firms' reports.
+  Council prices are Bill's (2026-10-06): the two ENTRY prices are published - an area study
+  from GBP 750 and the existing 90-day pilot at GBP 2,500 - because an officer needs a figure
+  to start approval. The annual licence is ON REQUEST, priced to the size of the authority
+  after a pilot (the pilot fee credited, as it has always promised). Licence figures stay off
+  every public page; the reasoning is in Bill's notes, not here (this comment ships).
+  MIRRORS: a price that appears in more than one place carries the same data-price key
+  everywhere it appears (the pilot twice on this page and once on /api/; the API tiers here and on /api/; the
+  council area study here and on /reports/). tests/front-page.mjs fails if one key reads two ways. Report prices for firms
+  are NOT repeated here: /reports/#prices is their one holder.
+  The API quota wording ("10,000 requests a month", "100,000 requests") is read by
+  FreeTierQuotaDriftTests in backend/tests/test_handlers.py; change it there too.
+-->
 
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   :root {
-      /* Declared 2026-09-07 (audit). No page carried `color-scheme` at
-         all, so a visitor whose OS is set to dark got UA-LIGHT scrollbars,
-         form controls and pre-CSS canvas over a near-black page - the
-         flash of white before the stylesheet applies being the visible
-         part. The 99 generated pages under area/ have declared it since
-         2026-09-02; the hand-written ones were missed.
-         Each page commits to the scheme it actually paints: measured,
-         these render identically under both OS preferences, so claiming
-         `light dark` would promise an adaptation that does not happen. */
-      color-scheme: dark;
-    --bg: #06070d;
-    --panel: #0d0f1a;
-    --border: #1f2333;
-    --text: #e8e8ee;
-    --muted: #8b8fa3;
-    --amber: #f59e0b;
-    --grad: linear-gradient(135deg, #f59e0b 0%, #e25822 100%);
+    color-scheme: light;
+    --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+    --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --gutter: clamp(16px, 4vw, 48px);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: 'Geist', -apple-system, system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-    min-height: 100vh;
-    background-image:
-      radial-gradient(circle at 15% 0%, rgba(245,158,11,0.08), transparent 40%),
-      radial-gradient(circle at 90% 30%, rgba(226,88,34,0.06), transparent 50%);
-  }
-  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
-  .site-top { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }
-  .site-top .site-brand { font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--text); }
-  .site-top .site-nav { display:flex; gap:4px; flex-wrap:wrap; }
-  .site-top .site-nav { align-items:center; }
-  .site-top .site-nav a { font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--text); }
-  .site-top .site-nav a.nav-cta { background:#f27d26; color:#141414; font-weight:600; }
-  .site-top .site-nav a.nav-cta:hover { background:#ff9440; color:#141414; }
-  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] { background:var(--border); color:var(--text); }
-  header { padding: 48px 24px 8px; max-width: 960px; margin: 0 auto; }
-  .crumb {
-    font-family: 'Geist Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-  .crumb a { color: var(--muted); text-decoration: none; }
-  .crumb a:hover, .crumb a:focus-visible { color: var(--amber); }
-  h1 { font-size: 36px; font-weight: 700; margin: 12px 0 8px; letter-spacing: -0.5px; }
-  .tagline { color: var(--muted); font-size: 16px; margin: 0; max-width: 640px; }
+  body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
 
-  main { max-width: 960px; margin: 0 auto; padding: 24px 24px 64px; }
+  /* The site bar, the same as the front page and the reports page. */
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 14px var(--gutter); }
+  .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+  nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  nav.top-nav a { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dark); }
+  nav.top-nav a.nav-cta { background: var(--orange); color: var(--dark); font-weight: 600; }
+  nav.top-nav a.nav-cta:hover { background: #ff9440; }
+  nav.top-nav a:hover { background: #ffe6cf; color: var(--dark); }
 
-  section { margin-bottom: 56px; }
-  section h2 {
-    font-size: 13px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    margin: 0 0 16px;
-  }
-  section p { margin: 0 0 12px; color: var(--text); font-size: 15px; }
+  /* Wider than the reports page's 1080px: the platform ladder is four cards side by side. */
+  main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 12px; }
+  p.lead { margin: 0 0 22px; color: var(--mid); font-size: 18px; max-width: 60ch; }
 
-  .btn {
-    display: inline-block;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-family: inherit;
-    font-weight: 600;
-    font-size: 14px;
-    text-decoration: none;
-    transition: transform 0.06s ease, opacity 0.2s ease;
-  }
-  .btn:hover { transform: translateY(-1px); }
-  .btn:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
-  .btn-primary { background: var(--grad); color: #06070d; }
-  .btn-secondary {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { border-color: var(--amber); color: var(--amber); }
+  /* Jump links: three buyers, three sections. */
+  .jump { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 44px; padding: 0; list-style: none; }
+  .jump a { display: inline-block; text-decoration: none; font-weight: 600; font-size: 14px; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--dark); }
+  .jump a:hover { background: #ffe6cf; }
 
-  /* Signature: the pilot panel. The offer is a number and a deliverable,
-     so the number carries the page. */
-  .pilot {
-    background: var(--panel);
-    border: 1px solid var(--amber);
-    border-radius: 12px;
-    padding: 32px 28px;
-  }
-  .pilot .tier {
-    font-family: 'Geist Mono', monospace;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--amber);
-    margin-bottom: 10px;
-  }
-  .pilot .price {
-    font-family: 'Geist Mono', monospace;
-    font-size: 56px;
-    font-weight: 500;
-    line-height: 1.1;
-    margin-bottom: 4px;
-  }
-  .pilot .price .unit { font-size: 15px; font-family: 'Geist', sans-serif; font-weight: 400; color: var(--muted); }
-  .pilot .credit { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
-  .pilot-timeline {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-    margin: 0 0 24px;
-    padding: 0;
-    list-style: none;
-  }
-  .pilot-timeline li {
-    border-top: 2px solid var(--border);
-    padding-top: 10px;
-  }
-  .pilot-timeline .day {
-    font-family: 'Geist Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--amber);
-    margin-bottom: 4px;
-  }
-  .pilot-timeline p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.6; }
-  .pilot-includes { font-size: 14px; color: var(--text); margin-bottom: 24px; }
+  section { margin: 0 0 52px; scroll-margin-top: 16px; }
+  h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.8vw, 32px); letter-spacing: -0.02em; margin: 0 0 8px; }
+  p.intro { margin: 0 0 22px; color: var(--mid); max-width: 70ch; }
 
-  .pricing-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-  .pricing-cell { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .pricing-cell .tier { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
-  .pricing-cell .tier .tag {
-    display: inline-block;
-    margin-left: 6px;
-    padding: 1px 7px;
-    border: 1px solid var(--border);
-    border-radius: 99px;
-    font-size: 10px;
-    color: var(--amber);
-  }
-  .pricing-cell .price { font-size: 24px; font-weight: 700; margin-bottom: 12px; font-family: 'Geist Mono', monospace; }
-  .pricing-cell .price .unit { font-size: 13px; font-weight: 400; color: var(--muted); font-family: 'Geist', sans-serif; }
-  .pricing-cell .quota { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; margin: 0 0 18px; }
+  .tier { background: var(--paper); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .tier h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: -0.01em; margin: 0; }
+  .tier .tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #ffe6cf; color: var(--dark); font: 600 11px var(--font-body); letter-spacing: 0.02em; vertical-align: middle; }
+  .tier p { margin: 0; color: var(--mid); }
+  /* After the general paragraph rule, and dark: a price is the one thing a card must not grey out. */
+  .tier .price { font-family: var(--font-display); font-weight: 700; font-size: 38px; letter-spacing: -0.03em; line-height: 1.05; margin: 2px 0; color: var(--dark); }
+  /* The qualifier wraps as ONE unit ("a year"), never word by word under a wide figure. */
+  .tier .price small { display: inline-block; white-space: nowrap; font: 400 15px var(--font-body); letter-spacing: 0; color: var(--mid); }
+  .tier ul { margin: 0; padding-left: 20px; color: var(--mid); }
+  .tier ul li { margin: 4px 0; }
+  .tier .go { margin-top: auto; align-self: flex-start; }
+  .tier-featured { box-shadow: inset 0 0 0 2px var(--orange); }
+  /* The platform ladder has four steps, so its cards may be narrower and stay on one row. */
+  .tiers.four { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  h3.tl-head { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 26px 0 10px; }
 
-  .founder {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-  .founder strong { color: var(--text); font-weight: 600; }
-  .founder a { color: var(--amber); }
+  a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
+  a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
+  a.go.quiet:hover { background: #ebe9e3; }
+  p.note { margin: 0; color: var(--mid); max-width: 72ch; font-size: 15px; }
+  p.note + p.note { margin-top: 10px; }
 
-  footer {
-    text-align: center;
-    color: var(--muted);
-    font-size: 12px;
-    padding: 32px 16px;
-    border-top: 1px solid var(--border);
-    margin-top: 48px;
-  }
-  footer a { color: var(--muted); text-decoration: none; margin: 0 8px; }
-  footer a:hover, footer a:focus-visible { color: var(--amber); }
+  /* The pilot's three checkpoints, under the platform ladder. */
+  ol.timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 24px; margin: 0 0 18px; padding: 0; list-style: none; }
+  ol.timeline li { border-top: 2px solid var(--line); padding-top: 10px; color: var(--mid); font-size: 15px; }
+  ol.timeline b { display: block; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dark); margin-bottom: 2px; }
 
-  @media (max-width: 720px) {
-    .pricing-row, .pilot-timeline { grid-template-columns: 1fr; }
-    .pilot .price { font-size: 42px; }
-    /* Keep the price qualifier as its own line so it never wraps mid-phrase
-       around the large number. */
-    .pilot .price .unit { display: block; margin-top: 4px; }
-  }
-  /* Respect OS-level "reduce motion" preference (WCAG 2.3.3 AAA). */
+  .founder { background: var(--paper); border-radius: 18px; padding: 22px 24px; color: var(--mid); font-size: 15px; max-width: 80ch; }
+  .founder strong { color: var(--dark); }
+
+  footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+  footer a { color: var(--mid); }
+
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.001ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.001ms !important;
-      scroll-behavior: auto !important;
-    }
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
   }
 </style>
 </head>
 <body>
 
-<!-- The site bar, the same on every page since 2026-10-06 (the front page's own header.top). A <nav>, not a
-     <header>: this page styles every header element as its hero. -->
-<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a></div></nav>
-
-<header>
-  <p class="crumb"><a href="/">&larr; Sky Score</a> · <a href="/api/">API overview</a></p>
-  <h1>Pricing</h1>
-  <p class="tagline">The consumer site and apps are free and stay free. Pricing below is for commercial use of the Sky Score API and data.</p>
+<header class="top">
+  <a class="brand" href="/">Sky Score</a>
+  <nav class="top-nav" aria-label="Site">
+    <a class="nav-cta" href="/map/">Full map</a>
+    <a href="/reports/">Reports</a>
+    <a href="/api/">API</a>
+    <a href="/open-data/">Open data</a>
+  </nav>
 </header>
 
 <main>
+  <h1>Pricing</h1>
+  <p class="lead">Looking up your own street is free, on the map and as a report on screen. Councils, platforms and firms pay for the figures they use in their work, and the prices are published here.</p>
 
-  <section aria-labelledby="pilot-heading">
-    <h2 id="pilot-heading">Paid pilot</h2>
-    <div class="pilot">
-      <div class="tier">90-day pilot · one success metric · written evidence report</div>
-      <div class="price">£2,500<span class="unit"> invoiced at kickoff</span></div>
-      <p class="credit">Credited in full against your first-year licence if you continue. If not, the evidence report is yours to keep.</p>
-      <ol class="pilot-timeline">
-        <li>
-          <div class="day">Day 0</div>
-          <p>Kickoff. One success metric agreed together before any integration work starts.</p>
-        </li>
-        <li>
-          <div class="day">Day 45</div>
-          <p>Mid-point review against the metric.</p>
-        </li>
-        <li>
-          <div class="day">Day 90</div>
-          <p>Written evidence report: what the data moved, by how much, with the workings.</p>
-        </li>
-      </ol>
-      <p class="pilot-includes">A fixed-scope, fixed-fee way to test whether Sky Score data moves a metric your business already cares about. Includes everything in Professional - production API access for every covered city-region at Professional volume - plus what no API tier carries: integration support direct from the founder, a jointly-defined success metric, the day-45 review, and the day-90 written evidence report. The premium over three months of Professional buys the evidence, not the API calls.</p>
-      <a class="btn btn-primary" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
+  <nav aria-label="On this page">
+    <ul class="jump">
+      <li><a href="#councils">Councils and public bodies</a></li>
+      <li><a href="#platforms">Platforms and developers</a></li>
+      <li><a href="#firms">Firms and homeowners</a></li>
+    </ul>
+  </nav>
+
+  <section id="councils" aria-labelledby="councils-heading">
+    <h2 class="sec" id="councils-heading">Councils and public bodies</h2>
+    <p class="intro">For consultation responses, committee papers, airspace-change and local-plan work: the official figures for your area, each with its source and date, and a written method you can attach. We supply the figures and how they were made; we do not take sides in a consultation.</p>
+    <div class="tiers">
+      <article class="tier">
+        <h3>Area study</h3>
+        <p class="price" data-price="council-area-study">From £750 <small>one-off</small></p>
+        <p>One ward, a consultation area or a set of streets, written up with a data table and method notes.</p>
+        <ul>
+          <li>Flight paths and aircraft noise</li>
+          <li>Road noise, air quality and flood risk</li>
+          <li>Every figure with its source and date</li>
+          <li>Ready to attach to a committee paper</li>
+        </ul>
+        <a class="go quiet" data-event="pricing-council-study-cta" href="mailto:support@skyscore.co.uk?subject=Area%20study%20for%20a%20council">Ask for a study</a>
+      </article>
+      <article class="tier">
+        <h3>90-day pilot</h3>
+        <p class="price" data-price="pilot">£2,500 <small>for 90 days</small></p>
+        <p>Your team uses the reports and the API for three months, measured against one aim agreed at the start.</p>
+        <ul>
+          <li>Everything in the annual licence, for 90 days</li>
+          <li>A review at day 45</li>
+          <li>A written evidence report at day 90</li>
+          <li>Credited in full against a first-year licence</li>
+        </ul>
+        <a class="go quiet" data-event="pricing-council-pilot-cta" href="mailto:support@skyscore.co.uk?subject=90-day%20pilot%20for%20a%20council">Start a pilot conversation</a>
+      </article>
+      <article class="tier tier-featured">
+        <h3>Annual licence</h3>
+        <p class="price" data-price="council-licence">On request <small>annual</small></p>
+        <p>The figures for your whole area, for every officer who needs them, all year. Priced to the size of your authority, usually after a pilot.</p>
+        <ul>
+          <li>Reports for any address in your area, for staff use</li>
+          <li>API access at Professional volume</li>
+          <li>Area studies for your consultations included</li>
+          <li>Updated as the official sources are</li>
+          <li>After a pilot, its £2,500 comes off the first year</li>
+        </ul>
+        <a class="go" data-event="pricing-council-licence-cta" href="mailto:support@skyscore.co.uk?subject=Annual%20licence%20for%20a%20council">Talk to us</a>
+      </article>
     </div>
+    <p class="note">Prices are published so an officer can start approval straight away. We are not registered for VAT, so none is added, and we invoice on order. The figures cover the city regions on <a href="/map/">the map</a>; if your area is not there yet, ask.</p>
   </section>
 
-  <section aria-labelledby="tiers-heading">
-    <h2 id="tiers-heading">API tiers</h2>
-    <div class="pricing-row">
-      <div class="pricing-cell">
-        <div class="tier">Developer</div>
-        <div class="price">Free<span class="unit"> · live today</span></div>
-        <div class="quota">10,000 requests a month, 2/sec sustained, 5 burst. One request is one address, so that is 10,000 scores a month. Batch is a paid feature. Self-service signup, key issued instantly. Same data as every tier.</div>
-        <a class="btn btn-secondary" data-event="pricing-free-cta" href="/score-demo/index.html#signup" style="font-size:12px;padding:8px 14px;">Get a free key</a>
-      </div>
-      <div class="pricing-cell">
-        <div class="tier">Professional<span class="tag">Launching</span></div>
-        <div class="price">£499<span class="unit"> /month</span></div>
-        <div class="quota">100,000 requests a month, under a fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each, so the score ceiling is the binding limit rather than the request count. Suitable for one platform integrating Sky Score. Email support.</div>
-        <a class="btn btn-secondary" data-event="pricing-professional-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Professional%20tier" style="font-size:12px;padding:8px 14px;">Talk to us</a>
-      </div>
-      <div class="pricing-cell">
-        <div class="tier">Enterprise licence</div>
-        <div class="price">POA<span class="unit"> · annual</span></div>
-        <div class="quota">Aggregators and large integrators. MSA, SLA, audit log, bulk scoring.</div>
-        <a class="btn btn-secondary" data-event="pricing-enterprise-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Enterprise%20licence" style="font-size:12px;padding:8px 14px;">Talk to us</a>
-      </div>
+  <section id="platforms" aria-labelledby="platforms-heading">
+    <h2 class="sec" id="platforms-heading">Platforms and developers: the API</h2>
+    <p class="intro">Scores and the measurements behind them for any address we cover, as structured JSON, with the source of every figure in the response. <a href="/api/">How the API works</a>.</p>
+    <div class="tiers four">
+      <article class="tier">
+        <h3>Developer</h3>
+        <p class="price" data-price="api-free">Free <small>live today</small></p>
+        <p>10,000 requests a month, 2/sec sustained, 5 burst. One request is one address, so that is 10,000 scores a month. Batch is a paid feature. Your key is issued instantly, and the data is the same as every other tier.</p>
+        <a class="go quiet" data-event="pricing-free-cta" href="/score-demo/index.html#signup">Get a free key</a>
+      </article>
+      <article class="tier">
+        <h3>90-day pilot</h3>
+        <p class="price" data-price="pilot">£2,500 <small>for 90 days</small></p>
+        <p>A fixed fee to test whether the data moves a measure your business already tracks. Production API access at Professional volume, integration support from the founder, and the written evidence report. The premium over three months of Professional buys the evidence, not the API calls.</p>
+        <a class="go" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
+      </article>
+      <article class="tier tier-featured">
+        <h3>Professional <span class="tag">Launching</span></h3>
+        <p class="price" data-price="api-professional">£499 <small>a month</small></p>
+        <p>100,000 requests a month, under a fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each, so the score ceiling is the binding limit. For one platform integrating Sky Score. Email support.</p>
+        <a class="go quiet" data-event="pricing-professional-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Professional%20tier">Talk to us</a>
+      </article>
+      <article class="tier">
+        <h3>Enterprise licence</h3>
+        <p class="price" data-price="api-enterprise">On request <small>annual</small></p>
+        <p>For aggregators and large integrators: a master agreement, a service level, an audit log and bulk scoring.</p>
+        <a class="go quiet" data-event="pricing-enterprise-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Enterprise%20licence">Talk to us</a>
+      </article>
     </div>
-    <p style="margin-top:12px;font-size:13px;color:var(--muted);">Convenience-tier model: you pay for integration value (SLA, structured JSON, batch, audit trail, methodology pinning), not data exclusivity. The consumer site keeps every feature.</p>
+    <h3 class="tl-head">How a pilot runs</h3>
+    <ol class="timeline">
+      <li><b>Day 0</b>Kickoff. One measure agreed together before any integration work starts.</li>
+      <li><b>Day 45</b>A mid-point review against that measure.</li>
+      <li><b>Day 90</b>A written evidence report: what the data moved, by how much, with the workings. Yours to keep whether or not you continue.</li>
+    </ol>
+    <p class="note">You pay for the convenience (a service level, structured JSON, batch, an audit trail, a pinned methodology), not for exclusive data: the public site keeps every feature.</p>
+  </section>
+
+  <section id="firms" aria-labelledby="firms-heading">
+    <h2 class="sec" id="firms-heading">Firms and homeowners: reports</h2>
+    <p class="intro">A one-page report of the official figures for an address. Free to read on screen for your own home, and free for residents' groups. Buying agents, relocation firms, conveyancers and surveyors get a PDF to hand to their clients: <a href="/reports/#prices">see what a report costs</a>.</p>
   </section>
 
   <section aria-labelledby="founder-heading">
-    <h2 id="founder-heading">Who is behind it</h2>
+    <h2 class="sec" id="founder-heading">Who is behind it</h2>
     <div class="founder">
-      <p style="margin:0;"><strong>Bilal Khizar</strong>, finance professional turned AI builder. Built and operated solo: <a href="/">skyscore.co.uk</a>, the <a href="https://apps.apple.com/gb/app/sky-score/id6768118116" rel="noopener">Sky Score iOS app</a>, a public API covering 12 UK city-regions - 94 boroughs across London, Greater Manchester, the West Midlands, West and South Yorkshire, Merseyside, Tyne and Wear, Bristol, Leicester, Teesside, Cardiff and Nottingham - plus around 182 New York residential ZIP codes, and an <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" rel="noopener">open methodology</a> published on GitHub. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
+      <p style="margin:0;"><strong>Bilal Khizar</strong>, a finance professional turned builder, makes and runs Sky Score: <a href="/">skyscore.co.uk</a>, the <a href="https://apps.apple.com/gb/app/sky-score/id6768118116" rel="noopener">iOS app</a>, and an API covering 13 UK city regions (97 council areas) and New York, with an <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" rel="noopener">open methodology</a> published on GitHub. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
     </div>
   </section>
-
 </main>
 
 <footer>
-  <a href="/">Front page</a> ·
-  <a href="/map/">Full map</a> ·
-  <a href="/reports/">Reports</a> ·
-  <a href="/api/">API overview</a> ·
-  <a href="/score-demo/index.html">Demo</a> ·
-  <a href="/score-demo/api-docs.html">API reference</a> ·
-  <a href="/score-demo/status.html">Status</a> ·
-  <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a> ·
-  <a href="/privacy">Privacy</a>
+  <span>All figures from official public data.</span>
+  <span><a href="/">Front page</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/api/">API</a> &middot; <a href="/score-demo/api-docs.html">API reference</a> &middot; <a href="/score-demo/status.html">Status</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></span>
 </footer>
 
 <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 
-<!-- B2B funnel events, same convention as /api/index.html (Wave 12.7):
-     events bucket under /event/<name> in GoatCounter. CTA anchors carry
-     data-event attributes; one delegated listener covers them all. -->
+<!-- Funnel events, same convention as /api/index.html (Wave 12.7): events bucket
+     under /event/<name> in GoatCounter. CTA anchors carry data-event attributes;
+     one delegated listener covers them all. -->
 <script>
   function trackEvent(name) {
     try {

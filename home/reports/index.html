@@ -54,8 +54,10 @@
       a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
       a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
       a.go.quiet:hover { background: #ebe9e3; }
-      /* The prices as three tiers (2026-10-06): each says who it is for, what it costs and
-         what to do next, in one card. This page is still the ONE holder of the price. */
+      /* The prices as tiers (2026-10-06): each says who it is for, what it costs and what to
+         do next, in one card. This page is the ONE holder of the report prices; the council
+         card's price is a MIRROR of /pricing#councils, held to it by its data-price key
+         (tests/front-page.mjs). */
       .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin: 0 0 24px; }
       .tier h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; letter-spacing: -0.01em; margin: 0; }
       .tier .price { font-family: var(--font-display); font-weight: 700; font-size: 40px; letter-spacing: -0.03em; line-height: 1; color: var(--dark); margin: 2px 0; }
@@ -146,9 +148,15 @@
           <p class="for">For buying agents, relocation firms, conveyancers and surveyors.</p>
           <a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Reports%20for%20a%20firm">Ask for one</a>
         </article>
+        <article class="tier">
+          <h3>Councils</h3>
+          <p class="price" data-price="council-area-study">From £750 <small>an area study</small></p>
+          <p>A ward or a consultation area written up with a data table and method notes, for a committee paper or a consultation response. Pilots and annual licences too.</p>
+          <a class="go quiet" href="/pricing#councils">See council prices</a>
+        </article>
       </div>
 
-      <p class="note">For your own home, <a href="/reports/street/">make the street report yourself</a>: it is made in your browser and is free to read on screen. For an area summary, or a report for a client, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> with the postcode or the streets, and say whether it is for a residents' group or a firm. The prices are what you pay: We are not registered for VAT, so none is added. A report is not a conveyancing search or a survey and does not replace either. Reports cover the city regions on <a href="/map/">the map</a>.</p>
+      <p class="note">For your own home, <a href="/reports/street/">make the street report yourself</a>: it is made in your browser and is free to read on screen. For an area summary, or a report for a client, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> with the postcode or the streets, and say whether it is for a residents' group or a firm. The prices are what you pay: we are not registered for VAT, so none is added. A report is not a conveyancing search or a survey and does not replace either. Reports cover the city regions on <a href="/map/">the map</a>.</p>
     </main>
     <footer>
       <span>All figures from official public data.</span>

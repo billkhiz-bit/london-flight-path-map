@@ -10,19 +10,19 @@
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
-<title>Sky Score API · UK property noise + livability data for B2B integrators</title>
-<meta name="description" content="Sky Score is a B2B property data API: 0-10 noise, affordability, growth, liveability scores per UK postcode or NYC ZIP. Methodology fully published. Free 10,000 req/month tier; paid tiers above.">
+<title>Sky Score API · UK property noise and liveability data for integrators</title>
+<meta name="description" content="Sky Score is a property data API: 0-10 noise, affordability, growth, liveability and environment scores per UK postcode or NYC ZIP, every figure with its source. Methodology fully published. Free tier of 10,000 requests a month; paid tiers above.">
 <link rel="canonical" href="https://skyscore.co.uk/api/">
-<meta name="theme-color" content="#06070d">
+<meta name="theme-color" content="#f4f3ef">
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://skyscore.co.uk/api/">
-<meta property="og:title" content="Sky Score API · property noise + livability data">
-<meta property="og:description" content="0-10 noise / affordability / growth / liveability scores per UK postcode + NYC ZIP. DEFRA / DfE / ONS anchored. OpenAPI 3.0 spec live.">
+<meta property="og:title" content="Sky Score API · property noise and liveability data">
+<meta property="og:description" content="0-10 noise, affordability, growth, liveability and environment scores per UK postcode and NYC ZIP. Anchored on DEFRA, DfE and ONS. OpenAPI 3.0 spec live.">
 <meta property="og:site_name" content="Sky Score">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sky Score API · property data">
-<meta name="twitter:description" content="UK property noise + livability data API for aggregators, conveyancers, and Sharia-compliant home-finance providers.">
+<meta name="twitter:description" content="UK property noise and liveability data API for aggregators, conveyancers, councils and Sharia-compliant home-finance providers.">
 
 <!-- JSON-LD: helps both Google Rich Results and LLM-driven discovery
      surfaces understand what Sky Score is. Schema.org/SoftwareApplication
@@ -36,7 +36,7 @@
   "applicationSubCategory": "Property Data API",
   "operatingSystem": "Cloud",
   "url": "https://skyscore.co.uk/api/",
-  "description": "B2B property data API providing 0-10 noise, affordability, growth, and liveability scores per UK postcode or NYC ZIP. Anchored on DEFRA, DfE, ONS, and HM Land Registry open data.",
+  "description": "Property data API providing 0-10 noise, affordability, growth, liveability and environment scores per UK postcode or NYC ZIP. Anchored on DEFRA, DfE, ONS, and HM Land Registry open data.",
   "offers": [
     {
       "@type": "Offer",
@@ -57,202 +57,127 @@
     "0-10 affordability (HM Land Registry)",
     "0-10 growth (price-trend annualised)",
     "0-10 liveability (schools/crime/transport/health composite)",
+    "0-10 environment (air quality, road noise, flood risk)",
     "OpenAPI 3.0 spec",
-    "GDPR-compliant UK data residency (eu-west-2)"
+    "Hosted in AWS London (eu-west-2)"
   ]
 }
 </script>
+<!--
+  Redesigned 2026-10-06 into the front page's light look, with every figure kept word for
+  word. Gates that read this page's WORDS: FreeTierQuotaDriftTests (the "N requests"
+  figures), scripts/measure_covid_understatement.py (the 75.6 and 148.4 km2 it must quote),
+  check_api_url_drift.sh (the API base in the sample) and the price-mirror check in
+  tests/front-page.mjs (every data-price key reads as it does on /pricing). The "UK data
+  residency" line in the JSON-LD became "Hosted in AWS London": /v1/chat calls Bedrock in
+  us-east-1 (SUBPROCESSORS row 18), so a residency claim for the whole API was not true.
+-->
 
 <link rel="stylesheet" href="/fonts/fonts.css">
 <style>
   :root {
-      /* Declared 2026-09-07 (audit). No page carried `color-scheme` at
-         all, so a visitor whose OS is set to dark got UA-LIGHT scrollbars,
-         form controls and pre-CSS canvas over a near-black page - the
-         flash of white before the stylesheet applies being the visible
-         part. The 99 generated pages under area/ have declared it since
-         2026-09-02; the hand-written ones were missed.
-         Each page commits to the scheme it actually paints: measured,
-         these render identically under both OS preferences, so claiming
-         `light dark` would promise an adaptation that does not happen. */
-      color-scheme: dark;
-    --bg: #06070d;
-    --panel: #0d0f1a;
-    --border: #1f2333;
-    --text: #e8e8ee;
-    --muted: #8b8fa3;
-    --amber: #f59e0b;
-    --green: #26F27D;
-    --grad: linear-gradient(135deg, #f59e0b 0%, #e25822 100%);
+    color-scheme: light;
+    --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+    --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --gutter: clamp(16px, 4vw, 48px);
   }
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: 'Geist', -apple-system, system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-    min-height: 100vh;
-    background-image:
-      radial-gradient(circle at 15% 0%, rgba(245,158,11,0.08), transparent 40%),
-      radial-gradient(circle at 90% 30%, rgba(226,88,34,0.06), transparent 50%);
-  }
-  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
-  .site-top { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }
-  .site-top .site-brand { font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--text); }
-  .site-top .site-nav { display:flex; gap:4px; flex-wrap:wrap; }
-  .site-top .site-nav { align-items:center; }
-  .site-top .site-nav a { font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--text); }
-  .site-top .site-nav a.nav-cta { background:#f27d26; color:#141414; font-weight:600; }
-  .site-top .site-nav a.nav-cta:hover { background:#ff9440; color:#141414; }
-  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] { background:var(--border); color:var(--text); }
-  header { padding: 48px 24px 24px; max-width: 960px; margin: 0 auto; }
-  h1 { font-size: 36px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.5px; }
-  h1 .accent { color: var(--amber); }
-  .tagline { color: var(--muted); font-size: 16px; margin: 0; max-width: 640px; }
+  body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  code { font-family: var(--font-mono); font-size: 0.88em; background: #ebe9e3; padding: 1px 5px; border-radius: 4px; }
 
-  main { max-width: 960px; margin: 0 auto; padding: 0 24px 64px; }
+  /* The site bar, the same as the front page and the reports page. */
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 14px var(--gutter); }
+  .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+  nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  nav.top-nav a { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dark); }
+  nav.top-nav a.nav-cta { background: var(--orange); color: var(--dark); font-weight: 600; }
+  nav.top-nav a.nav-cta:hover { background: #ff9440; }
+  nav.top-nav a:hover { background: #ffe6cf; color: var(--dark); }
+  nav.top-nav a[aria-current] { background: #e9e8e3; }
 
-  .hero-cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin: 32px 0 48px;
-  }
-  .btn {
-    display: inline-block;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-family: inherit;
-    font-weight: 600;
-    font-size: 14px;
-    text-decoration: none;
-    transition: transform 0.06s ease, opacity 0.2s ease;
-  }
-  .btn:hover { transform: translateY(-1px); }
-  .btn-primary { background: var(--grad); color: #06070d; }
-  .btn-secondary {
-    background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { border-color: var(--amber); color: var(--amber); }
+  main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 12px; }
+  p.lead { margin: 0 0 22px; color: var(--mid); font-size: 18px; max-width: 62ch; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 48px; }
+  a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
+  a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
+  a.go.quiet:hover { background: #ebe9e3; }
 
-  section { margin-bottom: 56px; }
-  section h2 {
-    font-size: 13px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-    margin: 0 0 16px;
-  }
-  section p { margin: 0 0 12px; color: var(--text); font-size: 15px; }
+  section { margin: 0 0 52px; scroll-margin-top: 16px; }
+  h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.8vw, 32px); letter-spacing: -0.02em; margin: 0 0 14px; }
+  p.note { margin: 0; color: var(--mid); max-width: 72ch; font-size: 15px; }
 
-  .three-up {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-  @media (max-width: 720px) {
-    .three-up { grid-template-columns: 1fr; }
-  }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px;
-  }
-  .card h3 { font-size: 16px; font-weight: 600; margin: 0 0 8px; color: var(--amber); }
-  .card p { font-size: 13px; color: var(--muted); margin: 0; line-height: 1.6; }
-  .card.full { grid-column: 1 / -1; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+  .card { background: var(--paper); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .card h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; letter-spacing: -0.01em; margin: 0; }
+  .card p { margin: 0; color: var(--mid); font-size: 15px; }
+  /* Five audiences: narrower cards so the fifth does not sit alone on a second row. */
+  .cards.five { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
-  pre {
-    background: #060810;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    margin: 0;
-    overflow-x: auto;
-    font-family: 'Geist Mono', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text);
-  }
-  /* overflow-wrap: a long command or path is ONE unbreakable token, and a
-     grid item defaults to min-width:auto - so it cannot shrink below that
-     token and pushes the whole document sideways. Caught 2026-09-03 at
-     320px by tests/responsive.mjs: <code>python
-     scripts/check_quiet_estimate_error.py</code> measured 274px against a
-     277px card, overflowing the page by 23px. Fixed on the RULE, not the
-     element: the sibling <ul> above carries an inline padding:0 for the
-     same class of reason, and the next <code> added would have inherited
-     nothing. */
-  code { font-family: 'Geist Mono', monospace; color: var(--amber); font-size: 0.95em; overflow-wrap: anywhere; }
+  /* The estimate's accuracy and limits: kept in full, behind one disclosure. */
+  details.limits { margin-top: 18px; background: var(--paper); border-radius: 18px; padding: 4px 24px; }
+  details.limits summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; font-size: 17px; padding: 16px 0; }
+  details.limits[open] { padding-bottom: 20px; }
+  details.limits p, details.limits li { color: var(--mid); font-size: 15px; max-width: 80ch; }
+  details.limits p { margin: 0 0 10px; }
+  details.limits ul { margin: 0 0 12px; padding-left: 20px; }
+  details.limits li { margin: 4px 0; }
+  details.limits strong { color: var(--dark); }
 
-  .audience-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 720px) { .audience-list { grid-template-columns: 1fr; } }
-  .audience-list .card { padding: 14px 16px; }
-  .audience-list .card h3 { font-size: 14px; margin-bottom: 4px; }
+  /* The sample: dark code on the light page, scrollable and keyboard-reachable. */
+  pre { background: #141414; color: #f4f3ef; border-radius: 14px; padding: 18px 20px; overflow-x: auto; font: 13px/1.6 var(--font-mono); margin: 0 0 12px; }
 
-  .pricing-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-  @media (max-width: 720px) { .pricing-row { grid-template-columns: 1fr; } }
-  .pricing-cell { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .pricing-cell .tier { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 6px; }
-  .pricing-cell .price { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
-  .pricing-cell .quota { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-  .pricing-cell.featured { border-color: var(--amber); }
-  .pricing-cell .price .unit { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin: 0 0 16px; }
+  .tier { background: var(--paper); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .tier h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0; }
+  .tier .tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #ffe6cf; color: var(--dark); font: 600 11px var(--font-body); letter-spacing: 0.02em; vertical-align: middle; }
+  .tier p { margin: 0; color: var(--mid); font-size: 15px; }
+  .tier .price { font-family: var(--font-display); font-weight: 700; font-size: 34px; letter-spacing: -0.03em; line-height: 1.05; color: var(--dark); }
+  .tier .price small { display: inline-block; white-space: nowrap; font: 400 14px var(--font-body); letter-spacing: 0; color: var(--mid); }
+  .tier .go { margin-top: auto; align-self: flex-start; }
+  .tier-featured { box-shadow: inset 0 0 0 2px var(--orange); }
 
-  footer {
-    text-align: center;
-    color: var(--muted);
-    font-size: 12px;
-    padding: 32px 16px;
-    border-top: 1px solid var(--border);
-    margin-top: 48px;
-  }
-  footer a { color: var(--muted); text-decoration: none; margin: 0 8px; }
-  footer a:hover { color: var(--amber); }
-  /* F-UX-11: respect OS-level "reduce motion" preference (WCAG 2.3.3 AAA). */
+  ol.steps { margin: 0; padding-left: 22px; color: var(--dark); font-size: 15px; line-height: 1.8; max-width: 80ch; }
+
+  .founder { background: var(--paper); border-radius: 18px; padding: 22px 24px; color: var(--mid); font-size: 15px; max-width: 80ch; }
+  .founder strong { color: var(--dark); }
+
+  footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+  footer a { color: var(--mid); }
+
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.001ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.001ms !important;
-      scroll-behavior: auto !important;
-    }
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
   }
 </style>
 </head>
 <body>
 
-<!-- The site bar, the same on every page since 2026-10-06 (the front page's own header.top). A <nav>, not a
-     <header>: this page styles every header element as its hero. -->
-<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/" aria-current="page">API</a><a href="/open-data/">Open data</a></div></nav>
-
-<header>
-  <h1>Sky Score <span class="accent">API</span></h1>
-  <p class="tagline">UK property noise + livability data, anchored to DEFRA, DfE, and ONS. One JSON call per postcode. Free 10,000 req/month tier; self-service signup.</p>
+<header class="top">
+  <a class="brand" href="/">Sky Score</a>
+  <nav class="top-nav" aria-label="Site">
+    <a class="nav-cta" href="/map/">Full map</a>
+    <a href="/reports/">Reports</a>
+    <a href="/api/" aria-current="page">API</a>
+    <a href="/open-data/">Open data</a>
+  </nav>
 </header>
 
 <main>
-
-  <div class="hero-cta">
-    <a class="btn btn-primary" href="/score-demo/index.html">Try the live demo</a>
-    <a class="btn btn-secondary" href="/score-demo/api-docs.html">API reference</a>
-    <a class="btn btn-secondary" href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a>
+  <h1>The Sky Score API</h1>
+  <p class="lead">UK property noise and liveability data, anchored to DEFRA, DfE and ONS, in one JSON call per postcode, with the source of every figure in the response. Free tier of 10,000 requests a month, with self-service signup.</p>
+  <div class="actions">
+    <a class="go" href="/score-demo/index.html">Try the live demo</a>
+    <a class="go quiet" href="/score-demo/api-docs.html">API reference</a>
+    <a class="go quiet" href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a>
   </div>
 
-  <section>
-    <h2>What you get</h2>
-    <div class="three-up">
+  <section aria-labelledby="get-heading">
+    <h2 class="sec" id="get-heading">What you get</h2>
+    <div class="cards">
       <div class="card">
-        <h3>0-10 score per postcode</h3>
+        <h3>A 0-10 score per postcode</h3>
         <p>UK postcodes across <strong>13 city-regions and 97 boroughs</strong> - London (33), Greater Manchester (10), West Midlands (7), West Yorkshire (5), South Yorkshire (4), Merseyside (5), Tyne and Wear (5), Bristol (4), Leicester (8), Teesside (5), Cardiff (4), Nottingham (4) and Greater Norwich (3) - plus NYC ZIPs (~182 residential). Single composite + five components: quiet, affordability, growth, liveability, environment. Coverage is not uniform across cities and each response says what it rests on.</p>
       </div>
       <div class="card">
@@ -261,29 +186,33 @@
       </div>
       <div class="card">
         <h3>Per-postcode noise resolution</h3>
-        <p>Quiet is scored per postcode from Haversine proximity to airports and flight-path geometry, at the postcode centroid rather than a borough average. The response reports which tier answered in <code>context.quietResolution</code>.</p>
-        <p><strong>Note (updated 12 August 2026):</strong> the DEFRA Lden raster tier is <strong>live</strong>. <code>quietResolution</code> returns <code>raster</code> wherever DEFRA published a contour and the sampled reading is on file, and <code>postcode</code> elsewhere. It was bypassed between 3 and 6 August 2026 for the coverage reason below; that bypass was lifted once the consumer site was given the same measurements, so the two surfaces cannot disagree. Three separate reasons, stated plainly because two of them were understood only after the first was published:</p>
-        <ul style="margin:8px 0 0 18px;padding:0;font-size:14px;line-height:1.55;">
-          <li><strong>Coverage.</strong> DEFRA's aircraft contours reach only 10.4% of live London postcodes, and treating the unmapped remainder as quiet flattened the component.</li>
-          <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
-          <li><strong>Vintage.</strong> DEFRA Round 4 is published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. <strong>Measured at Heathrow</strong>, the one airport with a published normal-year model: DEFRA's 2021 55 dB L<sub>den</sub> contour covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2024 (traffic 0.5% below 2019; ERCD Report 2501, Table 12) covers <strong>148.4 km&sup2;</strong>, about twice the area. They are different models, so that is an order of magnitude, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
-          <li><strong>Outdoor levels.</strong> L<sub>den</sub> is assessed outdoors, at the most exposed facade. Indoor exposure depends on glazing and ventilation, which no public dataset records per property.</li>
-        </ul>
-        <p style="margin-top:8px;">The geometry tier is documented in full in METHODOLOGY section 4.5. It is not a DEFRA reading and does not inherit the vintage caveat directly, but it is not independent of it either: since v3.8 each airport's distance ladder is scaled by that airport's measured Round 4 footprint.</p>
-        <p style="margin-top:8px;"><strong>How wrong is the estimate? Measured, not asserted.</strong> Where DEFRA published a contour we hold both numbers for the same postcode, so the estimator can be scored against the measurement rather than argued about. Across all <strong>35,441</strong> London postcodes DEFRA measured (methodology v5.5):</p>
-        <ul>
-          <li><strong>Mean absolute error 1.03 points</strong> on the 0-10 scale; median 0.9, 90th percentile 2.2. It was 1.879 before v5.3, which derived the flight-path corridors from the UK AIP and fitted the corridor penalty, and 1.32 before v5.5, which made the airport term follow the runway rather than a circle. Both were fitted on half of these postcodes; on the held-out half the error is 1.09.</li>
-          <li><strong>57.2%</strong> land within 1.0 point of the DEFRA value, <strong>88.4%</strong> within 2.0.</li>
-          <li><strong>Signed bias &minus;0.29: the estimate reads slightly LOUDER than DEFRA measured</strong>, so where it is wrong it leans pessimistic about noise rather than optimistic. That is by rule since v5.5: the fit is not allowed to make any city read quieter than DEFRA, and in every city we cover it reads louder. For a noise product that is the safer direction to err, and it is stated here rather than left for you to discover.</li>
-        </ul>
-        <p style="margin-top:8px;">Two things that figure is <em>not</em>. It describes postcodes <strong>near airports</strong>, because that is the only population where DEFRA published anything to compare against, not a global accuracy figure. And the bias is not purely estimator error: Round 4 maps a COVID-suppressed year, so some share of that &minus;0.29 is real traffic reduction in the measurement rather than overstatement in the estimate. We do not apply a correction for it, because the split is not measurable from the data we hold. The same caveat reaches the fit itself: the corridor penalty's weight and the runway shape were fitted against this 2021 map, so they inherit the understatement, and we treat them as provisional until a normal-year yardstick is available.</p>
-        <p style="margin-top:8px;">Reproduce it yourself against our published dataset: <code>python scripts/check_quiet_estimate_error.py</code>.</p>
+        <p>Quiet is scored per postcode from Haversine proximity to airports and flight-path geometry, at the postcode centroid rather than a borough average. The response reports which tier answered in <code>context.quietResolution</code>: <code>raster</code> wherever DEFRA published a contour and the sampled reading is on file, and <code>postcode</code> elsewhere.</p>
       </div>
     </div>
+
+    <details class="limits">
+      <summary>How accurate is the noise estimate, and what are its limits?</summary>
+      <p><strong>Note (updated 12 August 2026):</strong> the DEFRA Lden raster tier is <strong>live</strong>. It was bypassed between 3 and 6 August 2026 for the coverage reason below; that bypass was lifted once the consumer site was given the same measurements, so the two surfaces cannot disagree. Three separate reasons, stated plainly because two of them were understood only after the first was published:</p>
+      <ul>
+        <li><strong>Coverage.</strong> DEFRA's aircraft contours reach only 10.4% of live London postcodes, and treating the unmapped remainder as quiet flattened the component.</li>
+        <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
+        <li><strong>Vintage.</strong> DEFRA Round 4 is published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. <strong>Measured at Heathrow</strong>, the one airport with a published normal-year model: DEFRA's 2021 55 dB L<sub>den</sub> contour covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2024 (traffic 0.5% below 2019; ERCD Report 2501, Table 12) covers <strong>148.4 km&sup2;</strong>, about twice the area. They are different models, so that is an order of magnitude, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
+        <li><strong>Outdoor levels.</strong> L<sub>den</sub> is assessed outdoors, at the most exposed facade. Indoor exposure depends on glazing and ventilation, which no public dataset records per property.</li>
+      </ul>
+      <p>The geometry tier is documented in full in METHODOLOGY section 4.5. It is not a DEFRA reading and does not inherit the vintage caveat directly, but it is not independent of it either: since v3.8 each airport's distance ladder is scaled by that airport's measured Round 4 footprint.</p>
+      <p><strong>How wrong is the estimate? Measured, not asserted.</strong> Where DEFRA published a contour we hold both numbers for the same postcode, so the estimator can be scored against the measurement rather than argued about. Across all <strong>35,441</strong> London postcodes DEFRA measured (methodology v5.5):</p>
+      <ul>
+        <li><strong>Mean absolute error 1.03 points</strong> on the 0-10 scale; median 0.9, 90th percentile 2.2. It was 1.879 before v5.3, which derived the flight-path corridors from the UK AIP and fitted the corridor penalty, and 1.32 before v5.5, which made the airport term follow the runway rather than a circle. Both were fitted on half of these postcodes; on the held-out half the error is 1.09.</li>
+        <li><strong>57.2%</strong> land within 1.0 point of the DEFRA value, <strong>88.4%</strong> within 2.0.</li>
+        <li><strong>Signed bias &minus;0.29: the estimate reads slightly LOUDER than DEFRA measured</strong>, so where it is wrong it leans pessimistic about noise rather than optimistic. That is by rule since v5.5: the fit is not allowed to make any city read quieter than DEFRA, and in every city we cover it reads louder. For a noise product that is the safer direction to err, and it is stated here rather than left for you to discover.</li>
+      </ul>
+      <p>Two things that figure is <em>not</em>. It describes postcodes <strong>near airports</strong>, because that is the only population where DEFRA published anything to compare against, not a global accuracy figure. And the bias is not purely estimator error: Round 4 maps a COVID-suppressed year, so some share of that &minus;0.29 is real traffic reduction in the measurement rather than overstatement in the estimate. We do not apply a correction for it, because the split is not measurable from the data we hold. The same caveat reaches the fit itself: the corridor penalty's weight and the runway shape were fitted against this 2021 map, so they inherit the understatement, and we treat them as provisional until a normal-year yardstick is available.</p>
+      <p>Reproduce it yourself against our published dataset: <code>python scripts/check_quiet_estimate_error.py</code>.</p>
+    </details>
   </section>
 
-  <section>
-    <h2>30-second sample</h2>
+  <section aria-labelledby="sample-heading">
+    <h2 class="sec" id="sample-heading">30-second sample</h2>
     <!-- tabindex + role make the horizontally scrollable code block reachable
          by keyboard (WCAG 2.1.1). It scrolls on any narrow viewport, and a
          keyboard user could not scroll it at all - caught once the a11y gate
@@ -306,93 +235,88 @@
 #   "methodologyVersion": "5.5",
 #   "sources": [...]
 # }</pre>
-    <p style="margin-top:12px;">More examples in the <a href="/score-demo/api-docs.html" style="color:var(--amber);">Swagger UI reference</a>.</p>
+    <p class="note">More examples in the <a href="/score-demo/api-docs.html">Swagger UI reference</a>.</p>
   </section>
 
-  <section>
-    <h2>Built for</h2>
-    <div class="audience-list">
+  <section aria-labelledby="for-heading">
+    <h2 class="sec" id="for-heading">Built for</h2>
+    <div class="cards five">
       <div class="card">
         <h3>Property data aggregators</h3>
-        <p>Landmark, TM Group, OneSearch Direct - drop-in noise + livability layer for conveyancing search reports.</p>
+        <p>Landmark, TM Group, OneSearch Direct - a drop-in noise and liveability layer for conveyancing search reports.</p>
       </div>
       <div class="card">
         <h3>Sharia-compliant home finance</h3>
         <p>Al Rayan, StrideUp, Gatehouse, Nester, Yielders - riba-free underwriting context with attribution.</p>
       </div>
       <div class="card">
-        <h3>Conveyancers + surveyors</h3>
+        <h3>Conveyancers and surveyors</h3>
         <p>Per-property due-diligence data your clients won't find on Rightmove or Zoopla.</p>
       </div>
       <div class="card">
-        <h3>Build-to-rent + public bodies</h3>
-        <p>Site selection + portfolio screening with the structural quality factors that affect retention.</p>
+        <h3>Councils and public bodies</h3>
+        <p>Consultation responses, committee papers and local-plan work, every figure sourced. <a href="/pricing#councils">Council prices</a>.</p>
+      </div>
+      <div class="card">
+        <h3>Build-to-rent and developers</h3>
+        <p>Site selection and portfolio screening with the structural quality factors that affect retention.</p>
       </div>
     </div>
   </section>
 
-  <section>
-    <h2>Pricing</h2>
-    <div class="pricing-cell featured" style="margin-bottom:12px;">
-      <div class="tier">90-day paid pilot</div>
-      <div class="price">£2,500<span class="unit"> · one success metric · written evidence report</span></div>
-      <div class="quota">Fixed scope, fixed fee: metric agreed at kickoff, mid-point review at day 45, written evidence report at day 90. Credited in full against your first-year licence if you continue.</div>
-      <a class="btn btn-primary" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot" style="font-size:12px;padding:8px 14px;">Start a pilot conversation</a>
-      <a class="btn btn-secondary" data-event="pricing-detail-click" href="/pricing" style="font-size:12px;padding:8px 14px;margin-left:8px;">Full pricing</a>
+  <section id="pricing" aria-labelledby="pricing-heading">
+    <h2 class="sec" id="pricing-heading">Pricing</h2>
+    <div class="tiers">
+      <article class="tier">
+        <h3>Developer</h3>
+        <p class="price" data-price="api-free">Free <small>live today</small></p>
+        <p>10,000 requests a month, which is 10,000 scores: batch is a paid feature, so one request is one address. Self-service signup; same data, lower limits.</p>
+        <a class="go quiet" href="/score-demo/index.html#signup">Get a free key</a>
+      </article>
+      <article class="tier">
+        <h3>90-day pilot</h3>
+        <p class="price" data-price="pilot">£2,500 <small>for 90 days</small></p>
+        <p>Fixed scope, fixed fee: a measure agreed at kickoff, a review at day 45, a written evidence report at day 90. Credited in full against your first-year licence if you continue.</p>
+        <a class="go" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
+      </article>
+      <article class="tier tier-featured">
+        <h3>Professional <span class="tag">Launching</span></h3>
+        <p class="price" data-price="api-professional">£499 <small>a month</small></p>
+        <p>100,000 requests a month, under a fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each. For one platform integrating Sky Score.</p>
+        <a class="go quiet" data-event="pricing-professional-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Professional%20tier%20enquiry">Talk to us</a>
+      </article>
+      <article class="tier">
+        <h3>Enterprise licence</h3>
+        <p class="price" data-price="api-enterprise">On request <small>annual</small></p>
+        <p>For aggregators and large integrators: a master agreement, a service level, an audit log and a support contract.</p>
+        <a class="go quiet" data-event="pricing-enterprise-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Enterprise%20enquiry">Talk to us</a>
+      </article>
     </div>
-    <div class="pricing-row">
-      <div class="pricing-cell">
-        <div class="tier">Developer</div>
-        <div class="price">Free<span class="unit"> · 10,000 req/mo</span></div>
-        <div class="quota">Self-service signup. Same data, lower limits. 10,000 requests a month, which is 10,000 scores: batch is a paid feature, so one request is one address and the two numbers are the same. Ceiling 10,000 scores a month.</div>
-        <a class="btn btn-secondary" href="/score-demo/index.html#signup" style="font-size:12px;padding:8px 14px;">Get a free key</a>
-      </div>
-      <div class="pricing-cell">
-        <div class="tier">Professional · Launching</div>
-        <div class="price">£499<span class="unit"> /mo · 100k req/mo</span></div>
-        <div class="quota">Fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each, so scores rather than requests are the binding limit. Suitable for one platform integrating Sky Score.</div>
-        <a class="btn btn-secondary" data-event="pricing-professional-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Professional%20tier%20enquiry" style="font-size:12px;padding:8px 14px;">Talk to us</a>
-      </div>
-      <div class="pricing-cell">
-        <div class="tier">Enterprise licence</div>
-        <div class="price">POA<span class="unit"> · annual · MSA + SLA</span></div>
-        <div class="quota">Aggregators, large integrators. SLA, audit log, support contract.</div>
-        <a class="btn btn-secondary" data-event="pricing-enterprise-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Enterprise%20enquiry" style="font-size:12px;padding:8px 14px;">Talk to us</a>
-      </div>
-    </div>
-    <p style="margin-top:12px;font-size:13px;color:var(--muted);">Pricing firms up post-first-prospect-conversation. Convenience-tier model: integration value (SLA, structured JSON, batch, audit trail), not data exclusivity. The consumer site keeps every feature.</p>
+    <p class="note">You pay for the convenience (a service level, structured JSON, batch, an audit trail), not for exclusive data: the public site keeps every feature. <a data-event="pricing-detail-click" href="/pricing">Full pricing, including councils</a>.</p>
   </section>
 
-  <section>
-    <h2>Get started</h2>
-    <ol style="padding-left:20px;color:var(--text);font-size:15px;line-height:1.8;">
-      <li>Try the <a href="/score-demo/index.html" style="color:var(--amber);">live demo</a> with one of your live property postcodes.</li>
+  <section aria-labelledby="start-heading">
+    <h2 class="sec" id="start-heading">Get started</h2>
+    <ol class="steps">
+      <li>Try the <a href="/score-demo/index.html">live demo</a> with one of your live property postcodes.</li>
       <li>If the output is useful, sign up for a free API key on the same page.</li>
-      <li>Read the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" style="color:var(--amber);">methodology</a> - every threshold anchored, every assumption written down.</li>
-      <li>Open the <a href="/score-demo/api-docs.html" style="color:var(--amber);">OpenAPI 3.0 reference</a> and integrate.</li>
-      <li>If you need a paid tier, MSA, or have integration questions: <a href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20API%20integration" style="color:var(--amber);">support@skyscore.co.uk</a>.</li>
+      <li>Read the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a> - every threshold anchored, every assumption written down.</li>
+      <li>Open the <a href="/score-demo/api-docs.html">OpenAPI 3.0 reference</a> and integrate.</li>
+      <li>If you need a paid tier, a master agreement, or have integration questions: <a href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20API%20integration">support@skyscore.co.uk</a>.</li>
     </ol>
   </section>
 
-  <section>
-    <h2>Who is behind it</h2>
-    <p style="color:var(--muted);"><strong style="color:var(--text);">Bilal Khizar</strong>, finance professional turned AI builder. Built and operated solo: <a href="https://skyscore.co.uk/" style="color:var(--amber);">skyscore.co.uk</a>, the <a href="https://apps.apple.com/gb/app/sky-score/id6768118116" style="color:var(--amber);" rel="noopener">Sky Score iOS app</a>, this API, and an <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" style="color:var(--amber);">open methodology</a> published on GitHub. Contact: <a href="mailto:support@skyscore.co.uk" style="color:var(--amber);">support@skyscore.co.uk</a>.</p>
+  <section aria-labelledby="who-heading">
+    <h2 class="sec" id="who-heading">Who is behind it</h2>
+    <div class="founder">
+      <p style="margin:0;"><strong>Bilal Khizar</strong>, a finance professional turned builder, makes and runs Sky Score: <a href="https://skyscore.co.uk/">skyscore.co.uk</a>, the <a href="https://apps.apple.com/gb/app/sky-score/id6768118116" rel="noopener">iOS app</a>, this API, and an <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">open methodology</a> published on GitHub. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
+    </div>
   </section>
-
 </main>
 
 <footer>
-  <a href="/">Front page</a> ·
-  <a href="/map/">Full map</a> ·
-  <a href="/reports/">Reports</a> ·
-  <a href="/pricing">Pricing</a> ·
-  <a href="/privacy">Privacy</a> ·
-  <a href="/score-demo/index.html">Demo</a> ·
-  <a href="/score-demo/api-docs.html">API reference</a> ·
-  <a href="/score-demo/status.html">Status</a> ·
-  <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a> ·
-  <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">Licensing</a> ·
-  <a href="/.well-known/security.txt">Security</a>
+  <span>All figures from official public data.</span>
+  <span><a href="/">Front page</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/score-demo/index.html">Demo</a> &middot; <a href="/score-demo/api-docs.html">API reference</a> &middot; <a href="/score-demo/status.html">Status</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">Licensing</a> &middot; <a href="/.well-known/security.txt">Security</a> &middot; <a href="/privacy">Privacy</a></span>
 </footer>
 
 <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
