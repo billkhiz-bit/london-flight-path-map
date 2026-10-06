@@ -36,9 +36,15 @@ const RAW_TARGET = process.argv[2] || 'https://d1oe4ftwutjpf.cloudfront.net/';
 // neither form is a FAILURE, not a skip - a silently dropped page is how this
 // check came to cover one url in the first place.
 const BASE = RAW_TARGET.replace(/\/(index\.html)?$/, '');
+// SOURCE or LIVE (2026-10-06). The repo and the site disagree at the root since
+// the front page took / and the full map moved to /map/: in the repo the map is
+// index.html and the front page is home/. A page whose live address differs
+// carries `live`, the slug to resolve against the site; `slug` stays the repo's.
+const LIVE = !/^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(BASE);
+const slugOf = (meta) => (LIVE && meta.live) || meta.slug;
 
 const PAGES = [
-  { name: 'consumer app', slug: 'index', full: true, settle: 2500 },
+  { name: 'consumer app', slug: 'index', live: 'map/index', full: true, settle: 2500 },
   // THE SAME PAGE WITH ITS LEGEND OPEN, added 2026-08-23.
   //
   // Every entry here is audited in its LANDING state, and on a phone the map
@@ -54,6 +60,7 @@ const PAGES = [
   {
     name: 'consumer app, legend open',
     slug: 'index',
+    live: 'map/index',
     full: true,
     settle: 2500,
     prepare: 'legend',
@@ -70,6 +77,7 @@ const PAGES = [
   {
     name: 'consumer app, borough selected',
     slug: 'index',
+    live: 'map/index',
     full: true,
     settle: 2500,
     prepare: 'result',
@@ -87,6 +95,7 @@ const PAGES = [
   {
     name: 'consumer app, layers open',
     slug: 'index',
+    live: 'map/index',
     full: true,
     settle: 2500,
     prepare: 'layers',
@@ -101,6 +110,7 @@ const PAGES = [
   {
     name: 'consumer app, ranking open',
     slug: 'index',
+    live: 'map/index',
     full: true,
     settle: 2500,
     prepare: 'ranking',
@@ -110,9 +120,17 @@ const PAGES = [
   { name: 'terms of use', slug: 'terms' },
   { name: 'open data', slug: 'open-data/index' },
   { name: 'Bay Area flight paths', slug: 'bay-area/index' },
-  // The new front page under trial (branch homepage-v2) and its reports page.
-  { name: 'preview home', slug: 'preview/index', settle: 2500 },
-  { name: 'preview reports', slug: 'preview/reports/index' },
+  // The front page, its reports page and the free street report: home/ in the
+  // repo, /, /reports/ and /reports/street/ on the site (2026-10-06).
+  // The narrow end only, as the other pages get. NOT every viewport: on a wide
+  // screen the page opens as Bill's "ask first" question centred over the map
+  // (2026-10-05), which covers council areas BY DESIGN - the map is a backdrop
+  // until first use and every area stays a keyboard button. The COVERED
+  // detector reads that as 30 controls under the panel (tried 2026-10-06).
+  // tests/front-page.mjs drives the wide intro and the tool state instead.
+  { name: 'front page', slug: 'home/index', live: 'index', settle: 2500 },
+  { name: 'reports', slug: 'home/reports/index', live: 'reports/index' },
+  { name: 'free street report', slug: 'home/reports/street/index', live: 'reports/street/index' },
   { name: 'what changed', slug: 'changes', settle: 2500 },
   { name: 'API landing', slug: 'api/index' },
   { name: 'score demo', slug: 'score-demo/index' },
@@ -191,7 +209,7 @@ const browser = await chromium.launch();
 
 const unresolved = [];
 for (const meta of PAGES) {
-  const url = await resolvePage(meta.slug);
+  const url = await resolvePage(slugOf(meta));
   if (!url) {
     unresolved.push(meta);
     continue;
@@ -694,7 +712,7 @@ console.log(`\nResponsive audit: ${BASE || RAW_TARGET}\n`);
 // A page whose url resolved to nothing is a hard failure. Skipping it would
 // quietly recreate the single-page coverage this widening removed.
 for (const meta of unresolved) {
-  console.log(`UNRESOLVED    ${meta.name} (${meta.slug}) - no url served at either form`);
+  console.log(`UNRESOLVED    ${meta.name} (${slugOf(meta)}) - no url served at either form`);
   failures += 1;
 }
 let lastPage = null;

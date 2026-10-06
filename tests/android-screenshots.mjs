@@ -26,7 +26,7 @@ import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const SITE = 'https://skyscore.co.uk/';
+const SITE = 'https://skyscore.co.uk/map/'; // the full map since 2026-10-06
 const OUT = 'mobile/fastlane/metadata/android/en-GB/images/phoneScreenshots';
 
 // Play Store minimum: 320 dp width, 9:16 (or up to 19.5:9). 1080×1920 is

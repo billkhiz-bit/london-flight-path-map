@@ -623,7 +623,7 @@ Most of what matters now is not code. Owner in brackets.
 
 Parked on purpose: phase 2 departures (until the CAA data - the v5.4 fit showed DEFRA cannot reward them); Norwich on the map (watch scorecard traffic first); I17 (**28 Sep: IAM paste DONE - probe 23 granted, 0 denied; SES identity VERIFIED, DKIM SUCCESS; I17 code landed on master with the flag off.** **29 Sep: TTL deployed on master (live table reads ENABLED); PR #15 rebased, reworded to "press Confirm", and GREEN.** Left: SPF merge + DMARC in Cloudflare and the SES sandbox-exit request, both Bill's; then merge PR #15, which IS the flip - OPERATIONS s3.9); the Android rebuild (after the rename, so it goes through review once). Optional: `CITIES=norwich sh scripts/load_road_rasters.sh` for the per-postcode road tier on `/v1/environment`.
 
-**Added 2026-10-03, all Bill's and all short:** (a) a free OS Data Hub key on the OpenData plan, then open `/preview/#oskey=<key>` once on each device (the FRAGMENT since 2026-10-05, audit M-1: a `?oskey=` is now ignored) to judge the street-map trial; (b) before the first PAID report, indemnity insurance and NATS AIS's written confirmation on reusing AIP-derived routes (`LICENSING.md`); (c) a free Census API key, after the Bay Area map release; (d) try `/preview/` on a phone and rule on when it replaces `/`.
+**Added 2026-10-03, all Bill's and all short:** (a) a free OS Data Hub key on the OpenData plan, then open `/#oskey=<key>` once on each device (the FRAGMENT since 2026-10-05, audit M-1: a `?oskey=` is now ignored; `/preview/` until the front page moved on 2026-10-06) to judge the street-map trial; (b) before the first PAID report, indemnity insurance and NATS AIS's written confirmation on reusing AIP-derived routes (`LICENSING.md`); (c) a free Census API key, after the Bay Area map release (released: request it now); ~~(d) try `/preview/` on a phone and rule on when it replaces `/`~~ **ruled 2026-10-06: it IS `/` now** (Homepage redesign, below).
 
 ### Audit 2026-10-05: what it left open
 
@@ -682,6 +682,16 @@ would give it away.
 | - | Consumer paywall, adverts, affiliate links | Tiny at this traffic; costs the differentiator or the neutrality the community work rests on | Not now |
 
 #### Breathe London is London-only: the rules if it is built (recommended 2026-10-02)
+
+**Licence first (2026-10-06): there are TWO Breathe London APIs.** breathelondon.org (the
+GLA's network) is OGL v3.0, commercial use allowed with its attribution. breathelondon-
+communities.org (Imperial Projects' Communities network) is non-commercial only without
+IPROJ's prior written approval - and the Breathe London team's reply of 6 Oct pointed to
+THAT one. Build on the GLA API; take anything only the Communities network holds only once
+approval is in writing (OUTREACH_TARGETS L5 quotes both). **How, when built:** a scheduled
+script fetches the sensor list and recent averages into a static file under data/ (the
+key stays on Bill's machine, never in a page, and no visitor ever calls their API, which
+both licences let them throttle for "excessive use").
 
 It causes no problem for the other cities provided three rules hold. **(1) Display only,
 never scored**: scores are compared across cities (v5.0 anchors are national), so a
@@ -811,8 +821,11 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       a fix INSIDE it, never interpolated between fixes. **Palo Alto now reads
       "SFO SERFR4. Published altitude at SIDBY, inside the city: 4,000 ft or
       above".** On the page (new column, dashed line, key, notes), the live map
-      (`arrival` lines, a card row), and both area tiers. Committed, **not yet
-      deployed**.
+      (`arrival` lines, a card row), and both area tiers. **DEPLOYED 2026-10-06
+      (`f14a352`, CI green, master level) and verified from the origin**: every
+      uploaded file hash-equal to source, a browser on the live map drew 51
+      arrival-type lines (16 finals + 35 arrivals) and Palo Alto's card showed
+      the SIDBY row at desktop and phone, drift 22 pages / 29 data / 103 area.
 - [ ] **`/preview/` does not draw the arrivals.** Its engine draws finals and
       departures from the RAW record with its own rules (departures whole, cut
       by the city outline), so arrivals there would mean re-implementing the
@@ -960,6 +973,23 @@ the site is); Bill: "a grid system like Hometrack". The path so far, all in
   `homepage-v2`; fast-forward master after each deploy so the two stay level.
   (Since then master has moved on with `bay-area-on-map`: `35f1a2b` on
   2026-10-04. `homepage-v2` is fully contained in it.)
+- **THE FRONT PAGE SINCE 2026-10-06** (Bill: "making our mockup (with report
+  generation and api etc.) into our live website"; branch `front-door`). His
+  rulings, all four recommended options: **the installed app opens the full map**
+  (`start_url: "/map/"`; the App Store app IS the map), **reports are free and
+  self-serve for your own home, firms ask by email** (no payment system until
+  NATS confirms reuse and insurance is in place), **launch now and rename later**,
+  and **the API, pricing and open-data pages get the shared site bar and footer
+  now**, their bodies restyled later (the 103 area pages got the bar too). What
+  moved, and why each piece is where it is, is CLAUDE.md "THE FRONT DOOR MOVED".
+  New: `/reports/street/`, a visitor's own one-page aircraft-noise report made in
+  the browser from `js/street_report.mjs`, the same module the sample PDFs are
+  printed from. **Not deployed** until preflight and Bill's go-ahead.
+  - **Still to do, deliberately later:** restyle the bodies of `/api/` and
+    `/pricing` (dark, Geist) to the new design; the free AREA summary is still
+    by email (`scripts/area_summary.mjs` reads the live API with a key, so it
+    cannot run in a visitor's browser as it stands); draw the Bay Area's arrival
+    lines on the front page (it reads the raw FAA record, ROADMAP Bay Area).
 
 ### Parked idea: a community noise-sensor network (raised 2026-10-03)
 
@@ -999,6 +1029,18 @@ Kept for reference; nothing is built or promised.
   roof microphone with API access if he had the time, which he does not at
   present. Recorded so the offer is not forgotten; ask again only if a pilot
   is actually being set up.
+
+### Parked idea: mobile and broadband coverage (raised by Bill, 2026-10-06)
+
+Asked mid-way through the front-door work: "can we also factor in network
+coverage or is that too much?" Answer given: possible, parked. **Ofcom publishes
+mobile and broadband coverage by postcode** (Connected Nations: downloads, and an
+API behind a free key) - from memory, NOT yet called, and its reuse terms are
+unread, which is the first gate. **It sits outside the niche** Geovation advised
+(flight paths, not breadth; Crystal Roof already sells the breadth). If it is
+built, the Breathe London rules apply: **display only, never scored** (scores
+are compared across cities), a fact on the panel and in reports, absent - never
+"no coverage" - where it was not measured.
 
 ### Parked idea: light aircraft, leaded fuel and schools (raised by a user, 2026-10-03)
 

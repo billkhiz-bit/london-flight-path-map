@@ -56,7 +56,7 @@ version-pinned fonts):
 
 ```bash
 make web-deploy-all        # fonts first (load-bearing), then every target below
-make web-deploy            # index.html, privacy, pricing, changes, terms, api/, js/ (api-base.js + flight_geometry.mjs)
+make web-deploy            # the map (index.html -> /map/), privacy, pricing, changes, terms, api/, js/ (api-base.js + every js/*.mjs)
 make data-deploy           # data/*.json incl. borough-extra.json + stations.json (no-cache)
 make pwa-deploy            # manifest, sw.js, icons
 make demo-deploy           # score-demo/ incl. openapi.yaml and vendored Swagger
@@ -66,12 +66,22 @@ make area-deploy           # area/ - 100 pages, sync --delete, invalidates
 make open-data-deploy      # open-data/ - the page + the borough CSV (the new front page reads the CSV)
 make bay-area-deploy       # bay-area/ - the Bay Area flight-path page + its noise picture
 make talks-deploy          # talks/ - sync the write-up PDFs + index.html (standalone, not in web-deploy-all)
-make preview-deploy        # preview/ - the new front page under trial + js/flight_geometry.mjs + the five data files its engine reads (standalone, noindex, not in web-deploy-all; run pwa-deploy with it whenever sw.js changed)
+make home-deploy           # THE FRONT PAGE (home/index.html -> /), /reports/ + /reports/street/, the /preview/ forwarding pages, js/*.mjs. AFTER web-deploy (2026-10-06)
 ```
 
 (This list named eight targets and omitted `open-data-deploy` and
 `bay-area-deploy` until 2026-10-03, when `preview-deploy` was added - count
-the `.PHONY` lines in the Makefile rather than trusting it.)
+the `.PHONY` lines in the Makefile rather than trusting it. `preview-deploy`
+became `home-deploy` on 2026-10-06.)
+
+**THE FRONT DOOR MOVED ON 2026-10-06.** `/` is the front page
+(`home/index.html`, uploaded by `home-deploy`) and the full map is at `/map/`
+(`index.html` is still its source, uploaded to `map/index.html` by
+`web-deploy`, which no longer writes the root key). **Order: `web-deploy`
+BEFORE `home-deploy`** - the front page links to `/map/` everywhere, and run
+the other way round there is a window in which those links 404. `pwa-deploy`
+after both: `sw.js` v1.0.37 precaches `/map/` best-effort, outside the
+atomic list, so a missing `/map/` cannot stop the worker installing.
 
 **ORDER: `data-deploy` BEFORE `web-deploy` when both are run (2026-09-19).**
 `web-deploy` uploads AND INVALIDATES `index.html`, and the page fetches

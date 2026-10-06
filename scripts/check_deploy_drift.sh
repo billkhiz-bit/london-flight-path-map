@@ -33,8 +33,21 @@ set -u
 BASE="${SMOKE_BASE:-https://d1oe4ftwutjpf.cloudfront.net}"
 
 # "<local path>|<url path>"
+# The map's source is index.html and it is served at /map/; the front page's
+# source is home/index.html and it is served at / (2026-10-06, web-deploy and
+# home-deploy). Comparing index.html against / would now compare the map with
+# the front page and report drift on every run.
 SURFACES='
-index.html|index.html
+index.html|map/
+home/index.html|index.html
+home/reports/index.html|reports/
+home/reports/street/index.html|reports/street/
+home/moved/preview/index.html|preview/
+home/moved/preview/reports/index.html|preview/reports/
+js/flight_geometry.mjs|js/flight_geometry.mjs
+js/street_report.mjs|js/street_report.mjs
+js/street_report_page.mjs|js/street_report_page.mjs
+js/home-engine.mjs|js/home-engine.mjs
 pricing.html|pricing
 privacy.html|privacy
 terms.html|terms

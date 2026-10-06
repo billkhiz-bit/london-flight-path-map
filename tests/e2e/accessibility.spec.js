@@ -10,17 +10,19 @@ import { stubLiveApi } from '../stub-live-api.mjs';
 // prospects, had never been scanned at all. A green a11y check covering one
 // eighth of the site is worse than none: it reads as "the site is accessible".
 const PAGES = [
-  { path: '/', name: 'consumer app', waitFor: '#loading' },
+  // The full map is at /map/ since 2026-10-06, when the front page took /.
+  { path: '/map/', name: 'consumer app (full map)', waitFor: '#loading' },
   { path: '/pricing', name: 'pricing' },
   { path: '/privacy', name: 'privacy' },
   { path: '/terms', name: 'terms of use' },
   { path: '/open-data/', name: 'open data' },
   { path: '/bay-area/', name: 'Bay Area flight paths' },
-  // The new front page under trial, deployed 2026-10-03. Its council areas are
-  // controls drawn after the data lands, so the scan waits for them: scanned
-  // at load it would pass on a page with no map in it.
-  { path: '/preview/', name: 'new front page (preview)', ready: '#map .boro' },
-  { path: '/preview/reports/', name: 'reports (preview)' },
+  // The front page (at / since 2026-10-06; trialled at /preview/ from 2026-10-03).
+  // Its council areas are controls drawn after the data lands, so the scan waits
+  // for them: scanned at load it would pass on a page with no map in it.
+  { path: '/', name: 'front page', ready: '#map .boro' },
+  { path: '/reports/', name: 'reports' },
+  { path: '/reports/street/', name: 'free street report' },
   { path: '/api/', name: 'API landing' },
   { path: '/changes', name: 'what changed this quarter' },
   { path: '/score-demo/', name: 'score demo' },
@@ -110,7 +112,7 @@ test.describe('Accessibility', () => {
   // A gate that inspects one keystroke short of the product is the same shape as
   // the two gates this repo has already been burned by.
   test('WCAG 2.1 AA scan: result panel after a postcode search', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/map/'); // the full map, at /map/ since 2026-10-06
     await page.waitForSelector('#app', { state: 'visible', timeout: 30_000 });
 
     const input = page.locator('#search-input');
@@ -158,7 +160,7 @@ test.describe('Accessibility', () => {
   // with a click listener and no role looks inert to it, which is precisely why
   // it needs an explicit behavioural test rather than another rule scan.
   test('ranking rows are operable by keyboard alone', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/map/'); // the full map, at /map/ since 2026-10-06
     await page.waitForSelector('#app', { state: 'visible', timeout: 30_000 });
     await page.evaluate(() => switchTab('ranking'));
     const rows = page.locator('#borough-ranking tbody tr[data-rank-name]');

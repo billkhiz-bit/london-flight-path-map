@@ -54,6 +54,12 @@
       radial-gradient(circle at 15% 0%, rgba(245,158,11,0.08), transparent 40%),
       radial-gradient(circle at 90% 30%, rgba(226,88,34,0.06), transparent 50%);
   }
+  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
+  .site-top { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }
+  .site-top .site-brand { font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--text); }
+  .site-top .site-nav { display:flex; gap:4px; flex-wrap:wrap; }
+  .site-top .site-nav a { font-size:14px; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--muted); }
+  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] { background:var(--border); color:var(--text); }
   header { padding: 48px 24px 8px; max-width: 960px; margin: 0 auto; }
   .crumb {
     font-family: 'Geist Mono', monospace;
@@ -210,6 +216,10 @@
 </head>
 <body>
 
+<!-- The site bar, the same on every page since 2026-10-06 (the front page's own header.top). A <nav>, not a
+     <header>: this page styles every header element as its hero. -->
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a><a href="/bay-area/">Bay Area</a></div></nav>
+
 <header>
   <p class="crumb"><a href="/">&larr; Sky Score</a> · <a href="/api/">API overview</a></p>
   <h1>Pricing</h1>
@@ -278,7 +288,9 @@
 </main>
 
 <footer>
-  <a href="/">Consumer site</a> ·
+  <a href="/">Front page</a> ·
+  <a href="/map/">Full map</a> ·
+  <a href="/reports/">Reports</a> ·
   <a href="/api/">API overview</a> ·
   <a href="/score-demo/index.html">Demo</a> ·
   <a href="/score-demo/api-docs.html">API reference</a> ·

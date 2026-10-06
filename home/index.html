@@ -5,12 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sky Score: how loud are the planes where you want to live?</title>
     <meta name="description" content="Type a postcode and get the official aircraft and road noise and air quality figures for that street, with the flight routes that pass it. Open government data for English city regions, New York and the San Francisco Bay Area." />
-    <meta name="robots" content="noindex, nofollow" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://api.os.uk; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com; base-uri 'self'; form-action 'self';" />
+    <link rel="canonical" href="https://skyscore.co.uk/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sky Score" />
+    <meta property="og:title" content="How loud are the planes where you want to live?" />
+    <meta property="og:description" content="Official aircraft and road noise and air quality for a postcode, with the flight routes that pass it. Open government data." />
+    <meta property="og:url" content="https://skyscore.co.uk/" />
+    <meta property="og:image" content="https://skyscore.co.uk/preview.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://skyscore.co.uk/preview.png" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://api.os.uk https://cubitt33.goatcounter.com; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
     <!--
-      PREVIEW of the new homepage (branch homepage-v2, 2026-10-02), served at
-      /preview/ so it can be tried on a phone against the live data. Not the
-      site's front door: /index.html is. noindex until it is.
+      THE FRONT PAGE, served at / since 2026-10-06 (Bill: "making our mockup
+      ... into our live website"). Its source lives in home/ because the repo's
+      index.html is the full map, which is served at /map/ and which dozens of
+      scripts write generated blocks into. `make home-deploy` puts this file at
+      the root key; `make web-deploy` puts index.html at map/index.html.
+      Built as /preview/ from 2026-10-02 (branch homepage-v2): Bill's "ask
+      first, then the tool".
     -->
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
@@ -162,7 +174,6 @@
 
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer a { color: var(--mid); }
-      .mock { position: fixed; pointer-events: none; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
 
       /* STACKED below 1280px and on short screens (audit 2026-10-05 I-4): from 761px
          to about 1180px the floating 520px panel lay over the layer toggles, the city
@@ -218,12 +229,11 @@
   </head>
   <body data-map-inset='{"left":566,"top":0,"right":0,"bottom":0}'>
     <a class="skip" href="#pc">Skip to the search</a>
-    <span class="mock" aria-hidden="true">Preview</span>
     <header class="top">
       <a class="brand" href="/">Sky Score</a>
       <nav class="top-nav" aria-label="Site">
-        <a href="/">Live map</a>
-        <a href="/preview/reports/">Reports</a>
+        <a href="/map/">Full map</a>
+        <a href="/reports/">Reports</a>
         <a href="/api/">API</a>
         <a href="/open-data/">Open data</a>
         <a href="/bay-area/">Bay Area</a>
@@ -254,7 +264,7 @@
             <div class="rows" id="ans-rows"></div>
             <p class="routes" id="ans-routes"></p>
             <p class="area" id="ans-area"></p>
-            <p class="more"><a id="ans-link" href="/">See the full picture on the map</a></p>
+            <p class="more"><a id="ans-link" href="/map/">See the full picture on the map</a></p>
           </div>
           <div class="borough" id="borough" aria-live="polite"></div>
         </div>
@@ -291,7 +301,7 @@
             <h3>Reports for your street</h3>
             <p>One page of the official figures for the streets you name. Free for your own home and for residents' groups; for buying agents and surveyors, a sourced answer to hand to a client.</p>
             <div class="fig">1 page<small>every number with its source and its date</small></div>
-            <div class="go-row"><a class="go quiet" href="/preview/reports/">See a sample</a><a class="also" href="/preview/reports/#prices">What it costs</a></div>
+            <div class="go-row"><a class="go" href="/reports/street/">Make yours, free</a><a class="also" href="/reports/#prices">What it costs</a></div>
           </article>
           <article class="card">
             <h3>Data for your business</h3>
@@ -309,13 +319,14 @@
     </main>
 
     <footer>
-      <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd. This is a preview of a new front page; <a href="/">the current site</a> is unchanged.</span>
-      <span><a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+      <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd.</span>
+      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
 
     <script src="/js/vendor/d3.v7.min.js"></script>
     <script src="/js/api-base.js"></script>
     <!-- A module: it imports the runway geometry the report generators use, js/flight_geometry.mjs. -->
-    <script type="module" src="/preview/hp-engine.js"></script>
+    <script type="module" src="/js/home-engine.mjs"></script>
+    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   </body>
 </html>

@@ -58,9 +58,13 @@ const PAGES = [
   { path: '/terms', name: 'terms of use' },
   { path: '/open-data/', name: 'open data' },
   { path: '/bay-area/', name: 'Bay Area flight paths' },
+  // The front page, its reports page and the free street report. Their SOURCE is
+  // home/ (live at /, /reports/ and /reports/street/ since 2026-10-06); this
+  // gate serves the repo, where / is still index.html, the full map.
   // renderedWhen, not waitFor: waitFor also waits for the live app's locator inset, which this page lacks.
-  { path: '/preview/', name: 'preview home', renderedWhen: '#map .boro' },
-  { path: '/preview/reports/', name: 'preview reports' },
+  { path: '/home/', name: 'front page', renderedWhen: '#map .boro' },
+  { path: '/home/reports/', name: 'reports' },
+  { path: '/home/reports/street/', name: 'free street report' },
   { path: '/api/', name: 'API landing' },
   {
     path: '/changes',

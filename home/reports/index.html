@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Reports: one page of official figures for a street or an area - Sky Score</title>
     <meta name="description" content="One-page reports built from official data: aircraft noise for a single address, with the published approach that passes it, or an air and noise summary for a whole area. Free for residents' groups." />
-    <meta name="robots" content="noindex, nofollow" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; base-uri 'self'; form-action 'self';" />
+    <link rel="canonical" href="https://skyscore.co.uk/reports/" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
     <!--
-      PREVIEW (branch homepage-v2, 2026-10-02): the Reports page the new front
-      page links to. Both samples are real output of the generators in
+      The Reports page, served at /reports/ since 2026-10-06 (built as
+      /preview/reports/ on 2026-10-02). Since the same day a visitor makes the
+      street report themselves at /reports/street/. Both samples are real output of the generators in
       scripts/ (address_noise_report.mjs, area_summary.mjs) on live data, so
       what is promised here is what the scripts make. Prices (Bill, 2026-10-03):
       free for your own home and for residents' groups, 35 pounds a report
@@ -54,16 +55,14 @@
       p.note { margin: 0; color: var(--mid); max-width: 70ch; font-size: 15px; }
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer a { color: var(--mid); }
-      .mock { position: fixed; pointer-events: none; right: 10px; bottom: 10px; font: 600 11px var(--font-mono); background: #fff3e6; color: var(--orange-ink); border: 1px solid var(--orange); padding: 4px 8px; border-radius: 6px; z-index: 5; }
     </style>
   </head>
   <body>
-    <span class="mock" aria-hidden="true">Preview</span>
     <header class="top">
-      <a class="brand" href="/preview/">Sky Score</a>
+      <a class="brand" href="/">Sky Score</a>
       <nav class="top-nav" aria-label="Site">
-        <a href="/">Live map</a>
-        <a href="/preview/reports/" aria-current="page">Reports</a>
+        <a href="/map/">Full map</a>
+        <a href="/reports/" aria-current="page">Reports</a>
         <a href="/api/">API</a>
         <a href="/open-data/">Open data</a>
         <a href="/bay-area/">Bay Area</a>
@@ -84,7 +83,7 @@
             <li>A map of the routes round it, from the official aeronautical publication</li>
           </ul>
           <p class="for"><b>For:</b> buyers and renters (free for your own home), buying agents and relocation firms, conveyancers and surveyors (<a href="#prices">prices below</a>).</p>
-          <div class="actions"><a class="go" href="/preview/reports/sample-street-report-kew.pdf">See the sample (Kew, TW9; PDF)</a><a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Street%20report">Ask for one</a></div>
+          <div class="actions"><a class="go" href="/reports/street/">Make yours, free</a><a class="go quiet" href="/reports/sample-street-report-kew.pdf">See a sample (Kew, TW9; PDF)</a></div>
         </article>
         <article>
           <h2>Air and noise summary for an area</h2>
@@ -96,7 +95,7 @@
             <li>Where the area ranks for air quality and road noise</li>
           </ul>
           <p class="for"><b>For:</b> residents' groups, for a funding bid, a consultation response or a meeting. Free.</p>
-          <div class="actions"><a class="go" href="/preview/reports/sample-area-summary-norwich.pdf">See the sample (Norwich; PDF)</a><a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Area%20summary">Ask for one</a></div>
+          <div class="actions"><a class="go" href="/reports/sample-area-summary-norwich.pdf">See the sample (Norwich; PDF)</a><a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Area%20summary">Ask for one</a></div>
         </article>
       </div>
 
@@ -115,11 +114,12 @@
         <div><b>Firms: £35 a report</b>Buying agents, relocation firms, conveyancers and surveyors. Your first report is free, and ten cost £250. An area or site study for a firm starts at £150.</div>
       </div>
 
-      <p class="note">To ask for a report, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> with the postcode or the streets, and say whether it is for your own home, a residents' group or a firm. The prices are what you pay: Cubitt33 Ltd is not registered for VAT, so none is added. A report is not a conveyancing search or a survey and does not replace either. Reports cover the city regions on <a href="/">the map</a>; the San Francisco Bay Area has <a href="/bay-area/">its own page</a> for now.</p>
+      <p class="note">For your own home, <a href="/reports/street/">make the street report yourself</a>: it is made in your browser and is free. For an area summary, or a report for a client, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> with the postcode or the streets, and say whether it is for a residents' group or a firm. The prices are what you pay: Cubitt33 Ltd is not registered for VAT, so none is added. A report is not a conveyancing search or a survey and does not replace either. Reports cover the city regions on <a href="/map/">the map</a>; the San Francisco Bay Area has <a href="/bay-area/">its own page</a> for now.</p>
     </main>
     <footer>
       <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd.</span>
-      <span><a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
+    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   </body>
 </html>

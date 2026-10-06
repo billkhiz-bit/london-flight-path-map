@@ -220,8 +220,20 @@
 // replace the front door. Found reading the fetch handler before the first
 // preview deploy, not by a gate; tests/test_badge_edge_cache.py's rule for
 // /badge is the nearest guard and it is per-path.
-const VERSION = 'v1.0.36';
+// v1.0.37 (2026-10-06): the FRONT DOOR MOVED. On the web / is the new front
+// page (home/index.html) and the full map is at /map/, the page an installed app
+// opens (manifest start_url). So /map/ is precached too, and is the FIRST
+// fallback for an offline navigation. But it is precached BEST-EFFORT, outside
+// the atomic list: only the live site serves /map/. The native app bundles the
+// map at its root (index.html), and every local gate serves the repo, where /
+// is the map and /map/ is a 404 - and cache.addAll() is atomic, so the first
+// version, which put /map/ IN SHELL_ASSETS, stopped the worker installing in
+// both (preflight: "service worker activates state=timeout-waiting"). The
+// atomic list keeps / and /index.html: the map in the app and the repo, the
+// front page on the web, which is harmless to hold.
+const VERSION = 'v1.0.37';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
+const MAP_SHELL = '/map/';
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
 
 // Pre-cached on install. Just enough for the shell to render offline.
@@ -300,7 +312,14 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(SHELL_CACHE)
-      .then((cache) => cache.addAll(SHELL_ASSETS))
+      .then(async (cache) => {
+        await cache.addAll(SHELL_ASSETS);
+        // The map's own address on the web (v1.0.37 note above). Best-effort:
+        // a 404 here is the native app or a local gate, never a reason not to
+        // install. A failure is not swallowed silently on the live site, where
+        // a missing /map/ is also the installed app's start page and shows.
+        await cache.add(MAP_SHELL).catch(() => {});
+      })
       // skipWaiting lets a new SW take control immediately on next page load
       // without waiting for all tabs to close. Combined with clients.claim()
       // in activate, deploys propagate within one refresh cycle.
@@ -430,9 +449,11 @@ async function networkFirst(req) {
   } catch {
     const cached = await caches.match(req);
     if (cached) return cached;
-    // Last-resort fallback: the cached index.html. Better to show a
-    // shell with stale data than a browser-default offline page.
-    const fallback = await caches.match('/index.html');
+    // Last-resort fallback: the cached map - /map/ on the web since v1.0.37,
+    // when / became the front page, and /index.html where the map IS the root
+    // (the native app, a local gate). Better to show a shell with stale data
+    // than a browser-default offline page.
+    const fallback = (await caches.match(MAP_SHELL)) || (await caches.match('/index.html'));
     if (fallback) return fallback;
     return new Response('Offline', { status: 503, statusText: 'Offline' });
   }

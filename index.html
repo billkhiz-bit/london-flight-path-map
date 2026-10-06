@@ -29,7 +29,8 @@
       property="og:description"
       content="The noise + livability data UK listings sites have a structural reason not to show. Free postcode-level scoring for UK and NYC. Open methodology, reproducible."
     />
-    <link rel="canonical" href="https://skyscore.co.uk/" />
+    <!-- The full map is served at /map/ since 2026-10-06; / is the front page (home/index.html). -->
+    <link rel="canonical" href="https://skyscore.co.uk/map/" />
     <meta name="theme-color" content="#141414" />
     <meta name="robots" content="index,follow" />
     <script type="application/ld+json">
@@ -46,7 +47,7 @@
       }
     </script>
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://skyscore.co.uk" />
+    <meta property="og:url" content="https://skyscore.co.uk/map/" />
     <meta property="og:image" content="https://skyscore.co.uk/preview.png" />
     <meta property="og:site_name" content="Sky Score" />
 
@@ -4639,7 +4640,7 @@
       src="/js/vendor/d3.v7.min.js"
       integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i"
     ></script>
-    <script src="js/api-base.js"></script>
+    <script src="/js/api-base.js"></script>
     <script>
       // PWA: register the service worker. Runs after window load so it
       // never blocks the initial map paint. Service workers only register
@@ -14423,7 +14424,7 @@
 
       // A ZIP's share of land in the city it is filed under keeps the name
       // honest: 94301 is Palo Alto, 95014 is 44% Cupertino and mostly empty
-      // hills. The same words as the new front page (preview/hp-engine.js).
+      // hills. The same words as the new front page (js/home-engine.mjs).
       function zipShareText(zip) {
         const pct = Math.round(zip.share * 100);
         if (zip.share >= 0.9) return `In ${zip.place}.`;

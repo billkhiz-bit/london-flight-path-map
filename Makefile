@@ -58,7 +58,8 @@ help:
 	@echo ""
 	@echo "  Web / PWA"
 	@echo "    fonts-deploy        Upload self-hosted fonts/ (runs FIRST in web-deploy-all: sw.js precaches them)"
-	@echo "    web-deploy          Upload js/api-base.js + index/privacy/pricing/changes/terms/api + invalidate"
+	@echo "    web-deploy          Upload js/ modules + the map (index.html, at /map/) + privacy/pricing/changes/terms/api"
+	@echo "    home-deploy         Upload the front page (home/index.html, at /) + /reports/ + the /preview/ redirects"
 	@echo "    data-deploy         Upload data/ boundaries + borough-extra + quiet datasets (run BEFORE pwa-deploy)"
 	@echo "    pwa-deploy          Upload manifest, sw.js, icons (PWA assets)"
 	@echo "    deeplinks-deploy    Upload .well-known/apple-app-site-association + assetlinks.json"
@@ -69,7 +70,6 @@ help:
 	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
 	@echo "    open-data-deploy    Upload open-data/ (borough CSV + its page; rebuild with the area pages)"
 	@echo "    bay-area-deploy     Upload bay-area/ (the Bay Area flight-path page + its noise picture)"
-	@echo "    preview-deploy      Upload preview/ (the new front page under trial; standalone, noindex)"
 	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta + open data + bay area"
 	@echo ""
 	@echo "  iOS (Codemagic-driven)"
@@ -112,13 +112,15 @@ web-deploy:
 		s3://$(S3_BUCKET)/js/api-base.js \
 		--content-type "application/javascript" \
 		--cache-control "no-cache" --region $(AWS_REGION)
-	# js/flight_geometry.mjs (moved from scripts/ on 2026-10-03): the runway
-	# geometry the two report generators AND the new front page's engine
-	# import. It lives under js/ so the browser can load it; this target owns
-	# js/, and preview-deploy uploads the same file to the same key so the
-	# preview never fetches a module the origin lacks.
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/flight_geometry.mjs \
-		s3://$(S3_BUCKET)/js/flight_geometry.mjs \
+	# The ES modules under js/: the runway geometry (flight_geometry.mjs, moved
+	# from scripts/ on 2026-10-03), the street report (street_report.mjs, one
+	# holder with scripts/address_noise_report.mjs), the front page's engine
+	# (home-engine.mjs) and the report page's script (street_report_page.mjs).
+	# This target owns js/; home-deploy uploads the same four to the same keys,
+	# so a front page deployed on its own never fetches a module the origin lacks.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/ \
+		s3://$(S3_BUCKET)/js/ \
+		--recursive --exclude "*" --include "*.mjs" \
 		--content-type "application/javascript" \
 		--cache-control "no-cache" --region $(AWS_REGION)
 	# --cache-control "no-cache" added 2026-09-08 (audit s4). index.html
@@ -133,10 +135,17 @@ web-deploy:
 	# `no-cache` means "store it, but revalidate before use", NOT "do not
 	# store" - so this costs a conditional request and returns 304, and never
 	# a stale shell. Same reasoning, same value, as borough-extra.json in
-	# data-deploy. index.html is in sw.js SHELL_ASSETS, so the offline path is
-	# unaffected either way.
+	# data-deploy. The map is sw.js's app shell (/map/), so the offline path
+	# is unaffected either way.
+	#
+	# AT map/index.html SINCE 2026-10-06: the front page (home/index.html,
+	# home-deploy) took the root key, and the full map moved to /map/. The
+	# SOURCE stays index.html because a dozen scripts write generated blocks
+	# into it by that name. This target no longer writes the root key at all,
+	# so run it BEFORE home-deploy (web-deploy-all does): /map/ must exist
+	# before the front page starts linking to it.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp index.html \
-		s3://$(S3_BUCKET)/index.html \
+		s3://$(S3_BUCKET)/map/index.html \
 		--content-type "text/html" \
 		--cache-control "no-cache" --region $(AWS_REGION)
 	# NB: the CloudFront function sky-score-rewrite-index rewrites
@@ -204,7 +213,7 @@ web-deploy:
 	# rather than a Makefile-level export because make is not on PATH here
 	# and these recipes are run by pasting them into Git Bash.
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
-		--distribution-id $(CF_DISTRIBUTION) --paths '/index.html' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*'
+		--distribution-id $(CF_DISTRIBUTION) --paths '/map*' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*'
 
 .PHONY: fonts-deploy
 fonts-deploy:
@@ -298,6 +307,27 @@ data-deploy:
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-zips.json \
 		s3://$(S3_BUCKET)/data/us-bayarea-zips.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# Five files the front page's engine and the street report read at run
+	# time and nothing else serves: the map and the Bay Area page carry their
+	# contents inline, generated. preview-deploy uploaded the first four from
+	# 2026-10-03 and its comment said they move here when the page became the
+	# front door, which it did on 2026-10-06. covid-understatement.json is the
+	# street report's 2021-vs-2024 caveat (scripts/measure_covid_understatement.py).
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/flight-procedures.json \
+		s3://$(S3_BUCKET)/data/flight-procedures.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-rasters.json \
+		s3://$(S3_BUCKET)/data/aircraft-noise-rasters.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-places.json \
+		s3://$(S3_BUCKET)/data/us-bayarea-places.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-flight-procedures.json \
+		s3://$(S3_BUCKET)/data/us-flight-procedures.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/covid-understatement.json \
+		s3://$(S3_BUCKET)/data/covid-understatement.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	# The tiers beneath a Bay Area city (2026-10-05): San Francisco's 41
 	# neighbourhoods and the 165 ZIP areas, from scripts/build_bayarea_areas.py.
@@ -582,63 +612,38 @@ bay-area-deploy:
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/bay-area/*'
 
-.PHONY: preview-deploy
-preview-deploy:
-	# The new front page under trial (branch homepage-v2, 2026-10-02) at
-	# /preview/, with its reports page, the shared engine and two sample
-	# PDFs. Standalone on purpose, like talks-deploy: it is not the site's
-	# front door (noindex), so web-deploy-all does not run it and
-	# check_deploy_drift.sh does not compare it. Pages no-cache, so a change
-	# reaches the phone it is being tried on; the PDFs for a day.
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync preview/ s3://$(S3_BUCKET)/preview/  \
+.PHONY: home-deploy
+home-deploy:
+	# THE FRONT PAGE (2026-10-06): home/index.html at the ROOT key, the reports
+	# pages at /reports/, the free street report at /reports/street/, and two
+	# small pages at /preview/ and /preview/reports/ that send anyone holding
+	# the old trial links on to the new addresses. Built as /preview/ from
+	# 2026-10-02 (preview-deploy, now gone). Pages no-cache; the sample PDFs
+	# for a day. Runs AFTER web-deploy in web-deploy-all: web-deploy moves the
+	# map to /map/ and no longer writes the root key, so this is what replaces
+	# the old map there, and /map/ exists before this page links to it.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp home/index.html \
+		s3://$(S3_BUCKET)/index.html \
+		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync home/reports/ s3://$(S3_BUCKET)/reports/  \
 		--exclude "*" --include "*.html"  \
 		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync preview/ s3://$(S3_BUCKET)/preview/  \
-		--exclude "*" --include "*.js"  \
-		--content-type "application/javascript" --cache-control "no-cache" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync preview/ s3://$(S3_BUCKET)/preview/  \
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync home/reports/ s3://$(S3_BUCKET)/reports/  \
 		--exclude "*" --include "*.pdf"  \
 		--content-type "application/pdf" --cache-control "public,max-age=86400" --region $(AWS_REGION)
-	# The engine is a module that imports js/flight_geometry.mjs (one holder
-	# with the report generators). Uploaded here as well as by web-deploy,
-	# because the preview can go out on its own and must not fetch a module
-	# the origin does not have. Same key, so the two cannot disagree.
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/flight_geometry.mjs \
-		s3://$(S3_BUCKET)/js/flight_geometry.mjs \
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync home/moved/preview/ s3://$(S3_BUCKET)/preview/  \
+		--exclude "*" --include "*.html"  \
+		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
+	# The same four modules web-deploy uploads, to the same keys: this page
+	# can go out on its own and must not fetch a module the origin lacks.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp js/ \
+		s3://$(S3_BUCKET)/js/ \
+		--recursive --exclude "*" --include "*.mjs" \
 		--content-type "application/javascript" \
 		--cache-control "no-cache" --region $(AWS_REGION)
-	# Four data files the engine reads at run time that no other target
-	# uploads: the live map and the Bay Area page carry their contents
-	# inline, generated, so until 2026-10-03 the origin had never held them
-	# and the deployed preview would have opened on "The map could not
-	# load". Here for the same reason as the module above; they move to
-	# data-deploy when this page becomes the front door. The last check in
-	# tests/preview-home.mjs fails any file the page fetches that no target
-	# uploads.
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/flight-procedures.json \
-		s3://$(S3_BUCKET)/data/flight-procedures.json \
-		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-rasters.json \
-		s3://$(S3_BUCKET)/data/aircraft-noise-rasters.json \
-		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-places.json \
-		s3://$(S3_BUCKET)/data/us-bayarea-places.json \
-		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-flight-procedures.json \
-		s3://$(S3_BUCKET)/data/us-flight-procedures.json \
-		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
-	# The Bay Area's ZIP areas, which the search reads on the first ZIP typed
-	# (scripts/build_bayarea_zips.py). Here with the four above, for the same
-	# reason, until the live map and the Lambda read it too.
-	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-zips.json \
-		s3://$(S3_BUCKET)/data/us-bayarea-zips.json \
-		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
-		--paths '/preview/*' '/js/flight_geometry.mjs' \
-			'/data/flight-procedures.json' '/data/aircraft-noise-rasters.json' \
-			'/data/us-bayarea-places.json' '/data/us-flight-procedures.json' \
-			'/data/us-bayarea-zips.json'
+		--paths '/' '/index.html' '/reports*' '/preview*' '/js/*'
 
 .PHONY: talks-deploy
 talks-deploy:
@@ -670,8 +675,8 @@ talks-deploy:
 # that this target covered 4 of the 15 publicly-served surfaces while being
 # named "all", which is the shape of every gate failure in this repo: green
 # because of what it was not looking at.
-web-deploy-all: fonts-deploy data-deploy web-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy open-data-deploy bay-area-deploy
-	@echo "Web + data + PWA + demo + prototype + area + meta + open data + Bay Area deployed. Skip deeplinks-deploy until placeholders are filled."
+web-deploy-all: fonts-deploy data-deploy web-deploy home-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy open-data-deploy bay-area-deploy
+	@echo "Web + front page + data + PWA + demo + prototype + area + meta + open data + Bay Area deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------
 # iOS (Codemagic does the heavy lifting; we just trigger and submit)

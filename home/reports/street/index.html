@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your free aircraft noise report, for any postcode we cover - Sky Score</title>
+    <meta name="description" content="Make a one-page aircraft noise report for your own home: DEFRA's official noise level, the published approach and departure routes that pass it and how high the aircraft are. Free, made in your browser, ready to save as a PDF." />
+    <link rel="canonical" href="https://skyscore.co.uk/reports/street/" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
+    <!--
+      THE FREE STREET REPORT (2026-10-06). Bill's ruling: reports are free for a
+      person's own home, so a visitor makes their own here instead of asking by
+      email. The report is js/street_report.mjs, the same module the sample PDFs
+      are printed from (scripts/address_noise_report.mjs), so what this page
+      makes and what the samples show cannot differ. It is drawn into an iframe
+      because its stylesheet styles body, h1, table and footer for an A4 page,
+      and printing the iframe prints the report alone.
+      Prices for firms are NOT repeated here: /reports/#prices is their one holder.
+    -->
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      :root {
+        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+        --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+        --gutter: clamp(16px, 4vw, 48px);
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
+      a { color: inherit; }
+      :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); }
+      .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+      nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+      nav.top-nav a { font-size: 14px; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--mid); }
+      nav.top-nav a:hover, nav.top-nav a[aria-current] { background: #e9e8e3; color: var(--dark); }
+      main { padding: 24px var(--gutter) 40px; max-width: 1080px; }
+      h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 4vw, 48px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 12px; max-width: 20ch; text-wrap: balance; }
+      p.lead { margin: 0 0 24px; color: var(--mid); font-size: 18px; max-width: 60ch; }
+      .field-label { display: block; margin: 0 0 6px; font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      form.check { display: flex; gap: 8px; max-width: 560px; }
+      form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
+      form.check input::placeholder { color: var(--mid); }
+      form.check button, button.print { font: 600 16px var(--font-body); padding: 14px 20px; border: 0; border-radius: 12px; background: var(--orange); color: var(--dark); cursor: pointer; white-space: nowrap; }
+      form.check button:hover, button.print:hover { background: #ff9440; }
+      form.check button:disabled { opacity: 0.6; cursor: progress; }
+      .status { margin: 12px 0 0; font-size: 15px; color: var(--mid); min-height: 1.5em; max-width: 70ch; }
+      .status a { color: var(--orange-ink); font-weight: 600; }
+      .result { display: none; margin: 20px 0 0; }
+      .result.is-open { display: block; }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 0 0 14px; }
+      .actions p { margin: 0; font-size: 14px; color: var(--mid); }
+      /* The sheet: an A4 page's width on screen, scrolled sideways on a phone rather than squeezed, because the report is laid out for paper. */
+      .sheet-wrap { overflow-x: auto; background: #e6e4de; border-radius: 14px; padding: 16px; }
+      .sheet-wrap:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      iframe.sheet { display: block; width: 794px; max-width: none; height: 1123px; border: 0; background: #fff; margin: 0 auto; box-shadow: 0 6px 20px rgba(20, 20, 20, 0.12); }
+      h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -0.02em; margin: 40px 0 10px; }
+      ul.notes { margin: 0; padding-left: 20px; color: var(--mid); max-width: 72ch; }
+      ul.notes li { margin: 6px 0; }
+      ul.notes a { color: var(--orange-ink); font-weight: 600; }
+      footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+      footer a { color: var(--mid); }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">Sky Score</a>
+      <nav class="top-nav" aria-label="Site">
+        <a href="/map/">Full map</a>
+        <a href="/reports/" aria-current="page">Reports</a>
+        <a href="/api/">API</a>
+        <a href="/open-data/">Open data</a>
+        <a href="/bay-area/">Bay Area</a>
+      </nav>
+    </header>
+    <main>
+      <h1>Your aircraft noise report, free</h1>
+      <p class="lead">One page for your own home: the official aircraft noise level at the postcode, the published flight routes that pass it and how high the aircraft are there. It is made in your browser from public data, ready to print or save as a PDF.</p>
+
+      <label for="pc" class="field-label">Postcode</label>
+      <form class="check" id="make">
+        <input type="text" id="pc" name="pc" placeholder="e.g. TW9 3PZ" autocomplete="postal-code" inputmode="text" maxlength="8" />
+        <button type="submit" id="go">Make the report</button>
+      </form>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+
+      <section class="result" id="result" aria-label="Your report">
+        <div class="actions">
+          <button type="button" class="print" id="print">Save as PDF or print</button>
+          <p>In the print window, choose "Save as PDF" to keep a copy.</p>
+        </div>
+        <div class="sheet-wrap" tabindex="0" role="region" aria-label="The report, scrolls sideways on a narrow screen">
+          <iframe class="sheet" id="sheet" title="Your aircraft noise report"></iframe>
+        </div>
+      </section>
+
+      <h2 class="sec">Before you rely on it</h2>
+      <ul class="notes">
+        <li>It covers postcodes in the city regions on <a href="/map/">the map</a>. Outside them the report says so rather than guess.</li>
+        <li>The noise level is DEFRA's official map, which models 2021, when COVID cut air traffic; levels today are likely to be higher. Where DEFRA has no reading the report shows our estimate and says it is one.</li>
+        <li>It says where the routes are, not how many aircraft use them.</li>
+        <li>It is information, not a survey or a conveyancing search. Visit at different times of day before deciding.</li>
+        <li>Free for your own home and for residents' groups. Making reports for clients? See <a href="/reports/#prices">what reports cost firms</a>.</li>
+      </ul>
+    </main>
+    <footer>
+      <span>All figures from open government data. Sky Score is run by Cubitt33 Ltd.</span>
+      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></span>
+    </footer>
+    <script src="/js/api-base.js"></script>
+    <script type="module" src="/js/street_report_page.mjs"></script>
+    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+  </body>
+</html>

@@ -175,7 +175,7 @@ for (const pg of pages) {
   // quietly swallow every page.
   if (pg.url === '/area/' || !siteCities.has(cityOf(pg.url))) continue;
   ctaChecked += 1;
-  if (!/href="\/\?city=[^"]*&amp;borough=[^"]+"/.test(html)) badCta.push(pg.url);
+  if (!/href="\/map\/\?city=[^"]*&amp;borough=[^"]+"/.test(html)) badCta.push(pg.url);
 }
 check(
   'every page carries no script tag',
@@ -332,7 +332,8 @@ const mapPromises = [];
 let mapLinks = 0;
 for (const page of pages) {
   const html = readFileSync(page.file, 'utf8');
-  for (const m of html.matchAll(/href="\/\?city=([^"&]+)/g)) {
+  // Any link to the map, at /map/ (since 2026-10-06) or at the old /.
+  for (const m of html.matchAll(/href="\/(?:map\/)?\?city=([^"&]+)/g)) {
     mapLinks += 1;
     if (!siteCities.has(m[1])) deadMapLinks.push(`${page.url} -> ?city=${m[1]}`);
   }

@@ -1,4 +1,5 @@
-// The new front page (preview/index.html + preview/hp-engine.js) is a tool,
+// The front page (home/index.html + js/home-engine.mjs, at / since 2026-10-06;
+// tests/preview-home.mjs while it was trialled at /preview/) is a tool,
 // not a picture: a borough tap opens the council area's figures, the search
 // takes a postcode or a place name, the routes explain themselves, the URL
 // carries the state. None of that is seen by any other gate - a11y, responsive
@@ -14,7 +15,12 @@
 //     outside every city (EX1 1HS) - and every other offsite request is
 //     aborted, so the gate cannot go red on someone else's latency.
 //
-// Run: node tests/preview-home.mjs   (in preflight, blocking)
+// It is served HERE the way the SITE serves it: every URL is resolved through
+// the Makefile's own upload lines (`make.py --dry-run`), so / is the front page,
+// /map/ the full map, /reports/ the reports pages - and a file no target uploads
+// is noticed rather than quietly served off the working tree.
+//
+// Run: node tests/front-page.mjs   (in preflight, blocking)
 import { chromium } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -28,13 +34,48 @@ const TYPES = {
   '.html': 'text/html', '.js': 'application/javascript', '.mjs': 'application/javascript', '.json': 'application/json',
   '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.csv': 'text/csv', '.pdf': 'application/pdf',
 };
+// THE LIVE ROUTING, read from the Makefile (2026-10-06). The repo and the site
+// disagree at the root since the front page took / and the map moved to /map/,
+// so serving the working tree path for path would test a layout nobody visits.
+// Each upload line becomes a rule from an S3 key to the file it came from.
+const makefile = await readFile(join(ROOT, 'Makefile'), 'utf8');
+const deployTargets = [...makefile.matchAll(/^([a-z0-9-]+-deploy):/gm)].map((m) => m[1]);
+const dryRun = execFileSync('python', ['scripts/make.py', '--dry-run', ...deployTargets], { cwd: ROOT, encoding: 'utf8' });
+const rules = [];
+for (const line of dryRun.split(/\r?\n/)) {
+  const m = /aws s3 (cp|sync)\s+(\S+)\s+s3:\/\/[^/\s]+\/(\S*)/.exec(line);
+  if (!m) continue;
+  const [, verb, src, dest] = m;
+  // aws's --include patterns match the path under the source folder, and * crosses a slash.
+  const includes = [...line.matchAll(/--include\s+"([^"]+)"/g)].map((x) => new RegExp(`^${x[1].replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`));
+  if (verb === 'sync' || /--recursive/.test(line)) rules.push({ prefix: dest, src, includes });
+  else rules.push({ key: dest.endsWith('/') ? dest + src.split('/').pop() : dest, src });
+}
+// CloudFront's rewrite: a folder or an extensionless path is served from its index.html.
+const keyOf = (p) => (p.endsWith('/') ? `${p}index.html` : extname(p) ? p : `${p}/index.html`).replace(/^\//, '');
+const sourceOf = (key) => {
+  for (const r of rules) {
+    if (r.key !== undefined && r.key === key) return r.src;
+    if (r.prefix !== undefined && key.startsWith(r.prefix)) {
+      const rest = key.slice(r.prefix.length);
+      if (!r.includes.length || r.includes.some((g) => g.test(rest))) return join(r.src, rest);
+    }
+  }
+  return null;
+};
+// Paths the pages asked for that NO upload line serves. Served off the working tree
+// anyway, so the page still renders and the check at the end names each one.
+const unrouted = new Set();
 const server = createServer(async (req, res) => {
-  let p = decodeURIComponent(req.url.split('?')[0]);
-  if (p === '/') p = '/index.html';
-  if (!extname(p)) p = p.replace(/\/$/, '') + '/index.html';
+  const p = decodeURIComponent(req.url.split('?')[0]);
+  let src = sourceOf(keyOf(p));
+  if (!src) {
+    unrouted.add(p);
+    src = keyOf(p);
+  }
   try {
-    const buf = await readFile(join(ROOT, p));
-    res.writeHead(200, { 'Content-Type': TYPES[extname(p)] || 'application/octet-stream' });
+    const buf = await readFile(join(ROOT, src));
+    res.writeHead(200, { 'Content-Type': TYPES[extname(src)] || 'application/octet-stream' });
     res.end(buf);
   } catch {
     res.writeHead(404);
@@ -42,7 +83,7 @@ const server = createServer(async (req, res) => {
   }
 });
 await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
-const BASE = `http://127.0.0.1:${PORT}/preview/`;
+const BASE = `http://127.0.0.1:${PORT}/`;
 
 // The CSV the page reads, parsed here independently (no quoted fields in it today; assert that).
 const csvText = await readFile(join(ROOT, 'open-data', 'sky-score-boroughs.csv'), 'utf8');
@@ -87,7 +128,9 @@ await context.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
     return route.fulfill({ status: 200, contentType: 'image/png', body: PNG_1PX });
   }
   if (url.hostname === 'api.postcodes.io') {
-    const key = url.pathname.split('/').pop().toUpperCase();
+    // Spaced or compact, as postcodes.io itself accepts both: the front page sends
+    // TW93PZ and the street report sends TW9%203PZ.
+    const key = decodeURIComponent(url.pathname.split('/').pop()).replace(/\s+/g, '').toUpperCase();
     const result = GEO[key] || null;
     return route.fulfill({ status: result ? 200 : 404, contentType: 'application/json', body: JSON.stringify({ status: result ? 200 : 404, result }) });
   }
@@ -143,7 +186,7 @@ ok(onSkip && (await page.evaluate(() => document.activeElement?.id === 'pc')), '
 // held to (tests/fixtures/postcodes-io-districts.json) are run through it too. It missed Barking and Dagenham.
 const spellings = JSON.parse(await readFile(join(ROOT, 'tests', 'fixtures', 'postcodes-io-districts.json'), 'utf8')).districts;
 const derived = await page.evaluate(async (ds) => {
-  const engine = await import('/preview/hp-engine.js');
+  const engine = await import('/js/home-engine.mjs');
   if (typeof engine.cityOf !== 'function') return null;
   return ds.map((d) => ({ ...d, got: engine.cityOf(d.admin_district) }));
 }, spellings);
@@ -188,7 +231,7 @@ const facts = await page.locator('#borough .facts dd').allTextContents();
 ok(facts.some((f) => f.includes(Number(camden.avg_price_gbp).toLocaleString('en-GB'))) && facts.some((f) => f.startsWith(`${camden.crime_per_1000} offences`)), 'facts carry the price and crime figures', facts.join(' | '));
 ok(facts.some((f) => f.includes(`${camden.flood_medium_or_high_pct}% of addresses at medium or high`)), 'the card carries flood risk (the card promised it)');
 const links = await page.locator('#borough .more a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
-ok(links.includes('/area/london/camden/') && links.includes('/?city=london&borough=Camden'), 'links to the scorecard page and the live map', links.join(' '));
+ok(links.includes('/area/london/camden/') && links.includes('/map/?city=london&borough=Camden'), 'links to the scorecard page and the full map at /map/', links.join(' '));
 ok(await page.evaluate(() => location.search) === '?city=london&borough=Camden', 'URL carries ?city=&borough=');
 ok((await page.locator('#map .boro.is-selected').getAttribute('aria-label')) === 'Camden: open its figures', 'the clicked area is highlighted');
 
@@ -313,7 +356,7 @@ const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
 ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.score}`) && area.includes(`${richmond.flood_medium_or_high_pct}% of addresses at medium or high flood risk`), 'the council-area line carries the CSV score and flood share', area);
 ok((await page.locator('#map .pin').count()) === 1, 'a pin is drawn at the postcode');
-ok((await page.locator('#ans-link').getAttribute('href')) === '/?city=london&postcode=TW9%203PZ', 'the hand-off link carries city and postcode to the live map');
+ok((await page.locator('#ans-link').getAttribute('href')) === '/map/?city=london&postcode=TW9%203PZ', 'the hand-off link carries city and postcode to the full map at /map/');
 ok(await page.evaluate(() => location.search) === '?city=london&postcode=TW9+3PZ', 'URL carries ?city=&postcode=');
 await page.locator('#ans-open-area').click();
 await page.waitForSelector('#borough.is-open');
@@ -539,16 +582,19 @@ ok(cardTop >= -1 && cardTop < 844, 'on a phone the card is brought into view', `
 const inside = await page.locator('#toggle-noise, #zoom-in, #zoom-out, #zoom-reset').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= 390; }));
 ok(inside.every(Boolean), 'layer and zoom controls are inside a phone viewport');
 
-// London's noise picture is the one box the engine types for itself (no data file
-// describes it); the holder is LONDON_AIRCRAFT_BBOX in index.html (audit M-13).
+// London's noise picture is the one box no data file describes; the holder is
+// LONDON_AIRCRAFT_BBOX in index.html (audit M-13). Since 2026-10-06 the engine
+// takes it, and DEFRA's colours, from js/street_report.mjs instead of typing a
+// third copy; tests/test_street_report_mirrors.py holds the module to index.html.
 {
-  const engine = await readFile(join(ROOT, 'preview', 'hp-engine.js'), 'utf8');
+  const engine = await readFile(join(ROOT, 'js', 'home-engine.mjs'), 'utf8');
+  const fromModule = /import \{[^}]*\bLONDON_RASTER\b[^}]*\} from '\/js\/street_report\.mjs'/.test(engine) && /const LONDON_PNG = \{.*\bbbox: LONDON_RASTER\.bbox \};/.test(engine);
+  const box = await page.evaluate(async () => (await import('/js/street_report.mjs')).LONDON_RASTER.bbox);
   const live = await readFile(join(ROOT, 'index.html'), 'utf8');
-  const nums = (s) => (s || '').match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
-  const mine = nums(engine.match(/const LONDON_PNG = \{[^}]*bbox: \{([^}]*)\}/)?.[1]);
   const holder = live.match(/const LONDON_AIRCRAFT_BBOX = \{([^}]*)\}/)?.[1] || '';
   const want = ['minLon', 'maxLon', 'minLat', 'maxLat'].map((k) => Number(holder.match(new RegExp(`${k}:\\s*(-?[\\d.]+)`))?.[1]));
-  ok(mine.length === 4 && want.every(Number.isFinite) && mine.every((v, i) => v === want[i]), 'the preview places London\'s noise picture where the live map does', `${mine} vs ${want}`);
+  const mine = ['minLon', 'maxLon', 'minLat', 'maxLat'].map((k) => box?.[k]);
+  ok(fromModule && want.every(Number.isFinite) && mine.every((v, i) => v === want[i]), 'the front page places London\'s noise picture where the map does, from the one shared copy', `${mine} vs ${want}`);
 }
 
 // The search has a visible label, and its placeholder fits the box at 320 wide
@@ -575,8 +621,8 @@ ok(inside.every(Boolean), 'layer and zoom controls are inside a phone viewport')
 // floating panel lay over the toggles and chips from 761px to about 1180px wide.
 // One query decides it in the CSS and the engine, held to one string here.
 {
-  const engine = await readFile(join(ROOT, 'preview', 'hp-engine.js'), 'utf8');
-  const html = await readFile(join(ROOT, 'preview', 'index.html'), 'utf8');
+  const engine = await readFile(join(ROOT, 'js', 'home-engine.mjs'), 'utf8');
+  const html = await readFile(join(ROOT, 'home', 'index.html'), 'utf8');
   const q = engine.match(/const STACKED = '([^']+)'/)?.[1];
   ok(Boolean(q) && html.includes(`@media ${q} {`), 'the CSS and the engine stack the panel on one query', q || 'no STACKED');
 }
@@ -596,36 +642,23 @@ for (const vp of [{ width: 1024, height: 768 }, { width: 768, height: 1024 }, { 
   ok(lay.toggles && !lay.overlap, `${vp.width}x${vp.height}: the panel stacks clear of the map and the layer toggles answer`, JSON.stringify(lay));
 }
 
-// 15. Every file this run fetched is one a Makefile target uploads. This gate serves the working tree, where
-// a file no target deploys looks exactly like one that is live: on 2026-10-03 four data files the engine reads
-// had no upload line (the live map carries their contents inline), and the deployed page would have opened on
-// "The map could not load". The rules are read from `make.py --dry-run`, so the Makefile stays the one holder.
+// 15. The other pages at their live addresses: the reports page and its PDFs, the full map at /map/,
+// and the trial's old address, which forwards.
 await page.goto(`${BASE}reports/`, { waitUntil: 'domcontentloaded' });
 const pdfs = await page.locator('a[href$=".pdf"]').evaluateAll((as) => as.map((a) => new URL(a.href).pathname));
 for (const p of pdfs) if ((await page.request.get(`http://127.0.0.1:${PORT}${p}`)).status() === 200) fetched.add(p);
-ok(pdfs.length >= 2 && pdfs.every((p) => fetched.has(p)), 'the reports page links sample PDFs that exist', pdfs.join(' '));
-const makefile = await readFile(join(ROOT, 'Makefile'), 'utf8');
-const deployTargets = [...makefile.matchAll(/^([a-z0-9-]+-deploy):/gm)].map((m) => m[1]);
-const dryRun = execFileSync('python', ['scripts/make.py', '--dry-run', ...deployTargets], { cwd: ROOT, encoding: 'utf8' });
-const rules = [];
-for (const line of dryRun.split(/\r?\n/)) {
-  const m = /aws s3 (cp|sync)\s+(\S+)\s+s3:\/\/[^/\s]+\/(\S*)/.exec(line);
-  if (!m) continue;
-  const [, verb, src, dest] = m;
-  // aws's --include patterns match the path under the source folder, and * crosses a slash.
-  const includes = [...line.matchAll(/--include\s+"([^"]+)"/g)].map((x) => new RegExp(`^${x[1].replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`));
-  if (verb === 'sync' || /--recursive/.test(line)) rules.push({ prefix: dest, includes });
-  else rules.push({ key: dest.endsWith('/') ? dest + src.split('/').pop() : dest });
+ok(pdfs.length >= 2 && pdfs.every((p) => fetched.has(p) && p.startsWith('/reports/')), 'the reports page links sample PDFs that exist, under /reports/', pdfs.join(' '));
+{
+  const map = await page.request.get(`${BASE}map/`);
+  const mapHtml = await map.text();
+  ok(map.status() === 200 && mapHtml.includes('id="app"') && mapHtml.includes('<link rel="canonical" href="https://skyscore.co.uk/map/" />'), '/map/ serves the full map, which names /map/ as its address');
+  ok(mapHtml.includes('<script src="/js/api-base.js"></script>'), 'the map loads the API base by an absolute path (relative, it broke at /map/)');
+  const old = await (await page.request.get(`${BASE}preview/`)).text();
+  const oldReports = await (await page.request.get(`${BASE}preview/reports/`)).text();
+  ok(/http-equiv="refresh" content="0; url=\/"/.test(old) && /http-equiv="refresh" content="0; url=\/reports\/"/.test(oldReports), 'the trial\'s old addresses forward to / and /reports/');
+  const front = await (await page.request.get(BASE)).text();
+  ok(!/noindex/.test(front) && front.includes('<link rel="canonical" href="https://skyscore.co.uk/" />') && !/class="mock"/.test(front), 'the front page is indexable, names / as its address and carries no preview badge');
 }
-// CloudFront's rewrite: a folder or an extensionless path is served from its index.html.
-const keyOf = (p) => (p.endsWith('/') ? `${p}index.html` : extname(p) ? p : `${p}/index.html`).replace(/^\//, '');
-const isUploaded = (p) => {
-  const key = keyOf(p);
-  return rules.some((r) => (r.key ? r.key === key : key.startsWith(r.prefix) && (!r.includes.length || r.includes.some((g) => g.test(key.slice(r.prefix.length))))));
-};
-const orphans = [...fetched].filter((p) => !isUploaded(p)).sort();
-ok(fetched.has('/preview/hp-engine.js') && fetched.has('/data/london-boroughs.json') && rules.length >= 20, 'the upload check saw the page\'s files and the Makefile\'s upload lines', `${fetched.size} files fetched, ${rules.length} upload rules`);
-ok(orphans.length === 0, `every one of the ${fetched.size} files the page fetched is one a Makefile target uploads`, orphans.join(', '));
 
 // 16. What a report costs lives on the reports page alone, and both pages reach pricing and the council areas.
 const reportsText = await page.locator('main').textContent();
@@ -635,9 +668,11 @@ await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitMap();
 const frontText = await page.locator('body').textContent();
 const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
-ok(!/£35/.test(frontText) && frontLinks.includes('/preview/reports/#prices'), 'the front page links to the price and does not repeat it');
-ok(['/pricing', '/area/'].every((h) => frontLinks.includes(h) && footReports.includes(h)), 'pricing and the council areas are linked from both preview pages', `${frontLinks.join(' ')} | ${footReports.join(' ')}`);
-for (const p of ['/pricing', '/area/']) ok((await page.request.get(`http://127.0.0.1:${PORT}${p === '/pricing' ? '/pricing.html' : p}`)).status() === 200, `${p} is a page that exists`);
+ok(!/£35/.test(frontText) && frontLinks.includes('/reports/#prices'), 'the front page links to the price and does not repeat it');
+ok(frontLinks.includes('/reports/street/'), 'the front page links to the free street report');
+ok(['/pricing', '/area/', '/map/'].every((h) => frontLinks.includes(h) && footReports.includes(h)), 'pricing, the council areas and the full map are linked from both pages', `${frontLinks.join(' ')} | ${footReports.join(' ')}`);
+// Their LIVE addresses: this server routes as the site does, so /pricing is pricing.html.
+for (const p of ['/pricing', '/area/', '/map/']) ok((await page.request.get(`http://127.0.0.1:${PORT}${p}`)).status() === 200, `${p} is a page that exists`);
 
 // 17. The OS street-map trial. No key is in the source: nothing is asked of api.os.uk until a device is given
 // one, the key leaves the address bar, and each tile sits where web-mercator says it should - checked against
@@ -688,6 +723,42 @@ await page.goto('about:blank');
 await page.goto(`${BASE}#oskey=off`, { waitUntil: 'domcontentloaded' });
 await waitMap();
 ok((await page.locator('#toggle-streets').isHidden()) && (await page.locator('#map .streets image').count()) === 0, '#oskey=off forgets the key');
+
+// 18. THE FREE STREET REPORT (2026-10-06), made in the browser from js/street_report.mjs, the module the
+// sample PDFs are printed from. Same stubs as the front page: measured (TW9), estimated (NW1) and outside (EX1).
+const sheetDoc = () => page.frameLocator('#sheet');
+const makeReport = async (pc) => {
+  await page.goto(`${BASE}reports/street/`, { waitUntil: 'domcontentloaded' });
+  await page.fill('#pc', pc);
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction(() => /ready below|outside the city|not a postcode|does not look|answered|reached/.test(document.getElementById('status').textContent), null, { timeout: 20000 });
+  return page.locator('#status').textContent();
+};
+{
+  const said = await makeReport('TW9 3PZ');
+  // Read the report only once the page says it is ready: otherwise a failure is a
+  // 30-second wait for a heading, with no word of what the page said instead.
+  const ready = /ready below/.test(said);
+  const h1 = ready ? await sheetDoc().locator('h1').textContent({ timeout: 5000 }) : `(no report: ${said})`;
+  const tiles = ready ? await sheetDoc().locator('.key .n').allTextContents() : [];
+  ok(/ready below/.test(said) && h1 === 'Aircraft noise at TW9 3PZ' && tiles[0] === '56 dB' && tiles[1] === '3.9/10', 'a measured postcode makes a report with DEFRA\'s level and the Quiet Skies score from the endpoint', `${said} | ${h1} | ${tiles.join(' ')}`);
+  ok(await page.locator('#result.is-open #print').isVisible(), 'the report offers Save as PDF');
+  const img = await sheetDoc().locator('svg image').getAttribute('href');
+  ok(img === '/data/aircraft-noise-london-lden.png' && (await page.request.get(`${BASE}data/aircraft-noise-london-lden.png`)).status() === 200, 'its map draws DEFRA\'s London picture from an address the site serves', img);
+  const est = await makeReport('NW1 7PJ');
+  const estTiles = await sheetDoc().locator('.key').allTextContents();
+  ok(/ready below/.test(est) && estTiles.some((t) => t.startsWith('9.0/10') && /ESTIMATE/.test(t)), 'an unmeasured postcode shows the estimate and calls it one', estTiles.join(' | '));
+  const outside = await makeReport('EX1 1HS');
+  ok(/outside the city regions/.test(outside) && !(await page.locator('#result').evaluate((r) => r.classList.contains('is-open'))), 'a postcode outside every city is told so and gets no report (the endpoint\'s 10.0 is from nothing nearby)', outside);
+  const bad = await makeReport('NOT A PC!');
+  ok(/does not look like a UK postcode/.test(bad), 'a string that is not a postcode is refused before anything is asked of the network', bad);
+}
+
+// 19. Every file this run fetched is one a Makefile target uploads. Served through those same rules above, an
+// unrouted path is one the deployed site would not have: on 2026-10-03 four data files the engine reads had no
+// upload line (the map carries their contents inline), and the page would have opened on "The map could not load".
+ok(fetched.has('/js/home-engine.mjs') && fetched.has('/js/street_report.mjs') && fetched.has('/data/london-boroughs.json') && rules.length >= 20, 'the upload check saw the pages\' files and the Makefile\'s upload lines', `${fetched.size} files fetched, ${rules.length} upload rules`);
+ok(unrouted.size === 0, `every one of the ${fetched.size} files the pages fetched is one a Makefile target uploads`, [...unrouted].sort().join(', '));
 
 ok(errors.length === 0, 'no page errors', errors.join(' | '));
 await browser.close();

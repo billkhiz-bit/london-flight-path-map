@@ -1005,16 +1005,16 @@ launch), permanent provider attribution, and per-load billing if it is Google.
 The product argument is separate and stronger: **street detail implies a
 precision we do not have**, since every figure published is borough-level.
 
-**2026-10-03: there is a street-map TRIAL, on `/preview/` only, and the decision
+**2026-10-03: there is a street-map TRIAL, on the front page only (`/preview/` until 2026-10-06, `/` since), and the decision
 above still stands for the live map.** Bill asked to trial Ordnance Survey's
 maps (Geovation's suggestion, costed in ROADMAP at GBP 0 in tiles). The preview
 is where it can be judged without touching the two objections: it is not in the
 app shell, so offline launch is not at stake, and its answers are postcode-level
 with a pin. `drawStreets()` in `preview/hp-engine.js` lays OS Maps API tiles
 under the d3 map by plain web-mercator arithmetic (no MapLibre, no d3-tile).
-**No key is in the source**: `/preview/?oskey=<key>` stores a Data Hub key in
+**No key is in the source**: `/#oskey=<key>` (the fragment since audit M-1) stores a Data Hub key in
 that browser and strips it from the URL, the Streets button is hidden without
-one, and `tests/preview-home.mjs` asserts nothing is ever requested from
+one, and `tests/front-page.mjs` asserts nothing is ever requested from
 `api.os.uk` keyless. The grid is checked against the pin of a known postcode,
 because a tile grid one tile out still looks like a map (the flood-georef
 lesson). If it ships, ship self-hosted OS Open Zoomstack: no key in a page, no
@@ -1129,6 +1129,49 @@ dissolves when you compute the real one.*
 
 ## Build & Deploy
 
+> ## THE FRONT DOOR MOVED ON 2026-10-06: `/` is the front page, the map is `/map/`
+>
+> Bill's ruling, the same day, all four recommended options: the installed app
+> opens the MAP (`manifest.webmanifest` `start_url: "/map/"`), reports are free
+> and self-serve for your own home with firms asking by email, launch now and
+> rename later, and the API / pricing / open-data pages (and all 103 area pages)
+> carry the front page's site bar and footer links.
+>
+> - **The map's SOURCE is still `index.html`** - a dozen scripts write generated
+>   blocks into it by that name - and `web-deploy` uploads it to `map/index.html`.
+>   The front page's source is `home/index.html`, uploaded to the root key by
+>   `home-deploy`. **web-deploy before home-deploy.**
+> - **Locally, `/` is still the map**: the 18 gates that run their own static
+>   server serve the repo path for path and were left alone. `tests/front-page.mjs`
+>   is the exception: it routes every URL through the Makefile's upload lines
+>   (`make.py --dry-run`), so it sees `/`, `/map/` and `/reports/` as the site
+>   does and names any file no target uploads. Live gates (e2e, `responsive`
+>   live half via a per-page `live:` slug, `site-api-parity`,
+>   `live-mobile-verify`) were repointed at `/map/`.
+> - **`sw.js` v1.0.37 precaches `/map/` BEST-EFFORT, outside the atomic
+>   `SHELL_ASSETS`**, and an offline navigation falls back to `/map/` then
+>   `/index.html`. The first version put `/map/` IN `SHELL_ASSETS`, and since
+>   `cache.addAll()` is atomic the worker stopped installing wherever `/map/` is
+>   a 404 - the native app (whose root IS the map) and every local gate (the repo
+>   has no `map/`): preflight's offline and PWA gates went red with
+>   `state=timeout-waiting` / `swRegistered: false`. `/` and `/index.html` stay
+>   in the atomic list (the map there, the front page on the web).
+> - **`index.html` loaded `js/api-base.js` by a RELATIVE path.** At `/map/` that
+>   is `/map/js/api-base.js`, so every API call would have had no base. Absolute
+>   now, and `tests/front-page.mjs` asserts it.
+> - Area pages link "Open <borough> on the Sky Score map" to `/map/?city=...`;
+>   the front page reads the same `?city=`/`?borough=`/`?postcode=`, so an old
+>   `/?city=` link still lands on something sensible (the council area's card).
+> - **The street report is ONE module, `js/street_report.mjs`**, shared by the
+>   browser page (`/reports/street/`, `js/street_report_page.mjs`) and the PDF
+>   script (`scripts/address_noise_report.mjs`, whose HTML was proven
+>   byte-identical before and after the move on three postcodes). It holds the
+>   DEFRA band colours and London's picture box as MIRRORS of index.html, held by
+>   `tests/test_street_report_mirrors.py` (blocking, proven red) and by the PDF
+>   script on every run; the front page's engine imports them instead of keeping
+>   a third copy. A postcode with `aircraftQuietCoverage: 'outside'` gets no
+>   report and no estimate tile: the endpoint's 10.0 there is from nothing nearby.
+
 > ## ⚠️ `export MSYS_NO_PATHCONV=1` BEFORE ANY `cloudfront create-invalidation`
 >
 > Git Bash rewrites any argument that looks like a Unix absolute path into a
@@ -1150,7 +1193,7 @@ all of them - **count the targets below, do not trust a number in this sentence*
 | Target | Covers |
 |---|---|
 | `fonts-deploy` | **new (2026-08-05)** — self-hosted `fonts/`. **Runs FIRST in `web-deploy-all`, and that ordering is load-bearing**: three font files are in `sw.js` `SHELL_ASSETS` and `cache.addAll()` is atomic, so shipping `sw.js` before the fonts exist at the origin makes the service worker fail to install at all |
-| `web-deploy` | `index.html`, privacy, pricing, changes, **terms**, `api/`, `js/` |
+| `web-deploy` | **the full map: `index.html` -> `map/index.html` (since 2026-10-06; it no longer writes the root key)**, privacy, pricing, changes, **terms**, `api/`, `js/` (api-base.js + every `js/*.mjs`) |
 | `data-deploy` | `data/*` (gets `borough-extra.json`'s load-bearing `no-cache` right) |
 | `pwa-deploy` | manifest, `sw.js`, icons |
 | `demo-deploy` | **new** — all 7 `score-demo/` files incl. the vendored Swagger UI |
@@ -1161,8 +1204,8 @@ all of them - **count the targets below, do not trust a number in this sentence*
 | `deeplinks-deploy` | `.well-known/apple-app-site-association` + `assetlinks.json`. **NOT in `web-deploy-all`**, deliberately: the target refuses to run while the files hold `TEAMID`/`REPLACE:WITH` placeholders (see `mobile/DEEP_LINKING.md`). Omitted from this table until 2026-09-14 (audit M29) |
 | `open-data-deploy` | `open-data/index.html` + the borough CSV (2026-09-28). In `web-deploy-all`. **Absent from this table until 2026-10-02**, the list-that-omits-a-member trap again |
 | `bay-area-deploy` | **new (2026-10-02)** - `bay-area/index.html`, its BTS noise picture and `share.png`. In `web-deploy-all`. The page is GENERATED: `python scripts/build_bay_area_page.py --write` (`--check` is blocking), from `data/us-flight-procedures.json`, `data/us-bayarea-places.json` and the picture. **A new FAA cycle reds `--check` until `--write` is re-run.** The picture's name carries its edition because `sw.js` serves same-origin images cache-first |
-| `preview-deploy` | **new (2026-10-02)** - `preview/`: the NEW FRONT PAGE under trial (`index.html`, v2 of the homepage redesign), its `reports/` page with two sample PDFs, and `hp-engine.js`, the one copy of the live map + working search that `design/homepage-v*.html` also load. Standalone like `talks-deploy` (not in `web-deploy-all`, not in the drift check), `noindex`, pages `no-cache`. Branch `homepage-v2`, **fast-forwarded into master on 2026-10-03** so master equals what is live (keep the two level after each deploy). **Since 2026-10-03 the engine is an ES MODULE importing `js/flight_geometry.mjs`** (moved from `scripts/`; the two report generators import it from there too - one holder), and this target uploads that module as well as `web-deploy` does, to the same key, so the preview never fetches a module the origin lacks. **It also uploads five data files the engine reads and nothing else deploys** (`flight-procedures.json`, `aircraft-noise-rasters.json`, `us-bayarea-places.json`, `us-flight-procedures.json`, and since 2026-10-04 `us-bayarea-zips.json`, the Census ZIP table from `scripts/build_bayarea_zips.py`, whose `--check` is blocking): the live map and the Bay Area page carry their contents inline, generated, so the origin had never held them and the first deploy would have opened on "The map could not load". Found by curling the origin BEFORE deploying, not by a gate - every source gate serves the working tree, where an undeployed file looks live - so the last check in `tests/preview-home.mjs` now fails any file the page fetches that no Makefile target uploads (read from `make.py --dry-run`). **DEPLOYED 2026-10-03**, `pwa-deploy` first (sw.js v1.0.36), verified from the origin. The page is a tool: borough cards read the open data CSV (no key, no quota), the search takes a place name, the URL carries `?city=`/`?postcode=`/`?borough=` exactly as the live map reads them. Gate: `tests/preview-home.mjs`, blocking, offline. When it becomes the front door, `index.html` moves to `/map/` and about twenty gates and 103 area-page links move with it |
-| `web-deploy-all` | all of the above bar `deeplinks-deploy`, `talks-deploy` and `preview-deploy`, `fonts-deploy` first |
+| `home-deploy` | **THE FRONT PAGE (2026-10-06), replacing `preview-deploy`.** `home/index.html` -> the ROOT key (`/`), `home/reports/` -> `/reports/` (the reports page, the two sample PDFs, and `/reports/street/`, the free self-serve street report), `home/moved/preview/` -> two meta-refresh pages so `/preview/` and `/preview/reports/` forward, and `js/*.mjs`. **Run AFTER `web-deploy`** (web-deploy-all does): the front page links to `/map/` everywhere. The engine's five data files (+ `covid-understatement.json` for the report) moved into `data-deploy`, as preview-deploy's own comment said they would. History: built as `/preview/` from 2026-10-02 (branch `homepage-v2`, Bill's v2, then 'ask first, then the tool' on 5 Oct), deployed `noindex` 2026-10-03, made the front door 2026-10-06. Gate: `tests/front-page.mjs` (was `tests/preview-home.mjs`), blocking, offline |
+| `web-deploy-all` | all of the above bar `deeplinks-deploy` and `talks-deploy`; `fonts-deploy` first, then `data-deploy`, `web-deploy`, `home-deploy`, `pwa-deploy` |
 
 The last three were added closing audit finding 38: **eleven live files had no
 deploy command anywhere** and had reached production by hand-upload, which is
@@ -1927,7 +1970,7 @@ undo from it:
 - **An outcome card is CAPPED, not floored**: `max-height: calc(100% - 201px)`
   with `flex-shrink: 0`. With `min-height: 0` alone the footer squeezed it to a
   52px sliver at 844x390 with the close button clipped out.
-- **`/preview/` has its own copy of the district-to-city lookup** and it
+- **The front page (`js/home-engine.mjs`, was `/preview/`) has its own copy of the district-to-city lookup** and it
   misses `Barking and Dagenham` (I-1); the 86-spelling fixture runs against
   `index.html` only. Open findings on the trial page are I-1, I-2, I-4 to I-7.
 

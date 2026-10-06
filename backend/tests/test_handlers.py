@@ -1191,8 +1191,9 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
             'this gate is now checking nothing. Fix the pattern, do not delete it.',
         )
 
-    def test_the_preview_front_page_quotes_the_enforced_free_quota(self):
-        """preview/index.html is a mirror the pattern above cannot read.
+    def test_the_front_page_quotes_the_enforced_free_quota(self):
+        """home/index.html (the front page, at / since 2026-10-06; preview/index.html
+        while it was trialled) is a mirror the pattern above cannot read.
 
         It prints the free quota as a headline figure with its unit in a
         <small> beside it ("10,000" then "lookups a month on the free tier"),
@@ -1204,15 +1205,15 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
 
         found = re.findall(
             r'class="fig">([\d,]+)<small>lookups a month on the free tier',
-            self._page('preview/index.html'))
+            self._page('home/index.html'))
         self.assertEqual(
             len(found), 1,
-            'preview/index.html no longer prints the free quota in the shape '
+            'home/index.html no longer prints the free quota in the shape '
             'this gate reads, so it is checking nothing. Fix the pattern, do '
             'not delete the test.')
         self.assertEqual(
             int(found[0].replace(',', '')), self._plan_int('Limit'),
-            f'preview/index.html advertises {found[0]} lookups a month on the '
+            f'home/index.html advertises {found[0]} lookups a month on the '
             f'free tier; the plan enforces {self._plan_int("Limit"):,}')
 
     def test_published_per_second_rates_match_the_plan(self):

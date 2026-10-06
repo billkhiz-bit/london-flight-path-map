@@ -132,7 +132,10 @@ async function readSite(page, postcode) {
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
-await page.goto(`${SITE}/index.html`, { waitUntil: 'domcontentloaded' });
+// The map is index.html in the repo and /map/ on the site (2026-10-06): /
+// there is the front page, which renders no score tables to compare.
+const LIVE = !/^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(SITE);
+await page.goto(`${SITE}${LIVE ? '/map/' : '/index.html'}`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#app', { state: 'visible', timeout: 30000 });
 
 console.log('SITE / API PARITY');

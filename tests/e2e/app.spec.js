@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Core loading', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/map/'); // the full map, at /map/ since 2026-10-06
   });
 
   test('page loads and loading screen disappears', async ({ page }) => {

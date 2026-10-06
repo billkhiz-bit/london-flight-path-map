@@ -2,7 +2,7 @@
 
 A `--cache-control "no-cache"` on an upload is a statement that a stale copy of
 that file is wrong, not merely old: borough-extra.json carries every borough's
-inputs, js/api-base.js the API host, preview/hp-engine.js the engine of the
+inputs, js/api-base.js the API host, js/home-engine.mjs the engine of the
 page under trial. But that header governs the browser's HTTP cache only.
 sw.js's fetch handler answers same-origin requests from Cache Storage FIRST
 unless a rule says otherwise, and Cache Storage never reads Cache-Control - so

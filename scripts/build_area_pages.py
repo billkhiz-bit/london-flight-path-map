@@ -354,6 +354,12 @@ PAGE = """<!doctype html>
   .sources {{ font-size:12px; color:var(--mid); }}
   .cta {{ margin:28px 0; padding:16px 18px; border:1px solid var(--line); border-radius:8px; }}
   footer {{ margin-top:40px; font-size:12px; color:var(--mid); }}
+  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
+  .site-top {{ display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }}
+  .site-top .site-brand {{ font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--dark); }}
+  .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
+  .site-top .site-nav a {{ font-size:14px; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--mid); }}
+  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] {{ background:var(--line); color:var(--dark); }}
   @media (prefers-color-scheme: dark) {{
     :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
     body {{ background:#141414; }}
@@ -361,6 +367,8 @@ PAGE = """<!doctype html>
 </style>
 </head>
 <body>
+<!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a><a href="/bay-area/">Bay Area</a></div></nav>
 <div class="wrap">
 <nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; {city_label}</nav>
 <main data-city="{city}" data-borough="{borough}">
@@ -387,7 +395,7 @@ Figures are for the whole borough; a single address can differ{map_note}.</p>
 </main>
 
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
 </footer>
 </div>
 </body>
@@ -444,7 +452,8 @@ def render(data: dict) -> str:
             '<div class="cta">\n'
             '  <p style="margin:0 0 8px;"><strong>See it on the map.</strong> Noise contours, flight corridors '
             f'and every neighbourhood in {e(city_label)}.</p>\n'
-            f'  <a href="/?city={e(data["city"])}&amp;borough={e(data["borough"].replace(" ", "+"))}">'
+            # /map/ since 2026-10-06, when the front page took / and the full map moved.
+            f'  <a href="/map/?city={e(data["city"])}&amp;borough={e(data["borough"].replace(" ", "+"))}">'
             f'Open {e(data["borough"])} on the Sky Score map</a>\n'
             '</div>'
         )
@@ -511,9 +520,17 @@ INDEX = """<!doctype html>
     :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --orange:#fb923c; }}
     body {{ background:#141414; }}
   }}
+  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
+  .site-top {{ display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }}
+  .site-top .site-brand {{ font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--dark); }}
+  .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
+  .site-top .site-nav a {{ font-size:14px; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--mid); }}
+  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] {{ background:var(--line); color:var(--dark); }}
 </style>
 </head>
 <body>
+<!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a><a href="/bay-area/">Bay Area</a></div></nav>
 <div class="wrap">
 <nav class="sub"><a href="/">Sky Score</a> &rsaquo; Areas</nav>
 <main>
@@ -805,6 +822,12 @@ OPEN_DATA_PAGE = """<!doctype html>
   th {{ font-weight:600; }}
   code {{ font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px; }}
   footer {{ margin-top:40px; font-size:12px; color:var(--mid); }}
+  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
+  .site-top {{ display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }}
+  .site-top .site-brand {{ font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--dark); }}
+  .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
+  .site-top .site-nav a {{ font-size:14px; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--mid); }}
+  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] {{ background:var(--line); color:var(--dark); }}
   @media (prefers-color-scheme: dark) {{
     :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
     body {{ background:#141414; }}
@@ -812,6 +835,8 @@ OPEN_DATA_PAGE = """<!doctype html>
 </style>
 </head>
 <body>
+<!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/" aria-current="page">Open data</a><a href="/bay-area/">Bay Area</a></div></nav>
 <div class="wrap">
 <nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; Open data</nav>
 <main>
@@ -838,7 +863,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 <p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10-15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: its Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's 2024 figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same figures are available per postcode through the <a href="/api/">API</a>.</p>
 </main>
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
 </footer>
 </div>
 </body>
@@ -887,6 +912,9 @@ def sync_open_data(write: bool) -> bool:
 
 STATIC_URLS = [
     ('/', '1.0', 'weekly'),
+    ('/map/', '0.9', 'weekly'),
+    ('/reports/', '0.8', 'monthly'),
+    ('/reports/street/', '0.8', 'monthly'),
     ('/open-data/', '0.7', 'monthly'),
     ('/bay-area/', '0.8', 'monthly'),
     ('/pricing', '0.8', 'monthly'),
@@ -899,8 +927,22 @@ STATIC_URLS = [
 ]
 
 
+# URLs whose file is not at the same path in the repo (2026-10-06): the front page
+# took /, the full map (still index.html, which a dozen scripts write into) moved
+# to /map/, and the reports pages live beside the front page in home/. Their
+# deploy keys are in the Makefile (web-deploy, home-deploy).
+MOVED_SOURCES = {
+    '/': 'home/index.html',
+    '/map/': 'index.html',
+    '/reports/': 'home/reports/index.html',
+    '/reports/street/': 'home/reports/street/index.html',
+}
+
+
 def source_file(loc: str) -> str:
     """The repo file a sitemap URL serves, as CloudFront's rewrite maps it."""
+    if loc in MOVED_SOURCES:
+        return MOVED_SOURCES[loc]
     if loc.endswith('/'):
         return loc[1:] + 'index.html'
     return loc[1:] if loc.endswith('.html') else loc[1:] + '.html'

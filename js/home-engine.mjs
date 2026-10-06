@@ -1,5 +1,5 @@
 /* global d3 */
-/* The engine behind the new homepage (preview/index.html) and its mockups
+/* The engine behind the front page (home/index.html, served at /) and its mockups
    (design/homepage-v*.html): the live map, the city chips, the working
    postcode-or-place search, the council-area card, the layer toggles and the
    zoom. Each layout is markup round the same ids (#map, #chips, #check, #pc,
@@ -15,9 +15,17 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, compass, plane, routesNear, towards } from '/js/flight_geometry.mjs';
+import { DEFRA_LDEN_SCALE, LONDON_RASTER } from '/js/street_report.mjs';
+
+// The full map's address since the front page took / (2026-10-06). Every link
+// from here to the map goes through it.
+const MAP_PATH = '/map/';
 
 // ---- what the page knows: the same data files the live site ships ----
-const DEFRA = ['#B8D6D1', '#CEE4CC', '#E2F2BF', '#F3C683', '#E87E4D', '#CD463E', '#A11A4D', '#75085C', '#430A4A'];
+// DEFRA's colours and London's picture box come from js/street_report.mjs, whose
+// copies are held to index.html's on every report run and in preflight; this
+// engine kept a third copy of each until 2026-10-06.
+const DEFRA = DEFRA_LDEN_SCALE.map((b) => b.colour);
 // BTS's seven colours, as NOISE_SCALE_BTS in index.html: the Bay Area's picture.
 const BTS = ['#FFC107', '#FF8000', '#FF0000', '#FF3399', '#A300CC', '#5200CC', '#0000FF'];
 const CITIES = [
@@ -44,19 +52,18 @@ function leaveIntro() {
   // The map refits beside the panel; on a stacked layout nothing moved.
   if (wasIntro && state.boroughs) draw(state.pin);
 }
-// The Bay Area is not a city on the live map yet: its outlines are the Census
-// places the /bay-area/ page is built from, its routes the FAA record, its
-// noise picture the one that page serves. Drawn here to show what "on the
-// map" would look like.
+// The Bay Area here is drawn from the files the /bay-area/ page is built from:
+// its outlines the Census places, its routes the FAA record, its noise picture
+// the one that page serves.
 const US = { bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', noiseDir: '/bay-area/' } };
 // London's picture is the one file not described by aircraft-noise-rasters.json.
-const LONDON_PNG = { png: '/data/aircraft-noise-london-lden.png', bbox: { minLon: -0.85, maxLon: 0.4, minLat: 51.1, maxLat: 51.78 } };
+const LONDON_PNG = { png: `/${LONDON_RASTER.png}`, bbox: LONDON_RASTER.bbox };
 // js/api-base.js is the one holder of the API host; the literal is for a mockup opened without it.
 const ENV = `${window.API_BASE || 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'}/v1/environment`;
 const CSV = '/open-data/sky-score-boroughs.csv';
 const FT_KM = 0.0003048;
 // When the panel stacks above the map rather than floating over it: the SAME
-// query as the @media rule in preview/index.html (audit 2026-10-05 I-4). The
+// query as the @media rule in home/index.html (audit 2026-10-05 I-4). The
 // engine used to decide on the map's own width (> 760px) while the CSS tested
 // the viewport, so 761-826px got the floating CSS with a full-width map beneath.
 const STACKED = '(max-width: 1279px), (max-height: 500px)';
@@ -72,7 +79,7 @@ const ZOOM_STEP = 1.6;
 // ---- trial (2026-10-03): an Ordnance Survey street background ----
 // The OS Maps API's OpenData layers cost nothing at any zoom this map reaches
 // (ROADMAP "OS open maps API"), but need a Data Hub key. No key is in the
-// source: opening /preview/#oskey=<key> once stores it on that device and
+// source: opening /#oskey=<key> once stores it on that device and
 // takes it out of the address bar; #oskey=off forgets it. The FRAGMENT, not the
 // query (audit 2026-10-05 M-1): a query string reaches the server and the service
 // worker's page cache, which kept the key after #oskey=off; a fragment reaches
@@ -169,7 +176,7 @@ function renderChips() {
     b.addEventListener('click', () => { leaveIntro(); show(key); setQuery({ city: key }); });
     box.append(b);
   }
-  for (const [href, name] of [['/?city=nyc', 'New York']]) {
+  for (const [href, name] of [[`${MAP_PATH}?city=nyc`, 'New York']]) {
     const a = document.createElement('a'); a.href = href; a.textContent = name; box.append(a);
   }
 }
@@ -686,7 +693,7 @@ function boroughCardHtml(row, f) {
   const score = fmt1(row.score);
   const links = [
     row.ons_code ? `<a href="/area/${esc(row.city)}/${slug(row.borough)}/">Full scorecard</a>` : '',
-    onMap ? `<a href="/?city=${esc(row.city)}&amp;borough=${encodeURIComponent(row.borough)}">Open on the live map</a>` : '',
+    onMap ? `<a href="${MAP_PATH}?city=${esc(row.city)}&amp;borough=${encodeURIComponent(row.borough)}">Open on the full map</a>` : '',
   ].filter(Boolean).join(' &middot; ');
   return `${closeButton}
     <h2 tabindex="-1">${esc(row.borough)}</h2>
@@ -874,7 +881,7 @@ async function searchZip(code) {
   }
   const found = state.usZips[code];
   if (!found) {
-    say(`${code} is not a ZIP in the four Bay Area counties on the map (San Francisco, San Mateo, Santa Clara and Alameda). New York's ZIPs are on the live map.`);
+    say(`${code} is not a ZIP in the four Bay Area counties on the map (San Francisco, San Mateo, Santa Clara and Alameda). New York's ZIPs are on the full map.`);
     return;
   }
   const zip = { code, ...found };
@@ -965,7 +972,7 @@ function render(postcode, district, city, e, lat, lon) {
   }
   const link = byId('ans-link');
   if (link) {
-    link.href = city ? `/?city=${city}&postcode=${encodeURIComponent(postcode)}` : '/';
+    link.href = city ? `${MAP_PATH}?city=${city}&postcode=${encodeURIComponent(postcode)}` : MAP_PATH;
     // "See the full picture on the map" for a postcode just called not on the
     // map contradicted itself (audit 2026-10-05 M-18): no map, no link.
     const more = link.closest('p');

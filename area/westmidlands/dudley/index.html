@@ -44,6 +44,12 @@
   .sources { font-size:12px; color:var(--mid); }
   .cta { margin:28px 0; padding:16px 18px; border:1px solid var(--line); border-radius:8px; }
   footer { margin-top:40px; font-size:12px; color:var(--mid); }
+  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
+  .site-top { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }
+  .site-top .site-brand { font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--dark); }
+  .site-top .site-nav { display:flex; gap:4px; flex-wrap:wrap; }
+  .site-top .site-nav a { font-size:14px; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--mid); }
+  .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] { background:var(--line); color:var(--dark); }
   @media (prefers-color-scheme: dark) {
     :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }
     body { background:#141414; }
@@ -51,6 +57,8 @@
 </style>
 </head>
 <body>
+<!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a><a href="/bay-area/">Bay Area</a></div></nav>
 <div class="wrap">
 <nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; West Midlands</nav>
 <main data-city="westmidlands" data-borough="Dudley">
@@ -85,7 +93,7 @@
 
 <div class="cta">
   <p style="margin:0 0 8px;"><strong>See it on the map.</strong> Noise contours, flight corridors and every neighbourhood in West Midlands.</p>
-  <a href="/?city=westmidlands&amp;borough=Dudley">Open Dudley on the Sky Score map</a>
+  <a href="/map/?city=westmidlands&amp;borough=Dudley">Open Dudley on the Sky Score map</a>
 </div>
 
 <h2>Where these numbers come from</h2>
@@ -95,7 +103,7 @@ Figures are for the whole borough; a single address can differ, and the map show
 </main>
 
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
 </footer>
 </div>
 </body>

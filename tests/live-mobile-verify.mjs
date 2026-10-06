@@ -20,7 +20,8 @@ import { chromium } from '@playwright/test';
 // ADVISORY for that reason: a source tree ahead of the last deploy is the
 // normal condition in this repo and must not block a commit. Same reasoning as
 // `deployed == source` and `site == /v1/score`.
-const URL = 'https://d1oe4ftwutjpf.cloudfront.net/index.html?cb=' + Date.now();
+// The full map, at /map/ since 2026-10-06 (/ is the front page now).
+const URL = 'https://d1oe4ftwutjpf.cloudfront.net/map/?cb=' + Date.now();
 const widths = [
   { w: 360, h: 800, label: 'small Android (360)' },
   { w: 390, h: 844, label: 'iPhone 13 (390)' },

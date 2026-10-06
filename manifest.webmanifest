@@ -2,7 +2,7 @@
   "name": "Sky Score",
   "short_name": "Sky Score",
   "description": "Postcode-level noise, livability and affordability data for UK and NYC property. Independent of estate agents and listings sites.",
-  "start_url": "/",
+  "start_url": "/map/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

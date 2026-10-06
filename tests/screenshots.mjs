@@ -19,7 +19,7 @@ import { webkit, devices } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const SITE = 'https://skyscore.co.uk/';
+const SITE = 'https://skyscore.co.uk/map/'; // the full map since 2026-10-06
 const OUT = 'mobile/fastlane/screenshots/ios/en-GB';
 const DEVICE = devices['iPhone 11 Pro Max'];
 
