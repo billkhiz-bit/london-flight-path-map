@@ -13,6 +13,7 @@ import {
   SCOPE_KM,
   districtComparison,
   mapSvg,
+  nearestStation,
   rasterFor,
   reportDocument,
 } from '/js/street_report.mjs';
@@ -139,10 +140,12 @@ async function make(raw, check = null) {
     }
     const resolvedAs = envBody.location && envBody.location.postcode !== loc.postcode ? envBody.location.postcode : null;
 
-    const [proc, regions, covid] = await Promise.all([
+    const [proc, regions, covid, stations] = await Promise.all([
       getJson('/data/flight-procedures.json', 'The route file'),
       getJson('/data/aircraft-noise-rasters.json', 'The noise map index'),
       getJson('/data/covid-understatement.json', 'The 2021 comparison'),
+      // The nearest station is a line, not a fact the report depends on.
+      maybeJson('/data/stations.json'),
     ]);
     const pl = plane(loc.latitude, loc.longitude);
     const routes = routesNear(proc, pl, SCOPE_KM);
@@ -185,6 +188,7 @@ async function make(raw, check = null) {
         routes,
         district,
         covid,
+        station: stations ? nearestStation(stations, loc.latitude, loc.longitude) : null,
         airac: proc.airac,
         map: mapSvg({
           pl,

@@ -26,6 +26,30 @@ export const ROUTE_RADIUS_KM = 5;
 // An airport nearer than this is named on the page, with what the report holds for it.
 export const SCOPE_KM = 40;
 export const MIN_DISTRICT = 30; // fewer live measured postcodes than this: no comparison chart
+
+// ---- The nearest station (Bill, 2026-10-06: "show it first"), shown and NOT scored ----
+// From data/stations.json, the list the full map's panel reads (NaPTAN rail and metro,
+// each covered city's own). The score's transport input stays the council area's share of
+// addresses within 800 m. One holder for the front page, the free report and the PDF.
+// The list holds stations INSIDE the cities covered, so near a city's edge a closer one
+// can lie outside it: beyond STATION_SCOPE_KM nothing is said, never "no station near".
+export const STATION_SCOPE_KM = 3;
+const haversineKm = (lat1, lon1, lat2, lon2) => {
+  const r = Math.PI / 180, dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371.0088 * Math.asin(Math.sqrt(h));
+};
+/** The nearest station in the list (keyed by city, as data/stations.json is), or null beyond the scope. */
+export function nearestStation(stationsByCity, lat, lon) {
+  let best = null;
+  for (const s of Object.values(stationsByCity || {}).flat()) {
+    const km = haversineKm(lat, lon, s.coords[1], s.coords[0]);
+    if (!best || km < best.km) best = { name: s.name, km };
+  }
+  return best && best.km <= STATION_SCOPE_KM ? best : null;
+}
+/** "650 m" under a kilometre (to the nearest 10 m), "1.4 km" above. */
+export const stationDistance = (km) => (km < 1 ? `${Math.round(km * 100) * 10} m` : `${km.toFixed(1)} km`);
 const MAP = { w: 1000, h: 345, padKm: 5, minHeightKm: 11 };
 
 // DEFRA's Lden bands for its aircraft map. A MIRROR of NOISE_SCALE_DEFRA_LDEN in
@@ -344,6 +368,7 @@ export function reportParts(spec, f) {
     also.push(
       `fine particles ${env.pm25AnnualMeanUgm3.toFixed(1)} &micro;g/m&sup3; (guideline ${Number(env.pm25WhoGuidelineUgm3)})`
     );
+  if (f.station) also.push(`nearest station ${esc(f.station.name)}, ${stationDistance(f.station.km)} in a straight line`);
 
   const c55 =
     covid && routes.airports[0] && routes.airports[0].code === covid.airport

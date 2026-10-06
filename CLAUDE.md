@@ -1212,6 +1212,13 @@ dissolves when you compute the real one.*
 >   comparable with the UK's. A card fact shows only when the row HAS its column, so UK cards
 >   keep one price in pounds. Not yet: New York ZIP search on the front page (it says the ZIPs
 >   are on the full map), and the FAA's arrivals on either US city there.
+> - **THE NEAREST STATION IS SHOWN, NOT SCORED** (Bill, 2026-10-06: "show it first"): the front
+>   page's postcode answer and every street report (free and PDF) say "Nearest station: X, N m in a
+>   straight line" from `data/stations.json`, through ONE function, `nearestStation()` in
+>   `js/street_report.mjs`. Beyond `STATION_SCOPE_KM` (3) NOTHING is said: the list holds stations
+>   INSIDE the covered cities, so "no station near" could be false at a city's edge. The score's
+>   transport input stays the council area's share within 800 m; scoring per address would be a
+>   measured v5.6 that REPLACES that share, never adds to it (double count).
 > - **"Cubitt33" stays on `privacy.html` and `terms.html` ONLY.** Bill asked for it off the
 >   site for now; the legal pages must still name the company (trading disclosures, and
 >   the controller in the privacy notice). Footers say "All figures from official public

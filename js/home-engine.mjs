@@ -15,7 +15,7 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, compass, plane, routesNear, towards } from '/js/flight_geometry.mjs';
-import { DEFRA_LDEN_SCALE, LONDON_RASTER } from '/js/street_report.mjs';
+import { DEFRA_LDEN_SCALE, LONDON_RASTER, nearestStation, stationDistance } from '/js/street_report.mjs';
 
 // The full map's address since the front page took / (2026-10-06). Every link
 // from here to the map goes through it.
@@ -981,6 +981,13 @@ export function cityOf(district) {
   return row && isMapCity(row.city) ? row.city : null;
 }
 
+// The nearest station under a postcode's answer (Bill, 2026-10-06: "show it first"): shown, not
+// scored, from the list the full map's panel reads; nearestStation() says nothing beyond 3 km
+// rather than claim there is no station. Fetched on the first answer, then kept.
+let stationsLoad = null;
+let stationSeq = 0;
+const loadStations = () => (stationsLoad ??= d3.json('/data/stations.json').catch(() => null));
+
 function render(postcode, district, city, e, lat, lon) {
   const title = byId('ans-title'), where = byId('ans-where');
   if (title) title.textContent = postcode;
@@ -1020,6 +1027,21 @@ function render(postcode, district, city, e, lat, lon) {
 
   const routes = byId('ans-routes');
   if (routes) routes.textContent = city && state.proc ? routesText(state.proc, lat, lon) : '';
+  const station = byId('ans-station');
+  if (station) {
+    station.hidden = true;
+    station.textContent = '';
+    // A later search owns the line: an earlier one's list landing late must not write it.
+    const seq = ++stationSeq;
+    if (city) {
+      loadStations().then((list) => {
+        const near = list && seq === stationSeq ? nearestStation(list, lat, lon) : null;
+        if (!near) return;
+        station.textContent = `Nearest station: ${near.name}, ${stationDistance(near.km)} in a straight line.`;
+        station.hidden = false;
+      });
+    }
+  }
   const area = byId('ans-area');
   if (area) {
     const row = city ? rowFor(district) : null;

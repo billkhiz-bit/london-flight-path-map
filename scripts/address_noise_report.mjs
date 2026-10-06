@@ -51,6 +51,7 @@ import {
   SCOPE_KM,
   districtComparison,
   mapSvg,
+  nearestStation,
   rasterFor,
   reportDocument,
 } from '../js/street_report.mjs';
@@ -177,6 +178,8 @@ const html = reportDocument(
     routes,
     district,
     covid: await readJson('data/covid-understatement.json'),
+    // The nearest station, as the free report shows it (one holder: nearestStation).
+    station: existsSync(resolve('data/stations.json')) ? nearestStation(await readJson('data/stations.json'), loc.latitude, loc.longitude) : null,
     airac: proc.airac,
     map: mapSvg({
       pl,

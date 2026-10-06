@@ -377,6 +377,34 @@ const routes = await page.locator('#ans-routes').textContent();
 ok((await page.locator('#status').textContent()) === 'Showing the figures for TW9 3PZ.', 'a found postcode is announced in the live region, not left silent (audit M-14)', await page.locator('#status').textContent());
 ok(/Nearest airport on the map: Heathrow, [\d.]+ km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance and direction', routes);
 ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.test(routes), 'Kew is reported under a Heathrow 27 final approach at a height', routes);
+// The nearest station (Bill, 2026-10-06: "show it first"): worked out HERE with this test's own
+// distance maths over data/stations.json, so the shared nearestStation() cannot pass by agreeing
+// with itself. TW9 3PZ is at the stub's 51.4713, -0.2894.
+{
+  const stations = Object.values(JSON.parse(await readFile(join(ROOT, 'data', 'stations.json'), 'utf8'))).flat();
+  const r = Math.PI / 180;
+  const km = (s) => {
+    const [lon, lat] = s.coords;
+    const dLat = (lat - 51.4713) * r, dLon = (lon + 0.2894) * r;
+    return 2 * 6371.0088 * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(51.4713 * r) * Math.cos(lat * r) * Math.sin(dLon / 2) ** 2));
+  };
+  const near = stations.reduce((a, s) => (km(s) < km(a) ? s : a));
+  const metres = Math.round(km(near) * 100) * 10;
+  await page.waitForFunction(() => !document.getElementById('ans-station').hidden, null, { timeout: 10000 }).catch(() => {});
+  const line = await page.locator('#ans-station').evaluate((p) => ({ hidden: p.hidden, text: p.textContent }));
+  ok(
+    !line.hidden && line.text === `Nearest station: ${near.name}, ${metres} m in a straight line.`,
+    'the answer names the nearest station, as worked out independently from the station list',
+    `${line.text} | expected ${near.name}, ${metres} m`
+  );
+  // Beyond 3 km nothing is said, never "no station near": the list holds stations inside the cities only.
+  const scope = await page.evaluate(async () => {
+    const m = await import('/js/street_report.mjs');
+    const one = { x: [{ name: 'A', coords: [0, 0] }] };
+    return { near: m.nearestStation(one, 0.01, 0)?.name ?? null, far: m.nearestStation(one, 0.05, 0) };
+  });
+  ok(scope.near === 'A' && scope.far === null, 'a station 1.1 km away is named; one 5.6 km away is not mentioned at all', JSON.stringify(scope));
+}
 const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
 ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.score}`) && area.includes(`${richmond.flood_medium_or_high_pct}% of addresses at medium or high flood risk`), 'the council-area line carries the CSV score and flood share', area);
@@ -1000,6 +1028,8 @@ const makeReport = async (pc) => {
   ok(!printed.report && printed.note && !printed.frameHeading, 'printing the page or the report frame gives the firms note, not the report', JSON.stringify(printed));
   const foot = ready ? await sheetDoc().locator('footer').textContent() : '';
   ok(/Free copy for personal use, not for use with clients/.test(foot), 'the free copy says on its face that it is for personal use, not for clients', foot.slice(-140));
+  const alsoLine = ready ? await sheetDoc().locator('p.note', { hasText: 'Also at this postcode' }).textContent() : '';
+  ok(/nearest station [^,]+, \d+ m in a straight line/.test(alsoLine), 'the report names the nearest station, from the same function as the front page', alsoLine.slice(-120));
   // PROTECTION FOR THE FREE COPY (Bill, 2026-10-06: "people can screenshot and maybe edit it"): a
   // watermark, a reference tied to the figures and the day, a check link with a QR code, the terms line.
   const today = new Date().toISOString().slice(0, 10);
