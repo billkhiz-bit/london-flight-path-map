@@ -710,10 +710,26 @@ const pricesOn = () =>
       return [e.dataset.price, c.textContent.replace(/\s+/g, ' ').trim()];
     })
   );
+// No card is "the one to pick" (Bill, 2026-10-06): a homeowner who jumps to the report tiers
+// saw the firms card outlined. Read from computed style: no card carries a ring or shadow, and
+// every card button has one look.
+const cardLook = () =>
+  page.locator('.tier').evaluateAll((cards) => ({
+    cards: cards.length,
+    ringed: cards.filter((c) => getComputedStyle(c).boxShadow !== 'none').map((c) => c.querySelector('h3')?.textContent.trim()),
+    buttons: [...new Set(cards.flatMap((c) => [...c.querySelectorAll('a.go')].map((a) => `${getComputedStyle(a).backgroundColor}|${a.className}`)))],
+  }));
 await page.goto(`http://127.0.0.1:${PORT}/api/`, { waitUntil: 'domcontentloaded' });
 const apiPrices = await pricesOn();
+const apiCards = await cardLook();
 await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentloaded' });
 const pricingPrices = await pricesOn();
+const pricingCards = await cardLook();
+ok(
+  [apiCards, pricingCards].every((c) => c.cards >= 4 && c.ringed.length === 0 && c.buttons.length === 1),
+  'no pricing card is highlighted, on /pricing or /api/, and every card button looks the same',
+  JSON.stringify({ apiCards, pricingCards })
+);
 const priceText = {};
 const clashes = [];
 for (const [key, text] of [...pricingPrices, ...apiPrices]) {

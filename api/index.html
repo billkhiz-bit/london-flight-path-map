@@ -140,12 +140,11 @@
   .tier .price { font-family: var(--font-display); font-weight: 700; font-size: 34px; letter-spacing: -0.03em; line-height: 1.05; color: var(--dark); }
   .tier .price small { display: inline-block; white-space: nowrap; font: 400 14px var(--font-body); letter-spacing: 0; color: var(--mid); }
   .tier .go { margin-top: auto; align-self: flex-start; }
-  .tier-featured { box-shadow: inset 0 0 0 2px var(--orange); }
+  /* No highlighted card and one button style (Bill, 2026-10-06): each section is for a different
+     buyer, so no card is the one to pick. tests/front-page.mjs 16b holds both pages to it. */
 
   ol.steps { margin: 0; padding-left: 22px; color: var(--dark); font-size: 15px; line-height: 1.8; max-width: 80ch; }
 
-  .founder { background: var(--paper); border-radius: 18px; padding: 22px 24px; color: var(--mid); font-size: 15px; max-width: 80ch; }
-  .founder strong { color: var(--dark); }
 
   footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
   footer a { color: var(--mid); }
@@ -281,9 +280,9 @@
         <h3>90-day pilot</h3>
         <p class="price" data-price="pilot">£2,500 <small>for 90 days</small></p>
         <p>Fixed scope, fixed fee: a measure agreed at kickoff, a review at day 45, a written evidence report at day 90. Credited in full against your first-year licence if you continue.</p>
-        <a class="go" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
+        <a class="go quiet" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
       </article>
-      <article class="tier tier-featured">
+      <article class="tier">
         <h3>Professional <span class="tag">Launching</span></h3>
         <p class="price" data-price="api-professional">£499 <small>a month</small></p>
         <p>100,000 requests a month, under a fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each. For one platform integrating Sky Score.</p>
@@ -310,12 +309,6 @@
     </ol>
   </section>
 
-  <section aria-labelledby="who-heading">
-    <h2 class="sec" id="who-heading">Who is behind it</h2>
-    <div class="founder">
-      <p style="margin:0;"><strong>Bilal Khizar</strong>, a finance professional turned builder, makes and runs Sky Score: <a href="https://skyscore.co.uk/">skyscore.co.uk</a>, the <a href="https://apps.apple.com/gb/app/sky-score/id6768118116" rel="noopener">iOS app</a>, this API, and an <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">open methodology</a> published on GitHub. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
-    </div>
-  </section>
 </main>
 
 <footer>

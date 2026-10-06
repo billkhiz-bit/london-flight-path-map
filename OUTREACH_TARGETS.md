@@ -113,6 +113,108 @@ service brings Online Safety Act duties), Discord/Slack, giveaways, paid ads.
 The working tracker is Bill's spreadsheet (Desktop, not the repo, because it
 holds contact details): Contacts, Community and Insiders tabs.
 
+## Search platforms (row 6): how Sky Score could be on them (added 2026-10-06)
+
+Bill asked whether Sky Score could sit on the platforms conveyancers order searches
+through, what that needs and what it costs. Researched 2026-10-06; organisations only.
+
+**Who is who.**
+- **Ordering platforms**, where a conveyancer clicks "order", inside their case-management
+  software: InfoTrack (which bought STL Group in 2014), TM Group (calls itself the largest
+  provider of property searches to conveyancers), Search Acumen, and smaller ones (PSG,
+  Searchflow). A supplier has ONE account with each, invoiced monthly; the platform bills
+  the conveyancers.
+- **Report makers** whose products those platforms sell: Groundsure and Landmark
+  (environmental reports, close to standard on every purchase).
+- **The rules**: the Search Code of Practice (published by CoPSO; register kept by the
+  Property Codes Compliance Board). Lenders increasingly require searches from Code
+  subscribers.
+
+**Yes, Sky Score could be on them, by two routes.**
+- **B, lead with this: our data inside an existing environmental report**, under an API
+  licence. The section is in every report, so there is no take-up problem, at a small fee
+  per address. What we add that the open DEFRA maps do not: the published flight routes
+  near the address, the aircraft's height there, an estimate where DEFRA has no reading,
+  and the 2021 understatement. Read their sample reports first: DEFRA's noise maps are
+  open data, so they may already show noise bands, and the pitch is the part they lack.
+- **A: our report as a line in a platform's catalogue**, paid wholesale per report.
+  Selling it as a search probably means subscribing to the Search Code ourselves.
+
+**Volume, measured** (see "Facts safe to quote"): 779,131 standard home sales in England
+and Wales in 2025; we cover 34.6% of sales, about 270,000 to 320,000 a year. But only
+**14,532 (1.87%)** of 2025's sales in the cities we cover were at postcodes on DEFRA's
+aircraft-noise map: an OPTIONAL aircraft report has a small natural audience, which is
+why route B leads.
+
+**What it needs, in order, and what it costs** (estimates marked; quotes before
+committing):
+
+| # | What | Why | Cost | Who |
+|---|---|---|---|---|
+| 1 | Written confirmation from NATS's aeronautical information service that facts derived from the UK AIP may be resold inside a paid product | A platform's lawyers will ask. The AIP terms (5.4) acknowledge commercial data services built on it, "with or without charge"; NATS's corporate site terms leave doubt (LICENSING.md) | Free | Bill sends; Claude drafts |
+| 2 | ~~Professional indemnity insurance~~ **NOT BOUGHT (Bill, 2026-10-06): no conventional insurance, for the same reason as no conventional lenders.** See "Without conventional insurance" below | Conveyancers rely on these reports; Groundsure's carry GBP 10M | GBP 0 (was estimated GBP 300 to 1,500 a year) | - |
+| 3 | Cyber Essentials | Platforms' and councils' security questionnaires | About GBP 384 a year (VAT paid in full: not VAT-registered) | Bill |
+| 4 | England-wide coverage | At 34.6% of sales, two orders in three would say "not covered" | GBP 0 in data (every English source is national and open); build time; AWS a few pounds a month | Claude |
+| 5 | The rename: the register check, domains, an attorney's opinion, a UK filing in classes 9 and 42 | Gate for cold outreach, and a platform contracts with a brand | About GBP 30 + GBP 150 to 300 + GBP 265 (UK IPO since April 2026: GBP 205 + GBP 60 a class) | Bill and an attorney |
+| 6 | The ICO fee | Legal obligation, open since August | GBP 52 a year | Bill |
+| 7 | A data-supply or reseller contract reviewed by a solicitor | Liability cap, warranties, licences passed through | **Rough estimate GBP 500 to 1,500**, one-off; ask for a fixed fee | Bill |
+| 8 | Search Code subscription (route A only) | Lenders require Code-compliant searches | Not published in what was found; ask the PCCB | Bill |
+| 9 | Evidence: 5 to 10 reports sold by hand to buying agents and surveyors | Proof of demand and a quote or two make the pitch | GBP 0 | Bill, with Claude |
+| 10 | A warm introduction: Geovation (run with OS and HM Land Registry) offered partner introductions, and OS lists InfoTrack and TM Group as OS business partners | A warm first contact beats a cold one | GBP 0 | Bill |
+
+**Total without insurance: roughly GBP 1,400 to 2,600 in the first year, then about
+GBP 450 a year** (ICO fee, Cyber Essentials, domains). Most of it is needed whatever the
+channel: Cyber Essentials for councils too, the rename and the ICO fee regardless.
+
+**Without conventional insurance (Bill, 2026-10-06).** The options, in the order they
+matter:
+1. **Be a data SUPPLIER, not a search seller: route B and the API become the plan.** The
+   report maker (Groundsure, Landmark) issues the report under its own Search Code
+   membership and its own cover; our contract is a data licence with a liability cap
+   (typically the fees paid in the last 12 months), a warranty limited to faithful
+   reproduction of the named official sources, and no reliance by anyone but the report
+   maker. Some partners will still ask for cover: a negotiation, not a given. **Route A
+   (our report sold as a search) is probably closed without cover**: the platforms work to
+   the Search Code (TM Group says it subscribes), and the GeoSmart precedent below almost
+   certainly held cover.
+2. **Takaful**, the Sharia-compliant alternative: thin in the UK (an industry article calls
+   it "nothing of significance"), with specialist brokers (GNL Insurance) and a
+   Sharia-compliant Lloyd's syndicate (Creechurch, Syndicate 3786). An enquiry is free;
+   whether a product meets Bill's standard is a question for his scholar.
+3. **Self-cover**: Cubitt33 Ltd holds a reserve equal to its liability cap; the limited
+   company and capped contracts bound what a claim can reach.
+4. **Design that keeps the risk low**, most of it already live: information not advice,
+   "not a search or a survey", every figure with its source and date, the free report on
+   screen only and for personal use, warranty disclaimers in the terms. A solicitor adds a
+   clear liability cap (item 7).
+5. **Direct buyers (councils, firms)**: "no professional indemnity cover held; liability
+   capped at the contract value". Some will accept for small purchases; ask early.
+
+**Precedent for route A**: TM Group added GeoSmart's drainage report (SuDSmart) to its
+ordering system, tmConvey, which offers "over 400 property searches". Catalogues, opened
+2026-10-06: InfoTrack `infotrack.co.uk/solutions/conveyancing/property-searches/`, TM Group
+`tmgroup.co.uk/residential/searches-property-data/`.
+
+**The channel wall (ROADMAP "Constraints").** The free per-address report on the site
+could look like undercutting a platform selling the same report. Expect a reseller to ask.
+The on-screen-only, personal-use design helps; decide before signing whether the free
+version stays as it is.
+
+**Is it the right path?** (Written before the no-insurance ruling, which narrows it to
+route B and the API.) Yes, as the main business channel for per-address reports, and
+inside the constraints (aggregators and conveyancers, no riba issue). Not first in time:
+it is slow (months of due diligence), wholesale margins are thin, and a platform could
+build basic noise from the same open DEFRA maps, so the edge has to be the flight routes,
+the heights and the checks. **Order: prove demand by hand (9); do the prerequisites
+(1 to 7) as they come due; then the Geovation introduction (10), with route B as the
+pitch.** The tracks that need no rename (journalists, researchers, the twice-yearly
+report) build the "as used by" credibility in the meantime.
+
+Sources, read 2026-10-06: ordnancesurvey.co.uk business partner pages for InfoTrack and
+TM Group; todaysconveyancer.co.uk (InfoTrack's acquisition of STL); legalfutures.co.uk
+(Search Acumen; the PCCB); gov.uk (IPO fees from April 2026); getindemnity.co.uk and
+simplybusiness.co.uk (PI premium ranges).
+
 ## Facts safe to quote
 
 Each is measured and in the repo. Re-check the source before quoting if the date is old.
@@ -122,7 +224,7 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 | Heathrow 55 dB Lden contour: DEFRA 2021 **75.6 km2** vs CAA 2024 **148.4 km2** (ERCD 2501 Table 12), about half | `scripts/measure_covid_understatement.py --check` (blocking) | 2026-09-26 |
 | 62% of DEFRA's mapped Heathrow area (124.2 of 199.8 km2) is below 55 dB | ROADMAP, Option C | 2026-09-26 |
 | Site covers 11 city regions, 91 boroughs; the API covers 14 cities | CLAUDE.md "Project" | 2026-09-27 |
-| Every input is open government data under the Open Government Licence | LICENSING.md | current |
+| Every input is official public data. DEFRA, the Environment Agency, ONS and HM Land Registry publish under the Open Government Licence; **the UK flight routes come from the UK AIP (NATS), which is public but NOT openly licensed** - never say "all open data" (corrected 2026-10-06; it read "every input is open government data") | LICENSING.md | 2026-10-06 |
 | Crime checked against ONS Table C4; prices against HM Land Registry HPI; flood against the EA's own map service, before every release | blocking preflight stages | current |
 | Neighbourhood prices use HM Land Registry Category A sales only, as HMLR's own statistics do | `build_city_neighbourhoods.py --check` | 2026-09-01 |
 | Aircraft-noise estimate error vs DEFRA: **MAE 1.03** on 35,441 London postcodes near airports (1.879 before v5.3, 1.32 before v5.5), bias -0.29, reading louder than DEFRA (pessimistic). Near airports only - never a global accuracy figure. Live since 2026-10-01 (v5.5) | `scripts/check_quiet_estimate_error.py` (re-run) | 2026-10-01 |

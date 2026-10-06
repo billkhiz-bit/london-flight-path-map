@@ -89,7 +89,8 @@
   .tier ul { margin: 0; padding-left: 20px; color: var(--mid); }
   .tier ul li { margin: 4px 0; }
   .tier .go { margin-top: auto; align-self: flex-start; }
-  .tier-featured { box-shadow: inset 0 0 0 2px var(--orange); }
+  /* No highlighted card and one button style (Bill, 2026-10-06): each section is for a different
+     buyer, so no card is the one to pick. tests/front-page.mjs 16b holds both pages to it. */
   /* The platform ladder has four steps, so its cards may be narrower and stay on one row. */
   .tiers.four { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
   h3.tl-head { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 26px 0 10px; }
@@ -105,8 +106,6 @@
   ol.timeline li { border-top: 2px solid var(--line); padding-top: 10px; color: var(--mid); font-size: 15px; }
   ol.timeline b { display: block; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dark); margin-bottom: 2px; }
 
-  .founder { background: var(--paper); border-radius: 18px; padding: 22px 24px; color: var(--mid); font-size: 15px; max-width: 80ch; }
-  .founder strong { color: var(--dark); }
 
   footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
   footer a { color: var(--mid); }
@@ -149,7 +148,7 @@
         <h3>Your own home</h3>
         <p class="price">Free</p>
         <p>For a buyer or a renter checking one address: your report on screen, one at a time, for your own use.</p>
-        <a class="go" data-event="pricing-street-report-cta" href="/reports/street/">Make yours now</a>
+        <a class="go quiet" data-event="pricing-street-report-cta" href="/reports/street/">Make yours now</a>
       </article>
       <article class="tier">
         <h3>Residents' groups</h3>
@@ -157,16 +156,17 @@
         <p>Area summaries for a funding bid, a consultation response or a meeting.</p>
         <a class="go quiet" href="mailto:support@skyscore.co.uk?subject=Area%20summary">Ask for one</a>
       </article>
-      <article class="tier tier-featured">
+      <article class="tier">
         <h3>Firms</h3>
         <p class="price">£35 <small>a report</small></p>
         <ul>
           <li>A PDF to hand to your client</li>
-          <li>Your first report is free</li>
-          <li>Ten reports for £250</li>
+          <li>Your first report is free, once per firm</li>
+          <li>Ten reports for £250 (£25 each), to use within 12 months</li>
           <li>An area or site study from £150</li>
+          <li>No minimum order; paid before the report is sent</li>
         </ul>
-        <p>For buying agents, relocation firms, conveyancers and surveyors.</p>
+        <p>For buying agents, relocation firms, conveyancers and surveyors. Ask from your work email.</p>
         <a class="go quiet" data-event="pricing-firm-reports-cta" href="mailto:support@skyscore.co.uk?subject=Reports%20for%20a%20firm">Ask for one</a>
       </article>
     </div>
@@ -201,7 +201,7 @@
         </ul>
         <a class="go quiet" data-event="pricing-council-pilot-cta" href="mailto:support@skyscore.co.uk?subject=90-day%20pilot%20for%20a%20council">Start a pilot conversation</a>
       </article>
-      <article class="tier tier-featured">
+      <article class="tier">
         <h3>Annual licence</h3>
         <p class="price" data-price="council-licence">On request <small>annual</small></p>
         <p>The figures for your whole area, for every officer who needs them, all year. Priced to the size of your authority, usually after a pilot.</p>
@@ -212,7 +212,7 @@
           <li>Updated as the official sources are</li>
           <li>After a pilot, its £2,500 comes off the first year</li>
         </ul>
-        <a class="go" data-event="pricing-council-licence-cta" href="mailto:support@skyscore.co.uk?subject=Annual%20licence%20for%20a%20council">Talk to us</a>
+        <a class="go quiet" data-event="pricing-council-licence-cta" href="mailto:support@skyscore.co.uk?subject=Annual%20licence%20for%20a%20council">Talk to us</a>
       </article>
     </div>
     <p class="note">Prices are published so an officer can start approval straight away. We are not registered for VAT, so none is added, and we invoice on order. The figures cover the city regions on <a href="/map/">the map</a>; if your area is not there yet, ask.</p>
@@ -232,9 +232,9 @@
         <h3>90-day pilot</h3>
         <p class="price" data-price="pilot">£2,500 <small>for 90 days</small></p>
         <p>A fixed fee to test whether the data moves a measure your business already tracks. Production API access at Professional volume, integration support from the founder, and the written evidence report. The premium over three months of Professional buys the evidence, not the API calls.</p>
-        <a class="go" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
+        <a class="go quiet" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
       </article>
-      <article class="tier tier-featured">
+      <article class="tier">
         <h3>Professional <span class="tag">Launching</span></h3>
         <p class="price" data-price="api-professional">£499 <small>a month</small></p>
         <p>100,000 requests a month, under a fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each, so the score ceiling is the binding limit. For one platform integrating Sky Score. Email support.</p>
@@ -256,12 +256,6 @@
     <p class="note">You pay for the convenience (a service level, structured JSON, batch, an audit trail, a pinned methodology), not for exclusive data: the public site keeps every feature.</p>
   </section>
 
-  <section aria-labelledby="founder-heading">
-    <h2 class="sec" id="founder-heading">Who is behind it</h2>
-    <div class="founder">
-      <p style="margin:0;"><strong>Bilal Khizar</strong>, a finance professional turned builder, makes and runs Sky Score: <a href="/">skyscore.co.uk</a>, the <a href="https://apps.apple.com/gb/app/sky-score/id6768118116" rel="noopener">iOS app</a>, and an API covering 13 UK city regions (97 council areas) and New York, with an <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md" rel="noopener">open methodology</a> published on GitHub. Contact: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
-    </div>
-  </section>
 </main>
 
 <footer>
