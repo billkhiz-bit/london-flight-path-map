@@ -171,8 +171,19 @@ async function make(raw) {
       // draw. Added here, screen only, so the page the PDF script prints is
       // untouched (its HTML is held byte-identical to the module's).
       const pad = doc.createElement('style');
-      pad.textContent = '@media screen { body { padding: 13mm 15mm; } }';
+      // On screen only: printing the frame itself (the browser's route to "Save as PDF")
+      // gets the firms note, not the report. The PDF is the paid product for firms.
+      pad.textContent =
+        '@media screen { body { padding: 13mm 15mm; } }' +
+        '@media print { body > * { display: none !important; } body::before { content: "A printed or PDF copy of a report is part of the service for firms: skyscore.co.uk/reports"; font: 14pt system-ui, sans-serif; } }';
       doc.head.append(pad);
+      // On the free copy only, and on the page itself so it travels with the PDF: a firm
+      // handing this to a client is visibly using it outside its terms (Bill, 2026-10-06:
+      // "can't firms just pretend to be a resident?"). Not in the shared module, so the
+      // sample PDFs stay byte-identical to what the script prints.
+      const use = doc.createElement('strong');
+      use.textContent = ' Free copy for personal use, not for use with clients: reports for firms are at skyscore.co.uk/reports.';
+      doc.querySelector('footer')?.append(use);
       // As tall as the report, so the page scrolls rather than the frame.
       sheet.style.height = `${Math.max(1123, doc.documentElement.scrollHeight + 8)}px`;
     }
@@ -189,10 +200,6 @@ async function make(raw) {
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   make(input.value);
-});
-byId('print').addEventListener('click', () => {
-  sheet.contentWindow?.focus();
-  sheet.contentWindow?.print();
 });
 // ?postcode= from a link (the front page's answer, a shared URL) makes the report at once.
 const given = new URLSearchParams(location.search).get('postcode');

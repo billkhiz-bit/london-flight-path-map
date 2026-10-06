@@ -108,6 +108,19 @@ const state = {
   selected: null, // the name of the council area or Bay Area place whose card is open
 };
 
+// "Or explore the map" (Bill, 2026-10-06). The intro used to say "or tap a council area
+// on the map" while, on a wide screen, the map sat faded behind the question with its
+// controls hidden. This is the way to the map without a search: wide, it ends the intro
+// and brings the map and its controls forward; stacked, the map is already below the
+// question and is scrolled into view. Focus lands on the first council area either way,
+// so a keyboard user arrives where they asked to go.
+byId('explore-map')?.addEventListener('click', () => {
+  leaveIntro();
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelector('.mapwrap')?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+  document.querySelector('#map .boro')?.focus({ preventScroll: true });
+});
+
 const ramp = byId('ramp');
 // The ramp is the palette of the picture on the map: DEFRA's in England, BTS's
 // in the Bay Area. It was DEFRA's everywhere, so not one colour painted over
@@ -321,9 +334,11 @@ function draw(pin) {
     .on('mouseleave', hideTip)
     .on('focus', async (ev, d) => {
       const el = ev.currentTarget;
+      const epoch = tipEpoch;
       // Tabbing to an area off a zoomed map brings it in first (M-16).
       await bringIntoView(el);
-      if (document.activeElement !== el) return;
+      // Not if focus moved on, or a hide came in while we waited (a tap's card opening: M-15).
+      if (document.activeElement !== el || epoch !== tipEpoch) return;
       // The bbox is in view space; the tip is placed in screen space, so apply the zoom.
       const r = el.getBBox();
       const [x, y] = d3.zoomTransform(svg.node()).apply([r.x + r.width / 2, r.y + r.height / 2]);
@@ -468,7 +483,16 @@ function routeNear(ev) {
   return best.d <= ROUTE_HOVER_PX ? best.route : null;
 }
 svg.on('mousemove.routes', (ev) => { const route = routeNear(ev); if (route) showTip(ev, route.html); })
-  .on('click.routes', (ev) => { const route = routeNear(ev); if (route) showTip(ev, route.html); })
+  // Not when the click opened a council area's card: the card is the answer to that tap,
+  // and on a phone a route's tooltip left over the map after it is the M-15 defect by
+  // another door (found 2026-10-06: tapping Camden beside a route opened the card, then
+  // this handler, which runs after the area's own, put the route's tip back on the map).
+  // A tap near a route over water or open ground still explains it; a mouse still hovers.
+  .on('click.routes', (ev) => {
+    if (ev.target.closest?.('.boro')) return;
+    const route = routeNear(ev);
+    if (route) showTip(ev, route.html);
+  })
   .on('mouseleave.routes', hideTip);
 
 function boroughTipHtml(d) {
@@ -494,7 +518,14 @@ function showTipAt(x, y, html) {
   tip.style.left = `${Math.max(0, Math.min(x + 14, r.width - 270))}px`;
   tip.style.top = `${Math.max(0, Math.min(y + 14, r.height - 80))}px`;
 }
-function hideTip() { if (tip) tip.style.display = 'none'; }
+// Every hide also CANCELS a tooltip still waiting to appear. A council area's focus
+// handler awaits bringIntoView() before it shows its tip, so a hide that lands during
+// that wait (a tap's card opening, M-15) would otherwise be undone when it wakes.
+let tipEpoch = 0;
+function hideTip() {
+  tipEpoch++;
+  if (tip) tip.style.display = 'none';
+}
 
 // A toggle for a layer the city does not have is disabled and says so, the way
 // the live map's legend measures "(NO DATA)" from what the render produced.

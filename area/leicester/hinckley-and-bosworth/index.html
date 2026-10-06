@@ -48,7 +48,10 @@
   .site-top { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }
   .site-top .site-brand { font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--dark); }
   .site-top .site-nav { display:flex; gap:4px; flex-wrap:wrap; }
-  .site-top .site-nav a { font-size:14px; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--mid); }
+  .site-top .site-nav { align-items:center; }
+  .site-top .site-nav a { font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }
+  .site-top .site-nav a.nav-cta { background:#f27d26; color:#141414; font-weight:600; }
+  .site-top .site-nav a.nav-cta:hover { background:#ff9440; color:#141414; }
   .site-top .site-nav a:hover, .site-top .site-nav a[aria-current] { background:var(--line); color:var(--dark); }
   @media (prefers-color-scheme: dark) {
     :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }
@@ -58,7 +61,7 @@
 </head>
 <body>
 <!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
-<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a><a href="/bay-area/">Bay Area</a></div></nav>
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/api/">API</a><a href="/open-data/">Open data</a></div></nav>
 <div class="wrap">
 <nav class="crumbs"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; Leicestershire</nav>
 <main data-city="leicester" data-borough="Hinckley and Bosworth">

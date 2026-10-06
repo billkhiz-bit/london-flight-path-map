@@ -219,6 +219,22 @@ await page.waitForSelector('#borough.is-open', { timeout: 5000 });
 const after = await introState();
 ok(!after.intro && after.atLeft && after.legend === 'visible' && after.mapOpacity === 1, 'the first use turns it into the tool: panel at the side, map and controls back', JSON.stringify(after));
 
+// 1c. Bill, 2026-10-06: the bar leads with the map as its one button and drops the Bay Area;
+// the intro stops promising "tap a council area on the map" while that map sits faded and
+// hidden behind it, and offers "Or explore the map" instead.
+{
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitMap();
+  const nav = await page.locator('header.top nav a').evaluateAll((as) => as.map((a) => [a.textContent.trim(), a.className]));
+  ok(nav.length > 0 && !nav.some(([t]) => /Bay Area/.test(t)) && nav[0][0] === 'Full map' && nav[0][1].includes('nav-cta'), 'the bar leads with the full map as its button and no longer lists the Bay Area', JSON.stringify(nav));
+  ok(!/tap a council area/i.test(await page.locator('.panel .lead').textContent()), 'the intro no longer promises a map it is hiding');
+  await page.click('#explore-map');
+  await page.waitForTimeout(300);
+  const st = await introState();
+  const focused = await page.evaluate(() => document.activeElement?.classList.contains('boro'));
+  ok(!st.intro && st.legend === 'visible' && focused && (await page.locator('#explore-map').isHidden()), '"Or explore the map" ends the intro, focuses a council area, then steps aside', JSON.stringify({ ...st, focused }));
+}
+
 // 2. Click Camden: the card opens with the CSV's score and components, and the URL says so.
 await page.locator('#map .boro[aria-label^="Camden"]').click();
 await page.waitForSelector('#borough.is-open', { timeout: 5000 });
@@ -662,7 +678,20 @@ ok(pdfs.length >= 2 && pdfs.every((p) => fetched.has(p) && p.startsWith('/report
 
 // 16. What a report costs lives on the reports page alone, and both pages reach pricing and the council areas.
 const reportsText = await page.locator('main').textContent();
-ok(/Your own home: free/.test(reportsText) && /Firms: £35 a report/.test(reportsText) && /not a conveyancing search/.test(reportsText) && !/\+ ?VAT/.test(reportsText), 'the reports page prices a report: free for your own home, £35 for firms, no VAT added, not a conveyancing search');
+// Read off the tier cards (2026-10-06), each card's own heading and price, so a price
+// moved under the wrong heading fails rather than still matching somewhere on the page.
+const tiers = await page.locator('#prices + .tiers .tier').evaluateAll((cards) =>
+  cards.map((c) => [c.querySelector('h3')?.textContent.trim(), c.querySelector('.price')?.textContent.replace(/\s+/g, ' ').trim()])
+);
+const tierOf = Object.fromEntries(tiers);
+ok(
+  tiers.length === 3 && tierOf['Your own home'] === 'Free' && tierOf["Residents' groups"] === 'Free' && tierOf.Firms === '£35 a report' &&
+    /not a conveyancing search/.test(reportsText) && !/\+ ?VAT/.test(reportsText),
+  'the reports page prices a report in three tiers: free for your own home and for residents\' groups, £35 for firms, no VAT added, not a conveyancing search',
+  JSON.stringify(tiers)
+);
+const homeTier = await page.locator('#prices + .tiers .tier').first().locator('a').getAttribute('href');
+ok(homeTier === '/reports/street/', 'the free tier for your own home leads straight to making the report', homeTier);
 const footReports = await page.locator('footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitMap();
@@ -742,7 +771,27 @@ const makeReport = async (pc) => {
   const h1 = ready ? await sheetDoc().locator('h1').textContent({ timeout: 5000 }) : `(no report: ${said})`;
   const tiles = ready ? await sheetDoc().locator('.key .n').allTextContents() : [];
   ok(/ready below/.test(said) && h1 === 'Aircraft noise at TW9 3PZ' && tiles[0] === '56 dB' && tiles[1] === '3.9/10', 'a measured postcode makes a report with DEFRA\'s level and the Quiet Skies score from the endpoint', `${said} | ${h1} | ${tiles.join(' ')}`);
-  ok(await page.locator('#result.is-open #print').isVisible(), 'the report offers Save as PDF');
+  // ON SCREEN ONLY (Bill, 2026-10-06): the PDF is the paid report for firms. No print
+  // button, and printing - the browser's route to "Save as PDF" - prints the firms note
+  // instead, from the page AND from inside the report's frame.
+  ok((await page.locator('#print').count()) === 0 && (await page.locator('#result.is-open').isVisible()), 'the free report is on screen, with no print or Save as PDF button');
+  await page.emulateMedia({ media: 'print' });
+  const printed = {
+    report: await page.locator('#result').isVisible(),
+    note: await page.locator('.print-note').isVisible(),
+    // Read INSIDE the frame: hiding the page's #result hides the frame too, so a
+    // visibility check would pass with the frame's own rule gone (tried 2026-10-06).
+    // The frame's rule is what covers printing the frame alone ("Print Frame").
+    frameHeading: await page.evaluate(() => {
+      const d = document.getElementById('sheet').contentDocument;
+      const h1 = d?.querySelector('h1');
+      return !h1 || d.defaultView.getComputedStyle(h1).display !== 'none';
+    }),
+  };
+  await page.emulateMedia({ media: 'screen' });
+  ok(!printed.report && printed.note && !printed.frameHeading, 'printing the page or the report frame gives the firms note, not the report', JSON.stringify(printed));
+  const foot = ready ? await sheetDoc().locator('footer').textContent() : '';
+  ok(/Free copy for personal use, not for use with clients/.test(foot), 'the free copy says on its face that it is for personal use, not for clients', foot.slice(-140));
   const img = await sheetDoc().locator('svg image').getAttribute('href');
   ok(img === '/data/aircraft-noise-london-lden.png' && (await page.request.get(`${BASE}data/aircraft-noise-london-lden.png`)).status() === 200, 'its map draws DEFRA\'s London picture from an address the site serves', img);
   const est = await makeReport('NW1 7PJ');

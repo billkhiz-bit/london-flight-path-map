@@ -143,7 +143,10 @@ recalled; the result is what answered.
 | Crime | **DataSF** police incidents (`data.sf.gov/resource/wg3w-h783`), carries `analysis_neighborhood` | Current to 2026-09-30 | San Francisco only |
 | Area boundaries | **DataSF Analysis Neighborhoods** (`data.sf.gov/resource/j2bu-swwd`) | 41 neighbourhoods, GeoJSON | San Francisco only |
 | Prices | **Zillow ZHVI by neighbourhood** (103 MB CSV) | 107 San Francisco neighbourhoods, all with a value for 2026-08-31, from USD 477k (Tenderloin) to USD 4.96M (Presidio Heights) | US. **Zillow's 107 are NOT DataSF's 41**, and **its reuse terms have not been read** - a gate before any price is published, and before any is sold |
-| Price trend | **FHFA HPI by ZIP** (`fhfa.gov/hpi/download/annual/hpi_at_zip5.xlsx`) | Downloads | US, public domain |
+| Price trend | **FHFA HPI by ZIP** (`fhfa.gov/hpi/download/annual/hpi_at_zip5.xlsx`, 39.75 MB, to 2025, updated 2026-03-31) | **Only 95 of our 165 ZIPs carry a 2025 value; 23 of the 50 cities have NO valued ZIP**, Palo Alto among them (measured 2026-10-06). An index, no dollar figure, built from Fannie Mae and Freddie Mac mortgages only, so the dearest areas (jumbo loans) drop out, and FHFA itself calls the series "developmental" | US, public domain (FHFA: "in the public domain and may be copied and distributed without permission") |
+| Price level | **Census ACS 5-year, table B25077** (median home value), BULK file `www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25077.dat` (pipe-delimited, 18.5 MB, no key) | 2020-2024; all 50 cities; **capped: 16 of the 50 read "$2,000,000 or more"** (value `2000001`, margin `-333333333`, a code, not a reading). Oakland USD 929,900, San Bruno USD 1,207,500. 2021-2025 due ~December | US federal work. **The Census API now refuses keyless calls** (302 to `missing_key.html`, measured), so the bulk file is the route |
+| Crime | **California DOJ OpenJustice, Crimes and Clearances** (`data-openjustice.doj.ca.gov/sites/default/files/dataset/2026-07/Crimes_and_Clearances_with_Arson-1985-2025.csv`, 6.3 MB; found through the site's `/jsonapi/file/file` listing, since `openjustice.doj.ca.gov/data` is a script shell with no links) | 1985-2025 by agency. **45 of the 50 cities have a row; Half Moon Bay, Millbrae, Portola Valley, San Carlos and Woodside do not** - each is policed by the San Mateo County Sheriff under contract, and DOJ's own context PDF says their crime is counted in the sheriff's figures | Public domain (oag.ca.gov/conditions: "Considered in the public domain") |
+| Population (for crime rates) | **Census city population estimates** (`www2.census.gov/programs-surveys/popest/datasets/2020-2025/cities/totals/sub-est2025_6.csv`, 110 KB, no key, `SUMLEV=162`) | 2025; all 50 cities match on GEOID | US federal work |
 | Area boundaries, national | Census cartographic files (`www2.census.gov/geo/tiger/GENZ2023/`) | Downloads | US, public domain |
 
 **BTS's own limit on its noise map, which shapes how a US city may use it:**
@@ -330,12 +333,22 @@ departure, 26 are on the noise map.
   with them the overall score, the neighbourhood tier, area pages and the
   launch post. ZIP search needs a ZIP-to-city table and ZIP centre points;
   the Census publishes both as files (gazetteer and relationship files),
-  believed to be plain downloads needing no key - not yet fetched. Prices by
-  the public-domain route are ACS median home values through the Census API
-  (the free key in point 3 above; Bill's to request, after release 1) with
-  FHFA for the trend; Zillow stays behind its unread terms. Reports there
-  follow England's rule: free for a person's own home and for residents'
-  groups, and until a level can be stood behind they are routes summaries.
+  believed to be plain downloads needing no key - not yet fetched. **The
+  release 2 sources were FETCHED on 2026-10-06 (table above) and none needs a
+  key**: prices from the ACS bulk file, crime from California DOJ, population
+  from the Census estimates file. The FBI's Crime Data Explorer needs an
+  api.data.gov key and is only worth having as a cross-check. Three rules
+  come out of the measurement, and each is the "absence is not a reading"
+  rule again: **publish ACS's cap as "$2M+", never as 2,000,000** (16 cities
+  share it); **the five sheriff-contract cities have no crime rate of their
+  own** - say so, never share the sheriff's county total out among them; and
+  **FHFA cannot carry a trend for the dearest half of the region**, so the
+  trend is a DECISION for Bill before release 2 (a city's FHFA change only
+  where its ZIPs are valued; FHFA's county series; or two ACS vintages, which
+  overlap, lag and hit the same cap). Zillow stays behind its unread terms.
+  Reports there follow England's rule: free to read on screen for a person's
+  own home and for residents' groups, and until a level can be stood behind
+  they are routes summaries.
 
 **What a second US city must touch** (code survey 2026-10-02; line numbers
 omitted because they move - search for the names). New York is wired in BY

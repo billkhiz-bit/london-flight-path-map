@@ -1173,6 +1173,20 @@ dissolves when you compute the real one.*
 >   script on every run; the front page's engine imports them instead of keeping
 >   a third copy. A postcode with `aircraftQuietCoverage: 'outside'` gets no
 >   report and no estimate tile: the endpoint's 10.0 there is from nothing nearby.
+> - **The free report is ON SCREEN ONLY** (Bill, 2026-10-06, after asking whether firms
+>   could pose as residents): no print button, and printing - a browser's "Save as PDF" -
+>   prints a firms note instead, from the page AND from inside the report's frame (the
+>   frame rule is injected by `js/street_report_page.mjs`; `tests/front-page.mjs` reads
+>   the frame's own computed style, because hiding the page's result box hides the frame
+>   too and a visibility check passed with the rule removed). The free copy carries "Free
+>   copy for personal use, not for use with clients". The PDF is the paid product for
+>   firms (`scripts/address_noise_report.mjs`, which never gets those additions, so it
+>   stays byte-identical to the module).
+> - **"Cubitt33" stays on `privacy.html` and `terms.html` ONLY.** Bill asked for it off the
+>   site for now; the legal pages must still name the company (trading disclosures, and
+>   the controller in the privacy notice). Footers say "All figures from official public
+>   data" - not "open government data", because the UK routes come from the AIP, public
+>   but not openly licensed.
 
 > ## ⚠️ `export MSYS_NO_PATHCONV=1` BEFORE ANY `cloudfront create-invalidation`
 >
