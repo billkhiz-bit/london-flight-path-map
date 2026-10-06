@@ -1131,6 +1131,8 @@ dissolves when you compute the real one.*
 
 > ## THE FRONT DOOR MOVED ON 2026-10-06: `/` is the front page, the map is `/map/`
 >
+> **DEPLOYED 2026-10-06 (`41c0852`, master level) and verified from the origin**: drift 31 pages / 34 data / 103 area, every precached asset present; a browser on the LIVE site at 1440 and 390 found / the front page, /map/ the map with its API base, /reports/street/ making TW9 3PZ's report from the live API, /preview/ forwarding, no page errors or failed requests; manifest start_url /map/, worker v1.0.37; live e2e 33 of 33 (10 before the deploy); live phone layout PASS; site == /v1/score on 6 postcodes; responsive live 115 combinations across 17 pages clean.
+>
 > Bill's ruling, the same day, all four recommended options: the installed app
 > opens the MAP (`manifest.webmanifest` `start_url: "/map/"`), reports are free
 > and self-serve for your own home with firms asking by email, launch now and

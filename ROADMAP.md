@@ -984,7 +984,7 @@ the site is); Bill: "a grid system like Hometrack". The path so far, all in
   moved, and why each piece is where it is, is CLAUDE.md "THE FRONT DOOR MOVED".
   New: `/reports/street/`, a visitor's own one-page aircraft-noise report made in
   the browser from `js/street_report.mjs`, the same module the sample PDFs are
-  printed from. **Not deployed** until preflight and Bill's go-ahead.
+  printed from. **DEPLOYED 2026-10-06 (`41c0852`, master level) and verified from the origin**: drift 31 pages / 34 data / 103 area, every precached asset present; a browser on the LIVE site at 1440 and 390 found / the front page, /map/ the map with its API base, /reports/street/ making TW9 3PZ's report from the live API, /preview/ forwarding, no page errors or failed requests; manifest start_url /map/, worker v1.0.37; live e2e 33 of 33 (10 before the deploy); live phone layout PASS; site == /v1/score on 6 postcodes; responsive live 115 combinations across 17 pages clean.
   - **Still to do, deliberately later:** restyle the bodies of `/api/` and
     `/pricing` (dark, Geist) to the new design; the free AREA summary is still
     by email (`scripts/area_summary.mjs` reads the live API with a key, so it
