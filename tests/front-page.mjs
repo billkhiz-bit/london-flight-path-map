@@ -162,7 +162,15 @@ ok((await boroCount()) === 33, 'London lands with 33 council areas');
 const labels = await page.locator('#map .boro').evaluateAll((els) => els.map((e) => [e.getAttribute('role'), e.getAttribute('tabindex'), e.getAttribute('aria-label')]));
 ok(labels.every(([r, t]) => r === 'button' && t === '0'), 'every council area is role=button and in the tab order');
 ok((await page.locator('#map').getAttribute('role')) !== 'img', 'the svg is not role=img (its children are buttons)');
-ok((await page.locator('#chips button').count()) === 11 && (await page.locator('#chips a').count()) === 1, 'eleven city chips plus the New York link');
+// The SET of cities, not a count: New York became a chip on 2026-10-06 (it was a link out to
+// the full map), and a count would only have said "one more".
+const chipCities = (await page.locator('#chips button').evaluateAll((bs) => bs.map((b) => b.dataset.city))).sort().join(' ');
+ok(
+  chipCities === 'bayarea bristol leicester london manchester merseyside nyc southyorkshire teesside tyneandwear westmidlands westyorkshire' &&
+    (await page.locator('#chips a').count()) === 0,
+  'a chip for every city on the front page, New York included, and no link out',
+  chipCities
+);
 await page.keyboard.press('Tab');
 const onSkip = await page.evaluate(() => document.activeElement?.matches('a.skip[href="#pc"]'));
 ok(onSkip, 'the first Tab reaches "Skip to the search" (audit I-5: the box was stop 56)');
@@ -494,6 +502,71 @@ await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 7, null, { timeout: 10000 });
 ok(true, 'a city name switches the map');
 
+// 12b. NEW YORK ON THE FRONT PAGE (Bill, 2026-10-06: "show on the main screen instead of going to the
+// full map"). A chip, not a link out; its five boroughs, the FAA's routes for its four airports and the
+// US DOT's picture; and a card that is the score engine's row (scripts/build_nyc_front.py --check holds
+// the file to the engine), in dollars, saying its figures are curated and not comparable with the UK's.
+{
+  const nycDoc = JSON.parse(await readFile(join(ROOT, 'data', 'us-nyc.json'), 'utf8'));
+  const nycChip = page.locator('#chips button[data-city="nyc"]');
+  ok((await nycChip.count()) === 1 && (await page.locator('#chips a[href*="city=nyc"]').count()) === 0, 'New York is a city chip, not a link out to the full map');
+  await nycChip.click();
+  await page.waitForFunction(
+    () => document.querySelector('#chips button[data-city="nyc"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length === 5,
+    null,
+    { timeout: 15000 }
+  );
+  const nycMap = await page.evaluate(() => ({
+    finals: document.querySelectorAll('#map .lines .final').length,
+    // The label's own text node: its <title> child carries the airport's name as well.
+    airports: [...document.querySelectorAll('#map text.ap')].map((t) => t.childNodes[0].nodeValue.trim()).sort(),
+    picture: document.getElementById('noise-image')?.getAttribute('href'),
+  }));
+  ok(
+    nycMap.finals > 0 && JSON.stringify(nycMap.airports) === JSON.stringify(['EWR', 'JFK', 'LGA', 'TEB']) && nycMap.picture === `/data/${nycDoc.noise.file}`,
+    "New York draws its five boroughs, the FAA's final approaches for JFK, LaGuardia, Newark and Teterboro, and the US DOT's noise picture",
+    JSON.stringify(nycMap)
+  );
+  ok(JSON.stringify(await rampHex()) === JSON.stringify(BTS), "New York's legend ramp is the US DOT's seven colours, the picture it sits over", (await rampHex()).join(' '));
+  await page.fill('#pc', 'Brooklyn');
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Brooklyn', null, { timeout: 10000 });
+  const bk = nycDoc.rows.find((r) => r.borough === 'Brooklyn');
+  const card = await page.locator('#borough').evaluate((c) => ({
+    where: c.querySelector('.where')?.textContent || '',
+    score: c.querySelector('.score strong')?.textContent,
+    text: c.textContent,
+    scorecard: c.querySelector('a[href^="/area/"]')?.getAttribute('href'),
+    prices: [...c.querySelectorAll('.facts dt')].filter((d) => d.textContent === 'Average price').length,
+  }));
+  ok(
+    card.score === Number(bk.score).toFixed(1) &&
+      /^Borough of New York City/.test(card.where) &&
+      card.text.includes(`$${Number(bk.avg_price_usd).toLocaleString('en-US')}`) &&
+      !/£/.test(card.text) &&
+      card.prices === 1 &&
+      /not comparable/.test(card.text) &&
+      card.scorecard === '/area/nyc/brooklyn/',
+    "Brooklyn's card is the engine's row: its score, its price in dollars (one price line, no pounds), the curated-and-not-comparable note, and its scorecard",
+    JSON.stringify({ ...card, text: card.text.slice(0, 160) })
+  );
+  ok((await page.evaluate(() => location.search)) === '?city=nyc&borough=Brooklyn', 'the URL names New York and Brooklyn', await page.evaluate(() => location.search));
+  // A UK card is unchanged by the dollar line: one price, in pounds.
+  await page.fill('#pc', 'Camden');
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Camden', null, { timeout: 10000 });
+  const camden = await page.locator('#borough .facts').evaluate((f) => ({
+    prices: [...f.querySelectorAll('dt')].filter((d) => d.textContent === 'Average price').length,
+    pounds: /£/.test(f.textContent),
+    dollars: /\$/.test(f.textContent),
+  }));
+  ok(camden.prices === 1 && camden.pounds && !camden.dollars, 'a UK card still shows one price, in pounds', JSON.stringify(camden));
+  // And a link straight to New York opens it.
+  await page.goto(`${BASE}?city=nyc&borough=Staten%20Island`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Staten Island', null, { timeout: 20000 });
+  ok((await nycChip.getAttribute('aria-pressed')) === 'true', '?city=nyc&borough= boots New York with the card open');
+}
+
 // 13. Deep links boot into the state the URL names.
 await page.goto(`${BASE}?city=manchester&borough=Trafford`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#borough.is-open', { timeout: 20000 });
@@ -812,6 +885,25 @@ for (const [path, here] of [
       bar.underlined,
     `${path}: the bar lists Pricing, Full map is outlined, and ${here ? 'this page is underlined, not filled' : 'no page is marked'}`,
     JSON.stringify(bar)
+  );
+  // Hover (Bill, 2026-10-06: "underline the header links instead of highlighting them a colour"):
+  // an underline and no fill, on an ordinary link and on Full map alike.
+  const hoverLook = async (sel) => {
+    const link = page.locator(sel).first();
+    await link.hover();
+    return link.evaluate((a) => ({ fill: getComputedStyle(a).backgroundColor, line: getComputedStyle(a).textDecorationLine }));
+  };
+  const hovered = {
+    // Not the brand: the generated pages put "Sky Score" INSIDE the site nav (the hand-written
+    // ones beside it), and the brand is not a menu item (first run read it as a missed underline).
+    plain: await hoverLook('nav[aria-label="Site"] a:not(.nav-cta):not([aria-current]):not(.site-brand)'),
+    cta: await hoverLook('nav[aria-label="Site"] a.nav-cta'),
+  };
+  await page.mouse.move(0, 0);
+  ok(
+    Object.values(hovered).every((h) => h.fill === 'rgba(0, 0, 0, 0)' && h.line.includes('underline')),
+    `${path}: hovering a header link underlines it, with no colour fill`,
+    JSON.stringify(hovered)
   );
 }
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass

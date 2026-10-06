@@ -308,6 +308,14 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-zips.json \
 		s3://$(S3_BUCKET)/data/us-bayarea-zips.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# New York on the front page (2026-10-06): the borough rows from the score engine and
+	# the US noise picture, both written by scripts/build_nyc_front.py.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-nyc.json \
+		s3://$(S3_BUCKET)/data/us-nyc.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-nyc-laeq.png \
+		s3://$(S3_BUCKET)/data/aircraft-noise-nyc-laeq.png \
+		--content-type "image/png" --region $(AWS_REGION)
 	# Five files the front page's engine and the street report read at run
 	# time and nothing else serves: the map and the Bay Area page carry their
 	# contents inline, generated. preview-deploy uploaded the first four from

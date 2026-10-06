@@ -32,7 +32,7 @@ const CITIES = [
   ['london', 'London'], ['manchester', 'Greater Manchester'], ['westmidlands', 'West Midlands'],
   ['westyorkshire', 'West Yorkshire'], ['southyorkshire', 'South Yorkshire'], ['merseyside', 'Merseyside'],
   ['tyneandwear', 'Tyne and Wear'], ['bristol', 'Bristol'], ['leicester', 'Leicester'], ['teesside', 'Teesside'],
-  ['bayarea', 'San Francisco Bay Area'],
+  ['bayarea', 'San Francisco Bay Area'], ['nyc', 'New York'],
 ];
 const CITY_NAME = Object.fromEntries(CITIES);
 // Own keys only: `CITY_NAME.constructor` is truthy, so ?city=constructor
@@ -55,7 +55,15 @@ function leaveIntro() {
 // The Bay Area here is drawn from the files the /bay-area/ page is built from:
 // its outlines the Census places, its routes the FAA record, its noise picture
 // the one that page serves.
-const US = { bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', noiseDir: '/bay-area/' } };
+const US = {
+  bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', noiseDir: '/bay-area/' },
+  // New York (Bill, 2026-10-06: "show on the main screen instead of going to the full map"):
+  // the map's own outlines, the FAA's routes for JFK, LaGuardia, Newark and Teterboro, and
+  // scripts/build_nyc_front.py's file - the US noise picture's frame and one row per borough
+  // from the score engine, in the open-data CSV's row shape.
+  nyc: { data: '/data/us-nyc.json', outlines: '/data/nyc-boroughs.json', proc: '/data/us-flight-procedures.json' },
+};
+const isUs = (key) => Object.hasOwn(US, key);
 // London's picture is the one file not described by aircraft-noise-rasters.json.
 const LONDON_PNG = { png: `/${LONDON_RASTER.png}`, bbox: LONDON_RASTER.bbox };
 // js/api-base.js is the one holder of the API host; the literal is for a mockup opened without it.
@@ -100,6 +108,7 @@ const tip = byId('tip');
 const state = {
   city: null, boroughs: null, extra: null, proc: null, rasters: null, projection: null,
   usProc: null, usNoise: null, usPlaces: null,
+  nycDoc: null, nycNoise: null, // scripts/build_nyc_front.py's file, and its picture placed on the map
   usZips: null, // the Census ZIP areas of the four Bay Area counties, fetched on the first ZIP typed
   rows: [], // the open-data CSV, one object per council area
   layers: { noise: true, lines: true, streets: false },
@@ -126,7 +135,7 @@ const ramp = byId('ramp');
 // in the Bay Area. It was DEFRA's everywhere, so not one colour painted over
 // the Bay Area appeared in its legend (audit 2026-10-05 M-11).
 const paintRamp = (key) => {
-  if (ramp) ramp.innerHTML = (key === 'bayarea' ? BTS : DEFRA).map((c) => `<b style="background:${c}"></b>`).join('');
+  if (ramp) ramp.innerHTML = (isUs(key) ? BTS : DEFRA).map((c) => `<b style="background:${c}"></b>`).join('');
 };
 paintRamp('london');
 
@@ -168,11 +177,13 @@ function parseCsv(text) {
 const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) || null;
 
 async function load() {
-  const [extra, proc, rasters, csv] = await Promise.all([
+  const [extra, proc, rasters, csv, nycDoc] = await Promise.all([
     d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
     d3.text(CSV).catch(() => ''),
+    // Optional like the CSV: without it New York's chip still draws, and its cards say "not scored".
+    d3.json(US.nyc.data).catch(() => null),
   ]);
-  Object.assign(state, { extra, proc, rasters, rows: csv ? parseCsv(csv) : [] });
+  Object.assign(state, { extra, proc, rasters, nycDoc, rows: [...(csv ? parseCsv(csv) : []), ...(nycDoc?.rows || [])] });
   readOsKey();
   renderChips();
   bindControls();
@@ -188,9 +199,6 @@ function renderChips() {
     b.type = 'button'; b.textContent = name; b.dataset.city = key; b.setAttribute('aria-pressed', 'false');
     b.addEventListener('click', () => { leaveIntro(); show(key); setQuery({ city: key }); });
     box.append(b);
-  }
-  for (const [href, name] of [[`${MAP_PATH}?city=nyc`, 'New York']]) {
-    const a = document.createElement('a'); a.href = href; a.textContent = name; box.append(a);
   }
 }
 
@@ -241,17 +249,31 @@ function setQuery(parts) {
 }
 
 // ---- the map ----
+// A US picture's frame is in web-mercator pixels at the zoom it was fetched at.
+function frameBox(frame) {
+  const [x0, y0, x1, y1] = frame.px;
+  const n = 256 * 2 ** frame.zoom;
+  const lonlat = (px, py) => [(px / n) * 360 - 180, (Math.atan(Math.sinh(Math.PI * (1 - (2 * py) / n))) * 180) / Math.PI];
+  const [minLon, maxLat] = lonlat(x0, y0);
+  const [maxLon, minLat] = lonlat(x1, y1);
+  return { minLon, maxLon, minLat, maxLat };
+}
+
+async function loadNyc() {
+  const [doc, proc, outlines] = await Promise.all([
+    state.nycDoc || d3.json(US.nyc.data).catch(() => null), d3.json(US.nyc.proc), d3.json(US.nyc.outlines),
+  ]);
+  state.nycDoc = doc;
+  state.usProc = proc;
+  state.nycNoise = doc ? { png: `/data/${doc.noise.file}`, bbox: frameBox(doc.frame) } : null;
+  return outlines;
+}
+
 async function loadBayArea() {
   const [places, proc] = await Promise.all([d3.json(US.bayarea.places), d3.json(US.bayarea.proc)]);
   state.usProc = proc;
   state.usPlaces = places;
-  // The picture's frame is in web-mercator pixels at the zoom it was fetched at.
-  const [x0, y0, x1, y1] = places.frame.px;
-  const n = 256 * 2 ** places.frame.zoom;
-  const lonlat = (px, py) => [(px / n) * 360 - 180, (Math.atan(Math.sinh(Math.PI * (1 - (2 * py) / n))) * 180) / Math.PI];
-  const [minLon, maxLat] = lonlat(x0, y0);
-  const [maxLon, minLat] = lonlat(x1, y1);
-  state.usNoise = { png: US.bayarea.noiseDir + places.noise.file, bbox: { minLon, maxLon, minLat, maxLat } };
+  state.usNoise = { png: US.bayarea.noiseDir + places.noise.file, bbox: frameBox(places.frame) };
   // Shapefile rings wind the opposite way to what d3's spherical geometry
   // expects for holes, so these are drawn on the plane (see planarPath).
   const features = places.places
@@ -275,7 +297,7 @@ function fitTarget(fc) {
 let showSeq = 0;
 async function show(key, pin) {
   const seq = ++showSeq;
-  const boroughs = key === 'bayarea' ? await loadBayArea() : await d3.json(`/data/${key}-boroughs.json`);
+  const boroughs = key === 'bayarea' ? await loadBayArea() : key === 'nyc' ? await loadNyc() : await d3.json(`/data/${key}-boroughs.json`);
   // The latest request owns the map: an outline file that lands late must not
   // draw one city's council areas under another's routes and noise picture.
   if (seq !== showSeq) return;
@@ -352,7 +374,7 @@ function draw(pin) {
       selectBorough(featureName(d), { scroll: true, focus: true });
     });
 
-  const raster = state.city === 'london' ? LONDON_PNG : state.city === 'bayarea' ? state.usNoise : state.rasters.cities[state.city];
+  const raster = state.city === 'london' ? LONDON_PNG : state.city === 'bayarea' ? state.usNoise : state.city === 'nyc' ? state.nycNoise : state.rasters.cities[state.city];
   if (raster) {
     const [x0, y0] = projection([raster.bbox.minLon, raster.bbox.maxLat]);
     const [x1, y1] = projection([raster.bbox.maxLon, raster.bbox.minLat]);
@@ -367,7 +389,7 @@ function draw(pin) {
   const lines = view.append('g').attr('class', 'lines').attr('clip-path', 'url(#city-clip)').style('display', state.layers.lines ? null : 'none');
   state.routes = [];
   const marks = view.append('g').attr('class', 'marks').style('pointer-events', 'none');
-  const proc = state.city === 'bayarea' ? state.usProc : state.proc;
+  const proc = isUs(state.city) ? state.usProc : state.proc;
   let drawn = 0;
   for (const [code, ap] of Object.entries(proc.airports)) {
     if (!(ap.cities || []).includes(state.city)) continue;
@@ -415,8 +437,8 @@ function draw(pin) {
 const OS_CREDIT = byId('os-credit')?.textContent || '';
 function drawStreets() {
   const key = osKey.get();
-  // OS maps Great Britain only: the Bay Area keeps its plain ground.
-  const can = Boolean(key) && state.city !== 'bayarea';
+  // OS maps Great Britain only: the US cities keep their plain ground.
+  const can = Boolean(key) && !isUs(state.city);
   const on = can && state.layers.streets;
   const b = byId('toggle-streets');
   if (b) {
@@ -641,6 +663,10 @@ const COMPONENTS = [['quiet', 'Quiet skies'], ['afford', 'Affordability'], ['gro
 // rather than as a number.
 const CARD_FACTS = [
   ['Average price', 'avg_price_gbp', (v, r) => `£${Number(v).toLocaleString('en-GB')} (${r.price_vintage})`],
+  // New York's rows (scripts/build_nyc_front.py) carry dollars, not pounds. A row LACKING a
+  // column skips its line (every CSV row has all the UK columns; New York's have only what
+  // the API publishes there); a BLANK one still says "not published".
+  ['Average price', 'avg_price_usd', (v) => `$${Number(v).toLocaleString('en-US')} (curated borough median)`],
   ['Crime', 'crime_per_1000', (v) => `${v} offences per 1,000 people a year`],
   ['Road noise', 'road_noise_above_who_pct', (v) => `${v}% of addresses over the WHO guideline (53 dB)`],
   // The ratio is the WORSE of the two pollutants, so it is claimed for neither; some rows hold it without the concentrations.
@@ -717,21 +743,22 @@ function boroughCardHtml(row, f) {
       ? `<div class="row"><span>${label}</span><span class="bar"></span><span class="val">not scored</span></div>`
       : `<div class="row"><span>${label}</span><span class="bar"><i style="width:${Number(v) * 10}%"></i></span><span class="val">${v} / 10</span></div>`;
   }).join('');
-  const facts = CARD_FACTS.map(([label, col, print]) => {
+  const facts = CARD_FACTS.filter(([, col]) => col in row).map(([label, col, print]) => {
     const v = row[col];
     return `<div><dt>${label}</dt><dd>${v === '' || v == null ? 'not published for this area' : esc(print(v, row))}</dd></div>`;
   }).join('');
   const score = fmt1(row.score);
   const links = [
-    row.ons_code ? `<a href="/area/${esc(row.city)}/${slug(row.borough)}/">Full scorecard</a>` : '',
+    row.ons_code ? `<a href="/area/${esc(row.city)}/${slug(row.borough)}/">Full scorecard</a>` : row.area_page ? `<a href="${esc(row.area_page)}">Full scorecard</a>` : '',
     onMap ? `<a href="${MAP_PATH}?city=${esc(row.city)}&amp;borough=${encodeURIComponent(row.borough)}">Open on the full map</a>` : '',
   ].filter(Boolean).join(' &middot; ');
   return `${closeButton}
     <h2 tabindex="-1">${esc(row.borough)}</h2>
-    <p class="where">Council area in ${esc(cityName)}${onMap ? '' : '. Not on the map yet: figures only'}.</p>
+    <p class="where">${row.city === 'nyc' ? 'Borough of' : 'Council area in'} ${esc(cityName)}${onMap ? '' : '. Not on the map yet: figures only'}.</p>
     ${score == null ? '<p class="score"><span>Not scored: too few inputs</span></p>' : `<p class="score"><strong>${score}</strong><span>Sky Score out of 10, balanced weighting, method ${esc(row.methodology_version)}</span></p>`}
     <div class="rows">${bars}</div>
     <dl class="facts">${facts}</dl>
+    ${row.note ? `<p class="where">${esc(row.note)}</p>` : ''}
     <p class="more">${links}</p>`;
 }
 function placeCardHtml(f, zip) {

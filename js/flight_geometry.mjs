@@ -44,6 +44,12 @@ export const AIRPORT_NAME = {
   LGW: 'Gatwick',
   STN: 'Stansted',
   LTN: 'Luton',
+  // New York's, drawn on the front page from the FAA record (2026-10-06), whose airport
+  // records carry no name: without these the tooltips read the bare codes.
+  JFK: 'JFK',
+  LGA: 'LaGuardia',
+  EWR: 'Newark',
+  TEB: 'Teterboro',
 };
 
 /** A flat plane in km, centred on a point. Good to well under 1% across a city region. */

@@ -1197,6 +1197,21 @@ dissolves when you compute the real one.*
 > - **The top bar marks the current page with an UNDERLINE, never a fill**, and Full map is an
 >   OUTLINED button: an orange block beside a grey box read as two selected tabs. The underline is
 >   `#d35a12` (3.61:1); the brand orange is 2.44:1, under WCAG 1.4.11's 3:1 for a state cue.
+>   **Hover underlines too (thinner, dark), never fills** (Bill, same day); gated in 16c on
+>   every bar. The generated pages put the brand INSIDE the site nav, so a check picking "the
+>   first link" there reads the brand: exclude `.site-brand`.
+> - **NEW YORK IS A FRONT-PAGE CITY since 2026-10-06** (Bill: "show on the main screen instead
+>   of going to the full map"): a chip, not a link out. Outlines `data/nyc-boroughs.json`, routes
+>   the FAA's `data/us-flight-procedures.json` (JFK, LGA, EWR, TEB - the full map still draws New
+>   York's HAND-DRAWN corridors), and `scripts/build_nyc_front.py` writes `data/us-nyc.json` (one
+>   row per borough FROM `resolve_query`, in the open-data CSV's row shape, so the card is
+>   unchanged) plus `data/aircraft-noise-nyc-laeq.png` (US DOT 2022, via
+>   `build_bay_area_page.build_noise`). `--check` is BLOCKING ("New York front page == engine").
+>   The open-data CSV still EXCLUDES New York, deliberately. The card prints dollars, "Borough
+>   of", and a note that the figures are curated (NYPD CompStat, borough medians) and NOT
+>   comparable with the UK's. A card fact shows only when the row HAS its column, so UK cards
+>   keep one price in pounds. Not yet: New York ZIP search on the front page (it says the ZIPs
+>   are on the full map), and the FAA's arrivals on either US city there.
 > - **"Cubitt33" stays on `privacy.html` and `terms.html` ONLY.** Bill asked for it off the
 >   site for now; the legal pages must still name the company (trading disclosures, and
 >   the controller in the privacy notice). Footers say "All figures from official public

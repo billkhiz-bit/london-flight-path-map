@@ -110,6 +110,11 @@ data/*
 # stage, checks it against the outlines above. The new front page reads it,
 # and the score Lambda will.
 !data/us-bayarea-zips.json
+# New York on the front page (2026-10-06): one row per borough from the score engine,
+# the US noise picture's frame, and the picture itself. scripts/build_nyc_front.py
+# (--check is a BLOCKING stage). Not *-boroughs.json: that suffix is globbed per city.
+!data/us-nyc.json
+!data/aircraft-noise-nyc-laeq.png
 # The Bay Area's 50 city outlines for the LIVE map, with the /bay-area/ page's facts,
 # written by scripts/build_bayarea_map_data.py (--check is blocking). Not *-boroughs.json.
 !data/us-bayarea-cities.json

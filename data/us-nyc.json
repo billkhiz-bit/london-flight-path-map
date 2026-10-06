@@ -1,0 +1,104 @@
+{
+ "generator": "scripts/build_nyc_front.py",
+ "frame": {
+  "zoom": 11,
+  "px": [
+   153972,
+   196693,
+   154840,
+   197577
+  ]
+ },
+ "noise": {
+  "file": "aircraft-noise-nyc-laeq.png",
+  "publisher": "US DOT Bureau of Transportation Statistics, National Transportation Noise Map 2022 (aviation)",
+  "sha256": "897bd959959297e5769c3de417be4deda4e9162120a61e553f58b4adfc820c3d"
+ },
+ "rows": [
+  {
+   "city": "nyc",
+   "city_name": "New York City",
+   "borough": "Bronx",
+   "score": 7.9,
+   "quiet": 7.5,
+   "afford": 10.0,
+   "growth": 10.0,
+   "live": 6.4,
+   "env": "",
+   "methodology_version": "5.5",
+   "avg_price_usd": 420000,
+   "price_trend_pct": 5.5,
+   "crime_per_1000": 110,
+   "area_page": "/area/nyc/bronx/",
+   "note": "New York's figures are curated from public city sources (NYPD CompStat for crime, borough median sale prices in dollars), not measured to the standard of the UK figures, and its scores are not comparable with the UK's. The map draws the FAA's published routes for JFK, LaGuardia, Newark and Teterboro; the Quiet skies score is the API's band from JFK and LaGuardia."
+  },
+  {
+   "city": "nyc",
+   "city_name": "New York City",
+   "borough": "Brooklyn",
+   "score": 4.0,
+   "quiet": 1.5,
+   "afford": 3.1,
+   "growth": 8.5,
+   "live": 8.0,
+   "env": "",
+   "methodology_version": "5.5",
+   "avg_price_usd": 850000,
+   "price_trend_pct": 3.8,
+   "crime_per_1000": 82,
+   "area_page": "/area/nyc/brooklyn/",
+   "note": "New York's figures are curated from public city sources (NYPD CompStat for crime, borough median sale prices in dollars), not measured to the standard of the UK figures, and its scores are not comparable with the UK's. The map draws the FAA's published routes for JFK, LaGuardia, Newark and Teterboro; the Quiet skies score is the API's band from JFK and LaGuardia."
+  },
+  {
+   "city": "nyc",
+   "city_name": "New York City",
+   "borough": "Manhattan",
+   "score": 4.6,
+   "quiet": 5.0,
+   "afford": 0.0,
+   "growth": 6.8,
+   "live": 8.8,
+   "env": "",
+   "methodology_version": "5.5",
+   "avg_price_usd": 1200000,
+   "price_trend_pct": 2.0,
+   "crime_per_1000": 95,
+   "area_page": "/area/nyc/manhattan/",
+   "note": "New York's figures are curated from public city sources (NYPD CompStat for crime, borough median sale prices in dollars), not measured to the standard of the UK figures, and its scores are not comparable with the UK's. The map draws the FAA's published routes for JFK, LaGuardia, Newark and Teterboro; the Quiet skies score is the API's band from JFK and LaGuardia."
+  },
+  {
+   "city": "nyc",
+   "city_name": "New York City",
+   "borough": "Queens",
+   "score": 4.4,
+   "quiet": 0.0,
+   "afford": 6.5,
+   "growth": 9.1,
+   "live": 7.7,
+   "env": "",
+   "methodology_version": "5.5",
+   "avg_price_usd": 620000,
+   "price_trend_pct": 4.5,
+   "crime_per_1000": 78,
+   "area_page": "/area/nyc/queens/",
+   "note": "New York's figures are curated from public city sources (NYPD CompStat for crime, borough median sale prices in dollars), not measured to the standard of the UK figures, and its scores are not comparable with the UK's. The map draws the FAA's published routes for JFK, LaGuardia, Newark and Teterboro; the Quiet skies score is the API's band from JFK and LaGuardia."
+  },
+  {
+   "city": "nyc",
+   "city_name": "New York City",
+   "borough": "Staten Island",
+   "score": 8.0,
+   "quiet": 10.0,
+   "afford": 7.7,
+   "growth": 7.7,
+   "live": 6.0,
+   "env": "",
+   "methodology_version": "5.5",
+   "avg_price_usd": 550000,
+   "price_trend_pct": 3.0,
+   "crime_per_1000": 52,
+   "area_page": "/area/nyc/staten-island/",
+   "note": "New York's figures are curated from public city sources (NYPD CompStat for crime, borough median sale prices in dollars), not measured to the standard of the UK figures, and its scores are not comparable with the UK's. The map draws the FAA's published routes for JFK, LaGuardia, Newark and Teterboro; the Quiet skies score is the API's band from JFK and LaGuardia."
+  }
+ ]
+}

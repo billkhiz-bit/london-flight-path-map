@@ -258,6 +258,9 @@ check "Bay Area page == its inputs"    python scripts/build_bay_area_page.py --c
 # source that IS on disk, the city outlines, so a table pairing ZIPs with the
 # wrong cities reds even on a fresh clone. Offline, under a second.
 check "Bay Area ZIPs == Census"        python scripts/build_bayarea_zips.py --check
+# New York on the front page (2026-10-06): its borough rows are the score engine's, and
+# its noise picture the one the file names. Offline: reads the Lambda and the files only.
+check "New York front page == engine"  python scripts/build_nyc_front.py --check
 # The Bay Area on the LIVE map (2026-10-05): its outlines, facts, airports and
 # routes, re-derived from the /bay-area/ page builder's own functions and
 # compared with data/us-bayarea-cities.json and the BAYAREA-MAP block.
