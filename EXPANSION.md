@@ -270,6 +270,7 @@ stage 1 record: each runway's final approach back to 3,000 ft, and the first
   which nothing here draws: arrivals before the final approach are radar
   vectored in the UK and are not drawn there either. If the Bay Area needs
   them, the CIFP codes the STARs (subsection E); stage 1 did not parse them.
+  **Drawn since 2026-10-06 - see "ARRIVALS" below.**
 
 **DECIDED 2026-10-02 (Bill), and BUILT the same day: a flight-path page FIRST,
 the four airport counties, 50 cities.** `/bay-area/` is a standalone page, not
@@ -308,6 +309,7 @@ departure, 26 are on the noise map.
 - **Runway ends with no published glide angle are not drawn** (SFO 01L/01R,
   OAK 15/33), and arrivals before the final approach are not drawn at all:
   Palo Alto, known for exactly those, shows no line and the page says why.
+  (Superseded 2026-10-06: the coded arrivals are drawn now, below.)
 - **Twenty-eight unincorporated communities are outlined; seven have a route
   overhead** (Castro Valley and San Lorenzo among them) and are named under
   the table, since they are in no city's row.
@@ -420,6 +422,37 @@ on the registry, before any Bay Area data exists:
     is what replaces the by-name ZIP branch there.
   - **Merged to master and deployed 2026-10-04** (`35f1a2b`, verified from
     the origin; ROADMAP has the record).
+- **ARRIVALS, BUILT 2026-10-06** (before area pages and the launch post, on
+  Bill's call). The record gains `arrivals` (each STAR's common route, then its
+  runway transition) and `approach_transitions` (per approach, from the fix an
+  arrival can end at to the start of the final); departures came out
+  byte-identical through the shared `walk()`. What the real file taught:
+  - **An "IF" means opposite things in the two directions.** On a departure it
+    is a fix the route never reached, and the line stops. An arrival STARTS
+    with one, and each later segment re-states the previous end fix as its IF.
+    The departure rule applied to arrivals left every STAR with no points.
+  - **In the UK, stack-to-final is radar vectors; in the US it is often
+    CODED.** San Francisco's SERFR4 ends at EDDYY (6,000 ft, over Los Altos),
+    and the 28L/28R approaches code transitions from EDDYY through **SIDBY**
+    (37.451, -122.145, in Palo Alto; the waypoint that replaced MENLO) to the
+    start of the final. The page joins a STAR to a transition only where the
+    FAA codes the join, only to a runway whose final it draws, and stops at
+    radar vectors (FM/VM). 22 of 39 Bay Area STAR transitions end in vectors.
+  - **Published altitudes are mostly FLOORS** ("+04000": at or above), and a
+    'B' window stores its CEILING first (LAANE: B FL260 FL220). The record keeps
+    `{min_ft, max_ft}` and the page words a floor as "4,000 ft or above",
+    never as one number. They are above SEA LEVEL; the page's landing heights
+    are above the RUNWAY, and it says which is which.
+  - **Where to start drawing is a rule, and it was measured** (cycle 2610): from
+    the first fix where the FAA ALLOWS 10,000 ft or lower gives 24 of 50 cities
+    overhead; from where it REQUIRES it, 21; the whole coded route, 32, eight
+    of them under aircraft published at 20,000 ft or more. Bill took the first.
+  - **A city's altitude is published at a fix INSIDE it, or not given.** Menlo
+    Park is under SERFR4 and holds no fix: "Yes", with no figure. Nothing is
+    interpolated between fixes.
+  - The record is 227 KB (19 KB gzipped), New York's arrivals included for when
+    its hand-drawn corridors are derived. `/preview/` does not draw arrivals
+    yet (ROADMAP).
 
 **The liveability component is now fully measured**, so depth is no longer the
 blocker it was: transport landed as v3.6 and healthcare as v3.7 on 2026-08-11.

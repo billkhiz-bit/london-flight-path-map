@@ -98,6 +98,15 @@ AIRPORTS = {
 # from the homes this product scores, and are left out.
 RUNWAY_TRANSITION = set('14FT')
 COMMON_ROUTE = set('25M')
+# STAR route types (5.7) run the other way: an enroute transition comes FIRST,
+# from hundreds of km out, then the common route, then a runway transition. The
+# same two kinds are kept, for the same reason. Read off the real file: SFO,
+# OAK and SJC use 1-6 only.
+STAR_RUNWAY_TRANSITION = set('369S')
+STAR_COMMON_ROUTE = set('258M')
+# An approach's TRANSITIONS (route type A) lead from where an arrival ends to
+# the start of its final approach, and are coded leg by leg like a STAR.
+APPROACH_TRANSITION = 'A'
 # Path terminators that END at a named fix, so the aircraft is there. The rest
 # fly a heading (VA, VI, VD, VR), a course with no fix (CA, CI, CD, CR), or a
 # course FROM a fix that only anchors it (FA, FC, FD): none adds a point.
@@ -118,6 +127,7 @@ GLIDE_RANGE = (2.5, 3.6)
 MAG_TOLERANCE_DEG = 2.0
 MAX_ROUTE_KM = 600.0
 FIRST_FIX_KM = 80.0
+MAX_ALT_FT = 45000  # no STAR or approach altitude is published above FL450
 
 
 def dms(s):
@@ -175,7 +185,7 @@ class Cifp:
         self.cycle = None
         self.created = None
         self.airport = {}  # icao -> the airport's 'A' line
-        self.by_airport = {icao: {'G': [], 'I': [], 'D': [], 'F': []} for icao in wanted}
+        self.by_airport = {icao: {'G': [], 'I': [], 'D': [], 'E': [], 'F': []} for icao in wanted}
         self.terminal = {}  # (airport icao, ident) -> (lat, lon)
         self.enroute = {}  # (ident, region) -> (lat, lon)
         self.navaid = {}  # (ident, region) -> (lat, lon)
@@ -201,7 +211,7 @@ class Cifp:
                     self.airport[icao] = line
                 elif sub in 'GI' and line[21] in '01':
                     self.by_airport[icao][sub].append(line)
-                elif sub in 'DF' and line[38] in '01':
+                elif sub in 'DEF' and line[38] in '01':
                     self.by_airport[icao][sub].append(line)
             elif sec == 'EA' and line[21] in '01':
                 self.enroute[(line[13:18].strip(), line[19:21])] = latlon(line)
@@ -327,70 +337,147 @@ def describe(line):
     return ' '.join(bits)
 
 
-def read_departures(cifp, icao, runways):
-    """Every SID runway transition, with the common route, as its named fixes."""
-    sids = {}
-    for line in cifp.by_airport[icao]['D']:
+def in_order(legs):
+    return sorted(legs, key=lambda x: x[26:29])
+
+
+def grouped(lines, runway_kinds, common_kinds):
+    """{procedure: {(is_common, transition ident): legs}} for the two kinds of transition this builder draws."""
+    out = {}
+    for line in lines:
         kind = line[19]
-        if kind in RUNWAY_TRANSITION or kind in COMMON_ROUTE:
-            sids.setdefault(line[13:19].strip(), {}).setdefault((kind in COMMON_ROUTE, line[20:25].strip()), []).append(
+        if kind in runway_kinds or kind in common_kinds:
+            out.setdefault(line[13:19].strip(), {}).setdefault((kind in common_kinds, line[20:25].strip()), []).append(
                 line
             )
+    return out
+
+
+def split_common(icao, name, groups):
+    """(common legs every transition shares, {runway ident: common legs keyed to that runway alone}).
+
+    A common route normally carries a blank or 'ALL' transition ident and goes
+    with every runway transition. But the file also keys a common route to ONE
+    runway (Oakland's SLNT3 is a single common-route record marked RW30, and
+    San Francisco's SERFR4 arrival is one marked RW28B), and that one belongs
+    to its runway alone. The first version sent every common route to every
+    runway, and recorded SLNT3 as departing all eight, the two general-aviation
+    runways included.
+    """
+    common_all, common_for = [], {}
+    for (is_common, ident), legs in sorted(groups.items()):
+        if not is_common:
+            continue
+        if ident.startswith('RW'):
+            common_for.setdefault(ident, []).extend(in_order(legs))
+        elif ident in ('', 'ALL'):
+            common_all.extend(in_order(legs))
+        else:
+            raise SystemExit(f'{icao} {name}: a common route is keyed {ident!r}, neither a runway nor ALL')
+    return common_all, common_for
+
+
+def served_by(icao, name, trans, runways):
+    """The runways a transition ident names: 'RW28B' is both 28s, 'ALL' every runway."""
+    if trans == 'ALL':
+        return sorted(runways)
+    label = trans[2:]
+    served = sorted(r for r in runways if r == label or (label.endswith('B') and r[:2] == label[:2]))
+    if not served:
+        raise SystemExit(f'{icao} {name}: transition {trans!r} matches no runway in {sorted(runways)}')
+    return served
+
+
+def feet(s):
+    """'FL270' -> 27000, '06000' -> 6000, blank -> None."""
+    s = s.strip()
+    if not s:
+        return None
+    if s.startswith('FL') and s[2:].isdigit():
+        return int(s[2:]) * 100
+    if s.isdigit():
+        return int(s)
+    raise SystemExit(f'unreadable altitude {s!r}')
+
+
+def altitude(line):
+    """The altitude the FAA publishes at a leg's fix, as {'min_ft', 'max_ft'}, or None where it publishes none.
+
+    ARINC 424 5.29, read off the real file: ' ' AT (both bounds), '+' at or
+    ABOVE (a floor only), '-' at or BELOW (a ceiling only), 'B' between, where
+    altitude 1 is the ceiling and altitude 2 the floor (DYAMD5's LAANE: B,
+    FL260, FL220). A floor is not where aircraft fly - they are often higher -
+    so the record keeps which bound was published and never collapses it to
+    one number. Any other code is refused rather than read as one of these.
+    """
+    desc, a1, a2 = line[82], feet(line[84:89]), feet(line[89:94])
+    if a1 is None:
+        if desc != ' ':
+            raise SystemExit(f'altitude description {desc!r} with no altitude: {line[13:34]!r}')
+        return None
+    if desc in (' ', '@'):
+        return {'min_ft': a1, 'max_ft': a1}
+    if desc == '+':
+        return {'min_ft': a1, 'max_ft': None}
+    if desc == '-':
+        return {'min_ft': None, 'max_ft': a1}
+    if desc == 'B':
+        if a2 is None or a2 > a1:
+            raise SystemExit(f'a "between" altitude whose floor {a2} is not under its ceiling {a1}: {line[13:34]!r}')
+        return {'min_ft': a2, 'max_ft': a1}
+    raise SystemExit(f'altitude description {desc!r} is not one this builder reads: {line[13:34]!r}')
+
+
+def walk(cifp, icao, where, route, arriving):
+    """A coded route's legs -> (waypoints, fixes, published altitudes, vectored).
+
+    `arriving` is the one difference between the two directions. A departure
+    starts at its runway, so an initial fix (IF) on it is a fix the route never
+    reached: how the aircraft gets there is not coded, and the line does not go
+    there. An arrival STARTS with an initial fix, and each later segment opens
+    with an IF re-stating the fix the one before it ended at, which the
+    same-point test below folds in.
+    """
+    waypoints, fixes, alts, vectored = [], [], [], False
+    for line in route:
+        term, ident = line[47:49], line[29:34].strip()
+        if term in VECTORS:
+            vectored = True
+            break
+        if term not in ENDS_AT_A_FIX and term != 'IF':
+            continue
+        if not ident:
+            raise SystemExit(f'{icao} {where}: a {term} leg names no fix')
+        p = list(cifp.fix(icao, ident, line[34:36], line[36:38]))
+        if waypoints and waypoints[-1] == p:
+            # The same fix again: the next segment's IF, or a repeated leg.
+            # Keep an altitude only one of the two published.
+            if alts[-1] is None:
+                alts[-1] = altitude(line)
+            continue
+        if term == 'IF' and not (arriving and not waypoints):
+            vectored = True
+            break
+        waypoints.append(p)
+        fixes.append(ident)
+        alts.append(altitude(line))
+    return waypoints, fixes, alts, vectored
+
+
+def read_departures(cifp, icao, runways):
+    """Every SID runway transition, with the common route, as its named fixes."""
     out = []
-    for name, groups in sorted(sids.items()):
-        # A common route normally carries a blank or 'ALL' transition ident and
-        # follows every runway transition. But the file also keys a common
-        # route to ONE runway (Oakland's SLNT3 is a single common-route record
-        # marked RW30), and that one belongs to its runway alone. The first
-        # version sent every common route to every runway, and recorded SLNT3
-        # as departing all eight, the two general-aviation runways included.
-        common_all, common_for = [], {}
-        for (is_common, ident), legs in sorted(groups.items()):
-            if not is_common:
-                continue
-            ordered = sorted(legs, key=lambda x: x[26:29])
-            if ident.startswith('RW'):
-                common_for.setdefault(ident, []).extend(ordered)
-            elif ident in ('', 'ALL'):
-                common_all.extend(ordered)
-            else:
-                raise SystemExit(f'{icao} {name}: a common route is keyed {ident!r}, neither a runway nor ALL')
-        transitions = {
-            t: sorted(legs, key=lambda x: x[26:29]) for (is_common, t), legs in groups.items() if not is_common
-        }
+    for name, groups in sorted(grouped(cifp.by_airport[icao]['D'], RUNWAY_TRANSITION, COMMON_ROUTE).items()):
+        common_all, common_for = split_common(icao, name, groups)
+        transitions = {t: in_order(legs) for (is_common, t), legs in groups.items() if not is_common}
         for ident in common_for:
             transitions.setdefault(ident, [])
         if not transitions:
             transitions = {'ALL': []}
         for trans, legs in sorted(transitions.items()):
-            if trans == 'ALL':
-                served = sorted(runways)
-            else:
-                label = trans[2:]
-                served = sorted(r for r in runways if r == label or (label.endswith('B') and r[:2] == label[:2]))
-            if not served:
-                raise SystemExit(f'{icao} {name}: transition {trans!r} matches no runway in {sorted(runways)}')
+            served = served_by(icao, name, trans, runways)
             route = legs + common_for.get(trans, []) + common_all
-            waypoints, fixes, vectored = [], [], False
-            for line in route:
-                term, ident = line[47:49], line[29:34].strip()
-                if term in VECTORS:
-                    vectored = True
-                    break
-                if term not in ENDS_AT_A_FIX and term != 'IF':
-                    continue
-                if not ident:
-                    raise SystemExit(f'{icao} {name} {trans}: a {term} leg names no fix')
-                p = list(cifp.fix(icao, ident, line[34:36], line[36:38]))
-                if waypoints and waypoints[-1] == p:
-                    continue
-                if term == 'IF':
-                    # An initial fix the route has not reached. How the aircraft
-                    # gets there is not coded, so the line does not go there.
-                    vectored = True
-                    break
-                waypoints.append(p)
-                fixes.append(ident)
+            waypoints, fixes, _, vectored = walk(cifp, icao, f'{name} {trans}', route, arriving=False)
             out.append(
                 {
                     'name': name,
@@ -403,6 +490,81 @@ def read_departures(cifp, icao, runways):
                     'vectored': vectored,
                 }
             )
+    return out
+
+
+def read_arrivals(cifp, icao, runways):
+    """Every STAR: its common route, then each runway transition, as named fixes with published altitudes.
+
+    Enroute transitions are left out, as they are for departures, and for the
+    same reason: they begin hundreds of km out. A STAR that ends in radar
+    vectors says so (`vectored`). One that ends at a fix is where an approach
+    transition can take over (read_approach_transitions); the record keeps the
+    two apart, as the FAA does, and the page decides what to join.
+    """
+    out = []
+    for name, groups in sorted(grouped(cifp.by_airport[icao]['E'], STAR_RUNWAY_TRANSITION, STAR_COMMON_ROUTE).items()):
+        common_all, common_for = split_common(icao, name, groups)
+        transitions = {t: in_order(legs) for (is_common, t), legs in groups.items() if not is_common}
+        for ident in common_for:
+            transitions.setdefault(ident, [])
+        if not transitions:
+            transitions = {'ALL': []}
+        for trans, legs in sorted(transitions.items()):
+            served = served_by(icao, name, trans, runways)
+            # Flown in this order: the shared route first, the runway's own last.
+            route = common_all + common_for.get(trans, []) + legs
+            waypoints, fixes, alts, vectored = walk(cifp, icao, f'{name} {trans}', route, arriving=True)
+            out.append(
+                {
+                    'name': name,
+                    'runway': trans[2:].rstrip('B') if trans != 'ALL' else 'ALL',
+                    'runways': served,
+                    'source': f'FAA CIFP cycle {cifp.cycle}, {icao} STAR {name} transition {trans}: '
+                    + '; '.join(describe(x) for x in route),
+                    'waypoints': waypoints,
+                    'fixes': fixes,
+                    'altitudes': alts,
+                    'vectored': vectored,
+                }
+            )
+    return out
+
+
+def read_approach_transitions(cifp, icao, runways):
+    """Each approach's transitions: from the fix an arrival can end at, to the start of the final approach.
+
+    Kept per approach, as the FAA codes them, so the record says which
+    approaches share a path; the ILS and RNAV approaches to one runway often
+    do. An approach that names no runway (a circling approach) has no final for
+    a transition to lead to, and is left out.
+    """
+    groups = {}
+    for line in cifp.by_airport[icao]['F']:
+        if line[19] == APPROACH_TRANSITION:
+            groups.setdefault((line[13:19].strip(), line[20:25].strip()), []).append(line)
+    out = []
+    for (proc, trans), legs in sorted(groups.items()):
+        rwy = runway_of_approach(proc)
+        if rwy is None:
+            continue
+        if rwy not in runways:
+            raise SystemExit(f'{icao} approach {proc}: runway {rwy} is not in {sorted(runways)}')
+        route = in_order(legs)
+        waypoints, fixes, alts, vectored = walk(cifp, icao, f'{proc} {trans}', route, arriving=True)
+        out.append(
+            {
+                'approach': proc,
+                'runway': rwy,
+                'transition': trans,
+                'source': f'FAA CIFP cycle {cifp.cycle}, {icao} approach {proc} transition {trans}: '
+                + '; '.join(describe(x) for x in route),
+                'waypoints': waypoints,
+                'fixes': fixes,
+                'altitudes': alts,
+                'vectored': vectored,
+            }
+        )
     return out
 
 
@@ -470,6 +632,8 @@ def build(lines, airports=None, effective=None, not_coded=None):
             'departures_method': 'cifp-coded',
             'runways': runways,
             'departures': read_departures(cifp, icao, runways),
+            'arrivals': read_arrivals(cifp, icao, runways),
+            'approach_transitions': read_approach_transitions(cifp, icao, runways),
         }
         if not_coded is not None:
             # Departures or arrivals the FAA publishes but has not coded; its
@@ -594,8 +758,37 @@ def check(record):
                     fails.append(
                         f'{code} {dep["name"]} {dep["runway"]}: fix {dep["fixes"][i]} is {d:.0f} km from the airport'
                     )
+        # Arrivals and approach transitions run TOWARDS the airport, so it is
+        # their LAST fix that must be near it; the first may be far out.
+        for kind, label in (('arrivals', 'name'), ('approach_transitions', 'approach')):
+            for r in ap.get(kind, []):
+                compared += 1
+                where = f'{code} {r[label]} {r.get("transition") or r.get("runway")}'
+                if not set(r['runways'] if 'runways' in r else [r['runway']]) <= set(rw):
+                    fails.append(f'{where}: names a runway that is not here')
+                if not len(r['waypoints']) == len(r['fixes']) == len(r['altitudes']):
+                    fails.append(
+                        f'{where}: {len(r["waypoints"])} points, {len(r["fixes"])} fixes and '
+                        f'{len(r["altitudes"])} altitudes'
+                    )
+                    continue
+                for i, p in enumerate(r['waypoints']):
+                    d = distance_km(ap['ref'], p)
+                    last = i == len(r['waypoints']) - 1
+                    if d > (FIRST_FIX_KM if last else MAX_ROUTE_KM):
+                        fails.append(f'{where}: fix {r["fixes"][i]} is {d:.0f} km from the airport')
+                for fx, a in zip(r['fixes'], r['altitudes'], strict=True):
+                    if a is None:
+                        continue
+                    lo, hi = a['min_ft'], a['max_ft']
+                    if lo is None and hi is None:
+                        fails.append(f'{where}: {fx} has an altitude with neither bound')
+                    elif any(v is not None and not 0 < v <= MAX_ALT_FT for v in (lo, hi)) or (
+                        lo is not None and hi is not None and lo > hi
+                    ):
+                        fails.append(f'{where}: {fx} altitude {a} is not a published altitude')
     if not compared:
-        fails.append('the record holds no runway and no departure: nothing was checked')
+        fails.append('the record holds no runway and no route: nothing was checked')
     return fails, compared
 
 
@@ -614,8 +807,11 @@ def main():
             sys.exit('NOT WRITTEN, the derived record fails its own check:\n  ' + '\n  '.join(fails))
         RECORD.write_text(dump(record), encoding='utf-8', newline='\n')
         deps = sum(len(a['departures']) for a in record['airports'].values())
+        arrs = sum(len(a['arrivals']) for a in record['airports'].values())
+        apps = sum(len(a['approach_transitions']) for a in record['airports'].values())
         print(
-            f'wrote {RECORD.name}: cycle {record["cycle"]}, {len(record["airports"])} airports, {deps} departure transitions'
+            f'wrote {RECORD.name}: cycle {record["cycle"]}, {len(record["airports"])} airports, {deps} departure, '
+            f'{arrs} arrival and {apps} approach transitions'
         )
         return 0
 
@@ -625,7 +821,8 @@ def main():
         record = json.loads(RECORD.read_text(encoding='utf-8'))
         fails, compared = check(record)
         print(
-            f'{RECORD.name}: cycle {record["cycle"]} (effective {record["effective"]}), {compared} runways and departures checked'
+            f'{RECORD.name}: cycle {record["cycle"]} (effective {record["effective"]}), '
+            f'{compared} runways, departures, arrivals and approach transitions checked'
         )
         stamp = (record.get('effective') or '').replace('-', '')[2:]
         cached = CACHE / f'CIFP_{stamp}.zip'

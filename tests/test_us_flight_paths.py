@@ -243,6 +243,86 @@ def test_a_common_route_keyed_to_neither_a_runway_nor_all_is_refused(lines):
         us.build(rekeyed_common_route(lines, 'LOUPE1', 'HRNER'), airports=SJC)
 
 
+# ---- arrivals (added 2026-10-06) -------------------------------------------
+#
+# Worked out from the raw RAZRR5 and I12R lines in the fixture. The STAR's
+# common route is STUBL, RAZRR, OUCHH, NIKKT; the RW12B transition re-states
+# NIKKT as its initial fix and runs on to HITIR, then "FM HITIR": radar
+# vectors. The RW30B transition ends at KLIDE on a plain TF leg.
+
+
+def arrival(sjc, name, runway):
+    hits = [a for a in sjc['arrivals'] if a['name'] == name and a['runway'] == runway]
+    assert len(hits) == 1, f'{name} {runway}: {len(hits)} transitions'
+    return hits[0]
+
+
+def test_an_arrival_is_its_common_route_then_its_runway_transition(sjc):
+    a = arrival(sjc, 'RAZRR5', '12')
+    common = ['STUBL', 'RAZRR', 'OUCHH', 'NIKKT']
+    own = ['GOTEE', 'SHIKK', 'TRCOT', 'GGUGL', 'GAARY', 'EDMND', 'JESEN', 'HITIR']
+    assert a['fixes'] == common + own
+    assert a['runways'] == ['12L', '12R']
+
+
+def test_an_arrival_starts_at_its_initial_fix_where_a_departure_would_stop(sjc):
+    # The departure rule ("an IF the route never reached is not drawn to")
+    # applied to an arrival would leave every STAR with no points at all.
+    a = arrival(sjc, 'RAZRR5', '30')
+    assert a['fixes'] == ['STUBL', 'RAZRR', 'OUCHH', 'NIKKT', 'SEKKO', 'SCOPR', 'KLIDE']
+    assert a['vectored'] is False
+
+
+def test_an_arrival_that_ends_in_vectors_says_so_and_draws_no_further(sjc):
+    a = arrival(sjc, 'RAZRR5', '12')
+    assert a['vectored'] is True
+    assert a['fixes'][-1] == 'HITIR' and a['fixes'].count('HITIR') == 1
+
+
+def test_a_published_altitude_keeps_which_bound_was_published(sjc):
+    alts = dict(zip(arrival(sjc, 'RAZRR5', '12')['fixes'], arrival(sjc, 'RAZRR5', '12')['altitudes'], strict=True))
+    assert alts['STUBL'] == {'min_ft': 24000, 'max_ft': 27000}  # B FL270 FL240: between, ceiling first
+    assert alts['NIKKT'] == {'min_ft': 10000, 'max_ft': 14000}
+    assert alts['TRCOT'] == {'min_ft': 9000, 'max_ft': None}  # + 09000: a floor, nothing above it
+    assert alts['HITIR'] == {'min_ft': 4000, 'max_ft': 4000}  # blank code: at
+    assert alts['SHIKK'] is None  # nothing published, and nothing invented
+
+
+def test_an_approach_transition_runs_from_where_an_arrival_ends_to_its_final(sjc):
+    t = [x for x in sjc['approach_transitions'] if x['approach'] == 'I12R' and x['transition'] == 'HITIR']
+    assert len(t) == 1
+    assert t[0]['runway'] == '12R'
+    assert t[0]['fixes'] == ['HITIR', 'ZUCKR', 'METTA', 'NTFLX', 'SNDAR', 'HOOLU']
+    assert t[0]['altitudes'][1] == {'min_ft': 3000, 'max_ft': None}
+
+
+def test_enroute_transitions_of_an_arrival_are_left_out(sjc):
+    # RAZRR5's enroute transitions start at FAANG, KNGRY, MDOWS and RUSME.
+    starts = {a['fixes'][0] for a in sjc['arrivals'] if a['name'] == 'RAZRR5'}
+    assert starts == {'STUBL'}
+
+
+def with_altitude(line, code, a1, a2='     '):
+    return line[:82] + code + line[83:84] + a1 + a2 + line[94:]
+
+
+def test_altitudes_read_flight_levels_and_feet():
+    assert us.feet('FL270') == 27000
+    assert us.feet('04000') == 4000
+    assert us.feet('     ') is None
+    with pytest.raises(SystemExit):
+        us.feet('4K000')
+
+
+def test_an_altitude_code_this_builder_does_not_know_is_refused(lines):
+    real = next(ln for ln in lines if ln.startswith('SUSAP KSJCK2ERAZRR56RW12B 040TRCOT'))
+    assert us.altitude(real) == {'min_ft': 9000, 'max_ft': None}
+    with pytest.raises(SystemExit, match='not one this builder reads'):
+        us.altitude(with_altitude(real, 'J', '09000'))
+    with pytest.raises(SystemExit, match='not under its ceiling'):
+        us.altitude(with_altitude(real, 'B', '05000', '09000'))
+
+
 # ---- the not-coded list ----------------------------------------------------
 
 HEADER = ('ARINC_ID', 'TERM_ID')
@@ -330,7 +410,31 @@ def record(lines):
 def test_check_passes_the_real_record_and_counts_what_it_checked(record):
     fails, compared = us.check(record)
     assert fails == []
-    assert compared == 4 + len(record['airports']['SJC']['departures'])
+    sjc = record['airports']['SJC']
+    assert compared == 4 + len(sjc['departures']) + len(sjc['arrivals']) + len(sjc['approach_transitions'])
+
+
+def test_check_fails_on_an_arrival_whose_last_fix_is_far_from_the_airport(record):
+    bad = copy.deepcopy(record)
+    a = next(x for x in bad['airports']['SJC']['arrivals'] if x['name'] == 'RAZRR5' and x['runway'] == '30')
+    a['waypoints'][-1] = [38.9, -121.9]  # about 175 km north: the arrival never reaches its airport
+    fails, _ = us.check(bad)
+    assert any('RAZRR5' in f and 'KLIDE' in f and 'km from the airport' in f for f in fails)
+
+
+def test_check_fails_on_an_altitude_whose_floor_is_above_its_ceiling(record):
+    bad = copy.deepcopy(record)
+    a = next(x for x in bad['airports']['SJC']['arrivals'] if x['name'] == 'RAZRR5' and x['runway'] == '12')
+    a['altitudes'][0] = {'min_ft': 27000, 'max_ft': 24000}
+    fails, _ = us.check(bad)
+    assert any('STUBL altitude' in f for f in fails)
+
+
+def test_check_fails_when_fixes_and_altitudes_fall_out_of_step(record):
+    bad = copy.deepcopy(record)
+    bad['airports']['SJC']['approach_transitions'][0]['altitudes'].pop()
+    fails, _ = us.check(bad)
+    assert any('altitudes' in f for f in fails)
 
 
 def test_check_fails_on_an_empty_record():

@@ -121,6 +121,7 @@ def row_facts(c, rank):
         'noise_pct': round(c['noise_pct'], 1),
         'noise_from': html.unescape(page.airfield_cell(c)),
         'approach': html.unescape(page.approach_cell(c)),
+        'arrival': html.unescape(page.arrival_cell(c)),
         'departure': html.unescape(page.departure_cell(c)),
         'nearest_route': html.unescape(page.nearest_cell(c)),
     }
@@ -190,7 +191,10 @@ def js_line(name, airport, kind, freq, line):
 
 
 def site_block(f, record):
-    out = ['      const BAYAREA_AIRPORTS = [']
+    # The cycle the lines are from, for the legend to name. It was typed into
+    # the legend by hand, so the next FAA cycle would have redrawn every line
+    # here and left the legend naming the old one.
+    out = [f'      const BAYAREA_ROUTES_CYCLE = {json.dumps(record["cycle"])};', '      const BAYAREA_AIRPORTS = [']
     for code in page.AIRPORTS:
         lat, lon = record['airports'][code]['ref']
         out.append(
@@ -214,8 +218,13 @@ def site_block(f, record):
             continue
         seen.add(key)
         out.append(js_line(f'{d["airport"]} departure via {d["name"]}', d['airport'], 'departure', 'medium', d['line']))
+    # Arrivals run TOWARDS the airport and end where a final begins (or where
+    # the coded route hands over to radar vectors), so the map's 'arrival'
+    # rule - hold the END on screen - is the right one for them too.
+    for a in f['arrivals']:
+        out.append(js_line(f'{a["airport"]} arrival via {a["name"]}', a['airport'], 'arrival', 'medium', a['line']))
     out.append('      ];')
-    return '\n'.join(out), len(f['approaches']), len(seen)
+    return '\n'.join(out), len(f['approaches']), len(seen), len(f['arrivals'])
 
 
 def render(fc):
@@ -236,8 +245,8 @@ def main():
         f'{len(fc["features"])} cities, {rings} rings ({holes} holes grouped), {on_map} at 1% or more on the noise map'
     )
     body = render(fc)
-    block, n_app, n_dep = site_block(f, record)
-    print(f'{n_app} final approaches and {n_dep} distinct departures, from {fc["routes"]}')
+    block, n_app, n_dep, n_arr = site_block(f, record)
+    print(f'{n_app} final approaches, {n_arr} arrivals and {n_dep} distinct departures, from {fc["routes"]}')
     stale = []
     if not OUT.exists() or OUT.read_text(encoding='utf-8') != body:
         stale.append(str(OUT.relative_to(ROOT)))

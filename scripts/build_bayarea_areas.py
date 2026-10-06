@@ -90,6 +90,7 @@ def context():
     frame = page.Frame(data['frame']['px'])
     noise = page.Noise(frame, page.PAGE_DIR / data['noise']['file'])
     approaches, departures, _ = page.routes(record)
+    arrivals = page.arrival_routes(record)
     owners = page.patch_owners(noise, data['airfields'], approaches)
     refs = {code: record['airports'][code]['ref'] for code in page.AIRPORTS}
     west, north = page.lonlat_of(frame.x0, frame.y0)
@@ -97,7 +98,7 @@ def context():
 
     def measure(name, polys):
         rings = [r for poly in polys for r in poly]
-        m = page.measure(page.Shape(rings), approaches, departures)
+        m = page.measure(page.Shape(rings), approaches, departures, arrivals)
         pct, sample = noise.share_pct(rings)
         return {
             'name': name,

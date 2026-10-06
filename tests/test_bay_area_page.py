@@ -188,6 +188,129 @@ def test_a_runway_with_no_published_glide_angle_is_not_drawn():
     assert first['line'][1][1] < first['line'][0][1]  # runway 09 is approached from the west
 
 
+# ---- arrivals (added 2026-10-06) ---------------------------------------------
+
+AT = {'min_ft': 6000, 'max_ft': 6000}
+
+
+def alt(lo=None, hi=None):
+    return {'min_ft': lo, 'max_ft': hi}
+
+
+def test_an_arrival_is_drawn_from_where_the_faa_first_allows_10000_ft_or_lower():
+    # SERFR4's real profile: nothing at SERFR, a floor of 20,000 at NRRLI,
+    # 10,000-15,000 at EPICK, a floor of 8,000 at FOLET.
+    assert bay.arrival_start([None, alt(20000), alt(10000, 15000), alt(8000)]) == 2
+    # A ceiling alone counts when no floor is published: the FAA allows lower.
+    assert bay.arrival_start([alt(hi=13000), alt(hi=9000)]) == 1
+    # A fix with no published altitude never starts a line, and nothing low means nothing drawn.
+    assert bay.arrival_start([None, None]) == 2
+    assert bay.arrival_start([alt(12000), alt(11000, 15000)]) == 2
+
+
+def arrival_record(arrivals, transitions):
+    """Runway 09 drawn (3 degrees), 27 not (no glide angle); the same at all three airports."""
+    return {
+        'airports': {
+            code: {
+                'ref': [37.5, -121.985],
+                'runways': {
+                    '09': {'thr': [37.5, -122.0], 'true_brg': 90.0, 'glide_deg': 3.0},
+                    '27': {'thr': [37.5, -121.97], 'true_brg': 270.0, 'glide_deg': None},
+                },
+                'departures': [],
+                'arrivals': arrivals,
+                'approach_transitions': transitions,
+            }
+            for code in bay.AIRPORTS
+        }
+    }
+
+
+A, B, C, D = [37.9, -121.6], [37.7, -121.7], [37.5, -122.3], [37.5, -121.6]
+
+
+def star(name, fixes, vectored=False):
+    pts = {'A': A, 'B': B}
+    return {
+        'name': name,
+        'runway': 'ALL',
+        'runways': ['09', '27'],
+        'waypoints': [pts[f] for f in fixes],
+        'fixes': list(fixes),
+        'altitudes': [AT] * len(fixes),
+        'vectored': vectored,
+    }
+
+
+def transition(approach, runway, end):
+    return {
+        'approach': approach,
+        'runway': runway,
+        'transition': 'B',
+        'waypoints': [B, {'C': C, 'D': D}[end]],
+        'fixes': ['B', end],
+        'altitudes': [AT, alt(3000)],
+        'vectored': False,
+    }
+
+
+def test_an_arrival_joins_the_transition_from_where_it_ends_and_only_to_a_drawn_final():
+    record = arrival_record([star('JOIN1', 'AB')], [transition('I09', '09', 'C'), transition('I27', '27', 'D')])
+    lines = bay.arrival_routes(record)
+    assert {tuple(f for f, _, _ in r['fixes']) for r in lines} == {('A', 'B', 'C')}
+    assert len(lines) == len(bay.AIRPORTS)
+
+
+def test_an_arrival_that_ends_in_vectors_is_not_joined_to_anything():
+    record = arrival_record([star('VECT1', 'AB', vectored=True)], [transition('I09', '09', 'C')])
+    assert {tuple(f for f, _, _ in r['fixes']) for r in bay.arrival_routes(record)} == {('A', 'B')}
+
+
+def test_approaches_that_share_a_transition_draw_one_line():
+    # The ILS and RNAV approaches to one runway often share theirs fix for fix.
+    record = arrival_record([star('JOIN1', 'AB')], [transition('I09', '09', 'C'), transition('R09', '09', 'C')])
+    assert len(bay.arrival_routes(record)) == len(bay.AIRPORTS)
+
+
+def arrival_over(fixes):
+    line = [p for _, p, _ in fixes]
+    return {'airport': 'TST', 'name': 'ARR1', 'fixes': fixes, 'line': line, 'points': bay.densify(line)}
+
+
+def test_an_arrival_overhead_gives_the_lowest_published_altitude_at_a_fix_inside():
+    fixes = [
+        ('OUT1', (37.5, -122.10), alt(8000)),
+        ('IN1', (37.5, -122.00), AT),
+        ('IN2', (37.5, -121.98), alt(4000)),
+        ('OUT2', (37.5, -121.90), alt(2000)),  # lower, but outside the city: not its figure
+    ]
+    m = bay.measure(bay.Shape([SQUARE]), [], [], [arrival_over(fixes)])
+    assert m['arrivals'] == {'TST ARR1': ('IN2', alt(4000))}
+    assert m['nearest_km'] == 0.0
+
+
+def test_an_arrival_crossing_a_city_between_fixes_is_overhead_with_no_altitude():
+    # Between fixes the FAA publishes nothing, and nothing is drawn in.
+    fixes = [('W', (37.5, -122.10), alt(8000)), ('E', (37.5, -121.90), alt(6000))]
+    m = bay.measure(bay.Shape([SQUARE]), [], [], [arrival_over(fixes)])
+    assert m['arrivals'] == {'TST ARR1': None}
+    assert bay.arrival_cell(city(arrivals=m['arrivals'])) == 'Yes: TST ARR1'
+
+
+def test_an_arrival_altitude_is_worded_by_what_was_published():
+    assert bay.altitude_words(alt(4000)) == '4,000 ft or above'
+    assert bay.altitude_words(AT) == '6,000 ft'
+    assert bay.altitude_words(alt(hi=13000)) == '13,000 ft or below'
+    assert bay.altitude_words(alt(10000, 14000)) == 'between 10,000 and 14,000 ft'
+    cell = bay.arrival_cell(city(arrivals={'SFO SERFR4': ('SIDBY', alt(4000)), 'SJC RAZRR5': None}))
+    assert cell == 'Yes: SFO SERFR4; SJC RAZRR5. Published altitude at SIDBY, inside the city: 4,000 ft or above'
+    # Two routes with a published altitude inside: the city's figure is the LOWER one.
+    two = {'SFO SERFR4': ('SIDBY', alt(4000)), 'SFO DYAMD5': ('FRELY', alt(8000))}
+    assert bay.arrival_cell(city(arrivals=two)).endswith('at SIDBY, inside the city: 4,000 ft or above')
+    assert bay.nearest_cell(city(arrivals={'SFO SERFR4': None})) == 'Overhead'
+
+
 # ---- what the table prints ---------------------------------------------------
 
 
@@ -195,6 +318,7 @@ def city(**over):
     base = {
         'approaches': {},
         'departures': [],
+        'arrivals': {},
         'nearest_km': 3.0,
         'nearest': 'SFO 28L approach',
         'airports_inside': [],
@@ -375,6 +499,23 @@ def test_the_map_draws_no_departure_beyond_what_the_table_reads(real):
         assert bay.densify(dep['line'])[-1][2] <= bay.DEPARTURE_KM + 0.01
 
 
+def test_every_real_arrival_starts_where_10000_ft_is_allowed_and_ends_near_its_airport(real):
+    _, record, facts = real
+    assert facts['arrivals'], 'no arrival drawn from the real record'
+    for r in facts['arrivals']:
+        first = r['fixes'][0][2]
+        assert first is not None and bay.floor_of(first) <= bay.ARRIVAL_TOP_FT, r['name']
+        ref = record['airports'][r['airport']]['ref']
+        assert bay.build_us_flight_paths.distance_km(ref, r['line'][-1]) <= bay.ARRIVAL_END_KM, r['name']
+
+
+def test_an_arrival_that_ends_far_from_its_airport_fails(real):
+    data, _, facts = real
+    bad = copy.deepcopy(facts)
+    bad['arrivals'][0]['line'][-1] = (38.9, -121.9)
+    assert any('the drawn arrival ends' in f for f in bay.invariants(data, bad))
+
+
 def test_every_drawn_threshold_is_on_the_picture_though_not_every_approach(real):
     # BTS paints land only: San Francisco's main approach is over the bay, so
     # "every approach lies on the picture" is false of a correctly placed one.
@@ -389,6 +530,15 @@ def test_every_drawn_threshold_is_on_the_picture_though_not_every_approach(real)
 @pytest.fixture(scope='module')
 def page():
     return (REPO_ROOT / 'bay-area' / 'index.html').read_text(encoding='utf-8')
+
+
+def test_the_page_draws_arrivals_and_no_longer_says_it_does_not(page, real):
+    # Until 2026-10-06 the notes said arrivals before the final were not drawn.
+    assert 'Arrivals further out are not drawn' not in page
+    assert '<th scope="col">Arrival route overhead</th>' in page
+    assert page.count('stroke-dasharray="5 3"') == len(real[2]['arrivals'])
+    rows = re.findall(r'<tr><th scope="row">.*?</tr>', page)
+    assert all(r.count('<td') == 7 for r in rows), 'a row lost or gained a cell'
 
 
 def test_the_page_lists_every_city_once(page, real):

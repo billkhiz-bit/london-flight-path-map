@@ -135,6 +135,10 @@ FINAL_TOP_FT = 3000  # the UK builder's rule: a final approach is drawn from 3,0
 FT_KM = 0.0003048
 KM_MI = 0.621371
 DEPARTURE_KM = 30.0  # beyond this a departing aircraft is high; the table reads the first 30 km
+# An arrival is drawn from where the FAA first allows 10,000 ft or lower: below
+# it US rules cap speed at 250 knots (14 CFR 91.117), the terminal area.
+ARRIVAL_TOP_FT = 10000
+ARRIVAL_END_KM = 60.0  # a drawn arrival must end this near its airport (invariants)
 STEP_KM = 0.1
 AIRFIELD_PAD_DEG = 0.1  # airfields just outside the frame can still be the nearest
 LOW_FT = 500
@@ -390,13 +394,99 @@ def routes(record):
     return approaches, departures, undrawn
 
 
+def arrival_start(alts):
+    """Where an arrival line starts being drawn: an index into its fixes, in the order flown.
+
+    `alts` is the published altitude at each fix, from the first fix of the
+    STAR to the last of the approach transition: {'min_ft': floor or None,
+    'max_ft': ceiling or None}, or None where the FAA publishes no altitude.
+    Read off cycle 2610: SERFR4 publishes no altitude at SERFR, a floor of
+    20,000 ft at NRRLI, a window of 10,000-15,000 ft at EPICK, a floor of
+    8,000 ft at FOLET and exactly 6,000 ft at EDDYY.
+
+    Departures are drawn for their first DEPARTURE_KM, "beyond this a
+    departing aircraft is high". An arrival needs its own version of that rule,
+    because a STAR begins 100 km or more out, high up, over cities this page
+    would otherwise mark "arrival overhead" for an aircraft four miles above.
+
+    The rule (Bill, 2026-10-06): from the first fix at which the FAA ALLOWS an
+    aircraft to be at ARRIVAL_TOP_FT or lower - a floor at or under it, or a
+    ceiling at or under it where no floor is published. Measured on cycle
+    2610 against the alternatives: 24 of 50 cities with an arrival overhead,
+    where drawing only from a published CEILING under 10,000 ft gives 21 (it
+    drops lines the FAA permits to be low) and drawing the whole coded route
+    gives 32 (eight of them under aircraft published at 20,000 ft or more).
+    A fix with no published altitude never starts a line: nothing says how
+    high it is.
+    """
+    for i, alt in enumerate(alts):
+        if alt is not None and floor_of(alt) <= ARRIVAL_TOP_FT:
+            return i
+    return len(alts)
+
+
+def arrival_routes(record):
+    """The arrival lines this page draws: each coded arrival, joined to the approach transition that starts where it ends.
+
+    Joined only where the FAA codes the join. A STAR that ends in radar
+    vectors stops there; one that ends at a fix no transition starts from stops
+    at that fix. A transition is followed only to a runway whose final
+    approach this page draws, so a joined line ends where a drawn final begins
+    (San Francisco's SERFR4 ends at EDDYY, and its transitions carry on through
+    SIDBY, over Palo Alto, to the start of the 28L and 28R finals). Identical
+    lines are drawn once: the ILS and RNAV approaches to a runway often share
+    their transitions fix for fix.
+    """
+    out = []
+    for code in AIRPORTS:
+        ap = record['airports'][code]
+        drawn = {rwy for rwy, r in ap['runways'].items() if r['glide_deg'] is not None}
+        starts = {}
+        for t in ap.get('approach_transitions', []):
+            if t['runway'] in drawn and t['waypoints'] and not t['vectored']:
+                starts.setdefault(t['fixes'][0], []).append(t)
+        seen = set()
+        for a in ap.get('arrivals', []):
+            legs = list(zip(a['fixes'], (tuple(w) for w in a['waypoints']), a['altitudes'], strict=True))
+            joins = [] if a['vectored'] or not legs else starts.get(legs[-1][0], [])
+            tails = [
+                list(zip(t['fixes'], (tuple(w) for w in t['waypoints']), t['altitudes'], strict=True))[1:]
+                for t in joins
+                if t['runway'] in a['runways']
+            ]
+            for tail in tails or [[]]:
+                path = legs + tail
+                path = path[arrival_start([alt for _, _, alt in path]) :]
+                key = tuple(fix for fix, _, _ in path)
+                if len(path) < 2 or key in seen:
+                    continue
+                seen.add(key)
+                line = [p for _, p, _ in path]
+                out.append(
+                    {
+                        'airport': code,
+                        'name': a['name'],
+                        'fixes': [(fix, p, alt) for fix, p, alt in path],
+                        'line': line,
+                        'points': densify(line),
+                    }
+                )
+    return out
+
+
 def height_ft(route, along_km):
     return along_km * math.tan(math.radians(route['glide'])) / FT_KM
 
 
-def measure(shape, approaches, departures):
+def floor_of(alt):
+    """The lowest altitude a published constraint allows, for ordering: its floor, or failing that its ceiling."""
+    return alt['min_ft'] if alt['min_ft'] is not None else alt['max_ft']
+
+
+def measure(shape, approaches, departures, arrivals=()):
     """What the routes say about one place."""
     over_app, over_dep, nearest = {}, set(), (float('inf'), None)
+    over_arr = {}  # label -> (fix, published altitude) at the lowest fix inside the place, or None
 
     def reach(lon, lat):
         # distance() hands back its `best` argument when the shape's box is
@@ -422,9 +512,28 @@ def measure(shape, approaches, departures):
                 over_dep.add(label)
             if d < nearest[0]:
                 nearest = (d, f'{label} departure')
+    for r in arrivals:
+        label = f'{r["airport"]} {r["name"]}'
+        for lat, lon, _ in r['points']:
+            d = reach(lon, lat)
+            if d == 0.0:
+                over_arr.setdefault(label, None)
+            if d < nearest[0]:
+                nearest = (d, f'{label} arrival')
+        if label not in over_arr:
+            continue
+        # A height only where the FAA publishes one, at a fix inside the
+        # place. Between fixes the file says nothing, and nothing is drawn in.
+        for fix, (lat, lon), alt in r['fixes']:
+            if alt is None or not inside(shape.rings, lon, lat):
+                continue
+            held = over_arr[label]
+            if held is None or floor_of(alt) < floor_of(held[1]):
+                over_arr[label] = (fix, alt)
     return {
         'approaches': over_app,
         'departures': sorted(over_dep),
+        'arrivals': over_arr,
         'nearest_km': nearest[0],
         'nearest': nearest[1],
     }
@@ -796,10 +905,11 @@ def facts(data, record):
     frame = Frame(data['frame']['px'])
     noise = Noise(frame, PAGE_DIR / data['noise']['file'])
     approaches, departures, undrawn = routes(record)
+    arrivals = arrival_routes(record)
     owners = patch_owners(noise, data['airfields'], approaches)
     rows = []
     for p in data['places']:
-        m = measure(Shape(p['rings']), approaches, departures)
+        m = measure(Shape(p['rings']), approaches, departures, arrivals)
         pct, sample = noise.share_pct(p['rings'])
         rows.append({**p, **m, 'noise_pct': pct, 'airfield': shading_airfield(noise, owners, sample)})
     on_noise, home, off_noise = {}, {}, []
@@ -819,6 +929,7 @@ def facts(data, record):
         'record': record,
         'approaches': approaches,
         'departures': departures,
+        'arrivals': arrivals,
         'undrawn': undrawn,
         'cities': [r for r in rows if r['kind'] != 'cdp'],
         'communities': [r for r in rows if r['kind'] == 'cdp'],
@@ -862,9 +973,20 @@ def invariants(data, f):
         # Per airport, not a total: San Francisco alone has more coded
         # departures than the other two together, so a cycle that parsed
         # Oakland and San Jose as all radar vectors passed a floor on the sum.
-        drawn = [sum(r['airport'] == code for r in f[kind]) for kind in ('approaches', 'departures')]
+        drawn = [sum(r['airport'] == code for r in f[kind]) for kind in ('approaches', 'departures', 'arrivals')]
         if not all(drawn):
-            fails.append(f'{code}: {drawn[0]} approaches and {drawn[1]} departures drawn: the record was not read')
+            fails.append(
+                f'{code}: {drawn[0]} approaches, {drawn[1]} departures and {drawn[2]} arrivals drawn: '
+                'the record was not read'
+            )
+    for r in f['arrivals']:
+        # The line must END near its airport: a joined arrival ends where a
+        # final begins, a vectored one where the coded route stops. A line
+        # ending far out means a join went to the wrong fix of that name.
+        ref = f['record']['airports'][r['airport']]['ref']
+        end = build_us_flight_paths.distance_km(ref, r['line'][-1])
+        if end > ARRIVAL_END_KM:
+            fails.append(f'{r["airport"]} {r["name"]}: the drawn arrival ends {end:.0f} km from the airport')
     ramp = {c for _, c in check_noise_legend.scale_from_index('NOISE_SCALE_BTS')}
     if f['picture_colours'] - ramp:
         fails.append(
@@ -950,8 +1072,35 @@ def departure_cell(c):
     return 'Yes: ' + e('; '.join(f'{code} {", ".join(names)}' for code, names in sorted(by_airport.items())))
 
 
+def altitude_words(alt):
+    """A published constraint in words. Never one number for a floor: aircraft are often above it."""
+    lo, hi = alt['min_ft'], alt['max_ft']
+    if lo is not None and lo == hi:
+        return f'{lo:,} ft'
+    if hi is None:
+        return f'{lo:,} ft or above'
+    if lo is None:
+        return f'{hi:,} ft or below'
+    return f'between {lo:,} and {hi:,} ft'
+
+
+def arrival_cell(c):
+    if not c['arrivals']:
+        return 'No'
+    by_airport = {}
+    for label in c['arrivals']:
+        code, name = label.split(' ', 1)
+        by_airport.setdefault(code, []).append(name)
+    text = 'Yes: ' + '; '.join(f'{code} {", ".join(sorted(names))}' for code, names in sorted(by_airport.items()))
+    held = [v for v in c['arrivals'].values() if v]
+    if held:
+        fix, alt = min(held, key=lambda v: (floor_of(v[1]), v[0]))
+        text += f'. Published altitude at {fix}, inside the city: {altitude_words(alt)}'
+    return e(text)
+
+
 def nearest_cell(c):
-    if c['approaches'] or c['departures']:
+    if c['approaches'] or c['departures'] or c['arrivals']:
         return 'Overhead'
     if c['nearest_km'] * KM_MI < 0.05:
         return f'Under 0.1 mi ({e(c["nearest"])})'
@@ -988,8 +1137,9 @@ def render_map(f, data):
     out = [
         f'<svg viewBox="0 0 {MAP_W} {frame.height}" role="img" aria-labelledby="map-title map-desc" class="map">',
         '<title id="map-title">Map of the San Francisco Bay Area with the published flight routes of SFO, OAK and SJC</title>',
-        '<desc id="map-desc">Fifty cities in four counties, the final approach to each runway, the coded departure '
-        'routes and the 2022 aircraft noise map. The table below gives the same information city by city.</desc>',
+        '<desc id="map-desc">Fifty cities in four counties, the final approach to each runway, the coded arrival '
+        'and departure routes and the 2022 aircraft noise map. The table below gives the same information city by '
+        'city.</desc>',
         f'<rect width="{MAP_W}" height="{frame.height}" fill="#dfe7ea"/>',
     ]
     out += [f'<path d="{path_d(frame, c["rings"])}" fill="#efeeea" fill-rule="evenodd"/>' for c in data['land']]
@@ -1008,6 +1158,10 @@ def render_map(f, data):
         'preserveAspectRatio="none" style="pointer-events:none"/>'
     )
     out.append('<g fill="none" style="pointer-events:none">')
+    out += [
+        f'<path d="{line_d(frame, r["line"])}" stroke="#55554f" stroke-width="1.1" stroke-dasharray="5 3" opacity="0.9"/>'
+        for r in f['arrivals']
+    ]
     out += [
         f'<path d="{line_d(frame, r["line"])}" stroke="#1d5fa8" stroke-width="1.1" opacity="0.8"/>'
         for r in f['departures']
@@ -1051,7 +1205,7 @@ PAGE_HTML = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';">
 <title>Bay Area flight paths: which cities are under the routes into SFO, Oakland and San Jose - Sky Score</title>
-<meta name="description" content="The published landing and departure routes of San Francisco, Oakland and San Jose airports, drawn over {n} Bay Area cities from the FAA's own procedure file, with the federal aircraft noise map. {n_app} cities have a landing path overhead below 3,000 ft." />
+<meta name="description" content="The published landing, arrival and departure routes of San Francisco, Oakland and San Jose airports, drawn over {n} Bay Area cities from the FAA's own procedure file, with the federal aircraft noise map. {n_app} cities have a landing path overhead below 3,000 ft." />
 <link rel="canonical" href="{site}/bay-area/" />
 <meta property="og:type" content="article" />
 <meta property="og:title" content="Which Bay Area cities are under a flight path?" />
@@ -1087,12 +1241,13 @@ PAGE_HTML = """<!doctype html>
   .key li {{ display:flex; align-items:center; gap:8px; }}
   .key i {{ display:inline-block; width:26px; height:0; border-top:2px solid #141414; }}
   .key i.dep {{ border-top-color:#1d5fa8; }}
+  .key i.arr {{ border-top:2px dashed #55554f; }}
   .key i.ap {{ width:9px; height:9px; border:1px solid #141414; background:#f27d26; }}
   .ramp {{ display:inline-flex; border:1px solid var(--line); }}
   .ramp b {{ width:16px; height:12px; }}
   .tw {{ overflow-x:auto; }}
   .tw:focus-visible {{ outline:2px solid var(--link); outline-offset:2px; }}
-  table {{ width:100%; min-width:860px; border-collapse:collapse; font-size:13px; }}
+  table {{ width:100%; min-width:980px; border-collapse:collapse; font-size:13px; }}
   th, td {{ text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }}
   th {{ font-weight:600; }}
   td.n {{ font-family:'JetBrains Mono',ui-monospace,monospace; white-space:nowrap; }}
@@ -1107,10 +1262,11 @@ PAGE_HTML = """<!doctype html>
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; Bay Area flight paths</nav>
 <main>
 <h1>Which Bay Area cities are under a flight path?</h1>
-<p class="sub">The published landing and departure routes of San Francisco (SFO), Oakland (OAK) and San Jose (SJC), drawn over the {n} cities and towns of the four counties around them. The routes come from the FAA's own procedure file and the shading from the federal aircraft noise map. The figures in the table are measured from those two.</p>
+<p class="sub">The published landing, arrival and departure routes of San Francisco (SFO), Oakland (OAK) and San Jose (SJC), drawn over the {n} cities and towns of the four counties around them. The routes come from the FAA's own procedure file and the shading from the federal aircraft noise map. The figures in the table are measured from those two.</p>
 
 <ul class="figures">
 <li><b>{n_app} of {n}</b><span>cities have a published landing path overhead, below 3,000 ft</span></li>
+<li><b>{n_arr} of {n}</b><span>have a coded arrival route overhead, where the FAA allows aircraft at {arr_top} ft or lower</span></li>
 <li><b>{n_dep} of {n}</b><span>have a coded departure route overhead, within {dep_mi} miles of the runway</span></li>
 <li><b>{n_noise} of {n}</b><span>have at least 1% of their area on the federal aircraft noise map, from any airfield</span></li>
 </ul>
@@ -1118,17 +1274,18 @@ PAGE_HTML = """<!doctype html>
 {svg}
 <ul class="key">
 <li><i></i>Final approach, from 3,000 ft down to the runway</li>
+<li><i class="arr"></i>Coded arrival route, from where {arr_top} ft or lower is allowed</li>
 <li><i class="dep"></i>Coded departure route, first {dep_mi} miles</li>
 <li><i class="ap"></i>Airport</li>
 <li><span class="ramp" aria-hidden="true">{ramp}</span>Aircraft noise, 2022: quieter to louder</li>
 </ul>
 
 <h2>City by city</h2>
-<p class="small">Ordered by how much of each city the federal noise map shades. That map is the better guide to what is actually flown, but it covers every airfield the Bureau models, not only these three, so each row names the airfield its shading belongs to. Heights are of landing aircraft on the published glide path, above the runway, to the nearest 100 ft.</p>
+<p class="small">Ordered by how much of each city the federal noise map shades. That map is the better guide to what is actually flown, but it covers every airfield the Bureau models, not only these three, so each row names the airfield its shading belongs to. Heights are of landing aircraft on the published glide path, above the runway, to the nearest 100 ft. Arrival altitudes are the ones the FAA publishes at a waypoint inside the city, above sea level.</p>
 <div class="tw" tabindex="0" role="region" aria-label="City by city table, scrolls sideways on a narrow screen">
 <table>
 <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Flight routes and mapped aircraft noise for {n} Bay Area cities</caption>
-<thead><tr><th scope="col">City</th><th scope="col">County</th><th scope="col">Share of city on the noise map</th><th scope="col">Airfield that shading belongs to</th><th scope="col">Landing path overhead</th><th scope="col">Departure route overhead</th><th scope="col">Nearest drawn route</th></tr></thead>
+<thead><tr><th scope="col">City</th><th scope="col">County</th><th scope="col">Share of city on the noise map</th><th scope="col">Airfield that shading belongs to</th><th scope="col">Landing path overhead</th><th scope="col">Arrival route overhead</th><th scope="col">Departure route overhead</th><th scope="col">Nearest drawn route</th></tr></thead>
 <tbody>
 {rows}
 </tbody>
@@ -1144,7 +1301,7 @@ PAGE_HTML = """<!doctype html>
 <li><strong>Landing lines</strong> are each runway's final approach, from 3,000 ft down to the runway, at the glide angle the FAA publishes. "SFO 28L" means runway 28 Left at San Francisco. {undrawn}</li>
 <li><strong>Departure lines</strong> are the coded departure procedures, drawn for their first {dep_mi} miles, or as far as their named waypoints go if that is less: where controllers take over and steer aircraft by radar, the line stops. Names such as GAPP7 are the FAA's own names for them.</li>
 <li><strong>Heights are above the runway, not above the ground.</strong> A city on a hill is closer to the aircraft than its figure says. Read each figure as give or take 100 ft.</li>
-<li><strong>Arrivals further out are not drawn.</strong> Before the final approach, aircraft descending towards an airport are steered by air traffic control, higher up and over a wide area. Cities under those arrival streams show no line here.</li>
+<li><strong>Arrival lines</strong> are the FAA's coded arrival routes, joined to the coded approach transitions that lead from where they end to the start of a final approach. Each is drawn from the first waypoint at which the FAA allows aircraft to be at {arr_top} ft or lower. Where a coded route ends and controllers take over, steering aircraft by radar over a wide area, the line stops, and cities under those streams show no line here. The altitudes are the ones the FAA publishes at a waypoint, above sea level, and most are a minimum: "4,000 ft or above" means aircraft may be, and often are, higher. Names such as SERFR4 are the FAA's own names for these routes.</li>
 <li><strong>The noise shading</strong> is the aviation layer of the National Transportation Noise Map, 2022 edition, from the US Bureau of Transportation Statistics. It is a modelled 24-hour average, drawn over land only (which is why an approach over the bay has no shading until it reaches the shore), and it includes airfields this page draws no routes for, such as Livermore's and Hayward's own. The table names, for each city, the airfield inside its patch of shading; where water cuts a patch off from its airport, it is named for the airport whose approach runs through it, and where a patch holds two airfields, for the nearer. The Bureau publishes it to track trends and says it should not be used to evaluate noise at an individual location, so this page gives a share of a whole city and never a figure for an address.</li>
 <li><strong>City outlines are approximate.</strong> They are the Census Bureau's generalised boundaries, good to a few hundred feet, so treat anything right on a city line as approximate.</li>
 <li><strong>Cities only.</strong> The table lists incorporated cities and towns in San Francisco, San Mateo, Santa Clara and Alameda counties. {homes}</li>
@@ -1177,10 +1334,10 @@ def render(data, record):
     rows = '\n'.join(
         f'<tr><th scope="row">{e(c["name"])}</th><td>{e(c["county"])}</td><td class="n">{noise_cell(c)}</td>'
         f'<td>{airfield_cell(c)}</td>'
-        f'<td>{approach_cell(c)}</td><td>{departure_cell(c)}</td><td>{nearest_cell(c)}</td></tr>'
+        f'<td>{approach_cell(c)}</td><td>{arrival_cell(c)}</td><td>{departure_cell(c)}</td><td>{nearest_cell(c)}</td></tr>'
         for c in cities
     )
-    under = sorted(c['name'] for c in f['communities'] if c['approaches'] or c['departures'])
+    under = sorted(c['name'] for c in f['communities'] if c['approaches'] or c['departures'] or c['arrivals'])
     communities = ''
     if under:
         communities = (
@@ -1207,6 +1364,8 @@ def render(data, record):
         n=len(cities),
         n_app=sum(bool(c['approaches']) for c in cities),
         n_dep=sum(bool(c['departures']) for c in cities),
+        n_arr=sum(bool(c['arrivals']) for c in cities),
+        arr_top=f'{ARRIVAL_TOP_FT:,}',
         n_noise=sum(c['noise_pct'] >= MIN_SHARE_PCT for c in cities),
         dep_mi=f'{DEPARTURE_KM * KM_MI:.0f}',
         svg=render_map(f, data),

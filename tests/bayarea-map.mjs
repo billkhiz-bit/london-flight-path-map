@@ -139,6 +139,34 @@ for (const vp of [
   );
   ok(!/\/10|undefined|NaN|null/.test(sb.text), `${L} the facts card prints no score and no placeholder`, sb.text.slice(0, 200));
 
+  // 2a. Arrivals (2026-10-06): drawn, and named on a card with the FAA's altitude.
+  // The subject is taken from the data, not named: a city borrowed by name stops
+  // testing anything the day its row changes.
+  const arr = await page.evaluate(() => {
+    const withAlt = (cityBoundaries.bayarea || []).find((f) => /Published altitude at/.test(f.properties.arrival || ''));
+    return {
+      want: BAYAREA_FLIGHT_PATHS.filter((p) => p.type === 'arrival').length,
+      arrivals: BAYAREA_FLIGHT_PATHS.filter((p) => / arrival via /.test(p.name)).length,
+      drawn: document.querySelectorAll('.layer-paths path[data-flight="arrival"]').length,
+      name: withAlt ? withAlt.properties.name : null,
+      fact: withAlt ? withAlt.properties.arrival : null,
+    };
+  });
+  ok(arr.arrivals > 0 && arr.drawn === arr.want, `${L} every arrival line in the data is drawn`, JSON.stringify(arr));
+  if (arr.name) {
+    await page.evaluate((n) => selectBoroughByName(n), arr.name);
+    await page.waitForTimeout(300);
+    const card = await panel(page);
+    ok(
+      // The label is upper-cased by CSS, and innerText returns it as rendered.
+      card.onScreen && /Arrival route overhead/i.test(card.text) && card.text.includes(arr.fact),
+      `${L} a city under an arrival names it and the FAA's published altitude (${arr.name})`,
+      card.text.slice(0, 260)
+    );
+  } else {
+    ok(false, `${L} some city carries an arrival with a published altitude`, 'none in us-bayarea-cities.json');
+  }
+
   // 3. The ranking: noise-map order, no score column.
   const rank = await page.evaluate(() => {
     renderBoroughRanking();

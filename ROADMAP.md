@@ -712,8 +712,15 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       Linked from both footers of the main site ("Bay Area") and from `/area/`.
 - [ ] Post it where Bay Area residents are (Bill's to do). Never say "how often
       planes fly over": the page says where the routes are, not their traffic.
-- [ ] Each new FAA cycle (28 days): re-fetch the record, `--write` the page,
-      re-render `share.png` if a line moved, redeploy. `--check` reds until then.
+- [ ] Each new FAA cycle (28 days; **next is 2611, effective 2026-10-29**):
+      `build_us_flight_paths.py --fetch`, then `--write` on
+      `build_bay_area_page.py`, `build_bayarea_map_data.py` and
+      `build_bayarea_areas.py` (all three read the record, and all three
+      `--check`s are blocking), re-render `share.png` (`node
+      scripts/render_bay_area_share.mjs`) if a line moved, then deploy
+      `bay-area-deploy`, `web-deploy` (the BAYAREA-MAP block) and
+      `data-deploy`. The legend's cycle number is GENERATED since 2026-10-06
+      (`BAYAREA_ROUTES_CYCLE`); it was typed by hand and nothing checked it.
 - [ ] **The scored city: stages 2-5 in EXPANSION.md. Bill, 2 Oct evening: "have
       San Francisco as part of the map" - so this is NEXT, not later.** First
       step is generalising the by-name New York branches (EXPANSION.md lists
@@ -789,6 +796,29 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       Francisco's card lists its neighbourhoods; neighbourhood names search; the
       ranking toggles to them. Gated in `tests/bayarea-map.mjs`. **Layer 2 (prices,
       crime, a score) waits for the Census and api.data.gov keys, both Bill's.**
+- [x] **Arrival routes, BUILT 2026-10-06** (Bill chose them first, before area
+      pages and the launch post: Palo Alto's well-known complaint is ARRIVALS, and
+      the page drew none, so the first local reply to a post would have been
+      "where are the arrivals?"). `build_us_flight_paths.py` now records each
+      STAR (common route, then runway transition, with the FAA's published
+      altitude at every fix as a floor/ceiling pair) and each approach's coded
+      transitions; departures came out byte-identical. The page joins a STAR to
+      the approach transition that starts where it ends, follows it only to a
+      drawn final, stops at radar vectors, and **draws it from the first fix where
+      the FAA allows 10,000 ft or lower** (Bill's rule, measured against two
+      others: 24 of 50 cities overhead, against 21 for "required below 10,000"
+      and 32 for the whole route). A city's figure is the published altitude at
+      a fix INSIDE it, never interpolated between fixes. **Palo Alto now reads
+      "SFO SERFR4. Published altitude at SIDBY, inside the city: 4,000 ft or
+      above".** On the page (new column, dashed line, key, notes), the live map
+      (`arrival` lines, a card row), and both area tiers. Committed, **not yet
+      deployed**.
+- [ ] **`/preview/` does not draw the arrivals.** Its engine draws finals and
+      departures from the RAW record with its own rules (departures whole, cut
+      by the city outline), so arrivals there would mean re-implementing the
+      join and the 10,000 ft start in JavaScript - mirrored code. Do it by having
+      the preview read the generated lines (the BAYAREA-MAP block's shape, or a
+      routes member in `us-bayarea-cities.json`), not by copying the rules.
 - [ ] **Prices by the public-domain route need a free Census API key**
       (American Community Survey median home values, with FHFA for the
       trend), which avoids Zillow's unread terms. Bill's to request at
