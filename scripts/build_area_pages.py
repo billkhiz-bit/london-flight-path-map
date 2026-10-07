@@ -134,6 +134,42 @@ def _painted_for(city, borough):
     return {}
 
 
+# THE API-ONLY PAGES SHOWED NO ENVIRONMENT ROWS (website audit I16, 2026-10-07).
+#
+# The road noise, air quality and flood rows print BANDS, and the bands live in
+# data/borough-extra.json alone - the map's holder, which leaves BACKEND_ONLY_CITIES out on
+# purpose. So the 11 Cardiff, Nottingham and Norwich pages showed none of the three, while the
+# Lambda's record held the continuous figure behind each and the Environment score used it.
+#
+# They print that figure instead of a band. Re-banding it here is the trap: bands are cut on the
+# UNROUNDED share (METHODOLOGY s7.1) and the Lambda holds the rounded one, so a borough sitting on a
+# cut would land on the wrong side. A city that joins the map gains bands and switches by itself.
+MEASURED_FIELD = {
+    'roadNoise': 'roadNoiseAboveWhoPct',
+    'airQuality': 'airQualityWhoRatio',
+    'flood': 'floodMediumOrHighPct',
+}
+
+
+def measured_value(key: str, value: float) -> str:
+    """Display text for one measured environment figure, printed as held (never re-rounded).
+
+    `key` is a MEASURED_FIELD key and `value` the Lambda's figure. The row's note column already
+    names the source and the threshold, so this is the reading itself:
+
+      roadNoise   share of addresses over WHO's 53 dB Lden road guideline, a percentage (48.9)
+      airQuality  the worse of NO2 and PM2.5 as a multiple of its WHO 2021 guideline (1.49)
+      flood       share of addresses at Environment Agency Medium-or-High risk, a percentage (0.43)
+    """
+    shown = f'{value:g}'
+    if key == 'airQuality':
+        # A multiple, not "N% above": the conversion reads oddly at 1.01 and breaks below 1.
+        return f'{shown} × the WHO 2021 guideline'
+    if key in ('roadNoise', 'flood'):
+        return f'{shown}% of addresses'
+    raise KeyError(key)
+
+
 def gather(city: str, borough: str) -> dict | None:
     """Every published figure for one borough, absent keys omitted."""
     body, status = app.resolve_query({'borough': borough, 'city': city})
@@ -294,6 +330,12 @@ def gather(city: str, borough: str) -> dict | None:
     ):
         raw = merged.get(key)
         if raw in (None, ''):
+            # No band: an API-only city (audit I16). Print the measured figure the band would be
+            # cut from, when the Lambda holds one; a borough holding neither still gets no row.
+            field = MEASURED_FIELD.get(key)
+            measured = merged.get(field) if field else None
+            if isinstance(measured, (int, float)):
+                add(label, measured_value(key, measured), uk_note(note))
             continue
         # City of London's crime rate is OUR OWN estimate - ONS suppresses the
         # rate for its small resident population, and the crime gate prints
