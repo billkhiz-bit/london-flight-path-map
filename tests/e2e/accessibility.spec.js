@@ -15,6 +15,10 @@ const PAGES = [
   { path: '/pricing', name: 'pricing' },
   { path: '/privacy', name: 'privacy' },
   { path: '/terms', name: 'terms of use' },
+  // The branded not-found page, LIVE since 2026-10-07 (audit I15): reached the way a visitor
+  // reaches it, at an address that does not exist, so this scans what CloudFront actually serves
+  // there (status 404) rather than the /404.html object. tests/a11y-source.mjs scans the file.
+  { path: '/this-page-does-not-exist/', name: 'not found page (a missing address)' },
   { path: '/open-data/', name: 'open data' },
   { path: '/bay-area/', name: 'Bay Area flight paths' },
   // The front page (at / since 2026-10-06; trialled at /preview/ from 2026-10-03).
