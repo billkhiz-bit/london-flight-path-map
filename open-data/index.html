@@ -4,8 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Open data - Sky Score</title>
-<meta name="description" content="Download Sky Score's borough-level scores and inputs for 97 UK areas as one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices, from open government data." />
+<meta name="description" content="Download Sky Score's borough-level scores and inputs for 97 UK areas as one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices, from official public data." />
 <link rel="canonical" href="https://skyscore.co.uk/open-data/" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://skyscore.co.uk/open-data/" />
+<meta property="og:title" content="Open data - Sky Score" />
+<meta property="og:description" content="Every UK area Sky Score covers in one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices. Free for non-commercial use." />
+<meta property="og:site_name" content="Sky Score" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
   :root { color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }
@@ -53,8 +58,8 @@
 <p><a class="dl" href="/open-data/sky-score-boroughs.csv" download>Download sky-score-boroughs.csv (CSV)</a></p>
 
 <h2>Licence and attribution</h2>
-<p>Sky Score’s scores in this file are released under <a href="https://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0</a>: free to use, share and adapt for non-commercial purposes, with credit to "Sky Score (skyscore.co.uk)". <strong>In addition</strong>, journalists may publish figures, tables and charts from it in news reporting, including in commercial publications, and academic researchers may use it in published research, in each case with that credit. Reselling the dataset, redistributing it in bulk, or building it into a commercial product or service needs written permission: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
-<p>Built entirely from open government data, used under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>. If you reuse this file, please also credit the original publishers: DEFRA (noise and air quality), the Environment Agency (flood risk), ONS (crime, postcode lookup), the Department for Education (Progress 8), HM Land Registry (prices), the Department for Transport (NaPTAN) and the NHS Organisation Data Service (GP practices).</p>
+<p>Sky Score’s scores in this file are released under <a href="https://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0</a>: free to use, share and adapt for non-commercial purposes, with credit to "Sky Score (skyscore.co.uk)". <strong>In addition</strong>, journalists may publish figures, tables and charts from it in news reporting, including in commercial publications, and academic researchers may use it in published research, in each case with that credit. Reselling the dataset, redistributing it in bulk for commercial purposes, or building it into a commercial product or service needs written permission: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
+<p>Built from official public data. Most of it is used under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>; the aircraft noise estimate also uses the flight routes of the UK Aeronautical Information Publication (NATS), which is public but not openly licensed. If you reuse this file, please also credit the original publishers: DEFRA (noise and air quality), the Environment Agency (flood risk), ONS (crime, postcode lookup), the Department for Education (Progress 8), HM Land Registry (prices), the Department for Transport (NaPTAN), the NHS Organisation Data Service (GP practices) and the UK AIP, NATS (flight routes).</p>
 
 <h2>What each column means</h2>
 <div class="tw" tabindex="0" role="region" aria-label="What each column means, scrolls sideways on a narrow screen">
@@ -95,7 +100,7 @@
 <p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10-15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: its Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's 2024 figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same figures are available per postcode through the <a href="/api/">API</a>.</p>
 </main>
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
 </footer>
 </div>
 </body>

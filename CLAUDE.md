@@ -2001,6 +2001,18 @@ line outlived it by five days and several deploys. A blocker note that does not
 name what retires it is a note that expires silently - the same failure this
 file records twice more on 2026-09-09.
 
+**A WEBSITE CONTENT AUDIT RAN ON 2026-10-06: `AUDIT_REPORT_2026-10-06-website.md`** (what the
+site SAYS, page by page, as four visitors; statuses live in that file). Rules it set:
+- **Never call the whole product "open government data" / "OGL".** The UK flight routes (and so the
+  quiet estimate) come from the UK AIP (NATS): public, NOT openly licensed. Say "official public
+  data" and credit "UK AIP (NATS)" wherever routes are shown. **The FAA's routes need the FAA's
+  "as is, without warranty" disclaimer wherever shown** - `/bay-area/` has it; the front page,
+  which draws Bay Area and New York FAA routes, does not yet (batch 2).
+- **`/pricing` is the ONLY page with prices**; `/api/` states none and links `/pricing#platforms`
+  (it had kept its own copy, which drifted). `tests/front-page.mjs` 16b fails on a price there.
+- **An area page describes itself from its own rows** (`topics()` in `build_area_pages.py`): 22 of
+  102 promised "schools" they did not show.
+
 **THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-05.md`** (1 Critical, 8 Important,
 20 Minor; statuses live in that file, not here). What a future session must not
 undo from it:

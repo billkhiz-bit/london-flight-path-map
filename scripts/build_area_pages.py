@@ -216,7 +216,12 @@ def gather(city: str, borough: str) -> dict | None:
     # Derived from the response, never recomputed here: a second implementation
     # of the same rank is a second thing to keep in step.
     rank = (body.get('context') or {}).get('priceRankInCity') or {}
-    afford_note = 'Scored against borough prices across the whole country, not just this city'
+    # Per CURRENCY (audit 2026-10-06, I6): the sterling pool is every UK area covered; New York's is
+    # its own five boroughs, and the page said "the whole country" for both.
+    if app.CITIES[city].get('country') == 'United Kingdom':
+        afford_note = 'Scored against the prices of every UK area we cover, not just this city'
+    else:
+        afford_note = "Scored against New York's five boroughs, the only US prices held: not comparable with UK scores"
     if rank.get('rank') and rank.get('of', 0) > 1:
         afford_note += f' - {rank["rank"]} of {rank["of"]} here by price, cheapest first'
 
@@ -378,7 +383,7 @@ PAGE = """<!doctype html>
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; {city_label}</nav>
 <main data-city="{city}" data-borough="{borough}">
 <h1>{borough} noise and liveability</h1>
-<p class="sub">{city_label}. Aircraft and road noise, affordability, schools, crime and access, from published sources.</p>
+<p class="sub">{city_label}. {topics_cap}, from published sources.</p>
 
 <div class="headline"><span class="n">{score}</span><span class="of">Sky Score out of 10</span></div>
 
@@ -395,17 +400,34 @@ PAGE = """<!doctype html>
 
 <h2>Where these numbers come from</h2>
 <p class="sources">{sources}</p>
-<p class="sources">Methodology version {methodology}. Full method: <a href="/score-demo/api-docs.html">API reference</a>.
+<p class="sources">Methodology version {methodology}. Full method: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">the methodology</a> (and the <a href="/score-demo/api-docs.html">API reference</a>).
 Figures are for the whole borough; a single address can differ{map_note}.</p>
 </main>
 
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
 </footer>
 </div>
 </body>
 </html>
 """
+
+
+def topics(facts) -> str:
+    """What this page actually shows, in words (audit 2026-10-06, I7): 22 of 102 pages promised
+    schools and showed no schools figure, and Cardiff's promised road noise it does not hold."""
+    have = {f['label'] for f in facts}
+    words = ['aircraft and road noise' if 'Road noise' in have else 'aircraft noise', 'affordability']
+    for label, word in (
+        ('Progress 8', 'schools'),
+        ('Recorded crime', 'crime'),
+        ('Transport access', 'transport'),
+        ('Air quality', 'air quality'),
+        ('Flood risk', 'flood risk'),
+    ):
+        if label in have:
+            words.append(word)
+    return ', '.join(words[:-1]) + ' and ' + words[-1]
 
 
 def render(data: dict) -> str:
@@ -426,15 +448,13 @@ def render(data: dict) -> str:
     # fix, because it is built here and not there. Found by the gate written for
     # the notes, which is the argument for writing the gate.
     uk_city = app.CITIES[data['city']].get('country') == 'United Kingdom'
-    source_clause = (
-        'from DEFRA, ONS, DfE and HM Land Registry data'
-        if uk_city
-        else 'from public New York City sources'
-    )
+    source_clause = 'from official public data' if uk_city else 'from public New York City sources'
+    # "Cardiff, Cardiff" (audit I7): a borough that shares its city's name is named once.
+    place = data['borough'] if data['borough'] == city_label else f"{data['borough']}, {city_label}"
+    shown = topics(data['facts'])
     desc = (
         f"{data['borough']} scores {data['score']} out of 10 on Sky Score. "
-        f"Aircraft and road noise, affordability, schools, crime and transport "
-        f"for {data['borough']}, {city_label}, {source_clause}."
+        f"{shown[0].upper() + shown[1:]} for {place}, {source_clause}."
     )[:300]
     # A PREVIEW CITY HAS NO MAP, SO ITS PAGE MUST NOT OFFER ONE (2026-09-30).
     #
@@ -468,6 +488,7 @@ def render(data: dict) -> str:
         description=e(desc),
         canonical=f"{SITE}/area/{slug(data['city'])}/{slug(data['borough'])}/",
         city_label=e(city_label),
+        topics_cap=e(shown[0].upper() + shown[1:]),
         # `city` feeds data-city on <main>: the page's machine-readable identity,
         # which tests/area-page-freshness.mjs reads. It used to read the map
         # link, and a preview page has no map link (2026-09-30).
@@ -495,7 +516,12 @@ def render(data: dict) -> str:
         # A cap on an attribution list is a cap on a licence obligation, and it
         # was invisible because the array grew past six only when `environment`
         # started scoring at v3.9.
-        sources=e('; '.join(str(s) for s in data['sources']) or 'See methodology.'),
+        # The API's sources do not credit the UK AIP yet (audit 2026-10-06, C1: a backend change,
+        # recorded in AUDIT_REPORT_2026-10-06-website.md); a UK page credits it here meanwhile.
+        sources=e('; '.join([str(s) for s in data['sources']] + (
+            ['Flight routes behind the aircraft noise estimate: UK Aeronautical Information Publication (NATS)']
+            if uk_city else []
+        )) or 'See methodology.'),
         methodology=e(data['methodology'] or ''),
     )
 
@@ -549,7 +575,7 @@ INDEX = """<!doctype html>
 <p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
 <p class="sub">In the United States: <a href="/bay-area/">flight paths over 50 San Francisco Bay Area cities</a>.</p>
 {body}
-<p class="sub" style="margin-top:32px;"><a href="/">Back to the map</a> &middot; <a href="/api/">For developers</a></p>
+<p class="sub" style="margin-top:32px;"><a href="/map/">Back to the map</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/terms">Terms</a></p>
 </main>
 </div>
 </body>
@@ -811,8 +837,13 @@ OPEN_DATA_PAGE = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Open data - Sky Score</title>
-<meta name="description" content="Download Sky Score's borough-level scores and inputs for {n} UK areas as one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices, from open government data." />
+<meta name="description" content="Download Sky Score's borough-level scores and inputs for {n} UK areas as one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices, from official public data." />
 <link rel="canonical" href="{site}/open-data/" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="{site}/open-data/" />
+<meta property="og:title" content="Open data - Sky Score" />
+<meta property="og:description" content="Every UK area Sky Score covers in one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices. Free for non-commercial use." />
+<meta property="og:site_name" content="Sky Score" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
   :root {{ color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
@@ -861,7 +892,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 
 <h2>Licence and attribution</h2>
 <p>{licence}</p>
-<p>Built entirely from open government data, used under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>. If you reuse this file, please also credit the original publishers: DEFRA (noise and air quality), the Environment Agency (flood risk), ONS (crime, postcode lookup), the Department for Education (Progress 8), HM Land Registry (prices), the Department for Transport (NaPTAN) and the NHS Organisation Data Service (GP practices).</p>
+<p>Built from official public data. Most of it is used under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence v3.0</a>; the aircraft noise estimate also uses the flight routes of the UK Aeronautical Information Publication (NATS), which is public but not openly licensed. If you reuse this file, please also credit the original publishers: DEFRA (noise and air quality), the Environment Agency (flood risk), ONS (crime, postcode lookup), the Department for Education (Progress 8), HM Land Registry (prices), the Department for Transport (NaPTAN), the NHS Organisation Data Service (GP practices) and the UK AIP, NATS (flight routes).</p>
 
 <h2>What each column means</h2>
 <div class="tw" tabindex="0" role="region" aria-label="What each column means, scrolls sideways on a narrow screen">
@@ -878,7 +909,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 <p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10-15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: its Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's 2024 figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same figures are available per postcode through the <a href="/api/">API</a>.</p>
 </main>
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
 </footer>
 </div>
 </body>
@@ -896,8 +927,8 @@ OPEN_DATA_LICENCE = (
     'free to use, share and adapt for non-commercial purposes, with credit to "Sky Score (skyscore.co.uk)". '
     '<strong>In addition</strong>, journalists may publish figures, tables and charts from it in news reporting, '
     'including in commercial publications, and academic researchers may use it in published research, in each case '
-    'with that credit. Reselling the dataset, redistributing it in bulk, or building it into a commercial product or '
-    'service needs written permission: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.'
+    'with that credit. Reselling the dataset, redistributing it in bulk for commercial purposes, or building it into a '
+    'commercial product or service needs written permission: <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.'
 )
 
 
@@ -934,11 +965,12 @@ STATIC_URLS = [
     ('/bay-area/', '0.8', 'monthly'),
     ('/pricing', '0.8', 'monthly'),
     ('/privacy', '0.3', 'yearly'),
+    ('/terms', '0.3', 'yearly'),
+    ('/changes', '0.4', 'monthly'),
     ('/api/', '0.9', 'monthly'),
     ('/score-demo/', '0.7', 'monthly'),
     ('/score-demo/api-docs.html', '0.6', 'monthly'),
     ('/score-demo/status.html', '0.3', 'weekly'),
-    ('/prototype/', '0.5', 'monthly'),
 ]
 
 

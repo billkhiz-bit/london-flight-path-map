@@ -421,7 +421,7 @@ ${f.map}
 <h2>Published routes within ${ROUTE_RADIUS_KM} km</h2>
 ${
   rows.length
-    ? `<table><thead><tr><th>Route</th><th>Used when aircraft are</th><th>Closest point to this postcode</th><th>Height there</th></tr></thead><tbody>
+    ? `<table><thead><tr><th>Route</th><th>Used when aircraft are</th><th>Closest point to this postcode</th><th>Height</th></tr></thead><tbody>
 ${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('\n')}</tbody></table>`
     : `<p>No published approach or departure route passes within ${ROUTE_RADIUS_KM} km of this postcode.</p>`
 }

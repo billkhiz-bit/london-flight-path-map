@@ -133,16 +133,6 @@
   /* The sample: dark code on the light page, scrollable and keyboard-reachable. */
   pre { background: #141414; color: #f4f3ef; border-radius: 14px; padding: 18px 20px; overflow-x: auto; font: 13px/1.6 var(--font-mono); margin: 0 0 12px; }
 
-  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin: 0 0 16px; }
-  .tier { background: var(--paper); border-radius: 18px; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
-  .tier h3 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0; }
-  .tier .tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #ffe6cf; color: var(--dark); font: 600 11px var(--font-body); letter-spacing: 0.02em; vertical-align: middle; }
-  .tier p { margin: 0; color: var(--mid); font-size: 15px; }
-  .tier .price { font-family: var(--font-display); font-weight: 700; font-size: 34px; letter-spacing: -0.03em; line-height: 1.05; color: var(--dark); }
-  .tier .price small { display: inline-block; white-space: nowrap; font: 400 14px var(--font-body); letter-spacing: 0; color: var(--mid); }
-  .tier .go { margin-top: auto; align-self: flex-start; }
-  /* No highlighted card and one button style (Bill, 2026-10-06): each section is for a different
-     buyer, so no card is the one to pick. tests/front-page.mjs 16b holds both pages to it. */
 
   ol.steps { margin: 0; padding-left: 22px; color: var(--dark); font-size: 15px; line-height: 1.8; max-width: 80ch; }
 
@@ -196,11 +186,11 @@
 
     <details class="limits">
       <summary>How accurate is the noise estimate, and what are its limits?</summary>
-      <p><strong>Note (updated 12 August 2026):</strong> the DEFRA Lden raster tier is <strong>live</strong>. It was bypassed between 3 and 6 August 2026 for the coverage reason below; that bypass was lifted once the consumer site was given the same measurements, so the two surfaces cannot disagree. Three separate reasons, stated plainly because two of them were understood only after the first was published:</p>
+      <p><strong>Note:</strong> the DEFRA Lden raster tier has been <strong>live</strong> since 6 August 2026. It was bypassed between 3 and 6 August 2026 for the coverage reason below; that bypass was lifted once the consumer site was given the same measurements, so the two surfaces cannot disagree. Four things to know, stated plainly because some were understood only after the first was published:</p>
       <ul>
         <li><strong>Coverage.</strong> DEFRA's aircraft contours reach only 10.4% of live London postcodes, and treating the unmapped remainder as quiet flattened the component.</li>
         <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
-        <li><strong>Vintage.</strong> DEFRA Round 4 is published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. <strong>Measured at Heathrow</strong>, the one airport with a published normal-year model: DEFRA's 2021 55 dB L<sub>den</sub> contour covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2024 (traffic 0.5% below 2019; ERCD Report 2501, Table 12) covers <strong>148.4 km&sup2;</strong>, about twice the area. They are different models, so that is an order of magnitude, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
+        <li><strong>Vintage.</strong> DEFRA Round 4 was published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. <strong>Measured at Heathrow</strong>, the one airport with a published normal-year model: DEFRA's 2021 55 dB L<sub>den</sub> contour covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2024 (traffic 0.5% below 2019; ERCD Report 2501, Table 12) covers <strong>148.4 km&sup2;</strong>, about twice the area. They are different models, so that is an order of magnitude, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
         <li><strong>Outdoor levels.</strong> L<sub>den</sub> is assessed outdoors, at the most exposed facade. Indoor exposure depends on glazing and ventilation, which no public dataset records per property.</li>
       </ul>
       <p>The geometry tier is documented in full in METHODOLOGY section 4.5. It is not a DEFRA reading and does not inherit the vintage caveat directly, but it is not independent of it either: since v3.8 each airport's distance ladder is scaled by that airport's measured Round 4 footprint.</p>
@@ -247,11 +237,11 @@
     <div class="cards five">
       <div class="card">
         <h3>Property data aggregators</h3>
-        <p>Landmark, TM Group, OneSearch Direct - a drop-in noise and liveability layer for conveyancing search reports.</p>
+        <p>Search and data platforms: a drop-in noise and liveability layer for conveyancing search reports.</p>
       </div>
       <div class="card">
         <h3>Sharia-compliant home finance</h3>
-        <p>Al Rayan, StrideUp, Gatehouse, Nester, Yielders - riba-free underwriting context with attribution.</p>
+        <p>Islamic home-finance providers: riba-free underwriting context with attribution.</p>
       </div>
       <div class="card">
         <h3>Conveyancers and surveyors</h3>
@@ -270,40 +260,16 @@
 
   <section id="pricing" aria-labelledby="pricing-heading">
     <h2 class="sec" id="pricing-heading">Pricing</h2>
-    <div class="tiers">
-      <article class="tier">
-        <h3>Developer</h3>
-        <p class="price" data-price="api-free">Free <small>live today</small></p>
-        <p>10,000 requests a month, which is 10,000 scores: batch is a paid feature, so one request is one address. Self-service signup; same data, lower limits.</p>
-        <a class="go quiet" href="/score-demo/index.html#signup">Get a free key</a>
-      </article>
-      <article class="tier">
-        <h3>90-day pilot</h3>
-        <p class="price" data-price="pilot">£2,500 <small>for 90 days</small></p>
-        <p>Fixed scope, fixed fee: a measure agreed at kickoff, a review at day 45, a written evidence report at day 90. If you go on to an annual licence, the £2,500 comes off its first year.</p>
-        <a class="go quiet" data-event="pricing-pilot-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%2090-day%20pilot">Start a pilot conversation</a>
-      </article>
-      <article class="tier">
-        <h3>Professional <span class="tag">Launching</span></h3>
-        <p class="price" data-price="api-professional">£499 <small>a month</small></p>
-        <p>100,000 requests a month, under a fair-use ceiling of 1,000,000 scores a month. Batch requests carry up to 100 addresses each. For one platform integrating Sky Score.</p>
-        <a class="go quiet" data-event="pricing-professional-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Professional%20tier%20enquiry">Talk to us</a>
-      </article>
-      <article class="tier">
-        <h3>Enterprise licence</h3>
-        <p class="price" data-price="api-enterprise">On request <small>annual</small></p>
-        <p>For aggregators and large integrators: a master agreement, a service level, an audit log and a support contract.</p>
-        <a class="go quiet" data-event="pricing-enterprise-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Enterprise%20enquiry">Talk to us</a>
-      </article>
-    </div>
-    <p class="note">You pay for the convenience (a service level, structured JSON, batch, an audit trail), not for exclusive data: the public site keeps every feature. <a data-event="pricing-detail-click" href="/pricing">Full pricing, including councils</a>.</p>
+    <!-- Prices live on /pricing alone (audit 2026-10-06, I2): this page's own copy of the ladder
+         had already drifted from it. tests/front-page.mjs fails if a price figure returns here. -->
+    <p class="note">Start free: 10,000 requests a month, which is 10,000 scores, with a key issued at once (<a href="/score-demo/index.html#signup">get a free key</a>). Paid plans, the 90-day pilot and licences are on <a data-event="pricing-detail-click" href="/pricing#platforms">the pricing page</a>, the one place prices are kept. You pay for the convenience (a service level, structured JSON, batch, an audit trail), not for exclusive data: the public site keeps every feature.</p>
   </section>
 
   <section aria-labelledby="start-heading">
     <h2 class="sec" id="start-heading">Get started</h2>
     <ol class="steps">
       <li>Try the <a href="/score-demo/index.html">live demo</a> with one of your live property postcodes.</li>
-      <li>If the output is useful, sign up for a free API key on the same page.</li>
+      <li>If the output is useful, sign up for a free API key on the same page; the <a href="/terms">terms</a> apply to every key.</li>
       <li>Read the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a> - every threshold anchored, every assumption written down.</li>
       <li>Open the <a href="/score-demo/api-docs.html">OpenAPI 3.0 reference</a> and integrate.</li>
       <li>If you need a paid tier, a master agreement, or have integration questions: <a href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20API%20integration">support@skyscore.co.uk</a>.</li>
@@ -314,7 +280,7 @@
 
 <footer>
   <span>All figures from official public data.</span>
-  <span><a href="/">Front page</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/score-demo/index.html">Demo</a> &middot; <a href="/score-demo/api-docs.html">API reference</a> &middot; <a href="/score-demo/status.html">Status</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">Licensing</a> &middot; <a href="/.well-known/security.txt">Security</a> &middot; <a href="/privacy">Privacy</a></span>
+  <span><a href="/">Front page</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/score-demo/index.html">Demo</a> &middot; <a href="/score-demo/api-docs.html">API reference</a> &middot; <a href="/score-demo/status.html">Status</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">Licensing</a> &middot; <a href="/.well-known/security.txt">Security</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></span>
 </footer>
 
 <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>

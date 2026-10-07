@@ -820,33 +820,41 @@ const cardLook = () =>
     ringed: cards.filter((c) => getComputedStyle(c).boxShadow !== 'none').map((c) => c.querySelector('h3')?.textContent.trim()),
     buttons: [...new Set(cards.flatMap((c) => [...c.querySelectorAll('a.go')].map((a) => `${getComputedStyle(a).backgroundColor}|${a.className}`)))],
   }));
+// /api/ states NO prices since the website audit of 2026-10-06 (I2): its own copy of the API
+// ladder had already drifted from /pricing ("a support contract" there, "bulk scoring" here).
+// It links to the platform ladder instead, so a price creeping back onto /api/ fails here.
 await page.goto(`http://127.0.0.1:${PORT}/api/`, { waitUntil: 'domcontentloaded' });
-const apiPrices = await pricesOn();
-const apiCards = await cardLook();
+const apiPage = await page.evaluate(() => ({
+  pounds: document.querySelector('main')?.textContent.match(/£\s?\d[\d,]*/g) || [],
+  cards: document.querySelectorAll('.tier').length,
+  link: Boolean(document.querySelector('main a[href="/pricing#platforms"]')),
+}));
+ok(
+  apiPage.pounds.length === 0 && apiPage.cards === 0 && apiPage.link,
+  '/api/ states no price and links to the platform prices on /pricing, the one holder',
+  JSON.stringify(apiPage)
+);
 await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentloaded' });
 const pricingPrices = await pricesOn();
 const pricingCards = await cardLook();
 ok(
-  [apiCards, pricingCards].every((c) => c.cards >= 4 && c.ringed.length === 0 && c.buttons.length === 1),
-  'no pricing card is highlighted, on /pricing or /api/, and every card button looks the same',
-  JSON.stringify({ apiCards, pricingCards })
+  pricingCards.cards >= 4 && pricingCards.ringed.length === 0 && pricingCards.buttons.length === 1,
+  'no pricing card is highlighted on /pricing, and every card button looks the same',
+  JSON.stringify(pricingCards)
 );
 const priceText = {};
 const clashes = [];
-for (const [key, text] of [...pricingPrices, ...apiPrices]) {
+for (const [key, text] of pricingPrices) {
   if (key in priceText && priceText[key] !== text) clashes.push(`${key}: "${priceText[key]}" vs "${text}"`);
   priceText[key] ??= text;
 }
 const pricingKeys = pricingPrices.map(([k]) => k);
-const apiKeys = apiPrices.map(([k]) => k);
-const apiLadder = ['api-free', 'pilot', 'api-professional', 'api-enterprise'];
 ok(
   clashes.length === 0 &&
     pricingKeys.filter((k) => k === 'pilot').length === 2 &&
-    ['council-area-study', 'council-licence', ...apiLadder].every((k) => pricingKeys.includes(k)) &&
-    apiLadder.every((k) => apiKeys.includes(k)),
-  'every price on /pricing and /api/ that shares a key reads the same (the pilot on both ladders, the API tiers on both pages)',
-  clashes.join('; ') || JSON.stringify({ pricingPrices, apiPrices })
+    ['council-area-study', 'council-licence', 'api-free', 'api-professional', 'api-enterprise'].every((k) => pricingKeys.includes(k)),
+  'a price shown twice on /pricing reads the same both times (the pilot on the council and platform ladders)',
+  clashes.join('; ') || JSON.stringify(pricingPrices)
 );
 // The report tiers, read card by card so a price moved under the wrong heading fails. The SET of
 // headings, never a count: a count in an assertion is scheduled staleness.
