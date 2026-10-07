@@ -13,7 +13,9 @@ every external link and anchor resolves; prices agree everywhere they appear; no
 text; methodology v5.5 everywhere; 97 UK areas + 5 New York = 102, matching the CSV; titles,
 descriptions and canonicals unique and correct.
 
-Status: **open** unless marked. "Bill" = needs a decision or approval of wording.
+Status: **open** unless marked. "Bill" = needs a decision or approval of wording. Everything
+marked "fixed 6 Oct" was committed and deployed on 7 Oct (`e2396cc`) and verified from the
+origin.
 
 ## Critical
 
