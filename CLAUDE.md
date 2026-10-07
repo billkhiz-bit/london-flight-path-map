@@ -1212,6 +1212,20 @@ dissolves when you compute the real one.*
 >   comparable with the UK's. A card fact shows only when the row HAS its column, so UK cards
 >   keep one price in pounds. Not yet: New York ZIP search on the front page (it says the ZIPs
 >   are on the full map), and the FAA's arrivals for New York there (the Bay Area's are drawn since 2026-10-07).
+> - **THE PLANE ALTITUDE IS THE GLIDE PATH'S, ON EVERY SURFACE (2026-10-07, website audit A1).** The full map's "Plane altitude" was a hand
+>   ladder by distance to the airport ("4,000-6,000 ft" at TW9 3PZ) while the front page and street report said about 1,800 ft.
+>   It now lazy-loads `js/flight_geometry.mjs` + `data/flight-procedures.json` (`ensureFlightGeometry`, like the stations) and
+>   gives a height only under a final approach via `finalOverhead()`, the ONE rule the front page imports too. UK cities only;
+>   New York keeps its ladder for now. Gate: `tests/uk-city-panel.mjs` (a physics bound). Any local test server that serves the
+>   map must map `.mjs` to a JavaScript type, or the import fails there while the site is fine.
+>   **A result is analysed BEFORE the search-time data is awaited** (the pin must not wait), so both result paths call
+>   `planeAltitudeUk()` again after the await: a deep link (/map/?postcode=) never focuses the search box, never preloads, and
+>   printed N/A until that refresh (found retaking the LGM screenshot). The gate drives a deep link in a fresh page too.
+> - **GoatCounter is PINNED (2026-10-07)**: `count.v5.js` + `crossorigin` + its sha384 on every page and in
+>   `build_bay_area_page.py`; `tests/test_goatcounter_pinned.py` holds them to one tag. Never go back to the unversioned
+>   `count.js` (it changes without notice). Upgrading: recompute the hash from the served file, change every page at once.
+> - **Focus rings use `--focus: #d35a12`** on the front page, its reports pages and the full map (audit I-7, 2026-10-07):
+>   the brand orange measured 2.17-2.72:1 against them. `tests/test_focus_ring_contrast.py` fails on a ring in `var(--orange)`.
 > - **THE NEAREST STATION IS SHOWN, NOT SCORED** (Bill, 2026-10-06: "show it first"): the front
 >   page's postcode answer and every street report (free and PDF) say "Nearest station: X, N m in a
 >   straight line" from `data/stations.json`, through ONE function, `nearestStation()` in

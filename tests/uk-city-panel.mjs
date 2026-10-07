@@ -299,6 +299,27 @@ console.log('Plane altitude under an approach');
     .catch(() => 'N/A (never resolved)');
   const ft = Number((row.match(/^About ([\d,]+) ft \(Heathrow 27R final approach\)$/) || [])[1]?.replace(/,/g, ''));
   check('TW9 3PZ: plane altitude is the 27R glide path, about 1,750 ft (not a ladder by distance)', ft >= 1500 && ft <= 2100, `row: "${row}"`);
+
+  // THE SAME FROM A DEEP LINK, in a fresh page that never touches the search box. The
+  // typed search above preloads the geometry when the box takes focus; a link to
+  // /map/?postcode= does not, and the first version analysed before the geometry
+  // arrived and printed N/A (found retaking the LGM demo screenshot, 7 Oct).
+  const deep = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await deep.goto(`${url}${url.includes('?') ? '&' : '?'}city=london&postcode=TW9%203PZ`, { waitUntil: 'domcontentloaded' });
+  const deepRow = await deep
+    .waitForFunction(
+      () => {
+        const label = [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude');
+        const value = label?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim();
+        return value && value !== 'N/A' ? value : false;
+      },
+      { timeout: 25000 },
+    )
+    .then((h) => h.jsonValue())
+    .catch(async () => `never resolved (row reads: ${await deep.evaluate(() => [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude')?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim() || 'absent')})`);
+  const deepFt = Number((deepRow.match(/^About ([\d,]+) ft \(Heathrow 27R final approach\)$/) || [])[1]?.replace(/,/g, ''));
+  check('TW9 3PZ from a deep link: the same glide-path altitude, not N/A', deepFt >= 1500 && deepFt <= 2100, `row: "${deepRow}"`);
+  await deep.close();
   console.log('');
 }
 
