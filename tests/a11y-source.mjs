@@ -56,6 +56,9 @@ const PAGES = [
   { path: '/pricing', name: 'pricing' },
   { path: '/privacy', name: 'privacy' },
   { path: '/terms', name: 'terms of use' },
+  // The branded not-found page (2026-10-07, audit I15). CloudFront serves it at ANY missing
+  // address; here it is fetched by its own name, which is what CloudFront fetches too.
+  { path: '/404.html', name: 'not found page' },
   { path: '/open-data/', name: 'open data' },
   { path: '/bay-area/', name: 'Bay Area flight paths' },
   // The front page, its reports page and the free street report. Their SOURCE is

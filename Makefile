@@ -573,9 +573,15 @@ meta-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp preview.png \
 		s3://$(S3_BUCKET)/preview.png \
 		--content-type "image/png" --cache-control "public,max-age=86400" --region $(AWS_REGION)
+	# The branded not-found page (website audit I15, 2026-10-07). CloudFront serves it for origin
+	# 403/404 (scripts/cloudfront_not_found.py), so it must be AT THE ORIGIN before those error
+	# responses are applied, or a missing page is reported by fetching a missing page.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp 404.html \
+		s3://$(S3_BUCKET)/404.html \
+		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
-		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png'
+		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png' '/404.html'
 
 .PHONY: open-data-deploy
 open-data-deploy:

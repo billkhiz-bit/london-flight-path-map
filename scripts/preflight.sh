@@ -182,7 +182,7 @@ fi
 # same failure mode as a gate that overstates — either way the name stops
 # describing what actually ran.
 check "ESLint (10 targets)"            npm run lint
-check "html-validate (14 pages)"       npm run lint:html
+check "html-validate (15 pages)"       npm run lint:html
 check "ruff (backend/lambdas)"         python -m ruff check backend/lambdas/
 # backend/tests/ was outside every ruff target until 2026-08-04, so the suite
 # that guards the score engine was the one directory nothing linted — it had

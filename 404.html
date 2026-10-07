@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- The branded "not found" page (website audit 2026-10-06, I15). CloudFront serves it, with
+     status 404, for any address the origin has no file for: S3 answers a missing key with 403
+     because the bucket is not listable, and both codes map here. It is served AT the mistyped
+     address, so every link and asset below must be root-absolute, never relative. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; form-action 'self'; base-uri 'none'" />
+<meta name="robots" content="noindex" />
+<title>Page not found - Sky Score</title>
+<link rel="stylesheet" href="/fonts/fonts.css" />
+<style>
+  :root { color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }
+  .wrap { max-width:760px; margin:0 auto; padding:40px 20px 64px; }
+  a { color:var(--orange); }
+  .code { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:13px; color:var(--mid); margin:0 0 8px; letter-spacing:0.04em; }
+  h1 { font-size:28px; line-height:1.25; margin:0 0 8px; }
+  .sub { color:var(--mid); margin:0 0 28px; }
+  form { display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px; margin:0 0 32px; }
+  label { display:block; width:100%; font-weight:600; font-size:14px; }
+  input { font:inherit; padding:10px 12px; min-height:44px; border:1px solid #767676; border-radius:8px; background:var(--bg); color:var(--dark); width:12em; }
+  button { font:inherit; font-weight:600; padding:10px 18px; min-height:44px; border:0; border-radius:8px; background:var(--dark); color:#fff; cursor:pointer; }
+  input:focus-visible, button:focus-visible, a:focus-visible { outline:2px solid var(--orange); outline-offset:2px; }
+  ul.go { list-style:none; padding:0; margin:0; display:grid; gap:10px; }
+  ul.go a { font-weight:600; }
+  ul.go span { display:block; color:var(--mid); font-size:14px; }
+  footer { margin-top:48px; font-size:12px; color:var(--mid); }
+  /* The site bar, as on every generated page (2026-10-06). Nothing is "current" here. */
+  .site-top { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }
+  .site-top .site-brand { font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--dark); }
+  .site-top .site-nav { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+  .site-top .site-nav a { font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }
+  .site-top .site-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }
+  .site-top .site-nav a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
+  @media (prefers-color-scheme: dark) {
+    :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }
+    body { background:#141414; }
+    input { border-color:#8a8a8a; }
+    button { color:#141414; }
+  }
+</style>
+</head>
+<body>
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/open-data/">Open data</a></div></nav>
+<div class="wrap">
+<main>
+<p class="code">404</p>
+<h1>We can't find that page</h1>
+<p class="sub">The address may be mistyped, or the page may have moved.</p>
+
+<form action="/" method="get">
+  <label for="pc">Look up a postcode instead</label>
+  <input id="pc" name="postcode" type="text" autocomplete="postal-code" placeholder="e.g. SW11 1AA" maxlength="8" />
+  <button type="submit">Look up</button>
+</form>
+
+<ul class="go">
+  <li><a href="/">Front page</a> <span>ask about any postcode we cover</span></li>
+  <li><a href="/map/">Full map</a> <span>flight paths, noise and scores by area</span></li>
+  <li><a href="/area/">All areas</a> <span>a page for every council area we score</span></li>
+  <li><a href="/reports/">Reports</a> <span>a free aircraft noise report for your street</span></li>
+</ul>
+</main>
+
+<footer>
+<p><a href="/">Sky Score</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a></p>
+</footer>
+</div>
+</body>
+</html>

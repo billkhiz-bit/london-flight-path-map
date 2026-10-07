@@ -47,6 +47,7 @@ const TYPES = {
 const CASES = [
   { path: '/index.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/terms.html', sans: 'Inter', mono: 'JetBrains Mono' },
+  { path: '/404.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/open-data/index.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/bay-area/index.html', sans: 'Inter', mono: 'JetBrains Mono' },
   { path: '/home/index.html', sans: 'Inter', mono: 'JetBrains Mono' },

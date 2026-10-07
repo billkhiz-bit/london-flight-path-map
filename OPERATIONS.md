@@ -733,11 +733,19 @@ for the count. The detail below is kept as the reasoning.
 **STATUS 2026-09-28: step 1 DONE except SPF/DMARC; step 3 DONE; step 2 NOT YET.**
 Identity `skyscore.co.uk` created in eu-west-2, Easy DKIM RSA-2048; the three
 DKIM CNAMEs were published in Cloudflare (DNS only) and the identity reads
-**verified, DKIM SUCCESS** the same hour. The SPF merge and the DMARC record
-are Bill's: the auto-mode classifier refuses DNS changes from Claude's session
-(it allowed the three adds, then blocked the SPF edit). Email runs on Cloudflare
-Email Routing, so SPF must be ONE record:
-`v=spf1 include:_spf.mx.cloudflare.net include:amazonses.com ~all`.
+**verified, DKIM SUCCESS** the same hour. The DMARC record is Bill's: the
+auto-mode classifier refuses DNS changes from Claude's session.
+
+> **THE SPF MERGE IS NOT NEEDED (corrected 2026-10-07).** This runbook told
+> you to add `include:amazonses.com` to the root SPF. With SES's DEFAULT
+> MAIL FROM (a subdomain of `amazonses.com`), receivers check SPF against
+> THAT domain, never ours - AWS: "in SES, SPF is implicitly set up for
+> you". Our record only matters with a CUSTOM MAIL FROM domain, and
+> `get-email-identity` shows none is configured (`MailFromAttributes` holds
+> no `MailFromDomain`). DMARC passes through aligned DKIM (Easy DKIM,
+> `d=skyscore.co.uk`). Leave `v=spf1 include:_spf.mx.cloudflare.net ~all`
+> alone. If a custom MAIL FROM is ever set up, it needs its OWN SPF and MX
+> on that subdomain, not an edit to this record.
 The IAM paste of step 3 landed (23 granted, 0 denied). Step 2 (sandbox exit)
 is the next action. **The TTL landed on master 2026-09-29**, not on the branch as
 step 3 below says: with the flag off nothing writes to the table, so deploying it
@@ -746,9 +754,9 @@ first meeting them inside the flip.
 
 1. **SES identity (console, eu-west-2).** SES -> Identities -> Create ->
    Domain `skyscore.co.uk`, Easy DKIM. Publish the three DKIM CNAMEs SES
-   prints at Cloudflare (DNS only), plus `v=spf1 include:amazonses.com ~all`
-   in the existing SPF TXT (merge, do not add a second SPF record) and a
-   DMARC TXT if none exists (`v=DMARC1; p=none; rua=mailto:support@skyscore.co.uk`).
+   prints at Cloudflare (DNS only), and a DMARC TXT if none exists
+   (`v=DMARC1; p=none; rua=mailto:support@skyscore.co.uk`). No SPF edit:
+   see the 2026-10-07 correction above.
    Wait for "Verified". **Since 2026-09-17 `python scripts/check_aws_permissions.py`
    prints an "I17 readiness" block** - identity created / verified / DKIM
    status, and the DKIM CNAMEs to publish if they are still pending - once

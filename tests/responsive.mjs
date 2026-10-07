@@ -118,6 +118,9 @@ const PAGES = [
   { name: 'pricing', slug: 'pricing' },
   { name: 'privacy', slug: 'privacy' },
   { name: 'terms of use', slug: 'terms' },
+  // Live, '/404' is a missing address (the page with status 404, so not res.ok) and
+  // resolvePage falls through to '/404.html', the object itself: the same page either way.
+  { name: 'not found page', slug: '404' },
   { name: 'open data', slug: 'open-data/index' },
   { name: 'Bay Area flight paths', slug: 'bay-area/index' },
   // The front page, its reports page and the free street report: home/ in the

@@ -56,6 +56,7 @@ open-data/sky-score-boroughs.csv|open-data/sky-score-boroughs.csv
 bay-area/index.html|bay-area/
 bay-area/share.png|bay-area/share.png
 changes.html|changes
+404.html|404.html
 api/index.html|api/
 score-demo/index.html|score-demo/index.html
 score-demo/api-docs.html|score-demo/api-docs.html

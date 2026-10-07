@@ -45,10 +45,30 @@ import time
 DISTRIBUTION_ID = 'EGSSPJKLFL33M'
 FUNCTION_NAME = 'sky-score-rewrite-index'
 # CloudFront caps Comment at 64 chars, keep it terse.
-FUNCTION_COMMENT = 'Append index.html to subdir URIs (Sky Score)'
-FUNCTION_CODE = """function handler(event) {
+FUNCTION_COMMENT = 'index.html for subdir URIs; 301 old .html names (Sky Score)'
+# THE OLD .html NAMES (website audit 2026-10-06, I15). These four pages are SOURCE files named
+# <page>.html, uploaded to <page>/index.html because this function serves extensionless paths
+# from there. So /privacy.html, the name in the repo and in old links, was a dead key that
+# answered a raw 403. Each now answers 301 to the address that serves it. An explicit map, not
+# a rule: /score-demo/api-docs.html and /404.html are real .html keys and must pass through.
+# tests/test_cloudfront_function.py runs this code in Node and checks each target is uploaded.
+FUNCTION_CODE = """var MOVED = {
+    '/privacy.html': '/privacy',
+    '/terms.html': '/terms',
+    '/pricing.html': '/pricing',
+    '/changes.html': '/changes'
+};
+
+function handler(event) {
     var request = event.request;
     var uri = request.uri;
+    if (Object.prototype.hasOwnProperty.call(MOVED, uri)) {
+        return {
+            statusCode: 301,
+            statusDescription: 'Moved Permanently',
+            headers: { location: { value: MOVED[uri] } }
+        };
+    }
     if (uri.endsWith('/')) {
         request.uri = uri + 'index.html';
     } else if (uri.lastIndexOf('.') === -1) {
