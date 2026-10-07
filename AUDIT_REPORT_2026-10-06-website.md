@@ -64,6 +64,12 @@ origin.
 | M14 | Developer trust: the raw AWS API address everywhere; `api.skyscore.co.uk` does not resolve (a Cloudflare CNAME, Bill); the status page routes support to GitHub issues; `robots.txt` contradicts its own comment | partly Bill |
 | M15 | Firms are not told how to pay (councils are told "we invoice on order") | fixed 6 Oct ("paid by bank transfer before the report is sent") |
 
+## Found after the audit
+
+| # | Finding | Status |
+|---|---|---|
+| A1 | (7 Oct, preparing the LGM demo) The full map contradicts the front page and the street report for the same postcode. TW9 3PZ: front page and report say "Under the Heathrow 27R final approach, 0.1 km from the centreline, aircraft at about 1,800 ft" and 10.2 km to the nearest runway; the full map's "What you need to know about noise here" says "Planes pass at roughly 4,000-6,000 ft" and "Heathrow is 11.7km away". The map's prose looks like generic band text, and its distance is to the airport, not the runway. Fix: derive the map's sentence from the same AIP geometry `js/street_report.mjs` uses (one holder), or drop the height claim there | open; demo run sheet avoids that panel |
+
 Also from the same day: the street report's route table header "Height there" becomes "Height" (Bill).
 
 Found while fixing: `prototype/index.html` has seven `<button>`s without a `type` (html-validate `no-implicit-button-type`); pre-existing, and the prototype is outside the validator's page list. "Height there" became "Height" (Bill) on 6 Oct.
