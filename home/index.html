@@ -70,7 +70,9 @@
       .hero svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; vector-effect: non-scaling-stroke; transition: fill 0.15s; cursor: pointer; }
       .hero svg .boro:hover, .hero svg .boro.is-selected { fill: #ffe6cf; }
       .hero svg .boro:focus-visible { outline: none; stroke: var(--orange); stroke-width: 3; }
-      .hero svg .final { stroke: #141414; stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+      .hero svg .final { stroke: #141414; stroke-width: 1.8; fill: none; vector-effect: non-scaling-stroke; }
+      /* A coded arrival (the Bay Area, 2026-10-07): an approach route, so solid like a final, and thinner, because it is flown higher. fill: none, or a curved path fills in as a shape. */
+      .hero svg .arrival { stroke: #141414; stroke-width: 1.2; fill: none; vector-effect: non-scaling-stroke; }
       .hero svg .departure { stroke: #141414; stroke-width: 1.4; stroke-dasharray: 5 4; fill: none; vector-effect: non-scaling-stroke; }
       /* Routes have no hit area: the engine measures the pointer's distance to them, so a borough beneath keeps its tap. */
       .hero svg .lines { pointer-events: none; }

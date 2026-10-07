@@ -66,10 +66,13 @@ function syncIntroMap() {
   if (mapwrap) mapwrap.inert = inIntro();
 }
 // The Bay Area here is drawn from the files the /bay-area/ page is built from:
-// its outlines the Census places, its routes the FAA record, its noise picture
-// the one that page serves.
+// its outlines the Census places, its noise picture the one that page serves,
+// and its LINES from data/us-bayarea-routes.json (2026-10-07), the same records
+// scripts/build_bayarea_map_data.py writes into the live map: finals, departures
+// cut at the page's 30 km, and the coded arrivals. They used to be re-derived
+// here from the raw FAA record, with whole departures and no arrivals at all.
 const US = {
-  bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', noiseDir: '/bay-area/' },
+  bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', routes: '/data/us-bayarea-routes.json', noiseDir: '/bay-area/' },
   // New York (Bill, 2026-10-06: "show on the main screen instead of going to the full map"):
   // the map's own outlines, the FAA's routes for JFK, LaGuardia, Newark and Teterboro, and
   // scripts/build_nyc_front.py's file - the US noise picture's frame and one row per borough
@@ -286,8 +289,9 @@ async function loadNyc() {
 }
 
 async function loadBayArea() {
-  const [places, proc] = await Promise.all([d3.json(US.bayarea.places), d3.json(US.bayarea.proc)]);
+  const [places, proc, routes] = await Promise.all([d3.json(US.bayarea.places), d3.json(US.bayarea.proc), d3.json(US.bayarea.routes)]);
   state.usProc = proc;
+  state.usRoutes = routes;
   state.usPlaces = places;
   state.usNoise = { png: US.bayarea.noiseDir + places.noise.file, bbox: frameBox(places.frame) };
   // Shapefile rings wind the opposite way to what d3's spherical geometry
@@ -406,11 +410,14 @@ function draw(pin) {
   state.routes = [];
   const marks = view.append('g').attr('class', 'marks').style('pointer-events', 'none');
   const proc = isUs(state.city) ? state.usProc : state.proc;
+  // The Bay Area's lines come from its generated routes file (see US above); the
+  // airports' marks still come from the FAA record below.
+  const fromFile = state.city === 'bayarea' ? state.usRoutes?.routes : null;
   let drawn = 0;
   for (const [code, ap] of Object.entries(proc.airports)) {
     if (!(ap.cities || []).includes(state.city)) continue;
     const name = AIRPORT_NAME[code] || ap.name || code;
-    for (const [rwy, r] of Object.entries(ap.runways)) {
+    for (const [rwy, r] of fromFile ? [] : Object.entries(ap.runways)) {
       if (r.glide_deg == null || !r.thr) continue;
       const far = dest(r.thr[0], r.thr[1], r.true_brg + 180, (3000 * FT_KM) / Math.tan((r.glide_deg * Math.PI) / 180));
       const a = projection([r.thr[1], r.thr[0]]), b = projection(far);
@@ -419,7 +426,7 @@ function draw(pin) {
       state.routes.push({ pts: [a, b], html });
       drawn++;
     }
-    for (const dep of ap.departures || []) {
+    for (const dep of fromFile ? [] : ap.departures || []) {
       if (!dep.waypoints || dep.waypoints.length < 2) continue;
       const html = `<b>${esc(name)} departure ${esc(dep.name)}</b>Published departure route from runway ${esc(dep.runway)}, heading ${towards(parseInt(dep.runway, 10) * 10)} at first.`;
       const pts = dep.waypoints.map(([la, lo]) => projection([lo, la]));
@@ -432,6 +439,14 @@ function draw(pin) {
       const p = projection([d3.mean(thr, (t) => t[1]), d3.mean(thr, (t) => t[0])]);
       marks.append('rect').attr('class', 'ap-box').attr('x', p[0] - 4).attr('y', p[1] - 4).attr('width', 8).attr('height', 8).attr('fill', '#f27d26').attr('stroke', '#141414');
       marks.append('text').attr('class', 'ap').attr('x', p[0] + 8).attr('y', p[1] - 6).text(code).append('title').text(name);
+    }
+  }
+  if (fromFile) {
+    for (const route of fromFile) {
+      const pts = route.coordinates.map((c) => projection(c));
+      lines.append('path').attr('class', route.kind).attr('d', 'M' + pts.map((pt) => pt.map((v) => v.toFixed(1)).join(' ')).join('L'));
+      state.routes.push({ pts, html: routeTip(route) });
+      drawn++;
     }
   }
   markLayerCoverage('lines', drawn > 0);
@@ -532,6 +547,21 @@ svg.on('mousemove.routes', (ev) => { const route = routeNear(ev); if (route) sho
     if (route) showTip(ev, route.html);
   })
   .on('mouseleave.routes', hideTip);
+
+// A Bay Area route's tooltip, from its record in data/us-bayarea-routes.json. The
+// rules it states are the page builder's: departures are cut at DEPARTURE_KM (30 km,
+// "beyond this a departing aircraft is high") and an arrival starts where the FAA
+// first allows 10,000 ft or lower (ARRIVAL_TOP_FT), both in build_bay_area_page.py.
+function routeTip(route) {
+  const name = esc(AIRPORT_NAME[route.airport] || route.airport);
+  if (route.kind === 'final') {
+    return `<b>${name} runway ${esc(route.runway)}</b>Final approach on a ${route.glide_deg}&deg; glide path, aircraft descending towards the ${towards(route.bearing)}, drawn from 3,000 ft down to the runway.`;
+  }
+  if (route.kind === 'departure') {
+    return `<b>${name} departure ${esc(route.procedure)}</b>Published departure route, drawn for its first 30 km: beyond that a departing aircraft is high.`;
+  }
+  return `<b>${name} arrival ${esc(route.procedure)}</b>Published arrival route via ${esc((route.via || []).join(', '))}, drawn from where the FAA first allows aircraft at 10,000 ft or lower to where the published route ends.`;
+}
 
 function boroughTipHtml(d) {
   const name = featureName(d);

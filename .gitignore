@@ -118,6 +118,9 @@ data/*
 # The Bay Area's 50 city outlines for the LIVE map, with the /bay-area/ page's facts,
 # written by scripts/build_bayarea_map_data.py (--check is blocking). Not *-boroughs.json.
 !data/us-bayarea-cities.json
+# Every Bay Area line the front page draws (finals, departures, arrivals), from the same
+# derivation as the live map block, by scripts/build_bayarea_map_data.py (2026-10-07).
+!data/us-bayarea-routes.json
 # The tiers beneath a Bay Area city: San Francisco's neighbourhoods (DataSF, PDDL) and
 # the 165 ZIP areas (Census ZCTA), from scripts/build_bayarea_areas.py (--check is blocking).
 !data/us-sf-neighbourhoods.json

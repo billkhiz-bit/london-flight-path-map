@@ -507,6 +507,25 @@ const fact = (label) => page.locator('#borough .facts div', { has: page.locator(
 const paloField = await fact('Nearest airfield');
 ok(/^Palo Alto \(KPAO\), [\d.]+ km to the/.test(paloField), 'Palo Alto card names its own airfield as the nearest (audit I-2: it named SJC)', paloField);
 ok(/^SJC 12R, [\d.]+ km to the/.test(await fact('Nearest of SFO, OAK and SJC')), 'and SJC 12R as the nearest of the three airports whose routes are drawn', await fact('Nearest of SFO, OAK and SJC'));
+// The Bay Area's lines are the GENERATED routes file's (2026-10-07), the same records the live map
+// draws: so the map draws one path per record of each kind, arrivals included, and nothing from the
+// raw FAA record (which drew finals as <line> elements and whole departures, and no arrivals).
+{
+  const file = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-routes.json'), 'utf8'));
+  const want = { final: 0, departure: 0, arrival: 0 };
+  for (const r of file.routes) want[r.kind]++;
+  const got = await page.evaluate(() => ({
+    final: document.querySelectorAll('#map .lines path.final').length,
+    departure: document.querySelectorAll('#map .lines path.departure').length,
+    arrival: document.querySelectorAll('#map .lines path.arrival').length,
+    rawFinals: document.querySelectorAll('#map .lines line.final').length,
+  }));
+  ok(
+    want.arrival > 0 && got.final === want.final && got.departure === want.departure && got.arrival === want.arrival && got.rawFinals === 0,
+    'the Bay Area draws every route in data/us-bayarea-routes.json, arrivals included, and none from the raw FAA record',
+    JSON.stringify({ want, got })
+  );
+}
 const BTS = ['#FFC107', '#FF8000', '#FF0000', '#FF3399', '#A300CC', '#5200CC', '#0000FF'];
 const rampHex = () => page.locator('#ramp b').evaluateAll((bs) => bs.map((b) => '#' + getComputedStyle(b).backgroundColor.match(/\d+/g).slice(0, 3).map((v) => (+v).toString(16).padStart(2, '0')).join('').toUpperCase()));
 ok(JSON.stringify(await rampHex()) === JSON.stringify(BTS), "the Bay Area legend ramp is BTS's seven colours, the picture it sits over (audit M-11)", (await rampHex()).join(' '));
