@@ -14,7 +14,7 @@
    quota. A postcode goes to postcodes.io and then the key-free
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
-import { AIRPORT_NAME, compass, plane, routesNear, towards } from '/js/flight_geometry.mjs';
+import { AIRPORT_NAME, compass, finalOverhead, plane, roundFt, routesNear, towards } from '/js/flight_geometry.mjs';
 import { DEFRA_LDEN_SCALE, LONDON_RASTER, nearestStation, stationDistance } from '/js/street_report.mjs';
 
 // The full map's address since the front page took / (2026-10-06). Every link
@@ -99,7 +99,6 @@ window.matchMedia(STACKED).addEventListener('change', syncIntroMap);
 // (scripts/address_noise_report.mjs) uses its own, wider ones (40 km and 5 km):
 // it is read for one address, this is glanced at for a postcode.
 const AIRPORT_SCOPE_KM = 30;
-const UNDER_LINE_KM = 1.0;
 const ZOOM_MAX = 6;
 const ZOOM_STEP = 1.6;
 
@@ -890,11 +889,11 @@ function routesText(proc, lat, lon) {
   // routes are drawn, and a smaller airfield can be nearer (audit 2026-10-05 I-2).
   if (!ap) return `No airport on the map within ${AIRPORT_SCOPE_KM} km.`;
   const name = AIRPORT_NAME[ap.code] || ap.code;
-  const under = near.finals.filter((x) => x.beside && x.dist <= UNDER_LINE_KM).sort((a, b) => a.dist - b.dist)[0];
+  const under = finalOverhead(near.finals); // the full map's "Plane altitude" uses the same rule (A1)
   const nearestFinal = near.finals.sort((a, b) => a.dist - b.dist)[0];
   const parts = [`Nearest airport on the map: ${name}, ${km(ap.dist)} to the ${compass(ap.q)}.`];
   if (under) {
-    parts.push(`Under the ${AIRPORT_NAME[under.code] || under.code} ${under.rwy} final approach, ${under.dist < 0.05 ? 'on the centreline' : `${km(under.dist)} from the centreline`}, aircraft at about ${(Math.round(under.heightFt / 100) * 100).toLocaleString('en-GB')} ft here.`);
+    parts.push(`Under the ${AIRPORT_NAME[under.code] || under.code} ${under.rwy} final approach, ${under.dist < 0.05 ? 'on the centreline' : `${km(under.dist)} from the centreline`}, aircraft at about ${roundFt(under.heightFt).toLocaleString('en-GB')} ft here.`);
   } else if (nearestFinal && nearestFinal.dist <= AIRPORT_SCOPE_KM) {
     parts.push(`Nearest published approach: ${AIRPORT_NAME[nearestFinal.code] || nearestFinal.code} ${nearestFinal.rwy}, ${km(nearestFinal.dist)} to the ${compass(nearestFinal.q)}.`);
   }

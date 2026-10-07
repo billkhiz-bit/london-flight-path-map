@@ -29,14 +29,14 @@
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
       :root {
-        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12; /* I-7: focus rings, 3:1+ */
         --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
         --gutter: clamp(16px, 4vw, 48px);
       }
       * { box-sizing: border-box; }
       body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
       a { color: inherit; }
-      :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
       header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); }
       .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
       nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -78,7 +78,7 @@
       .actions p { margin: 0; font-size: 14px; color: var(--mid); }
       /* The sheet: an A4 page's width on screen, scrolled sideways on a phone rather than squeezed, because the report is laid out for paper. */
       .sheet-wrap { overflow-x: auto; background: #e6e4de; border-radius: 14px; padding: 16px; }
-      .sheet-wrap:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      .sheet-wrap:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
       iframe.sheet { display: block; width: 794px; max-width: none; height: 1123px; border: 0; background: #fff; margin: 0 auto; box-shadow: 0 6px 20px rgba(20, 20, 20, 0.12); }
       h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -0.02em; margin: 40px 0 10px; }
       ul.notes { margin: 0; padding-left: 20px; color: var(--mid); max-width: 72ch; }
@@ -139,6 +139,6 @@
     </footer>
     <script src="/js/api-base.js"></script>
     <script type="module" src="/js/street_report_page.mjs"></script>
-    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
   </body>
 </html>

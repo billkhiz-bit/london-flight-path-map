@@ -65,6 +65,11 @@ const PORT = 8925;
 const TYPES = {
   '.html': 'text/html',
   '.js': 'text/javascript',
+  // A module served as anything else is refused by the browser. Missing until the full map
+  // started importing js/flight_geometry.mjs for its plane altitude (A1, 2026-10-07): the
+  // import failed here, the row stayed "N/A", and the site itself (served .mjs as
+  // application/javascript by web-deploy) was fine.
+  '.mjs': 'text/javascript',
   '.json': 'application/json',
   '.css': 'text/css',
   '.svg': 'image/svg+xml',
@@ -264,6 +269,36 @@ for (const c of CASES) {
       'NYC must still say subway - NaPTAN is UK-only',
     );
   }
+  console.log('');
+}
+
+// THE PLANE ALTITUDE IS THE GLIDE PATH'S (website audit A1, 2026-10-07).
+//
+// For TW9 3PZ this row read "4,000-6,000 ft", a hand ladder by distance to the
+// airport, while the front page and the street report said about 1,800 ft on
+// Heathrow's 27R approach. The bound below is PHYSICS, not a copy of the code:
+// the postcode is about 10 km from the runway on a 3-degree glide path, and
+// 10.2 km x tan(3 deg) is about 535 m, about 1,750 ft. The old ladder fails it,
+// and so does a lost height ("N/A", the row's not-loaded state).
+console.log('Plane altitude under an approach');
+{
+  await page.evaluate((city) => window.switchCity(city), 'london');
+  await page.waitForTimeout(1200);
+  await page.fill('#search-input', 'TW9 3PZ');
+  await page.press('#search-input', 'Enter');
+  const row = await page
+    .waitForFunction(
+      () => {
+        const label = [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude');
+        const value = label?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim();
+        return value && value !== 'N/A' ? value : false;
+      },
+      { timeout: 25000 },
+    )
+    .then((h) => h.jsonValue())
+    .catch(() => 'N/A (never resolved)');
+  const ft = Number((row.match(/^About ([\d,]+) ft \(Heathrow 27R final approach\)$/) || [])[1]?.replace(/,/g, ''));
+  check('TW9 3PZ: plane altitude is the 27R glide path, about 1,750 ft (not a ladder by distance)', ft >= 1500 && ft <= 2100, `row: "${row}"`);
   console.log('');
 }
 

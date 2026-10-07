@@ -157,3 +157,23 @@ export function routesNear(proc, pl, scopeKm) {
   scope.sort((a, b) => a.dist - b.dist);
   return { finals, departures, airports, scope };
 }
+
+// A point is UNDER a final approach when it lies beside the drawn segment (between the
+// threshold and the 3,000 ft point) and within this distance of its centreline.
+export const UNDER_LINE_KM = 1.0;
+
+/**
+ * The final approach a point sits under, the nearest if several, or null.
+ *
+ * ONE RULE for every page that says "aircraft at about N ft here" (website audit A1,
+ * 2026-10-07): the front page's answer and the full map's "Plane altitude". The full map
+ * printed a hand ladder by distance to the airport instead, "4,000-6,000 ft" at TW9 3PZ,
+ * where the published glide path gives about 1,800 ft on Heathrow's 27R approach. The
+ * height is the final's own `heightFt` from routesNear(), the glide path's.
+ */
+export function finalOverhead(finals) {
+  return finals.filter((x) => x.beside && x.dist <= UNDER_LINE_KM).sort((a, b) => a.dist - b.dist)[0] || null;
+}
+
+/** A glide-path height as every page prints it: to the nearest 100 ft. */
+export const roundFt = (ft) => Math.round(ft / 100) * 100;

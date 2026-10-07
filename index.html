@@ -125,6 +125,8 @@
         --light: #c8c7c4;
         --white: #fafaf9;
         --orange: #f27d26;
+        /* Focus rings (audit 2026-10-05 I-7): the brand orange measured 2.1-2.7:1 against these pages, under WCAG 1.4.11's 3:1. #d35a12 is the "you are here" underline's colour (6 Oct) and clears 3:1 on every background here (3.2:1 on the map's water, the worst). */
+        --focus: #d35a12;
         /* The brand orange as INK. #f27d26 is 2.60:1 on --white, so it fails
            WCAG AA (4.5) for any text - it is a fill and a border colour, not a
            text colour. This is the same hue darkened to 5.10:1, for the places
@@ -627,7 +629,7 @@
         transform: rotate(-90deg);
       }
       .legend-toggle:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       .legend-row {
@@ -672,7 +674,7 @@
         color: var(--dark);
       }
       .legend-disclosure > summary:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       .legend-disclosure[open] > summary {
@@ -749,7 +751,7 @@
         color: var(--white);
       }
       .map-controls button:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 1px;
       }
 
@@ -816,7 +818,7 @@
         color: var(--white);
       }
       .layer-toggle:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 1px;
       }
       .layer-toggle.active {
@@ -1087,7 +1089,7 @@
         color: var(--white);
       }
       .quicksearch-chip:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       @media (max-width: 900px) {
@@ -1127,7 +1129,7 @@
         background: var(--orange);
       }
       .install-chip:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       .install-chip span {
@@ -1177,7 +1179,7 @@
         color: var(--dark);
       }
       .ios-install-dismiss:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
 
@@ -1347,7 +1349,7 @@
       .fav-open:focus-visible,
       .fav-remove:focus-visible,
       #favourites-list:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       /* --orange-text, not --orange (2026-09-13 audit, I21). Hover TEXT is
@@ -1427,7 +1429,7 @@
         color: var(--dark);
       }
       .search-box input:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       .search-box input:focus {
@@ -1553,7 +1555,7 @@
       }
       .skip-link:focus {
         top: 8px;
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
       }
 
       /* Embeddable badge block (D2, 2026-08-21). */
@@ -1696,7 +1698,7 @@
         background: var(--bg);
       }
       .tab:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: -2px;
       }
       .tab.active {
@@ -1933,7 +1935,7 @@
         border-color: var(--dark);
       }
       .metric-card:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: -2px;
       }
       .metric-card.expanded {
@@ -2160,7 +2162,7 @@
         color: var(--dark);
       }
       .country-btn:focus-visible {
-        outline: 2px solid var(--orange);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
 
@@ -2567,7 +2569,7 @@
           opacity: 1;
         }
         .sheet-handle:focus-visible {
-          outline: 2px solid var(--orange);
+          outline: 2px solid var(--focus);
           outline-offset: -2px;
         }
         /* Sheet (peek state) covers ~220px at the bottom. Push the bottom-
@@ -3072,7 +3074,7 @@
           backdrop-filter: blur(6px);
         }
         .layers-trigger:focus-visible {
-          outline: 2px solid var(--orange);
+          outline: 2px solid var(--focus);
           outline-offset: 2px;
         }
         .layers-trigger span {
@@ -3344,7 +3346,7 @@
           font-weight: 600;
         }
         .mobile-nav-btn:focus-visible {
-          outline: 2px solid var(--orange);
+          outline: 2px solid var(--focus);
           outline-offset: -3px;
         }
 
@@ -3615,7 +3617,7 @@
           z-index: 2;
         }
         .app[data-mview='search'] .result-close:focus-visible {
-          outline: 2px solid var(--orange);
+          outline: 2px solid var(--focus);
           outline-offset: -2px;
           border-radius: 4px;
         }
@@ -8483,6 +8485,42 @@
         return Promise.race([_stationsPromise, new Promise((r) => setTimeout(r, capMs))]);
       }
 
+      // THE PLANE ALTITUDE COMES FROM THE PUBLISHED GLIDE PATH SINCE 2026-10-07
+      // (website audit A1). This panel printed a hand ladder by distance to the
+      // AIRPORT - "4,000-6,000 ft" at TW9 3PZ - while the front page and the
+      // street report said "about 1,800 ft" on Heathrow's 27R approach for the
+      // same postcode: three times too high, on the one figure a buyer under an
+      // approach most wants. It now asks js/flight_geometry.mjs, the module those
+      // pages use, with data/flight-procedures.json (the UK AIP record), and gives
+      // a height only for a home UNDER a final approach (finalOverhead), as they
+      // do. Loaded on search intent like the stations; until it arrives, or if it
+      // fails, the row says N/A rather than guess. UK cities only: the AIP record
+      // holds no US routes, and New York keeps its own ladder for now.
+      let FLIGHT_GEO = null; // { mod, proc } once loaded
+      let FLIGHT_GEO_STATE = 'idle'; // idle | loading | ready | failed
+      let _flightGeoPromise = null;
+      async function hydrateFlightGeometry() {
+        FLIGHT_GEO_STATE = 'loading';
+        try {
+          const [mod, resp] = await Promise.all([
+            import('/js/flight_geometry.mjs'),
+            fetch('/data/flight-procedures.json', { cache: 'no-cache' }),
+          ]);
+          if (!resp.ok) throw new Error('flight procedures HTTP ' + resp.status);
+          FLIGHT_GEO = { mod, proc: await resp.json() };
+          FLIGHT_GEO_STATE = 'ready';
+        } catch (e) {
+          FLIGHT_GEO_STATE = 'failed';
+          console.warn('[Sky Score] flight geometry not loaded:', e);
+        }
+      }
+      function ensureFlightGeometry(capMs) {
+        // A failed load is not memoised, as with the stations: the next search retries.
+        if (!_flightGeoPromise || FLIGHT_GEO_STATE === 'failed') _flightGeoPromise = hydrateFlightGeometry();
+        if (!capMs) return _flightGeoPromise;
+        return Promise.race([_flightGeoPromise, new Promise((r) => setTimeout(r, capMs))]);
+      }
+
       async function hydrateAircraftQuietFile(url) {
         try {
           const resp = await fetch(url, { cache: 'no-cache' });
@@ -10043,6 +10081,7 @@
 
         // Altitude estimate (rough)
         let altEstimate = 'N/A';
+        let altClause = ''; // the prose's height sentence, '' when no height is known
         if (currentCity === 'nyc') {
           const majorAp = nearestPath ? nearestPath.airport : null;
           const majorDist = nearestAirportDist;
@@ -10056,20 +10095,19 @@
             else if (majorDist < 6) altEstimate = '2,000-4,000 ft';
             else altEstimate = '4,000+ ft';
           }
-        } else {
-          const lhrEntry = airportDists.find((a) => a.code === 'LHR');
-          const lhrDist = lhrEntry ? lhrEntry.dist : 999;
-          if (nearestPath && nearestPath.airport === 'LHR') {
-            if (lhrDist < 5) altEstimate = '1,000-2,500 ft';
-            else if (lhrDist < 10) altEstimate = '2,500-4,000 ft';
-            else if (lhrDist < 15) altEstimate = '4,000-6,000 ft';
-            else if (lhrDist < 20) altEstimate = '6,000-8,000 ft';
-            else altEstimate = '8,000+ ft';
-          } else if (nearestPath && nearestPath.airport === 'LCY') {
-            const lcyDist = airportDists.find((a) => a.code === 'LCY').dist;
-            if (lcyDist < 3) altEstimate = '500-2,000 ft';
-            else if (lcyDist < 6) altEstimate = '2,000-4,000 ft';
-            else altEstimate = '4,000+ ft';
+          if (altEstimate !== 'N/A') altClause = `Planes pass at roughly ${altEstimate}`;
+        } else if (isUkCity(currentCity) && FLIGHT_GEO) {
+          // A1 (2026-10-07): the published glide path, not a ladder by distance
+          // to the airport. See ensureFlightGeometry() for why.
+          const g = FLIGHT_GEO.mod;
+          const over = g.finalOverhead(g.routesNear(FLIGHT_GEO.proc, g.plane(lat, lon), 30).finals);
+          if (over) {
+            const label = `${g.AIRPORT_NAME[over.code] || over.code} ${over.rwy}`;
+            const ft = g.roundFt(over.heightFt).toLocaleString('en-GB');
+            altEstimate = `About ${ft} ft (${label} final approach)`;
+            altClause = `Aircraft on the ${label} final approach pass at about ${ft} ft here`;
+          } else {
+            altEstimate = 'Not under a final approach';
           }
         }
 
@@ -10106,6 +10144,7 @@
           noiseEstimate,
           noiseScore,
           altEstimate,
+          altClause,
           lat,
           lon,
           ward: result.admin_ward,
@@ -11475,7 +11514,7 @@
             }
             renderPostcodePin(analysis.lat, analysis.lon);
             flyToSearchResult(analysis.lat, analysis.lon);
-            await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000)]);
+            await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000), ensureFlightGeometry(6000)]);
             if (!isCurrentSearch(search)) return;
             updateSidebarPostcode(analysis, borData, search);
             return;
@@ -11572,7 +11611,7 @@
 
         flyToSearchResult(analysis.lat, analysis.lon);
 
-        await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000)]);
+        await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000), ensureFlightGeometry(6000)]);
         if (!isCurrentSearch(search)) return;
         updateSidebarPostcode(analysis, boroughData, search);
       }
@@ -12415,7 +12454,6 @@
 
       function postcodeNoiseSummary(analysis) {
         const d = analysis.nearestPathDist;
-        const alt = analysis.altEstimate;
         const ap = analysis.airportDists[0];
         // A CITY WITH NO AIRPORT IS A REAL CASE. South Yorkshire has none -
         // Doncaster Sheffield closed to commercial flights in 2022 - so
@@ -12428,10 +12466,10 @@
           return 'There is <strong>no commercial airport</strong> in this area, so aircraft noise is not a significant factor. Road noise and air quality are the measurements to look at here.';
         }
         if (analysis.noiseEstimate === 'High') {
-          return `This area is <strong>heavily affected by aircraft noise</strong>. ${ap.name} is only ${ap.dist.toFixed(1)}km away${d < 2 ? ', and you are within ' + d.toFixed(1) + 'km of a flight path' : ''}. ${alt !== 'N/A' ? 'Planes pass overhead at approximately ' + alt + ', which is low enough to be clearly audible.' : ''} <strong>Visit during peak flying hours before making any offer.</strong>`;
+          return `This area is <strong>heavily affected by aircraft noise</strong>. ${ap.name} is only ${ap.dist.toFixed(1)}km away${d < 2 ? ', and you are within ' + d.toFixed(1) + 'km of a flight path' : ''}. ${analysis.altClause ? analysis.altClause + ', low enough to be clearly audible.' : ''} <strong>Visit during peak flying hours before making any offer.</strong>`;
         }
         if (analysis.noiseEstimate === 'Moderate') {
-          return `This area has <strong>moderate aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away. ${alt !== 'N/A' ? 'Planes pass at roughly ' + alt + ' - audible outdoors on quiet days but typically manageable indoors.' : ''} <strong>Worth checking on a calm day with windows open.</strong>`;
+          return `This area has <strong>moderate aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away. ${analysis.altClause ? analysis.altClause + ' - audible outdoors on quiet days but typically manageable indoors.' : ''} <strong>Worth checking on a calm day with windows open.</strong>`;
         }
         return `This area has <strong>low aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away${d > 5 ? ' and flight paths are ' + d.toFixed(1) + 'km away' : ''}. Aircraft noise is unlikely to be a significant factor here.`;
       }
@@ -15566,6 +15604,7 @@
         () => {
           ensureAircraftQuiet();
           ensureStations();
+          ensureFlightGeometry();
         },
         { once: true }
       );
@@ -15631,6 +15670,6 @@
         }
       }
     </script>
-    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
   </body>
 </html>

@@ -33,6 +33,8 @@
         --mid: #55554f;
         --line: #dedcd6;
         --orange: #f27d26;
+        /* Focus rings (audit 2026-10-05 I-7): the brand orange measured 2.1-2.7:1 against these pages, under WCAG 1.4.11's 3:1. #d35a12 is the "you are here" underline's colour (6 Oct) and clears 3:1 on every background here (3.2:1 on the map's water, the worst). */
+        --focus: #d35a12;
         --orange-ink: #a85416;
         --water: #dbe4e8;
         --font-display: 'Geist', system-ui, sans-serif;
@@ -44,7 +46,7 @@
       html { scroll-behavior: smooth; }
       body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
       a { color: inherit; }
-      :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+      :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
       header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); }
       .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; white-space: nowrap; }
@@ -69,7 +71,7 @@
       /* Strokes keep their on-screen width at any zoom; the engine counter-scales the marks. */
       .hero svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; vector-effect: non-scaling-stroke; transition: fill 0.15s; cursor: pointer; }
       .hero svg .boro:hover, .hero svg .boro.is-selected { fill: #ffe6cf; }
-      .hero svg .boro:focus-visible { outline: none; stroke: var(--orange); stroke-width: 3; }
+      .hero svg .boro:focus-visible { outline: none; stroke: var(--focus); stroke-width: 3; }
       .hero svg .final { stroke: #141414; stroke-width: 1.8; fill: none; vector-effect: non-scaling-stroke; }
       /* A coded arrival (the Bay Area, 2026-10-07): an approach route, so solid like a final, and thinner, because it is flown higher. fill: none, or a curved path fills in as a shape. */
       .hero svg .arrival { stroke: #141414; stroke-width: 1.2; fill: none; vector-effect: non-scaling-stroke; }
@@ -346,6 +348,6 @@
     <script src="/js/api-base.js"></script>
     <!-- A module: it imports the runway geometry the report generators use, js/flight_geometry.mjs. -->
     <script type="module" src="/js/home-engine.mjs"></script>
-    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
   </body>
 </html>

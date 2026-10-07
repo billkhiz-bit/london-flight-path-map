@@ -125,14 +125,14 @@ const PAGES = [
   { name: 'Bay Area flight paths', slug: 'bay-area/index' },
   // The front page, its reports page and the free street report: home/ in the
   // repo, /, /reports/ and /reports/street/ on the site (2026-10-06).
-  // The narrow end only, as the other pages get. NOT every viewport: on a wide
-  // screen the page opens as Bill's "ask first" question centred over the map
-  // (2026-10-05), which covers council areas BY DESIGN - the map is a backdrop
-  // until first use. Since 2026-10-07 that backdrop is INERT (no pointer, no
-  // focus), so the areas are no longer controls under the panel; before that the
-  // COVERED detector read them as 30 (tried 2026-10-06). tests/front-page.mjs
-  // drives the wide intro, asserts the backdrop takes nothing, and the tool state.
-  { name: 'front page', slug: 'home/index', live: 'index', settle: 2500 },
+  // EVERY VIEWPORT for the front page since 2026-10-07. On a wide screen it opens
+  // as Bill's "ask first" question centred over the map (2026-10-05), covering
+  // council areas BY DESIGN, and until that backdrop went INERT (7 Oct: no
+  // pointer, no focus) the COVERED detector read those areas as 30 controls under
+  // the panel (tried 2026-10-06), so the page was audited at the narrow end only.
+  // Inert elements are exempt here, so the wide layout is audited like any other.
+  // tests/front-page.mjs still drives the intro and asserts the backdrop takes nothing.
+  { name: 'front page', slug: 'home/index', live: 'index', settle: 2500, full: true },
   { name: 'reports', slug: 'home/reports/index', live: 'reports/index' },
   { name: 'free street report', slug: 'home/reports/street/index', live: 'reports/street/index' },
   { name: 'what changed', slug: 'changes', settle: 2500 },

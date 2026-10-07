@@ -1319,7 +1319,7 @@ PAGE_HTML = """<!doctype html>
 <p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/open-data/">Open data</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
 </footer>
 </div>
-<script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
 </body>
 </html>
 """
