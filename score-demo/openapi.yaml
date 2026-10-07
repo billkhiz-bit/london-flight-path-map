@@ -708,8 +708,12 @@ components:
           items:
             type: string
           description: |
-            OGL attribution lines for the underlying data sources.
-            Consumers redistributing the response must preserve these.
+            Attribution lines for the underlying data sources, per city.
+            Most are Open Government Licence v3.0. The UK flight-route line
+            (UK Aeronautical Information Publication, NATS) is public but
+            not openly licensed, and New York's lines state that OGL does
+            not apply. Consumers redistributing the response must preserve
+            these.
         sourceBreakdown:
           type: object
           description: |

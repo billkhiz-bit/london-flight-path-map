@@ -558,12 +558,12 @@ def render(data: dict) -> str:
         # A cap on an attribution list is a cap on a licence obligation, and it
         # was invisible because the array grew past six only when `environment`
         # started scoring at v3.9.
-        # The API's sources do not credit the UK AIP yet (audit 2026-10-06, C1: a backend change,
-        # recorded in AUDIT_REPORT_2026-10-06-website.md); a UK page credits it here meanwhile.
-        sources=e('; '.join([str(s) for s in data['sources']] + (
-            ['Flight routes behind the aircraft noise estimate: UK Aeronautical Information Publication (NATS)']
-            if uk_city else []
-        )) or 'See methodology.'),
+        #
+        # The UK AIP (NATS) credit comes from the API's own sources now (audit 2026-10-06, C1),
+        # derived from the geometry each city scores with. It was appended here by hand for
+        # every UK page until then, which also credited it on South Yorkshire's, a city with
+        # no airport; adding it again would print it twice.
+        sources=e('; '.join(str(s) for s in data['sources']) or 'See methodology.'),
         methodology=e(data['methodology'] or ''),
     )
 

@@ -1628,6 +1628,10 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
             'DEFRA': 'aircraft noise, air quality, road noise',
             'NaPTAN': 'transport access',
             'NHS': 'healthcare access',
+            # The UK AIP, published by NATS (website audit 2026-10-06, C1):
+            # public but not openly licensed, so a breakdown naming it with no
+            # credit in `sources` is the same omission with a stricter licence.
+            'NATS': 'flight routes and runway alignments',
         }
         # A BREAKDOWN THAT NAMES A LICENSOR IS OFTEN DENYING IT. New York's says
         # "NOT HM Land Registry, which holds England and Wales only", and for
@@ -4806,6 +4810,95 @@ class PostcodeProvenanceCreditedEverywhereTests(unittest.TestCase):
         # Two older tests assert the London line's POSITION; the injection
         # appends for the other cities and must not have touched London's.
         self.assertTrue(app.build_sources('london')[2].startswith('Postcode resolution'))
+
+
+class FlightRouteProvenanceTests(unittest.TestCase):
+    """The UK AIP must be credited wherever the quiet geometry comes from it.
+
+    Website audit 2026-10-06, C1. The corridors and runway axes the quiet
+    estimate reads have been generated from the UK AIP (NATS) since v5.3-v5.5,
+    and the AIP is public but not openly licensed. The website credited it;
+    `sources` did not, and terms.html obliges integrators to pass `sources`
+    through to their own users, so every response carried the omission on.
+
+    The expectation is DERIVED from data/flight-procedures.json, the file the
+    generator reads - not from RUNWAY_AXIS_DEG, which is what the Lambda's own
+    derivation reads. Checking the Lambda against its own table would pass on
+    any mistake the two shared.
+    """
+
+    PROCEDURES = os.path.join(
+        os.path.dirname(__file__), '..', '..', 'data', 'flight-procedures.json')
+    MARK = 'Aeronautical Information Publication'
+
+    @classmethod
+    def setUpClass(cls):
+        with open(cls.PROCEDURES, encoding='utf-8') as fh:
+            cls.procedures = json.load(fh)['airports']
+
+    def expected(self):
+        """Cities whose scoring geometry reads an airport the AIP file records."""
+        aip = set(self.procedures)
+        out = set()
+        for city, geo in app.CITY_GEOMETRY.items():
+            codes = {ap['code'] for ap in geo['airports']}
+            codes |= {path.get('airport') for path in geo['paths']}
+            if codes & aip:
+                out.add(city)
+        return out
+
+    def test_the_expectation_covers_every_city_the_generator_draws(self):
+        # A floor that is not a count: every city an AIP record draws corridors
+        # for must be expected to credit it, so an empty or shrunken expectation
+        # cannot pass the test below by asking for nothing.
+        drawn = {city for rec in self.procedures.values() for city in rec.get('cities', [])}
+        self.assertTrue(drawn, 'the procedures file names no city; this proves nothing')
+        self.assertLessEqual(drawn, self.expected())
+        # The two negatives the derivation must produce, named so a change to
+        # either is a decision rather than a side effect: South Yorkshire has no
+        # airport, and New York's corridors are hand-drawn, not the UK AIP's.
+        self.assertNotIn('southyorkshire', self.expected())
+        self.assertNotIn('nyc', self.expected())
+
+    def test_aip_cities_credit_it_and_no_other_city_does(self):
+        expected = self.expected()
+        for city in app.CITY_PROVENANCE:
+            # Every tier, because the credit is city-level: the substitution
+            # build_sources makes for the raster tier must not drop it, and a
+            # borough-only query must not either.
+            for tier in (None, 'postcode', 'raster', 'borough'):
+                lines = [s for s in app.build_sources(city, quiet_source=tier) if self.MARK in s]
+                with self.subTest(city=city, tier=tier):
+                    if city in expected:
+                        self.assertEqual(len(lines), 1, f'{city}: {lines}')
+                        self.assertIn('NATS', lines[0])
+                        self.assertIn('not openly licensed', lines[0])
+                    else:
+                        self.assertEqual(lines, [], f'{city} credits the UK AIP for geometry it does not use')
+
+    def test_the_response_and_its_breakdown_agree(self):
+        """Through resolve_query, because that is what an integrator receives."""
+        expected = self.expected()
+        for city, cd in app.CITIES.items():
+            borough = next(iter(cd['boroughs']))
+            body, status = app.resolve_query({'city': city, 'borough': borough})
+            with self.subTest(city=city):
+                self.assertEqual(status, 200)
+                credited = [s for s in body['sources'] if self.MARK in s]
+                in_breakdown = self.MARK in body['sourceBreakdown']['quiet']
+                if city in expected:
+                    self.assertEqual(len(credited), 1, body['sources'])
+                    self.assertTrue(in_breakdown, body['sourceBreakdown']['quiet'])
+                else:
+                    self.assertEqual(credited, [])
+                    self.assertFalse(in_breakdown, body['sourceBreakdown']['quiet'])
+
+    def test_the_credit_is_appended_after_every_existing_line(self):
+        # APPENDED, never inserted: London's postcode line is index 2 by
+        # contract, and every other city's indices must not move either.
+        for city in self.expected():
+            with self.subTest(city=city):
+                self.assertIn(self.MARK, app.build_sources(city)[-1])
 
 
 class PerBoroughProvenanceTests(unittest.TestCase):

@@ -6467,6 +6467,75 @@ def _env_breakdown_line(city):
     )
 
 
+# --- flight-route provenance (website audit 2026-10-06, C1) -----------------
+#
+# The UK flight routes and runway axes behind the quiet estimate have been
+# DERIVED FROM THE UK AIP since v5.3-v5.5: every corridor between the
+# FLIGHT-PATHS markers and every entry in RUNWAY_AXIS_DEG is generated from
+# data/flight-procedures.json by scripts/build_flight_paths.py. The AIP is
+# published by NATS and is public but NOT openly licensed, and LICENSING.md
+# asks for it to be credited wherever the routes are used. The website
+# credited it from 6 Oct; `sources` did not, and terms.html obliges
+# integrators to carry `sources` through to their own users, so every
+# response passed the omission on.
+#
+# DERIVED from the geometry the engine scores with, not listed by city: an
+# airport in the city's CITY_GEOMETRY, or the airport a corridor serves, whose
+# code is in RUNWAY_AXIS_DEG. That table is generated from the AIP records and
+# held to them by build_flight_paths.py's blocking --check, so membership
+# means "the AIP publishes this airport and the quiet term reads its axis".
+# New York's corridors are hand-drawn and its airports carry no axis; South
+# Yorkshire has no airport. Both get None, and build_sources drops the line.
+#
+# City-level, like the aviation lines beside it, and deliberately not keyed
+# on the tier that answered: the postcode geometry estimate reads the routes
+# and axes, and Norwich's borough band is also built from AIP thresholds
+# (scripts/build_aircraft_bands.py), so no tier rule describes every city.
+
+_AIP_SOURCE_LINE = (
+    'Flight routes: UK Aeronautical Information Publication (NATS), derived by Sky Score '
+    'for the aircraft noise estimate; public but not openly licensed, and not for navigation'
+)
+
+
+def _aip_airports(city):
+    """Codes of the airports whose UK AIP geometry this city's quiet estimate reads.
+
+    Sorted, so the breakdown sentence that names them is stable.
+    """
+    geo = CITY_GEOMETRY.get(city) or {}
+    used = {ap.get('code') for ap in geo.get('airports') or []}
+    used |= {path.get('airport') for path in geo.get('paths') or []}
+    return sorted(code for code in used if code in RUNWAY_AXIS_DEG)
+
+
+def _aip_source_line(city):
+    """The UK AIP credit, or None for a city whose geometry does not come from it."""
+    return _AIP_SOURCE_LINE if _aip_airports(city) else None
+
+
+def _quiet_breakdown_with_routes(static):
+    """Wrap a city's hand-written `quiet` lineage with where its routes come from.
+
+    The twelve UK strings describe the estimate and its DEFRA scaling and name
+    no source for the corridors themselves, so a reader of the breakdown could
+    not tell the routes are the AIP's. The sentence is appended only where
+    _aip_airports finds AIP geometry, and names those airports.
+    """
+
+    def line(city, bd=None):
+        codes = _aip_airports(city)
+        if not codes:
+            return static
+        return (
+            f"{static} The geometry estimate's flight routes and runway alignments "
+            f"({', '.join(codes)}) are derived by Sky Score from the UK Aeronautical "
+            'Information Publication (NATS), and are not for navigation.'
+        )
+
+    return line
+
+
 # Environment provenance is injected here rather than written into each of the
 # thirteen city dicts above (audit F1). A per-city literal is exactly what went
 # stale through v3.9 and v4.0 with no gate noticing, and a city added tomorrow
@@ -6495,6 +6564,12 @@ for _city_key, _prov in CITY_PROVENANCE.items():
     # a per-city literal is what went stale.
     if _city_key != 'london' and CITIES[_city_key]['country'] == 'United Kingdom':
         _prov['sources'].append(lambda: _postcode_source_line(local_postcode_served()))
+    # FLIGHT ROUTES, from the UK AIP (website audit 2026-10-06, C1). APPENDED
+    # last, after the postcode line, so no city's existing indices move -
+    # London's postcode line keeps its index-2 contract. Derived per city by
+    # _aip_airports; None where the geometry is not the AIP's, and dropped.
+    _prov['sources'].append(_aip_source_line)
+    _prov['breakdown']['quiet'] = _quiet_breakdown_with_routes(_prov['breakdown']['quiet'])
 del _prov, _city_key
 
 
