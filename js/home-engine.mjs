@@ -49,8 +49,21 @@ function leaveIntro() {
   if (!hero?.classList.contains('is-intro')) return;
   const wasIntro = inIntro();
   hero.classList.remove('is-intro');
+  syncIntroMap();
   // The map refits beside the panel; on a stacked layout nothing moved.
   if (wasIntro && state.boroughs) draw(state.pin);
+}
+// THE FADED MAP IS A BACKDROP, NOT A CONTROL (Bill, 2026-10-07: "you can still highlight the
+// map behind the card ... which can be confusing"). While the question sits over it, the map is
+// INERT: no hover highlight, no tooltip, no click and no Tab stop. The Tab stops were the worse
+// half - thirty-odd council areas focusable BEHIND the card, which WCAG 2.2 2.4.11 (Focus Not
+// Obscured) fails. The ways in are the search, a city, a deep link and "Or explore the map",
+// which ends the intro and focuses the first area. Stacked (phones, tablets, short screens) the
+// map sits BELOW the question, uncovered, so inIntro() is false there and it is live from the
+// start. Set from JS, not in the markup: if the module failed, an inert map would stay dead.
+const mapwrap = document.querySelector('.mapwrap');
+function syncIntroMap() {
+  if (mapwrap) mapwrap.inert = inIntro();
 }
 // The Bay Area here is drawn from the files the /bay-area/ page is built from:
 // its outlines the Census places, its routes the FAA record, its noise picture
@@ -75,6 +88,9 @@ const FT_KM = 0.0003048;
 // engine used to decide on the map's own width (> 760px) while the CSS tested
 // the viewport, so 761-826px got the floating CSS with a full-width map beneath.
 const STACKED = '(max-width: 1279px), (max-height: 500px)';
+// After STACKED exists (inIntro reads it); again whenever the layout crosses between wide and stacked.
+syncIntroMap();
+window.matchMedia(STACKED).addEventListener('change', syncIntroMap);
 // How far out an airport counts as "near" a searched postcode, and how close to
 // an approach line a street must be to be called "under" it. The street report
 // (scripts/address_noise_report.mjs) uses its own, wider ones (40 km and 5 km):

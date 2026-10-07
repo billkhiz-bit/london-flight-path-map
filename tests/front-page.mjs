@@ -219,10 +219,44 @@ const introState = () =>
   });
 const before = await introState();
 ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpacity < 0.5, 'on a wide screen the page opens as the question, centred over a faded map', JSON.stringify(before));
-// The first use, here by keyboard: on the opening screen the question covers most of
-// London (that is the design: the map is the backdrop until someone asks), and every
-// council area stays reachable by Tab and Enter.
-await page.locator('#map .boro[aria-label^="Havering"]').focus();
+// The faded map is a BACKDROP while the question covers it (Bill, 2026-10-07): no hover, no
+// tooltip, no click, no Tab stop behind the card (WCAG 2.2 2.4.11). Asked of the BROWSER, not of
+// the attribute the fix sets: a 12 px grid over every council area's box, clear of the card and
+// inside the window, must hit no area, and none may take focus. A grid, not one point per area:
+// at 1366x820 the card covers all but ONE area's centre, and a probe of one proves little.
+// Until 7 Oct this step tabbed to Havering behind the card.
+const backdrop = await page.evaluate(() => {
+  // The keyboard steps above leave the page scrolled; an off-screen point hit-tests nothing.
+  // 'instant': the page scrolls smoothly by default, and a smooth scroll would still be moving.
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  const panel = document.querySelector('.panel').getBoundingClientRect();
+  const map = document.querySelector('#map').getBoundingClientRect();
+  const boxes = [...document.querySelectorAll('#map .boro')].map((el) => el.getBoundingClientRect());
+  let probed = 0;
+  let hits = 0;
+  for (let x = Math.max(map.left, 0) + 2; x < Math.min(map.right, innerWidth); x += 12) {
+    for (let y = Math.max(map.top, 0) + 2; y < Math.min(map.bottom, innerHeight); y += 12) {
+      if (x > panel.left - 8 && x < panel.right + 8 && y > panel.top - 8 && y < panel.bottom + 8) continue;
+      if (!boxes.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)) continue;
+      probed++;
+      if (document.elementFromPoint(x, y)?.closest?.('.boro')) hits++;
+    }
+  }
+  const focusable = [...document.querySelectorAll('#map .boro')].filter((el) => {
+    el.focus();
+    return document.activeElement === el;
+  }).length;
+  document.activeElement?.blur?.();
+  const r = (v) => Math.round(v);
+  const areas = boxes.reduce((u, b) => [Math.min(u[0], b.left), Math.min(u[1], b.top), Math.max(u[2], b.right), Math.max(u[3], b.bottom)], [Infinity, Infinity, -Infinity, -Infinity]);
+  return { probed, hits, focusable, card: [panel.left, panel.top, panel.right, panel.bottom].map(r), areas: areas.map(r), window: [innerWidth, innerHeight] };
+});
+ok(backdrop.probed >= 40 && backdrop.hits === 0 && backdrop.focusable === 0, 'while the question covers it, the faded map takes no pointer and no focus', JSON.stringify(backdrop));
+// The first use, here by keyboard and by the honest route: "Or explore the map", then Enter on
+// the council area it focuses.
+await page.locator('#explore-map').focus();
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => document.activeElement?.classList.contains('boro'), null, { timeout: 5000 });
 await page.keyboard.press('Enter');
 await page.waitForSelector('#borough.is-open', { timeout: 5000 });
 const after = await introState();
@@ -639,6 +673,8 @@ await page.setViewportSize({ width: 390, height: 844 });
 }
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitMap();
+// Stacked, the map sits BELOW the question, uncovered, so it is live from the start (2026-10-07).
+ok((await page.evaluate(() => document.querySelector('.mapwrap').inert)) === false, 'on a phone the map is live from the start: it sits below the question, not under it');
 await page.locator('#map .boro[aria-label^="Camden"]').click({ force: true });
 await page.waitForSelector('#borough.is-open');
 await page.waitForTimeout(700);

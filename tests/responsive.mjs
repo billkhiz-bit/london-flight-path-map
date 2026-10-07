@@ -128,9 +128,10 @@ const PAGES = [
   // The narrow end only, as the other pages get. NOT every viewport: on a wide
   // screen the page opens as Bill's "ask first" question centred over the map
   // (2026-10-05), which covers council areas BY DESIGN - the map is a backdrop
-  // until first use and every area stays a keyboard button. The COVERED
-  // detector reads that as 30 controls under the panel (tried 2026-10-06).
-  // tests/front-page.mjs drives the wide intro and the tool state instead.
+  // until first use. Since 2026-10-07 that backdrop is INERT (no pointer, no
+  // focus), so the areas are no longer controls under the panel; before that the
+  // COVERED detector read them as 30 (tried 2026-10-06). tests/front-page.mjs
+  // drives the wide intro, asserts the backdrop takes nothing, and the tool state.
   { name: 'front page', slug: 'home/index', live: 'index', settle: 2500 },
   { name: 'reports', slug: 'home/reports/index', live: 'reports/index' },
   { name: 'free street report', slug: 'home/reports/street/index', live: 'reports/street/index' },
