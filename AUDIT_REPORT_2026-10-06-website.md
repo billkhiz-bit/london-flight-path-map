@@ -61,7 +61,7 @@ origin.
 | M11 | The prototype, linked from `/score-demo/`, promises "live aircraft tracking" (removed in May) | fixed 6 Oct ("simulated flight tracks") |
 | M12 | Every Method link goes to the GitHub repository under its old name | after the rename |
 | M13 | Cardiff "not on the map yet" may never be kept (Wales has no Progress 8) | fixed 7 Oct (no "yet": area pages, the full map's panel and the front page card say "not on the map") |
-| M14 | Developer trust: the raw AWS API address everywhere; `api.skyscore.co.uk` does not resolve (a Cloudflare CNAME, Bill); the status page routes support to GitHub issues; `robots.txt` contradicts its own comment | partly Bill |
+| M14 | Developer trust: the raw AWS API address everywhere; `api.skyscore.co.uk` does not resolve (a Cloudflare CNAME, Bill); the status page routes support to GitHub issues; `robots.txt` contradicts its own comment | partly Bill. **8 Oct: the status page now routes to support@skyscore.co.uk**, as `/api/` and `/privacy` do. Still Bill's: the CNAME, and `robots.txt` (its comment welcomes citation of the API docs while it blocks `/api/` for GPTBot, ClaudeBot and others: change the rule or the comment, a policy call) |
 | M15 | Firms are not told how to pay (councils are told "we invoice on order") | fixed 6 Oct ("paid by bank transfer before the report is sent") |
 
 ## Found after the audit
