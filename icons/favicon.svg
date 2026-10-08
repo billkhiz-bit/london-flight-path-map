@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sky Score favicon (browser tab, bookmark, search result). Deliberately
+  NOT icons/icon.svg: at 16px that icon's rings, ticks and glow vanish and
+  it reads as a dark square with an orange dot. This keeps the same disc
+  and plane, scaled up to fill the square. The app icon (installs, App
+  Store) is unchanged. favicon.ico and icons/apple-touch-icon.png are
+  rendered from this file and icons/icon.svg by scripts/build_favicons.mjs.
+-->
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="14" fill="#101a2e"/>
+  <circle cx="32" cy="32" r="24" fill="#F27D26"/>
+  <g transform="translate(32 32) rotate(-22) scale(0.46)" fill="#FFFFFF">
+    <path d="M 0,-46 L 4,-17 L 43,2 L 6,4 L 10,29 L 3,34 L 0,37 L -3,34 L -10,29 L -6,4 L -43,2 L -4,-17 Z"/>
+  </g>
+</svg>

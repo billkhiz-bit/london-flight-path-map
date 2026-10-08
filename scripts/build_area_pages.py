@@ -359,6 +359,9 @@ PAGE = """<!doctype html>
 <meta property="og:description" content="{description}" />
 <meta property="og:url" content="{canonical}" />
 <meta property="og:type" content="article" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
   /* `color-scheme` declared 2026-09-02 (audit D11). These pages carry a
@@ -568,6 +571,9 @@ INDEX = """<!doctype html>
 <title>Every area Sky Score covers | Sky Score</title>
 <meta name="description" content="Noise and liveability scores for {n} boroughs across {c} UK and US city regions, from published UK government and New York City sources." />
 <link rel="canonical" href="{site}/area/" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
   /* See the note on the borough template: same reason, same fix. */
@@ -878,6 +884,9 @@ OPEN_DATA_PAGE = """<!doctype html>
 <meta property="og:title" content="Open data - Sky Score" />
 <meta property="og:description" content="Every UK area Sky Score covers in one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices. Free for non-commercial use." />
 <meta property="og:site_name" content="Sky Score" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
   :root {{ color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}

@@ -1219,6 +1219,9 @@ PAGE_HTML = """<!doctype html>
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
   :root {{ color-scheme: light; --dark:#141414; --mid:#55554f; --line:#dcdbd6; --bg:#fafaf9; --link:#b03a0b; }}

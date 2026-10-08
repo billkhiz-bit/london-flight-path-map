@@ -448,9 +448,14 @@ pwa-deploy:
 		--content-type "application/javascript" \
 		--cache-control "no-cache, no-store, must-revalidate" \
 		--region $(AWS_REGION)
+	# By type: the folder held only SVGs until the favicon (2026-10-08) added a PNG touch
+	# icon, and one --content-type for the whole folder would serve it as SVG to iOS.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp icons/ \
 		s3://$(S3_BUCKET)/icons/ \
-		--recursive --content-type "image/svg+xml" --region $(AWS_REGION)
+		--recursive --exclude "*" --include "*.svg" --content-type "image/svg+xml" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp icons/ \
+		s3://$(S3_BUCKET)/icons/ \
+		--recursive --exclude "*" --include "*.png" --content-type "image/png" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/manifest.webmanifest' '/sw.js' '/icons/*'
@@ -588,9 +593,14 @@ meta-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp 404.html \
 		s3://$(S3_BUCKET)/404.html \
 		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
+	# Browsers request /favicon.ico from the root whatever a page declares (2026-10-08);
+	# rendered from icons/favicon.svg by scripts/build_favicons.mjs.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp favicon.ico \
+		s3://$(S3_BUCKET)/favicon.ico \
+		--content-type "image/x-icon" --cache-control "public,max-age=86400" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
-		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png' '/404.html'
+		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png' '/404.html' '/favicon.ico'
 
 .PHONY: open-data-deploy
 open-data-deploy:

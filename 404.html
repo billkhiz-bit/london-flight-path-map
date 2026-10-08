@@ -7,9 +7,12 @@
      status 404, for any address the origin has no file for: S3 answers a missing key with 403
      because the bucket is not listable, and both codes map here. It is served AT the mistyped
      address, so every link and asset below must be root-absolute, never relative. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; form-action 'self'; base-uri 'none'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; form-action 'self'; base-uri 'none'" />
 <meta name="robots" content="noindex" />
 <title>Page not found - Sky Score</title>
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
   :root { color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }
