@@ -352,6 +352,9 @@ and holds a third copy of the floor. Three ranges exist for one raster: loader
   with no `customSyntax`, so it parses HTML as CSS and dies on the leading `<`.
   Nothing depended on it (stylelint is not in preflight), which is why it went
   unnoticed. Confirmed pre-existing against the committed lockfile.
+  **CLOSED 2026-10-08: stylelint removed** (with `lint:css` and `.stylelintrc.json`),
+  two months after this note - by then it was also carrying every open npm
+  advisory, seven high, with no patched release to update to.
 - **5 high-severity npm advisories — FIXED**, and worth stating what they were:
   all five were devDependencies of the lint toolchain. The project has **zero
   production npm dependencies**, so none was ever reachable by a visitor. The

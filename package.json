@@ -8,7 +8,6 @@
     "lint": "eslint index.html *.js js/api-base.js js/*.mjs home scripts tests mobile/scripts extension",
     "lint:fix": "eslint index.html --fix",
     "lint:html": "html-validate index.html changes.html pricing.html privacy.html terms.html api/index.html score-demo/index.html score-demo/api-docs.html score-demo/status.html home/index.html home/reports/index.html home/reports/street/index.html home/moved/preview/index.html home/moved/preview/reports/index.html 404.html",
-    "lint:css": "stylelint \"index.html\"",
     "lint:security": "eslint index.html --no-eslintrc -c eslint.config.js",
     "format": "prettier --write index.html",
     "format:check": "prettier --check index.html",
@@ -39,8 +38,6 @@
     "eslint-plugin-security": "^4.0.0",
     "globals": "^15.0.0",
     "html-validate": "^10.11.1",
-    "prettier": "^3.2.0",
-    "stylelint": "^17.4.0",
-    "stylelint-config-standard": "^40.0.0"
+    "prettier": "^3.2.0"
   }
 }
