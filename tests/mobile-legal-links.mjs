@@ -146,6 +146,49 @@ for (const vp of VIEWPORTS) {
   await ctx.close();
 }
 
+// CLOSED, THE FOOTER IS PRIVACY, TERMS AND "MORE"; OPEN, IT IS ALL NINE (2026-10-08,
+// audit 2026-10-05 M-20, Bill's choice). With no result on a phone the footer flows up
+// under the search card, and its nine links ran in three rows across the top of the
+// map, through the Luton and Stansted labels. Hit-tested like everything above, so a
+// link inside a closed "More" does not count as reachable, and the footer's height is
+// measured, because "one line" is the whole point (it was 107 px at 390x844).
+{
+  const { ctx, page } = await open(VIEWPORTS[1], false);
+  const footerLinks = () =>
+    page.evaluate(() => {
+      const f = document.querySelector('.sheet-footer');
+      const hit = (el) => {
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) return false;
+        const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return Boolean(at) && (at === el || el.contains(at) || at.contains(el));
+      };
+      return {
+        height: Math.round(f.getBoundingClientRect().height),
+        hrefs: [...f.querySelectorAll('a[href]')].filter(hit).map((a) => a.getAttribute('href')),
+        more: [...f.querySelectorAll('summary')].some(hit),
+      };
+    });
+  const closed = await footerLinks();
+  const legalOnly =
+    closed.hrefs.length === REQUIRED.length && REQUIRED.every((r) => closed.hrefs.some((h) => h.startsWith(r)));
+  const oneLine = closed.height <= 60;
+  if (!legalOnly || !closed.more || !oneLine) fail++;
+  console.log(
+    `  ${legalOnly && closed.more && oneLine ? 'ok  ' : 'FAIL'} closed: Privacy, Terms and More, one line` +
+      `   ${closed.height}px; links ${closed.hrefs.join(' ') || 'none'}; More ${closed.more ? 'reachable' : 'MISSING'}`,
+  );
+  if (closed.more) {
+    await page.locator('.sheet-footer summary').click();
+    await page.waitForTimeout(300);
+    const opened = await footerLinks();
+    const all = opened.hrefs.length >= 9 && opened.hrefs.some((h) => h.startsWith('/pricing'));
+    if (!all) fail++;
+    console.log(`  ${all ? 'ok  ' : 'FAIL'} open: every footer link reachable          ${opened.hrefs.length} link(s)`);
+  }
+  await ctx.close();
+}
+
 // The other direction. Without this, deleting the native rule outright would
 // pass every check above - and that is the mirror image of the defect.
 {

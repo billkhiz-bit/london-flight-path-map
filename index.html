@@ -540,6 +540,54 @@
              restores its defects with it. */
           color: var(--mid);
         }
+        /* "MORE" (2026-10-08, audit M-20): the seven non-legal links behind an
+           inline disclosure in the same text row, so the footer is one line under
+           the search card instead of three across the map. The summary opts back
+           into pointer events like the links do (the footer itself takes none) and
+           keeps their padding, which is what holds the tap target near 24px. */
+        .sheet-more {
+          display: inline;
+        }
+        .sheet-more > summary {
+          display: inline-block;
+          list-style: none;
+          cursor: pointer;
+          color: var(--mid);
+          padding: 6px 2px;
+          pointer-events: auto;
+        }
+        .sheet-more > summary::-webkit-details-marker {
+          display: none;
+        }
+        /* Closed, its links take no layout at all. Chrome hides a closed
+           <details>' content with content-visibility, which keeps layout boxes,
+           so a hit-test (tests/responsive.mjs) read all eight as links lying under
+           the map, "covered" at every phone width. Said plainly, it is the same
+           picture in every browser and every tool. */
+        .sheet-more:not([open]) > :not(summary) {
+          display: none;
+        }
+        .sheet-more > summary::after {
+          content: ' \25B8';
+        }
+        .sheet-more[open] > summary::after {
+          content: ' \25BE';
+        }
+        .sheet-more > summary:hover,
+        .sheet-more > summary:focus-visible {
+          color: var(--dark);
+        }
+        /* Open, the links sit on a card like the search card above them rather
+           than printed across the map's airport labels, and the card takes taps
+           (closed, the footer stays transparent to them, as described above). */
+        .sheet-footer:has(.sheet-more[open]) {
+          background: var(--white);
+          border: 1px solid var(--dark);
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+          margin: 8px 16px 0;
+          pointer-events: auto;
+        }
         /* NATIVE ONLY, and the distinction is load-bearing (2026-09-07 audit,
            C2). This was `.is-tabbed .sheet-footer`, which was correct when it
            landed on 2026-08-26: `.is-tabbed` was set on the NATIVE app alone,
@@ -4556,7 +4604,19 @@
              Store never surfaced on mobile web. This in-sheet copy shows
              <=900px on web only; the native app is excluded (.is-native)
              because it carries its own navigation. -->
+        <!-- PRIVACY AND TERMS, THEN "MORE" (2026-10-08, audit 2026-10-05 M-20,
+             Bill's choice). With no result on a phone this footer flows up under
+             the search card, and its nine links ran in three rows across the top of
+             the map, through the Luton and Stansted labels. The two legal links stay
+             one tap away (tests/mobile-legal-links.mjs); the other seven open from
+             "More". The front page carries the full set. -->
         <footer class="sheet-footer" aria-label="Sky Score links">
+          <a href="/privacy">Privacy</a>
+          <span class="sep">·</span>
+          <a href="/terms">Terms</a>
+          <span class="sep">·</span>
+          <details class="sheet-more">
+            <summary>More</summary>
           <a class="for-devs" href="/score-demo/index.html" target="_blank" rel="noopener">For Developers</a>
           <span class="sep">·</span>
           <a href="/pricing" data-event="pricing-footer-click">Pricing</a>
@@ -4585,10 +4645,7 @@
           <a href="/area/">Areas</a>
           <span class="sep">·</span>
           <a href="/bay-area/" data-event="bayarea-footer-click" title="Flight paths over 50 San Francisco Bay Area cities">Bay Area</a>
-          <span class="sep">·</span>
-          <a href="/privacy">Privacy</a>
-          <span class="sep">·</span>
-          <a href="/terms">Terms</a>
+          </details>
         </footer>
       </aside>
 

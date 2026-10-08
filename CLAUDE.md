@@ -2069,6 +2069,15 @@ site SAYS, page by page, as four visitors; statuses live in that file). Rules it
 20 Minor; statuses live in that file, not here). What a future session must not
 undo from it:
 
+- **The phone footer is "Privacy · Terms · More" (M-20, closed 2026-10-08, Bill's
+  choice).** With no result it flows up under the search card, and its nine links
+  ran in three rows across the map's airport labels. The other seven sit in an
+  inline `<details class="sheet-more">`, on a search-card-style card when open.
+  **Closed, its content is `display: none` on purpose**: Chrome hides a closed
+  `<details>` with `content-visibility`, which KEEPS layout boxes, so
+  `tests/responsive.mjs` hit-tested all eight hidden links as "covered by the map"
+  at every phone width. `tests/mobile-legal-links.mjs` hit-tests both states.
+
 - **`.no-result-yet`, NOT `.empty-state`, marks "nothing searched yet".** The
   tabbed (<=900px) layout hid `.empty-state` and the whole `#tab-analysis`
   card behind it, and every search OUTCOME (not covered, not on the map, not
