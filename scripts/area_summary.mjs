@@ -276,7 +276,10 @@ function page(spec, rows, ctx, vintage, nat, air) {
       byDist.length > 1 && last.air.near.dist - first.air.near.dist >= 0.1
         ? `${fmt(first.air.near.dist)} to ${fmt(last.air.near.dist)} km from the points sampled; the nearest is ${esc(first.label)}`
         : `${fmt(first.air.near.dist)} km from ${byDist.length > 1 ? 'the points sampled' : esc(first.label)}`;
-    const under = rows.filter((r) => r.air.under);
+    // LOWEST AIRCRAFT FIRST, not table order (2026-10-08). Only two are named, and in
+    // table order Hounslow's sheet named two Chiswick points at about 2,100 ft while
+    // Vicarage Farm Rd, 3.5 km from the runway and the loudest DEFRA reading, went unsaid.
+    const under = rows.filter((r) => r.air.under).sort((a, b) => a.air.under.heightFt - b.air.under.heightFt);
     const ft = (u) => `${(Math.round(u.heightFt / 100) * 100).toLocaleString('en-GB')} ft`;
     const underText = under.length
       ? under
@@ -325,7 +328,7 @@ function page(spec, rows, ctx, vintage, nat, air) {
 <p class="note">Figures in orange exceed the WHO guideline. The UK legal limit for NO&#8322; is 40 &micro;g/m&sup3;, so levels below it are within the law even where they are above what the WHO recommends for health.</p>
 ${bullets.length ? `<h2>What this shows</h2><ul>${bullets.map((b) => `<li>${b}</li>`).join('')}</ul>` : ''}
 <p class="note" style="margin-top:12px"><strong>Note:</strong> DEFRA's air figures are modelled background levels on a 1&nbsp;km grid (${esc(vintage.air)} annual means), so they understate pollution at the kerb of main roads, where roadside monitors and sensors take direct measurements. The noise maps model 2021 traffic, reduced by lockdown.${air ? ' Runway distances are measured to the runway itself, from its published position: they are distances, not noise levels. Helicopters, military flights and smaller airfields are not covered.' : ''}</p>
-<footer>Sources: DEFRA background pollution maps (PCM), ${esc(vintage.air)} annual mean, 1 km grid; DEFRA Strategic Noise Mapping Round 4 (road, Lden, 2021 traffic); WHO Global Air Quality Guidelines (2021) and Environmental Noise Guidelines for the European Region (2018). All Open Government Licence v3.0 except the WHO guidelines.${air ? ` Runway and approach positions from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(air.airac)}.` : ''}${ctx ? ` Borough comparison across ${esc(CITY_LABEL[ctx.city])}.` : ''}${nat && nat.air ? ` Council-area comparison across the ${nat.air.of} UK council areas in Sky Score's open data (skyscore.co.uk/open-data).` : ''} Compiled with Sky Score (skyscore.co.uk), which joins these public datasets; free to reuse and cite. Prepared ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}.</footer>
+<footer>Sources: DEFRA background pollution maps (PCM), ${esc(vintage.air)} annual mean, 1 km grid; DEFRA Strategic Noise Mapping Round 4 (road, Lden, 2021 traffic); WHO Global Air Quality Guidelines (2021) and Environmental Noise Guidelines for the European Region (2018). All Open Government Licence v3.0 except the WHO guidelines.${air ? ` Runway and approach positions from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(air.airac)}: public, but not under the Open Government Licence.` : ''}${ctx ? ` Borough comparison across ${esc(CITY_LABEL[ctx.city])}.` : ''}${nat && nat.air ? ` Council-area comparison across the ${nat.air.of} UK council areas in Sky Score's open data (skyscore.co.uk/open-data).` : ''} Compiled with Sky Score (skyscore.co.uk), which joins these public datasets; free to share and cite. Prepared ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}.</footer>
 </body></html>`;
 }
 

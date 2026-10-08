@@ -232,6 +232,11 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 | **779,131** standard (Category A) home sales in England and Wales in 2025; **14,532 (1.87%)** were at postcodes on DEFRA's aircraft-noise map in the cities we cover, **2,488** of them at about 55 dB Lden or louder. A FLOOR: the map is 2021, the surroundings of Gatwick, Stansted and Luton are outside it, and lettings are not counted | `scripts/measure_aircraft_market.py` (needs the gitignored `data/pp-2025.csv`, downloaded 2026-08-09) | 2026-10-02 |
 | Crystal Roof's consumer prices: GBP 7.99 a week, 12.99 a month, 29.99 for three months, with postcode-level data limited on its free plan | its pricing page, read 2026-10-02 (NOT in the repo: re-read before quoting) | 2026-10-02 |
 | Government backed a third Heathrow runway (29 Jan 2025), approved Luton's expansion (Apr 2025) and Gatwick's northern runway (21 Sep 2025), and is redesigning UK airspace through a new Airspace Design Service (announced June 2025) | gov.uk and press, searched 2026-10-02 (NOT in the repo: re-read before quoting) | 2026-10-02 |
+| **Hounslow, its five AQAP focus areas** (one postcode on each named road: W4 1RG, W4 2DY, TW5 0TA, TW5 0AA, TW3 1QJ): every point above the WHO guideline for both NO2 (17.8-19.5 vs 10 ug/m3) and PM2.5 (8.6-9.1 vs 5), DEFRA PCM 2024; road noise **67.7-77.8 dB Lden** against WHO's 53; **Vicarage Farm Rd (TW5 0AA) is 0.1 km from Heathrow's 27R approach line, landing aircraft at about 600 ft**, DEFRA aircraft noise 64.7 dB Lden there | `node scripts/area_summary.mjs --area "Hounslow" --aircraft --point ...` (live `/v1/environment` + the AIP record); the sheet is on Bill's Desktop | 2026-10-08 |
+| Hounslow: **63%** of its postcodes above the WHO road-noise guideline; **13th-highest NO2** of London's 33 boroughs | `data/borough-extra.json`, via the same script | 2026-10-08 |
+| **Mayor's Air Quality Fund Round 5 is open to London boroughs: GBP 6m, closing 5pm Friday 13 November 2026.** Boroughs apply, not community groups | london.gov.uk MAQF page, read 2026-10-08 (NOT in the repo: re-read before quoting) | 2026-10-08 |
+| **DEFRA's Air Quality Grant has had no round since 2023-24**, whose ~GBP 6m was withheld after councils had been told they had won (LocalGov, 16 Apr 2024); the grant's own page says "nearly GBP 92 million" since 1997 | gov.uk Air Quality Grant collection page + LocalGov, read 2026-10-08 (NOT in the repo) | 2026-10-08 |
+| Aircraft noise cannot be a statutory nuisance (Environmental Protection Act 1990 s.79(6)), and boroughs do not write noise action plans (DEFRA and airport operators do): a council's aircraft-noise lever is planning and advocacy, not enforcement | legislation.gov.uk, read 2026-10-08 | 2026-10-08 |
 
 ## Never say
 
@@ -253,21 +258,22 @@ Replace everything in [brackets]. Keep them short: one finding, one ask.
 > [One-sentence finding with the number.] It comes from comparing DEFRA's official
 > 2021 noise map, drawn during lockdown, with the CAA's 2024 figures.
 >
-> I built Sky Score (skyscore.co.uk), a free map joining open government data on
+> I built Sky Score (skyscore.co.uk), a free map joining official public data on
 > noise, air, flood, crime, schools and prices for [N] city regions. I can share
-> the borough-level table and the method behind the finding. Everything is open
-> data under the Open Government Licence.
+> the borough-level table and the method behind the finding. The government
+> datasets are under the Open Government Licence; the flight routes come from the
+> UK AIP (NATS), which is public but not openly licensed.
 >
 > [Name], Cubitt33 Ltd
 
 ### Public health and researchers (2, 3)
 
-> Subject: Joined open data on noise, air and flood by area - free for research
+> Subject: Joined official data on noise, air and flood by area - free for research
 >
 > Sky Score (skyscore.co.uk) joins DEFRA noise and air-quality maps, Environment
 > Agency flood risk and ONS, DfE and HM Land Registry data on one geography for
-> [N] UK city regions, with the method published and each figure checked against
-> its source before release.
+> [N] UK city regions, with the method published, and the crime, price and flood
+> figures checked against their publishers before every release.
 >
 > If it would help your work on [their topic], I am happy to share the
 > borough-level dataset and methodology, and I would welcome an independent check
