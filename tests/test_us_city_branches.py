@@ -30,10 +30,10 @@ REPO_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir))
 PAGE_DECLARED = {
     # handleUsZipSearch(): New York's static ZIP table decides the city.
     "if (currentCity !== 'nyc') await switchCity('nyc');": 1,
-    # Three functions open with this line: the altitude bands keyed on JFK,
-    # EWR and LGA; crimeNote()'s NYPD wording; buildPropertyLinks()'s
-    # StreetEasy links.
-    "if (currentCity === 'nyc') {": 3,
+    # Two functions open with this line: crimeNote()'s NYPD wording and
+    # buildPropertyLinks()'s StreetEasy links. (A third, the altitude bands keyed
+    # on JFK, EWR and LGA, went on 2026-10-07: the FAA's glide paths replaced it.)
+    "if (currentCity === 'nyc') {": 2,
     # The sold-prices fallback: New York's listing links or the UK's.
     "currentCity === 'nyc' ? nycLinks : ukLinks": 1,
     # The "check flight tracking" advice, which names JFK, LaGuardia and Newark.

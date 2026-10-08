@@ -323,6 +323,43 @@ console.log('Plane altitude under an approach');
   console.log('');
 }
 
+// NEW YORK READS THE FAA'S GLIDE PATHS (2026-10-07). Its row was a ladder by distance
+// to the airport ("1,000-2,500 ft" for anything within 5 km of JFK). Woodhaven's ZIP,
+// typed from LONDON so the city switch and the FAA record's lazy load are both on the
+// path: its point is 0.1 km off JFK 13L's centreline about 6.8 km out, and 6.8 km x
+// tan(3 deg) is about 360 m, about 1,180 ft. Chelsea (10001) is under no final, and
+// must say so rather than print a band.
+console.log('Plane altitude in New York');
+{
+  // `not`: a value the row must have LEFT (the previous search's), so a second search is
+  // read only once it has rendered: poll for the state you want, never one already true.
+  const altitudeRow = (pg, not = '') =>
+    pg
+      .waitForFunction(
+        (prev) => {
+          const label = [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude');
+          const value = label?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim();
+          return value && value !== 'N/A' && value !== prev ? value : false;
+        },
+        not,
+        { timeout: 25000 },
+      )
+      .then((h) => h.jsonValue())
+      .catch(() => 'N/A (never resolved)');
+  await page.evaluate((city) => window.switchCity(city), 'london');
+  await page.waitForTimeout(1200);
+  await page.fill('#search-input', '11421');
+  await page.press('#search-input', 'Enter');
+  const row = await altitudeRow(page);
+  const ft = Number((row.match(/^About ([\d,]+) ft \(JFK 13L final approach\)$/) || [])[1]?.replace(/,/g, ''));
+  check("11421 (Woodhaven): the FAA's JFK 13L glide path, about 1,180 ft (not a ladder by distance)", ft >= 1000 && ft <= 1400, `row: "${row}"`);
+  await page.fill('#search-input', '10001');
+  await page.press('#search-input', 'Enter');
+  const chelsea = await altitudeRow(page, row);
+  check('10001 (Chelsea): under no final approach, and says so', chelsea === 'Not under a final approach', `row: "${chelsea}"`);
+  console.log('');
+}
+
 // SOLD PRICES: EACH ABSENCE SAYS WHICH ABSENCE IT IS (2026-09-25).
 //
 // The panel printed "cannot be loaded directly due to browser security

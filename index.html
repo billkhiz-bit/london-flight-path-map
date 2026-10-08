@@ -7154,7 +7154,7 @@
           // Was the DEFRA paragraph, live, under this BTS heading, because the
           // explainer had no id and nothing swapped it.
           legendNoiseExplainer:
-            "<strong>What this is:</strong> Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. <strong>Not DEFRA</strong> - no published Lden survey covers New York, so the decibel thresholds used for London are not directly applicable here. A borough search gives a 0-10 quiet score, not a decibel reading. <strong>The coloured layer</strong> is the US Bureau of Transportation Statistics' National Transportation Noise Map for 2022: a 24-hour average of aircraft noise (LAeq). BTS publishes it to track national trends and says it should not be used to judge the noise at an individual location.",
+            "<strong>What this is:</strong> Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. <strong>Not DEFRA</strong> - no published Lden survey covers New York, so the decibel thresholds used for London are not directly applicable here. A borough search gives a 0-10 quiet score, not a decibel reading. <strong>The coloured layer</strong> is the US Bureau of Transportation Statistics' National Transportation Noise Map for 2022: a 24-hour average of aircraft noise (LAeq). BTS publishes it to track national trends and says it should not be used to judge the noise at an individual location. <strong>Plane altitudes</strong> are the FAA's published glide paths (Coded Instrument Flight Procedures, supplied \"as is\", without warranty; not for navigation), given only for a place under a final approach.",
           legendRoadTitle: 'DOT ROAD NOISE',
           legendFloodTitle: 'FEMA FLOOD RISK',
           legendAqTitle: 'EPA BOROUGH AIR QUALITY',
@@ -8494,9 +8494,18 @@
       // pages use, with data/flight-procedures.json (the UK AIP record), and gives
       // a height only for a home UNDER a final approach (finalOverhead), as they
       // do. Loaded on search intent like the stations; until it arrives, or if it
-      // fails, the row says N/A rather than guess. UK cities only: the AIP record
-      // holds no US routes, and New York keeps its own ladder for now.
+      // fails, the row says N/A rather than guess.
+      //
+      // NEW YORK TOO SINCE 2026-10-07: its row was a ladder by distance to JFK,
+      // Newark or LaGuardia ("1,000-2,500 ft" for anything within 5 km of JFK),
+      // the shape A1 retired here for the UK. It reads the FAA's record now
+      // (data/us-flight-procedures.json, the one the front page draws New York's
+      // finals from), through the same finalOverhead(). That record is 227 KB
+      // against the AIP's 30, so it loads only for a search outside the UK.
       let FLIGHT_GEO = null; // { mod, proc } once loaded
+      let FLIGHT_GEO_US = null; // the FAA record, once loaded
+      let FLIGHT_GEO_US_STATE = 'idle'; // idle | loading | ready | failed
+      let _flightGeoUsPromise = null;
       let FLIGHT_GEO_STATE = 'idle'; // idle | loading | ready | failed
       let _flightGeoPromise = null;
       async function hydrateFlightGeometry() {
@@ -8514,16 +8523,30 @@
           console.warn('[Sky Score] flight geometry not loaded:', e);
         }
       }
-      // The UK plane altitude, from the geometry above. Its own function because a
+      async function hydrateFlightGeometryUs() {
+        FLIGHT_GEO_US_STATE = 'loading';
+        try {
+          const resp = await fetch('/data/us-flight-procedures.json', { cache: 'no-cache' });
+          if (!resp.ok) throw new Error('FAA procedures HTTP ' + resp.status);
+          FLIGHT_GEO_US = await resp.json();
+          FLIGHT_GEO_US_STATE = 'ready';
+        } catch (e) {
+          FLIGHT_GEO_US_STATE = 'failed';
+          console.warn('[Sky Score] FAA flight procedures not loaded:', e);
+        }
+      }
+      // The plane altitude, from the geometry above. Its own function because a
       // result is ANALYSED BEFORE the search-time data is awaited (the pin and the
       // fly-to must not wait), so a deep link, which never focused the search box
       // and so never started this load, analysed first and printed N/A: found
       // retaking the LGM demo's screenshot from /map/?postcode=TW9 3PZ (7 Oct).
       // Both result paths call it again after the await, before the panel renders.
-      function planeAltitudeUk(lat, lon) {
-        if (!FLIGHT_GEO) return { altEstimate: 'N/A', altClause: '' };
+      // A UK city reads the AIP's record, any other city the FAA's.
+      function planeAltitude(city, lat, lon) {
+        const proc = isUkCity(city) ? FLIGHT_GEO?.proc : FLIGHT_GEO_US;
+        if (!FLIGHT_GEO || !proc) return { altEstimate: 'N/A', altClause: '' };
         const g = FLIGHT_GEO.mod;
-        const over = g.finalOverhead(g.routesNear(FLIGHT_GEO.proc, g.plane(lat, lon), 30).finals);
+        const over = g.finalOverhead(g.routesNear(proc, g.plane(lat, lon), 30).finals);
         if (!over) return { altEstimate: 'Not under a final approach', altClause: '' };
         const label = `${g.AIRPORT_NAME[over.code] || over.code} ${over.rwy}`;
         const ft = g.roundFt(over.heightFt).toLocaleString('en-GB');
@@ -8535,8 +8558,13 @@
       function ensureFlightGeometry(capMs) {
         // A failed load is not memoised, as with the stations: the next search retries.
         if (!_flightGeoPromise || FLIGHT_GEO_STATE === 'failed') _flightGeoPromise = hydrateFlightGeometry();
-        if (!capMs) return _flightGeoPromise;
-        return Promise.race([_flightGeoPromise, new Promise((r) => setTimeout(r, capMs))]);
+        let all = _flightGeoPromise;
+        if (!isUkCity(currentCity)) {
+          if (!_flightGeoUsPromise || FLIGHT_GEO_US_STATE === 'failed') _flightGeoUsPromise = hydrateFlightGeometryUs();
+          all = Promise.all([_flightGeoPromise, _flightGeoUsPromise]);
+        }
+        if (!capMs) return all;
+        return Promise.race([all, new Promise((r) => setTimeout(r, capMs))]);
       }
 
       async function hydrateAircraftQuietFile(url) {
@@ -9445,10 +9473,10 @@
         paintBoroughSelection();
         if (card) {
           const borough = escapeHtml(card.borough);
-          document.getElementById('sidebar-title').textContent = 'NOT ON THE MAP YET';
-          document.title = `${result.postcode || 'Postcode'} - not on the map yet - Sky Score`;
+          document.getElementById('sidebar-title').textContent = 'NOT ON THE MAP';
+          document.title = `${result.postcode || 'Postcode'} - not on the map - Sky Score`;
           announceResult(
-            `${result.postcode || 'This postcode'} is in ${card.borough}, which is not on the map yet. A borough scorecard is available.`
+            `${result.postcode || 'This postcode'} is in ${card.borough}, which is not on the map. A borough scorecard is available.`
           );
           document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
@@ -10097,28 +10125,10 @@
         else if (noiseScore >= 4) noiseEstimate = 'Moderate';
         else noiseEstimate = 'Low';
 
-        // Altitude estimate (rough)
-        let altEstimate = 'N/A';
-        let altClause = ''; // the prose's height sentence, '' when no height is known
-        if (currentCity === 'nyc') {
-          const majorAp = nearestPath ? nearestPath.airport : null;
-          const majorDist = nearestAirportDist;
-          if (majorAp === 'JFK' || majorAp === 'EWR') {
-            if (majorDist < 5) altEstimate = '1,000-2,500 ft';
-            else if (majorDist < 10) altEstimate = '2,500-4,000 ft';
-            else if (majorDist < 15) altEstimate = '4,000-6,000 ft';
-            else altEstimate = '6,000+ ft';
-          } else if (majorAp === 'LGA') {
-            if (majorDist < 3) altEstimate = '500-2,000 ft';
-            else if (majorDist < 6) altEstimate = '2,000-4,000 ft';
-            else altEstimate = '4,000+ ft';
-          }
-          if (altEstimate !== 'N/A') altClause = `Planes pass at roughly ${altEstimate}`;
-        } else if (isUkCity(currentCity)) {
-          // A1 (2026-10-07): the published glide path, not a ladder by distance
-          // to the airport. See planeAltitudeUk() and ensureFlightGeometry().
-          ({ altEstimate, altClause } = planeAltitudeUk(lat, lon));
-        }
+        // The plane altitude: the published glide path the home sits under, the
+        // AIP's in the UK and the FAA's in New York (A1, 2026-10-07), never a ladder
+        // by distance to the airport. See planeAltitude() and ensureFlightGeometry().
+        const { altEstimate, altClause } = planeAltitude(currentCity, lat, lon);
 
         // Heliport proximity
         const heliDists = (currentCity === 'london' ? HELIPORTS : [])
@@ -11525,7 +11535,7 @@
             flyToSearchResult(analysis.lat, analysis.lon);
             await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000), ensureFlightGeometry(6000)]);
             if (!isCurrentSearch(search)) return;
-            if (isUkCity(currentCity)) Object.assign(analysis, planeAltitudeUk(analysis.lat, analysis.lon));
+            Object.assign(analysis, planeAltitude(currentCity, analysis.lat, analysis.lon));
             updateSidebarPostcode(analysis, borData, search);
             return;
           }
@@ -11623,7 +11633,7 @@
 
         await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000), ensureFlightGeometry(6000)]);
         if (!isCurrentSearch(search)) return;
-        if (isUkCity(currentCity)) Object.assign(analysis, planeAltitudeUk(analysis.lat, analysis.lon));
+        Object.assign(analysis, planeAltitude(currentCity, analysis.lat, analysis.lon));
         updateSidebarPostcode(analysis, boroughData, search);
       }
 

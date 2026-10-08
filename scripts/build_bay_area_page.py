@@ -362,10 +362,14 @@ class Shape:
 # ---- routes -----------------------------------------------------------------
 
 
-def routes(record):
-    """The lines this page draws: (approaches, departures, runway ends not drawn)."""
+def routes(record, airports=AIRPORTS):
+    """The lines this page draws: (approaches, departures, runway ends not drawn).
+
+    `airports` defaults to the Bay Area's three; scripts/build_nyc_front.py passes New York's
+    four, so the front page draws both US cities from this one derivation (2026-10-07).
+    """
     approaches, departures, undrawn = [], [], []
-    for code in AIRPORTS:
+    for code in airports:
         ap = record['airports'][code]
         for rwy, r in sorted(ap['runways'].items()):
             if r['glide_deg'] is None:
@@ -425,7 +429,7 @@ def arrival_start(alts):
     return len(alts)
 
 
-def arrival_routes(record):
+def arrival_routes(record, airports=AIRPORTS):
     """The arrival lines this page draws: each coded arrival, joined to the approach transition that starts where it ends.
 
     Joined only where the FAA codes the join. A STAR that ends in radar
@@ -435,10 +439,10 @@ def arrival_routes(record):
     (San Francisco's SERFR4 ends at EDDYY, and its transitions carry on through
     SIDBY, over Palo Alto, to the start of the 28L and 28R finals). Identical
     lines are drawn once: the ILS and RNAV approaches to a runway often share
-    their transitions fix for fix.
+    their transitions fix for fix. `airports` as in routes().
     """
     out = []
-    for code in AIRPORTS:
+    for code in airports:
         ap = record['airports'][code]
         drawn = {rwy for rwy, r in ap['runways'].items() if r['glide_deg'] is not None}
         starts = {}

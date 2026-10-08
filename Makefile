@@ -313,6 +313,10 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-routes.json \
 		s3://$(S3_BUCKET)/data/us-bayarea-routes.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# New York's front-page lines (2026-10-07), the same derivation. Before home-deploy too.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-nyc-routes.json \
+		s3://$(S3_BUCKET)/data/us-nyc-routes.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	# New York on the front page (2026-10-06): the borough rows from the score engine and
 	# the US noise picture, both written by scripts/build_nyc_front.py.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-nyc.json \

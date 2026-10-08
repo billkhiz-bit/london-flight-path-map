@@ -48,19 +48,19 @@ origin.
 
 | # | Finding | Status |
 |---|---|---|
-| M1 | (partly fixed 6 Oct: Terms added to the area, open-data, Bay Area, /changes, /api/ and demo footers) Terms missing from the footers of `/open-data/`, the area pages, `/bay-area/` and `/changes`; no site bar on `/privacy`, `/terms`, `/changes`, `/talks/`, `/score-demo/api-docs.html`, `/score-demo/status.html` | open |
+| M1 | (partly fixed 6 Oct: Terms added to the area, open-data, Bay Area, /changes, /api/ and demo footers) Terms missing from the footers of `/open-data/`, the area pages, `/bay-area/` and `/changes`; no site bar on `/privacy`, `/terms`, `/changes`, `/talks/`, `/score-demo/api-docs.html`, `/score-demo/status.html` | fixed 7 Oct (the site bar on /privacy, /terms, /changes, /talks/, the API reference and status, inside each page's own header; 16c checks all twelve pages) |
 | M2 | "Back to the map" on `/area/` and `/talks/`, and "the map" on `/bay-area/`, point to `/` (the front page) | fixed 6 Oct |
-| M3 | "council areas", "boroughs" and "areas" used for the same 97; 13 or 14 city regions; Leicester vs Leicestershire; the front page meta says "English" and the body "England and Wales"; New York missing from the front page's coverage figure | open |
+| M3 | "council areas", "boroughs" and "areas" used for the same 97; 13 or 14 city regions; Leicester vs Leicestershire; the front page meta says "English" and the body "England and Wales"; New York missing from the front page's coverage figure | fixed 7 Oct (region names derived from the API: Leicester, Nottingham; the front page meta says UK and its figure counts New York, recounted from the data by tests/front-page.mjs; "13 or 14" is UK vs with New York, both right; "council areas / boroughs / areas" left as house style) |
 | M4 | (fixed 6 Oct: "UK city regions", "any UK postcode", residents' groups get area summaries) Small over-promises: the front page's "any postcode in the cities we cover" (Bay Area places are not scored); the street report's "any postcode we cover" (US ZIPs are refused); "free for residents' groups" on the street report | open |
 | M5 | Stale incident note on `/api/` ("updated 12 August 2026", "three separate reasons" then four headings, "is published in 2022") | fixed 6 Oct |
 | M6 | "Checked before it leaves" names price and crime checks for reports that contain neither | fixed 6 Oct |
 | M7 | Em dashes rendered by `/map/`'s JavaScript (eight cities' legend strings, the "led by price" note), `robots.txt`, the prototype's meta | fixed 6 Oct (map strings, robots.txt, prototype meta) |
-| M8 | Unexplained jargon (RoFRS, NaPTAN, NHS ODS, "ladder", persona); no "10 = best" key | open |
+| M8 | Unexplained jargon (RoFRS, NaPTAN, NHS ODS, "ladder", persona); no "10 = best" key | fixed 7 Oct (area and open-data pages spell out RoFRS, NaPTAN and NHS ODS and say what each measures; "ladder" gone from the area pages and /api/; "10 is best" on every area page) |
 | M9 | No og tags on `/reports/`, `/reports/street/`, `/open-data/`; no og:image on several pages; the sitemap omits `/terms` and `/changes` and includes `/prototype/`; `/bay-area/`'s title is 99 characters | fixed 6 Oct (og on /reports/, /reports/street/, /open-data/; sitemap gains /terms and /changes, drops /prototype/) |
 | M10 | `/privacy`: claims US-hosted fonts (self-hosted since August); "New York view only" for the US tiles (the Bay Area uses them); mentions an unpublished Android app; the copyright line names an individual where the operator is the company (deliberate until the IP deed is signed) | Bill |
 | M11 | The prototype, linked from `/score-demo/`, promises "live aircraft tracking" (removed in May) | fixed 6 Oct ("simulated flight tracks") |
 | M12 | Every Method link goes to the GitHub repository under its old name | after the rename |
-| M13 | Cardiff "not on the map yet" may never be kept (Wales has no Progress 8) | open |
+| M13 | Cardiff "not on the map yet" may never be kept (Wales has no Progress 8) | fixed 7 Oct (no "yet": area pages, the full map's panel and the front page card say "not on the map") |
 | M14 | Developer trust: the raw AWS API address everywhere; `api.skyscore.co.uk` does not resolve (a Cloudflare CNAME, Bill); the status page routes support to GitHub issues; `robots.txt` contradicts its own comment | partly Bill |
 | M15 | Firms are not told how to pay (councils are told "we invoice on order") | fixed 6 Oct ("paid by bank transfer before the report is sent") |
 

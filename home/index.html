@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sky Score: how loud are the planes where you want to live?</title>
-    <meta name="description" content="Type a postcode and get the official aircraft and road noise and air quality figures for that street, with the flight routes that pass it. Official public data for English city regions, New York and the San Francisco Bay Area." />
+    <meta name="description" content="Type a postcode and get the official aircraft and road noise and air quality figures for that street, with the flight routes that pass it. Official public data for UK city regions, New York and the San Francisco Bay Area." />
     <link rel="canonical" href="https://skyscore.co.uk/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Sky Score" />
@@ -191,6 +191,7 @@
       section.who p b { color: var(--dark); font-weight: 600; }
 
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+      footer .route-credit { flex-basis: 100%; order: 3; font-size: 12px; }
       footer a { color: var(--mid); }
 
       /* STACKED below 1280px and on short screens (audit 2026-10-05 I-4): from 761px
@@ -315,7 +316,7 @@
           <article class="card">
             <h3>Check an address</h3>
             <p>Aircraft and road noise, air quality and flood risk for any postcode in the UK city regions we cover, with the public body behind each figure.</p>
-            <div class="fig">97<small>council areas across England and Wales, and 50 Bay Area cities</small></div>
+            <div class="fig">97<small>council areas across England and Wales, New York's 5 boroughs and 50 Bay Area cities</small></div>
             <div class="go-row"><a class="go" href="#pc">Check a postcode</a><a class="also" href="/area/">Every council area</a></div>
           </article>
           <article class="card" id="reports">
@@ -341,6 +342,9 @@
 
     <footer>
       <span>All figures from official public data.</span>
+      <!-- The routes drawn above are the UK AIP's and the FAA's (2026-10-07). LICENSING.md: credit NATS wherever
+           UK routes are shown, and the FAA's CIFP terms ask for its "as is" disclaimer wherever its procedures are. -->
+      <span class="route-credit">Flight routes: UK Aeronautical Information Publication (NATS); in the US, the FAA's Coded Instrument Flight Procedures, supplied "as is", without warranty. Not for navigation.</span>
       <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
 

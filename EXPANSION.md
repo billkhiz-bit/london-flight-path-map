@@ -472,6 +472,38 @@ blocker it was: transport landed as v3.6 and healthcare as v3.7 on 2026-08-11.
 Breadth is now the reasonable next move - the ranked English city-regions above
 inherit all four inputs with no new integration.
 
+## Measured air quality, beside the modelled maps (researched 2026-10-07)
+
+Sky Score's air quality is DEFRA's PCM background maps: MODELLED, annual, 1 km. The
+question was which MEASURED sources could sit beside them, in the UK and the US, and
+whether their licences allow a free site, paid reports and a paid API. Every licence
+below was read on its publisher's own page on 2026-10-07; the two Breathe London rows
+were re-read independently the same day. Coverage counts are indicative (sites that
+reported in the last 14 days), not official.
+
+| Source | What it measures | Licence for our use | Verdict |
+|---|---|---|---|
+| **AURN** via UK-AIR (Defra) | Reference-grade NO2 and PM2.5, hourly, ratified quarterly; sites reporting in all ten English city regions | OGL: commercial use stated outright | **Use first** |
+| **Breathe London, the GLA's API** | 136 low-cost Airly sensors, NO2/PM2.5/O3, provisional | **OGL v3** ("All data made available through the API is licensed under the UK Open Government Licence v3.0"); the GLA approves keys; no implied endorsement | **Use, London only**, labelled low-cost and provisional |
+| Breathe London **Communities** (Imperial Projects) | Clarity sensors, NO2/PM2.5 | Non-commercial; commercial "with prior written approval from IPROJ"; no automated extraction | Written approval first |
+| LAQN (Imperial ERG) | London monitoring since 1993 | Its own pages contradict each other ("NOT for operational or commercial purposes"; no passing to third parties) | Written approval first |
+| Air Quality England (Ricardo) | Council networks | No data licence stated | Ask each council |
+| Newcastle Urban Observatory | NO2, PM2.5 and more since 2014 | CC BY 4.0 | **Use, Tyne and Wear** |
+| OpenAQ | Aggregator | Each source keeps its licence; the hosted API may not be used to "substantially duplicate or directly compete" with OpenAQ | Discovery only until OpenAQ confirms |
+| Sensor.Community | Low-cost PM only, no NO2 | Database licence unconfirmed | No |
+| PurpleAir | Low-cost PM | End users "non-commercial, non-public"; no resale; may not be combined with notice-requiring open data, which arguably includes OGL | **No** |
+| EPA AirNow | Live US monitors | Must be labelled preliminary; "should not be used to ... ascertain trends ... or support any other government or public decision-making"; 0 NO2 monitors in New York | Live display only |
+| **EPA AQS** | Validated US regulatory data, 6+ months behind | EPA Data License, public domain | **Use, US** (credit the state agencies) |
+| **NYCCAS** (NYC Health) | 300 m modelled NO2/PM2.5, the nearest US match to PCM | NYC Open Data: no restrictions; the Open Data copy stops at 2019, newer years are on NYC Health's portal | **Use, New York** (confirm the GitHub copy's licence) |
+| BAAQMD | 30+ Bay Area stations | "Permission to reproduce may be required" | Take the stations via AQS instead |
+
+**Order, if this is built:** (1) AURN, shown as "measured at <site>, N km away" beside the
+PCM figure, never replacing it; (2) EPA AQS annual means plus NYCCAS, which gives New York
+an air-quality figure for the first time; (3) the GLA's Breathe London API for London and
+the Urban Observatory for Tyne and Wear. A low-cost sensor is not a reference monitor, and
+the page must say which kind it is. Nothing here is scored: measured air quality would be a
+methodology change, decided on its own.
+
 ## What to do next, in order
 
 1. ~~Transport, from NaPTAN.~~ **DONE 2026-08-11 as methodology v3.6.** All 81

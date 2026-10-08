@@ -121,6 +121,8 @@ data/*
 # Every Bay Area line the front page draws (finals, departures, arrivals), from the same
 # derivation as the live map block, by scripts/build_bayarea_map_data.py (2026-10-07).
 !data/us-bayarea-routes.json
+# New York's front-page lines, from the same derivation, by scripts/build_nyc_front.py (2026-10-07).
+!data/us-nyc-routes.json
 # The tiers beneath a Bay Area city: San Francisco's neighbourhoods (DataSF, PDDL) and
 # the 165 ZIP areas (Census ZCTA), from scripts/build_bayarea_areas.py (--check is blocking).
 !data/us-sf-neighbourhoods.json

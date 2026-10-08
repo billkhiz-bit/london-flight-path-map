@@ -188,12 +188,31 @@
       footer a:hover {
         color: var(--dark);
       }
+      /* THE SITE BAR, as on the front page (website audit M1, 2026-10-07). Inside this page's own
+         <header>, so it adds no second banner landmark. Its colours are the page's (currentColor):
+         this page's scheme is not the front page's. Full map is an outlined button and a hover is an
+         underline, never a fill (Bill, 2026-10-06); tests/front-page.mjs 16c checks both here. */
+      .top { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin: 0 0 16px; }
+      .top a.brand { font-family: 'Geist', system-ui, sans-serif; font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-transform: none; text-decoration: none; color: inherit; }
+      nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+      nav.top-nav a { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; font-weight: 500; line-height: 1.5; letter-spacing: normal; text-transform: none; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: inherit; background: none; }
+      nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px currentColor; font-weight: 600; }
+      nav.top-nav a:hover { color: inherit; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
     </style>
   </head>
   <body>
     <div class="wrap">
       <header>
-        <a href="/">&larr; Sky Score</a>
+        <div class="top">
+          <a class="brand" href="/">Sky Score</a>
+          <nav class="top-nav" aria-label="Site">
+            <a class="nav-cta" href="/map/">Full map</a>
+            <a href="/reports/">Reports</a>
+            <a href="/pricing">Pricing</a>
+            <a href="/api/">API</a>
+            <a href="/open-data/">Open data</a>
+          </nav>
+        </div>
         <h1>Privacy Policy</h1>
         <p class="updated">Last updated: 2026-09-28 · Effective: 2026-05-09</p>
       </header>

@@ -67,22 +67,12 @@ SITE = 'https://skyscore.co.uk'
 # thinnest covered borough carries (score, four components, one price figure).
 MIN_FACTS = 6
 
-CITY_LABEL = {
-    'london': 'London',
-    'manchester': 'Greater Manchester',
-    'westmidlands': 'West Midlands',
-    'westyorkshire': 'West Yorkshire',
-    'southyorkshire': 'South Yorkshire',
-    'merseyside': 'Merseyside',
-    'tyneandwear': 'Tyne and Wear',
-    'bristol': 'Bristol',
-    'leicester': 'Leicestershire',
-    'teesside': 'Teesside',
-    'nottingham': 'Nottinghamshire',
-    'norwich': 'Greater Norwich',
-    'cardiff': 'Cardiff',
-    'nyc': 'New York City',
-}
+# Each city region's name is the API's (app.CITIES[...]['name']), the one the map and
+# /v1/score already use. This was a second hand-written list until 2026-10-07, and two of
+# its fourteen had drifted (website audit M3): 'Leicestershire' where everything else says
+# Leicester, and 'Nottinghamshire', which claimed the whole county for a region that is the
+# City of Nottingham with Broxtowe, Gedling and Rushcliffe, four of its eight authorities.
+CITY_LABEL = {key: city['name'] for key, city in app.CITIES.items()}
 
 
 def slug(text: str) -> str:
@@ -311,8 +301,8 @@ def gather(city: str, borough: str) -> dict | None:
     # Derived from the engine's own contour status so a city describes itself.
     contour = app._defra_contour_status(city) if uk else None
     aircraft_note = {
-        'mapped': 'Estimated from airport geometry, ladder scaled by the DEFRA Round 4 footprint',
-        'unmapped': 'Estimated from airport geometry; DEFRA Round 4 does not map this airport',
+        'mapped': "Estimated from the distance to the airport and its routes, scaled by the size of its DEFRA noise map",
+        'unmapped': "Estimated from the distance to the airport and its routes; DEFRA's noise maps do not cover this airport",
         'none': 'No commercial airport in this city region',
     }.get(contour)
     add('Aircraft noise band', (ctx.get('noiseImpactBand') or '').title() or None,
@@ -324,9 +314,11 @@ def gather(city: str, borough: str) -> dict | None:
         ('p8', 'Progress 8', 'DfE KS4 2023/24 revised, 0.0 is the national average'),
         ('roadNoise', 'Road noise', 'DEFRA road Lden, share of addresses over WHO 53 dB'),
         ('airQuality', 'Air quality', 'DEFRA background maps against WHO 2021'),
-        ('flood', 'Flood risk', 'Environment Agency RoFRS, risk after defences'),
-        ('transport', 'Transport access', 'NaPTAN, share of postcodes within 800 m of a station'),
-        ('healthcare', 'Healthcare access', 'NHS ODS'),
+        # Spelled out since 2026-10-07 (website audit M8): RoFRS, NaPTAN and ODS meant
+        # nothing to a reader, and "NHS ODS" did not say what was measured at all.
+        ('flood', 'Flood risk', 'Environment Agency, Risk of Flooding from Rivers and Sea, allowing for defences'),
+        ('transport', 'Transport access', "The national stop register (NaPTAN), share of postcodes within 800 m of a station"),
+        ('healthcare', 'Healthcare access', 'NHS Organisation Data Service, share of postcodes within 500 m of a GP practice'),
     ):
         raw = merged.get(key)
         if raw in (None, ''):
@@ -427,7 +419,7 @@ PAGE = """<!doctype html>
 <h1>{borough} noise and liveability</h1>
 <p class="sub">{city_label}. {topics_cap}, from published sources.</p>
 
-<div class="headline"><span class="n">{score}</span><span class="of">Sky Score out of 10</span></div>
+<div class="headline"><span class="n">{score}</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
 
 <div class="tw">
 <table>
@@ -508,8 +500,8 @@ def render(data: dict) -> str:
     if data['city'] in backend_only_cities():
         cta = (
             '<div class="cta">\n'
-            f'  <p style="margin:0 0 8px;"><strong>Not on the map yet.</strong> {e(city_label)} is a preview: '
-            'these borough figures are published, but the interactive map does not cover it yet.</p>\n'
+            f'  <p style="margin:0 0 8px;"><strong>Not on the map.</strong> {e(city_label)} is not on the '
+            'interactive map: these borough figures are published here and through the API.</p>\n'
             '  <a href="/area/">See every area Sky Score covers</a>\n'
             '</div>'
         )
@@ -802,7 +794,7 @@ OPEN_DATA_COLUMNS = [
     ('borough', 'Borough or district, as Sky Score names it'),
     ('ons_code', 'ONS local authority code, for joining to other datasets'),
     ('coverage', '"map and API", or "API preview" for areas not yet on the map'),
-    ('score', 'Sky Score, 0-10, balanced persona'),
+    ('score', 'Sky Score, 0-10 (10 is best), with the balanced weighting'),
     ('quiet', 'Quiet skies component, 0-10 (higher is quieter)'),
     ('afford', 'Affordability component, 0-10, national log scale'),
     ('growth', 'Price growth component, 0-10, real terms'),
@@ -814,14 +806,14 @@ OPEN_DATA_COLUMNS = [
     ('crime_per_1000', 'Recorded offences excluding fraud per 1,000 residents, ONS Table C4'),
     ('progress8', 'DfE Progress 8, 2023/24 (England only; blank where not published)'),
     ('rail_within_800m_pct', 'Share of postcodes within 800 m of a rail, metro or tram stop (NaPTAN), %'),
-    ('healthcare_within_500m_pct', 'Share of postcodes within 500 m of a GP practice (NHS ODS), %'),
+    ('healthcare_within_500m_pct', 'Share of postcodes within 500 m of a GP practice (NHS Organisation Data Service), %'),
     ('air_quality_who_ratio', 'Worse of NO2 and PM2.5 as a multiple of the WHO 2021 guideline (DEFRA)'),
     # Added 2026-09-29: journalists and researchers recognise the pollutants, not our ratio.
     # Blank for the API-preview areas, whose borough averages are derived but not yet held.
     ('no2_ugm3', 'Nitrogen dioxide, borough average of the DEFRA background annual mean, ug/m3 (WHO guideline 10; blank for API-preview areas)'),
     ('pm25_ugm3', 'Fine particles (PM2.5), borough average of the DEFRA background annual mean, ug/m3 (WHO guideline 5; blank for API-preview areas)'),
     ('road_noise_above_who_pct', 'Share of postcodes above the WHO 53 dB Lden road guideline (DEFRA Round 4), %'),
-    ('flood_medium_or_high_pct', 'Share of postcodes at Medium or High flood risk (Environment Agency RoFRS), %'),
+    ('flood_medium_or_high_pct', 'Share of postcodes at Medium or High flood risk (Environment Agency, Risk of Flooding from Rivers and Sea), %'),
     ('methodology_version', 'Sky Score methodology version the scores were computed under'),
     ('price_vintage', 'UK House Price Index month the prices are from'),
 ]

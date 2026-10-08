@@ -228,7 +228,7 @@ for (const vp of VIEWPORTS) {
   const n = await search(vp, 'NR2 1NE');
   checks++;
   const nOk =
-    n.title === 'NOT ON THE MAP YET' &&
+    n.title === 'NOT ON THE MAP' &&
     n.titleShown &&
     n.messageShown &&
     /Norwich/.test(n.text) &&

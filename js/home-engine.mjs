@@ -39,6 +39,29 @@ const CITY_NAME = Object.fromEntries(CITIES);
 // once opened a map that could not load (audit 2026-10-05 M-6).
 const isMapCity = (k) => Object.hasOwn(CITY_NAME, k);
 
+// ---- engagement: the first thing a visitor DOES (ROADMAP 3b, 2026-10-07) ----
+// GoatCounter has no bounce rate, and "more interactive, fewer bounces" (Bill, 6 Oct) cannot be
+// judged without one. So the front page counts `front-engaged` ONCE per page view, at the first
+// action a visitor takes, and each way in once (`front-search`, `front-example`, `front-city`,
+// `front-explore`, `front-map`): engaged views over views of / is the measure. Only a person's
+// actions count; a deep link runs search() at boot and is never engagement, so the calls sit
+// on the controls, not in search(). Like every page count, no cookie and no identifier
+// (privacy s2c). A way is recorded only once GoatCounter has taken it, and analytics must
+// never break the page (the full map's trackEvent lesson, 2026-08-24).
+const engagedWays = new Set();
+function engaged(way) {
+  if (engagedWays.has(way)) return;
+  try {
+    const gc = window.goatcounter;
+    if (!gc || typeof gc.count !== 'function') return;
+    if (engagedWays.size === 0) gc.count({ path: 'event/front-engaged', title: 'front-engaged', event: true });
+    gc.count({ path: `event/front-${way}`, title: `front-${way}`, event: true });
+    engagedWays.add(way);
+  } catch {
+    /* never break the page for analytics */
+  }
+}
+
 // ---- ask first, then the tool (Bill, 2026-10-05) ----
 // The page opens as v3 (the question over a faded map) and becomes v2 (the tool)
 // the first time someone uses it. One way in, one way out: leaveIntro().
@@ -77,7 +100,9 @@ const US = {
   // the map's own outlines, the FAA's routes for JFK, LaGuardia, Newark and Teterboro, and
   // scripts/build_nyc_front.py's file - the US noise picture's frame and one row per borough
   // from the score engine, in the open-data CSV's row shape.
-  nyc: { data: '/data/us-nyc.json', outlines: '/data/nyc-boroughs.json', proc: '/data/us-flight-procedures.json' },
+  // Its lines from data/us-nyc-routes.json since 2026-10-07: the Bay Area's derivation, run for
+  // JFK, LaGuardia, Newark and Teterboro (scripts/build_nyc_front.py), arrivals included.
+  nyc: { data: '/data/us-nyc.json', outlines: '/data/nyc-boroughs.json', proc: '/data/us-flight-procedures.json', routes: '/data/us-nyc-routes.json' },
 };
 const isUs = (key) => Object.hasOwn(US, key);
 // London's picture is the one file not described by aircraft-noise-rasters.json.
@@ -142,6 +167,7 @@ const state = {
 // question and is scrolled into view. Focus lands on the first council area either way,
 // so a keyboard user arrives where they asked to go.
 byId('explore-map')?.addEventListener('click', () => {
+  engaged('explore');
   leaveIntro();
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.querySelector('.mapwrap')?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
@@ -215,7 +241,7 @@ function renderChips() {
   for (const [key, name] of CITIES) {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = name; b.dataset.city = key; b.setAttribute('aria-pressed', 'false');
-    b.addEventListener('click', () => { leaveIntro(); show(key); setQuery({ city: key }); });
+    b.addEventListener('click', () => { engaged('city'); leaveIntro(); show(key); setQuery({ city: key }); });
     box.append(b);
   }
 }
@@ -278,11 +304,14 @@ function frameBox(frame) {
 }
 
 async function loadNyc() {
-  const [doc, proc, outlines] = await Promise.all([
-    state.nycDoc || d3.json(US.nyc.data).catch(() => null), d3.json(US.nyc.proc), d3.json(US.nyc.outlines),
+  const [doc, proc, outlines, routes] = await Promise.all([
+    state.nycDoc || d3.json(US.nyc.data).catch(() => null), d3.json(US.nyc.proc), d3.json(US.nyc.outlines), d3.json(US.nyc.routes),
   ]);
   state.nycDoc = doc;
   state.usProc = proc;
+  // Replaces the Bay Area's, which may still be held from an earlier switch: drawRoutes()
+  // reads state.usRoutes for whichever US city is on screen.
+  state.usRoutes = routes;
   state.nycNoise = doc ? { png: `/data/${doc.noise.file}`, bbox: frameBox(doc.frame) } : null;
   return outlines;
 }
@@ -386,10 +415,11 @@ function draw(pin) {
       showTipAt(x, y, boroughTipHtml(d));
     })
     .on('blur', hideTip)
-    .on('click', (ev, d) => selectBorough(featureName(d), { scroll: true }))
+    .on('click', (ev, d) => { engaged('map'); selectBorough(featureName(d), { scroll: true }); })
     .on('keydown', (ev, d) => {
       if (ev.key !== 'Enter' && ev.key !== ' ') return;
       ev.preventDefault();
+      engaged('map');
       selectBorough(featureName(d), { scroll: true, focus: true });
     });
 
@@ -409,9 +439,9 @@ function draw(pin) {
   state.routes = [];
   const marks = view.append('g').attr('class', 'marks').style('pointer-events', 'none');
   const proc = isUs(state.city) ? state.usProc : state.proc;
-  // The Bay Area's lines come from its generated routes file (see US above); the
+  // A US city's lines come from its generated routes file (see US above); the
   // airports' marks still come from the FAA record below.
-  const fromFile = state.city === 'bayarea' ? state.usRoutes?.routes : null;
+  const fromFile = isUs(state.city) ? state.usRoutes?.routes : null;
   let drawn = 0;
   for (const [code, ap] of Object.entries(proc.airports)) {
     if (!(ap.cities || []).includes(state.city)) continue;
@@ -799,7 +829,7 @@ function boroughCardHtml(row, f) {
   ].filter(Boolean).join(' &middot; ');
   return `${closeButton}
     <h2 tabindex="-1">${esc(row.borough)}</h2>
-    <p class="where">${row.city === 'nyc' ? 'Borough of' : 'Council area in'} ${esc(cityName)}${onMap ? '' : '. Not on the map yet: figures only'}.</p>
+    <p class="where">${row.city === 'nyc' ? 'Borough of' : 'Council area in'} ${esc(cityName)}${onMap ? '' : '. Not on the map: figures only'}.</p>
     ${score == null ? '<p class="score"><span>Not scored: too few inputs</span></p>' : `<p class="score"><strong>${score}</strong><span>Sky Score out of 10, balanced weighting, method ${esc(row.methodology_version)}</span></p>`}
     <div class="rows">${bars}</div>
     <dl class="facts">${facts}</dl>
@@ -913,8 +943,15 @@ const form = byId('check');
 const status = byId('status');
 const answer = byId('answer');
 const say = (s) => { if (status) status.textContent = s; };
-document.querySelectorAll('.try button').forEach((b) => b.addEventListener('click', () => { const i = byId('pc'); if (i) i.value = b.dataset.pc; form?.requestSubmit(); }));
-form?.addEventListener('submit', (ev) => { ev.preventDefault(); search(byId('pc')?.value || ''); });
+// An example is its own way in, not also a typed search: the flag tells the submit handler.
+let viaExample = false;
+document.querySelectorAll('.try button').forEach((b) => b.addEventListener('click', () => { const i = byId('pc'); if (i) i.value = b.dataset.pc; viaExample = true; form?.requestSubmit(); }));
+form?.addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  engaged(viaExample ? 'example' : 'search');
+  viaExample = false;
+  search(byId('pc')?.value || '');
+});
 
 async function search(raw) {
   const text = raw.trim();

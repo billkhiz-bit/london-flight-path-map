@@ -7,14 +7,14 @@ cardiff,Cardiff,Caerphilly,W06000018,API preview,8.2,10.0,8.6,5.9,5.7,,197272,4.
 cardiff,Cardiff,Cardiff,W06000015,API preview,7.4,10.0,6.4,4.9,5.4,,272252,2.7,-0.4,93.8,,,,1.22,,,,,5.5,July 2026
 cardiff,Cardiff,Newport,W06000022,API preview,7.4,10.0,7.6,4.8,4.2,,229200,2.0,-1.1,109.4,,,,1.19,,,,,5.5,July 2026
 cardiff,Cardiff,Vale of Glamorgan,W06000014,API preview,5.7,5.0,5.7,7.4,6.4,,303112,6.2,3.0,60.8,,,,1.01,,,,,5.5,July 2026
-leicester,Leicestershire,Blaby,E07000129,map and API,7.5,10.0,6.0,4.7,5.7,7.8,289282,1.9,-1.2,59.2,,6.4,30.6,1.47,10.1,7.4,40.7,0.56,5.5,July 2026
-leicester,Leicestershire,Charnwood,E07000130,map and API,6.7,7.5,6.4,4.8,5.4,7.8,273945,2.3,-0.8,67.9,,19.4,35.1,1.45,9.9,7.3,31.4,2.06,5.5,July 2026
-leicester,Leicestershire,Harborough,E07000131,map and API,7.3,10.0,4.8,9.1,6.0,8.3,347010,8.5,5.2,44.4,,8.5,21.4,1.35,6.8,6.8,33.9,0.08,5.5,July 2026
-leicester,Leicestershire,Hinckley and Bosworth,E07000132,map and API,7.7,10.0,6.7,4.7,5.7,8.1,260187,1.7,-1.4,59.5,,10.5,29.9,1.41,8.4,7.1,36.1,0.04,5.5,July 2026
-leicester,Leicestershire,Leicester,E06000016,map and API,7.6,10.0,7.6,4.2,4.9,7.6,227322,-0.9,-3.9,110.0,0.1,12.0,60.3,1.58,14.4,7.9,35.5,1.34,5.5,July 2026
-leicester,Leicestershire,Melton,E07000133,map and API,7.6,10.0,6.2,4.7,5.8,8.0,282521,1.5,-1.6,56.8,,14.1,15.7,1.3,5.8,6.5,39.6,0.64,5.5,July 2026
-leicester,Leicestershire,North West Leicestershire,E07000134,map and API,6.0,5.0,6.2,5.1,5.7,8.1,280530,3.2,0.1,59.2,,0.0,18.7,1.37,7.5,6.8,33.0,0.79,5.5,July 2026
-leicester,Leicestershire,Oadby and Wigston,E07000135,map and API,7.8,10.0,7.0,3.5,5.9,8.3,251253,-4.2,-7.1,53.6,,11.3,30.5,1.45,9.8,7.3,28.5,0.25,5.5,July 2026
+leicester,Leicester,Blaby,E07000129,map and API,7.5,10.0,6.0,4.7,5.7,7.8,289282,1.9,-1.2,59.2,,6.4,30.6,1.47,10.1,7.4,40.7,0.56,5.5,July 2026
+leicester,Leicester,Charnwood,E07000130,map and API,6.7,7.5,6.4,4.8,5.4,7.8,273945,2.3,-0.8,67.9,,19.4,35.1,1.45,9.9,7.3,31.4,2.06,5.5,July 2026
+leicester,Leicester,Harborough,E07000131,map and API,7.3,10.0,4.8,9.1,6.0,8.3,347010,8.5,5.2,44.4,,8.5,21.4,1.35,6.8,6.8,33.9,0.08,5.5,July 2026
+leicester,Leicester,Hinckley and Bosworth,E07000132,map and API,7.7,10.0,6.7,4.7,5.7,8.1,260187,1.7,-1.4,59.5,,10.5,29.9,1.41,8.4,7.1,36.1,0.04,5.5,July 2026
+leicester,Leicester,Leicester,E06000016,map and API,7.6,10.0,7.6,4.2,4.9,7.6,227322,-0.9,-3.9,110.0,0.1,12.0,60.3,1.58,14.4,7.9,35.5,1.34,5.5,July 2026
+leicester,Leicester,Melton,E07000133,map and API,7.6,10.0,6.2,4.7,5.8,8.0,282521,1.5,-1.6,56.8,,14.1,15.7,1.3,5.8,6.5,39.6,0.64,5.5,July 2026
+leicester,Leicester,North West Leicestershire,E07000134,map and API,6.0,5.0,6.2,5.1,5.7,8.1,280530,3.2,0.1,59.2,,0.0,18.7,1.37,7.5,6.8,33.0,0.79,5.5,July 2026
+leicester,Leicester,Oadby and Wigston,E07000135,map and API,7.8,10.0,7.0,3.5,5.9,8.3,251253,-4.2,-7.1,53.6,,11.3,30.5,1.45,9.8,7.3,28.5,0.25,5.5,July 2026
 london,London,Barking and Dagenham,E09000002,map and API,7.0,10.0,4.3,6.7,6.5,6.5,375604,5.3,2.1,84.2,0.24,48.3,75.8,1.83,16.9,9.1,60.4,0.9,5.5,July 2026
 london,London,Barnet,E09000003,map and API,5.8,7.5,1.2,3.3,7.9,6.8,600560,-4.9,-7.8,67.8,0.61,59.9,56.0,1.7,15.3,8.5,56.2,0.73,5.5,July 2026
 london,London,Bexley,E09000004,map and API,6.8,10.0,3.7,4.8,6.2,7.0,413343,2.0,-1.1,60.2,-0.02,44.8,52.9,1.7,14.3,8.5,53.5,0.55,5.5,July 2026
@@ -66,10 +66,10 @@ merseyside,Merseyside,Wirral,E08000015,map and API,7.9,10.0,7.8,7.8,5.4,7.8,2218
 norwich,Greater Norwich,Broadland,E07000144,API preview,5.2,3.0,5.5,5.0,6.0,8.2,313407,2.9,-0.2,34.8,,,,1.42,,,29.5,0.62,5.5,July 2026
 norwich,Greater Norwich,Norwich,E07000148,API preview,6.0,5.0,7.7,3.9,4.6,7.5,224323,-2.3,-5.2,108.9,,,,1.49,,,48.9,0.43,5.5,July 2026
 norwich,Greater Norwich,South Norfolk,E07000149,API preview,7.4,10.0,5.5,4.7,6.0,8.1,311587,1.5,-1.6,41.7,,,,1.38,,,34.1,0.56,5.5,July 2026
-nottingham,Nottinghamshire,Broxtowe,E07000172,API preview,6.4,7.5,6.9,4.2,4.0,7.8,253021,-0.8,-3.8,,,,,1.48,,,36.9,0.75,5.5,July 2026
-nottingham,Nottinghamshire,City of Nottingham,E06000018,API preview,7.8,10.0,8.8,4.1,4.5,7.0,190200,-1.3,-4.3,124.9,-0.25,,,1.54,,,43.0,3.47,5.5,July 2026
-nottingham,Nottinghamshire,Gedling,E07000173,API preview,6.9,10.0,7.2,4.5,2.6,7.8,241473,0.9,-2.1,,,,,1.48,,,28.4,2.44,5.5,July 2026
-nottingham,Nottinghamshire,Rushcliffe,E07000176,API preview,4.9,5.0,5.3,4.0,2.6,8.3,324012,-1.5,-4.5,,,,,1.37,,,28.7,0.58,5.5,July 2026
+nottingham,Nottingham,Broxtowe,E07000172,API preview,6.4,7.5,6.9,4.2,4.0,7.8,253021,-0.8,-3.8,,,,,1.48,,,36.9,0.75,5.5,July 2026
+nottingham,Nottingham,City of Nottingham,E06000018,API preview,7.8,10.0,8.8,4.1,4.5,7.0,190200,-1.3,-4.3,124.9,-0.25,,,1.54,,,43.0,3.47,5.5,July 2026
+nottingham,Nottingham,Gedling,E07000173,API preview,6.9,10.0,7.2,4.5,2.6,7.8,241473,0.9,-2.1,,,,,1.48,,,28.4,2.44,5.5,July 2026
+nottingham,Nottingham,Rushcliffe,E07000176,API preview,4.9,5.0,5.3,4.0,2.6,8.3,324012,-1.5,-4.5,,,,,1.37,,,28.7,0.58,5.5,July 2026
 southyorkshire,South Yorkshire,Barnsley,E08000038,map and API,7.9,10.0,9.3,5.3,4.2,7.7,175733,3.5,0.4,95.1,-0.32,20.1,34.9,1.41,8.6,7.0,44.1,0.93,5.5,July 2026
 southyorkshire,South Yorkshire,Doncaster,E08000017,map and API,7.8,10.0,9.5,6.3,4.3,6.4,172305,4.7,1.6,117.3,0.0,14.1,32.4,1.47,9.1,7.4,38.9,7.49,5.5,July 2026
 southyorkshire,South Yorkshire,Rotherham,E08000018,map and API,7.8,10.0,8.8,4.7,4.5,7.6,191496,1.7,-1.4,93.1,-0.18,9.6,35.9,1.5,10.8,7.5,41.0,1.11,5.5,July 2026

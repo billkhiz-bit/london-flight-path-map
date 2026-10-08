@@ -208,7 +208,7 @@ check(
 // carries, while the data sat in the file under the other name. The alias is
 // declared in four other places.
 const UK_BODIES =
-  /ONS Table|HM Land Registry|DEFRA|Environment Agency|NaPTAN|NHS ODS|DfE KS4/i;
+  /ONS Table|HM Land Registry|DEFRA|Environment Agency|NaPTAN|NHS ODS|NHS Organisation Data Service|DfE KS4/i;
 const NON_UK_PREFIXES = ['/area/nyc/'];
 
 const ukCredited = pages.filter(

@@ -37,8 +37,16 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 sys.path.insert(0, str(ROOT / 'backend' / 'lambdas' / 'score'))
 
 import build_bay_area_page as bay  # noqa: E402  (shares the frame and picture code)
+import build_bayarea_map_data as mapdata  # noqa: E402  (the route records, one derivation for both US cities)
 
 OUT = ROOT / 'data' / 'us-nyc.json'
+# New York's front-page lines (2026-10-07): finals, departures cut at 30 km and the coded
+# arrivals, from the SAME functions the Bay Area's routes file and the /bay-area/ page use
+# (bay.routes, bay.arrival_routes, mapdata.route_records). The front page drew New York's
+# finals and departures from the raw FAA record, whole, and no arrivals at all.
+ROUTES_OUT = ROOT / 'data' / 'us-nyc-routes.json'
+NYC_AIRPORTS = ('JFK', 'LGA', 'EWR', 'TEB')
+NYC_AIRPORT_NAMES = {'JFK': 'JFK', 'LGA': 'LaGuardia', 'EWR': 'Newark', 'TEB': 'Teterboro'}
 PICTURE = ROOT / 'data' / 'aircraft-noise-nyc-laeq.png'
 OUTLINES = ROOT / 'data' / 'nyc-boroughs.json'
 PAD_DEG = 0.02  # the picture is clipped to the boroughs' outline on the map
@@ -133,6 +141,22 @@ def document(picture_sha: str) -> dict:
     }
 
 
+def routes_text() -> tuple[str, list[dict]]:
+    """data/us-nyc-routes.json's text, and its records (for the counts printed)."""
+    record = json.loads(mapdata.RECORD.read_text(encoding='utf-8'))
+    approaches, departures, _ = bay.routes(record, NYC_AIRPORTS)
+    arrivals = bay.arrival_routes(record, NYC_AIRPORTS)
+    records = mapdata.route_records({'approaches': approaches, 'departures': departures, 'arrivals': arrivals}, record)
+    doc = mapdata.routes_doc(
+        records,
+        record,
+        NYC_AIRPORTS,
+        NYC_AIRPORT_NAMES,
+        'scripts/build_nyc_front.py --write; the same derivation as data/us-bayarea-routes.json',
+    )
+    return mapdata.render(doc), records
+
+
 def dump(doc: dict) -> str:
     return json.dumps(doc, indent=1, ensure_ascii=False) + '\n'
 
@@ -157,6 +181,10 @@ def main() -> int:
         doc = document(hashlib.sha256(PICTURE.read_bytes()).hexdigest())
         OUT.write_text(dump(doc), encoding='utf-8', newline='\n')
         print(f'wrote {OUT.name}: {len(doc["rows"])} boroughs, frame {doc["frame"]["px"]}')
+        text, records = routes_text()
+        ROUTES_OUT.write_text(text, encoding='utf-8', newline='\n')
+        kinds = {k: sum(r['kind'] == k for r in records) for k in ('final', 'departure', 'arrival')}
+        print(f'wrote {ROUTES_OUT.name}: {kinds}')
         return 0
 
     # --check: the file is what the engine and the picture say, byte for byte.
@@ -173,11 +201,19 @@ def main() -> int:
                 print(f'  differs: {b}: file {old.get(b, {}).get("score")} vs engine {new.get(b, {}).get("score")}')
         print(f'FAIL: {OUT.name} is stale against the engine or the picture; run --write')
         return 1
+    text, records = routes_text()
+    if not ROUTES_OUT.exists() or ROUTES_OUT.read_text(encoding='utf-8') != text:
+        print(f'FAIL: {ROUTES_OUT.name} is stale against the FAA record; run --write')
+        return 1
+    if not any(r['kind'] == 'arrival' for r in records):
+        print(f'FAIL: {ROUTES_OUT.name} holds no arrival: the derivation found nothing to draw')
+        return 1
     n = len(json.loads(have)['rows'])
     if n < 5:
         print(f'FAIL: {n} boroughs, expected all five')
         return 1
-    print(f'ok: {OUT.name} matches the engine for {n} boroughs, and {PICTURE.name} is the picture it names')
+    print(f'ok: {OUT.name} matches the engine for {n} boroughs, {PICTURE.name} is the picture it names, '
+          f'and {ROUTES_OUT.name} is a fresh derivation ({len(records)} routes)')
     return 0
 
 

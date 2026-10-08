@@ -278,23 +278,28 @@ def site_block(routes, record):
     return '\n'.join(out)
 
 
-def routes_doc(routes, record):
-    """data/us-bayarea-routes.json: the same records as the live map's block, for the front page."""
+def routes_doc(routes, record, airports=None, names=None, generator=None):
+    """A front-page routes file: the same records as the live map's block (the Bay Area's by default).
+
+    scripts/build_nyc_front.py passes New York's airports, names and generator line.
+    """
+    airports = airports or page.AIRPORTS
+    names = names or page.AIRPORT_NAMES
     keep = ('kind', 'airport', 'name', 'runway', 'glide_deg', 'bearing', 'procedure', 'via')
     return {
         'source': f'FAA CIFP cycle {record["cycle"]}, effective {record["effective"]}',
         'cycle': record['cycle'],
-        'generator': 'scripts/build_bayarea_map_data.py --write; the live map draws the same lines (BAYAREA-MAP)',
+        'generator': generator or 'scripts/build_bayarea_map_data.py --write; the live map draws the same lines (BAYAREA-MAP)',
         'airports': [
             {
                 'code': code,
-                'name': page.AIRPORT_NAMES[code],
+                'name': names[code],
                 'ref': [
                     float(f'{record["airports"][code]["ref"][1]:.4f}'),
                     float(f'{record["airports"][code]["ref"][0]:.4f}'),
                 ],
             }
-            for code in page.AIRPORTS
+            for code in airports
         ],
         'routes': [{**{k: r[k] for k in keep if k in r}, 'coordinates': lonlat_points(r['line'])} for r in routes],
     }

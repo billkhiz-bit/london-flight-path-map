@@ -28,6 +28,7 @@ import { readFile, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { extname, join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { stubLiveApi } from './stub-live-api.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 8941;
@@ -565,7 +566,7 @@ ok((await page.locator('#map .pin').count()) === 0 && (await cardOpen().count())
 await page.fill('#pc', 'Cardiff');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Cardiff', null, { timeout: 10000 });
-ok(/Not on the map yet/.test(await page.locator('#borough .where').textContent()), 'an API-only council area shows its figures and says it is not on the map');
+ok(/Not on the map: figures only/.test(await page.locator('#borough .where').textContent()), 'an API-only council area shows its figures and says it is not on the map');
 // The air-quality ratio is the WORSE of NO2 and fine particles, so the card must not print it as NO2's.
 // Cardiff holds the ratio and neither concentration; City of Bristol holds both.
 const airFact = () => page.locator('#borough .facts div', { has: page.locator('dt', { hasText: 'Air quality' }) }).locator('dd').textContent();
@@ -608,6 +609,25 @@ ok(true, 'a city name switches the map');
     "New York draws its five boroughs, the FAA's final approaches for JFK, LaGuardia, Newark and Teterboro, and the US DOT's noise picture",
     JSON.stringify(nycMap)
   );
+  // New York's lines are its GENERATED routes file's too (2026-10-07), the Bay Area's derivation run
+  // for its four airports. Reached here straight after the Bay Area, so a New York that kept the Bay
+  // Area's file (state.usRoutes is shared) draws the wrong counts and fails.
+  {
+    const file = JSON.parse(await readFile(join(ROOT, 'data', 'us-nyc-routes.json'), 'utf8'));
+    const want = { final: 0, departure: 0, arrival: 0 };
+    for (const r of file.routes) want[r.kind]++;
+    const got = await page.evaluate(() => ({
+      final: document.querySelectorAll('#map .lines path.final').length,
+      departure: document.querySelectorAll('#map .lines path.departure').length,
+      arrival: document.querySelectorAll('#map .lines path.arrival').length,
+      rawFinals: document.querySelectorAll('#map .lines line.final').length,
+    }));
+    ok(
+      want.arrival > 0 && got.final === want.final && got.departure === want.departure && got.arrival === want.arrival && got.rawFinals === 0,
+      'New York draws every route in data/us-nyc-routes.json, arrivals included, and none from the raw FAA record',
+      JSON.stringify({ want, got })
+    );
+  }
   ok(JSON.stringify(await rampHex()) === JSON.stringify(BTS), "New York's legend ramp is the US DOT's seven colours, the picture it sits over", (await rampHex()).join(' '));
   await page.fill('#pc', 'Brooklyn');
   await page.press('#pc', 'Enter');
@@ -655,7 +675,7 @@ ok((await page.locator('#borough h2').textContent()) === 'Trafford' && (await bo
 await page.goto(`${BASE}?city=manchester&borough=Camden`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#borough.is-open', { timeout: 20000 });
 const mismatchWhere = await page.locator('#borough .where').textContent();
-ok((await boroCount()) === 33 && !/Not on the map yet/.test(mismatchWhere), 'a council area in the URL opens on its own city, whatever ?city= says', `${await boroCount()} areas drawn; "${mismatchWhere}"`);
+ok((await boroCount()) === 33 && !/Not on the map/.test(mismatchWhere), 'a council area in the URL opens on its own city, whatever ?city= says', `${await boroCount()} areas drawn; "${mismatchWhere}"`);
 await page.goto(`${BASE}?postcode=TW9+3PZ`, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('#answer.is-open', { timeout: 20000 });
 ok((await page.locator('#ans-title').textContent()) === 'TW9 3PZ' && (await page.inputValue('#pc')) === 'TW9 3PZ', '?postcode= runs the search on load');
@@ -848,6 +868,26 @@ const footReports = await page.locator('footer a').evaluateAll((as) => as.map((a
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
 await waitMap();
 const frontText = await page.locator('body').textContent();
+// The front page draws the UK AIP's routes and the FAA's (2026-10-07): it credits NATS, as LICENSING.md
+// asks wherever UK routes are shown, and carries the FAA's "as is" disclaimer, as its CIFP terms ask.
+{
+  const credit = (await page.locator('footer .route-credit').textContent().catch(() => '')) || '';
+  ok(/Aeronautical Information Publication \(NATS\)/.test(credit) && /"as is", without warranty/.test(credit) && /Not for navigation/.test(credit),
+    `the front page credits the UK AIP (NATS) and carries the FAA's "as is" disclaimer for the routes it draws`, credit);
+}
+// THE COVERAGE FIGURE IS THE DATA'S (website audit M3, 2026-10-07: New York was missing from it).
+// Each number is recounted from the file it describes: the open-data CSV's UK rows, New York's
+// front-page rows, the Bay Area's places. A count written once is scheduled staleness.
+{
+  const csvRows = (await readFile(join(ROOT, 'open-data', 'sky-score-boroughs.csv'), 'utf8')).trim().split(/\r?\n/).length - 1;
+  const nycRows = JSON.parse(await readFile(join(ROOT, 'data', 'us-nyc.json'), 'utf8')).rows.length;
+  // The 50 INCORPORATED places (43 cities, 7 towns): the file also holds 28 census-designated
+  // places, unincorporated, which are outlines on the map and never 'cities'.
+  const bayPlaces = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-places.json'), 'utf8')).places.filter((x) => x.kind === 'city' || x.kind === 'town').length;
+  const want = `${csvRows}council areas across England and Wales, New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities`;
+  const fig = (await page.locator('.cards .fig').first().textContent()).trim();
+  ok(fig === want, 'the coverage figure is recounted from the data: UK council areas, New York boroughs, Bay Area cities', `page "${fig}" vs data "${want}"`);
+}
 const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
 ok(!/£35/.test(frontText) && frontLinks.includes('/pricing#reports'), 'the front page links to the report prices and does not repeat them');
 ok(frontLinks.includes('/reports/street/'), 'the front page links to the free street report');
@@ -941,6 +981,10 @@ ok(
 // carries it: Pricing is in it; Full map is an OUTLINED button, never a filled block; the page you are
 // on is an underline, never a filled box, and only that page is marked. Read from computed style, so a
 // rule that stops applying fails here even with the markup unchanged.
+// /score-demo/status.html probes the live API on load. This run already aborts every request
+// off 127.0.0.1, but the demo-key guard (tests/test_demo_key_spenders.py) asks every gate that
+// loads it to answer those calls through the shared stub, and to prove the stub fired.
+const statusStub = await stubLiveApi(page);
 for (const [path, here] of [
   ['/', null],
   ['/reports/', '/reports/'],
@@ -948,6 +992,14 @@ for (const [path, here] of [
   ['/api/', '/api/'],
   ['/open-data/', '/open-data/'],
   ['/area/london/camden/', null],
+  // The six that had none until 2026-10-07 (website audit M1). Three are dark pages, so the bar
+  // takes the page's colours; the rules checked are the same.
+  ['/privacy', null],
+  ['/terms', null],
+  ['/changes', null],
+  ['/talks/', null],
+  ['/score-demo/api-docs.html', null],
+  ['/score-demo/status.html', null],
 ]) {
   await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
   await page.mouse.move(0, 0); // no link hovered
@@ -997,6 +1049,7 @@ for (const [path, here] of [
     JSON.stringify(hovered)
   );
 }
+ok(statusStub.count > 0, 'the status page\'s API probes were answered by the stub, never the live API', `${statusStub.count} stubbed: ${statusStub.paths.slice(0, 3).join(', ')}`);
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass
 // vacuously on a page that has no such button.
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
@@ -1173,6 +1226,39 @@ const makeReport = async (pc) => {
   ok(/outside the city regions/.test(outside) && !(await page.locator('#result').evaluate((r) => r.classList.contains('is-open'))), 'a postcode outside every city is told so and gets no report (the endpoint\'s 10.0 is from nothing nearby)', outside);
   const bad = await makeReport('NOT A PC!');
   ok(/does not look like a UK postcode/.test(bad), 'a string that is not a postcode is refused before anything is asked of the network', bad);
+}
+
+// 18b. ENGAGEMENT IS COUNTED, ONCE, AND ONLY FOR A PERSON'S ACTIONS (ROADMAP 3b, 2026-10-07).
+// GoatCounter has no bounce rate, so the page sends `front-engaged` at the first thing a visitor
+// does, and each way in once. A stand-in records the calls (the real script is a third party, and
+// this run aborts every third-party request). A deep link searches at boot and must send nothing.
+{
+  const gcPage = await context.newPage();
+  await gcPage.addInitScript(() => {
+    window.__gc = [];
+    window.goatcounter = { count: (v) => window.__gc.push(v.path) };
+  });
+  const sent = () => gcPage.evaluate(() => window.__gc.slice());
+  await gcPage.goto(`${BASE}?postcode=TW9%203PZ`, { waitUntil: 'domcontentloaded' });
+  await gcPage.waitForFunction(() => document.getElementById('answer')?.classList.contains('is-open'), null, { timeout: 15000 }).catch(() => {});
+  const afterDeepLink = await sent();
+  ok(afterDeepLink.length === 0, 'a deep link that searches at boot is not counted as engagement', JSON.stringify(afterDeepLink));
+
+  await gcPage.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await gcPage.locator('.try button[data-pc="TW9 3PZ"]').click();
+  await gcPage.fill('#pc', 'NW1 7PJ');
+  await gcPage.press('#pc', 'Enter');
+  await gcPage.fill('#pc', 'M22 5RX');
+  await gcPage.press('#pc', 'Enter');
+  await gcPage.locator('#chips button[data-city="manchester"]').click();
+  await gcPage.waitForTimeout(300);
+  const ways = await sent();
+  ok(
+    JSON.stringify(ways) === JSON.stringify(['event/front-engaged', 'event/front-example', 'event/front-search', 'event/front-city']),
+    'engagement: one front-engaged at the first action, then each way in once (an example is not also a typed search; a second search is not counted again)',
+    JSON.stringify(ways)
+  );
+  await gcPage.close();
 }
 
 // 19. Every file this run fetched is one a Makefile target uploads. Served through those same rules above, an
