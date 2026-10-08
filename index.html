@@ -8557,6 +8557,40 @@
           altClause: `Aircraft on the ${label} final approach pass at about ${ft} ft here`,
         };
       }
+      // WHAT THE PANEL SAYS ABOUT DISTANCE COMES FROM THE SAME GEOMETRY AS THE FRONT
+      // PAGE (2026-10-08). For TW3 1ES this panel said "Heathrow is only 6.3km away, and
+      // you are within 0.6km of a flight path" while the front page said 4.9 km and
+      // 0.3 km from the 27L centreline: the panel measured to the airport's single
+      // reference point and to the nearest corridor POINT (they are 1 km apart, so it
+      // read up to ~0.5 km far), the front page to the runway strip and to the line.
+      // Now the airport figure is routesNear()'s strip distance, and the path figure is
+      // the distance to the segments this map DRAWS (so New York's corridors stay true
+      // to the screen), both through js/flight_geometry.mjs. ONLY THE WORDS move: the
+      // noise estimate keeps reading airportDists / minPathScaled, which mirror the
+      // score Lambda. Until the geometry loads, or if it fails, the old figures stand.
+      function shownDistances(city, analysis) {
+        const fallback = {
+          airportsShown: analysis.airportDists,
+          pathShown: { path: analysis.nearestPath, dist: analysis.nearestPathDist },
+        };
+        const g = FLIGHT_GEO?.mod;
+        const proc = isUkCity(city) ? FLIGHT_GEO?.proc : FLIGHT_GEO_US;
+        if (!g || !proc) return fallback;
+        const pl = g.plane(analysis.lat, analysis.lon);
+        const strip = Object.fromEntries(g.routesNear(proc, pl, Infinity).scope.map((s) => [s.code, s.dist]));
+        const airportsShown = analysis.airportDists
+          .map((a) => (a.code in strip ? { ...a, dist: strip[a.code] } : a))
+          .sort((a, b) => a.dist - b.dist);
+        let pathShown = { path: null, dist: Infinity };
+        getActiveFlightPaths().forEach((fp) => {
+          const pts = fp.coordinates.map(([lon, lat]) => pl.xy(lat, lon));
+          for (let i = 0; i < pts.length; i++) {
+            const d = g.closest(g.ORIGIN, pts[i], pts[Math.min(i + 1, pts.length - 1)]).d;
+            if (d < pathShown.dist) pathShown = { path: fp, dist: d };
+          }
+        });
+        return { airportsShown, pathShown };
+      }
       function ensureFlightGeometry(capMs) {
         // A failed load is not memoised, as with the stations: the next search retries.
         if (!_flightGeoPromise || FLIGHT_GEO_STATE === 'failed') _flightGeoPromise = hydrateFlightGeometry();
@@ -10162,6 +10196,9 @@
           airportDists,
           nearestPath,
           nearestPathDist: minPathDist,
+          // Replaced by shownDistances() once the geometry is here (both result paths).
+          airportsShown: airportDists,
+          pathShown: { path: nearestPath, dist: minPathDist },
           noiseEstimate,
           noiseScore,
           altEstimate,
@@ -11385,9 +11422,19 @@
         }
       }
 
+      // The first-run hint says how to get a result; once one is coming it only covers
+      // the map. It used to go only when the search box took focus, a layer toggle was
+      // clicked or 30 s passed, so a deep link (/map/?postcode=), an example button and a
+      // borough click left "Type a postcode..." over the answer (2026-10-08). Not saved as
+      // seen: a visitor who arrived by a link may still want it next time.
+      function hideFirstHint() {
+        document.getElementById('first-hint')?.classList.add('dismissed');
+      }
+
       async function triggerSearch(query) {
         let q = query.trim();
         if (!q) return;
+        hideFirstHint();
         // The query BEFORE the saved-item suffix is stripped. Kept because the
         // generated cities' area keys legitimately end in a bracketed postcode
         // district - "Altrincham (WA14)", "Acocks Green (B27)" - so the strip
@@ -11537,7 +11584,7 @@
             flyToSearchResult(analysis.lat, analysis.lon);
             await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000), ensureFlightGeometry(6000)]);
             if (!isCurrentSearch(search)) return;
-            Object.assign(analysis, planeAltitude(currentCity, analysis.lat, analysis.lon));
+            Object.assign(analysis, planeAltitude(currentCity, analysis.lat, analysis.lon), shownDistances(currentCity, analysis));
             updateSidebarPostcode(analysis, borData, search);
             return;
           }
@@ -11635,7 +11682,7 @@
 
         await Promise.all([ensureAircraftQuiet(6000), ensureStations(6000), ensureFlightGeometry(6000)]);
         if (!isCurrentSearch(search)) return;
-        Object.assign(analysis, planeAltitude(currentCity, analysis.lat, analysis.lon));
+        Object.assign(analysis, planeAltitude(currentCity, analysis.lat, analysis.lon), shownDistances(currentCity, analysis));
         updateSidebarPostcode(analysis, boroughData, search);
       }
 
@@ -12304,6 +12351,7 @@
       let panelSubject = { kind: 'none' };
 
       function updateSidebar(data, { switchToAnalysis = true } = {}) {
+        hideFirstHint(); // a borough click or ?borough= link is a result too
         // The Bay Area is not scored (2026-10-05): every route here - a click,
         // a search, a ranking row - lands on its facts card instead.
         if (data && data.facts) return renderPlaceFacts(data, { switchToAnalysis });
@@ -12476,8 +12524,9 @@
       }
 
       function postcodeNoiseSummary(analysis) {
-        const d = analysis.nearestPathDist;
-        const ap = analysis.airportDists[0];
+        // The SHOWN figures (shownDistances), the ones the front page prints too.
+        const d = analysis.pathShown.dist;
+        const ap = analysis.airportsShown[0];
         // A CITY WITH NO AIRPORT IS A REAL CASE. South Yorkshire has none -
         // Doncaster Sheffield closed to commercial flights in 2022 - so
         // airportDists is empty and `ap.dist` threw, taking the whole result
@@ -12609,7 +12658,7 @@
         const noiseCol =
           analysis.noiseEstimate === 'High' ? '#F27D26' : analysis.noiseEstimate === 'Moderate' ? '#F2B826' : '#26F27D';
         const noisePct = Math.min(100, analysis.noiseScore * 10);
-        const top3 = analysis.airportDists.slice(0, 3);
+        const top3 = analysis.airportsShown.slice(0, 3);
 
         let scoreHtml = '';
         let boroughStatsHtml = '';
@@ -12799,9 +12848,9 @@
       <div class="noise-detail-row"><span class="noise-detail-label">Plane altitude</span>
         <span class="noise-detail-value">${escapeHtml(analysis.altEstimate)}</span></div>
       <div class="noise-detail-row"><span class="noise-detail-label">Nearest flight path</span>
-        <span class="noise-detail-value">${analysis.nearestPath ? escapeHtml(analysis.nearestPath.airport + ' ' + analysis.nearestPath.name) : 'None nearby'}</span></div>
+        <span class="noise-detail-value">${analysis.pathShown.path ? escapeHtml(analysis.pathShown.path.airport + ' ' + analysis.pathShown.path.name) : 'None nearby'}</span></div>
       <div class="noise-detail-row"><span class="noise-detail-label">Path distance</span>
-        <span class="noise-detail-value">${analysis.nearestPathDist.toFixed(1)} km</span></div>
+        <span class="noise-detail-value">${Number.isFinite(analysis.pathShown.dist) ? analysis.pathShown.dist.toFixed(1) + ' km' : 'No flight path in this area'}</span></div>
       ${analysis.nearestHeli ? '<div class="noise-detail-row"><span class="noise-detail-label">Nearest heliport</span><span class="noise-detail-value">' + analysis.nearestHeli.name.split('(')[0].trim() + ' (' + analysis.nearestHeli.dist.toFixed(1) + ' km)</span></div>' : ''}
       ${top3
         .slice(1)

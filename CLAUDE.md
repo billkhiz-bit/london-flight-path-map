@@ -1229,6 +1229,15 @@ dissolves when you compute the real one.*
 >   **A result is analysed BEFORE the search-time data is awaited** (the pin must not wait), so both result paths call
 >   `planeAltitude()` again after the await: a deep link (/map/?postcode=) never focuses the search box, never preloads, and
 >   printed N/A until that refresh (found retaking the LGM screenshot). The gate drives a deep link in a fresh page too.
+> - **THE FULL MAP'S DISTANCES ARE THE FRONT PAGE'S (2026-10-08)**: for TW3 1ES the panel said "Heathrow 6.3 km,
+>   within 0.6 km of a flight path" (the airport's reference point; the nearest corridor POINT, 1 km apart) where the
+>   front page said 4.9 km and 0.3 km from the 27L centreline. `shownDistances()` (beside `planeAltitude()`) now gives
+>   the panel routesNear()'s runway-strip distance and the distance to the drawn SEGMENTS, through
+>   `js/flight_geometry.mjs`, recomputed after the geometry await on both result paths. **Only the words moved**: the
+>   noise estimate still reads `airportDists`/`minPathScaled`, which mirror the Lambda. Same day: the first-run hint
+>   now goes on ANY result (`hideFirstHint()` in `triggerSearch()` and `updateSidebar()`; a deep link and a borough
+>   click left it over the answer), and a city with no flight path says so instead of "Infinity km". Gate: four
+>   checks in `tests/uk-city-panel.mjs`, all proven red on the old map.
 > - **EVERY PAGE CARRIES THE FAVICON (2026-10-08)**: `/favicon.ico` (16/32/48), `/icons/favicon.svg` (a SIMPLIFIED
 >   mark: the app icon's rings vanish at 16 px) and `/icons/apple-touch-icon.png` (180, the full app icon on solid
 >   ground, because iOS fills alpha with black), all rendered by `scripts/build_favicons.mjs` (no `--check`: Chromium

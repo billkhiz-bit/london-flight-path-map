@@ -319,7 +319,91 @@ console.log('Plane altitude under an approach');
     .catch(async () => `never resolved (row reads: ${await deep.evaluate(() => [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude')?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim() || 'absent')})`);
   const deepFt = Number((deepRow.match(/^About ([\d,]+) ft \(Heathrow 27R final approach\)$/) || [])[1]?.replace(/,/g, ''));
   check('TW9 3PZ from a deep link: the same glide-path altitude, not N/A', deepFt >= 1500 && deepFt <= 2100, `row: "${deepRow}"`);
+  // THE FIRST-RUN HINT GOES WHEN AN ANSWER ARRIVES BY ANY ROUTE (2026-10-08). It went only
+  // when the search box took focus, so a deep link left "Type a postcode..." over the
+  // answer. Read from what is painted, not from the class the fix sets.
+  const deepHint = await deep.evaluate(() => {
+    const h = document.getElementById('first-hint');
+    return h ? getComputedStyle(h).display : 'absent';
+  });
+  check('TW9 3PZ from a deep link: the first-run hint is not painted over the answer', deepHint === 'none' || deepHint === 'absent', `#first-hint display: ${deepHint}`);
   await deep.close();
+  console.log('');
+}
+
+// A BOROUGH CLICK IS AN ANSWER TOO. The hint says "or click a borough", and clicking one
+// left it in place. A fresh page, so no saved "seen" flag: the hint must be painted first.
+console.log('First-run hint after a borough click');
+{
+  const fresh = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await fresh.goto(url, { waitUntil: 'domcontentloaded' });
+  await fresh.waitForSelector('path.borough', { timeout: 20000 });
+  const painted = () => fresh.evaluate(() => getComputedStyle(document.getElementById('first-hint')).display);
+  const before = await painted();
+  await fresh.locator('path.borough').first().dispatchEvent('click');
+  await fresh.waitForTimeout(500);
+  const after = await painted();
+  check('a borough click takes the first-run hint away (it was showing before)', before !== 'none' && after === 'none', `before: ${before}, after: ${after}`);
+  await fresh.close();
+  console.log('');
+}
+
+// THE PANEL'S DISTANCES ARE THE FRONT PAGE'S (2026-10-08). For TW3 1ES the panel said
+// Heathrow 6.3 km and a flight path 0.6 km away - the airport's reference point, and the
+// nearest corridor POINT (1 km apart) - while the front page said 4.9 km, and 0.3 km from
+// the 27L centreline. The expected figures are computed here from js/flight_geometry.mjs
+// and the AIP record, the front page's own source, at postcodes.io's coordinates (the
+// map's source too). The path allows 0.1 km: the map draws the record's lines resampled.
+console.log('Distances agree with the front page');
+{
+  const g = await import(new URL('../js/flight_geometry.mjs', import.meta.url).href);
+  const proc = JSON.parse(await readFile(join(ROOT, 'data', 'flight-procedures.json'), 'utf-8'));
+  const where = (await (await fetch('https://api.postcodes.io/postcodes/TW3%201ES')).json()).result;
+  const near = g.routesNear(proc, g.plane(where.latitude, where.longitude), Infinity);
+  const wantAirport = near.scope.find((x) => x.code === 'LHR').dist.toFixed(1);
+  const wantLine = Math.min(...near.finals.map((f) => f.dist), ...near.departures.map((d) => d.dist));
+
+  await page.evaluate((city) => window.switchCity(city), 'london');
+  await page.waitForTimeout(1200);
+  await page.fill('#search-input', 'TW3 1ES');
+  await page.press('#search-input', 'Enter');
+  const rows = await page
+    .waitForFunction(
+      () => {
+        const read = (name) => [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === name)?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim();
+        const alt = read('Plane altitude');
+        // The altitude resolving means the geometry has loaded and the panel was redrawn from it.
+        if (!alt || alt === 'N/A' || !/TW3 1ES/i.test(document.getElementById('sidebar-content')?.textContent || '')) return false;
+        const note = [...document.querySelectorAll('.property-note')].map((n) => n.textContent).find((t) => /km away/.test(t)) || '';
+        return { airport: read('Nearest airport'), path: read('Path distance'), note };
+      },
+      { timeout: 25000 },
+    )
+    .then((h) => h.jsonValue())
+    .catch(() => ({ airport: 'never resolved', path: 'never resolved', note: '' }));
+  const gotLine = parseFloat(rows.path);
+  check(`TW3 1ES: nearest airport is the front page's runway-strip figure, Heathrow (${wantAirport} km)`, rows.airport === `Heathrow (${wantAirport} km)`, `row: "${rows.airport}"`);
+  check(`TW3 1ES: path distance is to the drawn line, about ${wantLine.toFixed(1)} km`, Math.abs(gotLine - wantLine) <= 0.1, `row: "${rows.path}"`);
+  check('TW3 1ES: the noise summary says the same two figures', rows.note.includes(`${wantAirport}km away`) && rows.note.includes(`within ${gotLine.toFixed(1)}km`), `summary: "${rows.note.slice(0, 160)}"`);
+  console.log('');
+}
+
+// A CITY WITH NO FLIGHT PATH SAYS SO. South Yorkshire has no airport, so no path was ever
+// nearest and "Path distance" printed "Infinity km" (found 2026-10-08).
+console.log('No flight path in South Yorkshire');
+{
+  await page.evaluate((city) => window.switchCity(city), 'southyorkshire');
+  await page.waitForTimeout(1200);
+  await page.fill('#search-input', 'S1 2HH');
+  await page.press('#search-input', 'Enter');
+  const row = await page
+    .waitForFunction(
+      () => [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Path distance')?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim() || false,
+      { timeout: 25000 },
+    )
+    .then((h) => h.jsonValue())
+    .catch(() => 'never resolved');
+  check('S1 2HH: path distance says there is none, not "Infinity km"', row === 'No flight path in this area', `row: "${row}"`);
   console.log('');
 }
 
