@@ -26,6 +26,14 @@
 >   The test asserts device pixels per module and crisp edges, and decodes again at 1.5x.
 > - The stale `index.html` comment on the landscape footer padding is re-measured: the rule now keeps the OPEN
 >   "More" card's links from under the layers button, which paints above it.
+> - **`robots.txt` (M14, Bill: "yes do robots.txt") - DEPLOYED `9c38c3b`, live file == source.** The rules now follow
+>   the comment: AI crawlers may read `/api/`, never `/data/`. Found doing it: the `*` group put `Allow: /` before
+>   `Disallow: /data/`, so FIRST-match crawlers (the 1994 rule, Python's robotparser) read `/data/` as allowed.
+>   Disallow first now; `tests/test_robots_policy.py` checks both readings (5 red on the old file).
+> - **Console, re-measured 9 Oct, all still Bill's**: no `_dmarc` record; `api.skyscore.co.uk` CNAME absent (the
+>   APIGW domain is AVAILABLE, target `d1pr4crjutz9z8.cloudfront.net`, mapped to `prod`); AWS/Billing 0 metrics and
+>   0 alarms (tick "Receive Billing Alerts" first); SES still in the sandbox; second MFA unverifiable from here.
+>   And: pushes to `master` print "Bypassed rule violations" - branch protection does not stop an admin push.
 >
 > ## START HERE (2026-10-08, evening)
 >
@@ -42,8 +50,9 @@
 > - **(c) stylelint removed**: it could not parse `index.html` (since March) and carried all 7 high npm advisories
 >   (`braces` <=3.0.3, no patched release). `npm audit` now 0.
 > - **(d) The API status page** sends support to support@skyscore.co.uk, not GitHub issues (audit M14, part).
-> - **New for Bill:** `robots.txt` blocks `/api/` for GPTBot, ClaudeBot and others while its own comment welcomes
->   AI citation of the API docs - change the rule or the comment (M14). And the `api.skyscore.co.uk` CNAME.
+> - **New for Bill:** ~~`robots.txt` blocks `/api/` for GPTBot, ClaudeBot and others while its own comment welcomes
+>   AI citation of the API docs - change the rule or the comment (M14).~~ (rule changed, deployed 9 Oct) And the
+>   `api.skyscore.co.uk` CNAME.
 >
 > ### Afternoon: everything live, nothing in flight
 >
