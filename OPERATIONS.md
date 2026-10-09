@@ -297,9 +297,14 @@ steps stay below as the reference for what the config says.
 4. **X-Frame-Options: `DENY`**, not SAMEORIGIN. Every page's CSP declares
    `frame-ancestors 'none'`, and that directive is **IGNORED in a `<meta>` CSP** -
    so this header is the only thing actually refusing to be framed, and
-   SAMEORIGIN is weaker than what all ten pages claim. Verified safe: there is
-   **not one `<iframe>` anywhere** in the repo. (The `/badge` SVG is consumed
-   through third-party `<img>` tags, which X-Frame-Options does not affect.)
+   SAMEORIGIN is weaker than what all ten pages claim. Verified safe: when this
+   was written there was **not one `<iframe>` anywhere** in the repo. Since
+   2026-10-06 there is one, the free street report's `#sheet`, and it is filled
+   through `srcdoc`: no HTTP response, so X-Frame-Options never applies to it
+   and DENY stays safe (the report made on the live site, 2026-10-09). Any
+   future iframe that loads one of OUR URLs would be refused by DENY. (The
+   `/badge` SVG is consumed through third-party `<img>` tags, which
+   X-Frame-Options does not affect.)
 5. Custom header — Permissions-Policy:
 
    ```

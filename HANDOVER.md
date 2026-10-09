@@ -6,7 +6,15 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-10-04) - THE NEW FRONT PAGE IS ON TRIAL AT `/preview/`, AND THE BAY AREA BUILD HAS BEGUN.**
+**WHERE TO START (2026-10-09) - `ROADMAP.md`'s START HERE block is the live list; this file's dated blocks are
+history.** Since 2026-10-06 the front page is `/` (source `home/index.html`) and the full map is `/map/` (source
+`index.html`); `/preview/` only forwards. Work happens on `front-door`, pushed to both `front-door` and `master`
+(`git push origin front-door:master`), and master is level with what is live (`3c9b960` on 9 Oct, drift 32 pages /
+38 data / 103 area). The current audit is `AUDIT_REPORT_2026-10-09.md` (0 Critical, 8 Important, nothing fixed yet);
+the console items still open (second MFA, billing alerts, DMARC, the `api` CNAME, the SES sandbox) are in the START
+HERE block, re-measured 9 Oct.
+
+**Previously - WHERE TO START (2026-10-04) - THE NEW FRONT PAGE IS ON TRIAL AT `/preview/`, AND THE BAY AREA BUILD HAS BEGUN.**
 Master `35f1a2b`, pushed, CI green, and equal to what is live. Two branches were fast-forwarded into
 it over 3-4 October: `homepage-v2` and `bay-area-on-map`. Work continues on `bay-area-on-map`;
 fast-forward master after each deploy (`git push origin <sha>:master`, then

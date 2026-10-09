@@ -85,8 +85,8 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | Front page: ask about a postcode, then the tool (since 2026-10-06) | <https://skyscore.co.uk/> |
 | Full map (the consumer app; `/` until 2026-10-06) | <https://skyscore.co.uk/map/> |
 | Free street report: one page of official figures for your own home, made in the browser | <https://skyscore.co.uk/reports/street/> |
-| Reports (samples, and prices for firms) | <https://skyscore.co.uk/reports/> |
-| Pricing (B2B API tiers + 90-day pilot) | <https://skyscore.co.uk/pricing> |
+| Reports (samples; their prices are on /pricing) | <https://skyscore.co.uk/reports/> |
+| Pricing (every price since 2026-10-06: councils, platforms, firms' reports) | <https://skyscore.co.uk/pricing> |
 | Privacy policy | <https://skyscore.co.uk/privacy> |
 | Area pages (102 boroughs, static, no JS) | <https://skyscore.co.uk/area/> |
 | Open data (every council area's figures in one CSV) | <https://skyscore.co.uk/open-data/> |

@@ -16,10 +16,14 @@ THREE THINGS THAT ARE NOT OBVIOUS:
      CloudFront fetches the error page from the origin; if it is missing too, the visitor gets
      CloudFront's own error, which is worse than the XML it replaces.
   2. ERROR RESPONSES ARE DISTRIBUTION-WIDE, so they cover the /badge behaviour (API origin) too.
-     That is safe: /badge answers every GET with an SVG and status 200, including a postcode it
-     does not cover, by design. Only a HEAD reaches API Gateway's 403 (it has no HEAD on the
-     route), and a HEAD has no body to replace. 429s are not mapped, so a throttled badge stays
-     a 429. --verify fetches a badge to prove it.
+     This said that was safe because "/badge answers every GET with an SVG and status 200,
+     including a postcode it does not cover". IT DOES NOT (audit 2026-10-09 I-2, measured live):
+     an uncovered postcode's badge is an SVG with status 404, by design in handle_badge, and this
+     mapping replaces that body with /404.html, so the badge is a broken image on a partner's
+     page (skyscore.co.uk/badge?postcode=EX11HS -> 404 text/html; the API origin -> 404
+     image/svg+xml). Open, a decision: the badge answering 200 for "not covered" is the smallest
+     fix, since an error response cannot be scoped to a path. --verify fetches a COVERED badge
+     only, which is why it passed. 429s are not mapped, so a throttled badge stays a 429.
   3. 404, NOT 200. A not-found page answering 200 tells search engines the mistyped address is
      a real page (a "soft 404"). The page also carries `noindex`.
 

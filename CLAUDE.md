@@ -640,7 +640,13 @@ not a JS snippet, deliberately**: portals run strict CSP and a third-party scrip
 is the first thing blocked, so the badge would fail silently on exactly the sites
 worth appearing on. It reuses `resolve_query`, so it cannot show a score
 `/v1/score` would not. An unresolvable postcode returns a BADGE saying "not
-covered", never a 404 - a 404 renders as a broken image on a customer's page. The
+covered" - an SVG BODY with **status 404** (so a machine can tell), relying on
+browsers drawing an image body whatever its status. **Since the 7 Oct CloudFront
+404 -> `/404.html` mapping that body is REPLACED by the HTML 404 page at the
+site's origin, so an uncovered badge is a broken image on partners' pages**
+(audit 2026-10-09 I-2, measured: `skyscore.co.uk/badge?postcode=EX11HS` ->
+`404 text/html`, the API origin -> `404 image/svg+xml`; open, a decision on the
+status code). The
 SVG is XML-escaped because **an SVG is a script-capable document served from our
 origin onto someone else's page**. `max-age` 24h; uncovered postcodes 5 min, so a
 newly-covered area does not keep saying otherwise. **It is EDGE-CACHED since
@@ -1248,8 +1254,27 @@ dissolves when you compute the real one.*
 > - **GoatCounter is PINNED (2026-10-07)**: `count.v5.js` + `crossorigin` + its sha384 on every page and in
 >   `build_bay_area_page.py`; `tests/test_goatcounter_pinned.py` holds them to one tag. Never go back to the unversioned
 >   `count.js` (it changes without notice). Upgrading: recompute the hash from the served file, change every page at once.
+>   **It sends `q: location.search`** (read in the served script, 2026-10-09), so a page whose URL holds a postcode
+>   sends the postcode: audit 2026-10-09 I-1, against privacy s2c's "aggregate counts only", open.
 > - **Focus rings use `--focus: #d35a12`** on the front page, its reports pages and the full map (audit I-7, 2026-10-07):
->   the brand orange measured 2.17-2.72:1 against them. `tests/test_focus_ring_contrast.py` fails on a ring in `var(--orange)`.
+>   the brand orange measured 2.17-2.72:1 against them. `tests/test_focus_ring_contrast.py` fails on a ring in `var(--orange)`,
+>   **but only in the four files in its `FILES` list**: `/pricing` and `/api/` still ring in orange at 2.44:1 (audit
+>   2026-10-09 I-7, open). Derive that list, do not extend it by hand.
+> - **ROUTE EXPLANATIONS IN THE COUNCIL-AREA CARD (2026-10-09, audit 2026-10-05 M-15)**: the tooltip was a mouse's alone,
+>   so the front page's card lists the routes on the map that cross the area (`routesAcross()` / `routesFactHtml()` in
+>   `js/home-engine.mjs`), in the tooltip's own words, in a `<details>`. Inside is the DRAWN fill's rule, even-odd over
+>   every ring in view space (the `.boro` paths carry `fill-rule: evenodd`; never d3's spherical tests, which the Bay
+>   Area's rings do not suit); exact, not sampled; cross-checked against the browser's `isPointInFill` on all 165 areas.
+>   "None of the routes on this map crosses it" always carries the radar caveat - never "no aircraft here" - and a city
+>   with no routes prints no row. Gated in `tests/front-page.mjs` by keyboard (the card must carry the HOVERED tooltip's
+>   exact text). Open on it: M-4 (undrawn published departures not mentioned) and M-13 (ring over the label on phones).
+> - **THE FREE COPY'S QR CODE IS CRISP AT WHOLE DEVICE PIXELS PER MODULE (2026-10-09)**: `shape-rendering: crispEdges`
+>   and a side of `(modules + 8) * ceil(3 * dpr) / dpr` px, re-set on resize (zoom changes the ratio). A fixed size
+>   decoded on some DAYS and not others (the code holds the date): 132 px read 75/80 links, a flat 3 CSS px 47/80 at 150%
+>   Windows scaling; this rule reads 78-80/80 from 100% to 200% at a fractional page offset. `tests/front-page.mjs`
+>   asserts device px per module and crisp edges, and decodes at 1x AND 1.5x. Do not "simplify" it to a fixed width.
+> - **Distances print one decimal on every surface** (2026-10-09): the front page's `km()` switched to whole km above
+>   10 ("10 km" where the map said 10.2). `tests/front-page.mjs` reds on a whole-km figure at TW9 3PZ.
 > - **THE NEAREST STATION IS SHOWN, NOT SCORED** (Bill, 2026-10-06: "show it first"): the front
 >   page's postcode answer and every street report (free and PDF) say "Nearest station: X, N m in a
 >   straight line" from `data/stations.json`, through ONE function, `nearestStation()` in
@@ -1289,7 +1314,7 @@ all of them - **count the targets below, do not trust a number in this sentence*
 | `pwa-deploy` | manifest, `sw.js`, icons. **Uploaded BY TYPE since 2026-10-08** (`*.svg` and `*.png` in separate commands): the one `--content-type "image/svg+xml"` for the whole folder would have served the new PNG touch icon as SVG |
 | `demo-deploy` | **new** — all 7 `score-demo/` files incl. the vendored Swagger UI |
 | `prototype-deploy` | **new** — `prototype/index.html` |
-| `meta-deploy` | **new** — `robots.txt`, `sitemap.xml`, `.well-known/security.txt`, `preview.png`, **`favicon.ico` since 2026-10-08** (browsers request it from the root whatever a page declares; it 404'd on every page view until then), and **`404.html` since 2026-10-07**: CloudFront serves it with status 404 for any origin 403/404 (`scripts/cloudfront_not_found.py --plan/--apply/--verify`; the error responses are DISTRIBUTION-WIDE, so they cover `/badge` too, which is safe because `/badge` answers every GET 200). The old `/privacy.html`, `/terms.html`, `/pricing.html`, `/changes.html` 301 from `sky-score-rewrite-index`, whose source is `FUNCTION_CODE` in `scripts/install_cloudfront_index_rewrite.py` (run in Node by `tests/test_cloudfront_function.py`). **Both AWS steps are Bill's**: the classifier refuses CloudFront publishes from Claude's session ("Protected-Scope IaC Apply"), so hand them over as `!` commands, one per message |
+| `meta-deploy` | **new** — `robots.txt`, `sitemap.xml`, `.well-known/security.txt`, `preview.png`, **`favicon.ico` since 2026-10-08** (browsers request it from the root whatever a page declares; it 404'd on every page view until then), and **`404.html` since 2026-10-07**: CloudFront serves it with status 404 for any origin 403/404 (`scripts/cloudfront_not_found.py --plan/--apply/--verify`; the error responses are DISTRIBUTION-WIDE, so they cover `/badge` too, which was thought safe because "`/badge` answers every GET 200" - **it does not: an uncovered postcode's badge is a 404 SVG, and this mapping replaces it with HTML; audit 2026-10-09 I-2, open**). The old `/privacy.html`, `/terms.html`, `/pricing.html`, `/changes.html` 301 from `sky-score-rewrite-index`, whose source is `FUNCTION_CODE` in `scripts/install_cloudfront_index_rewrite.py` (run in Node by `tests/test_cloudfront_function.py`). **Both AWS steps are Bill's**: the classifier refuses CloudFront publishes from Claude's session ("Protected-Scope IaC Apply"), so hand them over as `!` commands, one per message |
 | `area-deploy` | **the 99 static borough pages + `area/index.html`** (`s3 sync --delete`). **Was MISSING FROM THIS TABLE until 2026-09-02**, which is the same "a list that omits a member reads as complete" trap this file records about `template.yaml`'s free-tier mirrors. It also had **no CloudFront invalidation** until that date - the only target without one - so all 100 pages uploaded, every command reported success, and CloudFront served the OLD pages for up to the hour its `max-age=3600` allows. That is what made it silent: check immediately and the deploy looks broken, check later and it looks fine, which reads as a flaky check rather than a missing step |
 | `talks-deploy` | **new (2026-09-21)** - `aws s3 sync` of `talks/`: the plain-English write-ups (`how-sky-score-works.pdf`, `how-the-checks-work.pdf`, each rendered TAGGED from the `.html` beside it by `node scripts/render_talks_pdfs.mjs`; commit both, and both are uploaded - the `.html` is the primary format since 2026-09-25) and `talks/index.html`, which is what the end-card QR code points at (`skyscore.co.uk/talks/`). No `--delete`. **Standalone**: not a product surface, so not in `web-deploy-all` and not compared by `check_deploy_drift.sh`. Exists because a live file with no deploy command is audit finding 38's shape. **No em dashes** - the gate does not scan `talks/`, so the rule is kept by hand here |
 | `deeplinks-deploy` | `.well-known/apple-app-site-association` + `assetlinks.json`. **NOT in `web-deploy-all`**, deliberately: the target refuses to run while the files hold `TEAMID`/`REPLACE:WITH` placeholders (see `mobile/DEEP_LINKING.md`). Omitted from this table until 2026-09-14 (audit M29) |
