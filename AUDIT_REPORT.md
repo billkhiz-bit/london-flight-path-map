@@ -1,6 +1,15 @@
 # Audit Report — Sky Score
 
-> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-05.md`
+> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-09.md`
+>
+> **2026-10-09:** 0 Critical, 8 Important (I-2 the badge's "not covered" SVG
+> replaced by the 404 page since 7 Oct; I-1 postcodes in GoatCounter's query
+> string; I-3 a front-page search race; I-4 no way back from the map on a
+> phone; I-5 Howard Beach "not under" JFK 13R; I-6 the free report fails
+> Reflow; I-7 and I-8 contrast), 17 Minor. Every Important re-verified in
+> session. Statuses live in that file.
+>
+> ### Previously: `AUDIT_REPORT_2026-10-05.md`
 >
 > **2026-10-05:** 1 Critical (on a phone the main map showed nothing for a
 > search that did not succeed), 8 Important (five on the `/preview/` trial

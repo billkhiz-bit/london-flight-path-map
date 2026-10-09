@@ -2065,9 +2065,13 @@ site SAYS, page by page, as four visitors; statuses live in that file). Rules it
 - **An area page describes itself from its own rows** (`topics()` in `build_area_pages.py`): 22 of
   102 promised "schools" they did not show.
 
-**THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-05.md`** (1 Critical, 8 Important,
-20 Minor; statuses live in that file, not here). What a future session must not
-undo from it:
+**THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-09.md`** (0 Critical, 8 Important,
+17 Minor, read-only; statuses live in that file). One lesson from it to keep: **the
+CloudFront 404 -> `/404.html` mapping is DISTRIBUTION-WIDE and replaced the badge's
+"not covered" SVG (a 404 by design) with HTML** - before changing an error response,
+check every path that answers 4xx with a body on purpose (I-2). The previous audit,
+**`AUDIT_REPORT_2026-10-05.md`** (1 Critical, 8 Important, 20 Minor), still applies;
+what a future session must not undo from it:
 
 - **The phone footer is "Privacy · Terms · More" (M-20, closed 2026-10-08, Bill's
   choice).** With no result it flows up under the search card, and its nine links

@@ -6,6 +6,13 @@
 
 > ## START HERE (2026-10-09)
 >
+> **A fresh audit ran the same afternoon: `AUDIT_REPORT_2026-10-09.md`** (0 Critical, 8 Important, 17 Minor; read-only,
+> nothing fixed yet, every Important re-verified). Worth doing before the LGM talk on 14 Oct, in this order: **I-2**
+> (an uncovered postcode's badge is a broken image on partners' pages since the 7 Oct 404 mapping - a decision on the
+> badge's status code), **I-3** (front-page search race), **I-4** (no way back from `/map/` on a phone), **I-5**
+> (Howard Beach told "not under" JFK 13R), **I-7/I-8** (contrast), **I-1** (postcodes in GoatCounter's `q`; code fix or
+> s2c wording), then **I-6** (free report Reflow on phones, a design call). Minors M-4 and M-13 are on the 9 Oct work.
+>
 > **DEPLOYED 2026-10-09 (`b7b019e`, master level) on Bill's go-ahead, verified from the origin**: preflight PASS
 > twice; drift 32 pages / 38 data / 103 area, both changed modules hash-equal live; a browser on the LIVE site
 > found TW9 3PZ "Heathrow, 10.2 km", Richmond's card (by keyboard) listing 27L, 27R and three departures, Sutton's
