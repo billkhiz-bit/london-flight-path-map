@@ -123,7 +123,9 @@ const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUl
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1366, height: 820 } });
-await context.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
+// Named so a second context (the free report at 150% display scaling, section 18) answers the same way.
+const OFFSITE = /^https?:\/\/(?!127\.0\.0\.1)/;
+const stubOffsite = (route) => {
   const url = new URL(route.request().url());
   if (url.hostname === 'api.os.uk') {
     osTiles.push(url.href);
@@ -141,7 +143,8 @@ await context.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body || { error: 'unstubbed' }) });
   }
   return route.abort();
-});
+};
+await context.route(OFFSITE, stubOffsite);
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
@@ -380,6 +383,52 @@ await page.locator('#toggle-noise').click();
 ok(await page.locator('#noise-image').evaluate((g) => getComputedStyle(g).display === 'none'), 'the noise toggle hides the picture');
 await page.locator('#toggle-noise').click();
 
+// 6a. THE TOOLTIP'S WORDS REACH A KEYBOARD AND A FINGER (2026-10-09, audit 2026-10-05 M-15). Route
+// explanations were hover-only: a tap opens the council area's card and a key cannot reach a line.
+// The card now lists the routes across the area. Opened here by KEYBOARD alone, on the area under
+// the very point hovered above, and it must carry that tooltip's text exactly.
+// ONE reader of the card's routes row, run in the desktop page here and the phone page below.
+const readRouteRow = () => {
+  const dt = [...document.querySelectorAll('#borough.is-open .facts dt')].find((d) => d.textContent === 'Flight routes');
+  const dd = dt?.nextElementSibling;
+  if (!dd) return null;
+  const items = [...dd.querySelectorAll('li')];
+  return { text: dd.textContent, items: items.map((li) => li.textContent), titled: items.every((li) => li.querySelector('b') && li.textContent.length > 40), open: dd.querySelector('details')?.open ?? null };
+};
+const routeCard = () => page.evaluate(readRouteRow);
+const hoveredArea = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('.boro')?.getAttribute('aria-label') || '', mid);
+let keyed = null;
+// A route midpoint that is not over a council area FAILS with that said, rather than a 30 s wait on no element.
+if (hoveredArea) {
+  await page.locator(`#map .boro[aria-label="${hoveredArea}"]`).focus();
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('#borough.is-open');
+  // Counted first, so a card without the list FAILS below rather than timing out here.
+  if (await page.locator('#borough .routes-across summary').count()) {
+    await page.locator('#borough .routes-across summary').focus();
+    await page.keyboard.press('Enter');
+  }
+  keyed = await routeCard();
+}
+ok(Boolean(hoveredArea) && keyed?.open === true && keyed.items.includes(tipText), `by keyboard alone, ${hoveredArea.replace(/: open its figures$/, '') || '(no council area under the hovered route)'}'s card lists the hovered route in the tooltip's words`, JSON.stringify(keyed)?.slice(0, 300));
+// Sutton: no drawn route crosses it, and the card must not read as "no aircraft here".
+await page.locator('#map .boro[aria-label^="Sutton"]').focus();
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Sutton');
+const sutton = await routeCard();
+ok(/^None of the routes on this map crosses it\./.test(sutton?.text || '') && /radar/.test(sutton.text), 'an area no drawn route crosses says so, and that radar-directed paths are not drawn', sutton?.text);
+// A city with no routes at all (South Yorkshire has no airport) prints no routes row.
+await page.locator('#chips button[data-city="southyorkshire"]').click();
+await page.waitForFunction(() => document.querySelector('#chips button[data-city="southyorkshire"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length === 4);
+await page.locator('#map .boro[aria-label^="Barnsley"]').focus();
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Barnsley');
+ok((await routeCard()) === null, 'a city with no routes on its map prints no routes row');
+await page.locator('#borough-close').click();
+await page.locator('#chips button[data-city="london"]').click();
+await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 33);
+await page.waitForTimeout(200);
+
 // 7. Zoom in scales the view; reset enables and returns to identity; marks keep their size.
 ok(await page.locator('#zoom-reset').isDisabled(), 'reset is disabled at zoom 1');
 await page.locator('#zoom-in').click();
@@ -410,7 +459,9 @@ const vals = await page.locator('#ans-rows .val').allTextContents();
 ok(vals.length === 4 && vals[0].startsWith('56 dB') && vals[0].includes('measured') && vals[1].startsWith('53.1 dB'), 'measured postcode renders four rows with the DEFRA readings', vals.join(' | '));
 const routes = await page.locator('#ans-routes').textContent();
 ok((await page.locator('#status').textContent()) === 'Showing the figures for TW9 3PZ.', 'a found postcode is announced in the live region, not left silent (audit M-14)', await page.locator('#status').textContent());
-ok(/Nearest airport on the map: Heathrow, [\d.]+ km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance and direction', routes);
+// ONE decimal, as the full map and the street report print it. TW9 3PZ is ~10.2 km out, the
+// distance at which this page used to switch to whole km and print "10 km" (2026-10-09).
+ok(/Nearest airport on the map: Heathrow, \d+\.\d km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance (one decimal, like the map) and direction', routes);
 ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.test(routes), 'Kew is reported under a Heathrow 27 final approach at a height', routes);
 // The nearest station (Bill, 2026-10-06: "show it first"): worked out HERE with this test's own
 // distance maths over data/stations.json, so the shared nearestStation() cannot pass by agreeing
@@ -734,6 +785,9 @@ ok(cardTop >= -1 && cardTop < 844, 'on a phone the card is brought into view', `
   await tp.waitForSelector('#borough.is-open');
   await tp.waitForTimeout(700);
   ok(await tp.locator('#tip').isHidden(), 'on a phone, a tapped council area takes its tooltip off the map (audit M-15)');
+  // ...and the route explanations the tooltip held come with the card (the other half of M-15).
+  const tapped = await tp.evaluate(readRouteRow);
+  ok(Boolean(tapped) && tapped.items.length > 0 && tapped.titled, 'on a phone, the tapped area\'s card lists the routes across it, each named and explained', JSON.stringify(tapped)?.slice(0, 300));
 
   // A zoomed map moves without a drag (audit M-16, WCAG 2.5.7): a finger scrolls the
   // page, so after three zoom-ins 13 of London's 33 areas were off the box with no
@@ -1180,26 +1234,61 @@ const makeReport = async (pc) => {
   );
   const wantLink = `https://skyscore.co.uk/reports/street/?postcode=TW9%203PZ&made=${today}&ref=${free.ref.replace('-', '')}`;
   ok(free.ref !== '' && free.link === wantLink && free.terms, 'the free copy carries a reference, a check link for that reference and day, and the terms line', `${free.ref} ${free.link}`);
+  // WHOLE DEVICE PIXELS PER MODULE, CRISP EDGES (2026-10-09). At a fixed 132 px a module was 2.69 px and
+  // anti-aliased, and the decode below failed on some days' patterns and not others: it went red on an
+  // unchanged tree. Asserted here, not left to the decode, because whether a blurred code decodes depends
+  // on the date. Measured over 80 links (see js/street_report_page.mjs), and checked again at 150% below.
+  const qrShape = (frame) =>
+    frame.locator('.free-copy-check svg').evaluate((s) => {
+      const dpr = s.ownerDocument.defaultView.devicePixelRatio;
+      const perModule = (s.getBoundingClientRect().width * dpr) / Number(s.dataset.modules);
+      return { dpr, perModule: Math.round(perModule * 1000) / 1000, crisp: s.ownerDocument.defaultView.getComputedStyle(s).shapeRendering };
+    });
+  const wholeModules = (q) => q.perModule >= 3 && Math.abs(q.perModule - Math.round(q.perModule)) < 0.02 && q.crisp === 'crispedges';
+  const qr1 = await qrShape(sheetDoc());
+  ok(wholeModules(qr1), 'its QR code is drawn at whole device pixels per module, with crisp edges', JSON.stringify(qr1));
   // The QR code is DECODED, by OpenCV: a code that scans to the wrong address would be worse than none.
-  // Enlarged first (nearest-neighbour, on a white border): at 132 px a module is about 3 px.
-  let decoded = '';
-  const png = join(tmpdir(), `skyscore-qr-${process.pid}.png`);
-  try {
-    await sheetDoc().locator('.free-copy-check svg').screenshot({ path: png });
-    decoded = execFileSync(
-      'python',
-      [
-        '-c',
-        'import cv2,sys\nimg=cv2.imread(sys.argv[1])\nimg=cv2.resize(img,None,fx=4,fy=4,interpolation=cv2.INTER_NEAREST)\nimg=cv2.copyMakeBorder(img,40,40,40,40,cv2.BORDER_CONSTANT,value=(255,255,255))\nprint(cv2.QRCodeDetector().detectAndDecode(img)[0])',
-        png,
-      ],
-      { encoding: 'utf8' }
-    ).trim();
-  } catch (e) {
-    decoded = `(could not decode: ${String(e.message).split('\n')[0]})`;
-  }
-  await unlink(png).catch(() => {});
+  // Enlarged first (nearest-neighbour, on a white border), from a screenshot at the context's own scale.
+  const decodeQr = async (frame) => {
+    const png = join(tmpdir(), `skyscore-qr-${process.pid}.png`);
+    let out;
+    try {
+      await frame.locator('.free-copy-check svg').screenshot({ path: png });
+      out = execFileSync(
+        'python',
+        [
+          '-c',
+          'import cv2,sys\nimg=cv2.imread(sys.argv[1])\nimg=cv2.resize(img,None,fx=4,fy=4,interpolation=cv2.INTER_NEAREST)\nimg=cv2.copyMakeBorder(img,40,40,40,40,cv2.BORDER_CONSTANT,value=(255,255,255))\nprint(cv2.QRCodeDetector().detectAndDecode(img)[0])',
+          png,
+        ],
+        { encoding: 'utf8' }
+      ).trim();
+    } catch (e) {
+      out = `(could not decode: ${String(e.message).split('\n')[0]})`;
+    }
+    await unlink(png).catch(() => {});
+    return out;
+  };
+  const decoded = await decodeQr(sheetDoc());
   ok(decoded === wantLink, 'its QR code scans to exactly that check link', decoded);
+  // AT 150% DISPLAY SCALING, the commonest Windows setting and the worst case for a fixed CSS size: 3 CSS px
+  // a module is 4.5 device px, and that decoded 47 of 80 links. A context of its own, same stubs.
+  {
+    const scaled = await browser.newContext({ viewport: { width: 1366, height: 820 }, deviceScaleFactor: 1.5 });
+    await scaled.route(OFFSITE, stubOffsite);
+    const sp = await scaled.newPage();
+    await sp.goto(`${BASE}reports/street/`, { waitUntil: 'domcontentloaded' });
+    await sp.fill('#pc', 'TW9 3PZ');
+    await sp.press('#pc', 'Enter');
+    await sp.waitForFunction(() => /ready below/.test(document.getElementById('status').textContent), null, { timeout: 20000 }).catch(() => {});
+    const frame = sp.frameLocator('#sheet');
+    const ready = (await frame.locator('.free-copy-check svg').count()) > 0;
+    const qr15 = ready ? await qrShape(frame) : { missing: true };
+    const link15 = ready ? await frame.locator('.free-copy-check a').getAttribute('href') : '';
+    const dec15 = ready ? await decodeQr(frame) : '(no report)';
+    ok(ready && qr15.dpr === 1.5 && wholeModules(qr15) && dec15 === link15, 'at 150% display scaling its QR code is still whole device pixels per module, and scans', `${JSON.stringify(qr15)} | ${dec15}`);
+    await scaled.close();
+  }
   // The check: the genuine reference matches, one changed character does not, a malformed one is ignored.
   const checkWith = async (ref) => {
     await page.goto(`${BASE}reports/street/?postcode=TW9%203PZ&made=${today}&ref=${ref}`, { waitUntil: 'domcontentloaded' });

@@ -149,6 +149,10 @@
       .borough .facts div { display: grid; grid-template-columns: 96px 1fr; gap: 10px; }
       .borough .facts dt { color: var(--mid); }
       .borough .facts dd { margin: 0; }
+      /* The routes across a council area (M-15): what a mouse's tooltip says, for a finger and a key. */
+      .borough .routes-across summary { cursor: pointer; padding: 3px 0; }
+      .borough .routes-across ul { margin: 6px 0 2px; padding-left: 16px; display: grid; gap: 6px; }
+      .borough .routes-across b { display: block; font-weight: 600; }
 
       .chips { position: absolute; right: 24px; bottom: 20px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: min(56%, calc(100% - 48px)); }
       .chips button, .chips a { font: 500 13px var(--font-body); padding: 7px 12px; border-radius: 999px; border: 1px solid transparent; background: rgba(251, 250, 248, 0.92); color: var(--dark); cursor: pointer; text-decoration: none; }

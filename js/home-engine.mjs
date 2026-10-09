@@ -198,7 +198,9 @@ const norm = (s) => String(s).toLowerCase().replace(/[.,]/g, '').replace(/\s+/g,
 // build_area_pages.py's slug(): lowercase, runs of anything else become one hyphen.
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const fmt1 = (v) => (v === '' || v == null ? null : Number(v).toFixed(1));
-const km = (d) => (d < 10 ? d.toFixed(1) : Math.round(d)) + ' km';
+// One decimal at every distance, as the full map's panel and the street report
+// print it: whole km above 10 had TW9 3PZ at "10 km" here and "10.2 km" there.
+const km = (d) => d.toFixed(1) + ' km';
 const ugm3 = (v) => (v === '' || v == null ? '' : ` (${v} µg/m³)`);
 
 // ---- the open data CSV: every council area's score, no key needed ----
@@ -564,18 +566,66 @@ function routeNear(ev) {
   }
   return best.d <= ROUTE_HOVER_PX ? best.route : null;
 }
+// A MOUSE HOVERS; A TAP OR A KEY OPENS THE CARD, which lists the routes across the area
+// (routesFactHtml, below). There was a click handler here for "a tap near a route over water
+// or open ground", and it could never fire: it returned on a tap over a council area, and
+// routeNear() answers only over one, because the lines are clipped to the city's outline and
+// take no pointer events (found 2026-10-09). Route explanations were a mouse's alone (M-15).
 svg.on('mousemove.routes', (ev) => { const route = routeNear(ev); if (route) showTip(ev, route.html); })
-  // Not when the click opened a council area's card: the card is the answer to that tap,
-  // and on a phone a route's tooltip left over the map after it is the M-15 defect by
-  // another door (found 2026-10-06: tapping Camden beside a route opened the card, then
-  // this handler, which runs after the area's own, put the route's tip back on the map).
-  // A tap near a route over water or open ground still explains it; a mouse still hovers.
-  .on('click.routes', (ev) => {
-    if (ev.target.closest?.('.boro')) return;
-    const route = routeNear(ev);
-    if (route) showTip(ev, route.html);
-  })
   .on('mouseleave.routes', hideTip);
+
+// ROUTES IN THE CARD (2026-10-09, audit 2026-10-05 M-15): the drawn routes that cross a council
+// area, in the tooltip's own words, so a finger and a keyboard get what a mouse gets. Measured in
+// view space, where the lines are drawn, never with d3's spherical tests (the Bay Area's rings do
+// not suit them: see planarPath). Exact, not sampled: a route crosses if a point of it is inside,
+// or a segment of it meets an edge.
+const polygonsOf = (g) => (g?.type === 'Polygon' ? [g.coordinates] : g?.type === 'MultiPolygon' ? g.coordinates : []);
+const side = (p, q, r) => (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+const overlap = (a, b, c, d, k) => Math.max(Math.min(a[k], b[k]), Math.min(c[k], d[k])) <= Math.min(Math.max(a[k], b[k]), Math.max(c[k], d[k]));
+const meets = (a, b, c, d) => {
+  const s1 = side(a, b, c), s2 = side(a, b, d);
+  // On one line, they meet only where their extents overlap (every orientation test is 0 there).
+  if (s1 === 0 && s2 === 0) return overlap(a, b, c, d, 0) && overlap(a, b, c, d, 1);
+  return s1 * s2 <= 0 && side(c, d, a) * side(c, d, b) <= 0;
+};
+// Each ring's edges, closing it if the file did not, and never a zero-length edge (it would "meet"
+// any segment whose LINE runs through its point).
+const edgesOf = (ring) => ring.map((p, i) => [p, ring[(i + 1) % ring.length]]).filter(([p, q]) => p[0] !== q[0] || p[1] !== q[1]);
+function routesAcross(f) {
+  if (!f || !state.projection || !state.routes.length) return [];
+  const polys = polygonsOf(f.geometry).map((poly) => poly.map((ring) => ring.map((p) => state.projection(p))));
+  const all = polys.flat(2);
+  if (!all.length) return [];
+  const [x0, x1] = d3.extent(all, (p) => p[0]), [y0, y1] = d3.extent(all, (p) => p[1]);
+  const rings = polys.flat();
+  const edges = rings.flatMap(edgesOf);
+  // INSIDE IS THE DRAWN FILL'S RULE: every `.boro` is painted with fill-rule evenodd, so a point is
+  // inside when an odd number of rings hold it. One rule for every city: a Bay Area place makes each
+  // shapefile ring its own polygon, holes included (14 of the 50 nest a ring in another, San Jose's
+  // county pockets for one), and a UK area's holes are rings too. Checked 2026-10-09 against the
+  // browser's isPointInFill on the drawn lines: every area of all 13 cities agrees bar Sunnyvale,
+  // where SJC 12L runs 11 m inside it (exact, from the source data), under the 0.1 px the drawn
+  // path is rounded to. The card is right there.
+  const inside = (pt) => rings.reduce((n, ring) => n + d3.polygonContains(ring, pt), 0) % 2 === 1;
+  const crosses = ({ pts }) => pts.slice(1).some((q, i) => {
+    const p = pts[i];
+    if (Math.max(p[0], q[0]) < x0 || Math.min(p[0], q[0]) > x1 || Math.max(p[1], q[1]) < y0 || Math.min(p[1], q[1]) > y1) return false;
+    return inside(p) || inside(q) || edges.some(([c, d]) => meets(p, q, c, d));
+  });
+  // Say each tooltip once: a US departure can be drawn more than once (SFO's CIITY3 three times)
+  // under one tooltip that names the procedure only. Oakland lists 14, from 17 lines.
+  return [...new Set(state.routes.filter(crosses).map((r) => r.html))];
+}
+function routesFactHtml(f) {
+  if (!f || !state.routes.length) return '';
+  const tips = routesAcross(f);
+  const n = tips.length;
+  // Never "no aircraft here": stack-to-final is radar-vectored and deliberately not drawn.
+  const dd = n
+    ? `<details class="routes-across"><summary>${n} ${n === 1 ? 'route on this map crosses' : 'routes on this map cross'} it</summary><ul>${tips.map((h) => `<li>${h}</li>`).join('')}</ul></details>`
+    : 'None of the routes on this map crosses it. Aircraft can still fly over: the paths air traffic control gives by radar are not published, so they are not drawn.';
+  return `<div><dt>Flight routes</dt><dd>${dd}</dd></div>`;
+}
 
 // A Bay Area route's tooltip, from its record in data/us-bayarea-routes.json. The
 // rules it states are the page builder's: departures are cut at DEPARTURE_KM (30 km,
@@ -832,7 +882,7 @@ function boroughCardHtml(row, f) {
     <p class="where">${row.city === 'nyc' ? 'Borough of' : 'Council area in'} ${esc(cityName)}${onMap ? '' : '. Not on the map: figures only'}.</p>
     ${score == null ? '<p class="score"><span>Not scored: too few inputs</span></p>' : `<p class="score"><strong>${score}</strong><span>Sky Score out of 10, balanced weighting, method ${esc(row.methodology_version)}</span></p>`}
     <div class="rows">${bars}</div>
-    <dl class="facts">${facts}</dl>
+    <dl class="facts">${facts}${routesFactHtml(f)}</dl>
     ${row.note ? `<p class="where">${esc(row.note)}</p>` : ''}
     <p class="more">${links}</p>`;
 }
@@ -844,7 +894,7 @@ function placeCardHtml(f, zip) {
   return `${closeButton}
     <h2 tabindex="-1">${esc(name)}</h2>
     <p class="where">${esc(f.properties.county)} County, California. Not scored: the Bay Area page shows where the routes are, not a score.</p>
-    <dl class="facts">${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div></dl>
+    <dl class="facts">${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div>${routesFactHtml(f)}</dl>
     <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
 }
 // The routes on the map are SFO's, OAK's and SJC's, but the FAA holds 23 more

@@ -225,7 +225,9 @@ async function make(raw, check = null) {
         '.free-copy-mark span { transform: rotate(-28deg); font: 600 15px system-ui, sans-serif; color: rgba(20, 20, 20, 0.09); white-space: nowrap; }' +
         // The check block sits ABOVE the watermark on white, so faint text never crosses the QR code.
         '.free-copy-check { position: relative; z-index: 6; background: #fff; display: flex; gap: 14px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #dedcd6; }' +
-        '.free-copy-check svg { flex: 0 0 auto; width: 132px; height: 132px; }' +
+        // Sized below, from the code itself, so it overrides the report's `svg { width: 100% }`.
+        // crispEdges: no anti-aliasing, so each module edge lands on a device pixel (see below).
+        '.free-copy-check svg { flex: 0 0 auto; shape-rendering: crispEdges; }' +
         '.free-copy-check p { margin: 0; }';
       doc.head.append(pad);
 
@@ -243,15 +245,34 @@ async function make(raw, check = null) {
       // The reference, the check link and its QR code, and the terms line. Bill, 2026-10-06:
       // "can't firms just pretend to be a resident?", then "people can screenshot and maybe
       // edit it". The terms (section 4) already limit free use to personal, non-commercial use.
+      // WHOLE DEVICE PIXELS PER MODULE, AND CRISP EDGES (2026-10-09). Drawn at a fixed 132 px, the
+      // code (41 modules: every check link fits version 6) came out at 2.69 px a module, every edge
+      // anti-aliased, so whether it scanned depended on the day's pattern - the date and reference
+      // are in it - and the blocking decode in tests/front-page.mjs went red on an unchanged tree.
+      // Measured over 80 links with that decode, the code placed at a fractional offset as a page
+      // can place it: a fixed 3 CSS px a module read 47 of 80 at 150% display scaling (4.5 device
+      // px); a size chosen for whole DEVICE pixels alone read 0 of 80 at 175% (the offset blurs
+      // every edge); both together, 78-80 of 80 at every scale from 100% to 200%. The size follows
+      // the scale, which browser zoom changes, so it is set again on every resize.
+      const CELL = 3;
       const qr = qrcode(0, 'M');
       qr.addData(link);
       qr.make();
       const block = doc.createElement('div');
       block.className = 'free-copy-check';
       block.innerHTML =
-        qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true, alt: 'QR code to check this report' }) +
+        qr.createSvgTag({ cellSize: CELL, margin: 4 * CELL, alt: 'QR code to check this report' }) +
         `<p><strong>Reference ${esc(ref)}</strong>, made ${esc(longDate(made))}. To check a copy against the official figures, scan the code or open <a href="${esc(link)}">${esc(link.replace('https://', ''))}</a>.` +
         ' <strong>Free copy for personal use, not for use with clients</strong>, under our terms (section 4, skyscore.co.uk/terms). Reports for firms: skyscore.co.uk/pricing.</p>';
+      const code = block.querySelector('svg');
+      code.dataset.modules = String(qr.getModuleCount() + 8); // the side in modules, quiet zone included
+      const sizeCode = () => {
+        const dpr = doc.defaultView.devicePixelRatio || 1;
+        const side = `${((qr.getModuleCount() + 8) * Math.ceil(CELL * dpr)) / dpr}px`;
+        Object.assign(code.style, { width: side, height: side });
+      };
+      sizeCode();
+      doc.defaultView.addEventListener('resize', sizeCode);
       (doc.querySelector('footer') || doc.body).append(block);
       // As tall as the report, so the page scrolls rather than the frame, and KEPT so: the web
       // fonts arrive after the first measure and make the text taller, which clipped the foot

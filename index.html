@@ -3005,15 +3005,16 @@
          this arithmetic goes stale - and `responsive.mjs` reds at 844x390 and
          568x320, which is how this collision was found. */
       @media (max-width: 900px) and (max-height: 500px) {
-        /* THE RIGHT EDGE BELONGS TO THE MAP CONTROLS (2026-09-07).
-           On a landscape phone the nine footer links wrap to five rows - 133px
-           tall at 568x320 - and the bottom rows reach across the full width,
-           under `#layers-trigger` at x 472..560. Measured: elementFromPoint at
-           the trigger's centre returned a footer `a`.
-           Reserving the control column keeps the links centred in what is left
-           (content box ends at 448px of 568) rather than hiding any of them:
-           these are the legal and funnel links, and hiding them at one
-           orientation is the defect this footer was just restored to fix. */
+        /* THE RIGHT EDGE BELONGS TO THE MAP CONTROLS (2026-09-07, re-measured
+           2026-10-09). Written when the nine footer links wrapped to five rows
+           across the full width (133px at 568x320) and elementFromPoint at
+           `#layers-trigger`'s centre returned a footer `a`. Since M-20 (8 Oct)
+           the closed footer is one line, so this now shapes the OPEN "More"
+           card: at 568x320 the card spans x 16..552 and the trigger (x 472..560,
+           y 158..194) paints ABOVE it. Measured at 568x320, 667x375 and 844x390,
+           the trigger takes its own taps and no link is covered with or without
+           this rule; what it keeps is the link text out from under the trigger
+           (rightmost link ends at x 382 with it, 528 without, at 568x320). */
         .sheet-footer {
           padding-right: 120px;
         }
