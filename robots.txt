@@ -1,27 +1,29 @@
 User-agent: *
-Allow: /
-
 # Block bulk-data fetches that would cost CDN egress without serving humans.
+# Disallow comes FIRST: a crawler that takes the first matching line (the
+# original 1994 rule; Python's robotparser) read `Allow: /` above it as
+# allowing /data/. Longest-match crawlers (Google) read it the same either way.
 Disallow: /data/
+Allow: /
 
 # AI training crawlers: case-by-case. We're happy for our public methodology
 # and API docs to be cited; we're not happy for borough metadata to be
 # trained on without attribution. If you're an AI vendor and want to use
 # our data in training, contact support@skyscore.co.uk first.
+# So each AI crawler is kept out of /data/ and NOT out of /api/ (until
+# 2026-10-09 these groups also blocked /api/, contradicting the line above).
+# A crawler that matches a group below ignores the * group entirely, which is
+# why each one repeats /data/. tests/test_robots_policy.py holds this.
 User-agent: GPTBot
 Disallow: /data/
-Disallow: /api/
 
 User-agent: anthropic-ai
 Disallow: /data/
-Disallow: /api/
 
 User-agent: ClaudeBot
 Disallow: /data/
-Disallow: /api/
 
 User-agent: CCBot
 Disallow: /data/
-Disallow: /api/
 
 Sitemap: https://skyscore.co.uk/sitemap.xml
