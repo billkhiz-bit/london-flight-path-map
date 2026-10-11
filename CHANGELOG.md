@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-10-11 - seven of the 9 Oct audit's eight Importants, closed and deployed
+
+Every fix carries a check proven red on the old code; three full preflights
+`RESULT: PASS`; each deploy verified from the origin (every changed file
+hash-equal live, drift 32 pages / 38 data / 103 area) and in a browser on the
+live site. Details per row in `AUDIT_REPORT_2026-10-09.md`.
+
+- **No visitor's postcode reaches analytics (I-1).** GoatCounter's script sent
+  every page's query string (`?postcode=...`) with each hit, a literal no
+  setting reaches. The pages now count through our own `js/count.mjs`: path,
+  title as served, referrer without its query, screen size, and on a page view
+  the three `utm_*` campaign tags alone. Nothing loads from `gc.zgo.at`;
+  SUBPROCESSORS row 17 is removed, and the 13 Sep audit's M6 (a third-party
+  script on the key-minting demo page) closes with it. The first deploy dropped
+  the campaign tags as well, which broke the outreach UTM convention for an
+  evening; found sweeping the docs and fixed the same day.
+- **An embedded badge for an uncovered postcode is an image again (I-2).**
+  CloudFront maps origin 403 alone to the 404 page: the bucket cannot answer 404,
+  so that entry only ever replaced the badge's own "Not covered" SVG.
+- **Front-page searches no longer overwrite each other (I-3).**
+- **The full map on a phone has a way back (I-4)**: its "More" links the same 16
+  places as the desktop footer, the front page first.
+- **Howard Beach is no longer told "Not under a final approach" (I-5).** A
+  runway with no glide angle on record (JFK 13R and others) is said to be a gap.
+- **Focus rings and EPC band letters reach WCAG AA (I-7, I-8).** The focus-ring
+  test now finds every served page itself, and found a third holder: the map's
+  ranking rows.
+
 ## 2026-09-19 - the held frontend deploys, and the runbook that would have broken it
 
 **The three surfaces held on 18 Sep went out together** - `index.html`,

@@ -350,7 +350,7 @@ Avoid subject lines that look automated: anything with "[Company]" placeholder l
 
 ## UTM convention (so you can see in analytics who clicked)
 
-Every link to `https://skyscore.co.uk/api/` (or any other Sky Score URL) sent in cold email or DM **must** carry a UTM tag identifying the recipient. GoatCounter logs the full referrer URL including query string, so the tag flows through automatically — no extra setup needed beyond using the right URL when you send.
+Every link to `https://skyscore.co.uk/api/` (or any other Sky Score URL) sent in cold email or DM **must** carry a UTM tag identifying the recipient. Since 2026-10-11 the pages count through our own `js/count.mjs`, which passes GoatCounter **these three tags and nothing else** from a page's address (`utm_source`, `utm_medium`, `utm_campaign`; `CAMPAIGN_KEYS` in the module), because the rest of an address can hold a visitor's postcode. So use exactly these names: a link tagged `ref=` or `source=` is counted with no campaign. No other setup needed beyond using the right URL when you send.
 
 **Format:** `https://skyscore.co.uk/api/?utm_source=outreach-{slug}&utm_medium={channel}&utm_campaign={month}`
 

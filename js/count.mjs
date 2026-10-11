@@ -15,8 +15,9 @@
  *
  * WHAT IS SENT, to GoatCounter's documented /count endpoint (the one its own script calls):
  * the page's path (the canonical link's when it has one, never a query or fragment), that
- * title, the referrer's origin and path, screen size, an event flag and a cache-buster. Nothing
- * that identifies a person, no cookie, no storage but GoatCounter's own opt-out flag.
+ * title, the referrer's origin and path, screen size, an event flag, a cache-buster, and with a
+ * page view the CAMPAIGN TAGS alone (see CAMPAIGN_KEYS). Nothing that identifies a person, no
+ * cookie, no storage but GoatCounter's own opt-out flag.
  *
  * KEPT FROM count.v5.js, on purpose: window.goatcounter.count(vars) with the same `path`,
  * `title` and `event` arguments, so no event caller changes; nothing is counted from localhost,
@@ -40,6 +41,27 @@ export function withoutQuery(href) {
   }
 }
 
+// THE CAMPAIGN TAGS, AND ONLY THESE (OUTREACH_DRAFTS.md "UTM convention"). Every outreach link
+// carries utm_source=outreach-<org>, utm_medium and utm_campaign, and GoatCounter files the visit
+// under that campaign in its Referrers tab by reading them from `q`. The first version of this
+// module sent no `q` at all and so lost every one (found the same day, sweeping the docs). Named,
+// never "everything but the postcode": our own pages write city, postcode, made and ref into
+// their addresses, and `ref` is the free report's reference, which GoatCounter would ALSO read
+// as a campaign source.
+export const CAMPAIGN_KEYS = ['utm_source', 'utm_medium', 'utm_campaign'];
+
+/** `?utm_source=..&..` holding only CAMPAIGN_KEYS from a query string, or '' when it has none. */
+export function campaignQuery(search) {
+  const from = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const key of CAMPAIGN_KEYS) {
+    const value = from.get(key);
+    if (value) kept.set(key, value.slice(0, 100));
+  }
+  const s = kept.toString();
+  return s ? `?${s}` : '';
+}
+
 /** The path to count: the canonical link's when it is on this host, else this page's. No query. */
 function pagePath() {
   const canonical = document.querySelector('link[rel="canonical"][href]');
@@ -60,6 +82,7 @@ export function pageContext() {
     path: pagePath(),
     title: TITLE,
     referrer: withoutQuery(document.referrer),
+    campaign: campaignQuery(location.search),
     screen: [window.screen.width, window.screen.height, window.devicePixelRatio || 1],
     bot: navigator.webdriver ? 153 : 0,
   };
@@ -74,6 +97,8 @@ export function countUrl(vars = {}, ctx = pageContext()) {
     e: vars.event ? 'true' : '',
     s: ctx.screen.join(','),
     b: ctx.bot, // 0, or count.v5.js's 153 for a webdriver; sent as 0 when 0, as its script does
+    // A page view carries its campaign; an event is a click, already filed under the view.
+    q: vars.event ? '' : ctx.campaign || '',
     rnd: Math.random().toString(36).slice(2, 7),
   };
   const query = Object.entries(data)

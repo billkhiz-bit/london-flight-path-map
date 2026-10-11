@@ -528,6 +528,20 @@ ok(await page.evaluate(() => location.search) === '?city=london&postcode=TW9+3PZ
     JSON.stringify({ view: sent.view, event: sent.event })
   );
   ok(params(sent.event).e === 'true' && params(sent.event).p === 'event/front-search', 'an event is sent as an event, by name', sent.event);
+  // OUTREACH LINKS STILL FILE UNDER THEIR CAMPAIGN (OUTREACH_DRAFTS.md "UTM convention"). The first version
+  // of the counter sent no `q`, so utm_source=outreach-<org> never reached GoatCounter's Referrers tab. Only
+  // the three tags pass: `ref` is the free report's reference and GoatCounter would read it as a source.
+  const tagged = await page.evaluate(async () => {
+    const m = await import('/js/count.mjs');
+    const campaign = m.campaignQuery('?city=london&postcode=TW9+3PZ&ref=ab12cd34&made=2026-10-11&utm_source=outreach-landmark&utm_medium=email&utm_campaign=2026-10');
+    return { campaign, view: m.countUrl({}, { ...m.pageContext(), campaign }), none: m.campaignQuery('?city=london&postcode=TW9+3PZ') };
+  });
+  ok(
+    tagged.campaign === '?utm_source=outreach-landmark&utm_medium=email&utm_campaign=2026-10' &&
+      new URL(tagged.view).searchParams.get('q') === tagged.campaign && !/TW9|postcode|ab12cd34|made/.test(tagged.view) && tagged.none === '',
+    'a page view carries the outreach campaign tags and nothing else from the address',
+    JSON.stringify(tagged)
+  );
 }
 await page.locator('#ans-open-area').click();
 await page.waitForSelector('#borough.is-open');

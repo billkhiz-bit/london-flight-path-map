@@ -106,9 +106,12 @@ def test_the_bay_area_generator_writes_the_tag():
     assert TAG in (REPO / 'scripts' / 'build_bay_area_page.py').read_text(encoding='utf-8')
 
 
-def test_the_module_never_reads_the_query_string():
+def test_the_module_reads_the_query_string_only_through_the_campaign_allow_list():
     source = (REPO / 'js' / 'count.mjs').read_text(encoding='utf-8')
     code = '\n'.join(line for line in source.splitlines() if not line.lstrip().startswith(('*', '//', '/*')))
-    assert 'location.search' not in code
+    # Once, as the input to the allow-list: the campaign tags OUTREACH_DRAFTS.md relies on, nothing else.
+    assert code.count('location.search') == 1 and 'campaignQuery(location.search)' in code
+    keys = re.search(r'CAMPAIGN_KEYS = \[([^\]]*)\]', code)
+    assert keys and re.findall(r"'([^']+)'", keys.group(1)) == ['utm_source', 'utm_medium', 'utm_campaign']
     # The referrer is read once, and only through the helper that drops its query and fragment.
     assert code.count('document.referrer') == 1 and 'withoutQuery(document.referrer)' in code

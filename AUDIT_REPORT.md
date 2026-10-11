@@ -7,7 +7,10 @@
 > string; I-3 a front-page search race; I-4 no way back from the map on a
 > phone; I-5 Howard Beach "not under" JFK 13R; I-6 the free report fails
 > Reflow; I-7 and I-8 contrast), 17 Minor. Every Important re-verified in
-> session. Statuses live in that file.
+> session. Statuses live in that file. **2026-10-11: seven of the eight closed
+> and deployed (I-1, I-2, I-3, I-4, I-5, I-7, I-8), each proven red on the old
+> code; only I-6, a design call, remains open. Closing I-1 also closed the
+> 13 Sep audit's M6.**
 >
 > ### Previously: `AUDIT_REPORT_2026-10-05.md`
 >
