@@ -22,6 +22,14 @@
 // Mirrors build_flight_paths.py: a final is drawn from the threshold out to
 // where the published glide path passes this height.
 export const FINAL_TOP_FT = 3000;
+// A runway the record holds NO glide angle for (JFK 13R, whose approach the FAA publishes
+// and this cycle does not code; TEB 01; SFO 01L/R; OAK 15/33; and every runway of the
+// UK's runways-only Gatwick, Stansted and Luton records) still has an extended
+// centreline that aircraft may be on. Its extent is taken at the standard 3 degrees, so
+// it is as long as every other final drawn to 3,000 ft. It is used ONLY to withhold a
+// "not under a final approach" a home there could not be told truthfully, never to give
+// a height (audit 2026-10-09 I-5: Howard Beach, 0.3 km beside 13R, read "Not under").
+export const NOMINAL_GLIDE_DEG = 3.0;
 export const FT_KM = 0.0003048;
 export const ORIGIN = [0, 0];
 
@@ -95,6 +103,7 @@ export function reciprocal(rwy) {
  */
 export function routesNear(proc, pl, scopeKm) {
   const finals = [];
+  const unglided = [];
   const departures = [];
   const airports = [];
   const scope = [];
@@ -112,6 +121,17 @@ export function routesNear(proc, pl, scopeKm) {
     // What the record holds for this airport goes on the page: a route the
     // data lacks must never read as a route that is not there.
     if (dist <= scopeKm) scope.push({ code, dist, q: strip.q, method: ap.departures_method });
+    // Before the runways-only `continue`: what the record does not hold is a gap whether or
+    // not the airport is drawn (see NOMINAL_GLIDE_DEG).
+    for (const [rwy, r] of Object.entries(ap.runways)) {
+      if (typeof r.glide_deg === 'number') continue;
+      const thr = pl.xy(...r.thr);
+      const back = unit(r.true_brg + 180);
+      const length = (FINAL_TOP_FT * FT_KM) / Math.tan(rad(NOMINAL_GLIDE_DEG));
+      const along = dot(sub(ORIGIN, thr), back);
+      const c = closest(ORIGIN, thr, add(thr, mul(back, length)));
+      unglided.push({ code, rwy, dist: c.d, beside: along > 0 && along < length, along });
+    }
     if (!ap.cities.length) continue; // runways-only record: nothing is drawn for it
     airports.push({ code, dist, thresholds, runways: ap.runways });
     for (const [rwy, r] of Object.entries(ap.runways)) {
@@ -155,7 +175,7 @@ export function routesNear(proc, pl, scopeKm) {
   }
   airports.sort((a, b) => a.dist - b.dist);
   scope.sort((a, b) => a.dist - b.dist);
-  return { finals, departures, airports, scope };
+  return { finals, unglided, departures, airports, scope };
 }
 
 // A point is UNDER a final approach when it lies beside the drawn segment (between the
@@ -173,6 +193,16 @@ export const UNDER_LINE_KM = 1.0;
  */
 export function finalOverhead(finals) {
   return finals.filter((x) => x.beside && x.dist <= UNDER_LINE_KM).sort((a, b) => a.dist - b.dist)[0] || null;
+}
+
+/**
+ * The runway WITHOUT a glide angle whose extended centreline a point sits under, by the
+ * same rule as finalOverhead(), or null. Ask it only when finalOverhead() found nothing:
+ * a home under a published glide path is told its height; one here is told the record
+ * cannot say, never that it is under no approach (audit 2026-10-09 I-5).
+ */
+export function unglidedOverhead(unglided) {
+  return finalOverhead(unglided || []);
 }
 
 /** A glide-path height as every page prints it: to the nearest 100 ft. */

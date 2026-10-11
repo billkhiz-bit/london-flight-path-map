@@ -81,13 +81,16 @@
   :root {
     color-scheme: light;
     --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+    /* Focus rings (audit 2026-10-09 I-7): the brand orange is 2.44:1 on --bg and 2.60:1 on the cards, under
+       WCAG 1.4.11's 3:1. #d35a12 is the front page's --focus, the "you are here" underline's colour. */
+    --focus: #d35a12;
     --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     --gutter: clamp(16px, 4vw, 48px);
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
   a { color: inherit; }
-  :focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   code { font-family: var(--font-mono); font-size: 0.88em; background: #ebe9e3; padding: 1px 5px; border-radius: 4px; }
 
   /* The site bar, the same as the front page and the reports page. */

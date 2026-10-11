@@ -100,12 +100,18 @@ const GEO = {
   NW17PJ: { postcode: 'NW1 7PJ', latitude: 51.539, longitude: -0.1426, admin_district: 'Camden' },
   EX11HS: { postcode: 'EX1 1HS', latitude: 50.722209, longitude: -3.530574, admin_district: 'Exeter' },
   M225RX: { postcode: 'M22 5RX', latitude: 53.3677, longitude: -2.2644, admin_district: 'Manchester' },
+  // CONSTRUCTED, not a real postcode: a point 5 km out on Gatwick 26L's extended centreline,
+  // given a London district so the page answers it. Every runway of Gatwick's record lacks a
+  // glide angle, and no real covered postcode sits under one, so this is the only way to
+  // reach the answer's "no glide path on record" sentence on purpose (section 11b).
+  ZZ99GAP: { postcode: 'ZZ9 9GAP', latitude: 51.16029, longitude: -0.102, admin_district: 'Croydon' },
 };
 // Real /v1/environment shapes, captured 2026-10-03, keyed on the latitude the page sends.
 const ENV = {
   '51.4713': { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
   '51.539': { environment: { roadNoiseLdenDb: 74.7, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 23.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.5, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 9.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   '50.722209': { environment: { no2AnnualMeanUgm3: 8.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 5.6, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 10.0, aircraftQuietCoverage: 'outside' }, notices: [] },
+  '51.16029': { environment: { no2AnnualMeanUgm3: 9.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 6.0, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 6.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   '53.3677': { environment: { roadNoiseLdenDb: 60.2, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 14.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 7.2, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 64.0, aircraftQuiet: 2.0, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
 };
 
@@ -542,6 +548,49 @@ await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10 && document.querySelector('#answer.is-open'), null, { timeout: 10000 });
 ok(/published only as charts and are not drawn here/.test(await page.locator('#ans-routes').textContent()), 'Manchester\'s undrawn departures are said, not left silent (audit M-7)', await page.locator('#ans-routes').textContent());
 ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
+
+// 11a. A SLOWER EARLIER SEARCH MUST NOT OVERWRITE A LATER ONE (audit 2026-10-09 I-3). TW9 3PZ's lookup is
+// held up; NW1 7PJ is searched while it waits, and answers first. Both are London, so the late TW9 lands on
+// the city already on screen and goes straight to draw() and render(), which is what overwrote the answer.
+{
+  const slow = /api\.postcodes\.io\/postcodes\/TW93PZ/;
+  await page.route(slow, async (route) => { await new Promise((r) => setTimeout(r, 1500)); return stubOffsite(route); });
+  await page.fill('#pc', 'TW9 3PZ');
+  await page.press('#pc', 'Enter');
+  await page.waitForTimeout(300);
+  await page.fill('#pc', 'NW1 7PJ');
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction(() => document.querySelector('#ans-title')?.textContent === 'NW1 7PJ', null, { timeout: 10000 });
+  await page.waitForTimeout(2000); // past the held-up TW9 3PZ answer
+  const race = await page.evaluate(() => ({
+    title: document.querySelector('#ans-title')?.textContent,
+    where: document.querySelector('#ans-where')?.textContent,
+    q: location.search,
+    status: document.querySelector('#status')?.textContent,
+    pins: document.querySelectorAll('#map .pin').length,
+  }));
+  ok(
+    race.title === 'NW1 7PJ' && race.where === 'Camden' && race.q === '?city=london&postcode=NW1+7PJ' && race.status === 'Showing the figures for NW1 7PJ.' && race.pins === 1,
+    'a slower earlier search does not overwrite the answer to a later one (audit I-3)',
+    JSON.stringify(race)
+  );
+  await page.unroute(slow);
+}
+
+// 11b. A RUNWAY WITH NO GLIDE PATH ON RECORD IS A GAP, NOT "NO APPROACH" (audit 2026-10-09 I-5). The full map
+// told Howard Beach, beside JFK 13R, "Not under a final approach"; the answer here would have named the
+// nearest PUBLISHED approach instead. The constructed ZZ9 9GAP sits on Gatwick 26L's extended centreline.
+await page.fill('#pc', 'ZZ9 9GAP');
+await page.press('#pc', 'Enter');
+await page.waitForFunction(() => document.querySelector('#ans-title')?.textContent === 'ZZ9 9GAP', null, { timeout: 10000 });
+{
+  const gapText = await page.locator('#ans-routes').textContent();
+  ok(
+    /In line with Gatwick runway 26L, on its extended centreline: the record gives no glide path for it, so no height is given here\./.test(gapText) && !/Nearest published approach/.test(gapText),
+    'a home in line with a runway the record holds no glide path for is told so, not pointed at another approach (audit I-5)',
+    gapText
+  );
+}
 
 // 12. Place names: a borough opens its card (switching city), a Bay Area city opens the Bay Area, a city name switches.
 await page.fill('#pc', 'Trafford');

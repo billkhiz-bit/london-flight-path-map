@@ -154,10 +154,13 @@ for (const vp of VIEWPORTS) {
 // measured, because "one line" is the whole point (it was 107 px at 390x844).
 {
   const { ctx, page } = await open(VIEWPORTS[1], false);
-  const footerLinks = () =>
-    page.evaluate(() => {
+  // `scroll`: bring each link into view first, as a finger would, so a long open list is
+  // judged on whether it can be reached, not on whether it fits one screen.
+  const footerLinks = (scroll = false) =>
+    page.evaluate((scroll) => {
       const f = document.querySelector('.sheet-footer');
       const hit = (el) => {
+        if (scroll) el.scrollIntoView({ block: 'center' });
         const r = el.getBoundingClientRect();
         if (!r.width || !r.height) return false;
         const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
@@ -168,7 +171,7 @@ for (const vp of VIEWPORTS) {
         hrefs: [...f.querySelectorAll('a[href]')].filter(hit).map((a) => a.getAttribute('href')),
         more: [...f.querySelectorAll('summary')].some(hit),
       };
-    });
+    }, scroll);
   const closed = await footerLinks();
   const legalOnly =
     closed.hrefs.length === REQUIRED.length && REQUIRED.every((r) => closed.hrefs.some((h) => h.startsWith(r)));
@@ -181,10 +184,33 @@ for (const vp of VIEWPORTS) {
   if (closed.more) {
     await page.locator('.sheet-footer summary').click();
     await page.waitForTimeout(300);
-    const opened = await footerLinks();
-    const all = opened.hrefs.length >= 9 && opened.hrefs.some((h) => h.startsWith('/pricing'));
+    const opened = await footerLinks(true);
+    // THE SAME DESTINATIONS AS THE DESKTOP FOOTER, and the way back among them (audit
+    // 2026-10-09 I-4). This said `>= 9 links` and passed while the phone copy had no
+    // `/`, `/reports/` or `/open-data/` and a developer link the desktop had moved off:
+    // a count says how many, never which. The expected set is READ from `.site-footer`,
+    // never typed here, so a link added to either footer reds until the other has it.
+    const sets = await page.evaluate(() => {
+      const hrefs = (sel) => [...new Set([...document.querySelectorAll(`${sel} a[href]`)].map((a) => a.getAttribute('href')))].sort();
+      return { phone: hrefs('.sheet-footer'), desktop: hrefs('.site-footer') };
+    });
+    const unreachable = sets.phone.filter((h) => !opened.hrefs.includes(h));
+    const all = unreachable.length === 0 && opened.hrefs.includes('/');
     if (!all) fail++;
-    console.log(`  ${all ? 'ok  ' : 'FAIL'} open: every footer link reachable          ${opened.hrefs.length} link(s)`);
+    console.log(
+      `  ${all ? 'ok  ' : 'FAIL'} open: every footer link reachable, the way back too   ${opened.hrefs.length} link(s)` +
+        (unreachable.length ? `  UNREACHABLE: ${unreachable.join(' ')}` : '') +
+        (opened.hrefs.includes('/') ? '' : '  NO WAY BACK to /'),
+    );
+    const onlyPhone = sets.phone.filter((h) => !sets.desktop.includes(h));
+    const onlyDesktop = sets.desktop.filter((h) => !sets.phone.includes(h));
+    const same = sets.desktop.length > 0 && onlyPhone.length === 0 && onlyDesktop.length === 0;
+    if (!same) fail++;
+    console.log(
+      `  ${same ? 'ok  ' : 'FAIL'} the phone footer and the desktop footer link the same ${sets.desktop.length} places` +
+        (onlyPhone.length ? `  PHONE ONLY: ${onlyPhone.join(' ')}` : '') +
+        (onlyDesktop.length ? `  DESKTOP ONLY: ${onlyDesktop.join(' ')}` : ''),
+    );
   }
   await ctx.close();
 }

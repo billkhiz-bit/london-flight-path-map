@@ -1255,11 +1255,28 @@ dissolves when you compute the real one.*
 >   `build_bay_area_page.py`; `tests/test_goatcounter_pinned.py` holds them to one tag. Never go back to the unversioned
 >   `count.js` (it changes without notice). Upgrading: recompute the hash from the served file, change every page at once.
 >   **It sends `q: location.search`** (read in the served script, 2026-10-09), so a page whose URL holds a postcode
->   sends the postcode: audit 2026-10-09 I-1, against privacy s2c's "aggregate counts only", open.
-> - **Focus rings use `--focus: #d35a12`** on the front page, its reports pages and the full map (audit I-7, 2026-10-07):
->   the brand orange measured 2.17-2.72:1 against them. `tests/test_focus_ring_contrast.py` fails on a ring in `var(--orange)`,
->   **but only in the four files in its `FILES` list**: `/pricing` and `/api/` still ring in orange at 2.44:1 (audit
->   2026-10-09 I-7, open). Derive that list, do not extend it by hand.
+>   sends the postcode: audit 2026-10-09 I-1, against privacy s2c's "aggregate counts only", open. `q` is a literal
+>   inside `get_data()`: no `data-goatcounter-settings` key and no `count()` argument reaches it (read 2026-10-11).
+> - **Focus rings use `--focus: #d35a12`** on the front page, its reports pages, the full map, `/pricing` and `/api/`
+>   (audit I-7, 2026-10-07; the last two 2026-10-11, audit 2026-10-09 I-7): the brand orange is 2.17-2.72:1 against them.
+>   `tests/test_focus_ring_contrast.py` has NO file list since 2026-10-11: it walks every served page with a focus rule
+>   and bans the brand orange COLOUR `#f27d26` in any ring (outline, stroke or box-shadow, literal or via any token),
+>   so 404.html's darker `--orange` (#c2410c) passes. Widening it found the full map's ranking rows ringing in an orange
+>   inset `box-shadow`, which the old outline/stroke-only check could not see.
+> - **A RUNWAY WITH NO GLIDE ANGLE IN THE RECORD IS A GAP, NEVER "NOT UNDER" (2026-10-11, audit 2026-10-09 I-5).**
+>   `routesNear()` returns `unglided` (JFK 13R, TEB 01, SFO 01L/R, OAK 15/33 and every runway of the runways-only
+>   LGW/STN/LTN records, each extended at a nominal 3 deg); `unglidedOverhead()` applies `finalOverhead()`'s rule and
+>   is asked only when no glided final is overhead. Howard Beach (11414) reads "N/A (no glide path in the FAA record
+>   for JFK 13R)", not "Not under a final approach"; the front page says "In line with ... the record gives no glide
+>   path for it". Never give a height from the nominal angle: it only withholds a negative.
+> - **The phone footer's "More" links the SAME 16 places as the desktop footer (2026-10-11, audit 2026-10-09 I-4)**,
+>   Front page first: the installed app opens `/map/`, so without `/` it was a dead end. `tests/mobile-legal-links.mjs`
+>   reads both footers and fails on any difference; add a footer link to both or neither.
+> - **The front page's `search()` takes a number (`searchSeq`) and stops after any await once a newer search has
+>   begun (2026-10-11, audit 2026-10-09 I-3)**; `tests/front-page.mjs` 11a holds one lookup 1.5 s under a second.
+> - **EPC band letters take `bandInk()`** (#fff on A and G, #141414 on B-F; 2026-10-11, I-8), and
+>   `tests/panel-contrast.mjs` has an `area panel, epc bands` state that fulfils `/epc`, because no run had ever seen
+>   the bands render (offsite requests are aborted there).
 > - **ROUTE EXPLANATIONS IN THE COUNCIL-AREA CARD (2026-10-09, audit 2026-10-05 M-15)**: the tooltip was a mouse's alone,
 >   so the front page's card lists the routes on the map that cross the area (`routesAcross()` / `routesFactHtml()` in
 >   `js/home-engine.mjs`), in the tooltip's own words, in a `<details>`. Inside is the DRAWN fill's rule, even-odd over

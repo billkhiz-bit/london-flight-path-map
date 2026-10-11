@@ -14,7 +14,7 @@
    quota. A postcode goes to postcodes.io and then the key-free
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
-import { AIRPORT_NAME, compass, finalOverhead, plane, roundFt, routesNear, towards } from '/js/flight_geometry.mjs';
+import { AIRPORT_NAME, compass, finalOverhead, plane, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
 import { DEFRA_LDEN_SCALE, LONDON_RASTER, nearestStation, stationDistance } from '/js/street_report.mjs';
 
 // The full map's address since the front page took / (2026-10-06). Every link
@@ -970,10 +970,14 @@ function routesText(proc, lat, lon) {
   if (!ap) return `No airport on the map within ${AIRPORT_SCOPE_KM} km.`;
   const name = AIRPORT_NAME[ap.code] || ap.code;
   const under = finalOverhead(near.finals); // the full map's "Plane altitude" uses the same rule (A1)
+  // ...and the same runways with no glide path on record (audit 2026-10-09 I-5).
+  const unglided = under ? null : unglidedOverhead(near.unglided);
   const nearestFinal = near.finals.sort((a, b) => a.dist - b.dist)[0];
   const parts = [`Nearest airport on the map: ${name}, ${km(ap.dist)} to the ${compass(ap.q)}.`];
   if (under) {
     parts.push(`Under the ${AIRPORT_NAME[under.code] || under.code} ${under.rwy} final approach, ${under.dist < 0.05 ? 'on the centreline' : `${km(under.dist)} from the centreline`}, aircraft at about ${roundFt(under.heightFt).toLocaleString('en-GB')} ft here.`);
+  } else if (unglided) {
+    parts.push(`In line with ${AIRPORT_NAME[unglided.code] || unglided.code} runway ${unglided.rwy}, ${unglided.dist < 0.05 ? 'on its extended centreline' : `${km(unglided.dist)} from its extended centreline`}: the record gives no glide path for it, so no height is given here.`);
   } else if (nearestFinal && nearestFinal.dist <= AIRPORT_SCOPE_KM) {
     parts.push(`Nearest published approach: ${AIRPORT_NAME[nearestFinal.code] || nearestFinal.code} ${nearestFinal.rwy}, ${km(nearestFinal.dist)} to the ${compass(nearestFinal.q)}.`);
   }
@@ -1003,9 +1007,18 @@ form?.addEventListener('submit', (ev) => {
   search(byId('pc')?.value || '');
 });
 
+// A search has up to four awaits (the Bay Area names, postcodes.io, a city's outlines,
+// /v1/environment), and a slower earlier one used to finish last and overwrite the answer
+// to a later one: TW9 3PZ held up, SW11 1AA typed after it, left TW9's title and figures
+// over a pin on Battersea (audit 2026-10-09 I-3). Each search takes a number, and after
+// every await it stops if a newer one has started - the full map's beginSearch() /
+// isCurrentSearch(), and show()'s own showSeq, one level up.
+let searchSeq = 0;
 async function search(raw) {
   const text = raw.trim();
   if (!text) return;
+  const seq = ++searchSeq;
+  const stale = () => seq !== searchSeq;
   leaveIntro();
   answer?.classList.remove('is-open');
   clearPin();
@@ -1014,6 +1027,7 @@ async function search(raw) {
   if (row) {
     say('');
     if (CITY_NAME[row.city] && row.city !== state.city) await show(row.city);
+    if (stale()) return;
     selectBorough(row.borough, { scroll: true });
     return;
   }
@@ -1021,28 +1035,38 @@ async function search(raw) {
   // on the 257 KB Bay Area file (audit 2026-10-05 M-12).
   const place = state.usPlaces?.places.find((p) => p.kind !== 'cdp' && norm(p.name) === norm(text))
     || (/\d/.test(text) ? null : await bayAreaPlace(text));
+  if (stale()) return;
   if (place) {
     say('');
     if (state.city !== 'bayarea') await show('bayarea');
+    if (stale()) return;
     selectBorough(place.name, { scroll: true });
     return;
   }
   const cityKey = CITIES.find(([k, n]) => norm(n) === norm(text) || k === norm(text).replace(/\s/g, ''))?.[0];
-  if (cityKey) { say(''); closeBorough(false); await show(cityKey); setQuery({ city: cityKey }); return; }
+  if (cityKey) {
+    say(''); closeBorough(false);
+    await show(cityKey);
+    if (!stale()) setQuery({ city: cityKey });
+    return;
+  }
 
   const pc = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
-  if (/^\d{5}$/.test(pc)) { await searchZip(pc); return; }
+  if (/^\d{5}$/.test(pc)) { await searchZip(pc, stale); return; }
   say('Looking it up...');
   closeBorough(false);
   try {
     const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
+    if (stale()) return;
     if (!geo.result) { say('That postcode was not found, and no place on the map has that name.'); return; }
     const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
     const city = cityOf(district);
     // A postcode no city covers gets no pin: a pin on whichever city is on
     // screen is how the live site once told a Norwich reader about Stansted.
     if (city && city !== state.city) await show(city, { lat, lon }); else if (city) draw({ lat, lon });
+    if (stale()) return;
     const env = await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
+    if (stale()) return;
     if (!env.environment) { say(env.error || 'No figures for that spot.'); return; }
     // A success is announced too: the status line is the page's live region,
     // and it went from "Looking it up..." to empty, so a screen-reader user
@@ -1051,7 +1075,8 @@ async function search(raw) {
     render(geo.result.postcode, district, city, env.environment, lat, lon);
     setQuery({ city: city || state.city, postcode: geo.result.postcode });
   } catch {
-    say('Could not reach the data just now. Try again in a moment.');
+    // A stale search's failure is not this one's: say nothing over the newer answer.
+    if (!stale()) say('Could not reach the data just now. Try again in a moment.');
   }
 }
 // ---- a US ZIP: the Census's ZIP areas for the four Bay Area counties ----
@@ -1059,16 +1084,18 @@ async function search(raw) {
 // a sentence and nothing else: no pin, and the map stays where it is, because
 // a point drawn on whichever city is on screen is how the live site once told
 // a Norwich reader about Stansted.
-async function searchZip(code) {
+// `stale` is the calling search()'s own test: a ZIP has two awaits of its own.
+async function searchZip(code, stale) {
   closeBorough(false);
   if (!state.usZips) {
     try {
       state.usZips = (await d3.json('/data/us-bayarea-zips.json')).zips;
     } catch {
-      say('Could not load the ZIP list just now. Try again in a moment.');
+      if (!stale()) say('Could not load the ZIP list just now. Try again in a moment.');
       return;
     }
   }
+  if (stale()) return;
   const found = state.usZips[code];
   if (!found) {
     say(`${code} is not a ZIP in the four Bay Area counties on the map (San Francisco, San Mateo, Santa Clara and Alameda). New York's ZIPs are on the full map.`);
@@ -1078,6 +1105,7 @@ async function searchZip(code) {
   say('');
   const pin = { lat: zip.lat, lon: zip.lon };
   if (state.city !== 'bayarea') await show('bayarea', pin); else draw(pin);
+  if (stale()) return;
   if (zip.place && selectBorough(zip.place, { scroll: true, zip })) return;
   // No city holds any of it (or the city is one the map does not draw): the ZIP's own card.
   state.selected = null;

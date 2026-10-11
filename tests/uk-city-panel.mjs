@@ -415,32 +415,49 @@ console.log('No flight path in South Yorkshire');
 // must say so rather than print a band.
 console.log('Plane altitude in New York');
 {
-  // `not`: a value the row must have LEFT (the previous search's), so a second search is
-  // read only once it has rendered: poll for the state you want, never one already true.
-  const altitudeRow = (pg, not = '') =>
+  // The previous search's row is overwritten with a marker BEFORE the next search, and the
+  // poll waits for a row that is neither the marker nor the pre-geometry N/A: poll for the
+  // state you want, never one already true. It waited for a value DIFFERENT from the last
+  // one until 2026-10-11, which could never resolve when two places rightly read the same,
+  // so the Howard Beach check reported "never resolved" on the old tree, not what it read.
+  const STALE = 'stale: the previous search';
+  const altitudeRow = (pg) =>
     pg
       .waitForFunction(
-        (prev) => {
+        (stale) => {
           const label = [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude');
           const value = label?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim();
-          return value && value !== 'N/A' && value !== prev ? value : false;
+          return value && value !== 'N/A' && value !== stale ? value : false;
         },
-        not,
+        STALE,
         { timeout: 25000 },
       )
       .then((h) => h.jsonValue())
       .catch(() => 'N/A (never resolved)');
+  const searchFor = async (q) => {
+    await page.evaluate((stale) => {
+      const label = [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude');
+      const cell = label?.parentElement?.querySelector('.noise-detail-value');
+      if (cell) cell.textContent = stale;
+    }, STALE);
+    await page.fill('#search-input', q);
+    await page.press('#search-input', 'Enter');
+    return altitudeRow(page);
+  };
   await page.evaluate((city) => window.switchCity(city), 'london');
   await page.waitForTimeout(1200);
-  await page.fill('#search-input', '11421');
-  await page.press('#search-input', 'Enter');
-  const row = await altitudeRow(page);
+  const row = await searchFor('11421');
   const ft = Number((row.match(/^About ([\d,]+) ft \(JFK 13L final approach\)$/) || [])[1]?.replace(/,/g, ''));
   check("11421 (Woodhaven): the FAA's JFK 13L glide path, about 1,180 ft (not a ladder by distance)", ft >= 1000 && ft <= 1400, `row: "${row}"`);
-  await page.fill('#search-input', '10001');
-  await page.press('#search-input', 'Enter');
-  const chelsea = await altitudeRow(page, row);
+  const chelsea = await searchFor('10001');
   check('10001 (Chelsea): under no final approach, and says so', chelsea === 'Not under a final approach', `row: "${chelsea}"`);
+  // A GAP IN THE RECORD IS NOT "NOT UNDER" (audit 2026-10-09 I-5). Howard Beach's point is
+  // about 3 km out and 0.3 km beside JFK 13R's extended centreline. The FAA publishes an
+  // approach to 13R that this cycle does not code, so the record holds no glide angle,
+  // 13R's final never entered the test, and the row read "Not under a final approach" in
+  // the panel whose own Queens note puts Howard Beach "under JFK paths".
+  const howard = await searchFor('11414');
+  check('11414 (Howard Beach): beside JFK 13R, which has no glide path on record, says so rather than "not under"', howard === 'N/A (no glide path in the FAA record for JFK 13R)', `row: "${howard}"`);
   console.log('');
 }
 

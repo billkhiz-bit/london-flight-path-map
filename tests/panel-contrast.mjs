@@ -186,6 +186,44 @@ const STATES = [
         () => document.querySelectorAll('#postcode-nhs-data a').length >= 3
       ),
   },
+  {
+    // THE EPC BANDS, REACHED ON PURPOSE (2026-10-11, audit 2026-10-09 I-8). Every band
+    // letter was --white on the band's colour, 1.36:1 on D, since the March EPC work, and
+    // no run of this gate ever saw one: offsite requests are aborted here, so /epc never
+    // answered and the section said "temporarily unavailable". This fulfils /epc with the
+    // Lambda's own summary shape (backend/lambdas/epc/app.py) carrying ALL SEVEN bands, so
+    // every band colour is measured with its letter, plus the 22px average on D, the worst.
+    name: 'area panel, epc bands',
+    open: async (page) => {
+      const bands = { A: 2, B: 9, C: 21, D: 18, E: 11, F: 6, G: 3 };
+      await page.route(
+        (url) => url.hostname.endsWith('.amazonaws.com') && url.pathname.endsWith('/epc'),
+        (route) =>
+          route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            headers: { 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify({
+              available: true,
+              count: Object.values(bands).reduce((a, b) => a + b, 0),
+              summary: { averageRating: 60, averageBand: 'D', bandDistribution: bands },
+            }),
+          })
+      );
+      return page.evaluate(() => {
+        const row = document.querySelector('.rank-table tbody tr');
+        if (row) {
+          row.click();
+          return 'ranking row (epc stubbed)';
+        }
+        return null;
+      });
+    },
+    expect: (title) => /\(\w{1,2}\d/.test(title),
+    // Seven band rows and the average: the stub's own content, asserted on the DOM.
+    reached: async (page) =>
+      page.evaluate(() => document.querySelectorAll('#postcode-epc-data .epc-band').length >= 8),
+  },
 ];
 
 // WHICH STATES TO RUN. `--only=<prefix>` selects one; the default is all.
