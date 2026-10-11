@@ -503,6 +503,32 @@ ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.
 ok((await page.locator('#map .pin').count()) === 1, 'a pin is drawn at the postcode');
 ok((await page.locator('#ans-link').getAttribute('href')) === '/map/?city=london&postcode=TW9%203PZ', 'the hand-off link carries city and postcode to the full map at /map/');
 ok(await page.evaluate(() => location.search) === '?city=london&postcode=TW9+3PZ', 'URL carries ?city=&postcode=');
+
+// 8a. THE COUNTER SENDS NO POSTCODE (audit 2026-10-09 I-1). GoatCounter's own script sent `q: location.search`
+// with every hit, so this very address (?city=london&postcode=TW9+3PZ) reached GoatCounter. js/count.mjs is
+// the page's counter now: what it WOULD send, for a page view and for an event, is read here from the real
+// module on a page whose address holds a postcode, a title changed after load, and a referrer with a query.
+{
+  const sent = await page.evaluate(async () => {
+    const m = await import('/js/count.mjs');
+    const before = document.title;
+    document.title = 'TW9 3PZ - Sky Score';
+    const ctx = m.pageContext();
+    const view = m.countUrl({}, { ...ctx, referrer: m.withoutQuery('https://skyscore.co.uk/map/?postcode=TW9+3PZ#x') });
+    const event = m.countUrl({ path: 'event/front-search', title: 'front-search', event: true }, ctx);
+    document.title = before;
+    return { view, event, wired: typeof window.goatcounter?.count === 'function' };
+  });
+  const leaks = (u) => /TW9|postcode|city%3D|[?&]q=/i.test(u);
+  const params = (u) => Object.fromEntries(new URL(u).searchParams);
+  const v = params(sent.view);
+  ok(
+    sent.wired && !leaks(sent.view) && !leaks(sent.event) && v.p === '/' && v.r === 'https://skyscore.co.uk/map/' && !/TW9/.test(v.t),
+    'the counter sends the path, the served title and a bare referrer: no postcode, no query (audit I-1)',
+    JSON.stringify({ view: sent.view, event: sent.event })
+  );
+  ok(params(sent.event).e === 'true' && params(sent.event).p === 'event/front-search', 'an event is sent as an event, by name', sent.event);
+}
 await page.locator('#ans-open-area').click();
 await page.waitForSelector('#borough.is-open');
 ok((await page.locator('#borough h2').textContent()) === 'Richmond upon Thames' && (await answerOpen().count()) === 0, '"Its figures" opens the council-area card and closes the answer');
@@ -1376,6 +1402,10 @@ const makeReport = async (pc) => {
     window.__gc = [];
     window.goatcounter = { count: (v) => window.__gc.push(v.path) };
   });
+  // Our own counter (js/count.mjs, since 2026-10-11) is served from this origin, so it would load
+  // and replace the stand-in; GoatCounter's script was third-party and aborted. Section 8a holds
+  // what the real module sends.
+  await gcPage.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
   const sent = () => gcPage.evaluate(() => window.__gc.slice());
   await gcPage.goto(`${BASE}?postcode=TW9%203PZ`, { waitUntil: 'domcontentloaded' });
   await gcPage.waitForFunction(() => document.getElementById('answer')?.classList.contains('is-open'), null, { timeout: 15000 }).catch(() => {});

@@ -1207,7 +1207,7 @@ PAGE_HTML = """<!doctype html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src https://gc.zgo.at; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';">
 <title>Bay Area flight paths: which cities are under the routes into SFO, Oakland and San Jose - Sky Score</title>
 <meta name="description" content="The published landing, arrival and departure routes of San Francisco, Oakland and San Jose airports, drawn over {n} Bay Area cities from the FAA's own procedure file, with the federal aircraft noise map. {n_app} cities have a landing path overhead below 3,000 ft." />
 <link rel="canonical" href="{site}/bay-area/" />
@@ -1326,7 +1326,7 @@ PAGE_HTML = """<!doctype html>
 <p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/open-data/">Open data</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
 </footer>
 </div>
-<script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
+<script type="module" src="/js/count.mjs"></script>
 </body>
 </html>
 """

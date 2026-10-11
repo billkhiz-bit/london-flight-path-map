@@ -6,9 +6,18 @@ WHY (website audit 2026-10-06, I15). A mistyped address, and the old names /priv
 listable, so S3 answers a missing key with 403 rather than 404, and the distribution had no
 custom error responses at all (measured 2026-10-07: CustomErrorResponses.Quantity 0).
 
-WHAT IT DOES. Maps origin 403 and 404 to `/404.html` with status 404, cached 60 s, on
-EGSSPJKLFL33M. The old .html names are a separate fix, a 301 in the viewer-request function
+WHAT IT DOES. Maps origin 403 to `/404.html` with status 404, cached 60 s, on EGSSPJKLFL33M.
+The old .html names are a separate fix, a 301 in the viewer-request function
 (`scripts/install_cloudfront_index_rewrite.py`), so they reach the page rather than this one.
+
+403 ONLY, NOT 404 (2026-10-11, audit 2026-10-09 I-2). It mapped both from 7 Oct. But the bucket
+policy grants CloudFront `s3:GetObject` and no `s3:ListBucket` (read live 11 Oct), so S3 answers
+EVERY missing key 403 and never 404: the 404 entry caught nothing from S3, and the one thing it
+did catch was the badge's own "not covered" SVG (see 2 below), which it replaced with this HTML
+page. Mapping 403 alone keeps the branded page for every mistyped address and leaves the badge
+whole, with no Lambda change. --verify checks the premise (no ListBucket in the policy): grant
+it one day and S3 starts answering 404, so missing pages would show S3's XML again, and the
+check reds before that reaches anyone. tests/test_cloudfront_not_found.py holds WANT to 403.
 
 THREE THINGS THAT ARE NOT OBVIOUS:
 
@@ -21,9 +30,9 @@ THREE THINGS THAT ARE NOT OBVIOUS:
      an uncovered postcode's badge is an SVG with status 404, by design in handle_badge, and this
      mapping replaces that body with /404.html, so the badge is a broken image on a partner's
      page (skyscore.co.uk/badge?postcode=EX11HS -> 404 text/html; the API origin -> 404
-     image/svg+xml). Open, a decision: the badge answering 200 for "not covered" is the smallest
-     fix, since an error response cannot be scoped to a path. --verify fetches a COVERED badge
-     only, which is why it passed. 429s are not mapped, so a throttled badge stays a 429.
+     image/svg+xml). An error response cannot be scoped to a path, so the fix is to stop
+     mapping 404 at all (above). --verify fetched a COVERED badge only, which is why it passed;
+     it fetches an uncovered one too now. 429s are not mapped, so a throttled badge stays a 429.
   3. 404, NOT 200. A not-found page answering 200 tells search engines the mistyped address is
      a real page (a "soft 404"). The page also carries `noindex`.
 
@@ -46,16 +55,21 @@ from pathlib import Path
 import boto3
 
 DISTRIBUTION_ID = 'EGSSPJKLFL33M'
+BUCKET = 'london-flight-map-frontend'
 SITE = 'https://skyscore.co.uk'
 PAGE = '/404.html'
 TTL = 60
+# 403 only: see "403 ONLY, NOT 404" above. A 404 here could only ever come from the badge.
+MAPPED = (403,)
 WANT = {
-    'Quantity': 2,
+    'Quantity': len(MAPPED),
     'Items': [
         {'ErrorCode': code, 'ResponsePagePath': PAGE, 'ResponseCode': '404', 'ErrorCachingMinTTL': TTL}
-        for code in (403, 404)
+        for code in MAPPED
     ],
 }
+# A postcode no city covers: the standard uncovered spot-check (CLAUDE.md).
+UNCOVERED = 'EX11HS'
 # What the page says, so --verify knows it got OUR page and not CloudFront's or S3's.
 MARKER = b"We can't find that page"
 
@@ -122,6 +136,11 @@ def apply():
     if page_status != 200 or MARKER not in page_body:
         print(f'refusing to apply: {PAGE} is not at the origin yet ({page_status}). Run meta-deploy first.')
         return 1
+    if not bucket_cannot_list():
+        print(
+            'refusing to apply: the bucket policy grants ListBucket, so S3 answers 404 and mapping 403 alone is wrong.'
+        )
+        return 1
     cfg, etag = current()
     if matches(cfg):
         print('nothing to do: the responses already match')
@@ -133,6 +152,19 @@ def apply():
     cf().get_waiter('distribution_deployed').wait(Id=DISTRIBUTION_ID)
     print('Deployed. Now run --verify.')
     return 0
+
+
+def bucket_cannot_list():
+    """True when no statement in the bucket policy grants s3:ListBucket, so S3 never answers 404."""
+    import json
+
+    policy = json.loads(boto3.client('s3', region_name='eu-west-2').get_bucket_policy(Bucket=BUCKET)['Policy'])
+    for st in policy.get('Statement', []):
+        actions = st.get('Action', [])
+        actions = [actions] if isinstance(actions, str) else actions
+        if any(a in ('s3:ListBucket', 's3:*', '*') for a in actions):
+            return False
+    return True
 
 
 def live_function_matches_source():
@@ -184,6 +216,18 @@ def verify():
         '/badge still answers an SVG',
         status == 200 and body.lstrip().startswith(b'<svg'),
         f'{status} {headers.get("Content-Type")}',
+    )
+    # The badge's OWN 404 (audit 2026-10-09 I-2): an SVG saying "Not covered", which renders in
+    # an <img> on a partner's page whatever its status. It is the case this check missed on 7 Oct.
+    status, headers, body = fetch(f'{SITE}/badge?postcode={UNCOVERED}')
+    check(
+        'an uncovered badge is still its own SVG, status 404',
+        status == 404 and body.lstrip().startswith(b'<svg') and b'Not covered' in body,
+        f'{status} {headers.get("Content-Type")}',
+    )
+    check(
+        'the bucket grants no ListBucket, so S3 answers missing keys 403 (the only code mapped)',
+        bucket_cannot_list(),
     )
     check('the live function is the installer source', live_function_matches_source())
     ok = all(results)

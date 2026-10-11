@@ -582,9 +582,10 @@ def test_the_picture_is_asked_for_by_a_root_path_and_named_after_its_content(pag
 
 def test_the_page_has_no_em_dash_and_no_inline_script(page):
     assert '—' not in page
-    # The one script is GoatCounter, pinned to count.v5.js with its SRI hash since 2026-10-07
-    # (tests/test_goatcounter_pinned.py holds every page to the same tag).
-    assert len(re.findall(r'<script\b', page)) == 1 and 'gc.zgo.at/count.v5.js' in page
+    # The one script is our own counter, js/count.mjs, since 2026-10-11 (audit 2026-10-09 I-1:
+    # GoatCounter's script sent the query string); tests/test_analytics_first_party.py holds
+    # every page to the same tag.
+    assert len(re.findall(r'<script\b', page)) == 1 and '<script type="module" src="/js/count.mjs"></script>' in page
 
 
 def test_any_shading_ranks_above_none():

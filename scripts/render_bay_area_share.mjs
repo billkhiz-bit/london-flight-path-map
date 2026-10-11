@@ -46,8 +46,9 @@ const base = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch();
 try {
   const page = await (await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 })).newPage();
-  // The page's own analytics script must not count a render as a visit.
-  await page.route('**/gc.zgo.at/**', (r) => r.abort());
+  // A render must not count as a visit. js/count.mjs already sends nothing from 127.0.0.1;
+  // the counting host is aborted too, so that stays true whatever the module decides.
+  await page.route('**/cubitt33.goatcounter.com/**', (r) => r.abort());
   await page.goto(`${base}/bay-area/index.html`, { waitUntil: 'networkidle' });
   const drawn = await page.evaluate(() => {
     const svg = document.querySelector('svg.map');

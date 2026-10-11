@@ -8,7 +8,7 @@
      OpenSky-related corsproxy.io / api.allorigins.win deliberately omitted — the
      dormant fetchLiveData function would fire CSP violations if anyone re-enabled
      the live mode without also restoring the licensing path. Defence-in-depth. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://gc.zgo.at https://cubitt33.goatcounter.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://cubitt33.goatcounter.com; connect-src 'self' https://cdn.jsdelivr.net https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -2848,6 +2848,6 @@ if (isMobile) enableCollapsiblePanels();
 </script>
 
 <!-- GoatCounter analytics (same tracker as main Sky Score site) -->
-<script data-goatcounter="https://cubitt33.goatcounter.com/count" async src="https://gc.zgo.at/count.v5.js" crossorigin="anonymous" integrity="sha384-atnOLvQb9t+jTSipvd75X2yginT4PjVbqDdlJAmxMm+wYElFmeR6EmLP5bYeoRVQ"></script>
+<script type="module" src="/js/count.mjs"></script>
 </body>
 </html>

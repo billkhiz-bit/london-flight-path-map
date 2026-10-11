@@ -645,8 +645,12 @@ browsers drawing an image body whatever its status. **Since the 7 Oct CloudFront
 404 -> `/404.html` mapping that body is REPLACED by the HTML 404 page at the
 site's origin, so an uncovered badge is a broken image on partners' pages**
 (audit 2026-10-09 I-2, measured: `skyscore.co.uk/badge?postcode=EX11HS` ->
-`404 text/html`, the API origin -> `404 image/svg+xml`; open, a decision on the
-status code). The
+`404 text/html`, the API origin -> `404 image/svg+xml`). **Fix prepared
+2026-10-11, applied by Bill**: the mapping covers origin 403 ALONE
+(`scripts/cloudfront_not_found.py`), because the bucket grants no
+`s3:ListBucket` and so S3 never answers 404 - the 404 entry only ever caught
+the badge. Its `--verify` now fetches an uncovered badge and checks the policy
+premise; `tests/test_cloudfront_not_found.py` holds the table to 403. The
 SVG is XML-escaped because **an SVG is a script-capable document served from our
 origin onto someone else's page**. `max-age` 24h; uncovered postcodes 5 min, so a
 newly-covered area does not keep saying otherwise. **It is EDGE-CACHED since
@@ -1251,12 +1255,16 @@ dissolves when you compute the real one.*
 >   write the three links; `tests/test_favicons.py` reds on a page without exactly one of each in `<head>`, an old
 >   icon, a generator that drops one, a touch icon with alpha, or an icons upload of one type. A page with a strict
 >   CSP needs `img-src 'self'` or Firefox blocks the icon (404 and the two `/preview/` forwards gained it).
-> - **GoatCounter is PINNED (2026-10-07)**: `count.v5.js` + `crossorigin` + its sha384 on every page and in
->   `build_bay_area_page.py`; `tests/test_goatcounter_pinned.py` holds them to one tag. Never go back to the unversioned
->   `count.js` (it changes without notice). Upgrading: recompute the hash from the served file, change every page at once.
->   **It sends `q: location.search`** (read in the served script, 2026-10-09), so a page whose URL holds a postcode
->   sends the postcode: audit 2026-10-09 I-1, against privacy s2c's "aggregate counts only", open. `q` is a literal
->   inside `get_data()`: no `data-goatcounter-settings` key and no `count()` argument reaches it (read 2026-10-11).
+> - **WE COUNT WITH OUR OWN `js/count.mjs`, NOT GOATCOUNTER'S SCRIPT (2026-10-11, audit 2026-10-09 I-1).** Its
+>   `count.v5.js` (pinned with SRI on 7 Oct) sent `q: location.search` with every hit, a literal inside `get_data()`
+>   that no setting reaches, so a postcode in a page's address reached GoatCounter against privacy s2c. The module
+>   sends GoatCounter's documented `/count` endpoint the path (the canonical's, never a query), the title AS SERVED
+>   (the full map writes the postcode into `document.title`), the referrer WITHOUT its query (a same-origin move keeps
+>   it), screen size and an event flag; it keeps `window.goatcounter.count(vars)`, so no event caller changed, and
+>   skips localhost, frames and the `#toggle-goatcounter` opt-out. One tag on eleven pages and in
+>   `build_bay_area_page.py`: `<script type="module" src="/js/count.mjs"></script>`, held by
+>   `tests/test_analytics_first_party.py` (no `gc.zgo.at` anywhere, policies allow it), and `tests/front-page.mjs` 8a
+>   reads what the real module would send from a postcode address. Never go back to GoatCounter's script.
 > - **Focus rings use `--focus: #d35a12`** on the front page, its reports pages, the full map, `/pricing` and `/api/`
 >   (audit I-7, 2026-10-07; the last two 2026-10-11, audit 2026-10-09 I-7): the brand orange is 2.17-2.72:1 against them.
 >   `tests/test_focus_ring_contrast.py` has NO file list since 2026-10-11: it walks every served page with a focus rule
@@ -1331,7 +1339,7 @@ all of them - **count the targets below, do not trust a number in this sentence*
 | `pwa-deploy` | manifest, `sw.js`, icons. **Uploaded BY TYPE since 2026-10-08** (`*.svg` and `*.png` in separate commands): the one `--content-type "image/svg+xml"` for the whole folder would have served the new PNG touch icon as SVG |
 | `demo-deploy` | **new** — all 7 `score-demo/` files incl. the vendored Swagger UI |
 | `prototype-deploy` | **new** — `prototype/index.html` |
-| `meta-deploy` | **new** — `robots.txt`, `sitemap.xml`, `.well-known/security.txt`, `preview.png`, **`favicon.ico` since 2026-10-08** (browsers request it from the root whatever a page declares; it 404'd on every page view until then), and **`404.html` since 2026-10-07**: CloudFront serves it with status 404 for any origin 403/404 (`scripts/cloudfront_not_found.py --plan/--apply/--verify`; the error responses are DISTRIBUTION-WIDE, so they cover `/badge` too, which was thought safe because "`/badge` answers every GET 200" - **it does not: an uncovered postcode's badge is a 404 SVG, and this mapping replaces it with HTML; audit 2026-10-09 I-2, open**). The old `/privacy.html`, `/terms.html`, `/pricing.html`, `/changes.html` 301 from `sky-score-rewrite-index`, whose source is `FUNCTION_CODE` in `scripts/install_cloudfront_index_rewrite.py` (run in Node by `tests/test_cloudfront_function.py`). **Both AWS steps are Bill's**: the classifier refuses CloudFront publishes from Claude's session ("Protected-Scope IaC Apply"), so hand them over as `!` commands, one per message |
+| `meta-deploy` | **new** — `robots.txt`, `sitemap.xml`, `.well-known/security.txt`, `preview.png`, **`favicon.ico` since 2026-10-08** (browsers request it from the root whatever a page declares; it 404'd on every page view until then), and **`404.html` since 2026-10-07**: CloudFront serves it with status 404 for any origin 403/404 (`scripts/cloudfront_not_found.py --plan/--apply/--verify`; the error responses are DISTRIBUTION-WIDE, so they cover `/badge` too, which was thought safe because "`/badge` answers every GET 200" - **it does not: an uncovered postcode's badge is a 404 SVG, and this mapping replaced it with HTML; audit 2026-10-09 I-2. Since 2026-10-11 the script maps origin 403 ONLY (S3 never 404s: no ListBucket), applied by Bill with `--apply`**). The old `/privacy.html`, `/terms.html`, `/pricing.html`, `/changes.html` 301 from `sky-score-rewrite-index`, whose source is `FUNCTION_CODE` in `scripts/install_cloudfront_index_rewrite.py` (run in Node by `tests/test_cloudfront_function.py`). **Both AWS steps are Bill's**: the classifier refuses CloudFront publishes from Claude's session ("Protected-Scope IaC Apply"), so hand them over as `!` commands, one per message |
 | `area-deploy` | **the 99 static borough pages + `area/index.html`** (`s3 sync --delete`). **Was MISSING FROM THIS TABLE until 2026-09-02**, which is the same "a list that omits a member reads as complete" trap this file records about `template.yaml`'s free-tier mirrors. It also had **no CloudFront invalidation** until that date - the only target without one - so all 100 pages uploaded, every command reported success, and CloudFront served the OLD pages for up to the hour its `max-age=3600` allows. That is what made it silent: check immediately and the deploy looks broken, check later and it looks fine, which reads as a flaky check rather than a missing step |
 | `talks-deploy` | **new (2026-09-21)** - `aws s3 sync` of `talks/`: the plain-English write-ups (`how-sky-score-works.pdf`, `how-the-checks-work.pdf`, each rendered TAGGED from the `.html` beside it by `node scripts/render_talks_pdfs.mjs`; commit both, and both are uploaded - the `.html` is the primary format since 2026-09-25) and `talks/index.html`, which is what the end-card QR code points at (`skyscore.co.uk/talks/`). No `--delete`. **Standalone**: not a product surface, so not in `web-deploy-all` and not compared by `check_deploy_drift.sh`. Exists because a live file with no deploy command is audit finding 38's shape. **No em dashes** - the gate does not scan `talks/`, so the rule is kept by hand here |
 | `deeplinks-deploy` | `.well-known/apple-app-site-association` + `assetlinks.json`. **NOT in `web-deploy-all`**, deliberately: the target refuses to run while the files hold `TEAMID`/`REPLACE:WITH` placeholders (see `mobile/DEEP_LINKING.md`). Omitted from this table until 2026-09-14 (audit M29) |
