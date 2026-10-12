@@ -840,7 +840,13 @@ Full detail in `AUDIT_REPORT.md`. The things a future session must not undo:
   checked `env`, and borough parity floored at **60 against a real 91**.
 - **preflight distinguishes INCONCLUSIVE from PASS.** Three gates deliberately
   exit 0 when they cannot verify, and the runner printed PASS and discarded the
-  reason.
+  reason. **And CRASHED from "deviates" since 2026-10-12**: `advise()` printed
+  any non-zero exit as "deviates", so `fit_airport_shape.py --check` dying on a
+  tuple unpack read as a measured deviation in a PASSing run.
+  `advisory_verdict()` keys on lines only a crash prints (Python's `Traceback
+  (most recent call last):`, Node's closing `Node.js v<version>`) and reports
+  the stage as could-not-verify with its last line;
+  `tests/test_preflight_advise.py` runs the real functions, proven red.
 - **`lookup_postcode` rejects anything but `[A-Z0-9]{1,8}`.** `quote()` defaults
   to `safe='/'`, so `../outcodes/SW11` traversed into the postcodes.io PATH and
   returned a **500 with a JSON body** from `/badge` - the one thing that

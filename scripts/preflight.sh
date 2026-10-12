@@ -158,9 +158,34 @@ advise() {
     else
       printf 'ok\n'
     fi
+  elif [ "$(advisory_verdict "$out")" = crashed ]; then
+    # A stage that broke measured nothing, so it is reported as could-not-verify
+    # (Bill's 2026-09-04 ruling), with the line that says why, never as a deviation.
+    printf 'CRASHED (advisory, could not run)\n'
+    INCONCLUSIVE="$INCONCLUSIVE|$name (crashed)"
+    printf '%s\n' "$out" | sed '/^[[:space:]]*$/d' | tail -1 | sed 's/^/      /'
   else
     printf 'deviates (advisory, not blocking)\n'
     ADVISORY="$ADVISORY|$name"
+  fi
+}
+
+# What a NON-ZERO advisory exit means, read from the stage's OUTPUT, not its exit
+# code (a traceback and a measured disagreement both exit 1). Prints one word:
+#   deviates   the gate ran and measured a disagreement
+#   crashed    the gate itself broke, so it measured nothing
+# On 2026-10-12 `fit_airport_shape.py --check` died on a tuple unpack and this
+# runner printed it as "deviates" inside a PASSing preflight.
+# Keyed on lines ONLY a crash prints, never on stack-like text a gate might quote:
+# Python opens every uncaught exception with "Traceback (most recent call last):",
+# and Node closes every uncaught one, sync or async, with "Node.js v<version>".
+# `tr -d '\r'` is load-bearing: Python on Windows ends those lines in CRLF, and the
+# `$` anchor matched here only because Git Bash's grep happens to drop the \r.
+advisory_verdict() {
+  if printf '%s\n' "$1" | tr -d '\r' | grep -qE '^Traceback \(most recent call last\):$|^Node\.js v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo crashed
+  else
+    echo deviates
   fi
 }
 
