@@ -72,6 +72,11 @@ Or just describe what you need, I have full context of this project.
 
 ## Project
 
+**THE PUBLIC COVERAGE SENTENCE (2026-10-12), the only one to quote: "97 council areas in 13 UK city regions, plus
+New York's 5 boroughs and 50 Bay Area cities (facts only)".** Three versions had been live at once (97 in 13; 102
+in 14; 11 and 91), each true of one surface. The counts below describe surfaces; `build_area_pages.py` counts the
+sentence per country for `/area/`, and OUTREACH_TARGETS "Facts safe to quote" holds it.
+
 **FOURTEEN cities on `/v1/score`; ELEVEN SCORED on the consumer site, as of 2026-09-27** (Greater Norwich joined the API that day, deployed and verified from the origin; see the Norwich block below). **Plus a twelfth, the San Francisco Bay Area, on the site and NOT scored (2026-10-05, release 1, DEPLOYED and verified from the origin that day)**: 50 cities with the `/bay-area/` page's facts and no number (Bill's ruling: the UK estimate is fitted against DEFRA and the Bay Area has no yardstick), a noise-map-order ranking, ZIP and name search. Its records carry `facts: true` and `updateSidebar()` / `renderBoroughRanking()` route them to their own renderers, so nothing passes through `calcScores()`; it is in no Lambda, and the parity gates read `borough-extra.json`, which it is not in. Both holders come from `scripts/build_bayarea_map_data.py` (blocking `--check`), which calls the page builder's own `facts()` / `routes()` / cell functions. Gate: `tests/bayarea-map.mjs`, blocking. **Two tiers beneath a city since the same day** (layer 1): San Francisco's 41 DataSF neighbourhoods and the 165 ZIP areas, the same facts measured over the smaller area by `scripts/build_bayarea_areas.py` (blocking, re-measures offline; its sources sit in ignored `data/datasf/` and `data/census/`). Outlines are drawn as STATE (`tierOutlineFeature`) because a phone's card opening runs `redrawForViewport()`, which rebuilds every layer and wiped a path drawn once. **Arrival routes since 2026-10-06**: each coded STAR joined to the approach transition starting where it ends, drawn from the first fix where the FAA ALLOWS 10,000 ft or lower (Bill's rule; 24 of 50 cities), stopping at radar vectors; a city's altitude is the FAA's published one at a fix INSIDE it, worded as published ("4,000 ft or above"), never interpolated. **The front page draws them since 2026-10-07**, from `data/us-bayarea-routes.json`, the third holder of `build_bayarea_map_data.py` (`route_records()` is the ONE derivation for it and the live map's block); until then the front page re-derived Bay Area lines from the raw FAA record, with whole departures and no arrivals. The legend's FAA cycle is generated (`BAYAREA_ROUTES_CYCLE`).
 
 - **On both site and API (11):** London (33), NYC (5), Greater Manchester (10),
@@ -1198,7 +1203,13 @@ dissolves when you compute the real one.*
 >   too and a visibility check passed with the rule removed). The free copy carries "Free
 >   copy for personal use, not for use with clients". The PDF is the paid product for
 >   firms (`scripts/address_noise_report.mjs`, which never gets those additions, so it
->   stays byte-identical to the module).
+>   stays byte-identical to the module). **It REFLOWS on a phone since 2026-10-12 (audit I-6, WCAG 1.4.10; Bill
+>   chose "reflow it")**: below A4 width the frame is fluid, and under 600 px the free copy's injected CSS gives two
+>   tiles a row, one column and 11 pt type; the routes table becomes a list whose cells carry `data-label` read from
+>   the table's own `th` cells (never retyped); the map alone keeps 720 px in its own `.map-scroll`, opened on the
+>   pin and a tab stop only while it scrolls. The free copy's "Prepared" date is the page's UTC `made` (M-6), never
+>   the local clock. `tests/front-page.mjs` checks 390 and 320 px: the FRAME must fit the screen (the old page
+>   scrolled inside `.sheet-wrap`, so "the page does not scroll" passed it) and the QR still decodes.
 > - **EVERY PRICE LIVES ON `/pricing`** (Bill, 2026-10-06: "one pricing page, in the top bar").
 >   The report tiers moved there as `#reports`; `/reports/` states no figure (the gate fails on
 >   any `£` digit there) and every old `/reports/#prices` link points at `/pricing#reports`. A price

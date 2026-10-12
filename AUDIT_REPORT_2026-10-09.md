@@ -4,6 +4,10 @@
 **Scope:** every commit since the 5 Oct audit (`b66c674`..`807d164`, 38 commits; 48 non-test files) on a clean tree level with what is deployed (drift 32 pages / 38 data / 103 area, re-run the same day). New or changed surfaces in the window: the front door move (`/` is `home/index.html` + `js/home-engine.mjs`, the full map is `/map/`), the reports pages and the free street report (`js/street_report.mjs`, `js/street_report_page.mjs`, the vendored QR library), `/pricing`, `404.html` and the CloudFront not-found mapping, favicons, the full map's glide-path altitude and distances, the phone footer, New York on the front page, and the 9 Oct route list in the council-area card and QR fix.
 **Method:** three read-only reviewers in parallel (code correctness; security and privacy; accessibility, layout and design), each told what is closed or recorded as a decision and to verify every finding before reporting it. **Every Critical and Important below was re-verified in this session** against the code, the data or the live site (the evidence is in each row); Minors marked "reviewer-measured" were measured by a reviewer and read, not re-run.
 
+**Status 2026-10-12: all 8 Importants CLOSED** (I-1 to I-5, I-7, I-8 on 11 Oct; I-6 on 12 Oct) **and Minors M-1, M-4,
+M-6, M-7 and M-9 closed**, each with a check proven red on the old code and deployed. The other Minors are open; each
+row says what is left.
+
 ## Critical
 
 None. On every page and viewport a visitor can search, read the answer and open a council area by mouse, keyboard or touch.

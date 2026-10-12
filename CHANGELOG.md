@@ -40,8 +40,16 @@ update. DEFRA has not published its 2025 grids yet, so this is on 2024 and the
   2.11 -> 2.08; `env` 6.185 -> 6.209, so neither it (6.2) nor the score moves.
 - **Per-postcode air quality:** 2,860 of 1,797,567 live postcodes change 1 km
   square; NO2 changes for 2,595 (median 0.5 ug/m3, at most 6.2), PM2.5 for 1,802
-  (median 0.1). Live once `load_defra_air_quality.py --live-only` is re-run
-  (Bill's step, after the noise reload).
+  (median 0.1). **Live since the same afternoon:** Bill re-ran
+  `load_defra_air_quality.py --live-only` after the noise reload (1,797,567
+  postcodes written).
+- **The re-placing is complete.** `remove_lost_readings.py --apply` removed
+  6,585 stale fields (3,047 old road readings, 3,522 old "below 40 dB" bounds,
+  16 old aircraft cells), exactly the dry run's count. Only the first and the
+  last were visible, because the API shows a reading in preference to a bound:
+  AL2 3FS read 47.4 dB where DEFRA, at ONS's position, records below 40 dB, and
+  16 postcodes kept an aircraft cell the site had already dropped. Verified on
+  the live API.
 
 ## 2026-10-11 (evening) - is the data true to the area?
 
@@ -64,7 +72,8 @@ Three fixes followed, each with a check proven red on the old code.
   ONS's own grid reference: on DEFRA's 10 m road map that is the next cell for
   one postcode in five, which can differ by 10 dB beside a busy road. The
   scripts now use the grid reference (`scripts/postcode_grid.py`), a test keeps
-  every script to it, and the per-postcode tables are reloaded (Bill's step).
+  every script to it, and the per-postcode tables are reloaded (Bill ran the
+  reloads on 12 Oct; see that entry).
 
 Plans for Breathe London, address-level readings from Ordnance Survey's open
 data, and a scored Bay Area panel are in ROADMAP; none is built.

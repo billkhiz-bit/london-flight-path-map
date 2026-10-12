@@ -6,8 +6,18 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-10-11) - `ROADMAP.md`'s START HERE block is the live list; this file's dated blocks are
-history.** Since 2026-10-06 the front page is `/` (source `home/index.html`) and the full map is `/map/` (source
+**WHERE TO START (2026-10-12) - `ROADMAP.md`'s START HERE block is the live list.** The grid-reference re-placing
+is COMPLETE and live: Bill ran the road, aircraft and air-quality reloads and `remove_lost_readings.py --apply`
+(6,585 stale fields), and the council-area figures were re-measured and deployed. All 8 Importants of
+`AUDIT_REPORT_2026-10-09.md` are closed (I-6, the free report's phone reflow, on 12 Oct, with M-1/6/7/9). Master
+`18cb27f`, level with what is live (drift 0 pages / 38 of 38 data / 103 area). Three habits from the day: **a
+DynamoDB write is Bill's** (the classifier refuses it to Claude even as a dry run, "Modify Shared Resources"; hand
+him the command, for Command Prompt wrap it in `"C:\Program Files\Git\bin\bash.exe" -lc "..."`), **a SAM deploy goes
+through a reviewed changeset**, and **an advisory "deviates" is now told apart from a crash** (`advisory_verdict()`).
+The rename shortlist is in memory and Bill's Desktop, never in this public repo until its domains are bought.
+
+**Previously - WHERE TO START (2026-10-11) - `ROADMAP.md`'s START HERE block is the live list; this file's dated
+blocks are history.** Since 2026-10-06 the front page is `/` (source `home/index.html`) and the full map is `/map/` (source
 `index.html`); `/preview/` only forwards. Work happens on `front-door`, pushed to both `front-door` and `master`
 (`git push origin front-door:master`), and master is level with what is live (11 Oct, drift 32 pages / 38 data /
 103 area). The current audit is `AUDIT_REPORT_2026-10-09.md`: **7 of its 8 Importants closed and deployed on 11
