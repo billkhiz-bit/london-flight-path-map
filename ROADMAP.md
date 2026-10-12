@@ -14,16 +14,20 @@
 > reference** (`scripts/postcode_grid.py`; road readings change for 21.5% of live postcodes). **Bill's step, refused
 > to Claude by the classifier ("Modify Shared Resources"), run in Git Bash from the repo, ~1 hour:**
 > `sh scripts/load_road_rasters.sh && SKIP_WAIT=1 sh scripts/load_aircraft_rasters.sh && AWS_PROFILE=flightmap python scripts/remove_lost_readings.py --apply`
-> (the aircraft runbook now deploys the two client datasets itself, through `make.py data-deploy`). The borough
-> shares (231 fields, under one point; Bradford road low -> moderate) ride on the mid-October air-quality roll.
+> (the aircraft runbook now deploys the two client datasets itself, through `make.py data-deploy`). **Then, in the
+> same window (same table, so not alongside):** `AWS_PROFILE=flightmap python -u scripts/load_defra_air_quality.py
+> --live-only` (~45 min; 2,595 postcodes' NO2 changes, median 0.5 ug/m3). **12 Oct: the borough shares were NOT left
+> for the mid-October roll** (Bill: "work on air quality and council area percentages now"; DEFRA 2025 not out, so on
+> 2024): 231 fields measured (Bradford road low -> moderate), 19 of 816 scores by 0.1, METHODOLOGY s6 re-derived;
+> CHANGELOG 2026-10-12. The 2025 roll repeats the steps.
 > **2026-10-12: the re-placing reaches a sheet already SENT.** The two Earl's Court Society one-pagers (1 Oct, nine
 > postcodes, `scripts/area_summary.mjs`) were checked against DEFRA's LIVE road WCS at both placings: every NO2 and
 > PM2.5 figure, both headlines and both borough ranks unchanged, 7 of 9 road figures unchanged, and two moved -
 > **Earls Court Square (SW5 9HP) printed 54.3 dB, 71.8 at ONS's grid reference** (the point sits on the edge between a
 > road band in the 70s and the square in the 50s), West Kensington station 73.5 -> 72.2. Both stay above WHO's 53, so
 > no sentence on either sheet changes. **Order: Bill's reload FIRST, then regenerate both sheets from the live API,
-> then a short correction** (Bill is holding it for now). Same check owed to the Hounslow pack (8 Oct) and the
-> Norwich sheets (2 Oct) if they were sent. Same day: `fit_airport_shape.py --check` was CRASHING on the new 6-field
+> then a short correction** (Bill is holding it for now). Only these two sheets were sent (Bill, 12 Oct); the
+> Hounslow pack and the Norwich sheets were not, so they need regenerating only if they ever go out. Same day: `fit_airport_shape.py --check` was CRASHING on the new 6-field
 > rows (preflight printed it as "deviates"); fixed, and at ONS's grid references it still picks the shipped k = 4,
 > w = 0.50 (strip error 1.140, was 1.141).
 > **Plans written below, nothing built:** "The plan for Breathe London" (GLA key first), "Address-level readings

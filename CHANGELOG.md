@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-10-12 - council-area figures re-measured at ONS's grid references
+
+The 11 Oct re-placing reached the per-postcode tables; this carries it into the
+council-area figures, which had been planned for the mid-October air-quality
+update. DEFRA has not published its 2025 grids yet, so this is on 2024 and the
+2025 update will repeat the steps (Bill's call, the same trade as 1 Oct).
+
+- **231 values move, all small.** Road-noise share over WHO's guideline on 77
+  areas (largest Calderdale 57.9% -> 58.7%), flood share on 51 (largest Bradford
+  1.34% -> 1.54%), transport and healthcare shares by 0.1 on 26, and NO2, PM2.5
+  and the WHO ratio by 0.1 or less on 3. **One label changes:** Bradford's road
+  noise, low -> moderate.
+- **19 of 816 area/persona scores move, each by 0.1**; under `balanced`, three:
+  Stockport 5.1 -> 5.0, Broxtowe 6.4 -> 6.5, Leeds 5.7 -> 5.8. 16 of 102 area
+  pages change.
+- **METHODOLOGY s6 re-derived:** Wandsworth's road share 58.8 -> 58.3 and flood
+  2.11 -> 2.08; `env` 6.185 -> 6.209, so neither it (6.2) nor the score moves.
+- **Per-postcode air quality:** 2,860 of 1,797,567 live postcodes change 1 km
+  square; NO2 changes for 2,595 (median 0.5 ug/m3, at most 6.2), PM2.5 for 1,802
+  (median 0.1). Live once `load_defra_air_quality.py --live-only` is re-run
+  (Bill's step, after the noise reload).
+
 ## 2026-10-11 (evening) - is the data true to the area?
 
 A spot-check of the live API against each publisher at 21 postcodes in 11

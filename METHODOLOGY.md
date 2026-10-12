@@ -1360,8 +1360,8 @@ crimeRate:            76.4        # ONS Table C4, offences per 1,000
 transport:            'good'      # NaPTAN, share of postcodes within 800 m
 healthcare:           'excellent' # NHS ODS, GP practices within 500 m
 airQualityWhoRatio:   1.89        # DEFRA PCM 2024, worse of NO2/PM2.5 vs WHO 2021
-roadNoiseAboveWhoPct: 58.8        # DEFRA Round 4 road Lden, share over 53 dB
-floodMediumOrHighPct: 2.11        # EA RoFRS, share at Medium-or-High
+roadNoiseAboveWhoPct: 58.3        # DEFRA Round 4 road Lden, share over 53 dB
+floodMediumOrHighPct: 2.08        # EA RoFRS, share at Medium-or-High
 impact:               'moderate'  # borough aircraft band, reported not scored here
 ```
 
@@ -1459,12 +1459,12 @@ each anchored on a published threshold:
 
 ```
 air quality  ratio 1.89 vs WHO 2021    -> 7.033
-road noise   58.8% over WHO 53 dB Lden -> 4.120
-flood        2.11% at Medium-or-High   -> 7.890
+road noise   58.3% over WHO 53 dB Lden -> 4.170
+flood        2.08% at Medium-or-High   -> 7.920
 
-env = 7.033 x 0.45 + 4.120 x 0.35 + 7.890 x 0.20
-    = 3.165 + 1.442 + 1.578
-    = 6.185
+env = 7.033 x 0.45 + 4.170 x 0.35 + 7.920 x 0.20
+    = 3.165 + 1.460 + 1.584
+    = 6.209
     -> 6.2
 ```
 
@@ -1477,6 +1477,11 @@ env = 7.033 x 0.45 + 4.120 x 0.35 + 7.890 x 0.20
 > refined by a median of 20.5 m. Neither `env` nor the score moved. An
 > auditor reproducing from the February 2026 edition of this section will
 > land 0.003 away on `env` and on the same published figures.
+
+> They moved again on **2026-10-12**, when every postcode came to be sampled at
+> ONS's own grid reference instead of a re-projection of its lat/long (§7.1):
+> 58.8 -> 58.3 and 2.11 -> 2.08. `env` went 6.185 -> 6.209; neither it nor the
+> score moved at the published precision.
 
 ### Step 4, Score combination (balanced persona, v5.0)
 

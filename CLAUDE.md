@@ -1299,7 +1299,9 @@ dissolves when you compute the real one.*
 >   it; `tests/test_postcode_grid.py` fails any script that projects WGS84 to the British grid without it (exemptions
 >   named, with reasons). **A re-placing needs `scripts/remove_lost_readings.py --apply` after the reload**: the loader
 >   upserts, so ~6,500 road postcodes would otherwise publish a reading AND a below-40 dB bound. The borough shares
->   move under one point (one band: Bradford road low -> moderate) and are carried by the next air-quality roll.
+>   move under one point (one band: Bradford road low -> moderate); re-derived 2026-10-12 on PCM 2024 rather than
+>   waiting for 2025 (231 fields, 19 of 816 scores by 0.1). The per-postcode AIR table needs its own reload too
+>   (`load_defra_air_quality.py --live-only`; 2,860 postcodes change 1 km square), after the noise reload.
 >   `load_aircraft_rasters.sh` now loads London's region raster too (it was in no runbook) and deploys through
 >   `make.py data-deploy`: it used to upload `index.html` to the ROOT key, i.e. over the front page.
 > - **The council card names undrawn routes (2026-10-11, audit 2026-10-09 M-4)**: `routeGap()` is the one wording,
