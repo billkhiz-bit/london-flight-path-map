@@ -78,6 +78,17 @@ moved 43 retained markers, Darlington's by 4.4 km), and a district belongs to
 exactly one city — WN4 and WN5 had been published twice, WN5 as both
 "Pemberton & Orrell" at £165k and "Billinge" at £235k on identical coordinates.
 
+**Since 2026-10-11 London is a generated city too, and its ranking says "best
+value" like the other nine.** Its 134 neighbourhoods had been curated by hand:
+round prices with no source or vintage (Chelsea read £1.2m against a 2025
+Category A median of £1.5m in SW3) and a `crime` modifier from -2 to +1 that no
+published source supports, which is also what had kept London's ordering from
+being price-led. It now carries 221 postcode districts generated exactly as the
+other nine are, labelled with names corroborated against each district's MSOA
+names. Only New York's ranking is still curated. (The 0.60 correlation threshold
+described below was replaced on 2026-09-09 by a structural rule: a city is
+price-led when no neighbourhood carries a sub-borough crime modifier.)
+
 **The neighbourhood ranking is BEST VALUE outside London and New York, and the
 site now says so (2026-08-12).** Measured over the rendered ordering, the
 correlation between rank position and price is **0.65 to 0.89 for every

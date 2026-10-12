@@ -52,7 +52,10 @@ class EmptyIndexProducesNoBand(unittest.TestCase):
     def setUpClass(cls):
         cls.b = _load('build_borough_bands')
 
-    POINTS = [(51.5074, -0.1278), (51.5155, -0.1410), (53.4808, -2.2426)]
+    # British grid (easting, northing): the bands builder carries ONS's grid
+    # reference since 2026-10-11 (scripts/postcode_grid.py). Charing Cross,
+    # Soho and central Manchester.
+    POINTS = [(530047, 180422), (529106, 181296), (383952, 398185)]
 
     def test_empty_grid_returns_none_not_zero(self):
         # The defect itself. 0.0 here is what became 'poor' everywhere.
@@ -87,7 +90,7 @@ class EmptyIndexProducesNoBand(unittest.TestCase):
     def test_a_populated_index_with_a_hit_measures_it(self):
         # Trafalgar Square in EPSG:27700 is about (530034, 180381).
         grid = {(530, 180): [(530034, 180381)]}
-        share = self.b.points_within(grid, [(51.5080, -0.1281)], 800)
+        share = self.b.points_within(grid, [(530025, 180488)], 800)
         self.assertIsNotNone(share)
         self.assertGreater(share, 0.0)
 

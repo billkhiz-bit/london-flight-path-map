@@ -135,9 +135,11 @@ from pathlib import Path
 # fallback covers loading this file by path, which is how its tests reach it.
 try:
     import ddb_write
+    import postcode_grid
 except ImportError:  # pragma: no cover - depends on how the file was loaded
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import ddb_write
+    import postcode_grid
 
 # Force UTF-8 stdout so the en-dashes / arrows / pound signs in our help
 # text and progress lines render on Windows cp1252 consoles. Python 3.7+.
@@ -426,7 +428,10 @@ def _flush_batch(ddb, items, attribute='ldenDb', failures_path=None):
     return len(items) - len(stalled)
 
 
-REQUIRED_COLUMNS = ('pcds', 'lat', 'long')
+# east1m/north1m since 2026-10-11: a postcode is sampled at ONS's grid reference, not at
+# a re-projection of its lat/long (scripts/postcode_grid.py). lat/long stay for the
+# Northern Ireland rows, whose grid reference is Irish Grid.
+REQUIRED_COLUMNS = ('pcds', 'lat', 'long') + postcode_grid.GRID_COLUMNS
 
 
 def require_columns(fieldnames, path=NSPL_CSV_PATH):
@@ -525,8 +530,13 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
             f'written as {ROAD_BELOW_ATTRIBUTE} = {ROAD_LOWEST_MAPPED_DB:.1f}'
         )
 
-    # Postcode WGS84 → raster CRS (likely BNG / EPSG:27700)
-    transformer = Transformer.from_crs('EPSG:4326', raster_crs, always_xy=True)
+    # Every DEFRA raster is British National Grid, and a postcode is placed by ONS's
+    # own grid reference on it (postcode_grid). A raster in another CRS would need
+    # that reference re-projected, which this loader does not do: refuse it.
+    if raster_crs is None or raster_crs.to_epsg() != 27700:
+        raise SystemExit(f'{geotiff}: CRS {raster_crs}, not EPSG:27700. The loader samples at '
+                         "ONS's British National Grid references; refusing to guess a re-projection.")
+    transformer = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
 
     # DynamoDB, instantiate even in dry-run so a missing AWS profile
     # surfaces immediately rather than after a long sample.
@@ -593,18 +603,16 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
                 skipped += 1
                 continue
 
-            try:
-                pc = row['pcds'].replace(' ', '').upper()
-                lat = float(row['lat'])
-                lon = float(row['long'])
-            except ValueError:
-                # A blank or unparseable coordinate on THIS row. KeyError is
-                # deliberately not here any more - see the header check above.
+            pc = row['pcds'].replace(' ', '').upper()
+            # ONS's grid reference, not a re-projection of the lat/long, which
+            # lands 1-2 m away and in the next 10 m cell for about one postcode
+            # in five (postcode_grid). None: a blank or unparseable coordinate
+            # on THIS row; a missing column stopped the run above.
+            xy = postcode_grid.grid_ref(row, transformer)
+            if xy is None:
                 skipped += 1
                 continue
-
-            # Project to raster CRS
-            x, y = transformer.transform(lon, lat)
+            x, y = xy
 
             # Sample the raster at the pixel containing (x, y)
             try:
@@ -678,7 +686,7 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
                 # Surveyed, under the lowest mapped band. Its own batch and
                 # its own attribute - see ROAD_BELOW_ATTRIBUTE.
                 if dry_run and samples_logged < SAMPLE_LOG_LIMIT:
-                    print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → below {lden:.0f} dB')
+                    print(f' sample {samples_logged + 1}: {pc} (E {x:.0f}, N {y:.0f}) → below {lden:.0f} dB')
                     samples_logged += 1
                 below_batch.append({'postcode': pc, 'value': f'{lden:.1f}'})
                 if len(below_batch) >= BATCH_SIZE:
@@ -692,7 +700,7 @@ def run_load(limit, dry_run, geotiff=DEFRA_GEOTIFF_PATH, attribute='ldenDb', liv
                 continue
 
             if dry_run and samples_logged < SAMPLE_LOG_LIMIT:
-                print(f' sample {samples_logged + 1}: {pc} ({lat:.4f},{lon:.4f}) → {lden:.1f} dB')
+                print(f' sample {samples_logged + 1}: {pc} (E {x:.0f}, N {y:.0f}) → {lden:.1f} dB')
                 samples_logged += 1
 
             batch.append({'postcode': pc, 'value': f'{lden:.1f}'})

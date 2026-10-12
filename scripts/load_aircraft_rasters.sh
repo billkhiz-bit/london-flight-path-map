@@ -1,6 +1,9 @@
 #!/bin/sh
-# Load the seven per-airport DEFRA aircraft Lden coverages, then ship the
-# matching client dataset.
+# Load the seven per-airport DEFRA aircraft Lden coverages and London's region
+# export (the eighth, since 2026-10-11), then ship the matching client datasets.
+# Each postcode is sampled at ONS's grid reference (scripts/postcode_grid.py).
+# After a RE-PLACING, run scripts/remove_lost_readings.py too: the loader
+# upserts, so a reading the new placing no longer has is never removed.
 #
 # WHY A CHAINED SCRIPT RATHER THAN SEVEN COMMANDS. The table and the client
 # file hold THE SAME measurements, and the site reads one while /v1/score reads
@@ -97,50 +100,39 @@ if [ -n "$FAILED" ]; then
   exit 1
 fi
 
-say "all seven rasters loaded"
+# LONDON'S REGION EXPORT, THE EIGHTH (2026-10-11). It is the loader's default
+# raster and was in no runbook, so re-placing "every aircraft raster" here left
+# London on the old placing. Loaded last; its own checkpoint, so it resumes too.
+say "loading london (region export, data/defra_lden_2022.tif)"
+if AWS_PROFILE=flightmap python -u scripts/load_defra_raster.py --geotiff data/defra_lden_2022.tif >> "$LOG" 2>&1; then
+  say "  london done"
+else
+  say "  london FAILED (exit $?)"
+  say "NOT DEPLOYING. Re-run this script; it resumes."
+  exit 1
+fi
+
+say "all eight rasters loaded"
 
 if [ -n "${NO_DEPLOY:-}" ]; then
   say "NO_DEPLOY set - stopping before the deploy"
   exit 0
 fi
 
-say "deploying client dataset + index.html + sw.js"
-# Cache-Control on every object, matching the Makefile targets (audit M19).
-# index.html and sw.js went up here with NO header, which reverted the 8 Sep
-# `no-cache` on the shell: a browser applies heuristic freshness to a page
-# with no Cache-Control and can pin the app shell for days, and neither a
-# CloudFront invalidation nor an sw.js bump reaches the browser's HTTP cache.
-AWS_PROFILE=flightmap aws s3 cp data/aircraft-quiet-regions.json \
-  s3://london-flight-map-frontend/data/aircraft-quiet-regions.json \
-  --content-type "application/json" --cache-control "no-cache" \
-  --region eu-west-2 >> "$LOG" 2>&1 || { say "data deploy FAILED"; exit 1; }
-AWS_PROFILE=flightmap aws s3 cp index.html \
-  s3://london-flight-map-frontend/index.html \
-  --content-type "text/html" --cache-control "no-cache" \
-  --region eu-west-2 >> "$LOG" 2>&1 \
-  || { say "index deploy FAILED"; exit 1; }
-AWS_PROFILE=flightmap aws s3 cp sw.js \
-  s3://london-flight-map-frontend/sw.js \
-  --content-type "application/javascript" \
-  --cache-control "no-cache, no-store, must-revalidate" \
-  --region eu-west-2 >> "$LOG" 2>&1 \
-  || { say "sw deploy FAILED"; exit 1; }
-# MSYS_NO_PATHCONV: Git Bash rewrites "/*" into a Windows path and CloudFront
-# rejects the whole batch (CLAUDE.md, "Build & Deploy").
-INVALIDATION=$(MSYS_NO_PATHCONV=1 AWS_PROFILE=flightmap aws cloudfront create-invalidation \
-  --distribution-id EGSSPJKLFL33M --paths "/*" \
-  --query "Invalidation.Id" --output text 2>> "$LOG" | tr -d '\r') \
-  || { say "invalidation FAILED"; exit 1; }
-say "invalidation $INVALIDATION created; waiting for it to complete"
-MSYS_NO_PATHCONV=1 AWS_PROFILE=flightmap aws cloudfront wait invalidation-completed \
-  --distribution-id EGSSPJKLFL33M --id "$INVALIDATION" >> "$LOG" 2>&1 \
-  || { say "invalidation did not complete"; exit 1; }
+# THROUGH THE MAKEFILE, NOT RETYPED (2026-10-11). This block uploaded
+# index.html to the ROOT key, which has been the front page since 2026-10-06:
+# run as written, it would have replaced the live front page with the map.
+# The client datasets are data files and need no page: data-deploy uploads
+# both no-cache and invalidates, from the one holder of how that is done.
+say "deploying the client datasets (make.py data-deploy)"
+MSYS_NO_PATHCONV=1 python scripts/make.py data-deploy >> "$LOG" 2>&1 \
+  || { say "data deploy FAILED"; exit 1; }
 
 # VERIFY FROM THE ORIGIN, not from the exit codes above (audit M19). An
 # upload that succeeded and a cache that still serves the old bytes look the
 # same from here; the hash the edge returns is the only thing a user gets.
-CF="https://d1oe4ftwutjpf.cloudfront.net"
-for f in data/aircraft-quiet-regions.json index.html sw.js; do
+CF="https://skyscore.co.uk"
+for f in data/aircraft-quiet-london.json data/aircraft-quiet-regions.json; do
   local_hash=$(sha256sum "$f" | cut -c1-16)
   live_hash=$(curl -sf -H "Cache-Control: no-cache" "$CF/$f" | sha256sum | cut -c1-16)
   if [ "$local_hash" != "$live_hash" ]; then

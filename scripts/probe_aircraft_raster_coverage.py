@@ -29,6 +29,10 @@ import os
 import re
 import sys
 from collections import defaultdict
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import postcode_grid  # noqa: E402  sampled where the loaders sample: ONS's grid reference
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NSPL_PATH = os.path.join(REPO, 'data', 'nspl.csv')
@@ -156,6 +160,7 @@ def main():
 
     with open(NSPL_PATH, encoding='utf-8-sig', newline='') as fh:
         rd = csv.DictReader(fh)
+        postcode_grid.require_grid_columns(rd.fieldnames, NSPL_PATH)
         cols = {c.lower(): c for c in rd.fieldnames}
         c_lat, c_lon = cols['lat'], cols['long']
         c_term = cols.get('doterm')
@@ -180,7 +185,10 @@ def main():
             city = cities.get((row.get(c_lad) or '').strip())
             if city:
                 city_live[city] += 1
-            x, y = to_bng.transform(lon, lat)
+            xy = postcode_grid.grid_ref(row, to_bng)
+            if xy is None:
+                continue
+            x, y = xy
             found = []
             for r in rasters:
                 v = sample(r, x, y)

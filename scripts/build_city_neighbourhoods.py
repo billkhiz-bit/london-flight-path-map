@@ -3,9 +3,10 @@
 
 WHY THIS SCRIPT EXISTS RATHER THAN A HAND-WRITTEN TABLE.
 
-London's and NYC's neighbourhood entries in `index.html` carry a curated
-median price (LONDON_NEIGHBOURHOOD_DETAIL: `price`, in GBP thousands) and a
-hand-assigned `crime` modifier on a -2..+1 scale. Those numbers are editorial.
+New York's neighbourhood entries in `index.html` carry a curated median price
+(NYC_NEIGHBOURHOOD_DETAIL: `price`, in thousands) and a hand-assigned `crime`
+modifier on a -2..+1 scale. Those numbers are editorial. London's did too, 134
+of them, until 2026-10-11, when London became the tenth city this generates.
 Writing four hundred more of them by hand would repeat the defect this
 project has already removed twice: the Ofsted school bands, which turned out
 not to reproduce from any published threshold, and the prototype's invented
@@ -523,6 +524,75 @@ NAME_OVERRIDES_BY_CITY['teesside'] = {
     'TS25': 'Seaton Carew & Owton Manor',
     'TS27': 'Blackhall & Elwick',
 }
+# LONDON JOINED THE GENERATED CITIES ON 2026-10-11. Its 134 neighbourhoods were
+# hand-written until then: round prices with no source or vintage (Chelsea read
+# GBP 1.2m against a 2025 Category A median of 1.5m in SW3) and a `crime`
+# modifier from -2 to +1 that no published source supports. Every inner district's
+# post town is "London", so each of those needs a name here; outer districts keep
+# their post town unless it repeats. Each label is held to its own district's
+# MSOA names by --check-names, like every city above.
+NAME_OVERRIDES_BY_CITY['london'] = {
+    'BR2': 'Bromley Common & Keston', 'BR5': "St Mary Cray & Petts Wood",
+    'DA7': 'Barnehurst', 'DA15': 'Blackfen & Lamorbey',
+    'E1': 'Whitechapel & Stepney', 'E1W': 'Wapping', 'E2': 'Bethnal Green', 'E3': 'Bow',
+    'E4': 'Chingford', 'E5': 'Clapton', 'E6': 'East Ham', 'E7': 'Forest Gate',
+    'E8': 'Dalston & Hackney', 'E9': 'Homerton & Hackney Wick', 'E10': 'Leyton',
+    'E11': 'Leytonstone & Wanstead', 'E12': 'Manor Park', 'E13': 'Plaistow',
+    'E14': 'Poplar & Limehouse', 'E15': 'Stratford', 'E16': 'Canning Town & Silvertown',
+    'E17': 'Walthamstow', 'E18': 'South Woodford', 'E20': 'Stratford & East Village',
+    'E22': 'Canary Wharf & Blackwall',
+    'EC1R': 'Clerkenwell', 'EC1V': "Old Street & St Luke's", 'EC2Y': 'City of London',
+    'EN1': 'Enfield Town', 'EN2': 'Enfield Chase', 'EN3': 'Enfield Lock & Ponders End',
+    'EN4': 'New Barnet & Cockfosters', 'EN5': 'High Barnet',
+    'HA0': 'Alperton & Sudbury', 'HA2': 'South Harrow & Rayners Lane',
+    'HA3': 'Kenton & Wealdstone', 'HA9': 'Wembley Park',
+    'IG2': 'Newbury Park', 'IG3': 'Seven Kings & Goodmayes', 'IG5': 'Clayhall',
+    'IG6': 'Barkingside & Hainault',
+    'KT2': 'Kingston Hill', 'KT5': 'Tolworth & Berrylands',
+    'N1': 'Islington & Canonbury', 'N1C': 'Somers Town', 'N2': 'East Finchley',
+    'N3': 'Finchley Central', 'N4': 'Finsbury Park & Stroud Green', 'N5': 'Highbury',
+    'N6': 'Highgate', 'N7': 'Holloway', 'N8': 'Crouch End & Hornsey', 'N9': 'Lower Edmonton',
+    'N10': 'Muswell Hill', 'N11': 'Friern Barnet & New Southgate', 'N12': 'North Finchley',
+    'N13': 'Palmers Green', 'N14': 'Southgate', 'N15': 'South Tottenham',
+    'N16': 'Stoke Newington', 'N17': 'Tottenham', 'N18': 'Upper Edmonton',
+    'N19': 'Archway & Tufnell Park', 'N20': 'Whetstone & Totteridge', 'N21': 'Winchmore Hill',
+    'N22': 'Wood Green',
+    'NW1': 'Camden Town & Euston', 'NW2': 'Cricklewood', 'NW3': 'Hampstead', 'NW4': 'Hendon',
+    'NW5': 'Kentish Town', 'NW6': 'Kilburn & West Hampstead', 'NW7': 'Mill Hill',
+    'NW8': "St John's Wood", 'NW9': 'Colindale & Kingsbury', 'NW10': 'Harlesden & Neasden',
+    'NW11': 'Golders Green',
+    'RM2': 'Gidea Park', 'RM3': 'Harold Hill & Harold Wood', 'RM5': 'Collier Row',
+    'RM6': 'Chadwell Heath', 'RM7': 'Rush Green', 'RM8': 'Becontree', 'RM10': 'Old Dagenham',
+    'RM11': 'Emerson Park', 'RM12': 'Elm Park',
+    'SE1': 'Southwark & Waterloo', 'SE2': 'Abbey Wood', 'SE3': 'Blackheath', 'SE4': 'Brockley',
+    'SE5': 'Camberwell', 'SE6': 'Catford', 'SE7': 'Charlton', 'SE8': 'Deptford', 'SE9': 'Eltham',
+    'SE10': 'Greenwich', 'SE11': 'Kennington & Vauxhall', 'SE12': 'Lee & Grove Park',
+    'SE13': 'Lewisham & Hither Green', 'SE14': 'New Cross', 'SE15': 'Peckham',
+    'SE16': 'Rotherhithe & Bermondsey', 'SE17': 'Walworth',
+    'SE18': 'Woolwich & Plumstead', 'SE19': 'Crystal Palace & Upper Norwood',
+    'SE20': 'Penge & Anerley', 'SE21': 'Dulwich', 'SE22': 'East Dulwich', 'SE23': 'Forest Hill',
+    'SE24': 'Herne Hill', 'SE25': 'South Norwood', 'SE26': 'Sydenham', 'SE27': 'West Norwood',
+    'SE28': 'Thamesmead',
+    'SM2': 'Belmont & South Cheam',
+    'SW1H': 'Westminster', 'SW1P': 'Westminster & Millbank', 'SW1V': 'Pimlico',
+    'SW1W': 'Belgravia & Victoria', 'SW1X': 'Knightsbridge & Belgravia',
+    'SW2': 'Brixton Hill & Tulse Hill', 'SW3': 'Chelsea', 'SW4': 'Clapham', 'SW5': "Earl's Court",
+    'SW6': 'Fulham', 'SW7': 'South Kensington', 'SW8': 'Vauxhall & Nine Elms',
+    'SW9': 'Brixton & Stockwell', 'SW10': 'West Brompton', 'SW11': 'Battersea', 'SW12': 'Balham',
+    'SW13': 'Barnes', 'SW14': 'Mortlake & East Sheen', 'SW15': 'Putney & Roehampton',
+    'SW16': 'Streatham', 'SW17': 'Tooting', 'SW18': 'Wandsworth & Earlsfield',
+    'SW19': 'Wimbledon', 'SW20': 'Raynes Park',
+    'TW1': 'Twickenham & St Margarets', 'TW2': 'Whitton', 'TW4': 'Hounslow West & Cranford',
+    'TW5': 'Heston', 'TW9': 'Kew & Richmond', 'TW10': 'Ham & Petersham', 'TW13': 'Hanworth',
+    'TW14': 'Bedfont & North Feltham',
+    'UB2': 'Norwood Green', 'UB4': 'Yeading', 'UB10': 'Ickenham & Hillingdon',
+    'W1G': 'Marylebone', 'W1H': 'Bryanston & Dorset Square', 'W1T': 'Fitzrovia',
+    'W1U': "Marylebone & Regent's Park", 'W2': 'Paddington & Bayswater', 'W3': 'Acton',
+    'W4': 'Chiswick', 'W5': 'Ealing', 'W6': 'Hammersmith', 'W7': 'Hanwell', 'W8': 'Kensington',
+    'W9': 'Maida Vale', 'W10': 'North Kensington & Ladbroke Grove', 'W11': 'Notting Hill',
+    'W12': "Shepherd's Bush", 'W13': 'West Ealing', 'W14': 'West Kensington',
+    'WC1H': 'Bloomsbury', 'WC1X': "King's Cross",
+}
 
 # Share of a city's published rows `--check` must actually re-derive before it
 # is allowed to report ok. Per CITY, and a share rather than a count, because a
@@ -975,8 +1045,8 @@ def markers(city):
 def write_index(city, entries, payload):
     """Rewrite index.html between this city's NEIGHBOURHOODS markers.
 
-    Inline rather than fetched, because London's and NYC's neighbourhood tables
-    are inline too and a fourth network request on first paint is not worth
+    Inline rather than fetched, because New York's neighbourhood table is
+    inline too and a fourth network request on first paint is not worth
     ~11 KB. Marker-delimited so a rebuild cannot drift from the JSON: this is
     the file `data/*` gitignore taught us to distrust hand-syncing.
     """
@@ -1029,8 +1099,8 @@ def _cities_with_markers():
     they are what --write-index rewrites between, so reading them cannot drift
     from the file being written.
 
-    London and New York are absent by design: their neighbourhood tables are
-    CURATED inline, not generated from Price Paid.
+    New York is absent by design: its neighbourhood table is CURATED inline, and
+    Price Paid is England and Wales only. London joined on 2026-10-11.
     """
     with open('index.html', encoding='utf-8') as fh:
         src = fh.read()

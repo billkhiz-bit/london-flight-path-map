@@ -449,7 +449,7 @@ without an airport needs that path to stay intact.
 
 **Neighbourhood medians are HM Land Registry PPD CATEGORY A ONLY since 2026-09-01 (audit C2).** Category B is HMLR's additional class - repossessions, power-of-sale transfers, buy-to-lets identified by mortgage, and every property-type-'O' row - and **HMLR's own median statistics and the UK HPI use category A alone**. So while both classes were kept, one product published two price bases: a borough `avgPrice` on A, validated against HPI by a blocking gate, and a neighbourhood `price` on A+B in the same panel. **412 of 485 published prices were wrong** - TS26 Hartlepool by 40% (125k -> 175k), WV2 by 26.7%, LS2 by -18.5%. **485 rows became 481**: four districts (L2, L28, SR1, B7) fell below the 30-sale floor once the repossessions stopped propping them up, which is the floor working. `--check` re-derives every published median from the PPD with a **per-city 95% share floor**; it is ADVISORY because the 155 MB PPD cache is gitignored, and it reports INCONCLUSIVE rather than PASS when the file is absent. `--check-names` now scopes corroboration to the districts a build will actually PUBLISH - a curated label for a dropped district is dead config, not a false claim.
 
-**Neighbourhood ranking data.** London and NYC hold *curated* medians and a hand-assigned `crime` modifier inline. **All nine UK city-regions' 481 entries are generated** (2026-08-11; was Greater Manchester's 85 alone) — `python scripts/build_city_neighbourhoods.py --write-index` rewrites `index.html` between each city's `<CITY>-NEIGHBOURHOODS:START/END` markers from HM Land Registry's **bulk** Price Paid CSV (the linked-data API returns **HTTP 200 with an empty list** for a district query, so it cannot be used) plus NSPL for coordinates. A "neighbourhood" is a **postcode district**, districts under 30 sales are dropped rather than estimated, and `crime` is 0 everywhere because sub-borough crime is not published at that geography. **Boroughs come from the Lambda's `LAD_TO_BOROUGH`, matched to Land Registry's own district spelling by normalisation** (`Westminster` → `CITY OF WESTMINSTER`); a borough matching nothing is reported loudly, because a silent miss reads as "this borough has no neighbourhoods". One PPD pass and one NSPL pass cover every city. Do not hand-edit inside the markers; re-run the script. The 155 MB PPD cache and the JSON by-product both land in gitignored `data/`.
+**Neighbourhood ranking data.** **New York alone** holds *curated* medians and a hand-assigned `crime` modifier inline. **LONDON IS GENERATED SINCE 2026-10-11**: its 134 hand-written neighbourhoods (round prices with no source; Chelsea GBP 1.2m against a 2025 SW3 median of 1.5m; crime modifiers no source supports) became 221 postcode districts, every one of 169 curated labels corroborated by `--check-names`, and London's ranking now carries the price-led disclosure like the other nine. `LONDON_AREA_MAP` keeps its 161 hand-written place names as SEARCH aids only (a name with no detail row is skipped by the ranking). **All ten UK city-regions' 702 entries are generated** (nine since 2026-08-11; was Greater Manchester's 85 alone) — `python scripts/build_city_neighbourhoods.py --write-index` rewrites `index.html` between each city's `<CITY>-NEIGHBOURHOODS:START/END` markers from HM Land Registry's **bulk** Price Paid CSV (the linked-data API returns **HTTP 200 with an empty list** for a district query, so it cannot be used) plus NSPL for coordinates. A "neighbourhood" is a **postcode district**, districts under 30 sales are dropped rather than estimated, and `crime` is 0 everywhere because sub-borough crime is not published at that geography. **Boroughs come from the Lambda's `LAD_TO_BOROUGH`, matched to Land Registry's own district spelling by normalisation** (`Westminster` → `CITY OF WESTMINSTER`); a borough matching nothing is reported loudly, because a silent miss reads as "this borough has no neighbourhoods". One PPD pass and one NSPL pass cover every city. Do not hand-edit inside the markers; re-run the script. The 155 MB PPD cache and the JSON by-product both land in gitignored `data/`.
 
 **The transport MAP LAYER is DELETED; stations live in the PANEL (2026-08-12).**
 Bill: "still messy for the other core cities - I can't click on them because it
@@ -1285,6 +1285,21 @@ dissolves when you compute the real one.*
 >   reads both footers and fails on any difference; add a footer link to both or neither.
 > - **The front page's `search()` takes a number (`searchSeq`) and stops after any await once a newer search has
 >   begun (2026-10-11, audit 2026-10-09 I-3)**; `tests/front-page.mjs` 11a holds one lookup 1.5 s under a second.
+> - **A POSTCODE IS SAMPLED AT ONS'S GRID REFERENCE, NEVER A RE-PROJECTION (2026-10-11).** `scripts/postcode_grid.py`
+>   (`grid_ref()`) is the one holder: NSPL's `east1m`/`north1m`. Re-projecting its lat/long with pyproj (no OSTN15
+>   grid) lands a median 1.75 m off, the next 10 m cell for 22% of road readings (median 2.8 dB, one in ten of those
+>   10.9 dB or more; aircraft 5.6%, at most 0.7 dB). **BT postcodes are IRISH Grid in NSPL** (BT1 1AA would sample
+>   near Wigan), so they and rows with no grid reference keep the projection. Every loader and the bands builder use
+>   it; `tests/test_postcode_grid.py` fails any script that projects WGS84 to the British grid without it (exemptions
+>   named, with reasons). **A re-placing needs `scripts/remove_lost_readings.py --apply` after the reload**: the loader
+>   upserts, so ~6,500 road postcodes would otherwise publish a reading AND a below-40 dB bound. The borough shares
+>   move under one point (one band: Bradford road low -> moderate) and are carried by the next air-quality roll.
+>   `load_aircraft_rasters.sh` now loads London's region raster too (it was in no runbook) and deploys through
+>   `make.py data-deploy`: it used to upload `index.html` to the ROOT key, i.e. over the front page.
+> - **The council card names undrawn routes (2026-10-11, audit 2026-10-09 M-4)**: `routeGap()` is the one wording,
+>   shared with the postcode answer, and `routeGapsNear()` lists every airport within 30 km of the area's NEAREST
+>   point whose routes the record lacks. Trafford read "None of the routes on this map crosses it" under
+>   Manchester's chart-only departures.
 > - **EPC band letters take `bandInk()`** (#fff on A and G, #141414 on B-F; 2026-10-11, I-8), and
 >   `tests/panel-contrast.mjs` has an `area panel, epc bands` state that fulfils `/epc`, because no run had ever seen
 >   the bands render (offsite requests are aborted there).
@@ -1799,6 +1814,8 @@ the sentence it prints**, which already described exactly that condition.
 - **It reproduced the correlation exactly** the day it replaced it: London 71
   non-zero modifiers, NYC 88 (not price-led), all nine generated cities 0
   (price-led) - the same split as +0.55 / -0.06 / 0.65-0.89. No disclosure moved.
+  **London has been price-led since 2026-10-11**: its 71 modifiers were hand-assigned,
+  and went when its neighbourhoods became generated. Only New York is not.
 - **`priceDominance` and `rankPrice` are DELETED**, not left dangling; nothing
   else read them. Do not reintroduce a correlation.
 - Gated by the second pass in `tests/ranking-separability.mjs`, computed from

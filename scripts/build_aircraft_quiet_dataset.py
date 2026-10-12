@@ -49,6 +49,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# Where a postcode sits on the grid: ONS's reference, not a re-projection of its
+# lat/long, which lands in the next 10 m cell for about one postcode in five.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import postcode_grid  # noqa: E402
+
 GEOTIFF = ROOT / 'data' / 'defra_lden_2022.tif'
 NSPL = ROOT / 'data' / 'nspl.csv'
 OUT = ROOT / 'data' / 'aircraft-quiet-london.json'
@@ -181,6 +186,7 @@ def build_regions():
 
     with NSPL.open(encoding='utf-8', errors='replace') as fh:
         reader = csv.DictReader(fh)
+        postcode_grid.require_grid_columns(reader.fieldnames, NSPL)
         cols = {c.lower(): c for c in reader.fieldnames}
         # Year-suffixed and it MOVES between editions (lad25cd -> lad26cd in
         # August 2026). Resolved by prefix, as build_city_neighbourhoods.py does.
@@ -194,12 +200,15 @@ def build_regions():
             if not c_lad or row[c_lad].strip() not in lads:
                 continue
             try:
-                lat, lon = float(row['lat']), float(row['long'])
+                lat = float(row['lat'])
             except (KeyError, TypeError, ValueError):
                 continue
             if lat > 90 or lat < 49:
                 continue
-            x, y = to_bng.transform(lon, lat)
+            xy = postcode_grid.grid_ref(row, to_bng)
+            if xy is None:
+                continue
+            x, y = xy
             best = None
             for r in rasters:
                 b = r['bounds']
@@ -276,14 +285,19 @@ def main():
     considered = 0
 
     with NSPL.open(encoding='utf-8', errors='replace') as fh:
-        for row in csv.DictReader(fh):
+        reader = csv.DictReader(fh)
+        postcode_grid.require_grid_columns(reader.fieldnames, NSPL)
+        for row in reader:
             try:
                 lat, lon = float(row['lat']), float(row['long'])
             except (KeyError, TypeError, ValueError):
                 continue
             if not (BBOX[0] <= lat <= BBOX[2] and BBOX[1] <= lon <= BBOX[3]):
                 continue
-            x, y = to_bng.transform(lon, lat)
+            xy = postcode_grid.grid_ref(row, to_bng)
+            if xy is None:
+                continue
+            x, y = xy
             if not (bounds.left <= x <= bounds.right and bounds.bottom <= y <= bounds.top):
                 continue
             considered += 1

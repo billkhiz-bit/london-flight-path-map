@@ -6,6 +6,30 @@
 
 > ## START HERE (2026-10-11)
 >
+> **EVENING: "is the data mapped correctly and true to the area?" - three fixes, and one step is Bill's.** A
+> spot-check of the live API against the publishers at 21 postcodes (air 21/21 exact, council 21/21, road 17/21) led
+> to (1) **London's neighbourhoods GENERATED** from Land Registry 2025 like the other nine (134 hand-written ->
+> 221 districts; Chelsea GBP 1.2m -> 1.5m; the invented crime modifiers gone, so London's ranking is now price-led),
+> (2) **audit M-4** (the council card names undrawn routes), and (3) **every postcode sampled at ONS's grid
+> reference** (`scripts/postcode_grid.py`; road readings change for 21.5% of live postcodes). **Bill's step, refused
+> to Claude by the classifier ("Modify Shared Resources"), run in Git Bash from the repo, ~1 hour:**
+> `sh scripts/load_road_rasters.sh && SKIP_WAIT=1 sh scripts/load_aircraft_rasters.sh && AWS_PROFILE=flightmap python scripts/remove_lost_readings.py --apply`
+> (the aircraft runbook now deploys the two client datasets itself, through `make.py data-deploy`). The borough
+> shares (231 fields, under one point; Bradford road low -> moderate) ride on the mid-October air-quality roll.
+> **2026-10-12: the re-placing reaches a sheet already SENT.** The two Earl's Court Society one-pagers (1 Oct, nine
+> postcodes, `scripts/area_summary.mjs`) were checked against DEFRA's LIVE road WCS at both placings: every NO2 and
+> PM2.5 figure, both headlines and both borough ranks unchanged, 7 of 9 road figures unchanged, and two moved -
+> **Earls Court Square (SW5 9HP) printed 54.3 dB, 71.8 at ONS's grid reference** (the point sits on the edge between a
+> road band in the 70s and the square in the 50s), West Kensington station 73.5 -> 72.2. Both stay above WHO's 53, so
+> no sentence on either sheet changes. **Order: Bill's reload FIRST, then regenerate both sheets from the live API,
+> then a short correction** (Bill is holding it for now). Same check owed to the Hounslow pack (8 Oct) and the
+> Norwich sheets (2 Oct) if they were sent. Same day: `fit_airport_shape.py --check` was CRASHING on the new 6-field
+> rows (preflight printed it as "deviates"); fixed, and at ONS's grid references it still picks the shipped k = 4,
+> w = 0.50 (strip error 1.140, was 1.141).
+> **Plans written below, nothing built:** "The plan for Breathe London" (GLA key first), "Address-level readings
+> with Ordnance Survey's open data", and the Bay Area's "Release 2 plan" (New York's panel is hand-written; its quiet
+> method read quieter than SJC's monitors at 10 of 13).
+>
 > **Seven Importants from `AUDIT_REPORT_2026-10-09.md` closed, red-proven, preflighted and DEPLOYED** (Bill: "yes and
 > what is recommended"). `24e2377` (the five below) and `5ab9c84` (I-1, I-2), pushed to front-door and master. Verified
 > FROM THE ORIGIN both times: every invalidation Completed, every changed file hash-equal live, drift 32 pages / 38 data
@@ -34,8 +58,8 @@
 >   uncovered badge `404 text/html`). The bucket grants no ListBucket, so S3 never answers 404 and the 404 entry only
 >   ever caught the badge's own "Not covered" SVG. `--apply` now refuses if that premise ever changes.
 >
-> **Next:** I-6 (the free report's Reflow on phones, a design call), then the Minors. Optional: let `js/count.mjs`
-> pass campaign tags (`utm_*`) through an allow-list; it forwards no query parameter today.
+> **Next:** I-6 (the free report's Reflow on phones, a design call), then the Minors. (The `utm_*` allow-list once
+> listed here as optional shipped the same evening as `CAMPAIGN_KEYS`; see I-1 above.)
 >
 > ## START HERE (2026-10-09)
 >
@@ -819,7 +843,7 @@ is built yet.
 | **The flight noise shown at load may confuse** | At load the boroughs are UNFILLED and the only colour is two layers that start on (`layers = { paths: true, 'defra-aircraft': true }` in `index.html`): animated corridor lines plus DEFRA's 40-80+ dB contours, explained by a legend in "dB Lden". No plain sentence says what the colours mean. On desktop the strapline is small grey text, partly covered by the first-run hint | A one-line plain caption on the map ("Orange lines: where Heathrow's planes fly. Coloured areas: how loud it is on average, measured by DEFRA"); or start on the borough scores and let the noise layers be one tap away. Gates that move: `layer-honesty`, `responsive`, `map-fit`, a11y. Claude, after Bill picks |
 | **Make search more obvious** | Desktop: the search box is in the right-hand panel under "PROPERTY INTELLIGENCE"; the map, where the eye lands, carries only a dismissible hint. **Phone: the tabbed search view hides `.sidebar-header`, `.empty-state` and `.first-hint`, so a first-time visitor sees no product name and no "what is this"**, and the first thing under the search card is the nine footer links (put there on purpose by audit C2 so the legal links are reachable; move them, do not hide them) | A headline question at the search ("Check aircraft noise at your postcode") on both layouts; a phone heading. Claude |
 | **Noise charts when you click an area** | A borough click gives a score card and five component bars; noise is ONE bar ("Quiet skies 7.5/10"). Nothing shows decibels, how the borough compares with its neighbours, or how noise varies across it | A small chart of the borough's postcodes per DEFRA band (data already held: the per-postcode aircraft-quiet datasets and road share). **Do not say "how often planes pass"**: that is N65, which we do not hold. Claude, after Bill picks |
-| **OS open maps API** | No basemap, by recorded decision (CLAUDE.md "There is NO basemap") | OS Data Hub's OpenData plan (Maps, Names, Features APIs) is free and unlimited; Premium carries GBP 1,000/month of free transactions. **He meant the map background (confirmed 2026-10-02). COSTED: GBP 0 in tiles.** Every zoom the map reaches sits in OS's free OpenData band (web-map zoom 7-16; OS: "Open layers are available to all users of the API regardless of which Data Hub plan is used, at no cost"): measured from the CITY_DATA scales and `scaleExtent([0.5, 8])`, desktop runs zoom 8.6-13.6 (14.6 on retina), London's default view is 10.2, and only a 320px phone fully zoomed out on the widest city dips to 6.9, where OS serves nothing (clamp). Premium (MasterMap) starts at zoom 17, which the 8x cap never reaches. Two routes: **(A) OS Maps API live** - an OS Data Hub key visible in the page (keep it on the OpenData plan so a copied key cannot spend), CSP `img-src` widened, a runtime dependency, no offline basemap; **(B) self-host OS Open Zoomstack (OGL) clipped to our cities** on our own S3/CloudFront - no key, no CSP change, low zooms precachable, egress inside CloudFront's always-free 1 TB/month. Either way attribution: "Contains OS data (c) Crown copyright and database right". The real cost is engineering time and the two non-money objections that still stand (offline launch, street detail implying precision the borough scores lack). **Cheapest next step:** point `design/map-basemap.html`'s raster toggle at OS OpenData tiles (needs a free Data Hub key) and judge it on screen. **Superseded 2026-10-03: the trial is BUILT on `/preview/`** (route A, behind a key pasted per device, never in the source - see "Homepage redesign"); it needs only Bill's free Data Hub key to be judged on screen. **OS Names API for place-name search** is still worth a separate look |
+| **OS open maps API** | No basemap, by recorded decision (CLAUDE.md "There is NO basemap") | OS Data Hub's OpenData plan (Maps, Names, Features APIs) is free and unlimited; Premium carries GBP 1,000/month of free transactions. **He meant the map background (confirmed 2026-10-02). COSTED: GBP 0 in tiles.** Every zoom the map reaches sits in OS's free OpenData band (web-map zoom 7-16; OS: "Open layers are available to all users of the API regardless of which Data Hub plan is used, at no cost"): measured from the CITY_DATA scales and `scaleExtent([0.5, 8])`, desktop runs zoom 8.6-13.6 (14.6 on retina), London's default view is 10.2, and only a 320px phone fully zoomed out on the widest city dips to 6.9, where OS serves nothing (clamp). Premium (MasterMap) starts at zoom 17, which the 8x cap never reaches. Two routes: **(A) OS Maps API live** - an OS Data Hub key visible in the page (keep it on the OpenData plan so a copied key cannot spend), CSP `img-src` widened, a runtime dependency, no offline basemap; **(B) self-host OS Open Zoomstack (OGL) clipped to our cities** on our own S3/CloudFront - no key, no CSP change, low zooms precachable, egress inside CloudFront's always-free 1 TB/month. Either way attribution: "Contains OS data (c) Crown copyright and database right". The real cost is engineering time and the two non-money objections that still stand (offline launch, street detail implying precision the borough scores lack). **Cheapest next step:** point `design/map-basemap.html`'s raster toggle at OS OpenData tiles (needs a free Data Hub key) and judge it on screen. **Superseded 2026-10-03: the trial is BUILT on `/preview/`** (route A, behind a key pasted per device, never in the source - see "Homepage redesign"); it needs only Bill's free Data Hub key to be judged on screen. **OS Names API for place-name search** is still worth a separate look. **Re-read 2026-10-11 (Bill asked whether OS's products help):** the GBP 1,000 still stands but EXCLUDES OS Places (GBP 0.0282 a lookup plus VAT from the first), the Premium plan bars "reports, documents or maps created with or containing OS Premium Data for 3rd parties" including PDFs without a separate licence (commercialenquiries@os.uk), and OS claims rights in "Analytics Data" made from Premium data. The OPEN products carry none of that: see "Address-level readings" under the Breathe London plan |
 | **Profit from generated reports** (like the Earl's Court one-pager) | `scripts/area_summary.mjs` makes one from live data in about a minute. Two decisions already bound who pays: **consumers stay free** (23 Jul) and **community one-pagers are free** (29 Sep community plan) | Sell the SAME generator to businesses on the buyer's side: buying and relocation agents, surveyors, developers' and planning consultants (site screening, never a formal assessment). **Not estate or letting agents, and not conventional lenders or insurers** ("Constraints"). The niche version is an **aircraft-noise report per address** (routes overhead, DEFRA level, the 2021 caveat). Gates: the rename first; never presented as a conveyancing environmental search; check PI insurance; OGL attribution and no implied Breathe London endorsement. **Test by hand before building**: a payment link plus the script, offered to two or three warm contacts. Bill, decision |
 | **Browser extension is a decent idea** | Unlisted MV3 demo, ship gates in `extension/README.md` | Publish after the rename, so it goes through store review once |
 | **Defect found while checking** | **The first-run hint does not dismiss on a borough click**, though its comment says it does (`index.html`, "Hidden once ... (search, borough click, layer toggle)": only search focus, the layer toggles and a 30 s timer are wired). Seen live: the hint stayed on screen through three borough clicks | Small fix in the borough click handler. Claude |
@@ -868,7 +892,113 @@ counterpart exists: DEFRA's AURN, 205 active sites (uk-air.defra.gov.uk), with a
 JSON API that answered 200 with no key on 2026-10-02 (`/sos-ukair/api/v1/stations`). It is
 far sparser than Breathe London, but it would give every city a "nearest official monitor"
 row, so London gains a layer rather than being the only city with measurements. Licence and
-update rhythm for that API: not yet read.
+update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
+
+#### The plan for Breathe London (written 2026-10-11, Bill's request; nothing built)
+
+**What the two APIs actually offer (read on their own pages 2026-10-11, no key used):**
+
+- **The GLA's API** (breathelondon.org/developers; OGL v3, the one to build on). Base
+  `https://breathe-london-7x54d7qf.ew.gateway.dev`, key in an `X-API-KEY` header.
+  `GET /ListSensors` gives SiteCode, SiteName, Latitude/Longitude (as STRINGS), Borough,
+  `SiteClassification` ("Urban Background" etc.), SensorHeightAboveGround, `DistanceToKerb`,
+  StartDate/EndDate (null = active). `GET /SensorData` takes Species `NO2`/`PM25`,
+  `startTime`/`endTime` (a range over 366 days needs a `SiteCode`) and returns HOURLY values
+  (`Duration: "PT1H"`, `ug.m-3`, `RatificationStatus: "P"`). **There is no averaging
+  parameter, so an annual mean is ours to compute.** No ozone in the API although the
+  sensors measure it. About 137 Airly sensors were reporting on 11 Oct (153 site codes on the
+  borough pages), 1 to 19 per borough, every borough covered. **Calibration is updated weekly
+  on unratified reference data and recalculated every six months on ratified data, so past
+  values change.** No rate limit is stated; the terms forbid exceeding "usage limits".
+  Attribution must read exactly "Contains Breathe London data licensed under the Open
+  Government License v3.0", linked to breathelondon.org. Without a key both calls answer 401.
+- **The Communities API** (Imperial Projects, Clarity sensors): `?key=` in the URL, hourly
+  data 2021-2024, no units or ratification field, non-commercial without IPROJ's written
+  approval, "no automated extraction". An invalid key answers **200** with
+  `{"error":"Invalid API Key"}`, so a client must read the body. **The Warwick Road node
+  (Earl's Court) is in neither GLA borough list, so it is probably this network** (inferred).
+- **AURN** (DEFRA, OGL, no key): the `sos-ukair` API holds the CURRENT YEAR only (a June
+  2025 query returns `[]`) and gives coordinates as [lat, lon]. Annual means per site come
+  from openair's summary files (`/openair/R_data/summary_annual_AURN_<year>.rds`), site type
+  from `AURN_metadata.RData`. UK-AIR warns that ranking sites is "not scientifically sound".
+- **LAQN stays out**: three of its pages give three different licences, one forbidding
+  "operational or commercial purposes".
+
+**The build, in order (about a day once the key exists):**
+
+1. **`scripts/fetch_breathe_london.py`**, `--fetch` and `--check`. The key lives in `.env` as
+   `BREATHE_LONDON_API_KEY` and only ever on Bill's machine; no page or visitor calls the
+   API. It lists active sensors, pulls each one's trailing 12 months of hourly NO2 and PM2.5
+   by `SiteCode`, and writes `data/breathe-london-sensors.json` (checked in): site, name,
+   position, classification, kerb distance, height, the two 12-month means, the share of
+   hours each rests on, the window, and the date fetched. `--check` is offline and
+   blocking: schema, coordinates inside London, a capture floor, the attribution string, and
+   no key anywhere in the file. A row in `check_data_freshness.py`: a window ending more
+   than 45 days ago is a roll to do.
+2. **The same for AURN, every city** (`scripts/fetch_aurn.py`, keyless): the nearest official
+   monitor's annual mean and site type. Same release, so London is not the only city with a
+   measurement.
+3. **The front page's postcode answer and the street report, London only:** "Nearest
+   Breathe London sensor: <site>, 0.6 km away, kerbside, 1.2 m from the kerb: NO2 31 ug/m3
+   over the last 12 months (94% of hours), provisional, low-cost sensor", beside
+   DEFRA's background figure, with one sentence on why kerbside reads higher than background.
+   Outside London the line does not render. Inside London beyond 2 km it gives the distance.
+   It never says "no sensors nearby" (the `/transport` lesson).
+4. **Gates:** the line absent for every non-London city; the attribution present wherever a
+   reading is; a file past its freshness window hides the line rather than showing old
+   figures as current (or shows its date: Bill's choice below).
+5. **Later, not now:** a `breatheLondon` object on `/v1/environment`, documented as
+   London-only and absent elsewhere, after the site line has run a month.
+
+**Decisions for Bill (recommendation first):**
+- **What to show: a 12-month mean, not the live hour.** It answers the product's question
+  (what it is like to live here) and sits beside DEFRA's annual figure like with like; live
+  readings are what Breathe London's own site does better.
+- **Capture floor: 75% of hours** in the window, stated on the page. Neither network
+  publishes an annual-mean completeness rule (LAQN marks 63% capture "achieved"), so ours is
+  a choice and must say so.
+- **AURN in the same release: yes.** It is keyless, OGL, and keeps the cities level.
+- **Stale file: hide the line** rather than print a dated one; recalibration means old
+  values were never final anyway.
+
+**Bill's steps first:** apply for the GLA key on breathelondon.org/developers (organisation
+"Other"; describe the free map AND the paid API), and ask the team which network carries the
+Warwick Road node. The Communities approval is needed only if Earl's Court's node matters.
+
+#### Address-level readings with Ordnance Survey's open data (plan, 2026-10-11; nothing built)
+
+**Why:** every per-postcode figure is read at ONE point, the postcode's ONS grid reference
+(since 2026-10-11; a re-projection of it before). Measured that day, road noise changes by a
+median 2.8 dB between neighbouring 10 m cells, and by 10.9 dB or more for one cell move in
+ten, so a postcode's single reading can be far from a given house on it. A firm's report is
+bought for an ADDRESS.
+
+**The free route, and the one to build:** **OS Open UPRN** (OGL, every UPRN in Great Britain
+with a grid reference, refreshed every six weeks) joined to the **EPC register's `UPRN`**
+field, which the EPC licence puts under OGL (the address TEXT is restricted to
+energy-performance purposes, so a report prints the UPRN's reading, never the EPC address).
+Both sides are OGL, so readings at those points can be sold. Two products follow:
+(1) a street report gains "across the N addresses on this postcode, road noise runs from X
+to Y dB", the honest answer to "is my house the loud one"; (2) a firm's report for a named
+address reads at that UPRN where the address has an EPC (most do; the share is unmeasured).
+Code-Point Open gives nothing NSPL does not.
+
+**What not to build on:** **OS Places API** (address search to UPRN) is Premium: GBP 0.0282
+plus VAT a lookup, outside the free GBP 1,000, and **its terms bar reports and PDFs for
+third parties without a separate licence**. Ask OS (through the Geovation contact) before
+any paid report depends on it. **Code-Point with Polygons** (postcode outlines) is Premium
+and reaches end of life on 31 March 2028. The **Data Exploration Licence** is for prototypes
+only: nothing built on it may be supplied. **For council area studies**, the council's own
+Public Sector Geospatial Agreement data (AddressBase, building heights) can be used under the
+free Public Sector Contractor Licence, but only for that contract: it cannot feed the API or
+other reports, and the contractor keeps just an archive copy.
+
+**Steps:** (1) measure the EPC UPRN share for three postcodes per city (the `/epc` proxy
+already returns certificates); (2) `scripts/fetch_os_open_uprn.py`, the six-weekly file
+clipped to covered cities, gitignored, with a freshness row; (3) sample the road and aircraft
+rasters at every UPRN of a postcode, using the same `postcode_grid`-style rule (British grid,
+no re-projection); (4) the range line on the street report, gated; (5) LICENSING.md rows for
+Open UPRN and for the EPC UPRN field.
 
 ### The Bay Area flight-path page (built 2026-10-02)
 
@@ -996,7 +1126,7 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       join and the 10,000 ft start in JavaScript - mirrored code. Do it by having
       the preview read the generated lines (the BAYAREA-MAP block's shape, or a
       routes member in `us-bayarea-cities.json`), not by copying the rules.
-- [ ] **Prices by the public-domain route need a free Census API key**
+- [x] ~~**Prices by the public-domain route need a free Census API key**~~ **No key is needed (6 Oct research): the ACS bulk files are keyless; see the release 2 plan below.**
       (American Community Survey median home values, with FHFA for the
       trend), which avoids Zillow's unread terms. Bill's to request at
       `api.census.gov/data/key_signup.html`; he will do it after the map
@@ -1007,6 +1137,68 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       how high), not a noise level: BTS says its map "should not be used to
       evaluate noise levels in individual locations", and the 2022 band
       values are unverified.
+
+#### Release 2 plan: a New York-style panel for the Bay Area (researched 2026-10-11, nothing built)
+
+Bill asked for "San Francisco analysis like we do for New York". **New York's panel is not a
+model to copy**: `NYC_BOROUGHS` in the score Lambda and its `borough-extra.json` rows are
+HAND-WRITTEN (impact band, price, trend, crime, the school/transport/healthcare tiers and the
+prose notes), with no `--check`. So "like New York" means the same panel, built from published
+data under the Bay Area's derived-not-curated rule. The Census key in the row above is **no
+longer needed** (the ACS bulk files are keyless, 6 Oct).
+
+**Quiet Skies cannot be ported as it stands - measured.** New York's ZIP figure is
+`calc_postcode_quiet` with JFK, LGA, EWR and TEB all set to Heathrow's size, fitted to
+nothing American. Run the same way on the Bay Area's generated routes at San Jose airport's
+13 permanent monitors (annual CNEL, July 2025 to June 2026, 55.5 to 64.9 dB, SJC's Q2 2026
+Title 21 report), it read **quieter than measured at 10 of 13, by a mean 2.3 points** - the
+v5.5 rule ("no city may read quieter than its yardstick") fails. **The same check probably
+applies to New York**, whose number may be optimistic too (inferred, not measured).
+
+| Input | Source | Geography, vintage | Licence | Confidence |
+|---|---|---|---|---|
+| Quiet Skies yardstick | Airport Title 21 monitor reports (SJC's 13 now; SFO files them too, not fetched) | Points, rolling year | Public filings, terms not stated | Medium for SJC |
+| Median home value | ACS 5-year B25077 bulk file | Place (all 50), 2020-24 | Public domain | High; 16 of 50 read "$2M+" (a cap code) |
+| Trend | FHFA county HPI ("developmental"); ZIP series covers 95 of 165 ZIPs | County, 2025 | Public domain (FHFA's page states no licence) | Medium |
+| Crime per 1,000 | California DOJ OpenJustice + Census SUB-EST2025 | Police agency, 2025 | Public domain | High for 45 of 50; five San Mateo sheriff-contract cities have no row |
+| Schools | CDE growth model, grades 4-8 | School, 2025 | Terms unread (CDE blocked us) | Medium-low |
+| Transport | BTS National Transit Map stops (GTFS) | Points, quarterly | US government work, no licence stated | Medium |
+| Flood | FEMA NFHL 1%-a-year zone (the EA's Medium-or-High line) | Polygons | Inferred public domain | Medium |
+| Road noise | BTS map road layer (LAeq; Lden = LAeq + 6.4 dB under BTS's flat-day model) | 30 m, 2022/23 | US government work | Medium-low |
+| Healthcare, air quality | No usable US equivalent found | | | Held out, declared absent |
+
+Two ACS 5-year releases are NOT a trend (the Census Bureau: "Do not compare overlapping
+datasets"); Zillow stays gated (its terms page answers 403).
+
+**Decisions for Bill (recommendation first):**
+1. **The yardstick:** a US fit against monitor CNEL (SJC now, SFO once fetched) under the v5.5
+   per-city rule; the Bay Area keeps facts-only until it passes. Then put New York through the
+   same check.
+2. **Pools:** one per US METRO, not per currency (a registry `pool` key defaulting to the
+   currency, so no UK or New York score moves). Adding the Bay Area to the dollar pool as it
+   is puts the p95 anchor on the "$2M+" cap code and **moves New York's published
+   affordability**: Queens 6.5 -> 9.9, Brooklyn 3.1 -> 7.3, Manhattan 0.0 -> 4.3 (Brooklyn
+   `balanced` 4.0 -> about 5.4).
+3. **Trend:** FHFA by county, labelled county-wide (growth weighs only on `investor`).
+4. **Crime:** a US scale anchored on California's 2025 rate (22.3 per 1,000), stated as not
+   comparable with the UK; the UK ramp gives 42 of 45 cities 10.0. Colma (1,385 residents,
+   469 per 1,000) and Emeryville need a "few residents" note.
+5. **Held out:** healthcare and air quality, declared absent. Liveability from crime +
+   transport (+ schools if CDE's terms allow), environment from flood + road: both clear the
+   two-input floor.
+
+**Build order** (each step behind its own gate, the repo's pattern): (1) retire the twelve
+by-name New York branches `tests/test_us_city_branches.py` declares; (2) the pool key, with a
+test that every New York score in every persona is byte-identical before and after; (3) one
+generator per input (`--fetch/--write/--check`, between markers; DOJ's five no-row cities in a
+declared list); (4) the Lambda: `CITIES['bayarea']`, records, `CITY_GEOMETRY` from
+`route_records()`, provenance with the FAA disclaimer, ZIP routing, the OpenAPI enum, sanity
+probes asserting the resolved city - backend deployed first, via a reviewed changeset; (5) the
+site, through the one-way door (`borough-score-parity` grows from 91 to 141 boroughs); (6)
+area pages, after fixing `build_area_pages.py`'s sterling-only price formatter and its
+open-data CSV, which would otherwise publish Bay Area rows under the OGL. **Open:** SFO and
+OAK monitor data and terms, the BTS 2022 raster's dB values, FEMA's licence wording, CDE's
+terms. The working notes are in this session's scratchpad, not the repo.
 
 ### Homepage redesign (opened 2026-10-02, after Geovation)
 

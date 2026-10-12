@@ -94,6 +94,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import fit_corridor_weight as fcw  # noqa: E402  same app loader, weight grid, data and split
+import postcode_grid  # noqa: E402  DEFRA is read at ONS's grid reference, as the loaders do
 
 ROOT = fcw.ROOT
 # Each raster, and the airports whose noise a blank cell in it speaks for.
@@ -207,9 +208,13 @@ def sample(r, x, y):
 
 def read_nspl(app):
     """Live postcodes in every city whose geometry has an airport."""
+    from pyproj import Transformer
+
+    to_bng = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
     rows = []
     with open(fcw.NSPL, newline='', encoding='utf-8') as fh:
         r = csv.DictReader(fh)
+        postcode_grid.require_grid_columns(r.fieldnames, fcw.NSPL)
         lad_col = next(c for c in r.fieldnames if c.startswith('lad') and c.endswith('cd'))
         for row in r:
             if row['doterm']:
@@ -220,18 +225,17 @@ def read_nspl(app):
             lat, lon = float(row['lat']), float(row['long'])
             if lat > 90:  # NSPL's "no grid reference" marker
                 continue
-            rows.append((row['pcds'].replace(' ', ''), hit[0], lat, lon))
+            # (pc, city, lat, lon, easting, northing): lat/lon for the geometry,
+            # ONS's grid reference for DEFRA's raster, as the loaders sample it.
+            rows.append((row['pcds'].replace(' ', ''), hit[0], lat, lon, *postcode_grid.grid_ref(row, to_bng)))
     return rows
 
 
 def truths(app, rows, rasters, measured):
     """Per row: (kind, value), or None where nothing is claimed. Plus a count of
     rows that hold a DEFRA reading the aircraft-quiet datasets do not carry."""
-    from pyproj import Transformer
-
-    lat = np.array([r[2] for r in rows])
-    lon = np.array([r[3] for r in rows])
-    x, y = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True).transform(lon, lat)
+    x = np.array([r[4] for r in rows])
+    y = np.array([r[5] for r in rows])
     hits = {name: sample(r, x, y) for name, r in rasters.items()}
     city = np.array([r[1] for r in rows])
     out = [None] * len(rows)
@@ -366,7 +370,7 @@ def collect(app):
 def guard(app, f):
     """At the shipped k and weight the decomposition must BE the engine."""
     q = quiet(airport_term(f, app.AIRPORT_SHAPE_K), f['pts'], f['heli'], app.CORRIDOR_WEIGHT)
-    for i, (pc, c, lat, lon) in enumerate(f['rows']):
+    for i, (pc, c, lat, lon, _e, _n) in enumerate(f['rows']):
         if f['kind'][i] != STRIP and zlib.crc32(pc.encode()) % GUARD_SAMPLE:
             continue
         want = app.calc_postcode_quiet(lat, lon, c, raster_lden=None)

@@ -42,10 +42,12 @@ from pathlib import Path
 # on sys.path. The fallback covers loading this file by path, as its tests do.
 try:
     import ddb_write
+    import postcode_grid
     from load_defra_raster import require_columns, require_wrote_something
 except ImportError:  # pragma: no cover - depends on how the file was loaded
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import ddb_write
+    import postcode_grid
     from load_defra_raster import require_columns, require_wrote_something
 
 if hasattr(sys.stdout, 'reconfigure'):
@@ -227,14 +229,20 @@ def main():
             if args.live_only and row.get('doterm'):
                 continue
             try:
-                lat, lon = float(row['lat']), float(row['long'])
+                lat = float(row['lat'])
             except (TypeError, ValueError):
                 continue
             # NSPL uses 99.999999 for postcodes with no grid reference.
             if lat > 60.9 or lat < 49.8:
                 continue
 
-            x, y = to_bng.transform(lon, lat)
+            # ONS's grid reference, not a re-projection of the lat/long
+            # (postcode_grid): the same placing as the noise tables, so a
+            # postcode's air and noise rows describe one point.
+            xy = postcode_grid.grid_ref(row, to_bng)
+            if xy is None:
+                continue
+            x, y = xy
             key = (int(x) // CELL_M, int(y) // CELL_M)
 
             attrs = {}

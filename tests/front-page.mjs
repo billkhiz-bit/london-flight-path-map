@@ -423,6 +423,20 @@ await page.keyboard.press('Enter');
 await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Sutton');
 const sutton = await routeCard();
 ok(/^None of the routes on this map crosses it\./.test(sutton?.text || '') && /radar/.test(sutton.text), 'an area no drawn route crosses says so, and that radar-directed paths are not drawn', sutton?.text);
+// ...and names the routes the record holds no line for (audit 2026-10-09 M-4): Gatwick's runway is
+// 18 km from Sutton's southern edge, and its routes are not drawn.
+ok(/Routes: Gatwick's are not drawn here\./.test(sutton?.text || ''), "Sutton's card says Gatwick's routes are not drawn, not that no route is near", sutton?.text);
+// Trafford read "None of the routes on this map crosses it" under Manchester's departures, which are
+// published only as charts (M-4). Its card must say so, as a postcode's answer there does (M-7).
+await page.locator('#borough-close').click();
+await page.locator('#chips button[data-city="manchester"]').click();
+await page.waitForFunction(() => document.querySelector('#chips button[data-city="manchester"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length === 10);
+await page.locator('#map .boro[aria-label^="Trafford"]').focus();
+await page.keyboard.press('Enter');
+await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Trafford');
+const trafford = await routeCard();
+ok(/Departure routes: Manchester's are published only as charts and are not drawn here\./.test(trafford?.text || ''), "Trafford's card says Manchester's departures are not drawn (audit 2026-10-09 M-4)", trafford?.text);
+await page.locator('#borough-close').click();
 // A city with no routes at all (South Yorkshire has no airport) prints no routes row.
 await page.locator('#chips button[data-city="southyorkshire"]').click();
 await page.waitForFunction(() => document.querySelector('#chips button[data-city="southyorkshire"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length === 4);

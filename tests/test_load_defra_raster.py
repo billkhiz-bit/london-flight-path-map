@@ -103,8 +103,8 @@ class TestAssertLowestMapped:
 def test_missing_column_stops_the_run_before_any_row():
     mod = _load()
     with pytest.raises(SystemExit, match=r"lacks column\(s\) \['long'\]"):
-        mod.require_columns(['pcds', 'lat', 'lng'], 'x.csv')
-    mod.require_columns(['pcds', 'lat', 'long', 'doterm'], 'x.csv')  # extras are fine
+        mod.require_columns(['pcds', 'lat', 'lng', 'east1m', 'north1m'], 'x.csv')
+    mod.require_columns(['pcds', 'lat', 'long', 'east1m', 'north1m', 'doterm'], 'x.csv')  # extras are fine
 
 
 def test_a_full_run_that_wrote_nothing_fails():

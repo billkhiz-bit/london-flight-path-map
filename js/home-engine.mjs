@@ -14,7 +14,7 @@
    quota. A postcode goes to postcodes.io and then the key-free
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
-import { AIRPORT_NAME, compass, finalOverhead, plane, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
+import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
 import { DEFRA_LDEN_SCALE, LONDON_RASTER, nearestStation, stationDistance } from '/js/street_report.mjs';
 
 // The full map's address since the front page took / (2026-10-06). Every link
@@ -616,14 +616,51 @@ function routesAcross(f) {
   // under one tooltip that names the procedure only. Oakland lists 14, from 17 lines.
   return [...new Set(state.routes.filter(crosses).map((r) => r.html))];
 }
+// WHAT THE RECORD DOES NOT DRAW, in one set of words for the postcode answer and the area card:
+// a route the data lacks must never read as one that is not there (audit 2026-10-05 M-7, and
+// 2026-10-09 M-4, where Trafford, Salford, Bolton and Charnwood read "None of the routes on this
+// map crosses it" under Manchester's and East Midlands' undrawn departures).
+function routeGap(code, method) {
+  const name = AIRPORT_NAME[code] || code;
+  return {
+    none: `Departure routes: none published for ${name}.`,
+    conventional: `Departure routes: ${name}'s are published only as charts and are not drawn here.`,
+    'not-drawn': `Routes: ${name}'s are not drawn here.`,
+  }[method] || '';
+}
+// The gaps of every airport whose runway lies within AIRPORT_SCOPE_KM of the area, nearest first:
+// the postcode answer's scope, measured from the area's NEAREST point, because a departure can
+// cross any part of it and the centre of a large district can sit outside the scope its edge is in.
+function routeGapsNear(f) {
+  const proc = isUs(state.city) ? state.usProc : state.proc;
+  const pts = polygonsOf(f?.geometry).flat(2);
+  if (!proc || !pts.length) return [];
+  const pl = plane(d3.mean(pts, (p) => p[1]), d3.mean(pts, (p) => p[0]));
+  const xy = pts.map(([lon, lat]) => pl.xy(lat, lon));
+  const gaps = [];
+  for (const [code, ap] of Object.entries(proc.airports)) {
+    const text = routeGap(code, ap.departures_method);
+    if (!text) continue;
+    let d = Infinity;
+    for (const [rwy, r] of Object.entries(ap.runways)) {
+      const other = ap.runways[reciprocal(rwy)] || r;
+      if (!r.thr || !other.thr) continue;
+      const a = pl.xy(...r.thr), b = pl.xy(...other.thr);
+      for (const p of xy) d = Math.min(d, closest(p, a, b).d);
+    }
+    if (d <= AIRPORT_SCOPE_KM) gaps.push({ d, text });
+  }
+  return gaps.sort((x, y) => x.d - y.d).map((g) => g.text);
+}
 function routesFactHtml(f) {
   if (!f || !state.routes.length) return '';
   const tips = routesAcross(f);
   const n = tips.length;
+  const gaps = routeGapsNear(f).map(esc).join(' ');
   // Never "no aircraft here": stack-to-final is radar-vectored and deliberately not drawn.
   const dd = n
-    ? `<details class="routes-across"><summary>${n} ${n === 1 ? 'route on this map crosses' : 'routes on this map cross'} it</summary><ul>${tips.map((h) => `<li>${h}</li>`).join('')}</ul></details>`
-    : 'None of the routes on this map crosses it. Aircraft can still fly over: the paths air traffic control gives by radar are not published, so they are not drawn.';
+    ? `<details class="routes-across"><summary>${n} ${n === 1 ? 'route on this map crosses' : 'routes on this map cross'} it</summary><ul>${tips.map((h) => `<li>${h}</li>`).join('')}</ul></details>${gaps ? `<p class="route-gaps">${gaps}</p>` : ''}`
+    : `None of the routes on this map crosses it. Aircraft can still fly over: the paths air traffic control gives by radar are not published, so they are not drawn.${gaps ? ` ${gaps}` : ''}`;
   return `<div><dt>Flight routes</dt><dd>${dd}</dd></div>`;
 }
 
@@ -983,11 +1020,7 @@ function routesText(proc, lat, lon) {
   }
   // Say which routes the data lacks, as the street report does, so an
   // undrawn route never reads as one that is not there (audit 2026-10-05 M-7).
-  const gap = {
-    none: 'Departure routes: none published for this airport.',
-    conventional: `Departure routes: ${name}'s are published only as charts and are not drawn here.`,
-    'not-drawn': `Routes: ${name}'s are not drawn here.`,
-  }[ap.method];
+  const gap = routeGap(ap.code, ap.method);
   if (gap) parts.push(gap);
   return parts.join(' ');
 }

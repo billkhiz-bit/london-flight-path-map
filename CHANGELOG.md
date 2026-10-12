@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-10-11 (evening) - is the data true to the area?
+
+A spot-check of the live API against each publisher at 21 postcodes in 11
+cities: air quality matched DEFRA's 2024 grid at 21 of 21, every postcode
+landed in ONS's council, road noise matched DEFRA's own service at 17 of 21.
+Three fixes followed, each with a check proven red on the old code.
+
+- **London's neighbourhood prices come from HM Land Registry now.** Its 134
+  neighbourhoods were hand-written: round prices with no source or date
+  (Chelsea read GBP 1.2m; 2025's sales in SW3 give 1.5m) and crime ratings no
+  published figure supports. London is generated like the other nine cities:
+  221 postcode districts, each named from a label checked against the House of
+  Commons Library's area names, and its ranking now says price leads it.
+- **A council area's card names the routes the map does not draw (audit M-4).**
+  Trafford read "None of the routes on this map crosses it" under Manchester's
+  departures, which are published only as charts.
+- **Noise is read where ONS puts the postcode.** Every reading was taken at a
+  conversion of the postcode's latitude and longitude, a median 1.75 m from
+  ONS's own grid reference: on DEFRA's 10 m road map that is the next cell for
+  one postcode in five, which can differ by 10 dB beside a busy road. The
+  scripts now use the grid reference (`scripts/postcode_grid.py`), a test keeps
+  every script to it, and the per-postcode tables are reloaded (Bill's step).
+
+Plans for Breathe London, address-level readings from Ordnance Survey's open
+data, and a scored Bay Area panel are in ROADMAP; none is built.
+
 ## 2026-10-11 - seven of the 9 Oct audit's eight Importants, closed and deployed
 
 Every fix carries a check proven red on the old code; three full preflights

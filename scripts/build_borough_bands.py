@@ -152,6 +152,12 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+# A postcode is a point on the British National Grid, placed by ONS's own grid
+# reference, never by re-projecting its lat/long (scripts/postcode_grid.py): every
+# raster and register below is EPSG:27700, NaPTAN's stations included.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import postcode_grid  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DATA = REPO_ROOT / 'data'
 NSPL_CSV = DATA / 'nspl.csv'
@@ -255,7 +261,13 @@ def load_lad_map():
 
 
 def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
-    """One pass over NSPL: {city: {borough: [(lat, lon), ...]}}.
+    """One pass over NSPL: {city: {borough: [(easting, northing), ...]}}.
+
+    Points are EPSG:27700 at ONS's grid reference (postcode_grid), since
+    2026-10-11. They were (lat, lon), re-projected by each sampler, which put
+    about one postcode in five in the neighbouring 10 m cell of the road and
+    flood rasters, and 1-2 m off the NaPTAN stations, which carry native
+    British grid references.
 
     `extra_postcodes` is a set of postcodes whose coordinates are also wanted -
     the GP surgeries. Collected in the SAME pass because the file is 806 MB and
@@ -267,11 +279,15 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
     """
     if not NSPL_CSV.exists():
         raise SystemExit(f'NSPL not found at {NSPL_CSV}')
+    from pyproj import Transformer
+
+    to_bng = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
     out = defaultdict(lambda: defaultdict(list))
     extra_coords = {}
     seen = retired = 0
     with NSPL_CSV.open(newline='', encoding='utf-8-sig') as fh:
         reader = csv.DictReader(fh)
+        postcode_grid.require_grid_columns(reader.fieldnames, NSPL_CSV)
         cols = {c.lower(): c for c in (reader.fieldnames or [])}
         c_term = cols.get('doterm')
         if not c_term:
@@ -316,22 +332,18 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
             if extra_postcodes:
                 pc = (row.get('pcds') or '').replace(' ', '').upper()
                 if pc in extra_postcodes:
-                    try:
-                        extra_coords[pc] = (float(row['lat']), float(row['long']))
-                    except (KeyError, ValueError):
-                        pass
+                    xy = postcode_grid.grid_ref(row, to_bng)
+                    if xy is not None:
+                        extra_coords[pc] = xy
             entry = lad_map.get(row.get(c_lad, ''))
             if not entry:
                 continue
-            try:
-                lat, lon = float(row['lat']), float(row['long'])
-            except (KeyError, ValueError):
-                continue
-            # NSPL parks terminated/unlocatable postcodes at (99.999, 0.0).
-            if lat > 90 or lat < -90:
+            # None for a row NSPL cannot place: it parks those at (99.999, 0.0).
+            xy = postcode_grid.grid_ref(row, to_bng)
+            if xy is None:
                 continue
             city, borough = entry
-            out[city][borough].append((lat, lon))
+            out[city][borough].append(xy)
             seen += 1
     print(f'  {seen:,} live postcodes across {len(out)} cities ({retired:,} terminated, excluded)')
     # A SCAN THAT MATCHED NOTHING IS NOT A COUNTRY WITH NO POSTCODES.
@@ -358,8 +370,15 @@ def collect_postcodes(lad_map, limit=None, extra_postcodes=None):
     return out, extra_coords
 
 
+def require_bng(crs, path):
+    """Refuse a raster that is not British National Grid: points are ONS grid references."""
+    if crs is None or crs.to_epsg() != 27700:
+        raise SystemExit(f'{path}: CRS {crs}, not EPSG:27700. Postcodes are sampled at '
+                         "ONS's British National Grid references; refusing to guess a re-projection.")
+
+
 def sample_raster(tif_path, points):
-    """Sample a GeoTIFF at (lat, lon) points.
+    """Sample a GeoTIFF at (easting, northing) points on the British grid.
 
     Returns (mapped, surveyed, inside):
       mapped    values above the lowest mapped contour, for the MEDIAN. A 0 is
@@ -384,19 +403,16 @@ def sample_raster(tif_path, points):
     """
     import numpy as np
     import rasterio
-    from pyproj import Transformer
 
     with rasterio.open(tif_path) as ds:
         band = ds.read(1).astype('float64')
         transform = ds.transform
         nodata = ds.nodata
-        crs = ds.crs
+        require_bng(ds.crs, tif_path)
         height, width = band.shape
 
-    tr = Transformer.from_crs('EPSG:4326', crs, always_xy=True)
-    lons = np.array([p[1] for p in points])
-    lats = np.array([p[0] for p in points])
-    xs, ys = tr.transform(lons, lats)
+    xs = np.array([p[0] for p in points], dtype='float64')
+    ys = np.array([p[1] for p in points], dtype='float64')
     inv = ~transform
     cols, rows = inv * (xs, ys)
     cols = np.floor(cols).astype(int)
@@ -412,7 +428,7 @@ def sample_raster(tif_path, points):
 
 
 def sample_codes(tif_path, points):
-    """Sample a classified GeoTIFF at (lat, lon) points. Returns raw codes.
+    """Sample a classified GeoTIFF at (easting, northing) points. Returns raw codes.
 
     Deliberately NOT sample_raster(): that drops values of 0, because for the
     Lden rasters 0 means 'below the lowest mapped band'. For flood, 0 is a real
@@ -422,16 +438,15 @@ def sample_codes(tif_path, points):
     """
     import numpy as np
     import rasterio
-    from pyproj import Transformer
 
     with rasterio.open(tif_path) as ds:
         band = ds.read(1)
         transform = ds.transform
-        crs = ds.crs
+        require_bng(ds.crs, tif_path)
         height, width = band.shape
 
-    tr = Transformer.from_crs('EPSG:4326', crs, always_xy=True)
-    xs, ys = tr.transform(np.array([p[1] for p in points]), np.array([p[0] for p in points]))
+    xs = np.array([p[0] for p in points], dtype='float64')
+    ys = np.array([p[1] for p in points], dtype='float64')
     cols, rows = ~transform * (xs, ys)
     cols = np.floor(cols).astype(int)
     rows = np.floor(rows).astype(int)
@@ -471,14 +486,10 @@ def load_aq_grid():
 
 
 def sample_aq(grids, points):
-    """Mean NO2 and PM2.5 over a borough's postcode centroids."""
-    from pyproj import Transformer
-
-    tr = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
+    """Mean NO2 and PM2.5 over a borough's postcode centroids (British grid points)."""
     sums = {'no2': 0.0, 'pm25': 0.0}
     counts = {'no2': 0, 'pm25': 0, 'either': 0}
-    for lat, lon in points:
-        e, n = tr.transform(lon, lat)
+    for e, n in points:
         key = (int(e // 1000), int(n // 1000))
         hit = False
         for k in ('no2', 'pm25'):
@@ -619,14 +630,9 @@ def transport_share(grid, points):
 
 
 def points_within(grid, points, radius_m):
-    """Share of points within radius_m of anything in a 1 km-cell grid."""
-    import numpy as np
-    from pyproj import Transformer
-
-    tr = Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
-    xs, ys = tr.transform(
-        np.array([p[1] for p in points]), np.array([p[0] for p in points])
-    )
+    """Share of (easting, northing) points within radius_m of anything in a 1 km-cell grid."""
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
     r2 = radius_m * radius_m
     near = 0
     for x, y in zip(xs, ys, strict=True):
@@ -724,13 +730,10 @@ def derive(limit=None):
     print('scanning NSPL...')
     by_city, gp_coords = collect_postcodes(lad_map, limit=limit, extra_postcodes=gp_postcodes)
 
-    # Same 1 km-cell grid trick as NaPTAN, over the geocoded surgeries.
-    from pyproj import Transformer as _T
-
-    _tr = _T.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
+    # Same 1 km-cell grid trick as NaPTAN, over the geocoded surgeries (already
+    # British grid points, from their postcodes' ONS grid references).
     gp_grid = defaultdict(list)
-    for lat, lon in gp_coords.values():
-        e, n = _tr.transform(lon, lat)
+    for e, n in gp_coords.values():
         gp_grid[(int(e // 1000), int(n // 1000))].append((e, n))
 
     print('loading DEFRA air-quality grids...')

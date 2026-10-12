@@ -16,7 +16,10 @@ know: **analytics is our own `js/count.mjs`** (GoatCounter's script sent each pa
 ours sends the three `utm_*` campaign tags and nothing else from an address), and **CloudFront maps origin 403
 alone to the 404 page** (S3 never answers 404; the 404 entry only ever replaced the badge's own SVG). The console
 items still open (second MFA, billing alerts, DMARC, the `api` CNAME, the SES sandbox) are in the START HERE block,
-re-measured 9 Oct.
+re-measured 9 Oct. **11 Oct evening:** London's neighbourhoods are generated from Land Registry now (no hand-written
+prices or crime ratings remain outside New York), the council card names undrawn routes (M-4), and **every postcode
+is sampled at ONS's grid reference** (`scripts/postcode_grid.py`; BT postcodes are Irish Grid and keep the
+projection). The DynamoDB reload that makes the last one live is Bill's (the command is in ROADMAP START HERE).
 
 **Previously - WHERE TO START (2026-10-04) - THE NEW FRONT PAGE IS ON TRIAL AT `/preview/`, AND THE BAY AREA BUILD HAS BEGUN.**
 Master `35f1a2b`, pushed, CI green, and equal to what is live. Two branches were fast-forwarded into
