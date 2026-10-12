@@ -215,6 +215,68 @@ TM Group; todaysconveyancer.co.uk (InfoTrack's acquisition of STL); legalfutures
 (Search Acumen; the PCCB); gov.uk (IPO fees from April 2026); getindemnity.co.uk and
 simplybusiness.co.uk (PI premium ranges).
 
+## Data buyers, channels and comparables (Bill's plan, 2026-10-12)
+
+Bill's own channel plan, filed here. Claims marked *(Bill's notes)* are not checked in
+the repo; check them before quoting. **Discipline rule: nothing new starts until one
+invoice is paid.** Scouts and marketplaces are passive channels and do little for an
+early dataset; a relationship, such as the Ordnance Survey conversation, is the
+exception.
+
+**In motion.**
+- **Neudata** (London data scout): form sent 12 Oct, a free consultation pending. Go
+  for the diagnosis, not the sale; ask first whether any part is paid. Prepare: the
+  entity key (postcode, street, or UPRN later), coverage, update frequency, history and
+  point-in-time, source licensing (LICENSING.md), delivery, no personal data. Likely
+  fit is climate risk, not trading signals.
+- **Eagle Alpha**: a 180-character message is ready. Their call is free; the "concrete
+  roadmap" after it is their paid product, so do not buy it.
+
+**Who buys.** Estate agents do not buy data; the suppliers who sell to agents and
+conveyancers do. *(Bill's notes:* Groundsure took on Ambiental as a flood-data partner;
+Landmark partnered with Satellite Vu.*)* Rows 5-7 of the shortlist already hold the
+Islamic lenders, the search and environmental-data firms and the research teams; this
+plan adds:
+- environmental and search data: **Future Climate Info** (beside Groundsure, Landmark,
+  TM Group in "Search platforms" above);
+- agent and developer platforms: **Sprift, Searchland, LandTech, Nimbus Maps**;
+- build-to-rent operators (site selection): **Grainger, Get Living, Greystar, Quintain**;
+- Islamic home finance, the one segment nobody is selling to: **Gatehouse, StrideUp,
+  Al Rayan, Offa, Primary Finance**, with the same climate-reporting duties as any UK
+  lender *(Bill's notes: Gatehouse priced a green home finance product in 2022)*.
+  ROADMAP "Constraints" applies (riba-free).
+- **Avoid:** lenders' surveying arms. **Do not bother:** Rightmove and Zoopla, who
+  build in-house (Hometrack is Zoopla's).
+
+**Channels, by friction.**
+- Days: **Datarade** (free provider listing); **RapidAPI** (little revenue, a real
+  willingness-to-pay signal).
+- Weeks: **AWS Data Exchange**, the best technical fit (the API already runs on AWS).
+  A free listing is easy; a PAID one needs VAT registration (Cubitt33 Ltd is not
+  registered), US tax forms, a payout account, a support process and a qualification
+  call. Also **ArcGIS Marketplace / CARTO** (councils already pay for these) and the
+  **Snowflake / Databricks** marketplaces.
+- Parked: **G-Cloud 15**: needs Cyber Essentials or ISO and professional indemnity
+  insurance (hosting lots ask for GBP 7m cover including GBP 1m PI). Next year, after
+  paying customers.
+
+**Comparables (study, do not contact):** Climate X (asset-level physical climate risk
+for banks and real estate), Kamma (geospatial data for lenders; *Bill's notes:*
+partnered with Atom Bank on its mortgage book's climate risk, close to this thesis and
+already funded), and Oxford's CGFI, which ran the SBRI Climate and Environmental Risk
+Analytics matchmaking: be known to them before any successor round.
+
+**Funding, as Bill found it on 12 Oct:** SBRI Clean Air Phase 3, Environmental
+Monitoring Innovation and SBRI CERA are all closed (2022-24); Innovate UK's open
+competitions have nothing on air quality or property (BridgeAI x3 open 21 Oct); council
+air-quality tenders buy monitoring hardware and site operation, not analysis. DEFRA's
+Air Quality Grant goes to councils, and has had no round since 2023-24 (see "Facts safe
+to quote"); the plan called it recurring.
+
+**Blockers it names** are tracked in ROADMAP (START HERE, 2026-10-12): coverage (fixed
+that day), data licensing (narrowed to the UK AIP), name, company and controller, ICO
+fee, terms of business.
+
 ## Facts safe to quote
 
 Each is measured and in the repo. Re-check the source before quoting if the date is old.
@@ -223,7 +285,7 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 |---|---|---|
 | Heathrow 55 dB Lden contour: DEFRA 2021 **75.6 km2** vs CAA 2024 **148.4 km2** (ERCD 2501 Table 12), about half | `scripts/measure_covid_understatement.py --check` (blocking) | 2026-09-26 |
 | 62% of DEFRA's mapped Heathrow area (124.2 of 199.8 km2) is below 55 dB | ROADMAP, Option C | 2026-09-26 |
-| Site covers 11 city regions, 91 boroughs; the API covers 14 cities | CLAUDE.md "Project" | 2026-09-27 |
+| **Coverage, the ONE sentence: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only).** The full map draws 11 of the 13 UK city regions (91 boroughs); never quote that, "14 cities" or "102 boroughs" as the coverage - each was true of one surface, and three versions were live at once until 2026-10-12 | front page, `/api/`, `/reports/`, `/open-data/`, `/area/` (counted per country by `build_area_pages.py`) | 2026-10-12 |
 | Every input is official public data. DEFRA, the Environment Agency, ONS and HM Land Registry publish under the Open Government Licence; **the UK flight routes come from the UK AIP (NATS), which is public but NOT openly licensed** - never say "all open data" (corrected 2026-10-06; it read "every input is open government data") | LICENSING.md | 2026-10-06 |
 | Crime checked against ONS Table C4; prices against HM Land Registry HPI; flood against the EA's own map service, before every release | blocking preflight stages | current |
 | Neighbourhood prices use HM Land Registry Category A sales only, as HMLR's own statistics do | `build_city_neighbourhoods.py --check` | 2026-09-01 |
@@ -246,6 +308,11 @@ Each is measured and in the repo. Re-check the source before quoting if the date
   airports, the only places DEFRA published a comparison.
 - **"AI-powered."** The product is data-first; the consumer site uses no AI.
 - **That anyone uses the API.** As of 2026-09-28 no outside developer had.
+- **"11 cities", "14 cities" or "102 boroughs" as the coverage.** Use the one
+  sentence in "Facts safe to quote".
+- **That every source is licensed for commercial resale.** All but one are (OGL
+  v3.0, TfL's licence): the UK AIP flight routes have no licence in so many words.
+  LICENSING.md has the row and the step (NATS's written confirmation).
 
 ## Templates
 

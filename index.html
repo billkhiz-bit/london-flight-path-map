@@ -7706,7 +7706,10 @@
       // answer. Failing loudly here is the difference between a bug you find in
       // the first minute and one that ships.
       function cityOf(id) {
-        const entry = CITY_DATA[id];
+        // OWN keys only: CITY_DATA['constructor'] is Object's constructor, a
+        // truthy "city" that passed this check and crashed later (audit
+        // 2026-10-09 M-1, via /map/?city=constructor).
+        const entry = Object.hasOwn(CITY_DATA, id) ? CITY_DATA[id] : null;
         if (!entry) {
           throw new Error(
             `Unknown city "${id}" - add it to CITY_DATA rather than relying on a default.`
@@ -15709,7 +15712,11 @@
           triggerSearch(qPostcode);
           return;
         }
-        if (qCity && CITY_DATA[qCity] && qCity !== currentCity) {
+        // Object.hasOwn, not CITY_DATA[qCity]: `?city=constructor` or
+        // `__proto__` named a prototype member, which is truthy, so the map
+        // switched to a "city" that was a function and threw (audit 2026-10-09
+        // M-1). The front page's engine was fixed the same way on 5 Oct (M-6).
+        if (qCity && Object.hasOwn(CITY_DATA, qCity) && qCity !== currentCity) {
           await switchCity(qCity);
         }
         if (qBorough) {

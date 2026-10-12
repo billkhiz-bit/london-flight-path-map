@@ -44,10 +44,6 @@ home/reports/index.html|reports/
 home/reports/street/index.html|reports/street/
 home/moved/preview/index.html|preview/
 home/moved/preview/reports/index.html|preview/reports/
-js/flight_geometry.mjs|js/flight_geometry.mjs
-js/street_report.mjs|js/street_report.mjs
-js/street_report_page.mjs|js/street_report_page.mjs
-js/home-engine.mjs|js/home-engine.mjs
 pricing.html|pricing
 privacy.html|privacy
 terms.html|terms
@@ -67,9 +63,20 @@ robots.txt|robots.txt
 sitemap.xml|sitemap.xml
 .well-known/security.txt|.well-known/security.txt
 preview.png|preview.png
-js/api-base.js|js/api-base.js
 fonts/fonts.css|fonts/fonts.css
 '
+
+# EVERY FILE UNDER js/, DERIVED (2026-10-12, audit 2026-10-09 M-9). Five of them
+# were named above by hand while web-deploy and home-deploy upload js/api-base.js,
+# every *.mjs under js/ and all of js/vendor/, so js/count.mjs (11 Oct),
+# js/vendor/qrcode-generator-2.0.4.mjs and js/vendor/d3.v7.min.js were deployed
+# and never compared - the list-that-omits-a-member shape. Read from the tree: a
+# file here that no target uploads then reports UNREACHABLE, which is the right
+# finding too.
+for module in $(find js -type f | sort); do
+  SURFACES="$SURFACES
+$module|$module"
+done
 
 # The Bay Area noise picture is named after its own content
 # (aircraft-noise-laeq-2022-<hash>.png), so that a rebuilt one cannot stay

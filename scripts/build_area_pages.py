@@ -569,7 +569,7 @@ INDEX = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Every area Sky Score covers | Sky Score</title>
-<meta name="description" content="Noise and liveability scores for {n} boroughs across {c} UK and US city regions, from published UK government and New York City sources." />
+<meta name="description" content="Noise and liveability scores for {coverage}, from published UK government and New York City sources." />
 <link rel="canonical" href="{site}/area/" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
@@ -611,7 +611,7 @@ INDEX = """<!doctype html>
 <nav class="sub" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; Areas</nav>
 <main>
 <h1>Every area we cover</h1>
-<p class="sub">{n} boroughs across {c} city regions. Each page carries the published measurements behind that area's score.</p>
+<p class="sub">{coverage}. Each page carries the published measurements behind that area's score.</p>
 <p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
 <p class="sub">In the United States: <a href="/bay-area/">flight paths over 50 San Francisco Bay Area cities</a>.</p>
 {body}
@@ -685,8 +685,17 @@ def main() -> int:
             f'<li><a href="/area/{p}/">{e(b)}</a></li>' for p, b in sorted(by_city[city], key=lambda x: x[1])
         )
         body.append(f'<h2>{e(CITY_LABEL.get(city, city.title()))}</h2>\n<ul>\n{items}\n</ul>')
+    # ONE COVERAGE SENTENCE (2026-10-12). This index said "102 boroughs across 14 city
+    # regions" while the front page, /api/, /reports/ and /open-data/ said 97 council areas in
+    # 13: both true, one counting New York's boroughs in with the UK's, and read side by side
+    # as two claims. Counted per country from the pages themselves, never typed.
+    uk = [c for c in by_city if app.CITIES[c].get('country') == 'United Kingdom']
+    abroad = [c for c in by_city if c not in uk]
+    uk_n = sum(len(by_city[c]) for c in uk)
+    us = ' and '.join(f"{CITY_LABEL.get(c, c.title())}'s {len(by_city[c])} boroughs" for c in sorted(abroad))
+    coverage = f'{uk_n} council areas in {len(uk)} UK city regions' + (f', plus {us}' if us else '')
     (OUT / 'index.html').write_text(
-        INDEX.format(n=len(pages), c=len(by_city), site=SITE, body='\n'.join(body)),
+        INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body)),
         encoding='utf-8', newline='\n')
 
     sync_scorecards(pages, write=True)

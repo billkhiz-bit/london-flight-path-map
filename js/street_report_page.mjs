@@ -176,8 +176,12 @@ async function make(raw, check = null) {
       }
     }
 
+    // The day this copy is made, and the reference that ties its figures to that day. Worked
+    // out BEFORE the report, which prints it as "Prepared", so the two can never disagree
+    // (audit 2026-10-09 M-6: the report read the local clock, this the UTC one).
+    const made = new Date().toISOString().slice(0, 10);
     const html = reportDocument(
-      { postcode: loc.postcode },
+      { postcode: loc.postcode, made },
       {
         postcode: loc.postcode,
         council: loc.admin_district,
@@ -202,8 +206,6 @@ async function make(raw, check = null) {
       },
       '/fonts/geist.woff2'
     );
-    // The day this copy is made, and the reference that ties its figures to that day.
-    const made = new Date().toISOString().slice(0, 10);
     const ref = await reportReference(loc.postcode, made, proc.airac, env);
     const link = checkLink(loc.postcode, made, ref);
 
@@ -228,7 +230,24 @@ async function make(raw, check = null) {
         // Sized below, from the code itself, so it overrides the report's `svg { width: 100% }`.
         // crispEdges: no anti-aliasing, so each module edge lands on a device pixel (see below).
         '.free-copy-check svg { flex: 0 0 auto; shape-rendering: crispEdges; }' +
-        '.free-copy-check p { margin: 0; }';
+        '.free-copy-check p { margin: 0; }' +
+        // REFLOW ON A NARROW SCREEN (audit 2026-10-09 I-6, WCAG 1.4.10). The frame is fluid below
+        // A4 width, and under 600 px the report reads top to bottom: two tiles a row, one column,
+        // the routes table as a list whose lines carry their column's heading (set below), larger
+        // type. The map alone keeps a legible width, in a scroller of its own: WCAG exempts content
+        // that needs two dimensions, and at the frame's width its labels were a few pixels high.
+        '@media screen and (max-width: 600px) {' +
+        ' body { padding: 16px 14px; font-size: 11pt; } h1 { font-size: 16pt; }' +
+        ' .keys { grid-template-columns: 1fr 1fr; } .cols { grid-template-columns: 1fr; }' +
+        ' table, tbody, tr, td { display: block; } thead { display: none; }' +
+        ' tr { padding: 7px 0; border-bottom: 1px solid var(--rule); } td { border: 0; padding: 1px 0; }' +
+        ' td:first-child { font-weight: 600; }' +
+        ' td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); }' +
+        ' .note, .legend, .cap { font-size: 9.5pt; } footer { font-size: 9pt; }' +
+        ' .free-copy-check { flex-direction: column; align-items: flex-start; }' +
+        ' .map-scroll { overflow-x: auto; } .map-scroll > svg { width: 720px; max-width: none; }' +
+        '}' +
+        '.map-scroll:focus-visible { outline: 3px solid #d35a12; outline-offset: 2px; }';
       doc.head.append(pad);
 
       const mark = doc.createElement('div');
@@ -274,6 +293,38 @@ async function make(raw, check = null) {
       sizeCode();
       doc.defaultView.addEventListener('resize', sizeCode);
       (doc.querySelector('footer') || doc.body).append(block);
+
+      // REFLOW, THE PARTS CSS CANNOT DO ALONE (audit 2026-10-09 I-6). Each route cell carries its
+      // column's heading, READ FROM THE TABLE so the words cannot drift from the module's; the
+      // narrow rules above show it ("Height: about 1,800 ft") once the header row is hidden.
+      const heads = [...doc.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+      for (const tr of doc.querySelectorAll('tbody tr')) {
+        [...tr.children].forEach((td, i) => {
+          if (i > 0 && heads[i]) td.dataset.label = heads[i];
+        });
+      }
+      // The map in a scroller of its own, opened on the postcode's pin. A tab stop only while it
+      // scrolls, so a wide screen gains no stop that does nothing.
+      const map = doc.querySelector('svg .pin')?.closest('svg');
+      if (map) {
+        const scroller = doc.createElement('div');
+        scroller.className = 'map-scroll';
+        map.replaceWith(scroller);
+        scroller.append(map);
+        const fitMap = () => {
+          const scrolls = scroller.scrollWidth > scroller.clientWidth + 1;
+          for (const [k, v] of [['tabindex', '0'], ['role', 'region'], ['aria-label', 'Map, scrolls sideways']]) {
+            if (scrolls) scroller.setAttribute(k, v);
+            else scroller.removeAttribute(k);
+          }
+          if (!scrolls) return;
+          const pin = map.querySelector('.pin').getBoundingClientRect();
+          const box = scroller.getBoundingClientRect();
+          scroller.scrollLeft += pin.left + pin.width / 2 - (box.left + box.width / 2);
+        };
+        fitMap();
+        doc.defaultView.addEventListener('resize', fitMap);
+      }
       // As tall as the report, so the page scrolls rather than the frame, and KEPT so: the web
       // fonts arrive after the first measure and make the text taller, which clipped the foot
       // of the report (found 2026-10-06, when the check block landed in the clipped strip).

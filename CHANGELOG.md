@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-10-12 (afternoon) - the free report reads on a phone, and four of the 9 Oct audit's Minors
+
+Each fix carries a check proven red on the old code.
+
+- **The free street report reflows on a phone (audit I-6, WCAG 1.4.10; Bill
+  chose "reflow it").** It was a fixed 794 px A4 page in a sideways scroller,
+  so on a phone every line ran off the edge. Below A4 width the frame is fluid,
+  and under 600 px the free copy reads top to bottom: two figure tiles a row,
+  larger type, the routes as a list whose lines carry their column's heading
+  ("Height: about 1,800 ft"), and the map kept legible in a scroller of its
+  own, opened on the postcode's pin. The paid PDF is not touched.
+- **`/map/?city=constructor` no longer breaks the full map (M-1).** A prototype
+  name passed the city lookup as a "city"; `Object.hasOwn` in the deep-link
+  reader and in `cityOf()`.
+- **One date on the whole free copy (M-6).** Made late in the evening, its
+  "Prepared" date followed the local clock and could say the 10th while its
+  watermark, reference and check link said the 9th.
+- **A station 995 m away reads "1.0 km", not "1000 m" (M-7).**
+- **The deploy-drift check compares every file under `js/` (M-9).** It named
+  five by hand and missed three that are deployed, `js/count.mjs` among them.
+
 ## 2026-10-12 - council-area figures re-measured at ONS's grid references
 
 The 11 Oct re-placing reached the per-postcode tables; this carries it into the

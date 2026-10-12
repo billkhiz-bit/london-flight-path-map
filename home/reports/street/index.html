@@ -79,10 +79,12 @@
       }
       .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 0 0 14px; }
       .actions p { margin: 0; font-size: 14px; color: var(--mid); }
-      /* The sheet: an A4 page's width on screen, scrolled sideways on a phone rather than squeezed, because the report is laid out for paper. */
-      .sheet-wrap { overflow-x: auto; background: #e6e4de; border-radius: 14px; padding: 16px; }
-      .sheet-wrap:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-      iframe.sheet { display: block; width: 794px; max-width: none; height: 1123px; border: 0; background: #fff; margin: 0 auto; box-shadow: 0 6px 20px rgba(20, 20, 20, 0.12); }
+      /* The sheet: an A4 page's width where there is room, and FLUID below it, where the free copy reflows
+         inside the frame (js/street_report_page.mjs). It was a fixed 794 px scrolled sideways, so on a phone
+         every line ran off the edge: WCAG 1.4.10 Reflow, audit 2026-10-09 I-6. The paid PDF is not touched. */
+      .sheet-wrap { background: #e6e4de; border-radius: 14px; padding: 16px; }
+      iframe.sheet { display: block; width: 100%; max-width: 794px; height: 1123px; border: 0; background: #fff; margin: 0 auto; box-shadow: 0 6px 20px rgba(20, 20, 20, 0.12); }
+      @media (max-width: 600px) { .sheet-wrap { padding: 6px; border-radius: 10px; } }
       h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(20px, 2.4vw, 26px); letter-spacing: -0.02em; margin: 40px 0 10px; }
       ul.notes { margin: 0; padding-left: 20px; color: var(--mid); max-width: 72ch; }
       ul.notes li { margin: 6px 0; }
@@ -120,7 +122,7 @@
         <div class="actions">
           <p>Free to read here. Need a PDF to hand to a client? A report for a firm comes as a PDF: <a href="/pricing#reports">see what it costs</a>.</p>
         </div>
-        <div class="sheet-wrap" tabindex="0" role="region" aria-label="The report, scrolls sideways on a narrow screen">
+        <div class="sheet-wrap">
           <iframe class="sheet" id="sheet" title="Your aircraft noise report"></iframe>
         </div>
       </section>

@@ -48,8 +48,14 @@ export function nearestStation(stationsByCity, lat, lon) {
   }
   return best && best.km <= STATION_SCOPE_KM ? best : null;
 }
-/** "650 m" under a kilometre (to the nearest 10 m), "1.4 km" above. */
-export const stationDistance = (km) => (km < 1 ? `${Math.round(km * 100) * 10} m` : `${km.toFixed(1)} km`);
+/** "650 m" under a kilometre (to the nearest 10 m), "1.4 km" above.
+ *  The unit is chosen AFTER rounding to 10 m: choosing it first printed 0.995 km as "1000 m"
+ *  (audit 2026-10-09 M-7). Kilometres still format from the raw distance, because rounding
+ *  twice (to 10 m, then to 0.1 km) tips ties: 1.0451 km would read "1.1 km". */
+export const stationDistance = (km) => {
+  const m = Math.round(km * 100) * 10;
+  return m < 1000 ? `${m} m` : `${km.toFixed(1)} km`;
+};
 const MAP = { w: 1000, h: 345, padKm: 5, minHeightKm: 11 };
 
 // DEFRA's Lden bands for its aircraft map. A MIRROR of NOISE_SCALE_DEFRA_LDEN in
@@ -380,7 +386,13 @@ export function reportParts(spec, f) {
       ? "DEFRA's map models 2021, when COVID restrictions cut air traffic, so levels today are likely to be higher than DEFRA's map shows."
       : 'DEFRA publishes no aircraft noise map for this airport. Its road-noise map models 2021 traffic, which lockdown reduced.';
   const title = `Aircraft noise at ${esc(f.postcode)}${spec.place ? `, ${esc(spec.place)}` : ''}`;
-  const when = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  // The free copy passes `made` (its UTC day, the one its watermark and reference carry), so
+  // "Prepared" cannot disagree with them: a local clock read 10 October at 23:30 UTC on 9
+  // October, and a copy that disagrees with itself reads as tampered (audit 2026-10-09 M-6).
+  // The PDF script passes none and keeps the local date, so its output does not change.
+  const when = spec.made
+    ? new Date(`${spec.made}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const css = `  @page { size: A4; margin: 13mm 15mm 11mm; }
   :root { --ink:#1c1c1a; --muted:#5f5e59; --rule:#dedcd6; --band:#f4f2ee; --accent:#b4441a; --fin:#d9480f; --dep:#1d4ed8; }

@@ -273,6 +273,16 @@ const registry = await page.evaluate(() => {
   } catch {
     out.throwsOnUnknown = true;
   }
+  // A PROTOTYPE member is unknown too (audit 2026-10-09 M-1): CITY_DATA['constructor']
+  // is truthy, so a plain lookup took Object's constructor for a city.
+  out.prototypeKeysThrow = ['constructor', '__proto__', 'toString', 'hasOwnProperty'].every((k) => {
+    try {
+      cityOf(k);
+      return false;
+    } catch {
+      return true;
+    }
+  });
   return out;
 });
 
@@ -284,6 +294,7 @@ console.log(
   registry.unresolved.length ? `  UNRESOLVED: ${registry.unresolved.join(', ')}` : ''
 );
 console.log('unknown city throws:      ', registry.throwsOnUnknown, '(must be true)');
+console.log('prototype names throw:    ', registry.prototypeKeysThrow, '(must be true)');
 console.log('every city declares same keys:', registry.keysMatch);
 if (registry.missing.length) console.log('  MISSING:', registry.missing.join(', '));
 
@@ -323,6 +334,40 @@ console.log('--- a second US city ---');
 console.log('asked of the registry:    ', JSON.stringify(secondUs));
 console.log('falls into no by-name branch:', secondUsOk, '(must be true)');
 
+// --- A deep link naming a prototype member must land on London, not break (audit 2026-10-09 M-1) ---
+// Reviewer-measured live: /map/?city=constructor threw a TypeError, blanked the subtitle, and a
+// later search showed no result. A fresh page each, because the first switch is the one that broke.
+const protoLinks = [];
+for (const name of ['constructor', '__proto__']) {
+  const p = await browser.newPage();
+  const errors = [];
+  p.on('pageerror', (e) => errors.push(e.message));
+  await p.goto(`${BASE}/index.html?city=${name}`, { waitUntil: 'domcontentloaded' });
+  let visible = true;
+  try {
+    await p.waitForSelector('#app', { state: 'visible', timeout: 20000 });
+    await p.waitForFunction(() => document.querySelectorAll('path.borough').length > 0, null, { timeout: 20000 });
+  } catch {
+    visible = false;
+  }
+  const state = await p.evaluate(() => ({
+    boroughs: document.querySelectorAll('path.borough').length,
+    title: (document.querySelector('.map-title h1')?.textContent || '').trim(),
+    subtitle: (document.querySelector('.map-title .subtitle')?.textContent || '').trim(),
+  }));
+  protoLinks.push({ name, visible, errors, ...state });
+  await p.close();
+}
+const protoLinksOk = protoLinks.every(
+  (r) => r.visible && r.errors.length === 0 && r.boroughs === 33 && r.title && r.subtitle
+);
+console.log('');
+console.log('--- ?city=<prototype member> deep links ---');
+for (const r of protoLinks) {
+  console.log(`  ?city=${r.name}: ${r.boroughs} boroughs, title "${r.title}", subtitle ${r.subtitle ? 'present' : 'BLANK'}, ${r.errors.length} page error(s)${r.errors.length ? ': ' + r.errors[0] : ''}`);
+}
+console.log('lands on London, unbroken:', protoLinksOk, '(must be true)');
+
 await browser.close();
 
 const ok =
@@ -346,8 +391,10 @@ const ok =
   registry.known.length > 0 &&
   registry.unresolved.length === 0 &&
   registry.throwsOnUnknown &&
+  registry.prototypeKeysThrow &&
   registry.keysMatch &&
-  secondUsOk;
+  secondUsOk &&
+  protoLinksOk;
 
 console.log('\nRESULT:', ok ? 'PASS' : 'FAIL');
 process.exit(ok ? 0 : 1);

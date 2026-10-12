@@ -510,6 +510,17 @@ ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.te
     return { near: m.nearestStation(one, 0.01, 0)?.name ?? null, far: m.nearestStation(one, 0.05, 0) };
   });
   ok(scope.near === 'A' && scope.far === null, 'a station 1.1 km away is named; one 5.6 km away is not mentioned at all', JSON.stringify(scope));
+  // The unit follows the ROUNDED distance (audit 2026-10-09 M-7): 0.995 km printed "1000 m".
+  const dist = await page.evaluate(async () => {
+    const { stationDistance } = await import('/js/street_report.mjs');
+    return Object.fromEntries([0.65, 0.9949, 0.995, 0.9999, 1.0451, 1.4].map((k) => [k, stationDistance(k)]));
+  });
+  const wantDist = { 0.65: '650 m', 0.9949: '990 m', 0.995: '1.0 km', 0.9999: '1.0 km', 1.0451: '1.0 km', 1.4: '1.4 km' };
+  ok(
+    Object.entries(wantDist).every(([k, v]) => dist[k] === v),
+    'a station distance never reads "1000 m": the unit follows the rounded figure, km from the raw one',
+    JSON.stringify(dist)
+  );
 }
 const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
@@ -1391,6 +1402,98 @@ const makeReport = async (pc) => {
     const dec15 = ready ? await decodeQr(frame) : '(no report)';
     ok(ready && qr15.dpr === 1.5 && wholeModules(qr15) && dec15 === link15, 'at 150% display scaling its QR code is still whole device pixels per module, and scans', `${JSON.stringify(qr15)} | ${dec15}`);
     await scaled.close();
+  }
+  // ONE DAY ON THE WHOLE COPY (audit 2026-10-09 M-6). At 23:30 UTC on 9 October, London's clock reads
+  // 00:30 on the 10th: "Prepared" read the local clock and said 10 October while the watermark, the
+  // reference and the check link said the 9th, and a copy that disagrees with itself reads as tampered.
+  {
+    const late = await browser.newContext({ viewport: { width: 1366, height: 820 }, timezoneId: 'Europe/London' });
+    await late.route(OFFSITE, stubOffsite);
+    const lp = await late.newPage();
+    await lp.clock.setFixedTime(new Date('2026-10-09T23:30:00Z'));
+    await lp.goto(`${BASE}reports/street/`, { waitUntil: 'domcontentloaded' });
+    await lp.fill('#pc', 'TW9 3PZ');
+    await lp.press('#pc', 'Enter');
+    await lp.waitForFunction(() => /ready below/.test(document.getElementById('status').textContent), null, { timeout: 20000 }).catch(() => {});
+    const dates = await lp.evaluate(() => {
+      const d = document.getElementById('sheet').contentDocument;
+      return {
+        local: new Date().toLocaleDateString('en-GB'),
+        prepared: (d?.querySelector('footer')?.textContent.match(/Prepared ([^.]+)\./) || [])[1] || '',
+        mark: d?.querySelector('.free-copy-mark')?.children[0]?.textContent.split(' · ')[2] || '',
+        made: (d?.querySelector('.free-copy-check')?.textContent.match(/made ([^.]+)\./) || [])[1] || '',
+        link: d?.querySelector('.free-copy-check a')?.getAttribute('href') || '',
+      };
+    });
+    ok(
+      dates.local === '10/10/2026' &&
+        dates.prepared === '9 October 2026' &&
+        dates.mark === '9 October 2026' &&
+        dates.made === '9 October 2026' &&
+        dates.link.includes('&made=2026-10-09&'),
+      'a copy made at 00:30 London time on the 10th (23:30 UTC on the 9th) carries one day throughout: Prepared, watermark, reference and check link',
+      JSON.stringify(dates)
+    );
+    await late.close();
+  }
+  // REFLOW ON A PHONE (audit 2026-10-09 I-6, WCAG 1.4.10). The free copy was a fixed 794 px A4 page in a
+  // sideways scroller: at 390 px wide, 358 px of 826 showed and every line ran off the edge. Under 600 px it
+  // now reads top to bottom; the map alone scrolls sideways, opened on the pin, and is a tab stop only then.
+  // On a wide screen it is the A4 page it was, the routes a table, the map no tab stop.
+  const wide = await page.evaluate(() => {
+    const f = document.getElementById('sheet');
+    const d = f.contentDocument;
+    const td = d.querySelector('tbody td');
+    return { frame: f.clientWidth, cell: td ? d.defaultView.getComputedStyle(td).display : null, mapStop: d.querySelector('.map-scroll')?.hasAttribute('tabindex') ?? null };
+  });
+  ok(wide.frame === 794 && wide.cell === 'table-cell' && wide.mapStop === false, 'on a wide screen the free report is still the A4 page: 794 px, the routes a table, the map no tab stop', JSON.stringify(wide));
+  for (const vp of [{ width: 390, height: 844 }, { width: 320, height: 568 }]) {
+    const phone = await browser.newContext({ viewport: vp, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    await phone.route(OFFSITE, stubOffsite);
+    const pp = await phone.newPage();
+    await pp.goto(`${BASE}reports/street/`, { waitUntil: 'domcontentloaded' });
+    await pp.fill('#pc', 'TW9 3PZ');
+    await pp.press('#pc', 'Enter');
+    await pp.waitForFunction(() => /ready below/.test(document.getElementById('status').textContent), null, { timeout: 20000 }).catch(() => {});
+    await pp.evaluate(() => document.getElementById('sheet')?.contentDocument?.fonts.ready);
+    await pp.waitForTimeout(200);
+    const r = await pp.evaluate(() => {
+      const f = document.getElementById('sheet');
+      const d = f?.contentDocument;
+      if (!d?.querySelector('h1')) return { made: false };
+      const map = d.querySelector('.map-scroll');
+      const words = [...d.querySelectorAll('h1, h2, p, li, td, .key')].filter((e) => !e.closest('.map-scroll'));
+      const pin = map?.querySelector('.pin')?.getBoundingClientRect();
+      const box = map?.getBoundingClientRect();
+      const height = d.querySelector('tbody td:nth-child(4)');
+      return {
+        made: true,
+        // The defect itself: the old page scrolled INSIDE .sheet-wrap, so neither the page nor the
+        // frame scrolled while the A4 frame ran 400 px past the screen's edge.
+        frameFits: f.getBoundingClientRect().right <= document.documentElement.clientWidth,
+        wrapScrolls: document.querySelector('.sheet-wrap').scrollWidth > document.querySelector('.sheet-wrap').clientWidth,
+        pageScrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+        frameScrolls: d.documentElement.scrollWidth > d.documentElement.clientWidth,
+        textRunsTo: Math.ceil(Math.max(...words.map((e) => e.getBoundingClientRect().right))),
+        frameWidth: d.documentElement.clientWidth,
+        mapScrolls: map ? map.scrollWidth > map.clientWidth : null,
+        mapStop: map?.getAttribute('tabindex') === '0',
+        pinInView: Boolean(pin && box && pin.left >= box.left && pin.right <= box.right),
+        heightLabel: height ? d.defaultView.getComputedStyle(height, '::before').content : '',
+        tilesPerRow: d.defaultView.getComputedStyle(d.querySelector('.keys')).gridTemplateColumns.split(' ').length,
+      };
+    });
+    ok(
+      r.made && r.frameFits && !r.wrapScrolls && !r.pageScrolls && !r.frameScrolls && r.textRunsTo <= r.frameWidth && r.tilesPerRow === 2 && /^"Height: "$/.test(r.heightLabel),
+      `at ${vp.width} px the free report reflows: no sideways scroll, every line inside the frame, two tiles a row, route lines labelled from their column headings`,
+      JSON.stringify(r)
+    );
+    ok(r.mapScrolls && r.mapStop && r.pinInView, `at ${vp.width} px the map keeps a legible width in its own scroller, opened on the postcode's pin, and is a tab stop`, JSON.stringify(r));
+    const fl = pp.frameLocator('#sheet');
+    const decodedPhone = r.made ? await decodeQr(fl) : '(no report)';
+    const linkPhone = r.made ? await fl.locator('.free-copy-check a').getAttribute('href') : '';
+    ok(decodedPhone === linkPhone && linkPhone !== '', `at ${vp.width} px its QR code still scans to its check link`, decodedPhone);
+    await phone.close();
   }
   // The check: the genuine reference matches, one changed character does not, a malformed one is ignored.
   const checkWith = async (ref) => {
