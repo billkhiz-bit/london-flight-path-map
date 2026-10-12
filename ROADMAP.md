@@ -9,8 +9,11 @@
 > **Data re-placed at ONS's grid references end to end.** Bill ran the road and aircraft reloads (both done, the two
 > client datasets deployed and verified; live `/v1/environment` serves SW5 9HP at 71.8 dB), then started the
 > air-quality reload (running at the time of writing); the council-area figures were re-derived on PCM 2024 and DEPLOYED (`4f1c5c7`: 231 fields, Bradford road low ->
-> moderate, 19 of 816 scores by 0.1). Still Bill's: `remove_lost_readings.py` dry run, then `--apply`. Then the two
-> Earl's Court sheets are regenerated from the live API and a short correction goes out (Bill holding it).
+> moderate, 19 of 816 scores by 0.1). **The air-quality reload then finished (1,797,567 postcodes) and Bill ran
+> `remove_lost_readings.py --apply`: 6,585 stale fields removed, 0 absent, exactly the dry run's 3,047 road readings
+> + 3,522 below-40 bounds + 16 aircraft cells. Verified live: AL2 3FS 47.4 dB -> "below 40 dB", E2 0QG's old aircraft
+> cell gone (geometry now, as the site), B10 9JE and SW5 9HP unchanged. THE RE-PLACING IS COMPLETE.** Next, when Bill
+> wants it: regenerate the two Earl's Court sheets from the live API and send a short correction.
 > **Afternoon, committed after the loads:** audit I-6 (the free report reflows on a phone) and M-1, M-6, M-7, M-9; the
 > coverage sentence unified; Bill's channel plan filed in OUTREACH_TARGETS ("Data buyers, channels and comparables").
 >

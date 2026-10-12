@@ -1298,7 +1298,11 @@ dissolves when you compute the real one.*
 >   near Wigan), so they and rows with no grid reference keep the projection. Every loader and the bands builder use
 >   it; `tests/test_postcode_grid.py` fails any script that projects WGS84 to the British grid without it (exemptions
 >   named, with reasons). **A re-placing needs `scripts/remove_lost_readings.py --apply` after the reload**: the loader
->   upserts, so ~6,500 road postcodes would otherwise publish a reading AND a below-40 dB bound. The borough shares
+>   upserts, so a field the new placing lost stays in the table. The Lambda publishes the below-40 bound ONLY when
+>   no reading is stored, so the visible harm is one-sided - measured on the 12 Oct dry run: 3,047 postcodes kept
+>   publishing an OLD road reading where DEFRA at ONS's point records below 40 dB (AL2 3FS: 47.4), and 16 kept an
+>   old aircraft cell the site's datasets had already dropped (site and API disagreeing); the other 3,522 carried a
+>   stale bound their new reading hides. The borough shares
 >   move under one point (one band: Bradford road low -> moderate); re-derived 2026-10-12 on PCM 2024 rather than
 >   waiting for 2025 (231 fields, 19 of 816 scores by 0.1). The per-postcode AIR table needs its own reload too
 >   (`load_defra_air_quality.py --live-only`; 2,860 postcodes change 1 km square), after the noise reload.
