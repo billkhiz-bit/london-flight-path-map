@@ -1047,14 +1047,18 @@ const frontText = await page.locator('body').textContent();
 // Each number is recounted from the file it describes: the open-data CSV's UK rows, New York's
 // front-page rows, the Bay Area's places. A count written once is scheduled staleness.
 {
-  const csvRows = (await readFile(join(ROOT, 'open-data', 'sky-score-boroughs.csv'), 'utf8')).trim().split(/\r?\n/).length - 1;
+  const csvLines = (await readFile(join(ROOT, 'open-data', 'sky-score-boroughs.csv'), 'utf8')).trim().split(/\r?\n/).slice(1);
+  const csvRows = csvLines.length;
+  // The regions too (2026-10-13): the card said "across England and Wales", which reads as the
+  // whole of both countries; the one coverage sentence (12 Oct) names the city regions instead.
+  const csvRegions = new Set(csvLines.map((l) => l.split(',')[0])).size;
   const nycRows = JSON.parse(await readFile(join(ROOT, 'data', 'us-nyc.json'), 'utf8')).rows.length;
   // The 50 INCORPORATED places (43 cities, 7 towns): the file also holds 28 census-designated
   // places, unincorporated, which are outlines on the map and never 'cities'.
   const bayPlaces = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-places.json'), 'utf8')).places.filter((x) => x.kind === 'city' || x.kind === 'town').length;
-  const want = `${csvRows}council areas across England and Wales, New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities`;
+  const want = `${csvRows}council areas in ${csvRegions} UK city regions, New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities`;
   const fig = (await page.locator('.cards .fig').first().textContent()).trim();
-  ok(fig === want, 'the coverage figure is recounted from the data: UK council areas, New York boroughs, Bay Area cities', `page "${fig}" vs data "${want}"`);
+  ok(fig === want, 'the coverage figure is recounted from the data: UK council areas and city regions, New York boroughs, Bay Area cities', `page "${fig}" vs data "${want}"`);
 }
 const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
 ok(!/£35/.test(frontText) && frontLinks.includes('/pricing#reports'), 'the front page links to the report prices and does not repeat them');

@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-10-13 - two things a talk audience would have seen
+
+Found re-reading the LGM #6 demo from the live site. Each carries a check
+proven red on the old code.
+
+- **The full map named the airport twice: "Nearest flight path: LHR LHR 27R
+  final approach".** Every flight-path name already starts with its code (all
+  111 records), and the row put the code in front again. Every city has shown
+  it since the routes came from the AIP (26 Sep), and New York always had. The
+  row now prints the name, adding the code only to a name that lacks it.
+- **The front page's coverage card said "97 council areas across England and
+  Wales".** That reads as the whole of both countries. It now uses the one
+  coverage sentence (12 Oct): "97 council areas in 13 UK city regions, New
+  York's 5 boroughs and 50 Bay Area cities", with the region count recounted
+  from the open-data file like the other three numbers.
+
 ## 2026-10-12 (afternoon) - the free report reads on a phone, and four of the 9 Oct audit's Minors
 
 Each fix carries a check proven red on the old code.

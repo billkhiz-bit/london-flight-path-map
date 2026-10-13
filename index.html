@@ -12638,6 +12638,15 @@
           analysis.noiseEstimate === 'High' ? '#F27D26' : analysis.noiseEstimate === 'Moderate' ? '#F2B826' : '#26F27D';
         const noisePct = Math.min(100, analysis.noiseScore * 10);
         const top3 = analysis.airportsShown.slice(0, 3);
+        // Every flight-path name already starts with its airport's code ("LHR 27R final
+        // approach"), so prefixing the code again printed "LHR LHR ..." on every city.
+        // A name without its code still gets one, so the row always says which airport.
+        const shownPath = analysis.pathShown.path;
+        const shownPathName = !shownPath
+          ? ''
+          : shownPath.name.startsWith(shownPath.airport + ' ')
+            ? shownPath.name
+            : shownPath.airport + ' ' + shownPath.name;
 
         let scoreHtml = '';
         let boroughStatsHtml = '';
@@ -12827,7 +12836,7 @@
       <div class="noise-detail-row"><span class="noise-detail-label">Plane altitude</span>
         <span class="noise-detail-value">${escapeHtml(analysis.altEstimate)}</span></div>
       <div class="noise-detail-row"><span class="noise-detail-label">Nearest flight path</span>
-        <span class="noise-detail-value">${analysis.pathShown.path ? escapeHtml(analysis.pathShown.path.airport + ' ' + analysis.pathShown.path.name) : 'None nearby'}</span></div>
+        <span class="noise-detail-value">${shownPath ? escapeHtml(shownPathName) : 'None nearby'}</span></div>
       <div class="noise-detail-row"><span class="noise-detail-label">Path distance</span>
         <span class="noise-detail-value">${Number.isFinite(analysis.pathShown.dist) ? analysis.pathShown.dist.toFixed(1) + ' km' : 'No flight path in this area'}</span></div>
       ${analysis.nearestHeli ? '<div class="noise-detail-row"><span class="noise-detail-label">Nearest heliport</span><span class="noise-detail-value">' + analysis.nearestHeli.name.split('(')[0].trim() + ' (' + analysis.nearestHeli.dist.toFixed(1) + ' km)</span></div>' : ''}

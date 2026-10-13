@@ -299,6 +299,13 @@ console.log('Plane altitude under an approach');
     .catch(() => 'N/A (never resolved)');
   const ft = Number((row.match(/^About ([\d,]+) ft \(Heathrow 27R final approach\)$/) || [])[1]?.replace(/,/g, ''));
   check('TW9 3PZ: plane altitude is the 27R glide path, about 1,750 ft (not a ladder by distance)', ft >= 1500 && ft <= 2100, `row: "${row}"`);
+  // THE AIRPORT CODE ONCE (2026-10-13). Every flight-path name carries its code, and the row
+  // put the code in front again, reading "LHR LHR 27R final approach" on every city since the
+  // names came from the AIP (found re-reading the LGM demo from the live site).
+  const pathRow = await page.evaluate(
+    () => [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Nearest flight path')?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim() || 'absent',
+  );
+  check('TW9 3PZ: nearest flight path names the airport once', pathRow === 'LHR 27R final approach', `row: "${pathRow}"`);
 
   // THE SAME FROM A DEEP LINK, in a fresh page that never touches the search box. The
   // typed search above preloads the geometry when the box takes focus; a link to
