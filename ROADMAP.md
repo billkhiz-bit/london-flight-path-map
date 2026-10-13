@@ -11,13 +11,16 @@
 > (`14423b0`, verified live): the full map's "LHR LHR 27R final approach" and the front page's "97 council
 > areas across England and Wales" (now the one coverage sentence). **Breathe London:** Bill is applying for
 > the GLA key and accepted the plan's four decisions; the keyless AURN half's DATA is built (below, step 2),
-> with nothing displaying it yet. Do not deploy anything visible before the talk.
-> **Evening, built and NOT deployed (deploy after the talk):** the front page's "count my vote" for places it
-> does not cover (council area or a fixed country list, GoatCounter events, no email). Bill submitted the GLA
+> with nothing displaying it yet. Nothing else visible deploys before the talk.
+> **Evening, built and DEPLOYED 13 Oct ~21:15 (Bill's call: the demo path never shows it):** the front page's "count my vote" for places it
+> does not cover (council area or a fixed country list, GoatCounter events, no email), verified live; the votes
+> are read in GoatCounter only (paths starting `want/`). Bill submitted the GLA
 > key request (acknowledged, pending approval). Queued for 14 Oct: "Spotted something wrong?" on the front page
 > and street report (it exists only on the full map), "have your say where it counts" signposts (verified links
 > only, Heathrow and London City first), a residents' groups page; the full map's NOT COVERED panel could take
-> the same vote. Privacy s2c wording for counted actions is Bill's (legal batch 2).
+> the same vote. Privacy s2c wording for counted actions is Bill's (legal batch 2), and with the vote live
+> the page is now behind the site by two counted actions (the front page's engagement events and the vote).
+> Optional: a script reading the `want/` counts through GoatCounter's API, once Bill puts a key in `.env`.
 >
 > ## START HERE (2026-10-12)
 >

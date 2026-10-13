@@ -3,7 +3,9 @@
 ## 2026-10-13 (evening) - a visitor the map does not cover can say where it should go next
 
 On the front page, a count rather than a form (Bill asked for a way to engage visitors from
-places the map does not reach). Not deployed before the 14 Oct talk.
+places the map does not reach). Deployed the same evening (Bill's call: the demo search never
+shows it) and verified on the live site with the real counting module, the sends held in the
+browser so nothing was counted.
 
 - **An uncovered UK postcode** (EX1 1HS) now ends "Want Exeter on the map? Count my vote".
   The vote is one GoatCounter event carrying the council area postcodes.io returned, never
@@ -17,6 +19,9 @@ places the map does not reach). Not deployed before the 14 Oct talk.
   (audit I17) and the ICO fee. The counts are measured demand for EXPANSION.md.
 - Eight new checks in `tests/front-page.mjs`, red when the postcode is sent instead of the
   council area and when an old vote offer is left under a new answer.
+- **Where the votes are read:** the GoatCounter dashboard, as events whose paths start `want/`
+  (`want/uk/exeter`, `want/country/fr`); type `want` in its path filter. Nothing is stored
+  anywhere else. A reload can vote again, so the counts are a demand signal, not a poll.
 
 ## 2026-10-13 (later) - DEFRA's reference monitors, held for the Breathe London release
 

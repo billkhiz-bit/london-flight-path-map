@@ -42,6 +42,13 @@ the product already uses. **All are in England, so all are "free" in the sense
 above** — the work is registry wiring, boundaries and a neighbourhood build, not
 new sources.
 
+**Visitor demand is measured since 2026-10-13.** The front page asks a visitor it
+cannot answer to vote: a UK council area (from an uncovered postcode) or a country
+(from a search that finds nothing). Each vote is a GoatCounter event, `want/uk/<area>`
+or `want/country/<code>`, read in the dashboard with the path filter `want`. Read it
+beside the sales column, never instead of it: a page reload can vote again, and a
+handful of votes from one area is one interested person, not a market.
+
 | # | City-region | Likely LADs | 2025 sales | Notes |
 |---|---|---|---|---|
 | - | **Greater Norwich** | Norwich, Broadland, South Norfolk | ~6.5k | **API-ONLY PREVIEW, DEPLOYED 2026-09-27.** Not ranked on volume - built on demand, after a Norwich user's report. 3 of 4 liveability inputs everywhere (no district P8); airport not in DEFRA Round 4 (geometry, floored). Promoting it to the site needs CITY_DATA, chip, stations, neighbourhoods and a projection fit |

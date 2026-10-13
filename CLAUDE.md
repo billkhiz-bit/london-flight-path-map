@@ -1300,6 +1300,11 @@ dissolves when you compute the real one.*
 >   or `event/want/country/<code>` from `WANT_COUNTRIES`, a FIXED list (no free text: people type addresses).
 >   No email until I17 is flipped and the ICO fee paid. `tests/front-page.mjs` 18c holds it; privacy s2c
 >   still names page views, referrers and screen sizes only (wording is Bill's, legal batch 2).
+>   **DEPLOYED 2026-10-13 evening and verified live** (the real `count.mjs` with `navigator.sendBeacon`
+>   replaced by a recorder, so the check counted nothing: never verify analytics by sending real hits).
+>   **The votes live ONLY in GoatCounter** (`cubitt33`): events with paths starting `want/`, read with the
+>   dashboard's path filter. Claude cannot read them without a GoatCounter API key in `.env`. Once per place
+>   per page VIEW, so a reload votes again: a demand signal for EXPANSION.md, never a poll.
 > - **Focus rings use `--focus: #d35a12`** on the front page, its reports pages, the full map, `/pricing` and `/api/`
 >   (audit I-7, 2026-10-07; the last two 2026-10-11, audit 2026-10-09 I-7): the brand orange is 2.17-2.72:1 against them.
 >   `tests/test_focus_ring_contrast.py` has NO file list since 2026-10-11: it walks every served page with a focus rule
