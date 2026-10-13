@@ -599,6 +599,11 @@ ok(/outside the cities on the map/.test(await page.locator('#status').textConten
 ok((await page.locator('#ans-area').textContent()) === '' && (await page.locator('#ans-routes').textContent()) === '', 'outside coverage: no council-area or runway line is invented');
 ok((await boroCount()) === 33, 'the map stayed on the city that was on screen');
 ok(!(await page.locator('#ans-link').isVisible()), 'outside coverage: no "see the full picture on the map" link to a map it is not on (audit M-18)');
+{
+  // The vote names the council area postcodes.io returned, never the postcode (2026-10-13).
+  const want = (await page.locator('#ans-want').isVisible()) ? await page.locator('#ans-want').textContent() : '';
+  ok(/Want Exeter on the map\? Count my vote/.test(want) && !/EX1/i.test(want), 'outside coverage: a vote for the council area is offered, by name, without the postcode', want);
+}
 await page.locator('#chips button[data-city="manchester"]').click();
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10);
 
@@ -1562,6 +1567,59 @@ const makeReport = async (pc) => {
     JSON.stringify(ways)
   );
   await gcPage.close();
+}
+
+// 18c. A VOTE FOR WHERE THE MAP GOES NEXT IS A COUNT, NOT A FORM (Bill, 2026-10-13). A visitor the map does
+// not cover can vote for their council area (from an uncovered postcode) or a country (from a search that finds
+// nothing, or a US ZIP outside the Bay Area). Each vote is one GoatCounter event: the council area or a code from
+// a fixed list, never the postcode and never free text, once per place per page view. The stand-in records the
+// whole event, so a postcode anywhere in it (path or title) fails here.
+{
+  const voteAs = await context.newPage();
+  await voteAs.addInitScript(() => {
+    window.__gc = [];
+    window.goatcounter = { count: (v) => window.__gc.push(`${v.path}|${v.title}`) };
+  });
+  await voteAs.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+  const votes = async () => (await voteAs.evaluate(() => window.__gc.slice())).filter((e) => e.startsWith('event/want/'));
+  const searchFor = async (q) => { await voteAs.fill('#pc', q); await voteAs.press('#pc', 'Enter'); };
+  await voteAs.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await voteAs.waitForFunction(() => document.querySelectorAll('#map .boro').length > 0, null, { timeout: 15000 });
+
+  await searchFor('EX1 1HS');
+  await voteAs.waitForSelector('#ans-want:not([hidden]) button', { timeout: 10000 });
+  const areaButton = voteAs.locator('#ans-want button');
+  await areaButton.click();
+  // A second click, as a person can make on a button marked aria-disabled (Playwright will not, so dispatch it).
+  await areaButton.evaluate((b) => b.click());
+  const afterArea = await votes();
+  ok(JSON.stringify(afterArea) === JSON.stringify(['event/want/uk/exeter|Want covered: Exeter']),
+    'vote: an uncovered postcode counts its council area once, and no postcode is sent', JSON.stringify(afterArea));
+  ok((await areaButton.textContent()) === 'Thank you' && await areaButton.evaluate((b) => b === document.activeElement),
+    'vote: the button says thank you (never "counted") and keeps keyboard focus', await areaButton.textContent());
+
+  await searchFor('TW9 3PZ');
+  await voteAs.waitForFunction(() => document.querySelector('#ans-title')?.textContent === 'TW9 3PZ', null, { timeout: 10000 });
+  ok(await voteAs.locator('#ans-want').isHidden(), 'vote: a covered postcode carries no vote offer, and the last one is gone');
+
+  await searchFor('Paris');
+  await voteAs.waitForSelector('#want-country:not([hidden]) select', { timeout: 10000 });
+  const go = voteAs.locator('#want-country button');
+  await go.click(); // nothing chosen: nothing sent
+  await voteAs.selectOption('#want-country select', 'fr');
+  await go.click();
+  await voteAs.selectOption('#want-country select', 'de');
+  ok((await go.textContent()) === 'Count my vote', 'vote: choosing another country brings the button back');
+  await go.click();
+  const countries = (await votes()).slice(1);
+  ok(JSON.stringify(countries) === JSON.stringify(['event/want/country/fr|Want covered: France', 'event/want/country/de|Want covered: Germany']),
+    'vote: a search that finds nothing offers a fixed country list; nothing is sent until one is chosen', JSON.stringify(countries));
+  ok((await voteAs.locator('#want-country input, #want-country textarea').count()) === 0, 'vote: there is no free-text box to type an address into');
+
+  await searchFor('60601');
+  await voteAs.waitForSelector('#want-country:not([hidden]) select', { timeout: 10000 });
+  ok((await voteAs.locator('#want-country select').inputValue()) === 'us', 'vote: a US ZIP outside the Bay Area offers the list with the United States chosen');
+  await voteAs.close();
 }
 
 // 19. Every file this run fetched is one a Makefile target uploads. Served through those same rules above, an

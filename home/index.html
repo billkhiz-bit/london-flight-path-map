@@ -134,6 +134,15 @@
       .answer .routes, .answer .area { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
       .answer .area b { color: var(--dark); font-weight: 600; }
       button.linkish { font: inherit; font-weight: 600; color: var(--orange-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+      /* "Count my vote" (2026-10-13): where a visitor the map does not cover wants it next. */
+      .want { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
+      .want b { color: var(--dark); font-weight: 600; }
+      .want label { display: block; }
+      .want-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+      .want select { font: 500 14px var(--font-body); min-height: 36px; max-width: 100%; padding: 6px 10px; border: 1.5px solid var(--dark); border-radius: 10px; background: #fff; color: var(--dark); }
+      .want .want-go { font: 600 14px var(--font-body); min-height: 36px; padding: 6px 14px; border: 1.5px solid var(--dark); border-radius: 10px; background: transparent; color: var(--dark); cursor: pointer; }
+      .want .want-go:hover { background: #fff; }
+      .want [aria-disabled="true"] { cursor: default; text-decoration: none; }
 
       /* The council-area card: what a borough tap opens, in the same panel. */
       .borough { display: none; position: relative; margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }
@@ -288,6 +297,7 @@
           <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="Camden">Camden</button><button type="button" data-pc="Palo Alto">Palo Alto</button></p>
           <p class="explore"><button type="button" class="linkish" id="explore-map">Or explore the map</button></p>
           <p class="status" id="status" aria-live="polite"></p>
+          <div class="want" id="want-country" aria-live="polite" hidden></div>
           <div class="answer" id="answer">
             <p class="ans-pc" id="ans-title"></p>
             <p class="where" id="ans-where"></p>
@@ -295,6 +305,7 @@
             <p class="routes" id="ans-routes"></p>
             <p class="routes" id="ans-station" hidden></p>
             <p class="area" id="ans-area"></p>
+            <p class="want" id="ans-want" aria-live="polite" hidden></p>
             <p class="more"><a id="ans-link" href="/map/">See the full picture on the map</a></p>
           </div>
           <div class="borough" id="borough" aria-live="polite"></div>

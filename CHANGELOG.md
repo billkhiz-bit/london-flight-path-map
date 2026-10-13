@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-10-13 (evening) - a visitor the map does not cover can say where it should go next
+
+On the front page, a count rather than a form (Bill asked for a way to engage visitors from
+places the map does not reach). Not deployed before the 14 Oct talk.
+
+- **An uncovered UK postcode** (EX1 1HS) now ends "Want Exeter on the map? Count my vote".
+  The vote is one GoatCounter event carrying the council area postcodes.io returned, never
+  the postcode (the 11 Oct fix keeps postcodes out of analytics).
+- **A search that finds nothing** ("Paris") or a US ZIP outside the Bay Area offers a fixed
+  list of countries, the United States chosen for a ZIP. No free text: a box would let people
+  type addresses into analytics. Nothing is sent until a country is chosen.
+- Once per place per page view; the button says "Thank you", never "counted" (an opted-out
+  browser sends nothing and the page cannot tell), and keeps keyboard focus.
+- No email address is asked for: "tell me when it is covered" waits for verified signup
+  (audit I17) and the ICO fee. The counts are measured demand for EXPANSION.md.
+- Eight new checks in `tests/front-page.mjs`, red when the postcode is sent instead of the
+  council area and when an old vote offer is left under a new answer.
+
 ## 2026-10-13 (later) - DEFRA's reference monitors, held for the Breathe London release
 
 Step 2 of ROADMAP's Breathe London plan, the half that needs no key. Nothing on

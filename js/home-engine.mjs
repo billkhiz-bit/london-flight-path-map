@@ -62,6 +62,82 @@ function engaged(way) {
   }
 }
 
+// ---- "count my vote": where a visitor the map does not cover wants it next (Bill, 2026-10-13) ----
+// A count, not a form: each vote is a GoatCounter event, so nothing is stored here and no one is
+// identified. It carries the COUNCIL AREA postcodes.io returned, never the postcode (the 11 Oct
+// audit I-1 fix keeps postcodes out of analytics), or a country from a FIXED list, never free text,
+// which would let people type addresses into analytics. "Email me when it is covered" waits for
+// verified signup (audit I17) and the ICO fee. The counts are measured demand for EXPANSION.md.
+// The list is a judgement: shape it from GoatCounter's Locations, keeping 'other' last.
+export const WANT_COUNTRIES = [
+  ['gb', 'Elsewhere in the UK'], ['ie', 'Ireland'], ['us', 'United States (another city)'], ['ca', 'Canada'],
+  ['au', 'Australia'], ['nz', 'New Zealand'], ['fr', 'France'], ['de', 'Germany'], ['nl', 'Netherlands'],
+  ['es', 'Spain'], ['it', 'Italy'], ['ae', 'United Arab Emirates'], ['qa', 'Qatar'], ['sa', 'Saudi Arabia'],
+  ['in', 'India'], ['pk', 'Pakistan'], ['sg', 'Singapore'], ['other', 'Somewhere else'],
+];
+const WANT_THANKS = 'Thank you';
+export const wantSlug = (s) => String(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const wantSent = new Set();
+function sendWant(kind, key, label) {
+  const path = `event/want/${kind}/${wantSlug(key)}`;
+  if (wantSent.has(path)) return; // once per place per page view
+  wantSent.add(path);
+  try {
+    const gc = window.goatcounter;
+    if (gc && typeof gc.count === 'function') gc.count({ path, title: `Want covered: ${label}`, event: true });
+  } catch {
+    /* never break the page for analytics */
+  }
+}
+// The button keeps focus when it is done (a removed button drops a keyboard user at the top of
+// the page), and says "Thank you", never "counted": the counter skips silently on an opted-out
+// browser, so the page cannot know a vote went anywhere.
+function voted(button) {
+  button.textContent = WANT_THANKS;
+  button.setAttribute('aria-disabled', 'true');
+}
+function hideWant() {
+  for (const id of ['ans-want', 'want-country']) {
+    const el = byId(id);
+    if (el) { el.hidden = true; el.textContent = ''; }
+  }
+}
+// Under the answer for a UK postcode no city covers.
+function wantArea(district) {
+  const el = byId('ans-want');
+  if (!el || !district) return;
+  el.innerHTML = `Want <b>${esc(district)}</b> on the map? <button type="button" class="linkish">Count my vote</button>`;
+  el.hidden = false;
+  const button = el.querySelector('button');
+  button.addEventListener('click', () => {
+    if (button.getAttribute('aria-disabled') === 'true') return;
+    sendWant('uk', district, district);
+    voted(button);
+  });
+}
+// Under the status line, when a search finds nothing we cover: a name we do not know, or a ZIP
+// outside the Bay Area table. `preset` picks a likely country (a US ZIP: 'us').
+function wantCountry(preset = '') {
+  const el = byId('want-country');
+  if (!el) return;
+  const options = WANT_COUNTRIES.map(([c, n]) => `<option value="${c}"${c === preset ? ' selected' : ''}>${esc(n)}</option>`).join('');
+  el.innerHTML = '<label for="want-country-select">Somewhere we do not cover yet? Tell us where you would like next:</label>'
+    + `<span class="want-row"><select id="want-country-select"><option value="">Choose a country</option>${options}</select>`
+    + '<button type="button" class="want-go">Count my vote</button></span>';
+  el.hidden = false;
+  const select = el.querySelector('select');
+  const button = el.querySelector('button');
+  // A new choice is a new vote: the button comes back for it.
+  select.addEventListener('change', () => { button.textContent = 'Count my vote'; button.removeAttribute('aria-disabled'); });
+  button.addEventListener('click', () => {
+    const code = select.value;
+    if (!code || button.getAttribute('aria-disabled') === 'true') return;
+    sendWant('country', code, WANT_COUNTRIES.find(([c]) => c === code)?.[1] || code);
+    voted(button);
+  });
+}
+
 // ---- ask first, then the tool (Bill, 2026-10-05) ----
 // The page opens as v3 (the question over a faded map) and becomes v2 (the tool)
 // the first time someone uses it. One way in, one way out: leaveIntro().
@@ -1055,6 +1131,7 @@ async function search(raw) {
   leaveIntro();
   answer?.classList.remove('is-open');
   clearPin();
+  hideWant();
   // A place name first: a borough, a Bay Area city or a city region.
   const row = rowFor(text);
   if (row) {
@@ -1091,7 +1168,7 @@ async function search(raw) {
   try {
     const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
     if (stale()) return;
-    if (!geo.result) { say('That postcode was not found, and no place on the map has that name.'); return; }
+    if (!geo.result) { say('That postcode was not found, and no place on the map has that name.'); wantCountry(); return; }
     const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
     const city = cityOf(district);
     // A postcode no city covers gets no pin: a pin on whichever city is on
@@ -1132,6 +1209,7 @@ async function searchZip(code, stale) {
   const found = state.usZips[code];
   if (!found) {
     say(`${code} is not a ZIP in the four Bay Area counties on the map (San Francisco, San Mateo, Santa Clara and Alameda). New York's ZIPs are on the full map.`);
+    wantCountry('us');
     return;
   }
   const zip = { code, ...found };
@@ -1243,6 +1321,7 @@ function render(postcode, district, city, e, lat, lon) {
       : '';
     area.querySelector('#ans-open-area')?.addEventListener('click', () => selectBorough(row.borough, { scroll: true, focus: true }));
   }
+  if (!city) wantArea(district);
   const link = byId('ans-link');
   if (link) {
     link.href = city ? `${MAP_PATH}?city=${city}&postcode=${encodeURIComponent(postcode)}` : MAP_PATH;

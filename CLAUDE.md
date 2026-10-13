@@ -1295,6 +1295,11 @@ dissolves when you compute the real one.*
 >   `build_bay_area_page.py`: `<script type="module" src="/js/count.mjs"></script>`, held by
 >   `tests/test_analytics_first_party.py` (no `gc.zgo.at` anywhere, policies allow it), and `tests/front-page.mjs` 8a
 >   reads what the real module would send from a postcode address. Never go back to GoatCounter's script.
+> - **A VOTE FOR WHERE THE MAP GOES NEXT IS A COUNT, NOT A FORM (2026-10-13).** The front page's uncovered
+>   answers send one GoatCounter event: `event/want/uk/<council area>` (from postcodes.io, NEVER the postcode)
+>   or `event/want/country/<code>` from `WANT_COUNTRIES`, a FIXED list (no free text: people type addresses).
+>   No email until I17 is flipped and the ICO fee paid. `tests/front-page.mjs` 18c holds it; privacy s2c
+>   still names page views, referrers and screen sizes only (wording is Bill's, legal batch 2).
 > - **Focus rings use `--focus: #d35a12`** on the front page, its reports pages, the full map, `/pricing` and `/api/`
 >   (audit I-7, 2026-10-07; the last two 2026-10-11, audit 2026-10-09 I-7): the brand orange is 2.17-2.72:1 against them.
 >   `tests/test_focus_ring_contrast.py` has NO file list since 2026-10-11: it walks every served page with a focus rule

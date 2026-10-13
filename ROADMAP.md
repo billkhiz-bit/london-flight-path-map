@@ -12,6 +12,12 @@
 > areas across England and Wales" (now the one coverage sentence). **Breathe London:** Bill is applying for
 > the GLA key and accepted the plan's four decisions; the keyless AURN half's DATA is built (below, step 2),
 > with nothing displaying it yet. Do not deploy anything visible before the talk.
+> **Evening, built and NOT deployed (deploy after the talk):** the front page's "count my vote" for places it
+> does not cover (council area or a fixed country list, GoatCounter events, no email). Bill submitted the GLA
+> key request (acknowledged, pending approval). Queued for 14 Oct: "Spotted something wrong?" on the front page
+> and street report (it exists only on the full map), "have your say where it counts" signposts (verified links
+> only, Heathrow and London City first), a residents' groups page; the full map's NOT COVERED panel could take
+> the same vote. Privacy s2c wording for counted actions is Bill's (legal batch 2).
 >
 > ## START HERE (2026-10-12)
 >
