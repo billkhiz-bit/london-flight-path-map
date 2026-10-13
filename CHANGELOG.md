@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-10-13 (later) - DEFRA's reference monitors, held for the Breathe London release
+
+Step 2 of ROADMAP's Breathe London plan, the half that needs no key. Nothing on
+the site reads it yet: it ships with the Breathe London line, so London is not
+the only city with a measured air-quality figure.
+
+- **`data/aurn-sites.json`**, from `scripts/fetch_aurn.py --fetch`: DEFRA's AURN
+  reference monitors, each site's annual NO2 and PM2.5 mean, from DEFRA's own
+  openair summary files (OGL). 164 sites for 2024: 146 with NO2, 103 with PM2.5.
+- **The year is the PCM year (2024), not the newest summary (2025).** DEFRA
+  calibrates its modelled background maps against AURN measurements of the same
+  year, so the two compare like with like, and the check reds the day air
+  quality rolls until the file is re-fetched.
+- **Only ratified means on at least 75% of the year's hours** (Bill, 13 Oct). A
+  site that closed during the year counts as ratified to its closing day: all
+  five 2024 rows "ratified" short of 31 December were closures.
+- **`--check` is a blocking preflight stage** with a per-city floor: a usable
+  site inside every covered city's boundary, or a declared reason. Its first run
+  found that **Greater Norwich has no NO2 site clearing the floor** (Norwich
+  Lakenfields recorded NO2 for 64% of 2024's hours; its PM2.5 rests on 98%), so
+  the floor is "either pollutant", and the line that shows the file will need a
+  distance scope: the nearest NO2 that clears it is 77 km away.
+- UK-AIR's attribution is held word for word ("licenced", their spelling), and
+  `--verify` (advisory) re-derives the file from DEFRA's raw R files.
+
 ## 2026-10-13 - two things a talk audience would have seen
 
 Found re-reading the LGM #6 demo from the live site. Each carries a check

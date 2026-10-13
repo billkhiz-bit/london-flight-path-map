@@ -498,7 +498,7 @@ reported in the last 14 days), not official.
 | BAAQMD | 30+ Bay Area stations | "Permission to reproduce may be required" | Take the stations via AQS instead |
 
 **Order, if this is built:** (1) AURN, shown as "measured at <site>, N km away" beside the
-PCM figure, never replacing it; (2) EPA AQS annual means plus NYCCAS, which gives New York
+PCM figure, never replacing it (its DATA is built, 2026-10-13: `data/aurn-sites.json` from `scripts/fetch_aurn.py`, pinned to the PCM year; the line itself ships with Breathe London); (2) EPA AQS annual means plus NYCCAS, which gives New York
 an air-quality figure for the first time; (3) the GLA's Breathe London API for London and
 the Urban Observatory for Tyne and Wear. A low-cost sensor is not a reference monitor, and
 the page must say which kind it is. Nothing here is scored: measured air quality would be a

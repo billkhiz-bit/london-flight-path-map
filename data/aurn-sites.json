@@ -1,0 +1,2855 @@
+{
+ "source": "DEFRA Automatic Urban and Rural Network (AURN), annual means from the openair summary files on uk-air.defra.gov.uk",
+ "attribution": "© Crown 2026 copyright Defra via uk-air.defra.gov.uk, licenced under the Open Government Licence (OGL).",
+ "licence": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+ "year": 2024,
+ "captureFloor": 0.75,
+ "fetched": "2026-10-13",
+ "files": {
+  "summary": "https://uk-air.defra.gov.uk/openair/R_data/summary_annual_AURN_2024.rds",
+  "metadata": "https://uk-air.defra.gov.uk/openair/R_data/AURN_metadata.RData"
+ },
+ "note": "Display only, never scored. Reference monitors of different types measure different things: show the nearest with its type, never rank them.",
+ "sites": [
+  {
+   "code": "ABD7",
+   "name": "Aberdeen Union Street Roadside",
+   "type": "Urban Traffic",
+   "lat": 57.14455,
+   "lon": -2.10647,
+   "localAuthority": "Aberdeen City",
+   "closed": null,
+   "no2": {
+    "mean": 23.1,
+    "capture": 0.99
+   },
+   "pm25": null
+  },
+  {
+   "code": "ABD8",
+   "name": "Aberdeen Wellington Road",
+   "type": "Urban Traffic",
+   "lat": 57.13389,
+   "lon": -2.0942,
+   "localAuthority": "Aberdeen City",
+   "closed": null,
+   "no2": {
+    "mean": 24.3,
+    "capture": 0.992
+   },
+   "pm25": null
+  },
+  {
+   "code": "ABD9",
+   "name": "Aberdeen Erroll Park",
+   "type": "Urban Background",
+   "lat": 57.1574,
+   "lon": -2.09477,
+   "localAuthority": "Aberdeen City",
+   "closed": null,
+   "no2": {
+    "mean": 13.9,
+    "capture": 0.996
+   },
+   "pm25": {
+    "mean": 5.5,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "ACTH",
+   "name": "Auchencorth Moss",
+   "type": "Rural Background",
+   "lat": 55.79216,
+   "lon": -3.2429,
+   "localAuthority": "Midlothian",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 3.8,
+    "capture": 0.998
+   }
+  },
+  {
+   "code": "AH",
+   "name": "Aston Hill",
+   "type": "Rural Background",
+   "lat": 52.50385,
+   "lon": -3.03418,
+   "localAuthority": "Powys",
+   "closed": null,
+   "no2": {
+    "mean": 2.4,
+    "capture": 0.99
+   },
+   "pm25": null
+  },
+  {
+   "code": "ARM6",
+   "name": "Armagh Roadside",
+   "type": "Urban Traffic",
+   "lat": 54.35373,
+   "lon": -6.65456,
+   "localAuthority": "Armagh, Banbridge and Craigavon",
+   "closed": null,
+   "no2": {
+    "mean": 21.8,
+    "capture": 0.961
+   },
+   "pm25": null
+  },
+  {
+   "code": "BALM",
+   "name": "Ballymena Ballykeel",
+   "type": "Urban Background",
+   "lat": 54.8616,
+   "lon": -6.25087,
+   "localAuthority": "Mid and East Antrim",
+   "closed": null,
+   "no2": {
+    "mean": 8.1,
+    "capture": 0.877
+   },
+   "pm25": null
+  },
+  {
+   "code": "BAR3",
+   "name": "Barnsley Gawber",
+   "type": "Urban Background",
+   "lat": 53.56292,
+   "lon": -1.51044,
+   "localAuthority": "Barnsley",
+   "closed": null,
+   "no2": {
+    "mean": 11.1,
+    "capture": 0.974
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "BBRD",
+   "name": "Birkenhead Borough Road",
+   "type": "Urban Traffic",
+   "lat": 53.38862,
+   "lon": -3.02494,
+   "localAuthority": "Wirral",
+   "closed": null,
+   "no2": {
+    "mean": 17.0,
+    "capture": 0.977
+   },
+   "pm25": null
+  },
+  {
+   "code": "BDMA",
+   "name": "Bradford Mayo Avenue",
+   "type": "Urban Traffic",
+   "lat": 53.77125,
+   "lon": -1.75977,
+   "localAuthority": "Bradford",
+   "closed": null,
+   "no2": {
+    "mean": 28.6,
+    "capture": 0.991
+   },
+   "pm25": null
+  },
+  {
+   "code": "BDMP",
+   "name": "Borehamwood Meadow Park",
+   "type": "Urban Background",
+   "lat": 51.66123,
+   "lon": -0.27055,
+   "localAuthority": "Hertsmere",
+   "closed": null,
+   "no2": {
+    "mean": 10.5,
+    "capture": 0.975
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.958
+   }
+  },
+  {
+   "code": "BEL1",
+   "name": "Belfast Stockman's Lane",
+   "type": "Urban Traffic",
+   "lat": 54.57259,
+   "lon": -5.97494,
+   "localAuthority": "Belfast",
+   "closed": null,
+   "no2": {
+    "mean": 33.3,
+    "capture": 0.988
+   },
+   "pm25": null
+  },
+  {
+   "code": "BEL2",
+   "name": "Belfast Centre",
+   "type": "Urban Background",
+   "lat": 54.59965,
+   "lon": -5.92883,
+   "localAuthority": "Belfast",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "BEX",
+   "name": "London Bexley",
+   "type": "Suburban Background",
+   "lat": 51.46603,
+   "lon": 0.18481,
+   "localAuthority": "Bexley",
+   "closed": null,
+   "no2": {
+    "mean": 15.3,
+    "capture": 0.878
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "BHA4",
+   "name": "Bath A4 Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.39092,
+   "lon": -2.35503,
+   "localAuthority": "Bath and North East Somerset",
+   "closed": null,
+   "no2": {
+    "mean": 20.3,
+    "capture": 0.96
+   },
+   "pm25": null
+  },
+  {
+   "code": "BIRR",
+   "name": "Birmingham A4540 Roadside",
+   "type": "Urban Traffic",
+   "lat": 52.47615,
+   "lon": -1.87498,
+   "localAuthority": "Birmingham",
+   "closed": null,
+   "no2": {
+    "mean": 28.7,
+    "capture": 0.99
+   },
+   "pm25": {
+    "mean": 7.8,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "BLAP",
+   "name": "Blackburn Audley Park",
+   "type": "Urban Background",
+   "lat": 53.74673,
+   "lon": -2.46787,
+   "localAuthority": "Blackburn with Darwen",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.997
+   }
+  },
+  {
+   "code": "BLAR",
+   "name": "Blackburn Accrington Road",
+   "type": "Urban Traffic",
+   "lat": 53.74776,
+   "lon": -2.45268,
+   "localAuthority": "Blackburn with Darwen",
+   "closed": null,
+   "no2": {
+    "mean": 16.8,
+    "capture": 0.987
+   },
+   "pm25": null
+  },
+  {
+   "code": "BLC2",
+   "name": "Blackpool Marton",
+   "type": "Urban Background",
+   "lat": 53.80489,
+   "lon": -3.00718,
+   "localAuthority": "Blackpool",
+   "closed": null,
+   "no2": {
+    "mean": 8.1,
+    "capture": 0.936
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "BMLD",
+   "name": "Birmingham Ladywood",
+   "type": "Urban Background",
+   "lat": 52.48135,
+   "lon": -1.91823,
+   "localAuthority": "Birmingham",
+   "closed": null,
+   "no2": {
+    "mean": 14.4,
+    "capture": 0.961
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.982
+   }
+  },
+  {
+   "code": "BOLD",
+   "name": "Oldbury Birmingham Road",
+   "type": "Urban Traffic",
+   "lat": 52.50244,
+   "lon": -2.0035,
+   "localAuthority": "Sandwell",
+   "closed": null,
+   "no2": {
+    "mean": 24.3,
+    "capture": 0.996
+   },
+   "pm25": null
+  },
+  {
+   "code": "BORN",
+   "name": "Bournemouth",
+   "type": "Urban Background",
+   "lat": 50.73957,
+   "lon": -1.82674,
+   "localAuthority": "Bournemouth",
+   "closed": null,
+   "no2": {
+    "mean": 7.6,
+    "capture": 0.97
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.954
+   }
+  },
+  {
+   "code": "BOTR",
+   "name": "Burton-on-Trent Horninglow",
+   "type": "Urban Background",
+   "lat": 52.82105,
+   "lon": -1.63572,
+   "localAuthority": "East Staffordshire",
+   "closed": null,
+   "no2": {
+    "mean": 14.8,
+    "capture": 0.997
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "BPLE",
+   "name": "Barnstaple A39",
+   "type": "Urban Traffic",
+   "lat": 51.07479,
+   "lon": -4.04192,
+   "localAuthority": "North Devon",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.2,
+    "capture": 0.99
+   }
+  },
+  {
+   "code": "BR11",
+   "name": "Bristol Temple Way",
+   "type": "Urban Traffic",
+   "lat": 51.45797,
+   "lon": -2.58398,
+   "localAuthority": "Bristol, City of",
+   "closed": null,
+   "no2": {
+    "mean": 23.9,
+    "capture": 0.984
+   },
+   "pm25": null
+  },
+  {
+   "code": "BRS8",
+   "name": "Bristol St Paul's",
+   "type": "Urban Background",
+   "lat": 51.46284,
+   "lon": -2.58448,
+   "localAuthority": "Bristol, City of",
+   "closed": null,
+   "no2": {
+    "mean": 15.7,
+    "capture": 0.993
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.94
+   }
+  },
+  {
+   "code": "BRT3",
+   "name": "Brighton Preston Park",
+   "type": "Urban Background",
+   "lat": 50.84084,
+   "lon": -0.14757,
+   "localAuthority": "Brighton and Hove",
+   "closed": null,
+   "no2": {
+    "mean": 10.1,
+    "capture": 0.991
+   },
+   "pm25": {
+    "mean": 8.0,
+    "capture": 0.921
+   }
+  },
+  {
+   "code": "BURW",
+   "name": "Bury Whitefield Roadside",
+   "type": "Urban Traffic",
+   "lat": 53.55903,
+   "lon": -2.29377,
+   "localAuthority": "Bury",
+   "closed": null,
+   "no2": {
+    "mean": 18.6,
+    "capture": 0.933
+   },
+   "pm25": null
+  },
+  {
+   "code": "BUSH",
+   "name": "Bush Estate",
+   "type": "Rural Background",
+   "lat": 55.86228,
+   "lon": -3.20578,
+   "localAuthority": "Midlothian",
+   "closed": null,
+   "no2": {
+    "mean": 3.4,
+    "capture": 0.982
+   },
+   "pm25": null
+  },
+  {
+   "code": "CA1",
+   "name": "Camden Kerbside",
+   "type": "Urban Traffic",
+   "lat": 51.54423,
+   "lon": -0.17523,
+   "localAuthority": "Camden",
+   "closed": null,
+   "no2": {
+    "mean": 29.6,
+    "capture": 0.977
+   },
+   "pm25": {
+    "mean": 10.3,
+    "capture": 0.959
+   }
+  },
+  {
+   "code": "CAEB",
+   "name": "Hafod-yr-ynys Hill Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.68049,
+   "lon": -3.13352,
+   "localAuthority": "Caerphilly",
+   "closed": null,
+   "no2": {
+    "mean": 22.1,
+    "capture": 0.959
+   },
+   "pm25": null
+  },
+  {
+   "code": "CAM",
+   "name": "Cambridge Roadside",
+   "type": "Urban Traffic",
+   "lat": 52.20237,
+   "lon": 0.12446,
+   "localAuthority": "Cambridge",
+   "closed": null,
+   "no2": {
+    "mean": 19.8,
+    "capture": 0.978
+   },
+   "pm25": null
+  },
+  {
+   "code": "CANK",
+   "name": "Cannock A5190 Roadside",
+   "type": "Urban Traffic",
+   "lat": 52.6873,
+   "lon": -1.98082,
+   "localAuthority": "Cannock Chase",
+   "closed": null,
+   "no2": {
+    "mean": 13.9,
+    "capture": 0.988
+   },
+   "pm25": null
+  },
+  {
+   "code": "CANT",
+   "name": "Canterbury",
+   "type": "Urban Background",
+   "lat": 51.27399,
+   "lon": 1.09806,
+   "localAuthority": "Canterbury",
+   "closed": "2024-11-04",
+   "no2": {
+    "mean": 8.2,
+    "capture": 0.812
+   },
+   "pm25": {
+    "mean": 7.8,
+    "capture": 0.835
+   }
+  },
+  {
+   "code": "CARD",
+   "name": "Cardiff Centre",
+   "type": "Urban Background",
+   "lat": 51.48178,
+   "lon": -3.17625,
+   "localAuthority": "Cardiff",
+   "closed": null,
+   "no2": {
+    "mean": 14.1,
+    "capture": 0.933
+   },
+   "pm25": {
+    "mean": 8.0,
+    "capture": 0.948
+   }
+  },
+  {
+   "code": "CARM",
+   "name": "Carlisle Morton A595",
+   "type": "Urban Traffic",
+   "lat": 54.88582,
+   "lon": -2.96495,
+   "localAuthority": "Carlisle",
+   "closed": null,
+   "no2": {
+    "mean": 8.8,
+    "capture": 0.967
+   },
+   "pm25": null
+  },
+  {
+   "code": "CHAT",
+   "name": "Chatham Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.37426,
+   "lon": 0.54797,
+   "localAuthority": "Medway",
+   "closed": null,
+   "no2": {
+    "mean": 15.0,
+    "capture": 0.977
+   },
+   "pm25": {
+    "mean": 8.3,
+    "capture": 0.915
+   }
+  },
+  {
+   "code": "CHBO",
+   "name": "Chilbolton Observatory",
+   "type": "Rural Background",
+   "lat": 51.14962,
+   "lon": -1.43823,
+   "localAuthority": "Test Valley",
+   "closed": null,
+   "no2": {
+    "mean": 5.0,
+    "capture": 0.99
+   },
+   "pm25": {
+    "mean": 6.5,
+    "capture": 0.766
+   }
+  },
+  {
+   "code": "CHBR",
+   "name": "Christchurch Barrack Road",
+   "type": "Urban Traffic",
+   "lat": 50.73545,
+   "lon": -1.78089,
+   "localAuthority": "Christchurch",
+   "closed": null,
+   "no2": {
+    "mean": 12.3,
+    "capture": 0.996
+   },
+   "pm25": {
+    "mean": 7.8,
+    "capture": 0.922
+   }
+  },
+  {
+   "code": "CHLG",
+   "name": "Chesterfield Loundsley Green",
+   "type": "Urban Background",
+   "lat": 53.24413,
+   "lon": -1.45495,
+   "localAuthority": "Chesterfield",
+   "closed": null,
+   "no2": {
+    "mean": 7.6,
+    "capture": 0.969
+   },
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.997
+   }
+  },
+  {
+   "code": "CHP",
+   "name": "Chepstow A48",
+   "type": "Urban Traffic",
+   "lat": 51.63809,
+   "lon": -2.67873,
+   "localAuthority": "Monmouthshire",
+   "closed": null,
+   "no2": {
+    "mean": 24.1,
+    "capture": 0.971
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.964
+   }
+  },
+  {
+   "code": "CHS7",
+   "name": "Chesterfield Roadside",
+   "type": "Urban Traffic",
+   "lat": 53.23175,
+   "lon": -1.45693,
+   "localAuthority": "Chesterfield",
+   "closed": null,
+   "no2": {
+    "mean": 13.7,
+    "capture": 0.844
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.997
+   }
+  },
+  {
+   "code": "CLL2",
+   "name": "London Bloomsbury",
+   "type": "Urban Background",
+   "lat": 51.52229,
+   "lon": -0.12589,
+   "localAuthority": "Camden",
+   "closed": null,
+   "no2": {
+    "mean": 22.5,
+    "capture": 0.936
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.94
+   }
+  },
+  {
+   "code": "CNPR",
+   "name": "Cardiff Newport Road",
+   "type": "Urban Traffic",
+   "lat": 51.49096,
+   "lon": -3.15231,
+   "localAuthority": "Cardiff",
+   "closed": null,
+   "no2": {
+    "mean": 17.3,
+    "capture": 0.992
+   },
+   "pm25": null
+  },
+  {
+   "code": "COAL",
+   "name": "Coventry Allesley",
+   "type": "Urban Background",
+   "lat": 52.41163,
+   "lon": -1.56019,
+   "localAuthority": "Coventry",
+   "closed": null,
+   "no2": {
+    "mean": 12.3,
+    "capture": 0.978
+   },
+   "pm25": {
+    "mean": 6.6,
+    "capture": 0.973
+   }
+  },
+  {
+   "code": "COBR",
+   "name": "Coventry Binley Road",
+   "type": "Urban Traffic",
+   "lat": 52.40771,
+   "lon": -1.49008,
+   "localAuthority": "Coventry",
+   "closed": null,
+   "no2": {
+    "mean": 21.4,
+    "capture": 0.995
+   },
+   "pm25": null
+  },
+  {
+   "code": "COPP",
+   "name": "Crewe Coppenhall",
+   "type": "Urban Background",
+   "lat": 53.11594,
+   "lon": -2.45349,
+   "localAuthority": "Cheshire East",
+   "closed": null,
+   "no2": {
+    "mean": 10.5,
+    "capture": 0.985
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.998
+   }
+  },
+  {
+   "code": "CW",
+   "name": "Shaw Crompton Way",
+   "type": "Urban Traffic",
+   "lat": 53.57923,
+   "lon": -2.09384,
+   "localAuthority": "Oldham",
+   "closed": null,
+   "no2": {
+    "mean": 20.2,
+    "capture": 0.952
+   },
+   "pm25": null
+  },
+  {
+   "code": "CWMC",
+   "name": "Cwmbran Crownbridge",
+   "type": "Urban Background",
+   "lat": 51.65382,
+   "lon": -3.00637,
+   "localAuthority": "Torfaen",
+   "closed": null,
+   "no2": {
+    "mean": 7.2,
+    "capture": 0.753
+   },
+   "pm25": null
+  },
+  {
+   "code": "DCC1",
+   "name": "Dundee Mains Loan",
+   "type": "Urban Background",
+   "lat": 56.47543,
+   "lon": -2.95986,
+   "localAuthority": "Dundee City",
+   "closed": null,
+   "no2": {
+    "mean": 6.8,
+    "capture": 0.994
+   },
+   "pm25": null
+  },
+  {
+   "code": "DCST",
+   "name": "Doncaster A630 Cleveland Street",
+   "type": "Urban Traffic",
+   "lat": 53.51838,
+   "lon": -1.13806,
+   "localAuthority": "Doncaster",
+   "closed": null,
+   "no2": {
+    "mean": 24.1,
+    "capture": 0.99
+   },
+   "pm25": null
+  },
+  {
+   "code": "DERR",
+   "name": "Derry Rosemount",
+   "type": "Urban Background",
+   "lat": 55.00282,
+   "lon": -7.33118,
+   "localAuthority": "Derry and Strabane",
+   "closed": null,
+   "no2": {
+    "mean": 7.8,
+    "capture": 0.995
+   },
+   "pm25": {
+    "mean": 8.2,
+    "capture": 0.918
+   }
+  },
+  {
+   "code": "DESA",
+   "name": "Derby St Alkmund's Way",
+   "type": "Urban Traffic",
+   "lat": 52.92298,
+   "lon": -1.46951,
+   "localAuthority": "Derby",
+   "closed": null,
+   "no2": {
+    "mean": 24.6,
+    "capture": 0.888
+   },
+   "pm25": null
+  },
+  {
+   "code": "DESB",
+   "name": "Derby Stockbrook Park",
+   "type": "Urban Background",
+   "lat": 52.91606,
+   "lon": -1.49217,
+   "localAuthority": "Derby",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.993
+   }
+  },
+  {
+   "code": "DUMB",
+   "name": "Dumbarton Roadside",
+   "type": "Urban Traffic",
+   "lat": 55.9432,
+   "lon": -4.55973,
+   "localAuthority": "West Dunbartonshire",
+   "closed": null,
+   "no2": {
+    "mean": 11.6,
+    "capture": 0.998
+   },
+   "pm25": null
+  },
+  {
+   "code": "DUMF",
+   "name": "Dumfries",
+   "type": "Urban Traffic",
+   "lat": 55.07003,
+   "lon": -3.61423,
+   "localAuthority": "Dumfries and Galloway",
+   "closed": null,
+   "no2": {
+    "mean": 20.5,
+    "capture": 0.966
+   },
+   "pm25": null
+  },
+  {
+   "code": "DYAG",
+   "name": "Dewsbury Ashworth Grange",
+   "type": "Urban Background",
+   "lat": 53.6931,
+   "lon": -1.63711,
+   "localAuthority": "Kirklees",
+   "closed": null,
+   "no2": {
+    "mean": 15.4,
+    "capture": 0.873
+   },
+   "pm25": {
+    "mean": 8.0,
+    "capture": 0.901
+   }
+  },
+  {
+   "code": "EAGL",
+   "name": "Stockton-on-Tees Eaglescliffe",
+   "type": "Urban Traffic",
+   "lat": 54.51667,
+   "lon": -1.35855,
+   "localAuthority": "Stockton-on-Tees",
+   "closed": null,
+   "no2": {
+    "mean": 9.5,
+    "capture": 0.972
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.799
+   }
+  },
+  {
+   "code": "EB",
+   "name": "Eastbourne",
+   "type": "Urban Background",
+   "lat": 50.80578,
+   "lon": 0.27161,
+   "localAuthority": "Eastbourne",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "ECCL",
+   "name": "Salford Eccles",
+   "type": "Urban Background",
+   "lat": 53.48481,
+   "lon": -2.33414,
+   "localAuthority": "Salford",
+   "closed": null,
+   "no2": {
+    "mean": 18.0,
+    "capture": 0.945
+   },
+   "pm25": {
+    "mean": 9.1,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "ED3",
+   "name": "Edinburgh St Leonards",
+   "type": "Urban Background",
+   "lat": 55.94559,
+   "lon": -3.18219,
+   "localAuthority": "Edinburgh, City of",
+   "closed": null,
+   "no2": {
+    "mean": 11.7,
+    "capture": 0.85
+   },
+   "pm25": {
+    "mean": 5.4,
+    "capture": 0.85
+   }
+  },
+  {
+   "code": "EDNS",
+   "name": "Edinburgh Nicolson Street",
+   "type": "Urban Traffic",
+   "lat": 55.94476,
+   "lon": -3.18399,
+   "localAuthority": "Edinburgh, City of",
+   "closed": null,
+   "no2": {
+    "mean": 21.8,
+    "capture": 0.994
+   },
+   "pm25": null
+  },
+  {
+   "code": "ESK",
+   "name": "Eskdalemuir",
+   "type": "Rural Background",
+   "lat": 55.31531,
+   "lon": -3.20611,
+   "localAuthority": "Dumfries and Galloway",
+   "closed": null,
+   "no2": {
+    "mean": 1.3,
+    "capture": 0.891
+   },
+   "pm25": null
+  },
+  {
+   "code": "FW",
+   "name": "Fort William",
+   "type": "Suburban Background",
+   "lat": 56.82266,
+   "lon": -5.1011,
+   "localAuthority": "Highland",
+   "closed": null,
+   "no2": {
+    "mean": 5.8,
+    "capture": 0.888
+   },
+   "pm25": null
+  },
+  {
+   "code": "GGWR",
+   "name": "Glasgow Great Western Road",
+   "type": "Urban Traffic",
+   "lat": 55.87204,
+   "lon": -4.27094,
+   "localAuthority": "Glasgow City",
+   "closed": null,
+   "no2": {
+    "mean": 17.9,
+    "capture": 0.987
+   },
+   "pm25": null
+  },
+  {
+   "code": "GHSR",
+   "name": "Glasgow High Street",
+   "type": "Urban Traffic",
+   "lat": 55.86094,
+   "lon": -4.23821,
+   "localAuthority": "Glasgow City",
+   "closed": null,
+   "no2": {
+    "mean": 17.1,
+    "capture": 0.995
+   },
+   "pm25": {
+    "mean": 5.7,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "GKA8",
+   "name": "Greenock A8 Roadside",
+   "type": "Urban Traffic",
+   "lat": 55.94408,
+   "lon": -4.73442,
+   "localAuthority": "Inverclyde",
+   "closed": null,
+   "no2": {
+    "mean": 17.5,
+    "capture": 0.978
+   },
+   "pm25": {
+    "mean": 5.4,
+    "capture": 0.997
+   }
+  },
+  {
+   "code": "GLA4",
+   "name": "Glasgow Kerbside",
+   "type": "Urban Traffic",
+   "lat": 55.85894,
+   "lon": -4.25912,
+   "localAuthority": "Glasgow City",
+   "closed": null,
+   "no2": {
+    "mean": 36.3,
+    "capture": 0.958
+   },
+   "pm25": null
+  },
+  {
+   "code": "GLAZ",
+   "name": "Glazebury",
+   "type": "Rural Background",
+   "lat": 53.46008,
+   "lon": -2.47206,
+   "localAuthority": "Salford",
+   "closed": null,
+   "no2": {
+    "mean": 11.2,
+    "capture": 0.982
+   },
+   "pm25": {
+    "mean": 6.4,
+    "capture": 0.988
+   }
+  },
+  {
+   "code": "GLKP",
+   "name": "Glasgow Townhead",
+   "type": "Urban Background",
+   "lat": 55.86578,
+   "lon": -4.24363,
+   "localAuthority": "Glasgow City",
+   "closed": null,
+   "no2": {
+    "mean": 14.5,
+    "capture": 0.979
+   },
+   "pm25": {
+    "mean": 5.3,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "GRA2",
+   "name": "Grangemouth Moray",
+   "type": "Urban Industrial",
+   "lat": 56.01314,
+   "lon": -3.71083,
+   "localAuthority": "Falkirk",
+   "closed": null,
+   "no2": {
+    "mean": 10.2,
+    "capture": 0.78
+   },
+   "pm25": null
+  },
+  {
+   "code": "GRAN",
+   "name": "Grangemouth",
+   "type": "Urban Industrial",
+   "lat": 56.01032,
+   "lon": -3.7044,
+   "localAuthority": "Falkirk",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.0,
+    "capture": 0.98
+   }
+  },
+  {
+   "code": "HG1",
+   "name": "Haringey Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.5993,
+   "lon": -0.06822,
+   "localAuthority": "Haringey",
+   "closed": null,
+   "no2": {
+    "mean": 24.9,
+    "capture": 0.993
+   },
+   "pm25": null
+  },
+  {
+   "code": "HG4",
+   "name": "London Haringey Priory Park South",
+   "type": "Urban Background",
+   "lat": 51.58413,
+   "lon": -0.12525,
+   "localAuthority": "Haringey",
+   "closed": null,
+   "no2": {
+    "mean": 13.9,
+    "capture": 0.964
+   },
+   "pm25": null
+  },
+  {
+   "code": "HIL",
+   "name": "London Hillingdon",
+   "type": "Urban Background",
+   "lat": 51.49633,
+   "lon": -0.46086,
+   "localAuthority": "Hillingdon",
+   "closed": null,
+   "no2": {
+    "mean": 23.5,
+    "capture": 0.991
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.997
+   }
+  },
+  {
+   "code": "HM",
+   "name": "High Muffles",
+   "type": "Rural Background",
+   "lat": 54.3345,
+   "lon": -0.80882,
+   "localAuthority": "Ryedale",
+   "closed": null,
+   "no2": {
+    "mean": 3.3,
+    "capture": 0.922
+   },
+   "pm25": {
+    "mean": 4.7,
+    "capture": 0.968
+   }
+  },
+  {
+   "code": "HONI",
+   "name": "Honiton",
+   "type": "Urban Background",
+   "lat": 50.79229,
+   "lon": -3.1967,
+   "localAuthority": "East Devon",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 5.9,
+    "capture": 0.99
+   }
+  },
+  {
+   "code": "HOPE",
+   "name": "Stanford-le-Hope Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.51817,
+   "lon": 0.43955,
+   "localAuthority": "Thurrock",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 9.3,
+    "capture": 0.891
+   }
+  },
+  {
+   "code": "HORE",
+   "name": "Horley",
+   "type": "Suburban Industrial",
+   "lat": 51.16586,
+   "lon": -0.16773,
+   "localAuthority": "Reigate and Banstead",
+   "closed": null,
+   "no2": {
+    "mean": 14.2,
+    "capture": 0.986
+   },
+   "pm25": null
+  },
+  {
+   "code": "HORS",
+   "name": "London Westminster",
+   "type": "Urban Background",
+   "lat": 51.49467,
+   "lon": -0.13193,
+   "localAuthority": "Westminster",
+   "closed": null,
+   "no2": {
+    "mean": 20.1,
+    "capture": 0.983
+   },
+   "pm25": null
+  },
+  {
+   "code": "HP1",
+   "name": "London Honor Oak Park",
+   "type": "Urban Background",
+   "lat": 51.44967,
+   "lon": -0.03742,
+   "localAuthority": "Lewisham",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "HRL",
+   "name": "London Harlington",
+   "type": "Urban Industrial",
+   "lat": 51.48879,
+   "lon": -0.44161,
+   "localAuthority": "Hillingdon",
+   "closed": null,
+   "no2": {
+    "mean": 19.2,
+    "capture": 0.961
+   },
+   "pm25": {
+    "mean": 6.6,
+    "capture": 0.997
+   }
+  },
+  {
+   "code": "HSAW",
+   "name": "Hartlepool St Abbs Walk",
+   "type": "Urban Background",
+   "lat": 54.68324,
+   "lon": -1.20384,
+   "localAuthority": "Hartlepool",
+   "closed": null,
+   "no2": {
+    "mean": 9.2,
+    "capture": 0.963
+   },
+   "pm25": {
+    "mean": 8.1,
+    "capture": 0.975
+   }
+  },
+  {
+   "code": "HUL2",
+   "name": "Hull Freetown",
+   "type": "Urban Background",
+   "lat": 53.74878,
+   "lon": -0.34122,
+   "localAuthority": "Kingston upon Hull, City of",
+   "closed": null,
+   "no2": {
+    "mean": 16.8,
+    "capture": 0.912
+   },
+   "pm25": {
+    "mean": 8.0,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "HULR",
+   "name": "Hull Holderness Road",
+   "type": "Urban Traffic",
+   "lat": 53.75901,
+   "lon": -0.30568,
+   "localAuthority": "Kingston upon Hull, City of",
+   "closed": null,
+   "no2": {
+    "mean": 20.1,
+    "capture": 0.934
+   },
+   "pm25": null
+  },
+  {
+   "code": "IMGM",
+   "name": "Immingham Woodlands Avenue",
+   "type": "Urban Background",
+   "lat": 53.61924,
+   "lon": -0.21332,
+   "localAuthority": "North East Lincolnshire",
+   "closed": null,
+   "no2": {
+    "mean": 9.6,
+    "capture": 0.99
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "INV2",
+   "name": "Inverness",
+   "type": "Urban Traffic",
+   "lat": 57.48131,
+   "lon": -4.24145,
+   "localAuthority": "Highland",
+   "closed": null,
+   "no2": {
+    "mean": 10.8,
+    "capture": 0.971
+   },
+   "pm25": {
+    "mean": 4.3,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "KC1",
+   "name": "London N. Kensington",
+   "type": "Urban Background",
+   "lat": 51.52105,
+   "lon": -0.21342,
+   "localAuthority": "Kensington and Chelsea",
+   "closed": null,
+   "no2": {
+    "mean": 15.4,
+    "capture": 0.991
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "LEAM",
+   "name": "Leamington Spa",
+   "type": "Urban Background",
+   "lat": 52.28881,
+   "lon": -1.53312,
+   "localAuthority": "Warwick",
+   "closed": null,
+   "no2": {
+    "mean": 12.7,
+    "capture": 0.994
+   },
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "LEAR",
+   "name": "Leamington Spa Rugby Road",
+   "type": "Urban Traffic",
+   "lat": 52.29488,
+   "lon": -1.54291,
+   "localAuthority": "Warwick",
+   "closed": null,
+   "no2": {
+    "mean": 11.0,
+    "capture": 0.992
+   },
+   "pm25": {
+    "mean": 6.5,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "LECU",
+   "name": "Leicester University",
+   "type": "Urban Background",
+   "lat": 52.6199,
+   "lon": -1.12718,
+   "localAuthority": "Leicester",
+   "closed": null,
+   "no2": {
+    "mean": 16.9,
+    "capture": 0.941
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "LED6",
+   "name": "Leeds Headingley Kerbside",
+   "type": "Urban Traffic",
+   "lat": 53.81997,
+   "lon": -1.57636,
+   "localAuthority": "Leeds",
+   "closed": null,
+   "no2": {
+    "mean": 20.1,
+    "capture": 0.983
+   },
+   "pm25": {
+    "mean": 8.8,
+    "capture": 0.976
+   }
+  },
+  {
+   "code": "LEED",
+   "name": "Leeds Centre",
+   "type": "Urban Background",
+   "lat": 53.80378,
+   "lon": -1.54647,
+   "localAuthority": "Leeds",
+   "closed": null,
+   "no2": {
+    "mean": 19.2,
+    "capture": 0.937
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.944
+   }
+  },
+  {
+   "code": "LEIR",
+   "name": "Leicester A594 Roadside",
+   "type": "Urban Traffic",
+   "lat": 52.63874,
+   "lon": -1.12427,
+   "localAuthority": "Leicester",
+   "closed": null,
+   "no2": {
+    "mean": 26.2,
+    "capture": 0.996
+   },
+   "pm25": null
+  },
+  {
+   "code": "LEOM",
+   "name": "Leominster",
+   "type": "Suburban Background",
+   "lat": 52.22159,
+   "lon": -2.73684,
+   "localAuthority": "Herefordshire, County of",
+   "closed": null,
+   "no2": {
+    "mean": 5.6,
+    "capture": 0.992
+   },
+   "pm25": null
+  },
+  {
+   "code": "LH",
+   "name": "Lullington Heath",
+   "type": "Rural Background",
+   "lat": 50.7937,
+   "lon": 0.18125,
+   "localAuthority": "Wealden",
+   "closed": null,
+   "no2": {
+    "mean": 4.8,
+    "capture": 0.957
+   },
+   "pm25": {
+    "mean": 6.4,
+    "capture": 0.994
+   }
+  },
+  {
+   "code": "LIN3",
+   "name": "Lincoln Canwick Road",
+   "type": "Urban Traffic",
+   "lat": 53.22143,
+   "lon": -0.5342,
+   "localAuthority": "Lincoln",
+   "closed": null,
+   "no2": {
+    "mean": 18.0,
+    "capture": 0.786
+   },
+   "pm25": null
+  },
+  {
+   "code": "LN",
+   "name": "Lough Navar",
+   "type": "Rural Background",
+   "lat": 54.43951,
+   "lon": -7.90033,
+   "localAuthority": "Fermanagh and Omagh",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 4.0,
+    "capture": 0.997
+   }
+  },
+  {
+   "code": "LUTR",
+   "name": "Luton A505 Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.89229,
+   "lon": -0.46211,
+   "localAuthority": "Luton",
+   "closed": null,
+   "no2": {
+    "mean": 25.0,
+    "capture": 0.989
+   },
+   "pm25": null
+  },
+  {
+   "code": "LVP",
+   "name": "Liverpool Speke",
+   "type": "Urban Industrial",
+   "lat": 53.34633,
+   "lon": -2.84433,
+   "localAuthority": "Liverpool",
+   "closed": null,
+   "no2": {
+    "mean": 13.2,
+    "capture": 0.976
+   },
+   "pm25": {
+    "mean": 8.4,
+    "capture": 0.809
+   }
+  },
+  {
+   "code": "MACK",
+   "name": "Charlton Mackrell",
+   "type": "Rural Background",
+   "lat": 51.05625,
+   "lon": -2.68345,
+   "localAuthority": "South Somerset",
+   "closed": null,
+   "no2": {
+    "mean": 3.8,
+    "capture": 0.977
+   },
+   "pm25": {
+    "mean": 5.9,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "MAHG",
+   "name": "Manchester Sharston",
+   "type": "Suburban Industrial",
+   "lat": 53.37172,
+   "lon": -2.23892,
+   "localAuthority": "Manchester",
+   "closed": null,
+   "no2": {
+    "mean": 14.2,
+    "capture": 0.983
+   },
+   "pm25": null
+  },
+  {
+   "code": "MAN3",
+   "name": "Manchester Piccadilly",
+   "type": "Urban Background",
+   "lat": 53.48152,
+   "lon": -2.23788,
+   "localAuthority": "Manchester",
+   "closed": null,
+   "no2": {
+    "mean": 27.0,
+    "capture": 0.903
+   },
+   "pm25": {
+    "mean": 8.5,
+    "capture": 0.785
+   }
+  },
+  {
+   "code": "MID",
+   "name": "Middlesbrough",
+   "type": "Urban Background",
+   "lat": 54.5693,
+   "lon": -1.22087,
+   "localAuthority": "Middlesbrough",
+   "closed": null,
+   "no2": {
+    "mean": 12.0,
+    "capture": 0.978
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.905
+   }
+  },
+  {
+   "code": "MKCC",
+   "name": "Milton Keynes Civic Centre",
+   "type": "Urban Background",
+   "lat": 52.04408,
+   "lon": -0.76101,
+   "localAuthority": "Milton Keynes",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.0,
+    "capture": 0.91
+   }
+  },
+  {
+   "code": "MY1",
+   "name": "London Marylebone Road",
+   "type": "Urban Traffic",
+   "lat": 51.52253,
+   "lon": -0.15461,
+   "localAuthority": "Westminster",
+   "closed": null,
+   "no2": {
+    "mean": 36.1,
+    "capture": 0.951
+   },
+   "pm25": {
+    "mean": 10.6,
+    "capture": 0.946
+   }
+  },
+  {
+   "code": "NCA3",
+   "name": "Newcastle Cradlewell Roadside",
+   "type": "Urban Traffic",
+   "lat": 54.9864,
+   "lon": -1.59536,
+   "localAuthority": "Newcastle upon Tyne",
+   "closed": null,
+   "no2": {
+    "mean": 27.5,
+    "capture": 0.941
+   },
+   "pm25": null
+  },
+  {
+   "code": "NEWC",
+   "name": "Newcastle Centre",
+   "type": "Urban Background",
+   "lat": 54.97825,
+   "lon": -1.61053,
+   "localAuthority": "Newcastle upon Tyne",
+   "closed": null,
+   "no2": {
+    "mean": 17.5,
+    "capture": 0.949
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.961
+   }
+  },
+  {
+   "code": "NO12",
+   "name": "Norwich Lakenfields",
+   "type": "Urban Background",
+   "lat": 52.61482,
+   "lon": 1.30269,
+   "localAuthority": "Norwich",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.979
+   }
+  },
+  {
+   "code": "NOTK",
+   "name": "Nottingham Kenmore Gardens",
+   "type": "Urban Background",
+   "lat": 52.95944,
+   "lon": -1.13865,
+   "localAuthority": "Nottingham",
+   "closed": null,
+   "no2": {
+    "mean": 14.1,
+    "capture": 0.813
+   },
+   "pm25": {
+    "mean": 8.4,
+    "capture": 0.913
+   }
+  },
+  {
+   "code": "NPT3",
+   "name": "Newport",
+   "type": "Urban Background",
+   "lat": 51.6012,
+   "lon": -2.97728,
+   "localAuthority": "Newport",
+   "closed": null,
+   "no2": {
+    "mean": 11.9,
+    "capture": 0.997
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "NTN4",
+   "name": "Northampton Spring Park",
+   "type": "Urban Background",
+   "lat": 52.27226,
+   "lon": -0.91661,
+   "localAuthority": "Northampton",
+   "closed": null,
+   "no2": {
+    "mean": 9.2,
+    "capture": 0.994
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.963
+   }
+  },
+  {
+   "code": "NWBV",
+   "name": "Nottingham Western Boulevard",
+   "type": "Urban Traffic",
+   "lat": 52.96938,
+   "lon": -1.18885,
+   "localAuthority": "Nottingham",
+   "closed": null,
+   "no2": {
+    "mean": 22.6,
+    "capture": 0.989
+   },
+   "pm25": null
+  },
+  {
+   "code": "OSY",
+   "name": "St Osyth",
+   "type": "Rural Background",
+   "lat": 51.77787,
+   "lon": 1.04901,
+   "localAuthority": "Tendring",
+   "closed": null,
+   "no2": {
+    "mean": 6.7,
+    "capture": 0.986
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.998
+   }
+  },
+  {
+   "code": "OX",
+   "name": "Oxford Centre Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.75174,
+   "lon": -1.25746,
+   "localAuthority": "Oxford",
+   "closed": null,
+   "no2": {
+    "mean": 22.9,
+    "capture": 0.757
+   },
+   "pm25": null
+  },
+  {
+   "code": "OX8",
+   "name": "Oxford St Ebbes",
+   "type": "Urban Background",
+   "lat": 51.74481,
+   "lon": -1.26028,
+   "localAuthority": "Oxford",
+   "closed": null,
+   "no2": {
+    "mean": 9.2,
+    "capture": 0.93
+   },
+   "pm25": {
+    "mean": 5.6,
+    "capture": 0.994
+   }
+  },
+  {
+   "code": "PEEB",
+   "name": "Peebles",
+   "type": "Urban Background",
+   "lat": 55.65747,
+   "lon": -3.19653,
+   "localAuthority": "Scottish Borders",
+   "closed": null,
+   "no2": {
+    "mean": 3.7,
+    "capture": 0.994
+   },
+   "pm25": null
+  },
+  {
+   "code": "PEMB",
+   "name": "Narberth",
+   "type": "Rural Background",
+   "lat": 51.78262,
+   "lon": -4.69237,
+   "localAuthority": "Pembrokeshire",
+   "closed": null,
+   "no2": {
+    "mean": 2.4,
+    "capture": 0.964
+   },
+   "pm25": {
+    "mean": 5.6,
+    "capture": 0.998
+   }
+  },
+  {
+   "code": "PLYM",
+   "name": "Plymouth Centre",
+   "type": "Urban Background",
+   "lat": 50.37167,
+   "lon": -4.14236,
+   "localAuthority": "Plymouth",
+   "closed": null,
+   "no2": {
+    "mean": 13.9,
+    "capture": 0.974
+   },
+   "pm25": {
+    "mean": 8.0,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "PLYR",
+   "name": "Plymouth Tavistock Road",
+   "type": "Urban Traffic",
+   "lat": 50.41106,
+   "lon": -4.13029,
+   "localAuthority": "Plymouth",
+   "closed": null,
+   "no2": {
+    "mean": 14.1,
+    "capture": 0.774
+   },
+   "pm25": null
+  },
+  {
+   "code": "PMTH",
+   "name": "Portsmouth",
+   "type": "Urban Background",
+   "lat": 50.82881,
+   "lon": -1.06858,
+   "localAuthority": "Portsmouth",
+   "closed": null,
+   "no2": {
+    "mean": 12.7,
+    "capture": 0.936
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.924
+   }
+  },
+  {
+   "code": "POAR",
+   "name": "Portsmouth Anglesea Road",
+   "type": "Urban Traffic",
+   "lat": 50.79834,
+   "lon": -1.09556,
+   "localAuthority": "Portsmouth",
+   "closed": null,
+   "no2": {
+    "mean": 20.8,
+    "capture": 0.986
+   },
+   "pm25": null
+  },
+  {
+   "code": "PRES",
+   "name": "Preston",
+   "type": "Urban Background",
+   "lat": 53.76559,
+   "lon": -2.68035,
+   "localAuthority": "Preston",
+   "closed": null,
+   "no2": {
+    "mean": 15.6,
+    "capture": 0.986
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "PT4",
+   "name": "Port Talbot Margam",
+   "type": "Urban Industrial",
+   "lat": 51.58395,
+   "lon": -3.77082,
+   "localAuthority": "Neath Port Talbot",
+   "closed": null,
+   "no2": {
+    "mean": 10.6,
+    "capture": 0.971
+   },
+   "pm25": {
+    "mean": 8.1,
+    "capture": 0.95
+   }
+  },
+  {
+   "code": "REA1",
+   "name": "Reading New Town",
+   "type": "Urban Background",
+   "lat": 51.45309,
+   "lon": -0.94407,
+   "localAuthority": "Reading",
+   "closed": null,
+   "no2": {
+    "mean": 10.5,
+    "capture": 0.991
+   },
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "REA5",
+   "name": "Reading London Road",
+   "type": "Urban Traffic",
+   "lat": 51.4549,
+   "lon": -0.94038,
+   "localAuthority": "Reading",
+   "closed": null,
+   "no2": {
+    "mean": 17.7,
+    "capture": 0.975
+   },
+   "pm25": null
+  },
+  {
+   "code": "ROCH",
+   "name": "Rochester Stoke",
+   "type": "Rural Background",
+   "lat": 51.45617,
+   "lon": 0.63489,
+   "localAuthority": "Medway",
+   "closed": null,
+   "no2": {
+    "mean": 9.0,
+    "capture": 0.988
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.982
+   }
+  },
+  {
+   "code": "SA33",
+   "name": "Southampton A33",
+   "type": "Urban Traffic",
+   "lat": 50.92027,
+   "lon": -1.46348,
+   "localAuthority": "Southampton",
+   "closed": null,
+   "no2": {
+    "mean": 22.7,
+    "capture": 0.989
+   },
+   "pm25": null
+  },
+  {
+   "code": "SASH",
+   "name": "Saltash Callington Road",
+   "type": "Urban Traffic",
+   "lat": 50.41146,
+   "lon": -4.22768,
+   "localAuthority": "Cornwall",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 8.5,
+    "capture": 0.973
+   }
+  },
+  {
+   "code": "SCN2",
+   "name": "Scunthorpe Town",
+   "type": "Urban Industrial",
+   "lat": 53.58634,
+   "lon": -0.63681,
+   "localAuthority": "North Lincolnshire",
+   "closed": null,
+   "no2": {
+    "mean": 11.3,
+    "capture": 0.959
+   },
+   "pm25": null
+  },
+  {
+   "code": "SDY",
+   "name": "Sandy Roadside",
+   "type": "Urban Traffic",
+   "lat": 52.13242,
+   "lon": -0.30031,
+   "localAuthority": "Central Bedfordshire",
+   "closed": null,
+   "no2": {
+    "mean": 15.8,
+    "capture": 0.945
+   },
+   "pm25": {
+    "mean": 7.8,
+    "capture": 0.963
+   }
+  },
+  {
+   "code": "SEND",
+   "name": "Southend-on-Sea",
+   "type": "Urban Background",
+   "lat": 51.54417,
+   "lon": 0.67833,
+   "localAuthority": "Southend-on-Sea",
+   "closed": null,
+   "no2": {
+    "mean": 12.0,
+    "capture": 0.931
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "SHBR",
+   "name": "Sheffield Barnsley Road",
+   "type": "Urban Traffic",
+   "lat": 53.40495,
+   "lon": -1.45582,
+   "localAuthority": "Sheffield",
+   "closed": null,
+   "no2": {
+    "mean": 31.0,
+    "capture": 0.972
+   },
+   "pm25": {
+    "mean": 8.4,
+    "capture": 0.925
+   }
+  },
+  {
+   "code": "SHDG",
+   "name": "Sheffield Devonshire Green",
+   "type": "Urban Background",
+   "lat": 53.37862,
+   "lon": -1.4781,
+   "localAuthority": "Sheffield",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "SHE",
+   "name": "Sheffield Tinsley",
+   "type": "Urban Background",
+   "lat": 53.41058,
+   "lon": -1.39614,
+   "localAuthority": "Sheffield",
+   "closed": null,
+   "no2": {
+    "mean": 17.5,
+    "capture": 0.992
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "SHLW",
+   "name": "St Helens Linkway",
+   "type": "Urban Traffic",
+   "lat": 53.45183,
+   "lon": -2.74213,
+   "localAuthority": "St. Helens",
+   "closed": null,
+   "no2": {
+    "mean": 21.8,
+    "capture": 0.755
+   },
+   "pm25": null
+  },
+  {
+   "code": "SIB",
+   "name": "Sibton",
+   "type": "Rural Background",
+   "lat": 52.2944,
+   "lon": 1.4635,
+   "localAuthority": "nan",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.6,
+    "capture": 0.988
+   }
+  },
+  {
+   "code": "SK5",
+   "name": "Southwark A2 Old Kent Road",
+   "type": "Urban Traffic",
+   "lat": 51.4805,
+   "lon": -0.05955,
+   "localAuthority": "Southwark",
+   "closed": null,
+   "no2": {
+    "mean": 20.2,
+    "capture": 0.997
+   },
+   "pm25": null
+  },
+  {
+   "code": "SOTR",
+   "name": "Stockton-on-Tees A1305 Roadside",
+   "type": "Urban Traffic",
+   "lat": 54.56582,
+   "lon": -1.3159,
+   "localAuthority": "Stockton-on-Tees",
+   "closed": null,
+   "no2": {
+    "mean": 14.4,
+    "capture": 0.961
+   },
+   "pm25": {
+    "mean": 8.2,
+    "capture": 0.936
+   }
+  },
+  {
+   "code": "SOUT",
+   "name": "Southampton Centre",
+   "type": "Urban Background",
+   "lat": 50.90817,
+   "lon": -1.39576,
+   "localAuthority": "Southampton",
+   "closed": null,
+   "no2": {
+    "mean": 20.1,
+    "capture": 0.974
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "STKR",
+   "name": "Stoke-on-Trent A50 Roadside",
+   "type": "Urban Traffic",
+   "lat": 52.98044,
+   "lon": -2.1119,
+   "localAuthority": "Stoke on Trent",
+   "closed": null,
+   "no2": {
+    "mean": 34.1,
+    "capture": 0.989
+   },
+   "pm25": null
+  },
+  {
+   "code": "STOK",
+   "name": "Stoke-on-Trent Centre",
+   "type": "Urban Background",
+   "lat": 53.02821,
+   "lon": -2.17513,
+   "localAuthority": "Stoke on Trent",
+   "closed": null,
+   "no2": {
+    "mean": 17.5,
+    "capture": 0.996
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "STOR",
+   "name": "Storrington Roadside",
+   "type": "Urban Traffic",
+   "lat": 50.91693,
+   "lon": -0.44955,
+   "localAuthority": "Horsham",
+   "closed": null,
+   "no2": {
+    "mean": 16.6,
+    "capture": 0.967
+   },
+   "pm25": null
+  },
+  {
+   "code": "SUN2",
+   "name": "Sunderland Silksworth",
+   "type": "Urban Background",
+   "lat": 54.88361,
+   "lon": -1.40688,
+   "localAuthority": "Sunderland",
+   "closed": null,
+   "no2": {
+    "mean": 10.5,
+    "capture": 0.986
+   },
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "SUNR",
+   "name": "Sunderland Wessington Way",
+   "type": "Urban Traffic",
+   "lat": 54.91839,
+   "lon": -1.40839,
+   "localAuthority": "Sunderland",
+   "closed": null,
+   "no2": {
+    "mean": 12.3,
+    "capture": 0.972
+   },
+   "pm25": null
+  },
+  {
+   "code": "SWA1",
+   "name": "Swansea Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.6327,
+   "lon": -3.94737,
+   "localAuthority": "Swansea",
+   "closed": null,
+   "no2": {
+    "mean": 15.9,
+    "capture": 0.985
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.887
+   }
+  },
+  {
+   "code": "SWHO",
+   "name": "Swindon Walcot",
+   "type": "Urban Background",
+   "lat": 51.55806,
+   "lon": -1.76568,
+   "localAuthority": "Swindon",
+   "closed": null,
+   "no2": {
+    "mean": 7.6,
+    "capture": 0.969
+   },
+   "pm25": {
+    "mean": 6.3,
+    "capture": 0.984
+   }
+  },
+  {
+   "code": "TALL",
+   "name": "Tallington",
+   "type": "Rural Background",
+   "lat": 52.65631,
+   "lon": -0.381,
+   "localAuthority": "South Kesteven",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.6,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "TDHD",
+   "name": "Telford Hollinswood",
+   "type": "Urban Background",
+   "lat": 52.67347,
+   "lon": -2.43669,
+   "localAuthority": "Telford and Wrekin",
+   "closed": null,
+   "no2": {
+    "mean": 10.3,
+    "capture": 0.996
+   },
+   "pm25": {
+    "mean": 6.0,
+    "capture": 0.996
+   }
+  },
+  {
+   "code": "TH2",
+   "name": "Tower Hamlets Roadside",
+   "type": "Urban Traffic",
+   "lat": 51.52253,
+   "lon": -0.04215,
+   "localAuthority": "Tower Hamlets",
+   "closed": null,
+   "no2": {
+    "mean": 21.2,
+    "capture": 0.995
+   },
+   "pm25": null
+  },
+  {
+   "code": "THUR",
+   "name": "Thurrock",
+   "type": "Urban Background",
+   "lat": 51.47707,
+   "lon": 0.31797,
+   "localAuthority": "Thurrock",
+   "closed": null,
+   "no2": {
+    "mean": 17.8,
+    "capture": 0.972
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.994
+   }
+  },
+  {
+   "code": "TOFT",
+   "name": "Toft Newton",
+   "type": "Rural Background",
+   "lat": 53.37413,
+   "lon": -0.44979,
+   "localAuthority": "West Lindsey",
+   "closed": null,
+   "no2": {
+    "mean": 4.8,
+    "capture": 0.97
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.994
+   }
+  },
+  {
+   "code": "TRAN",
+   "name": "Wirral Tranmere",
+   "type": "Urban Background",
+   "lat": 53.37287,
+   "lon": -3.02272,
+   "localAuthority": "Wirral",
+   "closed": null,
+   "no2": {
+    "mean": 11.3,
+    "capture": 0.982
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "WAL4",
+   "name": "Walsall Woodlands",
+   "type": "Urban Background",
+   "lat": 52.60564,
+   "lon": -2.03037,
+   "localAuthority": "Walsall",
+   "closed": null,
+   "no2": {
+    "mean": 11.3,
+    "capture": 0.995
+   },
+   "pm25": null
+  },
+  {
+   "code": "WBKP",
+   "name": "West Bromwich Kenrick Park",
+   "type": "Urban Background",
+   "lat": 52.50834,
+   "lon": -1.98607,
+   "localAuthority": "Sandwell",
+   "closed": null,
+   "no2": {
+    "mean": 16.1,
+    "capture": 0.853
+   },
+   "pm25": null
+  },
+  {
+   "code": "WEYB",
+   "name": "Weybourne",
+   "type": "Rural Background",
+   "lat": 52.95049,
+   "lon": 1.12202,
+   "localAuthority": "North Norfolk",
+   "closed": null,
+   "no2": null,
+   "pm25": {
+    "mean": 6.6,
+    "capture": 0.887
+   }
+  },
+  {
+   "code": "WFEN",
+   "name": "Wicken Fen",
+   "type": "Rural Background",
+   "lat": 52.2985,
+   "lon": 0.29092,
+   "localAuthority": "East Cambridgeshire",
+   "closed": null,
+   "no2": {
+    "mean": 4.9,
+    "capture": 0.958
+   },
+   "pm25": {
+    "mean": 6.6,
+    "capture": 0.998
+   }
+  },
+  {
+   "code": "WIG5",
+   "name": "Wigan Centre",
+   "type": "Urban Background",
+   "lat": 53.54914,
+   "lon": -2.63814,
+   "localAuthority": "Wigan",
+   "closed": null,
+   "no2": {
+    "mean": 12.7,
+    "capture": 0.9
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.981
+   }
+  },
+  {
+   "code": "WREX",
+   "name": "Wrexham",
+   "type": "Urban Traffic",
+   "lat": 53.04228,
+   "lon": -3.00283,
+   "localAuthority": "Wrexham",
+   "closed": null,
+   "no2": {
+    "mean": 13.3,
+    "capture": 0.991
+   },
+   "pm25": {
+    "mean": 6.3,
+    "capture": 0.999
+   }
+  },
+  {
+   "code": "WSMR",
+   "name": "Widnes Milton Road",
+   "type": "Urban Traffic",
+   "lat": 53.36539,
+   "lon": -2.73168,
+   "localAuthority": "Halton",
+   "closed": null,
+   "no2": {
+    "mean": 25.4,
+    "capture": 0.989
+   },
+   "pm25": null
+  },
+  {
+   "code": "WTHG",
+   "name": "Worthing A27 Roadside",
+   "type": "Urban Traffic",
+   "lat": 50.83295,
+   "lon": -0.37992,
+   "localAuthority": "Worthing",
+   "closed": null,
+   "no2": {
+    "mean": 21.6,
+    "capture": 0.994
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.942
+   }
+  },
+  {
+   "code": "YK10",
+   "name": "York Bootham",
+   "type": "Urban Background",
+   "lat": 53.96751,
+   "lon": -1.08651,
+   "localAuthority": "York",
+   "closed": null,
+   "no2": {
+    "mean": 11.4,
+    "capture": 0.988
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.965
+   }
+  },
+  {
+   "code": "YK11",
+   "name": "York Fishergate",
+   "type": "Urban Traffic",
+   "lat": 53.95189,
+   "lon": -1.07586,
+   "localAuthority": "York",
+   "closed": null,
+   "no2": {
+    "mean": 18.4,
+    "capture": 0.99
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.903
+   }
+  },
+  {
+   "code": "YW",
+   "name": "Yarner Wood",
+   "type": "Rural Background",
+   "lat": 50.5976,
+   "lon": -3.71651,
+   "localAuthority": "Teignbridge",
+   "closed": null,
+   "no2": {
+    "mean": 2.4,
+    "capture": 0.95
+   },
+   "pm25": {
+    "mean": 4.7,
+    "capture": 0.989
+   }
+  }
+ ],
+ "excluded": [
+  {
+   "code": "BAAR",
+   "site": "Ballymena Antrim Road",
+   "pollutant": "no2",
+   "reason": "capture 66% of hours"
+  },
+  {
+   "code": "BBRD",
+   "site": "Birkenhead Borough Road",
+   "pollutant": "pm25",
+   "reason": "capture 7% of hours"
+  },
+  {
+   "code": "BEL2",
+   "site": "Belfast Centre",
+   "pollutant": "no2",
+   "reason": "capture 60% of hours"
+  },
+  {
+   "code": "BIHG",
+   "site": "Birmingham Hall Green",
+   "pollutant": "no2",
+   "reason": "capture 21% of hours"
+  },
+  {
+   "code": "BIHG",
+   "site": "Birmingham Hall Green",
+   "pollutant": "pm25",
+   "reason": "capture 30% of hours"
+  },
+  {
+   "code": "BIL",
+   "site": "Billingham",
+   "pollutant": "no2",
+   "reason": "capture 46% of hours"
+  },
+  {
+   "code": "BLWD",
+   "site": "Blackpool Whitegate Drive",
+   "pollutant": "pm25",
+   "reason": "capture 15% of hours"
+  },
+  {
+   "code": "BR11",
+   "site": "Bristol Temple Way",
+   "pollutant": "pm25",
+   "reason": "capture 24% of hours"
+  },
+  {
+   "code": "BRAS",
+   "site": "Bradford Shipley Airedale Road",
+   "pollutant": "pm25",
+   "reason": "capture 8% of hours"
+  },
+  {
+   "code": "CANK",
+   "site": "Cannock A5190 Roadside",
+   "pollutant": "pm25",
+   "reason": "capture 14% of hours"
+  },
+  {
+   "code": "CARM",
+   "site": "Carlisle Morton A595",
+   "pollutant": "pm25",
+   "reason": "capture 66% of hours"
+  },
+  {
+   "code": "COBR",
+   "site": "Coventry Binley Road",
+   "pollutant": "pm25",
+   "reason": "capture 19% of hours"
+  },
+  {
+   "code": "DCST",
+   "site": "Doncaster A630 Cleveland Street",
+   "pollutant": "pm25",
+   "reason": "capture 7% of hours"
+  },
+  {
+   "code": "DESA",
+   "site": "Derby St Alkmund's Way",
+   "pollutant": "pm25",
+   "reason": "capture 11% of hours"
+  },
+  {
+   "code": "EB",
+   "site": "Eastbourne",
+   "pollutant": "no2",
+   "reason": "capture 30% of hours"
+  },
+  {
+   "code": "EX",
+   "site": "Exeter Roadside",
+   "pollutant": "no2",
+   "reason": "capture 38% of hours"
+  },
+  {
+   "code": "GRAN",
+   "site": "Grangemouth",
+   "pollutant": "no2",
+   "reason": "capture 50% of hours"
+  },
+  {
+   "code": "HONI",
+   "site": "Honiton",
+   "pollutant": "no2",
+   "reason": "capture 30% of hours"
+  },
+  {
+   "code": "HOPE",
+   "site": "Stanford-le-Hope Roadside",
+   "pollutant": "no2",
+   "reason": "capture 71% of hours"
+  },
+  {
+   "code": "HORE",
+   "site": "Horley",
+   "pollutant": "pm25",
+   "reason": "capture 12% of hours"
+  },
+  {
+   "code": "HULR",
+   "site": "Hull Holderness Road",
+   "pollutant": "pm25",
+   "reason": "capture 13% of hours"
+  },
+  {
+   "code": "KIEW",
+   "site": "Kielder Water",
+   "pollutant": "pm25",
+   "reason": "capture 4% of hours"
+  },
+  {
+   "code": "LB",
+   "site": "Ladybower",
+   "pollutant": "no2",
+   "reason": "capture 69% of hours"
+  },
+  {
+   "code": "LB",
+   "site": "Ladybower",
+   "pollutant": "pm25",
+   "reason": "capture 51% of hours"
+  },
+  {
+   "code": "LEIR",
+   "site": "Leicester A594 Roadside",
+   "pollutant": "pm25",
+   "reason": "capture 10% of hours"
+  },
+  {
+   "code": "LUTR",
+   "site": "Luton A505 Roadside",
+   "pollutant": "pm25",
+   "reason": "capture 14% of hours"
+  },
+  {
+   "code": "MAHG",
+   "site": "Manchester Sharston",
+   "pollutant": "pm25",
+   "reason": "capture 36% of hours"
+  },
+  {
+   "code": "MAID",
+   "site": "Maidstone Upper Stone Street",
+   "pollutant": "pm25",
+   "reason": "capture 6% of hours"
+  },
+  {
+   "code": "MALA",
+   "site": "Mansfield Ladybrook",
+   "pollutant": "pm25",
+   "reason": "capture 29% of hours"
+  },
+  {
+   "code": "MIMW",
+   "site": "Middlewich St Michael's Way",
+   "pollutant": "pm25",
+   "reason": "capture 13% of hours"
+  },
+  {
+   "code": "NCA3",
+   "site": "Newcastle Cradlewell Roadside",
+   "pollutant": "pm25",
+   "reason": "capture 6% of hours"
+  },
+  {
+   "code": "NO12",
+   "site": "Norwich Lakenfields",
+   "pollutant": "no2",
+   "reason": "capture 64% of hours"
+  },
+  {
+   "code": "NOTT",
+   "site": "Nottingham Centre",
+   "pollutant": "no2",
+   "reason": "capture 8% of hours"
+  },
+  {
+   "code": "NOTT",
+   "site": "Nottingham Centre",
+   "pollutant": "pm25",
+   "reason": "capture 8% of hours"
+  },
+  {
+   "code": "NWBV",
+   "site": "Nottingham Western Boulevard",
+   "pollutant": "pm25",
+   "reason": "capture 13% of hours"
+  },
+  {
+   "code": "PEGE",
+   "site": "Peterborough Garton End",
+   "pollutant": "pm25",
+   "reason": "capture 25% of hours"
+  },
+  {
+   "code": "POAR",
+   "site": "Portsmouth Anglesea Road",
+   "pollutant": "pm25",
+   "reason": "capture 11% of hours"
+  },
+  {
+   "code": "ROED",
+   "site": "Rotherham East Dene",
+   "pollutant": "pm25",
+   "reason": "capture 29% of hours"
+  },
+  {
+   "code": "RRKL",
+   "site": "Reading Rose Kiln Lane",
+   "pollutant": "pm25",
+   "reason": "capture 15% of hours"
+  },
+  {
+   "code": "SA33",
+   "site": "Southampton A33",
+   "pollutant": "pm25",
+   "reason": "capture 4% of hours"
+  },
+  {
+   "code": "SHDG",
+   "site": "Sheffield Devonshire Green",
+   "pollutant": "no2",
+   "reason": "capture 63% of hours"
+  },
+  {
+   "code": "SHUN",
+   "site": "Shrewsbury Underdale",
+   "pollutant": "pm25",
+   "reason": "capture 22% of hours"
+  },
+  {
+   "code": "STKR",
+   "site": "Stoke-on-Trent A50 Roadside",
+   "pollutant": "pm25",
+   "reason": "capture 9% of hours"
+  },
+  {
+   "code": "STOR",
+   "site": "Storrington Roadside",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours"
+  },
+  {
+   "code": "SUNR",
+   "site": "Sunderland Wessington Way",
+   "pollutant": "pm25",
+   "reason": "capture 12% of hours"
+  },
+  {
+   "code": "TED2",
+   "site": "London Teddington Bushy Park",
+   "pollutant": "pm25",
+   "reason": "capture 10% of hours"
+  },
+  {
+   "code": "WAR",
+   "site": "Warrington",
+   "reason": "no row in AURN_metadata"
+  },
+  {
+   "code": "WOEA",
+   "site": "Worthing East Ten Acres",
+   "pollutant": "pm25",
+   "reason": "capture 38% of hours"
+  }
+ ]
+}

@@ -637,6 +637,16 @@ touching it; do not reason from the old figures.
 
 Sky Score, a property noise + livability data tool for UK and NYC. Originally built for the Amazon Nova AI Hackathon; pivoted in May 2026 from "AI-powered" to "data-first" positioning. Consumer site is the marketing engine; the B2B `/v1/score` API is the product. Single-page frontend (`index.html`) plus B2B funnel pages (`/api/`, `/pricing`, `/privacy`) backed by the 8 active AWS Lambda functions orchestrated via SAM (the 4 dormant Bedrock Lambdas live in git history only; `live_flights` was removed in May 2026 pending OpenSky licensing).
 
+**DEFRA's AURN reference monitors are HELD, not shown (2026-10-13).** `scripts/fetch_aurn.py --fetch` writes
+`data/aurn-sites.json` (checked in; raw R files in ignored `data/aurn/`, `--fetch`/`--verify` need `pip install
+pyreadr`). Its year is `load_defra_air_quality.PCM_YEAR`, never the newest summary: PCM is calibrated against AURN
+of the same year, and `--check` (BLOCKING, offline) reds when air quality rolls until it is re-fetched. Ratified
+only (a site that closed mid-year counts to its closing day), 75% capture, UK-AIR's attribution word for word
+("licenced"), a usable site inside EVERY covered city or a `NO_SITE_INSIDE` reason. Display only, never scored,
+never ranked (UK-AIR: "not scientifically sound"). Nothing reads it yet: the "nearest official monitor" line ships
+with the Breathe London half (ROADMAP plan, GLA key pending) and needs a distance scope - Greater Norwich's
+nearest NO2 clearing the floor is 77 km away.
+
 ## Public surfaces added 2026-08-21 — badge and area pages
 
 **`GET /badge?postcode=` returns an SVG, unauthenticated.** It renders inside an

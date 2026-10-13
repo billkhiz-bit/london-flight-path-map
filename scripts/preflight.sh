@@ -304,6 +304,12 @@ check "aircraft rasters == DEFRA renders" python scripts/build_aircraft_rasters.
 # holds, so a re-measurement cannot leave a stale number live. Offline; the
 # DEFRA re-measurement half is INCONCLUSIVE without the gitignored GeoTIFF.
 check "COVID understatement == pages"   python scripts/measure_covid_understatement.py --check
+# DEFRA's AURN reference monitors (2026-10-13), held in data/aurn-sites.json for
+# the "nearest official monitor" line. Offline: the year must be PCM_YEAR, so an
+# air-quality roll reds this until it is re-fetched; UK-AIR's attribution word
+# for word; the 75% capture floor; and a usable site inside EVERY covered city,
+# because a count floor says how many sites survived, never which.
+check "AURN monitors keep their rules"  python scripts/fetch_aurn.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
@@ -871,6 +877,10 @@ advise "neighbourhood medians == PPD"   python scripts/build_city_neighbourhoods
 # distinction that mattered: an absent key and a measured zero are the same
 # shape in JSON.
 advise "aircraft footprint == DEFRA"    python scripts/measure_aircraft_footprint.py --verify
+# The AURN file re-derived from DEFRA's raw R files, so a hand edit of the JSON
+# cannot pass. Advisory for the same reason as the stage above: the raw files
+# are gitignored (and need pyreadr), so a fresh clone reports INCONCLUSIVE.
+advise "AURN monitors == DEFRA files"   python scripts/fetch_aurn.py --verify
 # Added 2026-09-02. `Quiet Skies` is the headline component and for most
 # postcodes it is an ESTIMATE; its accuracy had been measured ONCE during the
 # v3.8 work and recorded only in CLAUDE.md prose. api/index.html now PUBLISHES

@@ -252,6 +252,8 @@ CHECKED = [
 
 NOT_ROLLED = [
     ('ONS CPIH inflation (L55O)', 'covered', 'rolls with the HPI row; build_hpi_prices.py --check compares it with ONS'),
+    ('DEFRA AURN monitors (annual means)', 'covered',
+     'pinned to the PCM year: fetch_aurn.py --check (blocking) reds when PCM_YEAR moves; then --fetch'),
     ('Environment Agency flood risk', 'covered',
      'preflight "flood == EA service (georef)" compares our mosaic with the EA\'s live map'),
     ('NaPTAN stations (transport share)', 'not checked',
