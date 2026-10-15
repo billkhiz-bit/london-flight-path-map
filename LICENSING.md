@@ -234,6 +234,29 @@ If we add any of these later, **check terms first**:
 - ADS-B Exchange (would replace OpenSky; their commercial terms differ)
 - Any PAID dataset (we currently use only free / open data)
 
+**Under evaluation since 2026-10-15 for "how often planes pass" (ROADMAP "IN PROGRESS: how
+often planes fly"). Measured privately; nothing derived from these is published:**
+
+- **adsb.lol flight history** (`github.com/adsblol/globe_history_2026`), **ODbL 1.0**; its
+  feeders' contributions are CC0. Read by `scripts/adsb_extract.py` and
+  `scripts/adsb_movements.py`. **Share-alike, as for OpenStreetMap above**: the moment a
+  count derived from it is published, that count is a Derivative Database and must be
+  offered under ODbL, credited "aircraft positions via adsb.lol (ODbL)". Commercial use is
+  allowed. **Bill accepted the share-alike on 2026-10-15**: the counts will be published
+  under ODbL once they pass the per-airport floor (ROADMAP).
+- **CAA airport statistics, Table 03.1 Aircraft Movements** (2025, `data/caa/`, gitignored):
+  used to CHECK the tracked counts. The CAA's terms: "No statistical data provided by CAA
+  maybe sold on to a third party. CAA insists that they are referenced in any publication
+  that makes reference to CAA Statistics." So free, credited display only, until the CAA
+  answers (OUTREACH_LOG 2026-10-06).
+- **EASA ANP database** (aircraft noise-power-distance data, needed for N65): access by
+  request under Regulation (EU) 598/2014 Art 7. Terms unread; request drafted
+  (OUTREACH_LOG 2026-10-15).
+- **Rail noise, parked as breadth**: DEFRA Round 4 rail Lden (England; the road map's
+  family, so check its licence statement when built), the Welsh Government's 2022 rail
+  mapping on DataMapWales (licence unread), BTS's 2022/23 rail layer for the US (terms
+  unread; BTS says it is not for individual locations).
+
 ---
 
 ## Action items from this audit
@@ -246,4 +269,4 @@ If we add any of these later, **check terms first**:
 | 🟢 None | DEFRA + ONS + Land Registry + TfL all OGL v3.0; nothing to do |
 
 This document gets refreshed whenever we add or change a data source.
-Last reviewed: 2026-09-07 (**five datasets in live use added** - US DOT NTAD, FEMA NFHL, US EPA and the curated New York scored inputs; the **TfL row corrected**, which had credited TfL for the liveability `transport` sub-score that NaPTAN has supplied since v3.6; HMLR's required notice recorded as its own rather than "same OGL boilerplate"; and the absolute attribution claim corrected against three endpoints that falsify it. Found by the 2026-09-07 audit.) — Previous review 2026-07-25 (**ONS NSPL promoted from an offline input to a primary live serving source**, postcodes.io demoted to fallback; response attribution is now conditional on the local tier having actually served, so ONS is never credited while the table is empty. Flagged: the Enterprise city-scale CSV will be a bulk export of NSPL-derived data — allowed under OGL, but the attribution must travel with the file, and that form needs deciding before the first pilot deliverable). — Previous review 2026-05-07 (OpenSky removal end-to-end; AI-powered consumer features removed earlier the same day; loader still running against the full NSPL postcode list).
+Last reviewed: 2026-10-15 (candidate sources for flight frequency and rail noise listed under "What's NOT in our stack (yet)": adsb.lol is ODbL share-alike, CAA statistics may not be sold on, EASA's ANP data is by request; nothing new is published). — Previous review 2026-09-07 (**five datasets in live use added** - US DOT NTAD, FEMA NFHL, US EPA and the curated New York scored inputs; the **TfL row corrected**, which had credited TfL for the liveability `transport` sub-score that NaPTAN has supplied since v3.6; HMLR's required notice recorded as its own rather than "same OGL boilerplate"; and the absolute attribution claim corrected against three endpoints that falsify it. Found by the 2026-09-07 audit.) — Previous review 2026-07-25 (**ONS NSPL promoted from an offline input to a primary live serving source**, postcodes.io demoted to fallback; response attribution is now conditional on the local tier having actually served, so ONS is never credited while the table is empty. Flagged: the Enterprise city-scale CSV will be a bulk export of NSPL-derived data — allowed under OGL, but the attribution must travel with the file, and that form needs deciding before the first pilot deliverable). — Previous review 2026-05-07 (OpenSky removal end-to-end; AI-powered consumer features removed earlier the same day; loader still running against the full NSPL postcode list).
