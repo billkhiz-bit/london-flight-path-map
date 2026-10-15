@@ -1514,6 +1514,32 @@ Geovation advised (2026-10-02) and the question residents actually ask ("one pla
    Heathrow ran westerly all day, alternating 27L/27R. **One day against an annual
    average proves the method, not the coverage. Next: a whole month against the CAA's
    monthly figure for the SAME month**, then every month.
+
+   **August 2026, the first like-for-like month (2026-10-15): 12 of 15 UK airports pass
+   the floor.** Heathrow 98.8%, Gatwick 99.0, Stansted 98.8, Luton 98.6, London City
+   98.6, Manchester 98.9, Birmingham 100.0, Leeds Bradford 104.3, Newcastle 97.2, Bristol
+   97.3, Cardiff 99.6, East Midlands 97.4 without its circuits (105.5 with). Fail: Liverpool 94.8
+   (just short), Teesside 91.0 and Norwich 94.0 (training aircraft without ADS-B, as
+   predicted). Two things had to be found first, both now rules in the counter with tests
+   proven red:
+   - **adsb.lol's archive has outages**: 6 of 31 August days lost hours, in the UK and
+     the US in the same windows, one of them (1 Aug) THINNED to ~5% with no gap at all.
+     Each day's feed is profiled per region against the same ten minutes on nearby days;
+     an outage day is left out and the CAA's figure scaled to the days kept, weekday by
+     weekday (London City's Saturdays are a quarter of its weekdays). Before this, the
+     outages alone held every big airport at 94-95%.
+   - **Circuits are movements, and airports report them unevenly.** The CAA's definitions:
+     "Touch and go operations are counted as two movements". Cardiff's return includes
+     them; East Midlands' evidently does not (a Ryanair 737 flew 32 circuits on 7 Aug
+     against 62 training movements in the CAA's whole month). So an airport passes when
+     ONE reading fits at both ends: with its circuits, or without them.
+   - **A code review the same evening caught three more**, all fixed with tests proven
+     red: the first circuit rule read the floor one way and the ceiling the other (it
+     passed 110% with circuits / 80% without, an over-count or a 20% shortfall); a single
+     bad altitude report could pose as a circuit (a circuit now takes 30 s or more; real
+     ones take 50-130 s); and the feed test compared in UTC, so a clock change would have
+     read as an outage on 24 of 25 healthy days (it now compares local time).
+   **Next: July 2026 the same way, to show August was not luck.**
 2. **A full year of tracks** (~1.3 TB streamed a day at a time, ~30 GB of extracts kept),
    so seasonal runway direction is in the average. Per postcode: flights per average
    day below a height, westerly and easterly days separately.
@@ -1531,7 +1557,10 @@ publish floor per airport**: `coverage_verdict()` in `adsb_movements.py`, **set 
 (Bill delegated it): a whole period compared with the CAA's figure for the SAME period, at
 least 300 official movements, and tracked within **95-105%** of the official count. Below,
 the tracking misses flights and would understate; above, it counts things that are not
-movements. One day against 2025's average day is always "provisional". An airport that
+movements (airports report training circuits unevenly, so a count passes if it fits at
+both ends with its circuits or without them). Days with a feed outage are left out and the official figure scaled to the
+rest; a period with under three quarters of its days kept is not judged. One day against
+2025's average day is always "provisional". An airport that
 fails is never published, and never shown as quiet. (c) The CAA's answer on paid use
 of its counts (~3 Nov). (d) The copy rule "never say how often planes pass" lifts only
 when a step's validation passes, and only for the airports that pass it. **Regular users

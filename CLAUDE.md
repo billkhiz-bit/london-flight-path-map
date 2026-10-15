@@ -657,7 +657,17 @@ holding point split one take-off into two (bound each low run's climb by its nei
 measured from the FIELD, not the run's edge. **Nothing derived from it is published yet.** Bill accepted ODbL
 share-alike (15 Oct: published counts go out under ODbL, credited); the per-airport floor is `coverage_verdict()`
 (same period as the CAA's figure, 300+ official movements, tracked within 95-105%); the "never say how often
-planes pass" copy rule lifts only for airports that pass it.
+planes pass" copy rule lifts only for airports that pass it. **August 2026 against the CAA's August: 12 of 15 UK
+airports pass** (Heathrow 98.8%; fail Liverpool 94.8, Teesside 91.0, Norwich 94.0), once two more traps were
+handled (2026-10-15, both rules with tests proven red): **the archive has OUTAGES** (6 of 31 August days, the UK
+and US together, one THINNED to ~5% with no gap, so never test for gaps alone): `feed_gaps()` profiles distinct
+aircraft per 10 minutes per region against nearby days, outage days are left out and the CAA figure scaled by
+`usable_share()` (weekday-weighted; never judge an outage from an airport's own counts, London City's Saturdays
+are a quarter of its weekdays; the reference is turned onto LOCAL time, or a clock change reads as an outage on
+almost every day after it). And **circuits are movements** by the CAA's definition but airports report them unevenly
+(Cardiff includes them, East Midlands evidently not): a count passes only if ONE reading fits at both ends, with
+`circuits` or without (never the floor on one and the ceiling on the other: that passed 110%/80%), and a pair under
+`CIRCUIT_MIN_S` (30 s) is a low approach or a glitch, not a circuit. The report takes ~2.5 min a month on six workers.
 
 ## Public surfaces added 2026-08-21 — badge and area pages
 

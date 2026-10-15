@@ -14,6 +14,7 @@ two low runs, both saw the same climb, and one take-off was counted twice. On
 bounded by the neighbouring runs, Stansted read 283 against 277 and Heathrow
 97.6%.
 """
+import datetime as dt
 import importlib.util
 import math
 import sys
@@ -141,6 +142,137 @@ class MovementRuleTests(unittest.TestCase):
             self.assertEqual(count(approach + rollout), [('landing', want)])
 
 
+class CircuitTests(unittest.TestCase):
+    """Circuits are movements by the CAA's definition ("Touch and go operations
+    are counted as two movements") and airports report them unevenly, so they
+    are counted in their own column (2026-10-15, East Midlands)."""
+
+    def test_a_touch_and_go_is_two_circuit_movements_and_a_full_stop_is_none(self):
+        approach, t = Heathrow.approach(Heathrow.thr27r, T0, km_out=6)
+        touch, t = Heathrow.ground(Heathrow.thr27r, t, n=2)
+        climb, t = Heathrow.climb_out(Heathrow.thr27r, t, km_out=4)   # ~1,050 ft
+        again, t = Heathrow.approach(Heathrow.thr27r, t + 300, km_out=6)
+        stop, t = Heathrow.ground(Heathrow.thr27r, t)
+        later, t = Heathrow.ground(Heathrow.thr27l, t + 3600)
+        away, _ = Heathrow.climb_out(Heathrow.thr27l, t)
+        moves, _ = mv.movements({'pts': approach + touch + climb + again + stop + later + away},
+                                Heathrow.ap, FIELD)
+        self.assertEqual([k for k, _, _ in moves], ['landing', 'take-off', 'landing', 'take-off'])
+        self.assertEqual(mv.circuit_movements(moves), 2)
+
+    def test_one_bad_altitude_reading_is_not_a_circuit(self):
+        """Code review 2026-10-15: a single 5,000 ft report on short final split
+        one landing into a landing, a take-off and a landing 13 s apart, and the
+        pair was set aside as a circuit where the ceiling could not see it."""
+        approach, t = Heathrow.approach(Heathrow.thr27r, T0)
+        rollout, _ = Heathrow.ground(Heathrow.thr27r, t)
+        pts = approach + rollout
+        low = [i for i, p in enumerate(pts) if isinstance(p[3], int) and p[3] <= mv.LOW_ABOVE_FT]
+        spike = list(pts[low[1]])
+        spike[0], spike[3] = (pts[low[1]][0] + pts[low[2]][0]) / 2, 5000
+        moves, _ = mv.movements({'pts': pts[:low[1] + 1] + [spike] + pts[low[1] + 1:]}, Heathrow.ap, FIELD)
+        self.assertGreater(len(moves), 1)             # the glitch still splits the run
+        self.assertEqual(mv.circuit_movements(moves), 0)
+
+    def test_a_turnaround_is_not_a_circuit(self):
+        approach, t = Heathrow.approach(Heathrow.thr27r, T0)
+        rollout, t = Heathrow.ground(Heathrow.thr27r, t)
+        later, t = Heathrow.ground(Heathrow.thr27l, t + 3600)
+        climb, _ = Heathrow.climb_out(Heathrow.thr27l, t)
+        moves, _ = mv.movements({'pts': approach + rollout + later + climb}, Heathrow.ap, FIELD)
+        self.assertEqual(len(moves), 2)
+        self.assertEqual(mv.circuit_movements(moves), 0)
+
+
+class FeedOutageTests(unittest.TestCase):
+    """adsb.lol's archive has holes (6 of 31 days in August 2026). Each is
+    measured from the feed, never from an airport's counts."""
+
+    DAY = dt.date(2026, 8, 3)
+
+    @staticmethod
+    def month(n_days=15, usual=100):
+        start = dt.date(2026, 8, 1)
+        return {start + dt.timedelta(days=i): [usual] * 144 for i in range(n_days)}
+
+    def test_the_profile_counts_each_aircraft_once_per_window_per_region(self):
+        t0 = dt.datetime(2026, 8, 3, tzinfo=dt.UTC).timestamp()
+        lhr = Heathrow.ap['centre']
+        traces = [{'pts': [pt(t0 + s, *lhr, 2000, 0) for s in (0, 5, 9, 3001)]},
+                  {'pts': [pt(t0 + 1, 40.64, -73.78, 2000, 0)]}]       # JFK
+        prof = mv.feed_profile(traces, self.DAY)
+        self.assertEqual((prof['uk'][0], prof['uk'][5], prof['us'][0]), (1, 1, 1))
+        self.assertEqual(sum(prof['uk']) + sum(prof['us']), 3)
+
+    def test_an_empty_stretch_marks_the_day(self):
+        profiles = self.month()
+        profiles[self.DAY][60:66] = [0] * 6          # an hour of nothing, as on 19 Aug
+        gaps = mv.feed_gaps(profiles)
+        self.assertEqual(gaps[self.DAY], 6)
+        self.assertEqual(sum(gaps.values()), 6)
+
+    def test_a_thinned_feed_with_no_gap_is_an_outage_too(self):
+        """1 Aug 2026: 16:00-24:00 carried ~5% of the usual aircraft and not one
+        silent minute, so a test for gaps passes it. Proven red with
+        FEED_OUT_RATIO at 0.04, i.e. a test that only sees silence."""
+        profiles = self.month()
+        profiles[self.DAY][96:144] = [6] * 48
+        self.assertEqual(mv.feed_gaps(profiles)[self.DAY], 48)
+
+    def test_a_quiet_but_healthy_day_is_not_an_outage(self):
+        """The lowest window on any healthy August day read 0.56 of usual
+        (UK, 27 Aug); a bank-holiday dip must not cost a day."""
+        profiles = self.month()
+        profiles[self.DAY] = [56] * 144
+        self.assertEqual(mv.feed_gaps(profiles)[self.DAY], 0)
+
+    def test_a_clock_change_is_not_an_outage(self):
+        """Timetables run on local time. Compared in UTC alone, August's healthy
+        UK days moved an hour later read false outages on 24 of 25 days, which
+        is every day of the week after the October change. 25 Oct 2026: BST
+        ends, so the same local morning arrives an hour later in UTC."""
+        def day_of_traffic(offset_bins):
+            local = [10] * 36 + [100] * 108             # quiet to 06:00 local, busy after
+            return local[offset_bins:] + local[:offset_bins]   # UTC window b holds local b + offset
+        profiles = {}
+        for i in range(-10, 7):
+            day = dt.date(2026, 10, 25) + dt.timedelta(days=i)
+            profiles[day] = day_of_traffic(mv.clock_offset_bins(day, 'uk'))
+        self.assertEqual(mv.clock_offset_bins(dt.date(2026, 10, 24), 'uk'), 6)
+        self.assertEqual(mv.clock_offset_bins(dt.date(2026, 10, 25), 'uk'), 0)
+        gaps = mv.feed_gaps(profiles, 'uk')
+        self.assertEqual({d: n for d, n in gaps.items() if n}, {})
+
+    def test_too_few_days_to_know_usual_are_not_judged(self):
+        gaps = mv.feed_gaps(self.month(n_days=mv.FEED_MIN_REFERENCE_DAYS - 1))
+        self.assertTrue(all(v is None for v in gaps.values()))
+
+    def test_every_airport_is_judged_by_its_own_region(self):
+        regions = {code: ap['region'] for code, ap in mv.load_airports().items()}
+        self.assertTrue(all(regions[c] == 'uk' for c in mv.CAA_NAMES.values()))
+        self.assertEqual({regions[c] for c in ('JFK', 'SFO', 'TEB')}, {'us'})
+
+
+class UsableShareTests(unittest.TestCase):
+    """An outage day is left out and the official figure scaled to the rest."""
+
+    PERIOD = {dt.date(2026, 2, 1) + dt.timedelta(days=i) for i in range(28)}   # four weeks
+
+    @staticmethod
+    def timetable(day):
+        return {5: 25, 6: 75}.get(day.weekday(), 100)        # London City's weekly shape
+
+    def test_a_lost_saturday_costs_a_saturday_not_an_average_day(self):
+        lost = min(d for d in self.PERIOD if d.weekday() == 5)
+        kept = {d: self.timetable(d) for d in self.PERIOD if d != lost}
+        whole = sum(self.timetable(d) for d in self.PERIOD)
+        self.assertAlmostEqual(mv.usable_share(kept, self.PERIOD), (whole - 25) / whole)
+
+    def test_a_weekday_never_kept_cannot_be_estimated(self):
+        kept = {d: self.timetable(d) for d in self.PERIOD if d.weekday() != 2}
+        self.assertIsNone(mv.usable_share(kept, self.PERIOD))
+
+
 class FieldLevelTests(unittest.TestCase):
     def test_measured_from_touchdowns_when_the_surface_is_heard(self):
         traces = []
@@ -181,6 +313,39 @@ class PublishFloorTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn('unmeasured', why)
         self.assertTrue(mv.period_verdict(10_000, 10_000, same_period=True, missing_days=0)[0])
+
+    def test_circuits_an_airport_leaves_out_do_not_breach_the_ceiling(self):
+        """East Midlands, August 2026: 105.5% with its circuits, 96.6% without,
+        against a CAA month holding 62 training movements."""
+        self.assertTrue(mv.coverage_verdict(10_550, 10_000, same_period=True, circuits=890)[0])
+        self.assertFalse(mv.coverage_verdict(10_550, 10_000, same_period=True)[0])
+
+    def test_circuits_never_lift_a_shortfall(self):
+        """The floor counts every movement: a circuit is real, and loud."""
+        ok, why = mv.coverage_verdict(9_400, 10_000, same_period=True, circuits=2_000)
+        self.assertFalse(ok)
+        self.assertIn('understate', why)
+
+    def test_an_airport_must_fit_one_reading_of_its_return_at_both_ends(self):
+        """Code review 2026-10-15: 110% with circuits and 80% without passed,
+        the floor read one way and the ceiling the other. If the return holds
+        the circuits, that is a 10% over-count; if not, a 20% shortfall."""
+        ok, why = mv.coverage_verdict(11_000, 10_000, same_period=True, circuits=3_000)
+        self.assertFalse(ok)
+        self.assertIn('neither', why)
+        self.assertTrue(mv.coverage_verdict(9_960, 10_000, True, circuits=3_000)[0])   # Cardiff
+        self.assertTrue(mv.coverage_verdict(10_550, 10_000, True, circuits=890)[0])    # East Midlands
+
+    def test_a_month_mostly_lost_to_outages_cannot_pass(self):
+        ok, why = mv.period_verdict(10_000, 10_000, True, 0, kept_days=22, period_len=31)
+        self.assertFalse(ok)
+        self.assertIn('too few', why)
+        self.assertTrue(mv.period_verdict(10_000, 10_000, True, 0, kept_days=25, period_len=31)[0])
+
+    def test_an_official_count_that_cannot_be_scaled_cannot_pass(self):
+        ok, why = mv.period_verdict(10_000, None, True, 0, kept_days=31, period_len=31)
+        self.assertFalse(ok)
+        self.assertIn('weekday', why)
 
     def test_different_periods_never_pass_however_close(self):
         """One day against 2025's average day mixes coverage with traffic change."""
