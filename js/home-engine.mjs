@@ -772,7 +772,7 @@ function boroughTipHtml(d) {
   const x = (state.extra[state.city] || {})[name] || {};
   const bits = [];
   if (row && row.score !== '') bits.push(`Sky Score ${esc(row.score)} of 10`);
-  if (x.roadNoiseAboveWhoPct != null) bits.push(`${Math.round(x.roadNoiseAboveWhoPct)}% of addresses over WHO's road-noise guideline`);
+  if (x.roadNoiseAboveWhoPct != null) bits.push(`${Math.round(x.roadNoiseAboveWhoPct)}% of postcodes over WHO's road-noise guideline`);
   bits.push('Click for the council area\'s figures');
   return `<b>${esc(name)}</b>${bits.join('<br>')}`;
 }
@@ -915,11 +915,11 @@ const CARD_FACTS = [
   // the API publishes there); a BLANK one still says "not published".
   ['Average price', 'avg_price_usd', (v) => `$${Number(v).toLocaleString('en-US')} (curated borough median)`],
   ['Crime', 'crime_per_1000', (v) => `${v} offences per 1,000 people a year`],
-  ['Road noise', 'road_noise_above_who_pct', (v) => `${v}% of addresses over the WHO guideline (53 dB)`],
+  ['Road noise', 'road_noise_above_who_pct', (v) => `${v}% of postcodes over the WHO guideline (53 dB)`],
   // The ratio is the WORSE of the two pollutants, so it is claimed for neither; some rows hold it without the concentrations.
   ['Air quality', 'air_quality_who_ratio', (v, r) => `${v}× the WHO guideline, on the worse of NO₂${ugm3(r.no2_ugm3)} and fine particles${ugm3(r.pm25_ugm3)}`],
-  ['Flood risk', 'flood_medium_or_high_pct', (v) => `${v}% of addresses at medium or high risk`],
-  ['Rail or tram', 'rail_within_800m_pct', (v) => `${v}% of addresses within 800 m of a station`],
+  ['Flood risk', 'flood_medium_or_high_pct', (v) => `${v}% of postcodes at medium or high risk from rivers or the sea`],
+  ['Rail or tram', 'rail_within_800m_pct', (v) => `${v}% of postcodes within 800 m of a station`],
 ];
 
 function selectBorough(name, opts = {}) {
@@ -1344,7 +1344,7 @@ function render(postcode, district, city, e, lat, lon) {
   if (area) {
     const row = city ? rowFor(district) : null;
     area.innerHTML = row
-      ? `Council area: <b>${esc(row.borough)}</b>${row.score !== '' ? `, Sky Score ${esc(row.score)}` : ''}${row.flood_medium_or_high_pct !== '' ? `, ${esc(row.flood_medium_or_high_pct)}% of addresses at medium or high flood risk` : ''}. <button type="button" class="linkish" id="ans-open-area">Its figures</button>`
+      ? `Council area: <b>${esc(row.borough)}</b>${row.score !== '' ? `, Sky Score ${esc(row.score)}` : ''}${row.flood_medium_or_high_pct !== '' ? `, ${esc(row.flood_medium_or_high_pct)}% of postcodes at medium or high flood risk` : ''}. <button type="button" class="linkish" id="ans-open-area">Its figures</button>`
       : '';
     area.querySelector('#ans-open-area')?.addEventListener('click', () => selectBorough(row.borough, { scroll: true, focus: true }));
   }
@@ -1386,15 +1386,15 @@ export const FIT_CONDITIONS = [
   // `label` is the chip, `short` names a figure an area may not publish, `miss` says how one falls
   // short, `says` gives the figure in words, and `means` is the line in "What the choices mean".
   { key: 'planes', group: 'avoid', label: 'aircraft noise', short: 'aircraft', miss: 'more aircraft noise', col: 'quiet', test: (v) => v >= FIT_CUTS.quietLowBand,
-    says: (v) => `quiet skies ${v.toFixed(1)} / 10`, means: 'Aircraft noise: in the map\'s lowest band, quiet skies 10 out of 10. An estimate from the published flight routes (UK AIP, NATS).' },
+    says: (v) => `quiet skies ${v.toFixed(1)} / 10`, means: 'Aircraft noise: in the map\'s lowest band, quiet skies 10 out of 10. Estimated from the distance to the airport and its routes, scaled by the size of its DEFRA noise map: an estimate, not a measurement.' },
   { key: 'roads', group: 'avoid', label: 'busy roads', short: 'road noise', miss: 'more road noise', col: 'road_noise_above_who_pct', test: (v) => v < FIT_CUTS.roadShare,
-    says: (v) => `${v}% of addresses over 53 dB`, means: 'Busy roads: under half of addresses over the WHO road-noise guideline, 53 dB (DEFRA).' },
+    says: (v) => `${v}% of postcodes over 53 dB`, means: 'Busy roads: under half of postcodes over the WHO road-noise guideline, 53 dB (DEFRA).' },
   { key: 'flood', group: 'avoid', label: 'flood risk', short: 'flood', miss: 'more flood risk', col: 'flood_medium_or_high_pct', test: (v) => v < FIT_CUTS.floodShare,
-    says: (v) => `${v}% of addresses at risk`, means: 'Flood risk: under 2% of addresses at medium or high risk (Environment Agency).' },
+    says: (v) => `${v}% of postcodes at risk`, means: 'Flood risk: under 2% of postcodes at medium or high risk from rivers or the sea (Environment Agency). Surface water is not included.' },
   { key: 'air', group: 'avoid', label: 'poor air', short: 'air quality', miss: 'poorer air', col: 'air_quality_who_ratio', test: (v) => v <= FIT_CUTS.airRatio,
     says: (v) => `${v}× the WHO guideline`, means: 'Poor air: no worse than 2.5 times the WHO guideline (DEFRA).' },
   { key: 'rail', group: 'want', label: 'a station', short: 'station', miss: 'fewer stations', col: 'rail_within_800m_pct', test: (v) => v >= FIT_CUTS.railShare,
-    says: (v) => `${v}% of addresses within 800 m of one`, means: 'A station: at least half of addresses within 800 m of a rail, metro or tram stop (NaPTAN).' },
+    says: (v) => `${v}% of postcodes within 800 m of one`, means: 'A station: at least half of postcodes within 800 m of a rail, metro or tram stop (NaPTAN).' },
   { key: 'schools', group: 'want', label: 'good schools', short: 'schools', miss: 'schools below average', col: 'progress8', test: (v) => v > FIT_CUTS.progress8,
     says: (v) => `Progress 8 ${signed(v)}`, means: 'Good schools: Progress 8 above 0, the England average (DfE).' },
 ];

@@ -300,7 +300,7 @@ const bars = await page.locator('#borough .rows .row .val').allTextContents();
 ok(bars.length === 5 && bars[0].startsWith(`${camden.quiet} /`) && bars[4].startsWith(`${camden.env} /`), 'five component bars match the CSV', bars.join(' | '));
 const facts = await page.locator('#borough .facts dd').allTextContents();
 ok(facts.some((f) => f.includes(Number(camden.avg_price_gbp).toLocaleString('en-GB'))) && facts.some((f) => f.startsWith(`${camden.crime_per_1000} offences`)), 'facts carry the price and crime figures', facts.join(' | '));
-ok(facts.some((f) => f.includes(`${camden.flood_medium_or_high_pct}% of addresses at medium or high`)), 'the card carries flood risk (the card promised it)');
+ok(facts.some((f) => f.includes(`${camden.flood_medium_or_high_pct}% of postcodes at medium or high`)), 'the card carries flood risk (the card promised it)');
 const links = await page.locator('#borough .more a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
 ok(links.includes('/area/london/camden/') && links.includes('/map/?city=london&borough=Camden'), 'links to the scorecard page and the full map at /map/', links.join(' '));
 ok(await page.evaluate(() => location.search) === '?city=london&borough=Camden', 'URL carries ?city=&borough=');
@@ -526,7 +526,7 @@ ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.te
 }
 const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
-ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.score}`) && area.includes(`${richmond.flood_medium_or_high_pct}% of addresses at medium or high flood risk`), 'the council-area line carries the CSV score and flood share', area);
+ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.score}`) && area.includes(`${richmond.flood_medium_or_high_pct}% of postcodes at medium or high flood risk`), 'the council-area line carries the CSV score and flood share', area);
 ok((await page.locator('#map .pin').count()) === 1, 'a pin is drawn at the postcode');
 ok((await page.locator('#ans-link').getAttribute('href')) === '/map/?city=london&postcode=TW9%203PZ', 'the hand-off link carries city and postcode to the full map at /map/');
 ok(await page.evaluate(() => location.search) === '?city=london&postcode=TW9+3PZ', 'URL carries ?city=&postcode=');
