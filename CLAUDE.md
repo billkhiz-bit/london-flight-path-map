@@ -647,6 +647,18 @@ never ranked (UK-AIR: "not scientifically sound"). Nothing reads it yet: the "ne
 with the Breathe London half (ROADMAP plan, GLA key pending) and needs a distance scope - Greater Norwich's
 nearest NO2 clearing the floor is 77 km away.
 
+**HOW OFTEN PLANES PASS IS BEING MEASURED, NOT SHOWN (2026-10-15).** Bill: as accurate as possible, time no
+object; the plan and its gates are ROADMAP "IN PROGRESS: how often planes fly". `scripts/adsb_extract.py` streams
+one day of adsb.lol history (ODbL) into `data/adsb/extract/<day>.jsonl.gz` (raw days ~3.7 GB in `data/adsb/raw/`,
+all gitignored; run it with `python -I`, the archive is untrusted input); `scripts/adsb_movements.py` counts
+landings and take-offs per runway and compares the UK airports with CAA Table 03 (`data/caa/`, gitignored). Two
+traps found on day one, both held by `tests/test_adsb_movements.py` (the first proven red): a silent wait at the
+holding point split one take-off into two (bound each low run's climb by its neighbours), and a circuit's climb is
+measured from the FIELD, not the run's edge. **Nothing derived from it is published yet.** Bill accepted ODbL
+share-alike (15 Oct: published counts go out under ODbL, credited); the per-airport floor is `coverage_verdict()`
+(same period as the CAA's figure, 300+ official movements, tracked within 95-105%); the "never say how often
+planes pass" copy rule lifts only for airports that pass it.
+
 ## Public surfaces added 2026-08-21 — badge and area pages
 
 **`GET /badge?postcode=` returns an SVG, unauthenticated.** It renders inside an
@@ -1295,6 +1307,17 @@ dissolves when you compute the real one.*
 >   `build_bay_area_page.py`: `<script type="module" src="/js/count.mjs"></script>`, held by
 >   `tests/test_analytics_first_party.py` (no `gc.zgo.at` anywhere, policies allow it), and `tests/front-page.mjs` 8a
 >   reads what the real module would send from a postcode address. Never go back to GoatCounter's script.
+> - **"FIND AREAS" IS CONDITIONS ON PUBLISHED FACTS, NEVER PERSONA RANKING (built 2026-10-14, reviewed and
+>   committed 2026-10-15, NOT deployed).** A second tab in the front page's panel (`#tab-find`, real WAI-ARIA tabs)
+>   filters the open-data CSV by region, a HARD budget, and avoid/want conditions whose cuts (`FIT_CUTS` in
+>   `js/home-engine.mjs`) are the map's own band cuts; matches are shaded on the map. Persona reweighting was
+>   measured and rejected first (it moves levels, not order). `tests/test_fit_conditions_mirror.py` holds the cuts
+>   to `build_borough_bands.py` AND asserts the list and the map make the SAME call for every area (the CSV is
+>   rounded, bands are cut unrounded: Bradford's road share prints 50.0, on the cut). The 15 Oct review fixed five
+>   defects, each with a check in `tests/front-page.mjs` 18d/18e proven red: focus fell to `<body>` after a list
+>   rebuild (`focusAfterCard()`, never into the hidden `#pc`), a shared `?borough=...#find` link lost its card
+>   (`keepCard`), a city chip synced the list BEFORE `show()` had moved the map, so New York left a UK list beside it
+>   (now `show(key).then(syncFindWhere)` and the note says the map is elsewhere), plus two superseded-`show()` races.
 > - **A VOTE FOR WHERE THE MAP GOES NEXT IS A COUNT, NOT A FORM (2026-10-13).** The front page's uncovered
 >   answers send one GoatCounter event: `event/want/uk/<council area>` (from postcodes.io, NEVER the postcode)
 >   or `event/want/country/<code>` from `WANT_COUNTRIES`, a FIXED list (no free text: people type addresses).
