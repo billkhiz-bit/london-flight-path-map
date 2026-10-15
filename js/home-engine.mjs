@@ -230,7 +230,7 @@ const state = {
   nycDoc: null, nycNoise: null, // scripts/build_nyc_front.py's file, and its picture placed on the map
   usZips: null, // the Census ZIP areas of the four Bay Area counties, fetched on the first ZIP typed
   rows: [], // the open-data CSV, one object per council area
-  layers: { noise: true, lines: true, streets: false },
+  layers: { noise: true, lines: true, streets: false, fit: true },
   zoom: null, k: 1,
   routes: [], // every drawn route as view-space segments with its tooltip, for the pointer-distance check
   selected: null, // the name of the council area or Bay Area place whose card is open
@@ -299,6 +299,8 @@ function parseCsv(text) {
 const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) || null;
 
 async function load() {
+  // Read before boot: a deep-linked area or postcode rewrites the address on its way in.
+  const wantFind = location.hash === '#find';
   const [extra, proc, rasters, csv, nycDoc] = await Promise.all([
     d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
     d3.text(CSV).catch(() => ''),
@@ -309,7 +311,11 @@ async function load() {
   readOsKey();
   renderChips();
   bindControls();
+  bindFit();
   await bootFromQuery();
+  // /#find opens the Find areas tab (the card's link, or a link sent to someone). Not engagement:
+  // nobody has done anything yet.
+  if (wantFind && !document.querySelector('.tabs[role="tablist"]')?.hidden) setTab('find', { counted: false, keepCard: true });
 }
 
 function renderChips() {
@@ -319,7 +325,9 @@ function renderChips() {
   for (const [key, name] of CITIES) {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = name; b.dataset.city = key; b.setAttribute('aria-pressed', 'false');
-    b.addEventListener('click', () => { engaged('city'); leaveIntro(); show(key); setQuery({ city: key }); });
+    // The Find list follows once the map has MOVED: show() sets the city only when its outlines
+    // land, so syncing at once read the city being left (review 2026-10-15).
+    b.addEventListener('click', () => { engaged('city'); leaveIntro(); setQuery({ city: key }); show(key).then(() => syncFindWhere(key)); });
     box.append(b);
   }
 }
@@ -367,7 +375,8 @@ function setQuery(parts) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(parts)) if (v) q.set(k, v);
   const s = q.toString();
-  history.replaceState(null, '', s ? `?${s}` : location.pathname);
+  // #find keeps the Find areas tab open across a reload or a shared link (2026-10-14).
+  history.replaceState(null, '', (s ? `?${s}` : location.pathname) + (findActive() ? '#find' : ''));
 }
 
 // ---- the map ----
@@ -565,6 +574,7 @@ function draw(pin) {
   bindZoom(W, H);
   applyScale();
   drawStreets();
+  applyFitMap();
 }
 
 // Web-mercator tiles under a d3 mercator. With the projection's default centre
@@ -886,10 +896,9 @@ function bindControls() {
     const card = byId('borough');
     const wasOpen = card?.classList.contains('is-open');
     const inCard = card?.contains(document.activeElement);
+    const name = state.selected;
     closeBorough(false);
-    if (wasOpen && (inCard || document.activeElement === document.body)) {
-      (state.opener?.isConnected ? state.opener : byId('pc'))?.focus();
-    }
+    if (wasOpen && (inCard || document.activeElement === document.body)) focusAfterCard(name, { fromEscape: true });
   });
   window.addEventListener('resize', () => { if (state.boroughs) draw(state.pin); });
 }
@@ -956,12 +965,30 @@ function clearPin() {
 function closeBorough(refocus) {
   const card = byId('borough');
   if (!card?.classList.contains('is-open')) return;
+  const name = state.selected;
   card.classList.remove('is-open');
   panelState();
   state.selected = null;
   svg.selectAll('.boro').classed('is-selected', false);
   setQuery({ city: state.city });
-  if (refocus) byId('pc')?.focus();
+  if (refocus) focusAfterCard(name);
+}
+// Where focus goes when a card closes: what opened it, if that is still on the page and
+// not in a hidden panel; on the Find tab, else the same area's row, else the tab itself;
+// on the postcode tab, the search box. Never into a hidden panel: #pc sits in
+// #panel-check, hidden while Find is open, and focusing it left a keyboard user on
+// <body> once a list rebuild had detached the row that opened the card (review 2026-10-15).
+function focusAfterCard(name, { fromEscape = false } = {}) {
+  const opener = state.opener;
+  const openerOk = Boolean(opener?.isConnected && !opener.closest('[hidden]'));
+  if (findActive()) {
+    if (openerOk) return opener.focus();
+    const row = name && [...document.querySelectorAll('#fit-list .find-row')].find((li) => li.dataset.name === norm(name));
+    return (row?.querySelector('button[data-borough]') || byId('tab-find'))?.focus();
+  }
+  // The postcode tab keeps its two tested rules: Escape goes back to what opened the card
+  // (M-17), the Close button to the search box.
+  return (fromEscape && openerOk ? opener : byId('pc'))?.focus();
 }
 // Once there is a result the question makes way for it: the panel's heading
 // shrinks and the lead and examples hide, so the answer stays on one screen
@@ -1338,6 +1365,301 @@ function render(postcode, district, city, e, lat, lon) {
   if (opens) document.querySelector(opens)?.classList.add('is-open');
   const scrollTo = document.body.dataset.scrollTo;
   if (scrollTo) document.querySelector(scrollTo)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ---- "Find areas": which council areas fit what you need (Bill, 2026-10-14, after Path came up at LGM #6) ----
+// CONDITIONS ON PUBLISHED FIGURES, NOT A REWEIGHTED SCORE. Ranking the 97 areas under the
+// engine's eight personas was measured first and rejected: rank correlation with balanced was
+// 0.87-0.99 for six of the seven, so the answers would have moved the numbers and left the
+// list alone. A condition does move it (London's 33 areas to between 4 and 13).
+// Each test is on the figure the council-area card prints, cut where the map's own band is cut
+// (METHODOLOGY s7.1, scripts/build_borough_bands.py), so "avoid busy roads" means what the map's
+// colours mean; tests/test_fit_conditions_mirror.py calls the bands builder either side of every
+// cut. Nothing is stored, and the one count is THAT the tab was opened, never what was chosen.
+//
+// It lives IN the panel, as the second of two tabs, so the map beside it is the answer: the areas
+// that fit are shaded as each choice is made (Bill, same day: the first version sat below the map
+// and sent you back up with a button, "still feels clunky").
+export const FIT_CUTS = { quietLowBand: 10, roadShare: 50, floodShare: 2, airRatio: 2.5, railShare: 50, progress8: 0 };
+const signed = (v) => `${v > 0 ? '+' : ''}${v}`;
+export const FIT_CONDITIONS = [
+  // `label` is the chip, `short` names a figure an area may not publish, `miss` says how one falls
+  // short, `says` gives the figure in words, and `means` is the line in "What the choices mean".
+  { key: 'planes', group: 'avoid', label: 'aircraft noise', short: 'aircraft', miss: 'more aircraft noise', col: 'quiet', test: (v) => v >= FIT_CUTS.quietLowBand,
+    says: (v) => `quiet skies ${v.toFixed(1)} / 10`, means: 'Aircraft noise: in the map\'s lowest band, quiet skies 10 out of 10. An estimate from the published flight routes (UK AIP, NATS).' },
+  { key: 'roads', group: 'avoid', label: 'busy roads', short: 'road noise', miss: 'more road noise', col: 'road_noise_above_who_pct', test: (v) => v < FIT_CUTS.roadShare,
+    says: (v) => `${v}% of addresses over 53 dB`, means: 'Busy roads: under half of addresses over the WHO road-noise guideline, 53 dB (DEFRA).' },
+  { key: 'flood', group: 'avoid', label: 'flood risk', short: 'flood', miss: 'more flood risk', col: 'flood_medium_or_high_pct', test: (v) => v < FIT_CUTS.floodShare,
+    says: (v) => `${v}% of addresses at risk`, means: 'Flood risk: under 2% of addresses at medium or high risk (Environment Agency).' },
+  { key: 'air', group: 'avoid', label: 'poor air', short: 'air quality', miss: 'poorer air', col: 'air_quality_who_ratio', test: (v) => v <= FIT_CUTS.airRatio,
+    says: (v) => `${v}× the WHO guideline`, means: 'Poor air: no worse than 2.5 times the WHO guideline (DEFRA).' },
+  { key: 'rail', group: 'want', label: 'a station', short: 'station', miss: 'fewer stations', col: 'rail_within_800m_pct', test: (v) => v >= FIT_CUTS.railShare,
+    says: (v) => `${v}% of addresses within 800 m of one`, means: 'A station: at least half of addresses within 800 m of a rail, metro or tram stop (NaPTAN).' },
+  { key: 'schools', group: 'want', label: 'good schools', short: 'schools', miss: 'schools below average', col: 'progress8', test: (v) => v > FIT_CUTS.progress8,
+    says: (v) => `Progress 8 ${signed(v)}`, means: 'Good schools: Progress 8 above 0, the England average (DfE).' },
+];
+export const FIT_BUDGETS = [200000, 250000, 300000, 400000, 500000, 600000, 750000, 1000000];
+const FIT_SHOWN = 8;
+const gbp = (v) => `£${Number(v).toLocaleString('en-GB')}`;
+const gbpShort = (v) => (v >= 1e6 ? `£${(v / 1e6).toFixed(2).replace(/0$/, '')}m` : `£${Math.round(v / 1000)}k`);
+
+// The council areas the tab searches: the open-data CSV's UK rows. New York's rows carry no
+// ONS code, and its curated dollar figures are not comparable with these.
+const fitRows = () => state.rows.filter((r) => r.ons_code);
+const findActive = () => byId('tab-find')?.getAttribute('aria-selected') === 'true';
+
+// One area against the chosen conditions: how it falls short, and which figures it does not
+// publish. A blank figure is UNKNOWN, never a pass: "no figure" is not "meets it".
+export function fitOf(row, chosen, budget) {
+  const missed = [], unknown = [];
+  if (budget) {
+    if (row.avg_price_gbp === '') unknown.push('price');
+    else if (Number(row.avg_price_gbp) > budget) missed.push('over the budget');
+  }
+  for (const c of chosen) {
+    const v = row[c.col];
+    if (v === '' || v == null) unknown.push(c.short);
+    else if (!c.test(Number(v))) missed.push(`${c.miss}: ${c.says(Number(v))}`);
+  }
+  return { missed, unknown };
+}
+
+// Highest Sky Score first, then cheapest: the order the list says it is in.
+const byScore = (a, b) => (Number(b.score || -1) - Number(a.score || -1)) || (Number(a.avg_price_gbp) - Number(b.avg_price_gbp));
+
+// A row: the name (the control, stretched over the row), its region when the list spans several,
+// its average price and its Sky Score. A near miss says what it misses, with the figure.
+function findRow(row, showRegion, missed = '') {
+  return `<li class="find-row" data-city="${esc(row.city)}" data-name="${esc(norm(row.borough))}">`
+    + `<span class="find-name"><button type="button" data-borough="${esc(row.borough)}">${esc(row.borough)}<span class="vh">: open its figures</span></button>`
+    + `${showRegion ? `<span class="find-sub">${esc(row.city_name)}</span>` : ''}</span>`
+    + `<span class="find-price"><span class="vh">average </span>${esc(gbpShort(Number(row.avg_price_gbp)))}</span>`
+    + `<span class="find-score">${row.score === '' ? '<small>not scored</small>' : `${esc(row.score)}<span class="vh"> Sky Score</span>`}</span>`
+    + (missed ? `<span class="find-miss">Misses: <em>${esc(missed)}</em></span>` : '')
+    + '</li>';
+}
+
+let fitShowAll = false;
+let fitNow = { fits: [], chosen: false }; // what the list shows, which the map shades
+function updateFit() {
+  const count = byId('fit-count'), list = byId('fit-list'), note = byId('fit-note');
+  if (!count || !list || !note) return;
+  const where = byId('fit-where')?.value || '';
+  const budget = Number(byId('fit-budget')?.value || 0);
+  const chosen = FIT_CONDITIONS.filter((c) => byId(`fit-${c.key}`)?.checked);
+  const rows = fitRows().filter((r) => !where || r.city === where);
+  if (!budget && !chosen.length) {
+    fitNow = { fits: [], chosen: false };
+    count.textContent = 'Choose a price or what to avoid, and the areas that fit are shaded on the map.';
+    list.innerHTML = '';
+    note.textContent = '';
+    applyFitMap();
+    return;
+  }
+  const judged = rows.map((r) => ({ r, ...fitOf(r, chosen, budget) }));
+  // THE BUDGET IS A HARD LIMIT, like the region (Bill, 2026-10-14: "don't include anything over
+  // budget"). An area over it is never offered, not even as a near miss: "the nearest" are the
+  // areas you could afford that miss one of the other choices.
+  const affordable = (r) => !budget || (r.avg_price_gbp !== '' && Number(r.avg_price_gbp) <= budget);
+  const fits = judged.filter((j) => !j.missed.length && !j.unknown.length).map((j) => j.r).sort(byScore);
+  const maybe = judged.filter((j) => !j.missed.length && j.unknown.length);
+  const near = judged.filter((j) => j.missed.length === 1 && !j.unknown.length && affordable(j.r));
+  fitNow = { fits, chosen: true };
+  const scope = where ? ` in ${rows[0]?.city_name || where}` : ' we cover';
+  const region = !where;
+
+  let items = [];
+  if (fits.length) {
+    count.textContent = `${fits.length} of the ${rows.length} council areas${scope} ${fits.length === 1 ? 'fits' : 'fit'}.`;
+    items = (fitShowAll ? fits : fits.slice(0, FIT_SHOWN)).map((r) => findRow(r, region));
+    if (fits.length > FIT_SHOWN && !fitShowAll) items.push(`<li class="find-more"><button type="button" class="linkish" id="fit-more">Show all ${fits.length}</button></li>`);
+  } else if (budget && !rows.some(affordable)) {
+    // Nothing near either: the budget alone rules out every area here.
+    count.textContent = `No council area${scope} averages under ${gbp(budget)}. Try a higher price or another region.`;
+  } else {
+    // Nothing meets all of it: the affordable areas one choice away, and which one, rather than a blank.
+    const nearest = budget ? ` The nearest under ${gbp(budget)} miss one:` : ' The nearest miss one:';
+    count.textContent = `None of the ${rows.length} council areas${scope} meets all of these.${near.length ? nearest : ''}`;
+    items = near.sort((a, b) => byScore(a.r, b.r)).slice(0, FIT_SHOWN).map((j) => findRow(j.r, region, j.missed[0]));
+  }
+  // One heading for the columns, so each row's figures stay on one line. Hidden from assistive
+  // tech, because each row says its own ("average £453k", "7.1 Sky Score").
+  const head = items.length ? '<li class="find-head" aria-hidden="true"><span>Council area</span><span>Average</span><span>Sky Score</span></li>' : '';
+  list.innerHTML = head + items.join('');
+
+  const lines = [];
+  if (maybe.length) {
+    const names = maybe.slice(0, 4).map((j) => `${j.r.borough} (no ${j.unknown.join(' or ')} figure)`);
+    lines.push(`${maybe.length} more might fit but do not publish every figure you asked about: ${names.join(', ')}${maybe.length > 4 ? ', and others' : ''}.`);
+  }
+  lines.push('Highest Sky Score first. These are council-area figures and streets differ, so check a postcode before a viewing.');
+  // The map can be on a city this list does not hold: say so, and do not offer to "see them" there.
+  const mapHolds = fitRows().some((r) => r.city === state.city);
+  if (state.city && !mapHolds) {
+    lines.unshift(`The map is showing ${CITY_NAME[state.city] || 'a city'}, which this list does not cover: choose a UK region on the map to see these areas shaded.`);
+  }
+  const jump = byId('fit-mapjump')?.closest('p');
+  if (jump) jump.hidden = Boolean(state.city) && !mapHolds;
+  note.textContent = lines.join(' ');
+  applyFitMap();
+}
+
+// ---- the map is the answer: areas that fit are shaded while the tab is open ----
+// Only the city on screen can be shaded; with "anywhere we cover" the list spans every region and
+// the map shades the part of it that is in view. The legend's "Fits your choices" switch turns the
+// shading off, to read the noise picture beneath; it shows only while there is something to shade.
+function applyFitMap() {
+  const names = new Set(fitNow.fits.filter((r) => r.city === state.city).map((r) => norm(r.borough)));
+  const has = findActive() && fitNow.chosen && names.size > 0;
+  const on = has && state.layers.fit;
+  const fits = (d) => on && names.has(norm(featureName(d)));
+  svg.classed('has-fit', on);
+  svg.selectAll('.boro').classed('is-fit', fits)
+    .attr('aria-label', (d) => `${featureName(d)}${fits(d) ? ', fits your choices' : ''}: open its figures`);
+  const toggle = byId('toggle-fit');
+  if (toggle) {
+    toggle.hidden = !has;
+    toggle.setAttribute('aria-pressed', String(on));
+  }
+}
+// A row under the pointer or the keyboard outlines its area on the map, when that area is in view.
+function markHot(li) {
+  svg.selectAll('.boro').classed('is-hot', (d) => Boolean(li) && li.dataset.city === state.city && norm(featureName(d)) === li.dataset.name);
+}
+
+// An area chosen from the list opens its card in the panel, over the list; closing it comes back.
+async function openFitArea(name) {
+  const row = fitRows().find((r) => r.borough === name);
+  if (!row) return;
+  const seq = ++searchSeq; // newer than any search still in flight, which then stops
+  if (CITY_NAME[row.city] && row.city !== state.city) await show(row.city);
+  // Stop if anything newer started, or if the map did not end on this row's city (a city
+  // chip clicked while its outlines loaded): the card would open over another city's map.
+  if (seq !== searchSeq || (CITY_NAME[row.city] && state.city !== row.city)) return;
+  markHot(null);
+  selectBorough(row.borough, { scroll: window.matchMedia(STACKED).matches });
+  byId('borough')?.querySelector('h2')?.focus({ preventScroll: true });
+}
+
+// ---- the two tabs: "Check a postcode" and "Find areas" (WAI-ARIA tabs, automatic activation) ----
+let findOpened = false;
+// `counted` is false only for /#find at boot: a link that opens the tab is not a person's action (as a deep-linked search is not).
+// `keepCard` is true only then too: a shared link to an area opened from the list
+// (?city=...&borough=...#find) must come back with that area's card open, not closed.
+function setTab(name, { focus = false, counted = true, keepCard = false } = {}) {
+  const panel = byId('panel-find')?.closest('.panel');
+  for (const tab of document.querySelectorAll('.tabs [role="tab"]')) {
+    const on = tab.id === `tab-${name}`;
+    tab.setAttribute('aria-selected', String(on));
+    tab.tabIndex = on ? 0 : -1;
+    const tabpanel = byId(tab.getAttribute('aria-controls'));
+    if (tabpanel) tabpanel.hidden = !on;
+    if (on && focus) tab.focus({ preventScroll: true });
+  }
+  panel?.classList.toggle('is-find', name === 'find');
+  // The address says which tab is open, so a reload or a shared link comes back to it.
+  history.replaceState(null, '', location.pathname + location.search + (name === 'find' ? '#find' : ''));
+  if (name === 'find') {
+    if (counted) engaged('fit');
+    // The map is the answer, so the question over a faded map makes way for it.
+    leaveIntro();
+    if (!keepCard) closeBorough(false);
+    // The first time, the list starts where the map is (when the map is on a region the list
+    // knows); after that, whatever the reader chose, "Anywhere" included, is kept.
+    const where = byId('fit-where');
+    if (!findOpened && where && [...where.options].some((o) => o.value === state.city)) where.value = state.city;
+    findOpened = true;
+    updateFit();
+  } else {
+    markHot(null);
+    applyFitMap();
+  }
+}
+// A city chosen on the map while the tab is open becomes the list's region too, so the two agree.
+// A city the list does not hold (New York, the Bay Area: the open-data CSV is UK council areas)
+// keeps the list as chosen, and updateFit() says the map is elsewhere rather than leaving a
+// London list silently beside a New York map (review 2026-10-15).
+function syncFindWhere(key) {
+  const where = byId('fit-where');
+  // A later chip that replaced this one owns the map, and the list follows that one.
+  if (!findActive() || !where || state.city !== key || where.value === key) return;
+  if ([...where.options].some((o) => o.value === key)) {
+    where.value = key;
+    fitShowAll = false;
+  }
+  updateFit();
+}
+
+function bindFit() {
+  const tablist = document.querySelector('.tabs[role="tablist"]'), form = byId('fit-form');
+  const rows = fitRows();
+  // Without the CSV there is nothing to search: the tabs stay hidden and the panel is the postcode check alone.
+  if (!tablist || !form || !rows.length) return;
+  const regions = [...new Map(rows.map((r) => [r.city, r.city_name])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
+  byId('fit-where').innerHTML = '<option value="">Anywhere we cover</option>'
+    + regions.map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join('');
+  byId('fit-budget').innerHTML = '<option value="">Any price</option>' + FIT_BUDGETS.map((b) => `<option value="${b}">Under ${gbp(b)}</option>`).join('');
+  for (const group of ['avoid', 'want']) {
+    const box = byId(`fit-${group}`);
+    if (box) box.innerHTML = FIT_CONDITIONS.filter((c) => c.group === group).map((c) => `<label class="fit-pill"><input type="checkbox" id="fit-${c.key}" />${esc(c.label)}</label>`).join('');
+  }
+  const means = byId('fit-means');
+  if (means) {
+    means.innerHTML = FIT_CONDITIONS.map((c) => `<li>${esc(c.means)}</li>`).join('')
+      + `<li>${esc(`Price: each council area's average, HM Land Registry, ${rows[0]?.price_vintage || 'latest month'}. Every area has homes above and below its average.`)}</li>`;
+  }
+  form.addEventListener('change', (ev) => {
+    fitShowAll = false;
+    updateFit();
+    // A region the map draws is shown there: the list and the map always describe the same place.
+    if (ev.target.id === 'fit-where' && isMapCity(ev.target.value) && ev.target.value !== state.city) {
+      const key = ev.target.value;
+      // Only if the map ended there: a later choice that replaced this one owns the address.
+      show(key).then(() => { if (state.city === key) setQuery({ city: key }); });
+    }
+  });
+  const list = byId('fit-list');
+  list?.addEventListener('click', (ev) => {
+    if (ev.target.closest('#fit-more')) {
+      fitShowAll = true;
+      updateFit();
+      // The button that was pressed is gone: focus goes to the first area it revealed.
+      list.querySelectorAll('button[data-borough]')[FIT_SHOWN]?.focus();
+      return;
+    }
+    const b = ev.target.closest('button[data-borough]');
+    if (b) openFitArea(b.dataset.borough);
+  });
+  list?.addEventListener('pointerover', (ev) => markHot(ev.target.closest('.find-row')));
+  list?.addEventListener('pointerleave', () => markHot(null));
+  list?.addEventListener('focusin', (ev) => markHot(ev.target.closest('.find-row')));
+  list?.addEventListener('focusout', () => markHot(null));
+  byId('fit-mapjump')?.addEventListener('click', () => {
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelector('.mapwrap')?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+  });
+  byId('toggle-fit')?.addEventListener('click', () => { state.layers.fit = !state.layers.fit; applyFitMap(); });
+  // The tabs: a click or Enter selects; the arrow keys, Home and End move between them and select.
+  const tabs = [...tablist.querySelectorAll('[role="tab"]')];
+  for (const tab of tabs) tab.addEventListener('click', () => setTab(tab.id.replace('tab-', '')));
+  tablist.addEventListener('keydown', (ev) => {
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[ev.key];
+    if (to === undefined) return;
+    ev.preventDefault();
+    setTab(tabs[(to + tabs.length) % tabs.length].id.replace('tab-', ''), { focus: true });
+  });
+  // A link to the tab (the "Find an area that fits" card below the map) opens it and brings the panel into view.
+  for (const a of document.querySelectorAll('a[href="#find"]')) {
+    a.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      setTab('find', { focus: true });
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      hero?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+    });
+  }
+  tablist.hidden = false;
 }
 
 load().catch((e) => say(`The map could not load: ${e.message}`));
