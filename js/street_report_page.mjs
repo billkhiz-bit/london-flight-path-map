@@ -223,8 +223,8 @@ async function make(raw, check = null) {
         // gets the firms note, not the report.
         '@media print { body > * { display: none !important; } body::before { content: "A printed or PDF copy of a report is part of the service for firms: skyscore.co.uk/pricing"; font: 14pt system-ui, sans-serif; } }' +
         // The watermark: faint enough to read through, there on every screenshot.
-        '.free-copy-mark { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 110px 70px; padding: 60px 20px; }' +
-        '.free-copy-mark span { transform: rotate(-28deg); font: 600 15px system-ui, sans-serif; color: rgba(20, 20, 20, 0.09); white-space: nowrap; }' +
+        // A tiled image, not text (audit 2026-10-09 M-10): as text, axe's contrast rule read it at 1.2:1.
+        '.free-copy-mark { position: absolute; inset: 0; pointer-events: none; z-index: 5; background-repeat: repeat; }' +
         // The check block sits ABOVE the watermark on white, so faint text never crosses the QR code.
         '.free-copy-check { position: relative; z-index: 6; background: #fff; display: flex; gap: 14px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid #dedcd6; }' +
         // Sized below, from the code itself, so it overrides the report's `svg { width: 100% }`.
@@ -254,12 +254,16 @@ async function make(raw, check = null) {
       mark.className = 'free-copy-mark';
       mark.setAttribute('aria-hidden', 'true');
       const line = `Personal use only · ${loc.postcode} · ${longDate(made)}`;
-      for (let i = 0; i < 60; i++) {
-        const span = doc.createElement('span');
-        span.textContent = line;
-        mark.append(span);
-      }
+      // The line is kept as data too, so a check can read what the image says.
+      mark.dataset.line = line;
+      const xml = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const tile = '<svg xmlns="http://www.w3.org/2000/svg" width="440" height="170">'
+        + '<text x="20" y="110" transform="rotate(-28 220 85)" font-family="system-ui, sans-serif" font-size="15"'
+        + ` font-weight="600" fill="rgba(20,20,20,0.09)">${xml(line)}</text></svg>`;
+      mark.style.backgroundImage = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(tile)}")`;
       doc.body.append(mark);
+      // The page has its own footer, so the report's needs a name of its own (M-10, landmark-unique).
+      doc.querySelector('footer')?.setAttribute('aria-label', 'About this report');
 
       // The reference, the check link and its QR code, and the terms line. Bill, 2026-10-06:
       // "can't firms just pretend to be a resident?", then "people can screenshot and maybe
@@ -364,7 +368,9 @@ async function showCheck(check, postcode, airac, env) {
   const ok = expected === check.ref;
   checkResult.className = `check-result ${ok ? 'ok' : 'bad'}`;
   checkResult.innerHTML = ok
-    ? `Reference ${esc(shown)} matches. A copy made for ${esc(postcode)} on ${when} with this reference states the same official figures as the report below.`
+    // A reference proves the postcode and the day, not that a copy's figures were left alone: the copy's
+    // figures are never an input here (audit 2026-10-09 M-2), so the reader is told to compare them.
+    ? `Reference ${esc(shown)} matches a copy made for ${esc(postcode)} on ${when}. It cannot show that the figures on a copy were left unchanged: compare every figure on your copy with the report below, which a genuine copy states exactly.`
     : `Reference ${esc(shown)} does not match today's figures for ${esc(postcode)}. Either the official figures have been updated since ${when}, or the copy you were shown was changed. The report below is made from today's official data.`;
   checkResult.hidden = false;
 }

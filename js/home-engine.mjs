@@ -1144,7 +1144,10 @@ function routesText(proc, lat, lon) {
   // ...and the same runways with no glide path on record (audit 2026-10-09 I-5).
   const unglided = under ? null : unglidedOverhead(near.unglided);
   const nearestFinal = near.finals.sort((a, b) => a.dist - b.dist)[0];
-  const parts = [`Nearest airport on the map: ${name}, ${km(ap.dist)} to the ${compass(ap.q)}.`];
+  // An airport held for its runway alone (LGW, STN, LTN: method 'not-drawn') is not drawn, so it is not
+  // "on the map" (audit 2026-10-09 M-5); the route-gap line below says its routes are not drawn.
+  const where = ap.method === 'not-drawn' ? 'Nearest airport' : 'Nearest airport on the map';
+  const parts = [`${where}: ${name}, ${km(ap.dist)} to the ${compass(ap.q)}.`];
   if (under) {
     parts.push(`Under the ${AIRPORT_NAME[under.code] || under.code} ${under.rwy} final approach, ${under.dist < 0.05 ? 'on the centreline' : `${km(under.dist)} from the centreline`}, aircraft at about ${roundFt(under.heightFt).toLocaleString('en-GB')} ft here.`);
   } else if (unglided) {

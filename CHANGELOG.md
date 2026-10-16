@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-16 (late) - Live: New York's fitted figures and the audit fixes
+
+- **Deployed and checked against the live site**: New York's aircraft figures fitted to its airports' monitors,
+  the stricter "avoid aircraft noise", the landscape map and the rest of tonight's fixes. Every page, data file
+  and area page matches what was released, and the API and the site agree.
+- **Wide but short screens now get the phone layout**: a phone on its side over 900 px wide had the desktop
+  layout, with its buttons piled over the map; every area is visible now.
+- **Seven of the eight smaller items left from the 9 October review** (the API reference's second landmark needs a
+  change to how Swagger draws it, and stays open): among them the street report's check, which now asks you
+  to compare every figure on a copy, and "Nearest airport" no longer saying "on the map" for Gatwick, whose
+  routes the map does not draw.
+- **Two more Bay Area inputs gathered** (house-price trend by county, rail stations), not yet shown.
+
 ## 2026-10-16 (night) - The weekly audit, and what it fixed
 
 - **"Avoid aircraft noise" in Find areas no longer offers areas a flight route crosses.** It used the council

@@ -290,6 +290,8 @@
         /* On a phone the question, the search and the answer come first and the map follows: measured, the answer otherwise opened a whole screen below the box. */
         .panel { position: static; order: -1; width: auto; border-radius: 0; box-shadow: none; backdrop-filter: none; background: var(--paper); padding: 20px 18px 16px; }
         .hero .mapwrap { position: relative; height: 52vh; min-height: 320px; }
+        /* The routes summary's focus ring cleared its label by -5 px here (audit 2026-10-09 M-13). */
+        .borough .routes-across summary { margin-top: 6px; }
         .hero svg { position: absolute; }
         /* A scroll strip, as the live site's city chips are on a phone: wrapped, twelve chips stood taller than the map and reached up into the panel. */
         .chips { left: 12px; right: 12px; bottom: 12px; max-width: none; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; }
@@ -377,7 +379,8 @@
           <p class="status" id="status" aria-live="polite"></p>
           <div class="want" id="want-country" aria-live="polite" hidden></div>
           <div class="answer" id="answer">
-            <p class="ans-pc" id="ans-title"></p>
+            <!-- Text from the first answer on; never empty (html-validate), and hidden with the answer until then. -->
+            <h2 class="ans-pc" id="ans-title">Your answer</h2>
             <p class="where" id="ans-where"></p>
             <div class="rows" id="ans-rows"></div>
             <p class="routes" id="ans-routes"></p>

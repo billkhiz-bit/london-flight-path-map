@@ -25,7 +25,7 @@ None.
 | I-3 | **"Avoid aircraft noise" in Find areas lists council areas the same page shows routes crossing.** London under £1m with aircraft noise ticked lists 13 areas at quiet skies 10.0, among them Bexley (London City's runway 27 final approach), Havering, Barking and Dagenham, Redbridge, Waltham Forest and Enfield (several London City departures each). The rule (the lowest council band, estimated) is explained only inside the collapsed "What the choices mean". | `js/home-engine.mjs` (`FIT_CONDITIONS.planes`) | Front end / wording | **Fixed the same evening (Bill: "go ahead with recommendations")**: "avoid aircraft noise" now needs the lowest band AND no route on the map crossing the area. The counts are the page's own `routesAcross()`, run for every drawn UK region by `scripts/build_area_route_crossings.mjs` into `data/area-route-crossings.json` (blocking `--check`); a region the map does not draw counts as unknown, never a pass. London's "aircraft noise" list went from 13 areas to 4 (Hackney, Haringey, Islington, Sutton). Proven red in `tests/front-page.mjs` with the rule removed. |
 | I-4 | **On a landscape phone the full map hides the north of every city under the search card.** At 844x390 `elementFromPoint` at an area's centre lands on `div.search-box` for 12 of London's 33 boroughs, 4 of Greater Manchester's 10, 3 of Tyne and Wear's 5, the Bronx, and 32 of the Bay Area's 50. `tests/map-fit.mjs` passes because it measures the SVG box, not the band the chrome leaves uncovered. Pre-dates this window. | `index.html` (`mapCentreY`, `--map-band-top`), `tests/map-fit.mjs` | Front end / responsive | **Fixed for the phone layout**: the map now fits and centres in the band below the search card (and below the phone footer where the band is still deep enough), clipped to it. `tests/map-fit.mjs` now asks what lies at every area's centre at each phone size and measures fill against the visible band; proven red on the old layout (London 12, Bay Area 32, the Bronx, Leeds, Bradford, Doncaster, Sefton...). At 568x320 the footer's links still overlie 5 London centres, because the band below them is too shallow to use. |
 
-| I-5 | **Found while fixing I-4: wide but short screens get the desktop layout, and its chrome piles onto the map.** At 915x412 (and an iPhone Pro Max on its side, 932x430) the layout switches to two columns above 900 px wide, so the city chips, legend, layer buttons and footer all sit over a 412 px-tall map: 23 of London's 33 area centres are covered, and the layer buttons overlap the chips. | `index.html` (the 900 px breakpoint, `applyTabbedLayout`) | Front end / responsive | Open. Recommended: use the phone layout below about 500 px of height as well as below 900 px of width (the front page already does: `STACKED` includes `max-height: 500px`), then add 915x412 to `tests/map-fit.mjs`. |
+| I-5 | **Found while fixing I-4: wide but short screens get the desktop layout, and its chrome piles onto the map.** At 915x412 (and an iPhone Pro Max on its side, 932x430) the layout switches to two columns above 900 px wide, so the city chips, legend, layer buttons and footer all sit over a 412 px-tall map: 23 of London's 33 area centres are covered, and the layer buttons overlap the chips. | `index.html` (the 900 px breakpoint, `applyTabbedLayout`) | Front end / responsive | **Fixed the same night (Bill: "do all of the above")**: the phone layout is one condition, `PHONE_LAYOUT = '(max-width: 900px), (max-height: 500px)'`, used by every check in the script and stated by every @media rule (`tests/test_phone_layout_query.py`, proven red on a width-only desktop rule); 915x412 is in `tests/map-fit.mjs` and `tests/responsive.mjs`, with every area visible. |
 
 ## Minor Issues
 
@@ -63,16 +63,16 @@ None.
 | Item | Status 16 Oct |
 |---|---|
 | I-2 (badge "not covered" replaced by the 404 page) | Closed in source and deployed 11 Oct (`MAPPED = (403,)`). |
-| M-2 (free copy's check verdict wording) | Open. |
-| M-5 ("Nearest airport on the map: Gatwick", runways-only record) | Open. |
-| M-8 (front page BTS palette not compared with `NOISE_SCALE_BTS`) | Open. |
-| M-10 (watermark contrast; frame footer landmark) | Open (axe: 10 nodes at 1440, 16 at 320). |
+| M-2 (free copy's check verdict wording) | Fixed 16 Oct (see that report). |
+| M-5 ("Nearest airport on the map: Gatwick", runways-only record) | Fixed 16 Oct. |
+| M-8 (front page BTS palette not compared with `NOISE_SCALE_BTS`) | Fixed 16 Oct. |
+| M-10 (watermark contrast; frame footer landmark) | Fixed 16 Oct. |
 | M-11 (card announced twice) | Open, widened: see M-15 above. |
-| M-12 (no heading on the postcode answer) | Open. |
-| M-13 (routes focus ring over its label) | Open (5 px overlap at 390, 320, 844). |
+| M-12 (no heading on the postcode answer) | Fixed 16 Oct. |
+| M-13 (routes focus ring over its label) | Fixed 16 Oct. |
 | M-14, M-17 (design: answer below the clip; page furniture) | As recorded, Bill's calls. |
-| M-15 (two `main` landmarks on the API reference) | Open. |
-| M-16 (`/reports/` sub-headings as `<div><b>`) | Open. |
+| M-15 (two `main` landmarks on the API reference) | Still open: both fixes tried on 16 Oct broke a blocking axe rule; needs a Swagger plugin. Non-blocking. |
+| M-16 (`/reports/` sub-headings as `<div><b>`) | Fixed 16 Oct. |
 | The old EPC key in git history (`7eb1984`) | Still not confirmed revoked. |
 
 ## Checked and clean
@@ -91,5 +91,5 @@ None.
 ## Summary
 
 - Critical: 0
-- Important: 5 (I-1 to I-4 fixed the same day, I-3 and I-4 after Bill's "go ahead"; I-5, found while fixing I-4, open with a recommendation)
+- Important: 5, all fixed the same day (I-3, I-4 and I-5 after Bill's "go ahead" / "do all of the above")
 - Minor: 19 (18 fixed or settled the same day, M-19 kept deliberately; the Python patch in place waits on another project's jobs)

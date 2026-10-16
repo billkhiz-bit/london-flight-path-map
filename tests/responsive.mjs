@@ -193,6 +193,9 @@ const VIEWPORTS = [
   // on `max-width: 480px`. At 568x320 it showed 26px - 93% hidden.
   { w: 844, h: 390, name: 'iPhone 14 landscape' },
   { w: 568, h: 320, name: 'iPhone SE landscape' },
+  // Wide but short (audit 2026-10-16 I-5): above 900 px it took the desktop layout, whose chrome then piled
+  // onto a 412 px map; the phone layout applies below 500 px of height now.
+  { w: 915, h: 412, name: 'phone on its side, wide' },
 ];
 
 // The homepage gets all ten. The static pages get the narrow end only: they

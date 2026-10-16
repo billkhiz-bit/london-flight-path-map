@@ -275,6 +275,16 @@ often planes fly"). Measured privately; nothing derived from these is published:
   home value for the Bay Area's 50 cities, release 2's price input. Public domain (a US government work), from
   the keyless summary file (the API now wants a key). "$2,000,000+" is coded 2000001: a floor, flagged
   `top_coded` (16 of 50), never shown as a price.
+- **FHFA House Price Index, counties (annual, all-transactions, "developmental"), `data/us-bayarea-trend.json`
+  (2026-10-16)**: the 2025 annual change for the four Bay Area counties, release 2's growth input. Public domain
+  under FHFA's website policy s10 ("information and materials produced by Federal agencies, including FHFA, are
+  in the public domain"; the FHFA seal excluded); s11 forbids implying FHFA's endorsement. County-wide and a
+  calendar year behind the UK's monthly HPI: never shown as a city's own or current trend.
+- **BTS National Transit Map Stops, `data/us-bayarea-transit.json` (2026-10-16)**: 334 rail, metro and light-rail
+  stations in the four counties (GTFS route types 0-2), release 2's transport input. **CC-BY 3.0 United States**:
+  credit "US Department of Transportation, Bureau of Transportation Statistics" wherever it is shown; the Bay
+  Area agencies list their own feeds as public domain. Cable cars are left out (a decision, recorded in the
+  file); Capitol Corridor (Amtrak) is absent from the layer (a known gap, recorded, not filled).
 - **US Census Bureau ACS 5-year, table B01003 (2020-2024), and the 2024 ZCTA gazetteer, `data/us-nyc-zcta.json`
   (2026-10-16)**: population and internal point of the 211 ZIP Code Tabulation Areas inside New York's five
   boroughs, which weight New York's borough aircraft bands (`scripts/build_nyc_impact.py`). Public domain (US

@@ -6,7 +6,10 @@ picking the repo up on a laptop, or starting a fresh session on this desktop.
 **NOTHING IS BLOCKED (re-measured 2026-09-09).** `scripts/check_aws_permissions.py`
 reports **18 granted, 0 denied**; three waves have deployed since. Read §0.
 
-**WHERE TO START (2026-10-12) - `ROADMAP.md`'s START HERE block is the live list.** The grid-reference re-placing
+**WHERE TO START (2026-10-16, late) - `ROADMAP.md`'s START HERE block is the live list.** v5.6 (New York fitted to
+its monitors) and the 16 Oct audit's fixes are live; batch 2 and New York's January-July runway count are in flight.
+
+**Previously (2026-10-12):** The grid-reference re-placing
 is COMPLETE and live: Bill ran the road, aircraft and air-quality reloads and `remove_lost_readings.py --apply`
 (6,585 stale fields), and the council-area figures were re-measured and deployed. All 8 Importants of
 `AUDIT_REPORT_2026-10-09.md` are closed (I-6, the free report's phone reflow, on 12 Oct, with M-1/6/7/9). Master

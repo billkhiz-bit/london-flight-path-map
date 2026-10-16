@@ -5,8 +5,8 @@
 > **2026-10-16:** 0 Critical, 5 Important (I-1 New York's legend described the old method; I-2 New York's
 > bands could read quieter than their own estimate; I-3 "avoid aircraft noise" listed areas crossed by
 > routes; I-4 the landscape phone map hid each city's north under the search card: all four fixed the same
-> day. I-5, wide-but-short screens get the desktop layout over the map, is open), 19 Minor. Statuses live
-> in that file.
+> day, and I-5, wide-but-short screens given the desktop layout, the same night), 19 Minor; the 9 Oct
+> report's eight open Minors were closed the same night too. Statuses live in those files.
 >
 > ### Previously: `AUDIT_REPORT_2026-10-09.md`
 >

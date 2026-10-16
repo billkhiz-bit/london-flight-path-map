@@ -1,0 +1,38 @@
+{
+ "source": "Federal Housing Finance Agency, House Price Index for counties (all-transactions, annual, not seasonally adjusted), a series FHFA calls developmental",
+ "url": "https://www.fhfa.gov/hpi/download/annual/hpi_at_county.xlsx",
+ "fhfa_last_updated": "March 31, 2026",
+ "licence": "public domain (FHFA website policy s10); never imply FHFA endorsement (s11)",
+ "generator": "scripts/build_bayarea_trend.py --write",
+ "scope": "county-wide: every city in a county shares its figure, and it is a calendar year, not a month",
+ "counties": [
+  {
+   "county": "Alameda",
+   "fips": "06001",
+   "year": 2025,
+   "annual_change_pct": -1.91,
+   "index": 2486.02
+  },
+  {
+   "county": "San Francisco",
+   "fips": "06075",
+   "year": 2025,
+   "annual_change_pct": 0.5,
+   "index": 2739.65
+  },
+  {
+   "county": "San Mateo",
+   "fips": "06081",
+   "year": 2025,
+   "annual_change_pct": -0.61,
+   "index": 2603.37
+  },
+  {
+   "county": "Santa Clara",
+   "fips": "06085",
+   "year": 2025,
+   "annual_change_pct": -0.63,
+   "index": 2957.37
+  }
+ ]
+}

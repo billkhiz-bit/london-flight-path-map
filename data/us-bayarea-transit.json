@@ -1,0 +1,3030 @@
+{
+ "source": "US Department of Transportation, Bureau of Transportation Statistics, National Transit Map Stops (compiled from the agencies' GTFS feeds)",
+ "layer": "https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_National_Transit_Map_Stops/FeatureServer/0",
+ "compiled": [
+  "2026-03-09"
+ ],
+ "licence": "Creative Commons Attribution 3.0 United States (CC-BY-3.0): credit USDOT BTS",
+ "generator": "scripts/build_bayarea_transit.py --write",
+ "kept": "GTFS route types 0 (tram, light rail), 1 (subway, metro), 2 (rail); one record per station",
+ "left_out": {
+  "cable_car_stops": 116,
+  "why": "a tourist line with stops every block; a decision, not a gap in the data"
+ },
+ "known_gap": "Capitol Corridor (Amtrak) is absent from the layer: Emeryville reads no station, and Berkeley, Hayward and Jack London Square each lose one",
+ "stations_by_agency_ntd_id": {
+  "90003": 43,
+  "90013": 60,
+  "90015": 194,
+  "90134": 30,
+  "90182": 7
+ },
+ "stations": [
+  {
+   "name": "12th Street / Oakland City Center",
+   "agency": "90003",
+   "lat": 37.803482,
+   "lon": -122.27163,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "16th Street / Mission",
+   "agency": "90003",
+   "lat": 37.765173,
+   "lon": -122.419704,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "19th Street Oakland",
+   "agency": "90003",
+   "lat": 37.808078,
+   "lon": -122.268758,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "24th Street / Mission",
+   "agency": "90003",
+   "lat": 37.752419,
+   "lon": -122.418468,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Ashby",
+   "agency": "90003",
+   "lat": 37.853072,
+   "lon": -122.269771,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Balboa Park",
+   "agency": "90003",
+   "lat": 37.721747,
+   "lon": -122.447457,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Bay Fair",
+   "agency": "90003",
+   "lat": 37.696908,
+   "lon": -122.126446,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Berryessa / North San Jose",
+   "agency": "90003",
+   "lat": 37.368473,
+   "lon": -121.874681,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Castro Valley",
+   "agency": "90003",
+   "lat": 37.690737,
+   "lon": -122.075601,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Civic Center / UN Plaza",
+   "agency": "90003",
+   "lat": 37.779408,
+   "lon": -122.413826,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Coliseum",
+   "agency": "90003",
+   "lat": 37.753576,
+   "lon": -122.196716,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Colma",
+   "agency": "90003",
+   "lat": 37.684635,
+   "lon": -122.466157,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Daly City",
+   "agency": "90003",
+   "lat": 37.706259,
+   "lon": -122.468908,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Downtown Berkeley",
+   "agency": "90003",
+   "lat": 37.87011,
+   "lon": -122.268109,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Dublin / Pleasanton",
+   "agency": "90003",
+   "lat": 37.701646,
+   "lon": -121.899229,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "El Cerrito Del Norte",
+   "agency": "90003",
+   "lat": 37.925184,
+   "lon": -122.316892,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "El Cerrito Plaza",
+   "agency": "90003",
+   "lat": 37.90261,
+   "lon": -122.29892,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Embarcadero",
+   "agency": "90003",
+   "lat": 37.792762,
+   "lon": -122.397037,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Fremont",
+   "agency": "90003",
+   "lat": 37.55748,
+   "lon": -121.976619,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Fruitvale",
+   "agency": "90003",
+   "lat": 37.774841,
+   "lon": -122.224081,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Glen Park",
+   "agency": "90003",
+   "lat": 37.733235,
+   "lon": -122.433515,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Hayward",
+   "agency": "90003",
+   "lat": 37.669699,
+   "lon": -122.086958,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Lafayette",
+   "agency": "90003",
+   "lat": 37.893183,
+   "lon": -122.12462,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Lake Merritt",
+   "agency": "90003",
+   "lat": 37.797322,
+   "lon": -122.265247,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "MacArthur",
+   "agency": "90003",
+   "lat": 37.828803,
+   "lon": -122.267105,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Millbrae",
+   "agency": "90003",
+   "lat": 37.600237,
+   "lon": -122.386757,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Milpitas",
+   "agency": "90003",
+   "lat": 37.410277,
+   "lon": -121.891081,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Montgomery Street",
+   "agency": "90003",
+   "lat": 37.789173,
+   "lon": -122.401587,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "North Berkeley",
+   "agency": "90003",
+   "lat": 37.874005,
+   "lon": -122.283523,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Oakland International Airport",
+   "agency": "90003",
+   "lat": 37.713256,
+   "lon": -122.212237,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Orinda",
+   "agency": "90003",
+   "lat": 37.878481,
+   "lon": -122.183667,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Powell Street",
+   "agency": "90003",
+   "lat": 37.784606,
+   "lon": -122.407331,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Rockridge",
+   "agency": "90003",
+   "lat": 37.844755,
+   "lon": -122.251235,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "San Bruno",
+   "agency": "90003",
+   "lat": 37.63773,
+   "lon": -122.416326,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "San Francisco International Airport",
+   "agency": "90003",
+   "lat": 37.616091,
+   "lon": -122.391954,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "San Leandro",
+   "agency": "90003",
+   "lat": 37.721784,
+   "lon": -122.16074,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "South Hayward",
+   "agency": "90003",
+   "lat": 37.63434,
+   "lon": -122.057182,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "South San Francisco",
+   "agency": "90003",
+   "lat": 37.664462,
+   "lon": -122.444211,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Union City",
+   "agency": "90003",
+   "lat": 37.590735,
+   "lon": -122.017248,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Walnut Creek",
+   "agency": "90003",
+   "lat": 37.905791,
+   "lon": -122.067327,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Warm Springs / South Fremont",
+   "agency": "90003",
+   "lat": 37.502285,
+   "lon": -121.939395,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "West Dublin / Pleasanton",
+   "agency": "90003",
+   "lat": 37.699721,
+   "lon": -121.928277,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "West Oakland",
+   "agency": "90003",
+   "lat": 37.804888,
+   "lon": -122.295151,
+   "types": [
+    "1"
+   ]
+  },
+  {
+   "name": "Alder Station",
+   "agency": "90013",
+   "lat": 37.413572,
+   "lon": -121.917118,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Alum Rock Station",
+   "agency": "90013",
+   "lat": 37.358429,
+   "lon": -121.832325,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Bascom Station",
+   "agency": "90013",
+   "lat": 37.299851,
+   "lon": -121.92983,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Baypointe Station",
+   "agency": "90013",
+   "lat": 37.410438,
+   "lon": -121.942311,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Bayshore Nasa Station",
+   "agency": "90013",
+   "lat": 37.404327,
+   "lon": -122.049167,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Berryessa Station",
+   "agency": "90013",
+   "lat": 37.388238,
+   "lon": -121.86231,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Blossom Hill Station",
+   "agency": "90013",
+   "lat": 37.252793,
+   "lon": -121.841085,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Bonaventura Station",
+   "agency": "90013",
+   "lat": 37.388053,
+   "lon": -121.929303,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Borregas Station",
+   "agency": "90013",
+   "lat": 37.411664,
+   "lon": -122.018027,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Branham Station",
+   "agency": "90013",
+   "lat": 37.266765,
+   "lon": -121.85926,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Campbell Station",
+   "agency": "90013",
+   "lat": 37.2859,
+   "lon": -121.94303,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Capitol Station",
+   "agency": "90013",
+   "lat": 37.274581,
+   "lon": -121.863137,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Champion Station",
+   "agency": "90013",
+   "lat": 37.408898,
+   "lon": -121.951936,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Children's Discovery Museum Station",
+   "agency": "90013",
+   "lat": 37.327765,
+   "lon": -121.893665,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Cisco Station",
+   "agency": "90013",
+   "lat": 37.412348,
+   "lon": -121.928312,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Civic Center Station",
+   "agency": "90013",
+   "lat": 37.35138,
+   "lon": -121.901957,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Component Station",
+   "agency": "90013",
+   "lat": 37.382779,
+   "lon": -121.925337,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Convention Center Station",
+   "agency": "90013",
+   "lat": 37.330168,
+   "lon": -121.88975,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Cottle Station",
+   "agency": "90013",
+   "lat": 37.242678,
+   "lon": -121.802982,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Cropley Station",
+   "agency": "90013",
+   "lat": 37.403327,
+   "lon": -121.882075,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Crossman Station",
+   "agency": "90013",
+   "lat": 37.408841,
+   "lon": -122.01118,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Curtner Station",
+   "agency": "90013",
+   "lat": 37.293389,
+   "lon": -121.8725,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Diridon Station",
+   "agency": "90013",
+   "lat": 37.328711,
+   "lon": -121.903501,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Fair Oaks Station",
+   "agency": "90013",
+   "lat": 37.402578,
+   "lon": -122.00864,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Fruitdale Station",
+   "agency": "90013",
+   "lat": 37.310482,
+   "lon": -121.91802,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Gish Station",
+   "agency": "90013",
+   "lat": 37.361732,
+   "lon": -121.909638,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Great America Station",
+   "agency": "90013",
+   "lat": 37.403468,
+   "lon": -121.974908,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Great Mall Station",
+   "agency": "90013",
+   "lat": 37.41439,
+   "lon": -121.902123,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Hamilton Station",
+   "agency": "90013",
+   "lat": 37.293691,
+   "lon": -121.936576,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Hostetter Station",
+   "agency": "90013",
+   "lat": 37.395116,
+   "lon": -121.869629,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Japantown/Ayer Station",
+   "agency": "90013",
+   "lat": 37.344964,
+   "lon": -121.897116,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Karina Station",
+   "agency": "90013",
+   "lat": 37.375423,
+   "lon": -121.919867,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Lick Mill Station",
+   "agency": "90013",
+   "lat": 37.407795,
+   "lon": -121.962925,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Lockheed Martin Station",
+   "agency": "90013",
+   "lat": 37.409769,
+   "lon": -122.027025,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Mckee Station",
+   "agency": "90013",
+   "lat": 37.371854,
+   "lon": -121.844783,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro/Airport Station",
+   "agency": "90013",
+   "lat": 37.369515,
+   "lon": -121.915452,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Middlefield Station",
+   "agency": "90013",
+   "lat": 37.395428,
+   "lon": -122.05221,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Milpitas Station",
+   "agency": "90013",
+   "lat": 37.40876,
+   "lon": -121.891008,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Moffett Park Station",
+   "agency": "90013",
+   "lat": 37.402367,
+   "lon": -122.03346,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Mountain View Station",
+   "agency": "90013",
+   "lat": 37.395111,
+   "lon": -122.077192,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ohlone-Chynoweth Station",
+   "agency": "90013",
+   "lat": 37.257731,
+   "lon": -121.860292,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Old Ironsides Station",
+   "agency": "90013",
+   "lat": 37.403334,
+   "lon": -121.979862,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Orchard Station",
+   "agency": "90013",
+   "lat": 37.394908,
+   "lon": -121.934358,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Patrick Henry Pocket Track (NOT A PUBLIC STOP)",
+   "agency": "90013",
+   "lat": 37.403489,
+   "lon": -121.984251,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Penitencia Creek Station",
+   "agency": "90013",
+   "lat": 37.381739,
+   "lon": -121.855221,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Race Station",
+   "agency": "90013",
+   "lat": 37.317155,
+   "lon": -121.910753,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Reamwood Station",
+   "agency": "90013",
+   "lat": 37.403549,
+   "lon": -121.988555,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "River Oaks Station",
+   "agency": "90013",
+   "lat": 37.40201,
+   "lon": -121.939513,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Saint James Station",
+   "agency": "90013",
+   "lat": 37.338358,
+   "lon": -121.890805,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Antonio Station",
+   "agency": "90013",
+   "lat": 37.333481,
+   "lon": -121.887188,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Fernando Station",
+   "agency": "90013",
+   "lat": 37.330367,
+   "lon": -121.898116,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Santa Clara Station",
+   "agency": "90013",
+   "lat": 37.335924,
+   "lon": -121.890354,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Santa Teresa Station",
+   "agency": "90013",
+   "lat": 37.236535,
+   "lon": -121.789248,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Snell Station",
+   "agency": "90013",
+   "lat": 37.247852,
+   "lon": -121.830973,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Tamien Station",
+   "agency": "90013",
+   "lat": 37.311617,
+   "lon": -121.884585,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Tasman Station",
+   "agency": "90013",
+   "lat": 37.408669,
+   "lon": -121.944463,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Vienna Station",
+   "agency": "90013",
+   "lat": 37.403377,
+   "lon": -121.999589,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Virginia Station",
+   "agency": "90013",
+   "lat": 37.319828,
+   "lon": -121.890104,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Whisman Station",
+   "agency": "90013",
+   "lat": 37.392205,
+   "lon": -122.05822,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Winchester Station",
+   "agency": "90013",
+   "lat": 37.279614,
+   "lon": -121.947981,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "15th Ave & Taraval St",
+   "agency": "90015",
+   "lat": 37.743124,
+   "lon": -122.471297,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "17th St & Castro St",
+   "agency": "90015",
+   "lat": 37.762576,
+   "lon": -122.434979,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "17th St & Noe St",
+   "agency": "90015",
+   "lat": 37.762645,
+   "lon": -122.432991,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "19th Ave & Holloway Ave",
+   "agency": "90015",
+   "lat": 37.721342,
+   "lon": -122.475245,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "19th Ave & Junipero Serra Blvd",
+   "agency": "90015",
+   "lat": 37.716889,
+   "lon": -122.472275,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "19th Ave & Randolph St",
+   "agency": "90015",
+   "lat": 37.714443,
+   "lon": -122.469998,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "19th Ave & Randolph St",
+   "agency": "90015",
+   "lat": 37.7162,
+   "lon": -122.47167,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "19th Ave & Winston Dr",
+   "agency": "90015",
+   "lat": 37.727017,
+   "lon": -122.474937,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "30th St & Dolores St",
+   "agency": "90015",
+   "lat": 37.742304,
+   "lon": -122.424026,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "46th Ave & Taraval St",
+   "agency": "90015",
+   "lat": 37.741685,
+   "lon": -122.504534,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "46th Ave & Ulloa St",
+   "agency": "90015",
+   "lat": 37.739998,
+   "lon": -122.504579,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "46th Ave & Vicente St",
+   "agency": "90015",
+   "lat": 37.737973,
+   "lon": -122.504268,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "47th Ave & Cutler Ave",
+   "agency": "90015",
+   "lat": 37.736991,
+   "lon": -122.505413,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "4th & Brannan Southbound",
+   "agency": "90015",
+   "lat": 37.778341,
+   "lon": -122.396613,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "4th St & King St",
+   "agency": "90015",
+   "lat": 37.776135,
+   "lon": -122.393829,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "9th Ave & Irving St",
+   "agency": "90015",
+   "lat": 37.763307,
+   "lon": -122.466344,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Balboa Park BART/Mezzanine Level",
+   "agency": "90015",
+   "lat": 37.721809,
+   "lon": -122.447425,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Bayshore Blvd & Areta Ave",
+   "agency": "90015",
+   "lat": 37.712226,
+   "lon": -122.402339,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Bayshore Blvd & Blanken Ave",
+   "agency": "90015",
+   "lat": 37.712253,
+   "lon": -122.402316,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Bayshore Blvd & Sunnydale Ave",
+   "agency": "90015",
+   "lat": 37.708944,
+   "lon": -122.405044,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Beach St & Mason St",
+   "agency": "90015",
+   "lat": 37.807407,
+   "lon": -122.414125,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Beach St & Stockton St",
+   "agency": "90015",
+   "lat": 37.807841,
+   "lon": -122.41081,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Broad St & Capitol Ave",
+   "agency": "90015",
+   "lat": 37.713152,
+   "lon": -122.459159,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Broad St & Orizaba Ave",
+   "agency": "90015",
+   "lat": 37.713178,
+   "lon": -122.462331,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Broad St & Plymouth Ave",
+   "agency": "90015",
+   "lat": 37.713222,
+   "lon": -122.455927,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Carl St & Cole St",
+   "agency": "90015",
+   "lat": 37.765863,
+   "lon": -122.449804,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Carl St & Hillway Ave",
+   "agency": "90015",
+   "lat": 37.765003,
+   "lon": -122.456561,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Carl St & Stanyan St",
+   "agency": "90015",
+   "lat": 37.765495,
+   "lon": -122.45259,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Chinatown - Rose Pak Station",
+   "agency": "90015",
+   "lat": 37.794807,
+   "lon": -122.408078,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 16th St",
+   "agency": "90015",
+   "lat": 37.764382,
+   "lon": -122.428609,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 18th St",
+   "agency": "90015",
+   "lat": 37.761467,
+   "lon": -122.428416,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 22nd St",
+   "agency": "90015",
+   "lat": 37.754607,
+   "lon": -122.42775,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 24th St",
+   "agency": "90015",
+   "lat": 37.7518,
+   "lon": -122.427497,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 26th St",
+   "agency": "90015",
+   "lat": 37.748416,
+   "lon": -122.42706,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 28th St",
+   "agency": "90015",
+   "lat": 37.745225,
+   "lon": -122.426737,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 29th St",
+   "agency": "90015",
+   "lat": 37.743587,
+   "lon": -122.426585,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & 30th St",
+   "agency": "90015",
+   "lat": 37.742222,
+   "lon": -122.426459,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & Day St",
+   "agency": "90015",
+   "lat": 37.742811,
+   "lon": -122.426654,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & Duboce Ave",
+   "agency": "90015",
+   "lat": 37.769302,
+   "lon": -122.429087,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Church St & Market St",
+   "agency": "90015",
+   "lat": 37.767286,
+   "lon": -122.429053,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Don Chee Way/Steuart St",
+   "agency": "90015",
+   "lat": 37.793918,
+   "lon": -122.393438,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Duboce Ave & Church St",
+   "agency": "90015",
+   "lat": 37.769409,
+   "lon": -122.4294,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Duboce St/Noe St/Duboce Park",
+   "agency": "90015",
+   "lat": 37.769357,
+   "lon": -122.433557,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Embarcadero & Sansome St",
+   "agency": "90015",
+   "lat": 37.805146,
+   "lon": -122.403233,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Forest Hill Station Outbound",
+   "agency": "90015",
+   "lat": 37.74817,
+   "lon": -122.459192,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Fourth Street & Brannan Northbound",
+   "agency": "90015",
+   "lat": 37.778403,
+   "lon": -122.39659,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Irving St & 2nd Ave",
+   "agency": "90015",
+   "lat": 37.764441,
+   "lon": -122.458643,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Irving St & 5th Ave",
+   "agency": "90015",
+   "lat": 37.764182,
+   "lon": -122.462139,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Irving St & 6th Ave",
+   "agency": "90015",
+   "lat": 37.764244,
+   "lon": -122.462987,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Irving St & 8th Ave",
+   "agency": "90015",
+   "lat": 37.764038,
+   "lon": -122.465428,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Irving St & Arguello Blvd",
+   "agency": "90015",
+   "lat": 37.764366,
+   "lon": -122.458024,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Jefferson St & Powell St",
+   "agency": "90015",
+   "lat": 37.808594,
+   "lon": -122.413357,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Jefferson St & Taylor St",
+   "agency": "90015",
+   "lat": 37.80832,
+   "lon": -122.415514,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Jones St & Beach St",
+   "agency": "90015",
+   "lat": 37.807132,
+   "lon": -122.417324,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 12th Ave",
+   "agency": "90015",
+   "lat": 37.761988,
+   "lon": -122.469526,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 15th Ave",
+   "agency": "90015",
+   "lat": 37.761848,
+   "lon": -122.472777,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 16th Ave",
+   "agency": "90015",
+   "lat": 37.76194,
+   "lon": -122.473632,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 19th Ave",
+   "agency": "90015",
+   "lat": 37.761655,
+   "lon": -122.477194,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 22nd Ave",
+   "agency": "90015",
+   "lat": 37.761534,
+   "lon": -122.479855,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 23rd Ave",
+   "agency": "90015",
+   "lat": 37.761547,
+   "lon": -122.481164,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 25th Ave",
+   "agency": "90015",
+   "lat": 37.761373,
+   "lon": -122.48356,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 28th Ave",
+   "agency": "90015",
+   "lat": 37.761232,
+   "lon": -122.486763,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 31st Ave",
+   "agency": "90015",
+   "lat": 37.761105,
+   "lon": -122.4895,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 34th Ave",
+   "agency": "90015",
+   "lat": 37.761028,
+   "lon": -122.49293,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 40th Ave",
+   "agency": "90015",
+   "lat": 37.760743,
+   "lon": -122.499359,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 43rd Ave",
+   "agency": "90015",
+   "lat": 37.760518,
+   "lon": -122.502839,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 46th Ave",
+   "agency": "90015",
+   "lat": 37.760392,
+   "lon": -122.506064,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & 9th Ave",
+   "agency": "90015",
+   "lat": 37.762139,
+   "lon": -122.466312,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & Funston Ave",
+   "agency": "90015",
+   "lat": 37.76195,
+   "lon": -122.470572,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah St & Sunset Blvd",
+   "agency": "90015",
+   "lat": 37.760845,
+   "lon": -122.495805,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Judah/La Playa/Ocean Beach",
+   "agency": "90015",
+   "lat": 37.760304,
+   "lon": -122.508181,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Junipero Serra Blvd & Ocean Ave",
+   "agency": "90015",
+   "lat": 37.731628,
+   "lon": -122.471707,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "King St & 2nd St",
+   "agency": "90015",
+   "lat": 37.77972,
+   "lon": -122.389872,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "King St & 4th St",
+   "agency": "90015",
+   "lat": 37.776269,
+   "lon": -122.394173,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 1st St",
+   "agency": "90015",
+   "lat": 37.79094,
+   "lon": -122.399195,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 2nd St",
+   "agency": "90015",
+   "lat": 37.789353,
+   "lon": -122.401306,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 3rd St",
+   "agency": "90015",
+   "lat": 37.787525,
+   "lon": -122.403519,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 4th St",
+   "agency": "90015",
+   "lat": 37.785705,
+   "lon": -122.405847,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 5th  St",
+   "agency": "90015",
+   "lat": 37.784082,
+   "lon": -122.407992,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 5th St",
+   "agency": "90015",
+   "lat": 37.783886,
+   "lon": -122.408141,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 6th St",
+   "agency": "90015",
+   "lat": 37.782102,
+   "lon": -122.4104,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 7th St",
+   "agency": "90015",
+   "lat": 37.780363,
+   "lon": -122.412613,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 8th St",
+   "agency": "90015",
+   "lat": 37.778606,
+   "lon": -122.414826,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & 9th St",
+   "agency": "90015",
+   "lat": 37.77741,
+   "lon": -122.41634,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Battery St",
+   "agency": "90015",
+   "lat": 37.79111,
+   "lon": -122.399069,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Buchanan St",
+   "agency": "90015",
+   "lat": 37.769786,
+   "lon": -122.426149,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Church St",
+   "agency": "90015",
+   "lat": 37.76725,
+   "lon": -122.429214,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Dolores St",
+   "agency": "90015",
+   "lat": 37.76888,
+   "lon": -122.427103,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Drumm St",
+   "agency": "90015",
+   "lat": 37.793473,
+   "lon": -122.396178,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Gough St",
+   "agency": "90015",
+   "lat": 37.772875,
+   "lon": -122.421991,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Guerrero St",
+   "agency": "90015",
+   "lat": 37.77057,
+   "lon": -122.424971,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Hyde St",
+   "agency": "90015",
+   "lat": 37.779105,
+   "lon": -122.414379,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Kearny St",
+   "agency": "90015",
+   "lat": 37.78773,
+   "lon": -122.40337,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Laguna St",
+   "agency": "90015",
+   "lat": 37.770953,
+   "lon": -122.424666,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Larkin St",
+   "agency": "90015",
+   "lat": 37.777598,
+   "lon": -122.416236,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Main St",
+   "agency": "90015",
+   "lat": 37.792984,
+   "lon": -122.396627,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & New Montgomery St",
+   "agency": "90015",
+   "lat": 37.788613,
+   "lon": -122.402163,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Noe St",
+   "agency": "90015",
+   "lat": 37.764489,
+   "lon": -122.432812,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Sanchez St",
+   "agency": "90015",
+   "lat": 37.766185,
+   "lon": -122.430707,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & South Van Ness Ave",
+   "agency": "90015",
+   "lat": 37.775056,
+   "lon": -122.419321,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Stockton St",
+   "agency": "90015",
+   "lat": 37.785777,
+   "lon": -122.405859,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Taylor St",
+   "agency": "90015",
+   "lat": 37.782316,
+   "lon": -122.410228,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Market St & Van Ness Ave",
+   "agency": "90015",
+   "lat": 37.775198,
+   "lon": -122.419252,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Castro Station/Downtown",
+   "agency": "90015",
+   "lat": 37.76262,
+   "lon": -122.435231,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Castro Station/Outbound",
+   "agency": "90015",
+   "lat": 37.762683,
+   "lon": -122.435289,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Church Station/Downtown",
+   "agency": "90015",
+   "lat": 37.767194,
+   "lon": -122.429168,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Church Station/Outbound",
+   "agency": "90015",
+   "lat": 37.767327,
+   "lon": -122.429321,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Civic Center Station/Downtn",
+   "agency": "90015",
+   "lat": 37.779712,
+   "lon": -122.413347,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Civic Center Station/Outbd",
+   "agency": "90015",
+   "lat": 37.77924,
+   "lon": -122.414223,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Embarcadero Station",
+   "agency": "90015",
+   "lat": 37.79271,
+   "lon": -122.39715,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Forest Hill Station/Downtown",
+   "agency": "90015",
+   "lat": 37.748351,
+   "lon": -122.458623,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Montgomery Station/Downtown",
+   "agency": "90015",
+   "lat": 37.789219,
+   "lon": -122.401351,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Montgomery Station/Outbound",
+   "agency": "90015",
+   "lat": 37.788791,
+   "lon": -122.402127,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Powell Station/Downtown",
+   "agency": "90015",
+   "lat": 37.784653,
+   "lon": -122.407086,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Powell Station/Outbound",
+   "agency": "90015",
+   "lat": 37.7843,
+   "lon": -122.407822,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Metro Van Ness Station",
+   "agency": "90015",
+   "lat": 37.775127,
+   "lon": -122.419252,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & Aptos Ave",
+   "agency": "90015",
+   "lat": 37.728285,
+   "lon": -122.467561,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & Dorado Ter",
+   "agency": "90015",
+   "lat": 37.724957,
+   "lon": -122.461059,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & Fairfield Way",
+   "agency": "90015",
+   "lat": 37.726008,
+   "lon": -122.464072,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & Jules Ave",
+   "agency": "90015",
+   "lat": 37.724955,
+   "lon": -122.46139,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & Lee St",
+   "agency": "90015",
+   "lat": 37.723397,
+   "lon": -122.454423,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & Miramar Ave",
+   "agency": "90015",
+   "lat": 37.724387,
+   "lon": -122.458077,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & San Leandro Way",
+   "agency": "90015",
+   "lat": 37.729945,
+   "lon": -122.469475,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave & Victoria St",
+   "agency": "90015",
+   "lat": 37.726029,
+   "lon": -122.464337,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ocean Ave/CCSF Pedestrian Bridge",
+   "agency": "90015",
+   "lat": 37.722947,
+   "lon": -122.450866,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Orizaba Ave & Broad St",
+   "agency": "90015",
+   "lat": 37.713328,
+   "lon": -122.462585,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Randolph St & Arch St",
+   "agency": "90015",
+   "lat": 37.714201,
+   "lon": -122.467218,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Randolph St & Bright St",
+   "agency": "90015",
+   "lat": 37.71425,
+   "lon": -122.463675,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Right Of Way/18th St",
+   "agency": "90015",
+   "lat": 37.761192,
+   "lon": -122.428184,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Right Of Way/20th St",
+   "agency": "90015",
+   "lat": 37.758264,
+   "lon": -122.427924,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Right Of Way/21st St",
+   "agency": "90015",
+   "lat": 37.756436,
+   "lon": -122.426822,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Right Of Way/Eucalyptus Dr",
+   "agency": "90015",
+   "lat": 37.730987,
+   "lon": -122.474366,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Right Of Way/Liberty St",
+   "agency": "90015",
+   "lat": 37.757239,
+   "lon": -122.426867,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Right Of Way/Ocean Ave",
+   "agency": "90015",
+   "lat": 37.732022,
+   "lon": -122.473719,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Farallones St",
+   "agency": "90015",
+   "lat": 37.714153,
+   "lon": -122.452148,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Geneva Ave",
+   "agency": "90015",
+   "lat": 37.720631,
+   "lon": -122.446554,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Lakeview Ave",
+   "agency": "90015",
+   "lat": 37.716083,
+   "lon": -122.450435,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Niagra Ave",
+   "agency": "90015",
+   "lat": 37.719421,
+   "lon": -122.447654,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Ocean Ave",
+   "agency": "90015",
+   "lat": 37.723085,
+   "lon": -122.444699,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Randall St",
+   "agency": "90015",
+   "lat": 37.739741,
+   "lon": -122.424157,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Santa Rosa Ave",
+   "agency": "90015",
+   "lat": 37.728991,
+   "lon": -122.439922,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave & Santa Ynez Ave",
+   "agency": "90015",
+   "lat": 37.725877,
+   "lon": -122.442359,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "San Jose Ave/Glen Park Station",
+   "agency": "90015",
+   "lat": 37.732401,
+   "lon": -122.433855,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Sunset Tunnel East Portal",
+   "agency": "90015",
+   "lat": 37.769285,
+   "lon": -122.433511,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 17th Ave",
+   "agency": "90015",
+   "lat": 37.743131,
+   "lon": -122.473306,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 19th Ave",
+   "agency": "90015",
+   "lat": 37.74311,
+   "lon": -122.475444,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 22nd Ave",
+   "agency": "90015",
+   "lat": 37.74289,
+   "lon": -122.478426,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 23rd Ave",
+   "agency": "90015",
+   "lat": 37.742872,
+   "lon": -122.48045,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 26th Ave",
+   "agency": "90015",
+   "lat": 37.742683,
+   "lon": -122.483385,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 30th Ave",
+   "agency": "90015",
+   "lat": 37.742588,
+   "lon": -122.487337,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 32nd Ave",
+   "agency": "90015",
+   "lat": 37.742491,
+   "lon": -122.489505,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 40th Ave",
+   "agency": "90015",
+   "lat": 37.742124,
+   "lon": -122.498055,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 42nd Ave",
+   "agency": "90015",
+   "lat": 37.742021,
+   "lon": -122.500202,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 44th Ave",
+   "agency": "90015",
+   "lat": 37.741924,
+   "lon": -122.502346,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & 46th Ave",
+   "agency": "90015",
+   "lat": 37.741823,
+   "lon": -122.50449,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Taraval St & Sunset Blvd",
+   "agency": "90015",
+   "lat": 37.742188,
+   "lon": -122.49451,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Bay St",
+   "agency": "90015",
+   "lat": 37.806945,
+   "lon": -122.406278,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Brannan St",
+   "agency": "90015",
+   "lat": 37.784359,
+   "lon": -122.388138,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Broadway",
+   "agency": "90015",
+   "lat": 37.798901,
+   "lon": -122.397434,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Ferry Building",
+   "agency": "90015",
+   "lat": 37.794828,
+   "lon": -122.39377,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Folsom St",
+   "agency": "90015",
+   "lat": 37.790749,
+   "lon": -122.389841,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Green St",
+   "agency": "90015",
+   "lat": 37.800605,
+   "lon": -122.39892,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Greenwich St",
+   "agency": "90015",
+   "lat": 37.803263,
+   "lon": -122.401113,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Sansome St",
+   "agency": "90015",
+   "lat": 37.805022,
+   "lon": -122.403314,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Stockton St",
+   "agency": "90015",
+   "lat": 37.808351,
+   "lon": -122.410287,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "The Embarcadero & Washington St",
+   "agency": "90015",
+   "lat": 37.796355,
+   "lon": -122.395181,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & 20th St",
+   "agency": "90015",
+   "lat": 37.760518,
+   "lon": -122.388558,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & 23rd St",
+   "agency": "90015",
+   "lat": 37.755414,
+   "lon": -122.388001,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & Carroll Ave",
+   "agency": "90015",
+   "lat": 37.725241,
+   "lon": -122.394394,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & Evans Ave",
+   "agency": "90015",
+   "lat": 37.742727,
+   "lon": -122.388034,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & Le Conte Ave",
+   "agency": "90015",
+   "lat": 37.71864,
+   "lon": -122.397697,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & Marin St",
+   "agency": "90015",
+   "lat": 37.748999,
+   "lon": -122.387445,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & Mission Rock St",
+   "agency": "90015",
+   "lat": 37.772984,
+   "lon": -122.389683,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street & Williams Ave",
+   "agency": "90015",
+   "lat": 37.729211,
+   "lon": -122.392684,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street/Gilman/Paul",
+   "agency": "90015",
+   "lat": 37.722449,
+   "lon": -122.39561,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street/Hudson/Innes",
+   "agency": "90015",
+   "lat": 37.739934,
+   "lon": -122.38893,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street/Kirkwood/La Salle",
+   "agency": "90015",
+   "lat": 37.737641,
+   "lon": -122.389688,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street/Oakdale/Palou",
+   "agency": "90015",
+   "lat": 37.734358,
+   "lon": -122.390836,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Third Street/Revere/Shafter",
+   "agency": "90015",
+   "lat": 37.732289,
+   "lon": -122.391605,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "UCSF / Chase Center (16th St)",
+   "agency": "90015",
+   "lat": 37.768504,
+   "lon": -122.389182,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "UCSF / Chase Center (16th Street)",
+   "agency": "90015",
+   "lat": 37.768237,
+   "lon": -122.389366,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "UCSF Medical Center (Mariposa)",
+   "agency": "90015",
+   "lat": 37.764239,
+   "lon": -122.388865,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ulloa St & 14th Ave",
+   "agency": "90015",
+   "lat": 37.741356,
+   "lon": -122.470211,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ulloa St & Lenox Way",
+   "agency": "90015",
+   "lat": 37.741125,
+   "lon": -122.466155,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Ulloa St & West Portal Ave",
+   "agency": "90015",
+   "lat": 37.741009,
+   "lon": -122.466167,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Union Square/Market St Station Northbound",
+   "agency": "90015",
+   "lat": 37.787151,
+   "lon": -122.406477,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Union Square/Market St Station Southbound",
+   "agency": "90015",
+   "lat": 37.787133,
+   "lon": -122.406523,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Van Ness Station Outbound",
+   "agency": "90015",
+   "lat": 37.775234,
+   "lon": -122.41934,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Wawona/46th Ave /SF Zoo",
+   "agency": "90015",
+   "lat": 37.736125,
+   "lon": -122.504351,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "West Portal Ave & 14th Ave",
+   "agency": "90015",
+   "lat": 37.737859,
+   "lon": -122.469042,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "West Portal Station",
+   "agency": "90015",
+   "lat": 37.741391,
+   "lon": -122.46553,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "West Portal/Sloat/St Francis Circle",
+   "agency": "90015",
+   "lat": 37.734825,
+   "lon": -122.471446,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Yerba Buena/Moscone Station Northbound",
+   "agency": "90015",
+   "lat": 37.782358,
+   "lon": -122.401551,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "Yerba Buena/Moscone Station Southbound",
+   "agency": "90015",
+   "lat": 37.78238,
+   "lon": -122.40173,
+   "types": [
+    "0"
+   ]
+  },
+  {
+   "name": "22nd Street Station",
+   "agency": "90134",
+   "lat": 37.756972,
+   "lon": -122.392492,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Bayshore Station",
+   "agency": "90134",
+   "lat": 37.70766,
+   "lon": -122.401665,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Belmont Station",
+   "agency": "90134",
+   "lat": 37.52133,
+   "lon": -122.2763,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Blossom Hill Caltrain Station",
+   "agency": "90134",
+   "lat": 37.252606,
+   "lon": -121.797907,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Broadway Station",
+   "agency": "90134",
+   "lat": 37.58726,
+   "lon": -122.362,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Burlingame Station",
+   "agency": "90134",
+   "lat": 37.57985,
+   "lon": -122.34418,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "California Avenue Station",
+   "agency": "90134",
+   "lat": 37.428834,
+   "lon": -122.14113,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Capitol Caltrain Station",
+   "agency": "90134",
+   "lat": 37.284016,
+   "lon": -121.841899,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "College Park Station",
+   "agency": "90134",
+   "lat": 37.34289,
+   "lon": -121.91565,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Gilroy Station",
+   "agency": "90134",
+   "lat": 37.004466,
+   "lon": -121.566727,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Hayward Park Station",
+   "agency": "90134",
+   "lat": 37.553161,
+   "lon": -122.309494,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Hillsdale Station",
+   "agency": "90134",
+   "lat": 37.542392678,
+   "lon": -122.301612061,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Lawrence Station",
+   "agency": "90134",
+   "lat": 37.3707,
+   "lon": -121.9969,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Menlo Park Station",
+   "agency": "90134",
+   "lat": 37.4548,
+   "lon": -122.18245,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Millbrae",
+   "agency": "90134",
+   "lat": 37.5999,
+   "lon": -122.38675,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Morgan Hill Station",
+   "agency": "90134",
+   "lat": 37.129644,
+   "lon": -121.650558,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Mountain View Station",
+   "agency": "90134",
+   "lat": 37.395067,
+   "lon": -122.07722,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Palo Alto Station",
+   "agency": "90134",
+   "lat": 37.44322,
+   "lon": -122.16429,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Redwood City Station",
+   "agency": "90134",
+   "lat": 37.485865,
+   "lon": -122.2315,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Antonio Station",
+   "agency": "90134",
+   "lat": 37.407239431,
+   "lon": -122.107115562,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Bruno Caltrain Station",
+   "agency": "90134",
+   "lat": 37.630460335,
+   "lon": -122.411709042,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Carlos Station",
+   "agency": "90134",
+   "lat": 37.508033,
+   "lon": -122.2602,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Francisco Caltrain Station",
+   "agency": "90134",
+   "lat": 37.776404,
+   "lon": -122.394911,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Jose Diridon Station",
+   "agency": "90134",
+   "lat": 37.329694,
+   "lon": -121.903208,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Martin Station",
+   "agency": "90134",
+   "lat": 37.085984,
+   "lon": -121.61048,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Mateo Station",
+   "agency": "90134",
+   "lat": 37.56824,
+   "lon": -122.3239,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Santa Clara Caltrain Station",
+   "agency": "90134",
+   "lat": 37.353384,
+   "lon": -121.936465,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "South San Francisco Caltrain Station",
+   "agency": "90134",
+   "lat": 37.655941416,
+   "lon": -122.404979006,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Sunnyvale Station",
+   "agency": "90134",
+   "lat": 37.378934,
+   "lon": -122.0315,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Tamien Caltrain Station",
+   "agency": "90134",
+   "lat": 37.31269,
+   "lon": -121.8847,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Fremont Station",
+   "agency": "90182",
+   "lat": 37.559114,
+   "lon": -122.007353,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Great America Parkway Station",
+   "agency": "90182",
+   "lat": 37.406833,
+   "lon": -121.967047,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Livermore Station",
+   "agency": "90182",
+   "lat": 37.685045,
+   "lon": -121.766906,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Pleasanton Station",
+   "agency": "90182",
+   "lat": 37.658561,
+   "lon": -121.882229,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "San Jose Station Diridon",
+   "agency": "90182",
+   "lat": 37.330686,
+   "lon": -121.902378,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Santa Clara Station",
+   "agency": "90182",
+   "lat": 37.353506,
+   "lon": -121.936312,
+   "types": [
+    "2"
+   ]
+  },
+  {
+   "name": "Vasco Rd Station",
+   "agency": "90182",
+   "lat": 37.697062,
+   "lon": -121.717655,
+   "types": [
+    "2"
+   ]
+  }
+ ]
+}

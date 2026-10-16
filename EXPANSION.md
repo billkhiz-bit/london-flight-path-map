@@ -350,9 +350,13 @@ departure, 26 are on the noise map.
   share it); **the five sheriff-contract cities have no crime rate of their
   own** - say so, never share the sheriff's county total out among them; and
   **FHFA cannot carry a trend for the dearest half of the region**, so the
-  trend is a DECISION for Bill before release 2 (a city's FHFA change only
-  where its ZIPs are valued; FHFA's county series; or two ACS vintages, which
-  overlap, lag and hit the same cap). Zillow stays behind its unread terms.
+  trend was a DECISION for Bill: **decided 2026-10-16, FHFA's county series,
+  labelled county-wide** (decision 3 of release 2), and BUILT the same night
+  (`scripts/build_bayarea_trend.py`, `data/us-bayarea-trend.json`: 2025, Alameda
+  -1.91%, San Francisco +0.50%, San Mateo -0.61%, Santa Clara -0.63%). Stations
+  are built too (`scripts/build_bayarea_transit.py`: 334 rail, metro and
+  light-rail stations from BTS; cable cars left out, Capitol Corridor a recorded
+  gap). Zillow stays behind its unread terms.
   Reports there follow England's rule: free to read on screen for a person's
   own home and for residents' groups, and until a level can be stood behind
   they are routes summaries.

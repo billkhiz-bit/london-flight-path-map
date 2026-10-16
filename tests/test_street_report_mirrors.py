@@ -42,6 +42,17 @@ def test_the_report_draws_defra_bands_in_the_colours_the_map_legend_shows():
     assert module == site, f'js/street_report.mjs DEFRA_LDEN_SCALE {module} != index.html {site}'
 
 
+def test_the_front_pages_bts_palette_is_the_maps():
+    # The Bay Area's and New York's picture on the front page are coloured from js/home-engine.mjs's BTS list,
+    # which copies NOISE_SCALE_BTS in index.html (audit 2026-10-09 M-8: only a third literal in a test held it).
+    site = [c for _, c in bands(read('index.html'), 'NOISE_SCALE_BTS')]
+    block = re.search(r'const BTS = \[(.*?)\];', read('js/home-engine.mjs'))
+    assert block, 'const BTS not found in js/home-engine.mjs: the holder moved'
+    engine = [c.upper() for c in re.findall(r"'(#[0-9A-Fa-f]{6})'", block.group(1))]
+    assert len(site) == 7, f'expected BTS\'s seven colours in index.html, found {site}'
+    assert engine == site, f'js/home-engine.mjs BTS {engine} != index.html NOISE_SCALE_BTS {site}'
+
+
 def test_the_report_places_londons_picture_where_the_map_does():
     site = box(read('index.html'), r'const LONDON_AIRCRAFT_BBOX = \{(.*?)\}')
     module = box(read('js/street_report.mjs'), r'export const LONDON_RASTER = \{.*?bbox: \{(.*?)\}')

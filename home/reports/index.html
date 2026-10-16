@@ -67,8 +67,11 @@
       a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
       a.go.quiet:hover { background: #ebe9e3; }
       h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.6vw, 30px); letter-spacing: -0.02em; margin: 0 0 14px; }
-      .how { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; margin: 0 0 44px; }
-      .how div b { display: block; font-family: var(--font-display); font-weight: 600; font-size: 17px; margin-bottom: 4px; }
+      /* One, two or four columns: three left the fourth item alone on a row (audit 2026-10-09 M-16). */
+      .how { display: grid; grid-template-columns: 1fr; gap: 18px 28px; margin: 0 0 44px; }
+      @media (min-width: 640px) { .how { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (min-width: 1100px) { .how { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+      .how h3 { display: block; font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 0 0 4px; color: var(--dark); }
       .how div { color: var(--mid); font-size: 15px; }
       p.note { margin: 0; color: var(--mid); max-width: 70ch; font-size: 15px; }
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
@@ -119,10 +122,10 @@
 
       <h2 class="sec">How a report is made</h2>
       <div class="how">
-        <div><b>Official sources only</b>DEFRA's noise and air maps, the aeronautical publications the routes are drawn from, and the Environment Agency's flood map. Each figure carries its source and date.</div>
-        <div><b>Checked before it leaves</b>The checks that gate the website run on the data a report reads: the flight routes are rebuilt from the published aeronautical information and checked on every release, the noise map's colours against DEFRA's own, and an area's flood figures against the Environment Agency's own service.</div>
-        <div><b>Honest about estimates</b>Where the noise map has no reading for a street, the report says so and shows our estimate from the published routes as an estimate, never as a measurement.</div>
-        <div><b>What it does not say</b>How often aircraft fly a route: the official files say where the routes are, not their traffic. And nothing about a property we have not measured.</div>
+        <div><h3>Official sources only</h3>DEFRA's noise and air maps, the aeronautical publications the routes are drawn from, and the Environment Agency's flood map. Each figure carries its source and date.</div>
+        <div><h3>Checked before it leaves</h3>The checks that gate the website run on the data a report reads: the flight routes are rebuilt from the published aeronautical information and checked on every release, the noise map's colours against DEFRA's own, and an area's flood figures against the Environment Agency's own service.</div>
+        <div><h3>Honest about estimates</h3>Where the noise map has no reading for a street, the report says so and shows our estimate from the published routes as an estimate, never as a measurement.</div>
+        <div><h3>What it does not say</h3>How often aircraft fly a route: the official files say where the routes are, not their traffic. And nothing about a property we have not measured.</div>
       </div>
 
       <h2 class="sec" id="prices">What it costs</h2>

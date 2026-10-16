@@ -61,6 +61,9 @@ const VIEWPORTS = [
   [414, 896, 'iPhone 11 Pro Max'],
   [430, 932, 'iPhone 15 Pro Max'],
   [844, 390, 'iPhone 14 LANDSCAPE'],
+  // Wide but short (audit 2026-10-16 I-5): over 900 px wide, so it got the desktop layout and 23 of London's
+  // 33 area centres lay under its chips, legend and layer buttons. The phone layout covers it now.
+  [915, 412, 'phone on its side, wide'],
   [768, 1024, 'iPad portrait'],
   [1366, 768, 'commonest laptop'],
   [1440, 900, 'desktop'],
@@ -197,8 +200,9 @@ let CITY_COUNT = 0;
 for (const [w, h, label] of VIEWPORTS) {
   const ctx = await browser.newContext({
     viewport: { width: w, height: h },
-    hasTouch: w < 900,
-    isMobile: w < 900,
+    // The page's own condition for the phone layout (PHONE_LAYOUT in index.html).
+    hasTouch: w <= 900 || h <= 500,
+    isMobile: w <= 900 || h <= 500,
   });
   const page = await ctx.newPage();
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
@@ -269,9 +273,9 @@ for (const [w, h, label] of VIEWPORTS) {
     const spill = Math.round(m.over.left + m.over.right + m.over.top + m.over.bottom);
     const fill = Math.max(m.geoW / m.boxW, m.geoH / m.visH);
     const line = `${city.label.padEnd(20)} ${Math.round(m.geoW)}x${Math.round(m.geoH)} in ${Math.round(m.boxW)}x${Math.round(m.visH)} visible  fill ${(fill * 100).toFixed(0)}%`;
-    // Phones only (the tabbed layout, w <= 900): the desktop layout on a wide-but-short screen is a separate,
-    // recorded finding (AUDIT_REPORT_2026-10-16.md I-5), not something this fix claims.
-    if (w <= 900 && m.covered.length) {
+    // Phone-layout sizes only (PHONE_LAYOUT: up to 900 px wide or 500 px tall, since I-5 the same day): on a
+    // desktop the chrome sits beside the map, not over it.
+    if ((w <= 900 || h <= 500) && m.covered.length) {
       failures.push(`${w}x${h} ${city.label}: ${m.covered.length} area(s) under page furniture: ${m.covered.slice(0, 4).join('; ')}`);
       console.log(`  FAIL  ${line}  COVERED ${m.covered.length}: ${m.covered.slice(0, 3).join('; ')}`);
       continue;

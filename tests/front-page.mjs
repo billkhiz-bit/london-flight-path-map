@@ -1344,8 +1344,9 @@ const makeReport = async (pc) => {
     const m = d.querySelector('.free-copy-mark');
     const box = d.querySelector('.free-copy-check');
     return {
-      marks: m ? m.children.length : 0,
-      line: m?.children[0]?.textContent || '',
+      // A tiled image since 2026-10-16 (M-10): the line is read from its data, and the image must be there.
+      marks: m && /^url\("data:image\/svg\+xml/.test(d.defaultView.getComputedStyle(m).backgroundImage) ? 1 : 0,
+      line: m?.dataset.line || '',
       hidden: m?.getAttribute('aria-hidden'),
       events: m ? d.defaultView.getComputedStyle(m).pointerEvents : '',
       ref: (box?.textContent.match(/Reference ([A-Z2-9]{4}-[A-Z2-9]{4})/) || [])[1] || '',
@@ -1364,7 +1365,7 @@ const makeReport = async (pc) => {
   });
   ok(clip.checkBottom <= clip.frame, 'the whole report shows in its frame, the check block included, once the fonts have arrived', JSON.stringify(clip));
   ok(
-    free.marks >= 20 && free.line.startsWith('Personal use only · TW9 3PZ · ') && free.hidden === 'true' && free.events === 'none',
+    free.marks === 1 && free.line.startsWith('Personal use only · TW9 3PZ · ') && free.hidden === 'true' && free.events === 'none',
     'the free copy is watermarked with its postcode and date, out of the way of screen readers and the pointer',
     JSON.stringify(free)
   );
@@ -1442,7 +1443,7 @@ const makeReport = async (pc) => {
       return {
         local: new Date().toLocaleDateString('en-GB'),
         prepared: (d?.querySelector('footer')?.textContent.match(/Prepared ([^.]+)\./) || [])[1] || '',
-        mark: d?.querySelector('.free-copy-mark')?.children[0]?.textContent.split(' · ')[2] || '',
+        mark: d?.querySelector('.free-copy-mark')?.dataset.line.split(' · ')[2] || '',
         made: (d?.querySelector('.free-copy-check')?.textContent.match(/made ([^.]+)\./) || [])[1] || '',
         link: d?.querySelector('.free-copy-check a')?.getAttribute('href') || '',
       };
@@ -1528,7 +1529,7 @@ const makeReport = async (pc) => {
   const badCheck = await checkWith(genuine.slice(0, 7) + (genuine[7] === 'A' ? 'B' : 'A'));
   const junk = await checkWith('NOT-A-REF');
   ok(
-    !okCheck.hidden && /\bok\b/.test(okCheck.cls) && /matches/.test(okCheck.text) &&
+    !okCheck.hidden && /\bok\b/.test(okCheck.cls) && /matches/.test(okCheck.text) && /compare every figure on your copy/.test(okCheck.text) &&
       !badCheck.hidden && /\bbad\b/.test(badCheck.cls) && /does not match/.test(badCheck.text) &&
       junk.hidden,
     'a check link confirms the genuine reference, flags one changed character, and ignores a malformed one',
