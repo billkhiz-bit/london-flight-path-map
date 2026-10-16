@@ -18,6 +18,13 @@ saved under a name matching ASSET_RE, inside data/adsb/raw/<day>/. The API
 allows 60 unauthenticated calls an hour, one per day here, which is ample at
 ~4 minutes a day; set GITHUB_TOKEN to lift it.
 
+PYTHON: run these two scripts under a current Python, not the project's 3.11. They parse an
+untrusted tar stream, and the tarfile header-parsing fixes (e.g. CVE-2024-6232) reached 3.11 only
+in source-only releases after 3.11.9, the last with a Windows installer. They use the standard
+library alone, so any current Python will do; on Bill's machine that is an unregistered embeddable
+3.13 (C:/Users/bilal/tools/python-3.13.15/python.exe, checked against python.org's hash,
+2026-10-16). The fetcher runs the extractor with the same interpreter.
+
 Usage:
     python -I -u scripts/adsb_fetch.py 2026-08-01 2026-08-31
     python -I -u scripts/adsb_fetch.py 2026-08-01 2026-08-31 --keep-raw
@@ -67,7 +74,12 @@ def assets_for(day):
         if not ASSET_RE.match(a['name']):
             log(f'    skipping asset {a["name"]!r}: not an archive part')
             continue
-        out.append((a['name'], int(a['size']), a['browser_download_url']))
+        url = a['browser_download_url']
+        # The release JSON is untrusted: download only over https from GitHub, never
+        # file:// or plain http (audit 2026-10-16).
+        if not url.startswith(('https://github.com/', 'https://objects.githubusercontent.com/')):
+            raise RuntimeError(f'asset {a["name"]!r} has an unexpected download URL: {url!r}')
+        out.append((a['name'], int(a['size']), url))
     if not out:
         raise RuntimeError(f'release {tag_for(day)} has no archive parts')
     return sorted(out)

@@ -29,7 +29,7 @@ THE ARCHIVE IS UNTRUSTED INPUT. It is read as a stream (tarfile mode 'r|'),
 nothing is extracted to disk, and only members named traces/*/trace_full_*.json
 are parsed, as data.
 
-Usage:
+Usage (under a current Python: see adsb_fetch.py's PYTHON note):
     python -I scripts/adsb_extract.py data/adsb/raw/2026-10-14
     (writes data/adsb/extract/2026-10-14.jsonl.gz; --out to override)
 """
@@ -41,6 +41,7 @@ import math
 import sys
 import tarfile
 import time
+import zlib
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -156,11 +157,23 @@ def filter_trace(doc, near_boxes, wide_boxes, centres):
             'desc': doc.get('desc'), 'pts': kept}
 
 
+MAX_TRACE_BYTES = 64 * 1024 * 1024  # one aircraft's day; real traces are kilobytes
+
+
 def _work(raw):
-    data = gzip.decompress(raw) if raw[:2] == b'\x1f\x8b' else raw
+    # The archive is untrusted: a corrupt gzip member (BadGzipFile is an OSError,
+    # a truncated one EOFError) counts as one bad trace rather than ending the day,
+    # and decompression is capped so a gzip bomb cannot exhaust the machine.
     try:
+        if raw[:2] == b'\x1f\x8b':
+            z = zlib.decompressobj(16 + zlib.MAX_WBITS)
+            data = z.decompress(raw, MAX_TRACE_BYTES)
+            if z.unconsumed_tail:
+                return 'bad', None
+        else:
+            data = raw
         doc = json.loads(data)
-    except ValueError:
+    except (ValueError, OSError, EOFError, zlib.error):
         return 'bad', None
     return 'ok', filter_trace(doc, _NEAR_BOXES, _WIDE_BOXES, _CENTRES)
 

@@ -716,7 +716,7 @@ cannot read log groups, which gates **every commit in the repo**.
 
 **Fix:** IAM -> Users -> `flightmap-dev` -> `FlightMapDeployPolicy` -> Edit ->
 JSON, and paste the WHOLE of `backend/iam-policy.json` with
-`REPLACE_WITH_YOUR_AWS_ACCOUNT_ID` -> `072674217857`. It is 4,940 non-whitespace
+`REPLACE_WITH_YOUR_AWS_ACCOUNT_ID` -> the account ID (`aws sts get-caller-identity --query Account --output text`). It is 4,940 non-whitespace
 characters against a 6,144 limit. The three Observability statements are already
 in that file, so nothing currently working is lost.
 

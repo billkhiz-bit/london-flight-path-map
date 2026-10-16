@@ -7,7 +7,7 @@
 WHY THIS EXISTS (2026-10-02)
 ----------------------------
 The sibling of build_flight_paths.py, for the United States. New York's
-corridors are hand-drawn, which is what London's were until a reader caught
+corridors were hand-drawn until v5.6 (2026-10-16), which is what London's were until a reader caught
 Ockham and Bovingdon running due north-south into two east-west runways. The
 San Francisco Bay Area is next (EXPANSION.md), and it should start derived.
 
@@ -20,8 +20,9 @@ runway's threshold, true bearing and glide angle, and each departure as its
 sequence of named fixes.
 
 THIS WRITES THE RECORD ONLY. Nothing here touches the score Lambda or
-index.html. New York's holders stay hand-drawn until the derived routes have
-been measured against the scores they would move, which is its own change.
+index.html. New York's scored routes are generated from this record by
+scripts/measure_us_quiet_yardstick.py (v5.6, after they were measured against the
+Port Authority's monitors).
 
 WHAT IT REFUSES TO GUESS
 ------------------------

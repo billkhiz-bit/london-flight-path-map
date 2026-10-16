@@ -317,6 +317,11 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-nyc-routes.json \
 		s3://$(S3_BUCKET)/data/us-nyc-routes.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# Which routes on the front page's map cross each council area (2026-10-16, audit I-3): read by
+	# "avoid aircraft noise" in Find areas; written by scripts/build_area_route_crossings.mjs.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/area-route-crossings.json \
+		s3://$(S3_BUCKET)/data/area-route-crossings.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	# New York on the front page (2026-10-06): the borough rows from the score engine and
 	# the US noise picture, both written by scripts/build_nyc_front.py.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-nyc.json \

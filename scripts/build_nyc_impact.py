@@ -17,8 +17,10 @@ borough's outline (data/nyc-boroughs.json) is scored by the Lambda's own
 calc_postcode_quiet at that point, and the borough's figure is the mean weighted
 by each ZCTA's population (ACS 5-year table B01003): the quiet of a typical
 RESIDENT, not of the borough's land, so JFK's runways and Jamaica Bay do not count
-as people. The band is the one whose IMPACT_TO_QUIET value is nearest that mean;
-a tie takes the louder band.
+as people. The band is the QUIETEST one whose IMPACT_TO_QUIET value does not exceed
+that mean, so a borough never publishes quieter than its own estimate (Bill,
+2026-10-16, on the audit's finding that the nearest band put Brooklyn at 5.0 over a
+4.11 estimate): the same err-loud rule the fit itself follows.
 
 The ZCTA points and populations are CHECKED IN as data/us-nyc-zcta.json, so
 --check runs offline; their sources (the Census gazetteer and the B01003 summary
@@ -125,8 +127,10 @@ def derive(rows):
             raise SystemExit(f'{b}: no populated ZCTA')
         mean = sum(r['population'] * app.calc_postcode_quiet(r['lat'], r['lon'], 'nyc', raster_lden=None)
                    for r in mine) / people
-        # Nearest band value; on a tie the louder band (lower quiet), the pessimistic side.
-        band = min(app.IMPACT_TO_QUIET, key=lambda k: (abs(app.IMPACT_TO_QUIET[k] - mean), app.IMPACT_TO_QUIET[k]))
+        # The quietest band not quieter than the estimate: round toward LOUD, never away.
+        # 'severe' is 0.0, so some band always qualifies.
+        band = max((k for k, v in app.IMPACT_TO_QUIET.items() if v <= mean + 1e-9),
+                   key=lambda k: app.IMPACT_TO_QUIET[k])
         out[b] = (mean, band, len(mine), people)
     return out
 

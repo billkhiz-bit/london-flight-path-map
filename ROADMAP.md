@@ -1310,8 +1310,10 @@ $1.5-2M cities slightly LESS affordable: the cautious side). Recommended by Clau
 score New York from the fitted block (both holders generated; the map now DRAWS the scored FAA routes); site ==
 Lambda at 713 points and 127 neighbourhoods (`tests/us-quiet-site-parity.mjs`, blocking); borough bands derived,
 population-weighted (`scripts/build_nyc_impact.py`, blocking): **Queens severe -> high (quiet 0.0 -> 1.5),
-Brooklyn high -> moderate (1.5 -> 5.0), the Bronx low-moderate -> moderate (7.5 -> 5.0)**; the Bronx and Brooklyn
-notes now say where the scored routes run. Fit: JFK 1.8, LGA 1.35, EWR 1.0, TEB 0.3, weight 1.0; nested LOO JFK
+Brooklyn high -> moderate-high (1.5 -> 3.0), the Bronx low-moderate -> moderate (7.5 -> 5.0), Staten Island
+low -> low-moderate (10.0 -> 7.5)**, each rounded to the LOUDER band (Bill, after the 16 Oct audit found the
+nearest band put Brooklyn and Staten Island quieter than their own estimate); the three borough notes name only
+places within about a kilometre of a scored route. Fit: JFK 1.8, LGA 1.35, EWR 1.0, TEB 0.3, weight 1.0; nested LOO JFK
 1.28, LGA 1.25, TEB 1.70, EWR 3.40 (two monitors); louder than measured at all four. `sources` credits the FAA and
 the adsb.lol counts (ODbL; the NY counts are now in the published `data/us-runway-use.json`). **Known limitation,
 and the next step:** a summer runway count (July-August) against January-July monitors leaves JFK's north-west

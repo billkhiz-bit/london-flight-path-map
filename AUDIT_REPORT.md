@@ -1,6 +1,14 @@
 # Audit Report — Sky Score
 
-> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-09.md`
+> ## THE CURRENT AUDIT IS `AUDIT_REPORT_2026-10-16.md`
+>
+> **2026-10-16:** 0 Critical, 5 Important (I-1 New York's legend described the old method; I-2 New York's
+> bands could read quieter than their own estimate; I-3 "avoid aircraft noise" listed areas crossed by
+> routes; I-4 the landscape phone map hid each city's north under the search card: all four fixed the same
+> day. I-5, wide-but-short screens get the desktop layout over the map, is open), 19 Minor. Statuses live
+> in that file.
+>
+> ### Previously: `AUDIT_REPORT_2026-10-09.md`
 >
 > **2026-10-09:** 0 Critical, 8 Important (I-2 the badge's "not covered" SVG
 > replaced by the 404 page since 7 Oct; I-1 postcodes in GoatCounter's query

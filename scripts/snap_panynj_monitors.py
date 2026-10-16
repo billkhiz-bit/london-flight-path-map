@@ -9,8 +9,8 @@ street to its pin, and the snap distance is recorded as the uncertainty of the p
 A monitor whose street cannot be found within 1 km keeps its pin and is marked
 'street_verified': false, so the fit can leave it out.
 
-Network: Overpass (OpenStreetMap, ODbL; only street geometry is read, nothing stored
-but the snapped point). ONE combined query, two public endpoints, retried.
+Network: Overpass (OpenStreetMap, ODbL; only street geometry is read, and nothing is stored
+but the snapped point, which is credited in the data file and LICENSING.md). ONE combined query, two public endpoints, retried.
 Writes the result into data/us-noise-monitors.json ('NYC').
 """
 
@@ -108,7 +108,7 @@ def main():
             m['lat'], m['lon'] = round(slat, 5), round(slon, 5)
     block['positions_from'] = (
         'the report maps place a pin only roughly, so each monitor is the nearest point on the street its site table '
-        "names to its map pin (scripts/snap_panynj_monitors.py, OpenStreetMap geometry); snap_m is how far the pin was "
+        "names to its map pin (scripts/snap_panynj_monitors.py, OpenStreetMap geometry, (c) OpenStreetMap contributors, ODbL 1.0); snap_m is how far the pin was "
         'from that street; pin_lat/pin_lon is the map-derived pin (scripts/georef_panynj_monitors.py: pins detected, '
         'maps calibrated symmetrically on the FAA runway thresholds at three colour thresholds; position_spread_m is how '
         "far a pin moves between those calibrations). street_verified false or null: the street was not confirmed, and "

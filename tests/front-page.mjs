@@ -93,6 +93,17 @@ if (csvText.includes('"')) throw new Error('the CSV has quoted fields; this pars
 const [head, ...body] = csvText.trim().split(/\r?\n/).map((l) => l.split(','));
 const CSV = body.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
 const csvRow = (name) => CSV.find((r) => r.borough === name);
+// How many routes on the map cross each area (scripts/build_area_route_crossings.mjs): "avoid aircraft
+// noise" needs the lowest band AND none crossing (audit 2026-10-16 I-3).
+const CROSS = JSON.parse(await readFile(join(ROOT, 'data', 'area-route-crossings.json'), 'utf8')).cities;
+const normName = (s) => s.toLowerCase().replace(/&/g, 'and').replace(/[.,'']/g, '').replace(/\s+/g, ' ').trim();
+const crossesOf = (r) => {
+  const m = CROSS[r.city];
+  if (!m) return null;
+  const k = Object.keys(m).find((n) => normName(n) === normName(r.borough));
+  return k === undefined ? null : m[k];
+};
+const quietAndClear = (r) => r.quiet !== '' && Number(r.quiet) >= 10 && crossesOf(r) === 0;
 
 // Real postcodes.io shapes, trimmed to what the page reads.
 const GEO = {
@@ -1664,11 +1675,13 @@ const makeReport = async (pc) => {
     && (await fp.locator('#map .boro.is-fit').count()) === 0 && await fp.locator('#toggle-fit').isHidden(),
   'find: with nothing chosen, nothing is listed or shaded, and it says what to do');
 
-  // London, under £600,000, away from aircraft noise, close to a station: the list and the map are the CSV's answer.
-  await fp.selectOption('#fit-budget', '600000');
+  // London, under £750,000, away from aircraft noise, close to a station: the list and the map are the CSV's answer.
+  // (£750,000 since 2026-10-16: "away from aircraft noise" now also needs no route across the area, which left
+  // Sutton alone under £600,000, and the hover checks below need three.)
+  await fp.selectOption('#fit-budget', '750000');
   await fp.getByLabel('aircraft noise').check();
   await fp.getByLabel('a station').check();
-  const want = UK.filter((r) => r.city === 'london' && num(r.avg_price_gbp) <= 600000 && num(r.quiet) >= 10 && num(r.rail_within_800m_pct) >= 50)
+  const want = UK.filter((r) => r.city === 'london' && num(r.avg_price_gbp) <= 750000 && quietAndClear(r) && num(r.rail_within_800m_pct) >= 50)
     .sort(order).map((r) => r.borough);
   const got = await listed();
   ok(want.length > 0 && JSON.stringify(got) === JSON.stringify(want), 'find: the list is exactly the CSV areas that meet all three, highest score first', `${got.join(', ')} vs ${want.join(', ')}`);
@@ -1694,16 +1707,31 @@ const makeReport = async (pc) => {
   ok(hotKey.length === 1 && hotKey[0] === want[2], 'find: and so does focusing one by keyboard', hotKey.join(', '));
 
   // The shading follows the list when a choice changes.
-  await fp.getByLabel('a station').uncheck();
-  const wider = UK.filter((r) => r.city === 'london' && num(r.avg_price_gbp) <= 600000 && num(r.quiet) >= 10).length;
+  // Dropping "aircraft noise" widens the list (dropping the station would not: every quiet, clear area has one).
+  await fp.getByLabel('aircraft noise').uncheck();
+  const wider = UK.filter((r) => r.city === 'london' && num(r.avg_price_gbp) <= 750000 && num(r.rail_within_800m_pct) >= 50).length;
   ok((await fp.locator('#map .boro.is-fit').count()) === wider, 'find: the shading follows the list when a choice changes', `${await fp.locator('#map .boro.is-fit').count()} vs ${wider}`);
-  await fp.getByLabel('a station').check();
+  // Audit 2026-10-16 M-17: the matches are outlined in a layer ABOVE the noise picture, which is multiplied over
+  // the fill and muddied it; one outline per shaded area, and the layer after the picture in drawing order.
+  const outlines = await fp.evaluate(() => {
+    const img = document.getElementById('noise-image'), layer = document.querySelector('#map .fit-outlines');
+    return {
+      edges: document.querySelectorAll('#map .fit-outlines path.edge').length,
+      above: Boolean(img && layer && (img.compareDocumentPosition(layer) & Node.DOCUMENT_POSITION_FOLLOWING)),
+    };
+  });
+  ok(outlines.edges === wider && outlines.above, 'find: each area that fits is outlined above the noise picture', JSON.stringify(outlines));
+  await fp.getByLabel('aircraft noise').check();
 
   // An area opens its card in place of the list; closing it brings the list back with focus on that row.
   await fp.locator('#fit-list button[data-borough]').first().click();
   await fp.waitForSelector('#borough.is-open', { timeout: 10000 });
+  // The card sits IN the selected tab's panel (audit 2026-10-16 M-14): the panel stays shown, the list steps aside.
   ok((await fp.locator('#borough h2').textContent()) === want[0] && await fp.evaluate(() => document.activeElement?.matches('#borough h2'))
-    && await fp.locator('#panel-find').isHidden(), 'find: a row opens its card in place of the list, with focus on its name', want[0]);
+    && await fp.locator('#panel-find').isVisible() && await fp.locator('#fit-list').isHidden() && await fp.locator('#fit-form').isHidden()
+    && await fp.evaluate(() => Boolean(document.querySelector('#panel-find > #borough'))),
+    'find: a row opens its card in place of the list, inside the Find panel, with focus on its name', want[0]);
+  ok((await fp.locator('#borough').getAttribute('aria-live')) === 'off', 'find: a card focus moves into is not also announced as a live region (M-15)');
   await fp.locator('#borough-close').click();
   ok(await fp.locator('#panel-find').isVisible() && await fp.evaluate((n) => document.activeElement?.dataset?.borough === n, want[0]),
     'find: closing the card brings the list back, with focus on the row it came from');
@@ -1721,7 +1749,7 @@ const makeReport = async (pc) => {
   await fp.selectOption('#fit-budget', '200000');
   ok((await fp.locator('#fit-count').textContent()) === 'No council area in London averages under £200,000. Try a higher price or another region.' && (await listed()).length === 0,
     'find: a budget no area meets says so plainly, and lists nothing', await fp.locator('#fit-count').textContent());
-  await fp.selectOption('#fit-budget', '600000');
+  await fp.selectOption('#fit-budget', '750000');
 
   // A blank figure is unknown, not a pass: anywhere, away from busy roads. Cardiff publishes no road share,
   // and a blank read as a number is 0, which is UNDER the cut, so this is the condition that would wave it
@@ -1752,7 +1780,7 @@ const makeReport = async (pc) => {
   await fp.waitForFunction(() => document.querySelector('#chips button[aria-pressed="true"]')?.dataset.city === 'manchester', null, { timeout: 15000 });
   const noneText = await fp.locator('#fit-count').textContent();
   const misses = await fp.locator('#fit-list .find-miss em').allTextContents();
-  ok(/^None of the 10 council areas in Greater Manchester meets all of these/.test(noneText) && misses.length > 0 && misses.every((m) => /^(more aircraft noise|fewer stations): /.test(m)),
+  ok(/^None of the 10 council areas in Greater Manchester meets all of these/.test(noneText) && misses.length > 0 && misses.every((m) => /^(more aircraft noise|fewer stations|flight routes cross it): /.test(m)),
     'find: choosing a region moves the map there; when nothing fits, the nearest are named with what they miss and by how much', `${noneText} / ${misses.join(' | ')}`);
   ok((await fp.locator('#map .boro.is-fit').count()) === 0 && await fp.locator('#toggle-fit').isHidden(), 'find: and nothing is shaded, so the switch goes');
   ok((await fp.evaluate(() => location.hash)) === '#find' && (await fp.evaluate(() => location.search)) === '?city=manchester',
@@ -1762,6 +1790,24 @@ const makeReport = async (pc) => {
   await fp.locator('#chips button[data-city="westmidlands"]').click();
   await fp.waitForFunction(() => document.getElementById('fit-where')?.value === 'westmidlands', null, { timeout: 10000 }).catch(() => {});
   ok((await fp.locator('#fit-where').inputValue()) === 'westmidlands', 'find: a city chosen on the map becomes the list\'s region too');
+
+  // Audit 2026-10-16 M-13: on the Find tab "Skip to the search" lands on the Find controls (the postcode box
+  // is in the hidden panel, so it went to <body>), and the address keeps #find.
+  await fp.evaluate(() => document.querySelector('a.skip').focus());
+  await fp.keyboard.press('Enter');
+  ok(await fp.evaluate(() => document.activeElement?.id === 'fit-where' && location.hash === '#find'),
+    'find: on the Find tab the skip link lands on its first control and keeps #find', await fp.evaluate(() => `${document.activeElement?.id}|${location.hash}`));
+
+  // Audit 2026-10-16 M-12: a region the API scores and this map does not draw says so, and stops offering the map.
+  if (await fp.locator('#fit-where option[value="cardiff"]').count()) {
+    await fp.selectOption('#fit-where', 'cardiff');
+    ok(/does not draw Cardiff's council areas/.test(await fp.locator('#fit-note').textContent()) && await fp.locator('#fit-mapjump').isHidden()
+      && (await fp.locator('#chips button[aria-pressed="true"]').getAttribute('data-city')) === 'westmidlands',
+    'find: a region the map does not draw says so, leaves the map where it was, and stops offering it', await fp.locator('#fit-note').textContent());
+    await fp.selectOption('#fit-where', 'westmidlands');
+  } else {
+    ok(false, 'find: the list should offer Cardiff (an API-only region) for the undrawn-region check');
+  }
 
   // Review 2026-10-15: a city the list does not hold (the open-data CSV is UK council areas) must
   // not leave a West Midlands list silently beside a New York map.

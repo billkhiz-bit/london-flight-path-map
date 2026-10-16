@@ -883,11 +883,27 @@
 <div id="toast"></div>
 
 <!-- ═══════════════════════════════════════════════ -->
+<!-- Every module this page loads from jsDelivr carries its SHA-384 (audit 2026-10-16 M-9): a changed file
+     at the CDN is refused instead of run on our origin. The list is the set the page actually fetches,
+     recorded by loading it; tests/test_prototype_integrity.py holds it to the import map. -->
 <script type="importmap">
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
     "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+  },
+  "integrity": {
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js": "sha384-94gajc6XgNyCt0QElkXXk0mG9VEkNMmL4KZrhzqiErIDYDnA9qb8lR13pW6DGZMN",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/controls/OrbitControls.js": "sha384-BZPDnhvqQ9HQ5XsmqEusjwpN9TIaiGbsJ5XWilDEuRu9Psbw4ZyYk67DUO0nbP3z",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/postprocessing/EffectComposer.js": "sha384-L+Ns9skCAqjab7aG8LH5VLknBCoENW7p37sOj39jnITwlWZFabWc29JwzgYf6ygy",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/postprocessing/MaskPass.js": "sha384-SDM80tiGflO8UDV/QzR/mASjcc/+wF7KfRVFNHJUIPcTctwoPI8GoWVTlccZw7V4",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/postprocessing/Pass.js": "sha384-gSqIFh8vMmp1veyOysIS3KPVUl/A5JPefYvW4b89OeYeW0bwkrjN7qcC1h0XJK/K",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/postprocessing/RenderPass.js": "sha384-LwKrkOBAkmQ2KT4cv6P6q9Rb9L01GIFU34Zp16tGWZoBnrVuujfjpYZb7OxEMb0J",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/postprocessing/ShaderPass.js": "sha384-zetU6HhR/vTtgSvnS9DE+GQPZhVT/ZOSLa/1+DSM6rkM9hvBgQWr9bCEosZt93ch",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/postprocessing/UnrealBloomPass.js": "sha384-R734/7SvtqjjeteDKG4qcQA0adDCZ1ZcKfYUZsbVr9qqHGlgSXH9eNN4b3NIgwuc",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/renderers/CSS2DRenderer.js": "sha384-oxPlnJSeUCYU9W3RMQswb4S/vFd4Bhxuy1Ffx0V2KJakWeb6n1gaqUtSE9Ic/F72",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/shaders/CopyShader.js": "sha384-kzVlcj2amFaRNIWZ5zE0PmIN+QTNWWvrgKk31S8N/7w0nf7Qq3xqxHRLbD2UPPSl",
+    "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/shaders/LuminosityHighPassShader.js": "sha384-621kiA/kIdX8rtH6VU6+SwMVx+B8g7MQ6x0fei5dZVX3CQZSLkpOlglIk9sxE+/g"
   }
 }
 </script>

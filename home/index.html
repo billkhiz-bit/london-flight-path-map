@@ -81,6 +81,12 @@
       .hero svg .boro.is-fit { fill: #ffd2a8; stroke: #141414; stroke-width: 1.4; }
       .hero svg .boro.is-fit:hover, .hero svg .boro.is-fit.is-selected { fill: #ffbf85; }
       .hero svg .boro.is-hot { stroke: #d35a12; stroke-width: 3; }
+      /* The matches again, as outlines in a layer ABOVE the noise picture (audit 2026-10-16 M-17): the picture is
+         multiplied over the fill, which muddied a fitting area under DEFRA's 55-60 dB colour. A white halo under a
+         dark line reads on every band. */
+      .hero svg .fit-outlines path { fill: none; pointer-events: none; vector-effect: non-scaling-stroke; }
+      .hero svg .fit-outlines .halo { stroke: #fff; stroke-width: 4.5; }
+      .hero svg .fit-outlines .edge { stroke: #141414; stroke-width: 2; }
       .legend .fit-swatch { display: inline-block; width: 14px; height: 10px; margin-right: 6px; background: #ffd2a8; border: 1.4px solid #141414; border-radius: 2px; }
       .hero svg .final { stroke: #141414; stroke-width: 1.8; fill: none; vector-effect: non-scaling-stroke; }
       /* A coded arrival (the Bay Area, 2026-10-07): an approach route, so solid like a final, and thinner, because it is flown higher. fill: none, or a curved path fills in as a shape. */
@@ -135,7 +141,7 @@
       .panel.is-find h1 { font-size: 22px; margin-bottom: 8px; }
       .panel.is-find .lead { display: none; }
       /* An area opened from the list (or the map) shows its card in place of the list; closing it comes back. */
-      .panel.is-find:has(#borough.is-open) #panel-find { display: none; }
+      .panel.is-find:has(#borough.is-open) #panel-find > :not(#borough) { display: none; }
       .find-form { display: grid; grid-template-columns: 58px 1fr; gap: 10px 12px; align-items: center; }
       .find-form .k { font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
       .find-form select { width: 100%; font: 500 15px var(--font-body); min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--dark); border-radius: 10px; background: #fff; color: var(--dark); }
@@ -388,7 +394,8 @@
               <span class="k" id="fit-avoid-k">Avoid</span><div class="fit-chips" id="fit-avoid" role="group" aria-labelledby="fit-avoid-k"></div>
               <span class="k" id="fit-want-k">Want</span><div class="fit-chips" id="fit-want" role="group" aria-labelledby="fit-want-k"></div>
             </div>
-            <p class="find-count" id="fit-count" aria-live="polite"></p>
+            <p class="find-count" id="fit-count"></p>
+            <p class="vh" id="fit-announce" aria-live="polite"></p>
             <ol class="find-list" id="fit-list"></ol>
             <p class="find-note" id="fit-note"></p>
             <p class="find-mapjump"><button type="button" class="linkish" id="fit-mapjump">See them on the map</button></p>

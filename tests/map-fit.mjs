@@ -122,17 +122,40 @@ function measure() {
     x1 = Math.max(x1, b.x + b.width);
     y1 = Math.max(y1, b.y + b.height);
   }
+  // THE VISIBLE BAND, read from the clip the page APPLIED (2026-10-16, audit I-4). On a phone the map is
+  // clipped to the band the chrome leaves clear, so geography above the clip's top is not on screen even
+  // though it is inside the SVG box, and the size floor is owed to the band, not to the box.
+  const clip = getComputedStyle(svg).clipPath.match(/inset\(([^)]*)\)/);
+  const [clipTop = 0, , clipBottom = 0] = clip ? clip[1].split(/\s+/).map((v) => parseFloat(v) || 0) : [];
+  // NOTHING ON TOP OF AN AREA (audit 2026-10-16 I-4). A borough is not a control, so responsive.mjs never
+  // asks what covers it; on a landscape phone 12 of London's 33 lay under the search card, inside the box
+  // and inside the clip-free SVG. Asked the way a finger asks: what is at each area's centre?
+  const covered = [];
+  for (const p of drawn) {
+    if (p.__data__?.type !== 'Feature') continue;
+    const r = p.getBoundingClientRect();
+    if (!(r.width > 0)) continue;
+    const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (el && !svg.contains(el)) {
+      // Each boundary file names its areas under its own key (name, NAME, LAD24NM...).
+      const props = p.__data__.properties || {};
+      const name = Object.entries(props).find(([k, v]) => /name|nm$/i.test(k) && typeof v === 'string')?.[1] || '?';
+      covered.push(`${name} under ${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : ''}`);
+    }
+  }
   return {
     boxW: box.width,
     boxH: box.height,
+    visH: box.height - clipTop - clipBottom,
     geoW: x1 - x0,
     geoH: y1 - y0,
     corridors,
+    covered,
     over: {
       left: Math.max(0, -x0),
       right: Math.max(0, x1 - box.width),
-      top: Math.max(0, -y0),
-      bottom: Math.max(0, y1 - box.height),
+      top: Math.max(0, clipTop - y0),
+      bottom: Math.max(0, y1 - (box.height - clipBottom)),
     },
   };
 }
@@ -244,8 +267,15 @@ for (const [w, h, label] of VIEWPORTS) {
       }
     }
     const spill = Math.round(m.over.left + m.over.right + m.over.top + m.over.bottom);
-    const fill = Math.max(m.geoW / m.boxW, m.geoH / m.boxH);
-    const line = `${city.label.padEnd(20)} ${Math.round(m.geoW)}x${Math.round(m.geoH)} in ${Math.round(m.boxW)}x${Math.round(m.boxH)}  fill ${(fill * 100).toFixed(0)}%`;
+    const fill = Math.max(m.geoW / m.boxW, m.geoH / m.visH);
+    const line = `${city.label.padEnd(20)} ${Math.round(m.geoW)}x${Math.round(m.geoH)} in ${Math.round(m.boxW)}x${Math.round(m.visH)} visible  fill ${(fill * 100).toFixed(0)}%`;
+    // Phones only (the tabbed layout, w <= 900): the desktop layout on a wide-but-short screen is a separate,
+    // recorded finding (AUDIT_REPORT_2026-10-16.md I-5), not something this fix claims.
+    if (w <= 900 && m.covered.length) {
+      failures.push(`${w}x${h} ${city.label}: ${m.covered.length} area(s) under page furniture: ${m.covered.slice(0, 4).join('; ')}`);
+      console.log(`  FAIL  ${line}  COVERED ${m.covered.length}: ${m.covered.slice(0, 3).join('; ')}`);
+      continue;
+    }
     if (spill > 1) {
       const pct = (((m.over.left + m.over.right) / m.geoW) * 100).toFixed(1);
       failures.push(

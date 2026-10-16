@@ -515,7 +515,7 @@ unrelated branch cannot assume it:
   "Statement": [{
     "Effect": "Allow",
     "Principal": {
-      "Federated": "arn:aws:iam::072674217857:oidc-provider/token.actions.githubusercontent.com"
+      "Federated": "arn:aws:iam::<AWS_ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
     },
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {
@@ -552,7 +552,7 @@ targets carry, and the backend one the `EpcBearerToken` override). Add the
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::072674217857:role/flightmap-github-deploy
+          role-to-assume: arn:aws:iam::<AWS_ACCOUNT_ID>:role/flightmap-github-deploy
           aws-region: eu-west-2
 ```
 
@@ -589,7 +589,7 @@ that bullet describing a state that did not exist is what the finding was.
 > would all be scoped to an account that does not exist - **every deploy
 > denied**, the 3 Sep outage again. Found by diffing the LIVE policy against the
 > file statement by statement before the 28 Sep paste. Paste a copy with
-> `072674217857` substituted, and diff it against the live version first: on
+> the account ID substituted (`aws sts get-caller-identity --query Account --output text`), and diff it against the live version first: on
 > 28 Sep the diff was "removes nothing, adds exactly 10 actions, no existing
 > statement's scope changes". The first console save that day stored an
 > UNCHANGED version 12 (the paste had not reached the editor) - re-read the
@@ -604,7 +604,7 @@ NOT applied, deliberately - see "why this is not already done" below.**
 
 ```
 iam:CreateRole, iam:PassRole, iam:AttachRolePolicy, iam:PutRolePolicy, ...
-Resource:  arn:aws:iam::072674217857:role/london-flight-map-*
+Resource:  arn:aws:iam::<AWS_ACCOUNT_ID>:role/london-flight-map-*
 Condition: NONE
 ```
 
@@ -883,7 +883,7 @@ other two.
 | `london-flight-map-lambda-duration` | `AWS/Lambda` `Duration`, Maximum | >25 s, i.e. approaching the **29 s API Gateway integration cap**, before requests start 504-ing |
 | `london-flight-map-api-5xx` | `AWS/ApiGateway` `5XXError`, Sum, `ApiName=london-flight-map` | any 5xx, >0 in 5 min |
 
-All three notify **`arn:aws:sns:eu-west-2:072674217857:sky-score-alerts`** (email
+All three notify **`arn:aws:sns:eu-west-2:<AWS_ACCOUNT_ID>:sky-score-alerts`** (email
 to Bill) on BOTH `ALARM` and `OK`, and all three use
 `--treat-missing-data notBreaching` so a quiet API does not page anyone.
 

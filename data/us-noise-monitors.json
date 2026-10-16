@@ -477,7 +477,7 @@
         "2026-07-31"
       ],
       "transcription": "tables are images: read from the July and June editions separately and compared, 384 overlapping cells, 0 differ (scripts/panynj_monthly_dnl.py is the record)",
-      "positions_from": "the report maps place a pin only roughly, so each monitor is the nearest point on the street its site table names to its map pin (scripts/snap_panynj_monitors.py, OpenStreetMap geometry); snap_m is how far the pin was from that street; pin_lat/pin_lon is the map-derived pin (scripts/georef_panynj_monitors.py: pins detected, maps calibrated symmetrically on the FAA runway thresholds at three colour thresholds; position_spread_m is how far a pin moves between those calibrations). street_verified false or null: the street was not confirmed, and the monitor is left out of any fit",
+      "positions_from": "the report maps place a pin only roughly, so each monitor is the nearest point on the street its site table names to its map pin (scripts/snap_panynj_monitors.py, OpenStreetMap geometry, (c) OpenStreetMap contributors, ODbL 1.0); snap_m is how far the pin was from that street; pin_lat/pin_lon is the map-derived pin (scripts/georef_panynj_monitors.py: pins detected, maps calibrated symmetrically on the FAA runway thresholds at three colour thresholds; position_spread_m is how far a pin moves between those calibrations). street_verified false or null: the street was not confirmed, and the monitor is left out of any fit",
       "not_used": [
         {
           "id": "KEWHI",

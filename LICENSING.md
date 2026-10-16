@@ -263,7 +263,11 @@ often planes fly"). Measured privately; nothing derived from these is published:
 - **New York airport noise monitors (2026-10-16)**, `data/us-noise-monitors.json` 'NYC': the Port Authority of NY &
   NJ's Monthly Noise Monitor Report (a public report; no licence stated). Monthly figures transcribed and monitor
   positions measured off its maps, used as published facts with the source named; no report images or tables
-  are redistributed. **New York's runway use is in `data/us-runway-use.json` since 2026-10-16** (JFK, LGA, EWR,
+  are redistributed. **The positions were then snapped onto the named street with OpenStreetMap street geometry**
+  (`scripts/snap_panynj_monitors.py`, one Overpass query; OSM is ODbL 1.0, "(c) OpenStreetMap contributors"). Found
+  by the 2026-10-16 audit: they feed the fitted (scored) estimate, which is this file's re-open trigger. 29 points
+  are treated as an insubstantial extract, credited here and in the data file's notes, and never published per
+  response; whether a response-level credit is also wanted is Bill's call. **New York's runway use is in `data/us-runway-use.json` since 2026-10-16** (JFK, LGA, EWR,
   TEB, July-August 2026) and New York's score reads it (v5.6), so it takes the Bay Area's ODbL treatment: offered
   under ODbL, credited "aircraft positions via adsb.lol (ODbL)" in the file and in every New York response's
   `sources` (with the period, from the engine's own block).

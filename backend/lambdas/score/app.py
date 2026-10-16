@@ -196,8 +196,9 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            average at all four airports (nested leave-one-out MAE JFK 1.28,
 #            LGA 1.25, TEB 1.70; EWR 3.40 on two monitors). The borough bands
 #            are derived from it, population-weighted by ZIP area
-#            (scripts/build_nyc_impact.py): Queens severe -> high, Brooklyn high
-#            -> moderate, the Bronx low-moderate -> moderate. No UK value moves.
+#            (scripts/build_nyc_impact.py), rounded to the louder band: Queens
+#            severe -> high, Brooklyn high -> moderate-high, the Bronx low-moderate
+#            -> moderate, Staten Island low -> low-moderate. No UK value moves.
 METHODOLOGY_VERSION = '5.6'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
@@ -1756,7 +1757,7 @@ NYC_BOROUGHS = {
         'healthcare': 'good',
     },
     'Brooklyn': {
-        'impact': 'moderate',
+        'impact': 'moderate-high',
         'avgPrice': 850000,
         'trend': 3.8,
         'schools': 'good',
@@ -1783,7 +1784,7 @@ NYC_BOROUGHS = {
         'healthcare': 'good',
     },
     'Staten Island': {
-        'impact': 'low',
+        'impact': 'low-moderate',
         'avgPrice': 550000,
         'trend': 3.0,
         'schools': 'good',
@@ -6605,14 +6606,16 @@ def _quiet_across_all_geometry(lat, lon, postcode_clean=None):
     city, both re-open the exact failure this replaced: silence about the
     airport overhead.
 
-    NYC is excluded by name. Its geometry is thousands of km from any UK
-    coordinate so it would always return 10.0 and never win a minimum, but
-    including it would mean this quietly depended on that staying true.
+    UK cities only, chosen by country rather than by excluding US cities by
+    name: New York was excluded by name, and the Bay Area's geometry (added
+    2026-10-16, in no CITIES entry) then slipped into this loop unnoticed (audit
+    2026-10-16). Both are thousands of km away and would always return 10.0, but
+    including them would mean this quietly depended on that staying true.
     """
     readings = [
         calc_postcode_quiet(lat, lon, city, postcode_clean, raster_lden=None)
         for city in CITY_GEOMETRY
-        if city != 'nyc'
+        if city in CITIES and CITIES[city]['country'] == 'United Kingdom'
     ]
     readings = [r for r in readings if r is not None]
     return min(readings) if readings else None
@@ -6789,10 +6792,10 @@ def calc_postcode_quiet(lat, lon, city, postcode_clean=None, raster_lden=_RASTER
     # A US city's geometry carries its own fitted values (2026-10-16): per-airport
     # sizes measured against that airport's monitors, runway lobes weighted by how
     # each runway is flown, its own corridor weight and a LIST of major airports.
-    # Each is read only when present, so a city without them - every UK city and
-    # New York - takes exactly the path it took before. The US sizes deliberately
-    # do NOT go in AIRPORT_NOISE_SCALE: that table mirrors index.html, and the site
-    # scores no US city from geometry it would need them for.
+    # Each is read only when present, so a city without them - every UK city -
+    # takes exactly the path it took before. New York carries them since v5.6. The
+    # US sizes deliberately do NOT go in AIRPORT_NOISE_SCALE: that table mirrors
+    # index.html for the UK; the site reads New York's from its own US_QUIET_NYC block.
     sizes = geo.get('airport_sizes', {})
     lobes = geo.get('runway_lobes')
 
@@ -7652,7 +7655,7 @@ def _env_breakdown_line(city):
 # code is in RUNWAY_AXIS_DEG. That table is generated from the AIP records and
 # held to them by build_flight_paths.py's blocking --check, so membership
 # means "the AIP publishes this airport and the quiet term reads its axis".
-# New York's corridors are hand-drawn and its airports carry no axis; South
+# New York's routes are the FAA's (v5.6) and credited by _us_routes_source_line; South
 # Yorkshire has no airport. Both get None, and build_sources drops the line.
 #
 # City-level, like the aviation lines beside it, and deliberately not keyed

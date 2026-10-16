@@ -737,7 +737,7 @@
       .legend-line {
         width: 16px;
         height: 2px;
-        border-top: 2px dashed;
+        border-top: 2px solid;
       }
       .legend-dot {
         width: 8px;
@@ -5743,15 +5743,15 @@
           impact: 'high',
           avg_price: 620000,
           trend: 4.5,
-          note: 'JFK and LaGuardia are both in Queens. Southern Queens (Howard Beach, Ozone Park) is under JFK paths. Northern Queens (Flushing, Jackson Heights) gets LaGuardia traffic. Forest Hills and Rego Park are relatively quieter.',
+          note: "JFK and LaGuardia are both in Queens. LaGuardia's routes pass within about a kilometre of Jackson Heights, Forest Hills and Ozone Park, JFK's runway 22L approach of Rosedale, and Howard Beach sits beside JFK. Bayside and Douglaston, in the north-east, are furthest from the routes.",
           property:
             'Diverse and affordable by NYC standards. Astoria and Long Island City have seen rapid gentrification. Jamaica is a transport hub with good value. Avoid Howard Beach and South Ozone Park if noise matters.',
         },
         Brooklyn: {
-          impact: 'moderate',
+          impact: 'moderate-high',
           avg_price: 850000,
           trend: 3.8,
-          note: "LaGuardia's runway 4 approach and its departure routes cross north and west Brooklyn (Park Slope, Flatbush, Bushwick, Williamsburg). Bay Ridge, in the south-west, is further from them. Downtown Brooklyn and DUMBO get some helicopter traffic.",
+          note: "LaGuardia's runway 4 approach and its departure routes pass within about a kilometre of Bed-Stuy, Prospect Heights, East New York, Park Slope and Bushwick. Bay Ridge, in the south-west, is further from them. Downtown Brooklyn and DUMBO get some helicopter traffic.",
           property:
             'Brooklyn has seen massive price growth. Bushwick and Bed-Stuy still offer relative value. Park Slope is family-friendly but expensive. Red Hook is a hidden gem with some flood risk.',
         },
@@ -5767,12 +5767,12 @@
           impact: 'moderate',
           avg_price: 420000,
           trend: 5.5,
-          note: "LaGuardia's runway 22 approach crosses the east and south Bronx (Pelham Bay, Throgs Neck, Soundview, Hunts Point). The north-west, Riverdale and Fordham, is well away from the routes.",
+          note: "LaGuardia's runway 22 approach passes within about a kilometre of the south-east Bronx (Castle Hill, Pelham Bay, Westchester Square). The north-west, Riverdale and Fordham, is well away from the routes.",
           property:
             'Most affordable borough in NYC. Riverdale is leafy and suburban. South Bronx is seeing major regeneration. Excellent value for families priced out of Manhattan. Metro-North gives fast commute from north Bronx.',
         },
         'Staten Island': {
-          impact: 'low',
+          impact: 'low-moderate',
           avg_price: 550000,
           trend: 3.0,
           note: 'Well away from major flight paths. Some Newark departures pass at high altitude. The quietest borough for aircraft noise in NYC.',
@@ -6986,7 +6986,7 @@
           // Was the DEFRA paragraph, live, under this BTS heading, because the
           // explainer had no id and nothing swapped it.
           legendNoiseExplainer:
-            "<strong>What this is:</strong> Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. <strong>Not DEFRA</strong> - no published Lden survey covers New York, so the decibel thresholds used for London are not directly applicable here. A borough search gives a 0-10 quiet score, not a decibel reading. <strong>The coloured layer</strong> is the US Bureau of Transportation Statistics' National Transportation Noise Map for 2022: a 24-hour average of aircraft noise (LAeq). BTS publishes it to track national trends and says it should not be used to judge the noise at an individual location. <strong>Plane altitudes</strong> are the FAA's published glide paths (Coded Instrument Flight Procedures, supplied \"as is\", without warranty; not for navigation), given only for a place under a final approach.",
+            "<strong>What this is:</strong> An ESTIMATE of aircraft noise from the FAA's routes of JFK, LaGuardia, Newark and Teterboro (the runway directions flown most), fitted to the Port Authority's noise monitors so that it reads louder than they measure on average; a borough's band is the same estimate averaged over its residents and rounded to the louder side. <strong>Not DEFRA</strong> - no published Lden survey covers New York, so the decibel thresholds used for London are not directly applicable here. A borough search gives a 0-10 quiet score, not a decibel reading. <strong>The coloured layer</strong> is the US Bureau of Transportation Statistics' National Transportation Noise Map for 2022: a 24-hour average of aircraft noise (LAeq). BTS publishes it to track national trends and says it should not be used to judge the noise at an individual location. <strong>Plane altitudes</strong> are the FAA's published glide paths (Coded Instrument Flight Procedures, supplied \"as is\", without warranty; not for navigation), given only for a place under a final approach.",
           legendRoadTitle: 'DOT ROAD NOISE',
           legendFloodTitle: 'FEMA FLOOD RISK',
           legendAqTitle: 'EPA BOROUGH AIR QUALITY',
@@ -9181,7 +9181,48 @@
       // would be worse than not trying. So a band too short to hold the map is
       // declined and the container centre is used - today's behaviour, kept for
       // the case where there is no better answer rather than forced into one.
+      // THE PHONE LAYOUT'S BAND (audit 2026-10-16 I-4). In the tabbed layout - every phone on the web
+      // since 2026-08-28, and the native app - the sidebar is not a sheet at the bottom: it OVERLAYS the
+      // whole map, transparent, with the search card floating over the map's top. The sheet branch below
+      // therefore never applied (the sheet's top is the map's top), the map was fitted and centred on the
+      // whole box, and on a landscape phone the north of every city sat under the search card: 12 of
+      // London's 33 boroughs, 32 of the Bay Area's 50 (measured with elementFromPoint at each centre).
+      // The clear band is from just below the search card to the bottom of the map box; [top, bottom] in
+      // the container's own coordinates, or null where the layout is not the overlay one.
+      function overlayBand(container, h) {
+        const app = container.closest('.app');
+        if (!app || app.dataset.mview !== 'search') return null;
+        const card = app.querySelector('.search-box');
+        if (!card) return null;
+        const box = container.getBoundingClientRect();
+        const sheetTop = app.querySelector('.sidebar')?.getBoundingClientRect().top - box.top;
+        if (!(sheetTop <= 0)) return null; // a real sheet below the map: the branch in mapCentreY handles it
+        const c = card.getBoundingClientRect();
+        if (!(c.height > 0)) return null;
+        // The phone footer (Privacy, Terms, More) flows up under the card when there is no result; its
+        // links cover what lies beneath them, so it is part of the top chrome too when the band below it
+        // can still hold a map, else the card alone is (568x320 has room only for that).
+        const foot = app.querySelector('.sidebar > .sheet-footer')?.getBoundingClientRect();
+        const tops = [foot && foot.height > 0 ? foot.bottom : null, c.bottom].filter((v) => v != null).map((v) => v - box.top + 8);
+        // Too thin to hold a map is not a band: keep the whole box, as before.
+        const top = tops.find((t) => t > 0 && h - t >= 100);
+        return top === undefined ? null : [top, h];
+      }
+      // The height the map is FITTED to: the clear band in the overlay layout, else the box.
+      function fitHeight(container, h) {
+        const band = overlayBand(container, h);
+        return band ? band[1] - band[0] : h;
+      }
+
       function mapCentreY(container, h) {
+        const overlay = overlayBand(container, h);
+        if (overlay) {
+          // Clipped to the band as the sheet layout is, so the airports outside a city's boundary do not
+          // paint up behind the search card and the city chips.
+          container.style.setProperty('--map-band-top', overlay[0] + 'px');
+          container.style.setProperty('--map-band-bottom', '0px');
+          return (overlay[0] + overlay[1]) / 2;
+        }
         const sheet = document.querySelector('.sidebar');
         const nav = document.querySelector('.city-selector');
         if (!sheet || !nav) return h / 2;
@@ -13832,7 +13873,7 @@
         const cityData = cityOf(city);
         projection
           .center(cityData.center)
-          .scale(fittedScale(cityData.scale, w, h))
+          .scale(fittedScale(cityData.scale, w, fitHeight(container, h)))
           .translate([w / 2, mapCentreY(container, h)]);
         // interrupt() before remove(): d3 transitions outlive detachment, and
         // remove() alone leaves the flight-path dot loops running. The
@@ -14937,7 +14978,7 @@
         projection = d3
           .geoMercator()
           .center(cityData.center)
-          .scale(fittedScale(cityData.scale, w, h))
+          .scale(fittedScale(cityData.scale, w, fitHeight(container, h)))
           .translate([w / 2, mapCentreY(container, h)]);
         pathGenerator = d3.geoPath().projection(projection);
 
@@ -15380,7 +15421,7 @@
           const nw = container.clientWidth;
           const nh = container.clientHeight;
           const baseScale = cityOf(currentCity).scale;
-          projection.scale(fittedScale(baseScale, nw, nh)).translate([nw / 2, mapCentreY(container, nh)]);
+          projection.scale(fittedScale(baseScale, nw, fitHeight(container, nh))).translate([nw / 2, mapCentreY(container, nh)]);
           // interrupt() before remove() - see the matching call in switchCity.
           g.selectAll('*').interrupt().remove();
           // Projection translate has changed → previously cached g-coords for

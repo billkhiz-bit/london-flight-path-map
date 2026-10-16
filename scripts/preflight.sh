@@ -268,8 +268,8 @@ check "flight paths == UK AIP"         python scripts/build_flight_paths.py --ch
 # from the FAA's CIFP, must be internally sound (every runway opposite its
 # reciprocal, measured bearing agreeing with the published magnetic one, a
 # glide angle or the reason there is none), and IDENTICAL to what its zip
-# derives whenever that gitignored zip is on disk. It feeds no holder yet -
-# New York's corridors are still hand-drawn - so this gates the record alone.
+# derives whenever that gitignored zip is on disk. It feeds the Bay Area and New
+# York route files and, since v5.6, New York's scored geometry.
 # Offline: the network half is --fetch.
 check "US flight paths == FAA CIFP"    python scripts/build_us_flight_paths.py --check
 # Added 2026-10-16. The Bay Area's aircraft geometry (US-QUIET-BAYAREA in the
@@ -394,6 +394,10 @@ check "site == Lambda (91 boroughs)"   node tests/borough-score-parity.mjs
 # boroughs score from their impact band. Proven red three ways on site-only edits
 # (a size, the majors list, the lobe's behind-the-runway test).
 check "New York quiet: site == Lambda"   node tests/us-quiet-site-parity.mjs
+# "Avoid aircraft noise" in Find areas reads how many routes on the map cross each council area
+# (audit 2026-10-16 I-3). The counts are the page's own routesAcross(), run by the builder in a
+# browser over the working tree; a changed route, outline or AIP cycle reds this until rewritten.
+check "area route crossings == page"   node scripts/build_area_route_crossings.mjs --check
 # The 285 curated postcode-district labels are the one output of the
 # neighbourhood builder that nothing downstream can contradict: a wrong price
 # reds "prices == HM Land Registry", a wrong borough shows up as a borough with

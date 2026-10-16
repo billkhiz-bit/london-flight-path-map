@@ -9,7 +9,7 @@ Fetched from the keyless SUMMARY FILE (one file per table, every US geography); 
 Census API now refuses requests without a key, so it is not used. Public domain
 (a US government work).
 
-TOP-CODING: B25077 reports "$2,000,000+" as 2000001. That is a FLOOR, not a price: ten
+TOP-CODING: B25077 reports "$2,000,000+" as 2000001. That is a FLOOR, not a price: 16
 cities carry it in 2020-24 (Palo Alto, Los Altos, Saratoga and others). The file keeps
 the number and sets top_coded, and nothing may present 2000001 as a median - it means
 "at least $2 million". Two 5-year releases overlap and are NOT a trend (the Census

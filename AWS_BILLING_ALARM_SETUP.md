@@ -37,7 +37,7 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 1 \
   --dimensions Name=Currency,Value=USD \
   --treat-missing-data notBreaching \
-  --alarm-actions 'arn:aws:sns:us-east-1:072674217857:billing-alerts'
+  --alarm-actions 'arn:aws:sns:us-east-1:<AWS_ACCOUNT_ID>:billing-alerts'
 ```
 
 Threshold rationale: at idle, Sky Score's monthly cost is ~$1-5 (mostly DynamoDB on-demand + a small CloudWatch Logs bill). A $20 threshold gives ~4× headroom for normal traffic growth without false positives, and would have fired within hours of today's "AI Lambda routes left open" defect (where 10 RPS on `/multi-agent` could have burned $2,500/day in Nova Pro).
@@ -50,7 +50,7 @@ aws sns create-topic --region us-east-1 --name billing-alerts
 
 # 2. Subscribe your email
 aws sns subscribe --region us-east-1 \
-  --topic-arn arn:aws:sns:us-east-1:072674217857:billing-alerts \
+  --topic-arn arn:aws:sns:us-east-1:<AWS_ACCOUNT_ID>:billing-alerts \
   --protocol email \
   --notification-endpoint billkhiz@gmail.com
 

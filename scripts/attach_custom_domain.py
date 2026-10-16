@@ -19,7 +19,7 @@ Idempotent: re-running with the same cert is a no-op.
 
 Usage:
   AWS_PROFILE=flightmap python scripts/attach_custom_domain.py \
-      --cert-arn arn:aws:acm:us-east-1:072674217857:certificate/abc-...
+      --cert-arn arn:aws:acm:us-east-1:<AWS_ACCOUNT_ID>:certificate/abc-...
 
 Pre-requisite IAM perms (already in flightmap-dev):
   - cloudfront:GetDistributionConfig

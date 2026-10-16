@@ -1,0 +1,114 @@
+{
+ "what": "For each council area of each UK region the front page draws, how many routes on its map cross the area: routesAcross() in js/home-engine.mjs, the count each area's card shows. Read by \"avoid aircraft noise\" in Find areas.",
+ "generator": "node scripts/build_area_route_crossings.mjs",
+ "routes_from": "UK Aeronautical Information Publication (NATS), AIRAC 2026-10-01, via data/flight-procedures.json",
+ "airac": "2026-10-01",
+ "cities": {
+  "london": {
+   "City of London": 1,
+   "Barking and Dagenham": 6,
+   "Barnet": 2,
+   "Bexley": 1,
+   "Brent": 2,
+   "Bromley": 2,
+   "Camden": 1,
+   "Croydon": 2,
+   "Ealing": 2,
+   "Enfield": 5,
+   "Greenwich": 5,
+   "Hackney": 0,
+   "Hammersmith and Fulham": 2,
+   "Haringey": 0,
+   "Harrow": 1,
+   "Havering": 5,
+   "Hillingdon": 16,
+   "Hounslow": 8,
+   "Islington": 0,
+   "Kensington and Chelsea": 1,
+   "Kingston upon Thames": 1,
+   "Lambeth": 1,
+   "Lewisham": 0,
+   "Merton": 1,
+   "Newham": 8,
+   "Redbridge": 6,
+   "Richmond upon Thames": 5,
+   "Southwark": 0,
+   "Sutton": 0,
+   "Tower Hamlets": 5,
+   "Waltham Forest": 6,
+   "Wandsworth": 1,
+   "Westminster": 0
+  },
+  "manchester": {
+   "Bolton": 0,
+   "Bury": 0,
+   "Manchester": 3,
+   "Oldham": 0,
+   "Rochdale": 0,
+   "Salford": 0,
+   "Stockport": 2,
+   "Tameside": 2,
+   "Trafford": 0,
+   "Wigan": 0
+  },
+  "westmidlands": {
+   "Birmingham": 5,
+   "Coventry": 3,
+   "Dudley": 0,
+   "Sandwell": 0,
+   "Solihull": 9,
+   "Walsall": 1,
+   "Wolverhampton": 0
+  },
+  "westyorkshire": {
+   "Bradford": 1,
+   "Calderdale": 0,
+   "Kirklees": 0,
+   "Leeds": 2,
+   "Wakefield": 0
+  },
+  "southyorkshire": {
+   "Barnsley": 0,
+   "Doncaster": 0,
+   "Rotherham": 0,
+   "Sheffield": 0
+  },
+  "merseyside": {
+   "Knowsley": 0,
+   "Liverpool": 2,
+   "St Helens": 0,
+   "Sefton": 0,
+   "Wirral": 1
+  },
+  "tyneandwear": {
+   "Gateshead": 3,
+   "Newcastle upon Tyne": 5,
+   "North Tyneside": 2,
+   "South Tyneside": 0,
+   "Sunderland": 0
+  },
+  "bristol": {
+   "City of Bristol": 0,
+   "Bath and North East Somerset": 1,
+   "North Somerset": 2,
+   "South Gloucestershire": 0
+  },
+  "leicester": {
+   "Leicester": 0,
+   "Blaby": 0,
+   "Charnwood": 0,
+   "Harborough": 0,
+   "Hinckley and Bosworth": 0,
+   "Melton": 0,
+   "North West Leicestershire": 2,
+   "Oadby and Wigston": 0
+  },
+  "teesside": {
+   "Hartlepool": 0,
+   "Middlesbrough": 0,
+   "Redcar and Cleveland": 0,
+   "Stockton-on-Tees": 1,
+   "Darlington": 1
+  }
+ }
+}

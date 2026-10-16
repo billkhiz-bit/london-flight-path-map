@@ -186,6 +186,10 @@ const LONDON_PNG = { png: `/${LONDON_RASTER.png}`, bbox: LONDON_RASTER.bbox };
 // js/api-base.js is the one holder of the API host; the literal is for a mockup opened without it.
 const ENV = `${window.API_BASE || 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'}/v1/environment`;
 const CSV = '/open-data/sky-score-boroughs.csv';
+// How many routes on this map cross each council area, per UK region the map draws: written by
+// scripts/build_area_route_crossings.mjs from routesAcross() below, so the Find list can say so for every
+// region at once without a second copy of the geometry (audit 2026-10-16 I-3).
+const CROSSINGS = '/data/area-route-crossings.json';
 const FT_KM = 0.0003048;
 // When the panel stacks above the map rather than floating over it: the SAME
 // query as the @media rule in home/index.html (audit 2026-10-05 I-4). The
@@ -230,6 +234,7 @@ const state = {
   nycDoc: null, nycNoise: null, // scripts/build_nyc_front.py's file, and its picture placed on the map
   usZips: null, // the Census ZIP areas of the four Bay Area counties, fetched on the first ZIP typed
   rows: [], // the open-data CSV, one object per council area
+  crossings: null, // { city: Map(normalised area name -> routes crossing it) }, from CROSSINGS
   layers: { noise: true, lines: true, streets: false, fit: true },
   zoom: null, k: 1,
   routes: [], // every drawn route as view-space segments with its tooltip, for the pointer-distance check
@@ -301,13 +306,18 @@ const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) 
 async function load() {
   // Read before boot: a deep-linked area or postcode rewrites the address on its way in.
   const wantFind = location.hash === '#find';
-  const [extra, proc, rasters, csv, nycDoc] = await Promise.all([
+  const [extra, proc, rasters, csv, nycDoc, crossings] = await Promise.all([
     d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
     d3.text(CSV).catch(() => ''),
     // Optional like the CSV: without it New York's chip still draws, and its cards say "not scored".
     d3.json(US.nyc.data).catch(() => null),
+    // Optional too: without it "avoid aircraft noise" counts every area as unknown on routes, never as a pass.
+    d3.json(CROSSINGS).catch(() => null),
   ]);
   Object.assign(state, { extra, proc, rasters, nycDoc, rows: [...(csv ? parseCsv(csv) : []), ...(nycDoc?.rows || [])] });
+  state.crossings = crossings?.cities
+    ? Object.fromEntries(Object.entries(crossings.cities).map(([k, v]) => [k, new Map(Object.entries(v).map(([n, c]) => [norm(n), c]))]))
+    : null;
   readOsKey();
   renderChips();
   bindControls();
@@ -472,6 +482,7 @@ function draw(pin) {
       .map((poly) => poly.map((ring) => 'M' + ring.map((pt) => projection(pt).map((v) => v.toFixed(1)).join(' ')).join('L') + 'Z').join(''))
       .join('');
   const path = (f) => (f.properties.planar ? planarPath(f) : geoPath(f));
+  state.drawPath = path; // the fit outlines (applyFitMap) draw with the same path as the areas
 
   // Everything drawn sits in one group the zoom transforms.
   const view = svg.append('g').attr('class', 'view');
@@ -519,6 +530,8 @@ function draw(pin) {
       .style('display', state.layers.noise ? null : 'none');
   }
   markLayerCoverage('noise', Boolean(raster));
+  // The areas that fit, outlined ABOVE the noise picture (applyFitMap fills it).
+  view.append('g').attr('class', 'fit-outlines').style('pointer-events', 'none');
 
   // Routes are cut to the city's outline too: a departure runs 50 km to its
   // last waypoint, and a dozen of them crossing the whole hero read as noise.
@@ -738,6 +751,18 @@ function routeGapsNear(f) {
   }
   return gaps.sort((x, y) => x.d - y.d).map((g) => g.text);
 }
+// For scripts/build_area_route_crossings.mjs: draw each UK region the map holds and count, per council area,
+// the routes on the map that cross it, with routesAcross() itself. Never called by the page.
+export async function routeCrossingsByCity() {
+  const out = {};
+  for (const [key] of CITIES) {
+    if (isUs(key)) continue;
+    await show(key);
+    if (state.city !== key) throw new Error(`the map did not draw ${key}`);
+    out[key] = Object.fromEntries(state.boroughs.features.map((f) => [featureName(f), routesAcross(f).length]));
+  }
+  return out;
+}
 function routesFactHtml(f) {
   if (!f || !state.routes.length) return '';
   const tips = routesAcross(f);
@@ -941,15 +966,21 @@ function selectBorough(name, opts = {}) {
   if (!card) return true;
   // Where Escape returns focus to (M-17): whatever had it, unless that was nothing.
   state.opener = document.activeElement !== document.body ? document.activeElement : null;
-  openCard(f?.properties.planar ? placeCardHtml(f, opts.zip) : boroughCardHtml(row || { borough: name, city: state.city }, f));
+  openCard(f?.properties.planar ? placeCardHtml(f, opts.zip) : boroughCardHtml(row || { borough: name, city: state.city }, f),
+    { announce: !(opts.focus || opts.quiet) });
   setQuery(opts.zip ? { city: state.city, postcode: opts.zip.code } : { city: row ? row.city : state.city, borough: state.selected });
   if (opts.scroll && window.matchMedia(STACKED).matches) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (opts.focus) card.querySelector('h2')?.focus();
   return true;
 }
-function openCard(html) {
+function openCard(html, { announce = true } = {}) {
   const card = byId('borough');
   if (!card) return;
+  // In the panel the reader is on (M-14): the selected tab's panel holds it, so that panel stays shown.
+  const home = [...document.querySelectorAll('.panel [role="tabpanel"]')].find((p) => !p.hidden);
+  if (home && card.parentElement !== home) home.appendChild(card);
+  // Read once (M-15): when focus moves to its heading, focus reads the card, so the region stays quiet.
+  card.setAttribute('aria-live', announce ? 'polite' : 'off');
   card.innerHTML = html;
   card.classList.add('is-open');
   panelState();
@@ -1385,8 +1416,11 @@ const signed = (v) => `${v > 0 ? '+' : ''}${v}`;
 export const FIT_CONDITIONS = [
   // `label` is the chip, `short` names a figure an area may not publish, `miss` says how one falls
   // short, `says` gives the figure in words, and `means` is the line in "What the choices mean".
+  // Aircraft noise is the lowest band AND no route on the map crossing the area (audit 2026-10-16 I-3: the band
+  // alone offered Bexley, under London City's runway 27 final approach, to someone avoiding aircraft noise).
   { key: 'planes', group: 'avoid', label: 'aircraft noise', short: 'aircraft', miss: 'more aircraft noise', col: 'quiet', test: (v) => v >= FIT_CUTS.quietLowBand,
-    says: (v) => `quiet skies ${v.toFixed(1)} / 10`, means: 'Aircraft noise: in the map\'s lowest band, quiet skies 10 out of 10. Estimated from the distance to the airport and its routes, scaled by the size of its DEFRA noise map: an estimate, not a measurement.' },
+    routes: true,
+    says: (v) => `quiet skies ${v.toFixed(1)} / 10`, means: 'Aircraft noise: in the map\'s lowest band, quiet skies 10 out of 10, and no flight route drawn on the map crosses the area. The band is estimated from the distance to the airport and its routes, scaled by the size of its DEFRA noise map: an estimate, not a measurement. Aircraft can still pass over higher up, or on paths air traffic control gives by radar, which are not published.' },
   { key: 'roads', group: 'avoid', label: 'busy roads', short: 'road noise', miss: 'more road noise', col: 'road_noise_above_who_pct', test: (v) => v < FIT_CUTS.roadShare,
     says: (v) => `${v}% of postcodes over 53 dB`, means: 'Busy roads: under half of postcodes over the WHO road-noise guideline, 53 dB (DEFRA).' },
   { key: 'flood', group: 'avoid', label: 'flood risk', short: 'flood', miss: 'more flood risk', col: 'flood_medium_or_high_pct', test: (v) => v < FIT_CUTS.floodShare,
@@ -1420,6 +1454,12 @@ export function fitOf(row, chosen, budget) {
     const v = row[c.col];
     if (v === '' || v == null) unknown.push(c.short);
     else if (!c.test(Number(v))) missed.push(`${c.miss}: ${c.says(Number(v))}`);
+    else if (c.routes) {
+      // Routes the map draws across the area: a region this map does not draw has no count, which is unknown.
+      const n = state.crossings?.[row.city]?.get(norm(row.borough));
+      if (n == null) unknown.push('flight route');
+      else if (n > 0) missed.push(`flight routes cross it: ${n} on the map`);
+    }
   }
   return { missed, unknown };
 }
@@ -1495,13 +1535,25 @@ function updateFit() {
   lines.push('Highest Sky Score first. These are council-area figures and streets differ, so check a postcode before a viewing.');
   // The map can be on a city this list does not hold: say so, and do not offer to "see them" there.
   const mapHolds = fitRows().some((r) => r.city === state.city);
+  const undrawn = Boolean(where) && !isMapCity(where);
   if (state.city && !mapHolds) {
     lines.unshift(`The map is showing ${CITY_NAME[state.city] || 'a city'}, which this list does not cover: choose a UK region on the map to see these areas shaded.`);
+  } else if (undrawn) {
+    // Cardiff, Nottingham and Greater Norwich are scored by the API but not drawn on this map (audit 2026-10-16 M-12).
+    lines.unshift(`This map does not draw ${rows[0]?.city_name || 'this region'}'s council areas, so nothing is shaded: open an area from the list for its figures.`);
   }
   const jump = byId('fit-mapjump')?.closest('p');
-  if (jump) jump.hidden = Boolean(state.city) && !mapHolds;
+  if (jump) jump.hidden = (Boolean(state.city) && !mapHolds) || undrawn;
   note.textContent = lines.join(' ');
   applyFitMap();
+  announceFit(count.textContent);
+}
+// The count is announced once a choice settles (audit 2026-10-16 M-15): arrowing through the price
+// list changes it at every step, and a live count read each one out.
+let fitAnnounceTimer = 0;
+function announceFit(text) {
+  clearTimeout(fitAnnounceTimer);
+  fitAnnounceTimer = setTimeout(() => { const el = byId('fit-announce'); if (el) el.textContent = text; }, 800);
 }
 
 // ---- the map is the answer: areas that fit are shaded while the tab is open ----
@@ -1514,6 +1566,11 @@ function applyFitMap() {
   const on = has && state.layers.fit;
   const fits = (d) => on && names.has(norm(featureName(d)));
   svg.classed('has-fit', on);
+  const shown = on && state.drawPath ? (state.boroughs?.features || []).filter(fits) : [];
+  for (const cls of ['halo', 'edge']) {
+    svg.select('.fit-outlines').selectAll(`path.${cls}`).data(shown, featureName).join('path')
+      .attr('class', cls).attr('d', state.drawPath).attr('fill-rule', 'evenodd');
+  }
   svg.selectAll('.boro').classed('is-fit', fits)
     .attr('aria-label', (d) => `${featureName(d)}${fits(d) ? ', fits your choices' : ''}: open its figures`);
   const toggle = byId('toggle-fit');
@@ -1537,7 +1594,7 @@ async function openFitArea(name) {
   // chip clicked while its outlines loaded): the card would open over another city's map.
   if (seq !== searchSeq || (CITY_NAME[row.city] && state.city !== row.city)) return;
   markHot(null);
-  selectBorough(row.borough, { scroll: window.matchMedia(STACKED).matches });
+  selectBorough(row.borough, { scroll: window.matchMedia(STACKED).matches, quiet: true });
   byId('borough')?.querySelector('h2')?.focus({ preventScroll: true });
 }
 
@@ -1556,6 +1613,8 @@ function setTab(name, { focus = false, counted = true, keepCard = false } = {}) 
     if (tabpanel) tabpanel.hidden = !on;
     if (on && focus) tab.focus({ preventScroll: true });
   }
+  const card = byId('borough'), home = byId(`panel-${name}`);
+  if (card && home && card.parentElement !== home) home.appendChild(card);
   panel?.classList.toggle('is-find', name === 'find');
   // The address says which tab is open, so a reload or a shared link comes back to it.
   history.replaceState(null, '', location.pathname + location.search + (name === 'find' ? '#find' : ''));
@@ -1567,7 +1626,10 @@ function setTab(name, { focus = false, counted = true, keepCard = false } = {}) 
     // The first time, the list starts where the map is (when the map is on a region the list
     // knows); after that, whatever the reader chose, "Anywhere" included, is kept.
     const where = byId('fit-where');
-    if (!findOpened && where && [...where.options].some((o) => o.value === state.city)) where.value = state.city;
+    // The address's region first (a reload of ?city=norwich#find), else the map's.
+    const asked = new URLSearchParams(location.search).get('city');
+    const start = [asked, state.city].find((k) => k && where && [...where.options].some((o) => o.value === k));
+    if (!findOpened && start) where.value = start;
     findOpened = true;
     updateFit();
   } else {
@@ -1639,6 +1701,13 @@ function bindFit() {
     document.querySelector('.mapwrap')?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
   });
   byId('toggle-fit')?.addEventListener('click', () => { state.layers.fit = !state.layers.fit; applyFitMap(); });
+  // "Skip to the search" lands on the search the reader can see: on the Find tab #pc is hidden, so
+  // the link went to <body> and replaced #find in the address (audit 2026-10-16 M-13).
+  document.querySelector('a.skip')?.addEventListener('click', (ev) => {
+    if (!findActive()) return;
+    ev.preventDefault();
+    byId('fit-where')?.focus();
+  });
   // The tabs: a click or Enter selects; the arrow keys, Home and End move between them and select.
   const tabs = [...tablist.querySelectorAll('[role="tab"]')];
   for (const tab of tabs) tab.addEventListener('click', () => setTab(tab.id.replace('tab-', '')));

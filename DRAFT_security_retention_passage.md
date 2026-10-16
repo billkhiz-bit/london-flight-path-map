@@ -20,7 +20,7 @@ against the tree; verify each section against `SECURITY.md` before acting on it.
 
 ## 1. Do the console work first
 
-Region **eu-west-2**, account **072674217857**.
+Region **eu-west-2**, account **<AWS_ACCOUNT_ID>**.
 
 > **UPDATED 2026-09-04: this is no longer console-only.** `flightmap-dev` now holds BOTH
 > `logs:PutRetentionPolicy` and `logs:DeleteLogGroup`, granted by statement 12 of the
@@ -110,7 +110,7 @@ it in the same session saves a second recovery-and-sign-in cycle.
 >
 > ```bash
 > python -c "import pathlib; p=pathlib.Path('backend/iam-policy.json'); \
->   open('/tmp/policy.json','w',newline='').write(p.read_text().replace('REPLACE_WITH_YOUR_AWS_ACCOUNT_ID','072674217857'))"
+>   open('/tmp/policy.json','w',newline='').write(p.read_text().replace('REPLACE_WITH_YOUR_AWS_ACCOUNT_ID','<AWS_ACCOUNT_ID>'))"
 > ```
 >
 > The failed save is harmless — AWS validates before storing, so the live policy is untouched and
@@ -153,7 +153,7 @@ commands next time):
         "logs:PutRetentionPolicy",
         "logs:DeleteLogGroup"
     ],
-    "Resource": "arn:aws:logs:eu-west-2:072674217857:log-group:/aws/lambda/london-flight-map-*"
+    "Resource": "arn:aws:logs:eu-west-2:<AWS_ACCOUNT_ID>:log-group:/aws/lambda/london-flight-map-*"
 }
 ```
 

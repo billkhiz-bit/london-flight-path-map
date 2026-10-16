@@ -134,7 +134,7 @@ because 30-day retention would preserve the raw-email entries from 26 Jun–23 J
 
 **This must be done in the AWS console as root/admin.** There are no working admin credentials on
 this machine: `default` is dead (`InvalidClientTokenId`) and `flightmap` is deploy-scoped and cannot
-even read its own IAM user. Region **eu-west-2**, account **072674217857**. The likeliest silent
+even read its own IAM user. Region **eu-west-2**, account **<AWS_ACCOUNT_ID>**. The likeliest silent
 failure is retention — *Edit retention setting* opens a modal whose dropdown does nothing until
 **Save**, and closing it loses the change with no warning.
 

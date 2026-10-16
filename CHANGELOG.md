@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-10-16 (night) - The weekly audit, and what it fixed
+
+- **"Avoid aircraft noise" in Find areas no longer offers areas a flight route crosses.** It used the council
+  area's noise band alone, so it suggested Bexley, under London City's final approach, and five boroughs with
+  London City departures across them. It now also needs no route on the map crossing the area: London's list
+  went from 13 areas to 4.
+- **On a phone held sideways, the full map no longer hides each city's north under the search card.** The map
+  now fits the part of the screen the card leaves clear: 12 London boroughs and 32 Bay Area cities had been
+  covered. Smaller, but every area can be seen and tapped.
+- **Find areas works better with a keyboard and a screen reader**: the skip link lands on the open tab, the
+  area card stays inside its tab, and the card and the count are no longer read out twice or at every step.
+  Areas that fit are outlined on top of the noise picture rather than tinted beneath it.
+- **New York's borough bands round to the louder side**, so no borough reads quieter than its own estimate
+  (Brooklyn moderate-high, Staten Island low-moderate). Its legend and borough notes now describe the method
+  and the places the routes actually pass.
+- **Housekeeping:** the 3D prototype's modules carry integrity hashes; the flight-archive scripts run under a
+  current Python and survive a corrupt or oversized file; the AWS account number is out of the documents.
+  Found and not yet fixed: on wide-but-short screens the desktop layout piles its controls over the map.
+
 ## 2026-10-16 (evening) - New York's aircraft figures are fitted to its airports' noise monitors (v5.6, built, not yet live)
 
 - **New York now scores aircraft noise the way the Bay Area does**, on Bill's decision the same day: from the
@@ -8,9 +27,10 @@
   quieter than measured at 15 of 17 JFK monitors; the fitted estimate reads louder than the monitors on average
   at all four airports (1.25 to 1.70 points of error on monitors held out at JFK, LaGuardia and Teterboro).
 - **The borough figures follow, from where people live.** Each borough's band is the fitted estimate averaged
-  over its residents (2020 ZIP areas, Census population): Queens moves from the loudest band to the next,
-  Brooklyn and the Bronx both to the middle band (Brooklyn quieter than before, the Bronx louder, under
-  LaGuardia's approach). Manhattan and Staten Island are unchanged. No UK figure moves.
+  over its residents (2020 ZIP areas, Census population), rounded to the louder band so no borough reads
+  quieter than its own estimate: Queens moves from the loudest band to the next, Brooklyn one band quieter,
+  the Bronx (under LaGuardia's approach) and Staten Island one band louder. Manhattan is unchanged. No UK
+  figure moves.
 - **The full map draws the routes it scores**, and the map and the API agree to the decimal at 713 points across
   the city and every New York neighbourhood, checked on every commit.
 - **Stated limitation:** the runway count covers July and August, so a direction JFK flies mostly in other

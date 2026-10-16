@@ -49,7 +49,7 @@ def summary(errs):
 
 
 def published(mons):
-    """Today's engine, unpatched: New York's hand-drawn geometry."""
+    """The engine as it stands (since v5.6, the fitted geometry; before it, the hand-drawn corridors)."""
     return [(c, s, app.calc_postcode_quiet(la, lo, 'nyc', raster_lden=None) - app.lden_db_to_quiet(db))
             for c, s, la, lo, db in mons]
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     for which in ('dnl_year', 'dnl_aneem'):
         mons = monitors(which)
         print(f'\n=== yardstick: {which} ({len(mons)} monitors; DNL + measured Lden gap) ===')
-        print('PUBLISHED today (hand-drawn, Heathrow-sized):', summary(published(mons)))
+        print('PUBLISHED by the engine as it stands:', summary(published(mons)))
         comps = components(mons, kept, rts)
         for margin in (0.0, 0.2):
             w, sizes = choose(comps, margin=margin)
