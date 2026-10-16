@@ -1013,7 +1013,7 @@ are, not how many aircraft use them".
   mis-paired shapefile record, a picture one tile out, a missing city).
 - **Release 2's noise gate is BUILT (2026-10-16, engine only, inert):** `CITY_GEOMETRY['bayarea']` from the
   generated `US-QUIET-BAYAREA` block, fitted to SFO's 29 and SJC's 13 monitors with runway use from adsb.lol
-  tracks (`data/us-runway-use.json`, ODbL - NOT pushed until Bill confirms, LICENSING); blocking
+  tracks (`data/us-runway-use.json`, ODbL, published with `17d7ef1` on Bill's word; LICENSING); blocking
   `measure_us_quiet_yardstick.py --check`. Per-city fields only (`runway_lobes`, `airport_sizes`,
   `corridor_weight`, `major_airports`): never put US sizes in `AIRPORT_NOISE_SCALE`, which mirrors index.html.
   Normal-year monitors prefer a route weight of 1.0 against the UK's provisional 0.5: a UK lead, not a change.

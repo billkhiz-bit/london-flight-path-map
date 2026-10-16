@@ -1252,7 +1252,7 @@ engine:** the runway shares are derived from ODbL tracks, so a published score b
 credit and the shares offered under ODbL (accepted 15 Oct); the US route weight must be a per-country registry
 value, never a change to the UK's; OAK has no monitors in hand (its size is the larger fitted, pessimistic);
 and New York needs its own monitors before the same method can be said to hold there.
-**IN THE ENGINE, the same evening (committed locally, NOT pushed - see LICENSING):** `runway_lobe_km()` and four
+**IN THE ENGINE, the same evening (`17d7ef1`, pushed on Bill's word after he weighed the ODbL point - see LICENSING):** `runway_lobe_km()` and four
 optional city fields in `calc_postcode_quiet` (`runway_lobes`, `airport_sizes`, `corridor_weight`, `major_airports`),
 read only where present, so no UK or New York value can move (`backend/tests/test_us_quiet.py` reds if one gains
 a field). `CITY_GEOMETRY['bayarea']` comes from the GENERATED `US-QUIET-BAYAREA` block
@@ -1261,6 +1261,15 @@ three ways: a hand-edited size (stale block), changed lobe arithmetic (refit dif
 the engine alone (engine vs fit 2.0 apart). Shares are over MATCHED movements (counting the unmatched only drops
 lobes, the quiet direction); the fit is unchanged by it. `'bayarea'` is in no `CITIES` entry: inert until release 2.
 The site's `MAJOR_AIRPORT` gained `bayarea: null` for the registry parity test (it scores no Bay Area quiet).
+**NEW YORK'S YARDSTICK, FOUND (2026-10-16):** the Port Authority's Monthly Noise Monitor Report
+(`panynj.gov/content/dam/port-authority/aircraft-noise/panynj-noise-monitoring-<mon>-<yyyy>.pdf`) carries 13
+months of monthly aircraft DNL per monitor for JFK (18 sites), LGA, EWR and TEB; tables and maps are IMAGES and
+the site list gives a street and town only. JFK July 2025-June 2026 transcribed from the June AND July editions,
+0 of 216 cells differ; annual energy means 52.1-70.8 DNL. **DNL vs Lden measured, not assumed**
+(`scripts/measure_dnl_lden_gap.py`, movement hours from the July-August tracks): Lden - DNL = JFK +0.01, LGA
++0.13, EWR +0.06, TEB +0.27 dB, so DNL plus that gap stands in for Lden. **Still to do:** positions (street +
+map pin, about 200 m), the January 2026 method change (ANEEM reads higher), LGA/EWR/TEB transcription, then the
+same fit for New York, whose published Quiet Skies uses the old Heathrow-sized circles.
 
 | Input | Source | Geography, vintage | Licence | Confidence |
 |---|---|---|---|---|
