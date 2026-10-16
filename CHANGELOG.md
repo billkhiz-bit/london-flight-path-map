@@ -1,5 +1,53 @@
 # Changelog
 
+## 2026-10-15 - "Find areas" is live, and the flight count passes its first month
+
+**On the front page, a visitor can now ask which council areas fit** a region, a budget, and
+what they want to avoid (aircraft noise, busy roads, flood risk, poor air) or be near (a
+station, good schools). Built on 14 Oct after "what are you looking for?" came up at LGM #6;
+asking people to choose a persona was measured first and rejected, because it moves every
+area's score together rather than changing the order. Released on Bill's "make it live if
+it's accurate", which was checked before release, not assumed:
+
+- **Its answers:** a separate Python recompute, from the published open-data CSV and the
+  thresholds written out by hand, matched the page's list on six combinations, names and
+  order (London under £600,000 with no aircraft noise and a station nearby: 6 of 33, Sutton
+  first). Run again on the live site after release, with the same result.
+- **Its sentences:** three were not true, and were fixed in the release. The road-noise,
+  flood and station figures are shares of postcodes, not of addresses (the council card on
+  the front page said "addresses" too). The council-level aircraft band is estimated from
+  the distance to the airport and its routes, scaled by the size of its DEFRA noise map; it
+  is not built from the published flight routes, and now says it is an estimate. And the
+  flood figure covers rivers and the sea, not surface water, which it now says.
+- **The same correction everywhere else the figures are described:** 93 area pages (their
+  road-noise and flood rows), the API reference's description of the environment score, the
+  public write-up at `/talks/` and its PDF, METHODOLOGY, README and EXPANSION all said
+  "addresses" for shares measured over postcodes. All now say postcodes; no figure moved.
+  (The full map and the open-data page already said postcodes.)
+- The conditions are the map's own band cuts, held there by a test; a figure an area does
+  not publish is "might fit", never a pass. A code review before release fixed five
+  defects (keyboard focus, a shared link, a race with the map), each with a check.
+
+**How often planes pass: the counting passes its first month.** Nothing is published yet.
+Community flight tracking (adsb.lol, ODbL) was counted for every day of August 2026 and
+compared with the CAA's own August figures: 12 of the 15 UK airports we draw are within
+95-105% of the official count (Heathrow 98.8%). Liverpool is just short; Teesside and
+Norwich are short because much of their training traffic carries no transponder that
+community receivers hear. Two things had to be found first:
+
+- **The tracking archive has outages:** 6 of 31 August days lost hours, in the UK and the
+  US at once, one of them thinned to about 5% with no gap at all. Each day's feed is now
+  checked against the same local time on nearby days, and an outage day is left out.
+- **Training circuits count as two movements** in the CAA's definitions, but airports
+  report them unevenly: Cardiff's return includes them, East Midlands' evidently does not
+  (one airliner flew 32 circuits there on 7 August, against 62 training movements in the
+  CAA's whole month). An airport passes when one reading fits at both ends.
+
+A code review the same evening found that the first circuit rule could pass an airport
+missing a fifth of its flights, and that a clock change would have read as an outage; both
+are fixed, each with a test shown to fail without the fix. July 2026 is being counted as the
+second month.
+
 ## 2026-10-13 (evening) - a visitor the map does not cover can say where it should go next
 
 On the front page, a count rather than a form (Bill asked for a way to engage visitors from

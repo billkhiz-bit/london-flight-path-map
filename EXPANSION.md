@@ -4,7 +4,7 @@
 Where something has not been verified it says so, because the expensive mistake
 in this project has repeatedly been treating "the dataset exists" as "we have
 the data" — DEFRA publishes an aircraft surface for all 16 English airports and
-it still only reaches 0.5% of West Yorkshire's addresses.
+it still only reaches 0.5% of West Yorkshire's postcodes.
 
 ## The one fact that shapes everything
 

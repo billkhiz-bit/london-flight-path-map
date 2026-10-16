@@ -25,7 +25,7 @@ a percentile: a band that is defined relative to the other boroughs cannot say
 "all of them are loud", which is the answer that would matter most.
 
   ROAD NOISE   DEFRA Strategic Noise Mapping Round 4, road Lden, England.
-               Banded on the SHARE OF ADDRESSES at or above the WHO 2018
+               Banded on the SHARE OF POSTCODES at or above the WHO 2018
                guideline for road traffic, 53 dB Lden:
 
                  high      >= 2/3 of postcodes over the WHO guideline
@@ -71,7 +71,7 @@ a percentile: a band that is defined relative to the other boroughs cannot say
                  poor        > 2.5x
 
   TRANSPORT    NaPTAN, the DfT national public transport access node register.
-               Banded on the SHARE OF ADDRESSES within 800 m of a rail, metro
+               Banded on the SHARE OF POSTCODES within 800 m of a rail, metro
                or tram access node - 800 m being the standard ten-minute-walk
                planning threshold:
 
@@ -96,7 +96,7 @@ a percentile: a band that is defined relative to the other boroughs cannot say
                property of this cohort and not the definition.
 
   HEALTHCARE   NHS Organisation Data Service, active GP practices and branch
-               surgeries. Banded on the SHARE OF ADDRESSES within 500 m of one:
+               surgeries. Banded on the SHARE OF POSTCODES within 500 m of one:
 
                  excellent  >= 3/4 of postcodes within 500 m
                  good       >= 1/2
@@ -114,7 +114,7 @@ a percentile: a band that is defined relative to the other boroughs cannot say
 
   FLOOD RISK   Environment Agency Risk of Flooding from Rivers and Sea (NAFRA2),
                fetched by scripts/fetch_ea_flood_risk.py. Banded on the SHARE OF
-               ADDRESSES at Medium or High risk - that is the 1%-annual-chance
+               POSTCODES at Medium or High risk - that is the 1%-annual-chance
                threshold, the same cut that defines Flood Zone 3 in planning, so
                it is the conventional line rather than one invented here:
 
@@ -177,11 +177,11 @@ SCORE_APP = REPO_ROOT / 'backend' / 'lambdas' / 'score' / 'app.py'
 WHO_ROAD_LDEN_DB = 53.0  # WHO 2018 Environmental Noise Guidelines, road traffic
 WHO_NO2_UGM3 = 10.0  # WHO 2021 global air quality guidelines, annual mean
 WHO_PM25_UGM3 = 5.0  # WHO 2021 global air quality guidelines, annual mean
-# Share of a borough's addresses at or above the WHO road-traffic guideline.
+# Share of a borough's postcodes at or above the WHO road-traffic guideline.
 ROAD_HIGH_SHARE = 200.0 / 3.0  # two-thirds
 ROAD_MODERATE_SHARE = 50.0
 
-# Share of a borough's addresses at Medium or High flood risk (>= 1% annual
+# Share of a borough's postcodes at Medium or High flood risk (>= 1% annual
 # chance), which is the Flood Zone 3 planning threshold.
 FLOOD_HIGH_SHARE = 10.0
 FLOOD_MEDIUM_SHARE = 2.0
@@ -433,7 +433,7 @@ def sample_codes(tif_path, points):
     Deliberately NOT sample_raster(): that drops values of 0, because for the
     Lden rasters 0 means 'below the lowest mapped band'. For flood, 0 is a real
     class - not in any modelled risk polygon - and dropping it would compute the
-    share of at-risk addresses among the at-risk addresses, which is 100% by
+    share of at-risk postcodes among the at-risk postcodes, which is 100% by
     construction.
     """
     import numpy as np
@@ -679,7 +679,7 @@ def transport_band(share):
 
 
 def flood_band(medium_or_high_pct):
-    """Band from the share of addresses at or above the 1% annual chance line."""
+    """Band from the share of postcodes at or above the 1% annual chance line."""
     if medium_or_high_pct is None:
         return None
     if medium_or_high_pct >= FLOOD_HIGH_SHARE:
@@ -690,7 +690,7 @@ def flood_band(medium_or_high_pct):
 
 
 def road_band(exposed_pct):
-    """Band from the share of addresses at or above the WHO guideline."""
+    """Band from the share of postcodes at or above the WHO guideline."""
     if exposed_pct is None:
         return None
     if exposed_pct >= ROAD_HIGH_SHARE:

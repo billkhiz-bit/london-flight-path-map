@@ -866,7 +866,7 @@ components:
           maximum: 10
           description: >-
             Environment composite, 10 = best (45% air quality against the WHO
-            2021 guidelines, 35% share of addresses over the WHO 53 dB road
+            2021 guidelines, 35% share of postcodes over the WHO 53 dB road
             Lden guideline, 20% share at Environment Agency Medium-or-High
             flood risk). Scored since methodology v3.9; re-composed at v4.0.
             Absent for New York, and for boroughs below the two-input floor -

@@ -147,16 +147,16 @@ def measured_value(key: str, value: float) -> str:
     `key` is a MEASURED_FIELD key and `value` the Lambda's figure. The row's note column already
     names the source and the threshold, so this is the reading itself:
 
-      roadNoise   share of addresses over WHO's 53 dB Lden road guideline, a percentage (48.9)
+      roadNoise   share of postcodes over WHO's 53 dB Lden road guideline, a percentage (48.9)
       airQuality  the worse of NO2 and PM2.5 as a multiple of its WHO 2021 guideline (1.49)
-      flood       share of addresses at Environment Agency Medium-or-High risk, a percentage (0.43)
+      flood       share of postcodes at Environment Agency Medium-or-High risk, a percentage (0.43)
     """
     shown = f'{value:g}'
     if key == 'airQuality':
         # A multiple, not "N% above": the conversion reads oddly at 1.01 and breaks below 1.
         return f'{shown} × the WHO 2021 guideline'
     if key in ('roadNoise', 'flood'):
-        return f'{shown}% of addresses'
+        return f'{shown}% of postcodes'
     raise KeyError(key)
 
 
@@ -312,7 +312,7 @@ def gather(city: str, borough: str) -> dict | None:
     for key, label, note in (
         ('crimeRate', 'Recorded crime', 'ONS Table C4, per 1,000 residents per year'),
         ('p8', 'Progress 8', 'DfE KS4 2023/24 revised, 0.0 is the national average'),
-        ('roadNoise', 'Road noise', 'DEFRA road Lden, share of addresses over WHO 53 dB'),
+        ('roadNoise', 'Road noise', 'DEFRA road Lden, share of postcodes over WHO 53 dB'),
         ('airQuality', 'Air quality', 'DEFRA background maps against WHO 2021'),
         # Spelled out since 2026-10-07 (website audit M8): RoFRS, NaPTAN and ODS meant
         # nothing to a reader, and "NHS ODS" did not say what was measured at all.

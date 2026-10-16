@@ -180,7 +180,7 @@ Each component is bounded in 0-10 with floating-point precision internally and o
 > road noise a scored input. `_ENV_WEIGHTS` in `backend/lambdas/score/app.py` is
 > `{'airQuality': 0.45, 'roadNoise': 0.35, 'flood': 0.20}`, and `environment`
 > carries 0.14 of six personas and 0.18 of `family`/`laterlife`. The quantity
-> scored is `roadNoiseAboveWhoPct` — the SHARE of a borough's addresses over the
+> scored is `roadNoiseAboveWhoPct` — the SHARE of a borough's postcodes over the
 > WHO 53 dB Lden road guideline, not a median dB. `/v1/score` says so itself:
 > `sourceBreakdown.env` returns *"Air quality (0.45), Road noise (0.35), Flood
 > risk (0.20)"*. See §4.7 and the v4.0 entry, which have described it correctly
@@ -1585,7 +1585,7 @@ always published alongside the weights that produced it.
 
 | Source | Purpose | Licence | Refresh cadence |
 |---|---|---|---|
-| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England, scored in `quiet`. The **road** Lden surface is published in the same round; it drives the consumer-site road-noise overlay, the `roadNoise` borough band, and — since methodology v4.0 (2026-08-29) — **0.35 of the `environment` component**, via the share of addresses over the WHO 53 dB Lden guideline. It does not enter `quiet`. See §4.7 and §7.1 | Open Government Licence v3.0 | 5-yearly (next: 2027) |
+| **DEFRA Strategic Noise Mapping (Round 4, 2022)** | **Aircraft** Lden contours for England, scored in `quiet`. The **road** Lden surface is published in the same round; it drives the consumer-site road-noise overlay, the `roadNoise` borough band, and — since methodology v4.0 (2026-08-29) — **0.35 of the `environment` component**, via the share of postcodes over the WHO 53 dB Lden guideline. It does not enter `quiet`. See §4.7 and §7.1 | Open Government Licence v3.0 | 5-yearly (next: 2027) |
 | **DEFRA background pollution maps (2024 annual mean, 1 km grid)** | NO₂ and PM2.5 concentrations behind the `airQuality` borough band and the `/v1/environment` measurements. **Not** the Daily Air Quality Index, which is a daily station reading and describes today's weather as much as the place | Open Government Licence v3.0 | Annual |
 | **HM Land Registry Price Paid Data** | Historic sold prices at postcode resolution | Open Government Licence v3.0 | Monthly |
 | **ONS CPIH, 12-month rate, all items** (series L55O, dataset MM23) | Deflates the HPI trend to real terms for the `growth` component, since v5.1. One value per vintage month, held in the engine (`CPIH_12M_PCT`) and compared against the ONS series by `build_hpi_prices.py --check` | Open Government Licence v3.0 | Monthly, rolled with the HPI vintage |
@@ -1830,7 +1830,7 @@ accessibility to the **high-capacity network** and is described as that.
 > DEFRA sample, which this document already refuses to do.
 
 **Measured spread across all 81 boroughs:** 9.5% (Coventry) to 100% (City of
-London), median 49.8%. The quarter boundaries are round fractions of addresses,
+London), median 49.8%. The quarter boundaries are round fractions of postcodes,
 chosen for being sayable in words rather than fitted; on this cohort they happen
 to split it fairly evenly, which is a property of the cohort and not of the
 definition.
@@ -1892,7 +1892,7 @@ road traffic, **53 dB Lden** — the field published as `roadNoiseAboveWhoPct`:
 
 | Band | Condition |
 |---|---|
-| `high` | ≥ 66.7% of postcodes over 53 dB — two-thirds of addresses above the WHO guideline |
+| `high` | ≥ 66.7% of postcodes over 53 dB — two-thirds of postcodes above the WHO guideline |
 | `moderate` | 50–66.7% over 53 dB |
 | `low` | < 50% over 53 dB |
 
@@ -1954,7 +1954,7 @@ painted at all** rather than defaulted, the legend title gains a measured
 fails if a layer paints a different number of boroughs than hold data.
 
 **Flood risk**, from the Environment Agency's **Risk of Flooding from Rivers and
-Sea** (NAFRA2), banded on the share of a borough's addresses at **Medium or High**
+Sea** (NAFRA2), banded on the share of a borough's postcodes at **Medium or High**
 risk — the 1%-annual-chance line, which is also what defines Flood Zone 3 in
 planning, so it is the conventional cut rather than one invented here:
 

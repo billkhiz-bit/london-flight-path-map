@@ -3436,8 +3436,8 @@ class EnvironmentComponentTests(unittest.TestCase):
 
     # --- road, the v4.0 addition -----------------------------------------
     def test_road_ramp_hits_both_published_anchors(self):
-        # 0% of addresses over the WHO road guideline is the top of the scale;
-        # every address over it is the bottom. Both ends are the natural limits
+        # 0% of postcodes over the WHO road guideline is the top of the scale;
+        # every postcode over it is the bottom. Both ends are the natural limits
         # of a share, not observed values.
         self.assertEqual(app.road_to_score(0.0), 10.0)
         self.assertEqual(app.road_to_score(100.0), 0.0)

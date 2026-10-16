@@ -75,7 +75,7 @@ def test_a_held_environment_figure_reaches_the_page(city, borough):
 
 def test_measured_value_reads_as_held_and_refuses_an_unknown_key():
     assert pages.measured_value('airQuality', 1.49) == '1.49 × the WHO 2021 guideline'
-    assert pages.measured_value('roadNoise', 48.9) == '48.9% of addresses'
-    assert pages.measured_value('flood', 0.5) == '0.5% of addresses'
+    assert pages.measured_value('roadNoise', 48.9) == '48.9% of postcodes'
+    assert pages.measured_value('flood', 0.5) == '0.5% of postcodes'
     with pytest.raises(KeyError):
         pages.measured_value('transport', 50.0)

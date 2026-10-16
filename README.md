@@ -31,7 +31,7 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, qu
 > SHARE over WHO's guideline, not the median dB beside it: the median carries 41
 > distinct values to the share's 69 over an interquartile range of 1.7 dB. All
 > three ramps anchor on published thresholds (WHO 2021 guideline → the UK legal
-> limit for NO₂; 0% → 100% of addresses over WHO 2018's 53 dB Lden road
+> limit for NO₂; 0% → 100% of postcodes over WHO 2018's 53 dB Lden road
 > guideline; 0% → the EA's 10% Medium-or-High cut), never on the observed range.
 >
 > **The UK city-regions outside London are thinner than London on purpose,
@@ -262,7 +262,7 @@ Each component is anchored to a published source, see [METHODOLOGY.md](./METHODO
 | **Affordability** | Average price, log-scaled against the national p5-p95 band of borough medians (v5.0) - comparable between cities | HM Land Registry House Price Index (HPI) |
 | **Growth** | Real-terms 12-month price trend (HPI deflated by ONS CPIH, v5.1), dual-anchored against the fastest riser and steepest faller across the whole currency pool (v5.2) - comparable between cities; `investor` persona only | HM Land Registry House Price Index (HPI); ONS CPIH (L55O) |
 | **Liveability** | Schools (35%) + crime (30%) + transport (25%) + healthcare (10%) | DfE Key Stage 4 Progress 8 (2023/24); ONS *Crime in England and Wales* PFA tables, Table C4; **NaPTAN** rail/metro/tram within 800 m (v3.6, **not** PTAL); **NHS ODS** GP practices within 500 m (v3.7) |
-| **Environment** | Air quality (45%) + road noise (35%) + flood risk (20%). Scored since v3.9 (2026-08-26); road noise added at v4.0 (2026-08-29). Needs at least two of the three, so it is absent for New York and below the floor for Cardiff | DEFRA background pollution maps (PCM) against **WHO 2021** guidelines; DEFRA Round 4 **road** Lden, share of addresses over the **WHO 53 dB** guideline; Environment Agency Risk of Flooding from Rivers and Sea, share at Medium-or-High |
+| **Environment** | Air quality (45%) + road noise (35%) + flood risk (20%). Scored since v3.9 (2026-08-26); road noise added at v4.0 (2026-08-29). Needs at least two of the three, so it is absent for New York and below the floor for Cardiff | DEFRA background pollution maps (PCM) against **WHO 2021** guidelines; DEFRA Round 4 **road** Lden, share of postcodes over the **WHO 53 dB** guideline; Environment Agency Risk of Flooding from Rivers and Sea, share at Medium-or-High |
 
 The score is reproducible by hand from [METHODOLOGY §4](./METHODOLOGY.md) and the persona weights in §5.1, against the current data snapshot.
 
