@@ -154,11 +154,11 @@ class UsAirportExemptionTests(unittest.TestCase):
 
     def test_exemption_set_matches_nyc_airports(self):
         # _US_AIRPORT_CODES exists because airport_noise_scale runs during
-        # module load, before NYC_AIRPORTS is defined - so it cannot read the
-        # registry directly and a fifth NYC airport would silently take the
+        # module load, before AIRPORTS_NYC_FITTED is defined - so it cannot read
+        # the registry directly and a fifth NYC airport would silently take the
         # 0.190 default. This is the guard that turns that drift red.
         self.assertEqual(
-            app._US_AIRPORT_CODES, {ap['code'] for ap in app.AIRPORTS_NYC}
+            app._US_AIRPORT_CODES, {ap['code'] for ap in app.AIRPORTS_NYC_FITTED}
         )
 
 
@@ -2926,8 +2926,11 @@ class SiteApiGeometryParityTests(unittest.TestCase):
         self.assertIsNotNone(m, 'CORRIDOR_WEIGHT missing from index.html')
         self.assertEqual(float(m.group(1)), app.CORRIDOR_WEIGHT)
         # Both site ramps must actually READ it; a constant nobody applies
-        # would pass the comparison above while the ladder stayed at 1.0.
-        self.assertEqual(src.count('noiseScore += CORRIDOR_WEIGHT * pathPoints;'), 2)
+        # would pass the comparison above while the ladder stayed at 1.0. Since
+        # 2026-10-16 they read it through quietGeometry(), whose shared branch
+        # supplies CORRIDOR_WEIGHT (a fitted US city supplies its own).
+        self.assertEqual(src.count('noiseScore += qg.corridorWeight * pathPoints;'), 2)
+        self.assertEqual(src.count('corridorWeight: CORRIDOR_WEIGHT,'), 1)
         self.assertNotRegex(src, r'PathDist < 1\) noiseScore \+= 4|PathScaled < 1\) \{\s*noiseScore \+= 4')
 
     def test_corridor_weight_reaches_the_quiet_score(self):
@@ -2965,9 +2968,13 @@ class SiteApiGeometryParityTests(unittest.TestCase):
         site = {k: float(v) for k, v in re.findall(r'(\w+): ([\d.]+)', m.group(1))}
         self.assertEqual(site, app.RUNWAY_AXIS_DEG)
         # Both ramps must READ it: a shape nobody applies passes the
-        # comparisons above while the site keeps scoring a circle. The
-        # lookbehind skips the function's own definition line.
+        # comparisons above while the site keeps scoring a circle. Since
+        # 2026-10-16 both call quietGeometry()'s airportKm, which shapes with
+        # runwayShapedKm in the shared branch and, in a fitted US city, for an
+        # airport with no lobes (the lookbehind skips the definition).
+        self.assertEqual(src.count('qg.airportKm(lat, lon, ap, '), 2)
         self.assertEqual(len(re.findall(r'(?<!function )runwayShapedKm\(lat, lon, ap, ', src)), 2)
+        self.assertIn('airportKm: (lat, lon, ap, km) => runwayShapedKm(lat, lon, ap, km),', src)
 
     def test_airport_distance_is_a_strip_not_a_circle(self):
         """Down the runway the distance is the plain one; beside it, K times."""
@@ -4856,7 +4863,7 @@ class FlightRouteProvenanceTests(unittest.TestCase):
         self.assertLessEqual(drawn, self.expected())
         # The two negatives the derivation must produce, named so a change to
         # either is a decision rather than a side effect: South Yorkshire has no
-        # airport, and New York's corridors are hand-drawn, not the UK AIP's.
+        # airport, and New York's routes are the FAA's, not the UK AIP's.
         self.assertNotIn('southyorkshire', self.expected())
         self.assertNotIn('nyc', self.expected())
 

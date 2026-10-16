@@ -1306,6 +1306,29 @@ floor in the formula** - with 16 of 50 capped the Bay Area pool's p95 IS the cap
 least-affordable end, whatever its true price; it can never flatter. Show "$2M+" (never the number), return a
 `priceTopCoded` flag in the API, show the 16 as tied, and say the scale's top is the Census top code (which reads
 $1.5-2M cities slightly LESS affordable: the cautious side). Recommended by Claude; Bill to confirm.
+**NEW YORK FIX BUILT AS v5.6 (2026-10-16, evening; committed, NOT DEPLOYED - deploy is Bill's).** API and full map
+score New York from the fitted block (both holders generated; the map now DRAWS the scored FAA routes); site ==
+Lambda at 713 points and 127 neighbourhoods (`tests/us-quiet-site-parity.mjs`, blocking); borough bands derived,
+population-weighted (`scripts/build_nyc_impact.py`, blocking): **Queens severe -> high (quiet 0.0 -> 1.5),
+Brooklyn high -> moderate (1.5 -> 5.0), the Bronx low-moderate -> moderate (7.5 -> 5.0)**; the Bronx and Brooklyn
+notes now say where the scored routes run. Fit: JFK 1.8, LGA 1.35, EWR 1.0, TEB 0.3, weight 1.0; nested LOO JFK
+1.28, LGA 1.25, TEB 1.70, EWR 3.40 (two monitors); louder than measured at all four. `sources` credits the FAA and
+the adsb.lol counts (ODbL; the NY counts are now in the published `data/us-runway-use.json`). **Known limitation,
+and the next step:** a summer runway count (July-August) against January-July monitors leaves JFK's north-west
+2-3 points quieter than its monitors (Howard Beach, 150th and 165th Avenues); count runway use over the monitors'
+own months once those archive days are extracted. Deploy = SAM (score Lambda) first, then web + data + area.
+**BAY AREA READERS, SOURCES VERIFIED (2026-10-16, research, nothing built):** **trend** - FHFA county annual HPI
+(`fhfa.gov/hpi/download/annual/hpi_at_county.xlsx`, keyless, "developmental", calendar 2025, updated 31 Mar 2026:
+Alameda -1.91%, San Francisco +0.50%, San Mateo -0.61%, Santa Clara -0.63%); public domain under FHFA's site
+policy s10 ("information ... produced by Federal agencies, including FHFA, are in the public domain"; never imply
+endorsement); a year behind the UK figures. ZIP series: 92 of 165 ZIPs carry a 2025 value. **Flood** - FEMA's own
+hosts (msc/hazards.fema.gov) reset every connection from here, so the county NFHL files (06001C, 06081C, 06085C and
+San Francisco's single-city study 060298, which also holds SFO) need a person or a US runner; Esri's copy works
+keylessly but is Esri-licensed and drops Zone D/X, so prototyping only; select polygons spatially, never by county
+code. **Transit** - BTS National Transit Map stops (CC-BY 3.0 US, credit USDOT BTS; the Bay Area agencies list
+"Public Domain"; compiled 9 Mar 2026; `stop_type` carries the GTFS route type): BART, Caltrain, ACE, VTA light
+rail and Muni Metro are there; **Capitol Corridor is not** (Emeryville would read no station), and cable cars are
+a decision. 511 SF Bay has it but needs a token and a written-terms chain to anyone we pass data to.
 
 | Input | Source | Geography, vintage | Licence | Confidence |
 |---|---|---|---|---|

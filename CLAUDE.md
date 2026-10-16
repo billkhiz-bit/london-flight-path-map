@@ -1020,8 +1020,21 @@ are, not how many aircraft use them".
   **The yardstick is ANEEM where published (SFO; Bill 2026-10-16)**, built by `scripts/build_sfo_noise_monitors.py`,
   and the fit needs every airport 0.2 louder in sample (`MARGIN`) so it holds out: weight 1.25, SFO 0.96 held out.
 - **New York's published Quiet Skies reads QUIETER than measured near JFK (15 of 17 monitors, +2.38; 2026-10-16,
-  `scripts/measure_nyc_quiet_yardstick.py`, Port Authority monitors in `data/us-noise-monitors.json`).** The
-  fix (the Bay Area method) is measured, not applied: it moves live NY scores, so it is Bill's call (ROADMAP).
+  `scripts/measure_nyc_quiet_yardstick.py`, Port Authority monitors in `data/us-noise-monitors.json`).**
+  **FIXED AS v5.6 (Bill's "yes", 2026-10-16; built, NOT YET DEPLOYED):** `measure_us_quiet_yardstick.py` runs per
+  REGION (`--region all|bayarea|nyc`) and writes New York's `US-QUIET-NYC` block into BOTH holders (the Lambda's
+  `AIRPORTS_NYC_FITTED`/`FLIGHT_PATHS_NYC_FITTED`/`NYC_QUIET`, and index.html's `US_QUIET_NYC`, which sits in the
+  New York data section because `NYC_AIRPORTS`/`NYC_FLIGHT_PATHS` are now VIEWS of it: the map draws what the
+  score reads). Both site ramps read `quietGeometry(city)`, which mirrors calc_postcode_quiet's optional fields
+  (lobes via `runwayLobeKm`, sizes, `corridorWeight`, `majors`); `tests/us-quiet-site-parity.mjs` (BLOCKING) runs
+  both ramps against the Lambda at 713 points and 127 neighbourhoods, proven red three ways. The hand-drawn
+  `AIRPORTS_NYC`/`FLIGHT_PATHS_NYC` are DELETED from the Lambda. The five borough bands are DERIVED by
+  `scripts/build_nyc_impact.py` (BLOCKING `--check`, offline from the checked-in `data/us-nyc-zcta.json`):
+  population-weighted mean over 2020 ZCTAs (ACS B01003, keyless summary file), nearest band, a tie to the louder.
+  `sources` credits the FAA ("as is") and adsb.lol (ODbL, period read from the block's `runway_use_period`) for
+  any city carrying `runway_lobes`. **Known limitation, stated in every NY response:** runway use is July-August
+  while the monitors are January-July, so JFK's north-west (Howard Beach, 150th/165th Ave) reads 2-3 points
+  quieter than its monitors; the fix is a runway count over the monitors' months.
 - **Release 1 of the scored city is under way** (branch `bay-area-on-map`,
   fast-forwarded into master as it goes). Done by 2026-10-04: five of the
   page's eleven by-name New York tests ask the registry

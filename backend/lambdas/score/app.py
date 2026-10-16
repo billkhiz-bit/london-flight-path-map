@@ -184,7 +184,21 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            (23.3% -> 15.8%). k = 6 was more accurate and read quieter than
 #            DEFRA in five cities; the pooled figures had hidden that. Borough
 #            bands and area pages are unaffected.
-METHODOLOGY_VERSION = '5.5'
+#
+#   quiet    v5.6 (2026-10-16): NEW YORK'S estimate is FITTED to the Port
+#            Authority's noise monitors, like the Bay Area's (Bill's ruling): the
+#            FAA's coded routes of the runway directions flown 10%+ of the time
+#            (counted from adsb.lol tracks, July-August 2026), runway lobes,
+#            fitted sizes (JFK 1.8, LGA 1.35, EWR 1.0, TEB 0.3) and route weight
+#            1.0, every airport a major one (see US-QUIET-NYC). The hand-drawn
+#            corridors and Heathrow-sized circles read 15 of 17 JFK monitors
+#            quieter than measured; the fit reads louder than the monitors on
+#            average at all four airports (nested leave-one-out MAE JFK 1.28,
+#            LGA 1.25, TEB 1.70; EWR 3.40 on two monitors). The borough bands
+#            are derived from it, population-weighted by ZIP area
+#            (scripts/build_nyc_impact.py): Queens severe -> high, Brooklyn high
+#            -> moderate, the Bronx low-moderate -> moderate. No UK value moves.
+METHODOLOGY_VERSION = '5.6'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -241,7 +255,7 @@ AIRPORT_NOISE_SCALE = {
 # (Heathrow-equivalent, the pessimistic direction) since 2026-08-11; this is
 # the Lambda's half of that same decision, added 2026-08-25 after the two
 # holders were caught publishing quiet 10.0 beside impact "severe" for Howard
-# Beach. Keep the two exemption lists in step with NYC_AIRPORTS.
+# Beach. Keep the two exemption lists in step with AIRPORTS_NYC_FITTED.
 # An airport DEFRA does not map is below the threshold at which the mapping duty
 # applies, so it is smaller than the smallest mapped one. This takes London
 # City's value rather than extrapolating below it - pessimistic, and not a
@@ -250,11 +264,11 @@ AIRPORT_NOISE_SCALE = {
 UNMAPPED_AIRPORT_SCALE = 0.190
 
 
-# The exemption list is its own constant rather than a read of NYC_AIRPORTS
+# The exemption list is its own constant rather than a read of AIRPORTS_NYC_FITTED
 # because airport_noise_scale is called DURING module load, before the
-# NYC_AIRPORTS literal at the foot of the data section has executed - the
+# AIRPORTS_NYC_FITTED literal at the foot of the data section has executed - the
 # first version of this exemption NameError'd every import. A drift guard in
-# SiteApiGeometryParityTests asserts this set equals NYC_AIRPORTS' codes.
+# SiteApiGeometryParityTests asserts this set equals AIRPORTS_NYC_FITTED's codes.
 _US_AIRPORT_CODES = frozenset({'JFK', 'LGA', 'EWR', 'TEB'})
 
 
@@ -1733,7 +1747,7 @@ LONDON_BOROUGHS = {
 # comparison should be approached with caution (different methodologies).
 NYC_BOROUGHS = {
     'Queens': {
-        'impact': 'severe',
+        'impact': 'high',
         'avgPrice': 620000,
         'trend': 4.5,
         'schools': 'good',
@@ -1742,7 +1756,7 @@ NYC_BOROUGHS = {
         'healthcare': 'good',
     },
     'Brooklyn': {
-        'impact': 'high',
+        'impact': 'moderate',
         'avgPrice': 850000,
         'trend': 3.8,
         'schools': 'good',
@@ -1760,7 +1774,7 @@ NYC_BOROUGHS = {
         'healthcare': 'excellent',
     },
     'Bronx': {
-        'impact': 'low-moderate',
+        'impact': 'moderate',
         'avgPrice': 420000,
         'trend': 5.5,
         'schools': 'good',
@@ -2620,13 +2634,6 @@ HELIPORTS_LONDON = [
     },
 ]
 
-AIRPORTS_NYC = [
-    {'code': 'JFK', 'name': 'John F. Kennedy', 'lat': 40.6413, 'lon': -73.7781},
-    {'code': 'LGA', 'name': 'LaGuardia', 'lat': 40.7769, 'lon': -73.8740},
-    {'code': 'EWR', 'name': 'Newark Liberty', 'lat': 40.6895, 'lon': -74.1745},
-    {'code': 'TEB', 'name': 'Teterboro', 'lat': 40.8501, 'lon': -74.0608},
-]
-
 # Flight path geometry: list of paths, each with a sequence of (lat, lon)
 # waypoints at 1 km. Distance to the nearest waypoint is the proxy for distance
 # to the corridor, same approach as the consumer site.
@@ -3284,176 +3291,6 @@ FLIGHT_PATHS_LONDON = [
 ]
 # FLIGHT-PATHS-LONDON:END
 
-FLIGHT_PATHS_NYC = [
-    {
-        'name': 'JFK 31L Arrival',
-        'airport': 'JFK',
-        'type': 'arrival',
-        'freq': 'high',
-        'coords': [
-            (40.6, -73.6),
-            (40.6025, -73.61),
-            (40.605, -73.62),
-            (40.6075, -73.63),
-            (40.61, -73.64),
-            (40.6125, -73.65),
-            (40.615, -73.66),
-            (40.6175, -73.67),
-            (40.62, -73.68),
-            (40.6225, -73.69),
-            (40.625, -73.7),
-            (40.6275, -73.71),
-            (40.63, -73.72),
-            (40.6325, -73.73),
-            (40.635, -73.74),
-            (40.6375, -73.75),
-            (40.64, -73.76),
-            (40.6407, -73.769),
-            (40.6413, -73.7781),
-        ],
-    },
-    {
-        'name': 'JFK 13R Departure',
-        'airport': 'JFK',
-        'type': 'departure',
-        'freq': 'high',
-        'coords': [
-            (40.6413, -73.7781),
-            (40.6342, -73.7721),
-            (40.6271, -73.766),
-            (40.62, -73.76),
-            (40.6133, -73.7533),
-            (40.6067, -73.7467),
-            (40.6, -73.74),
-            (40.5933, -73.7333),
-            (40.5867, -73.7267),
-            (40.58, -73.72),
-            (40.5733, -73.7133),
-            (40.5667, -73.7067),
-            (40.56, -73.7),
-        ],
-    },
-    {
-        'name': 'JFK 22L Arrival (ILS)',
-        'airport': 'JFK',
-        'type': 'arrival',
-        'freq': 'medium',
-        'coords': [
-            (40.7, -73.7),
-            (40.6967, -73.7067),
-            (40.6933, -73.7133),
-            (40.69, -73.72),
-            (40.6867, -73.7267),
-            (40.6833, -73.7333),
-            (40.68, -73.74),
-            (40.6733, -73.7467),
-            (40.6667, -73.7533),
-            (40.66, -73.76),
-            (40.6538, -73.766),
-            (40.6475, -73.7721),
-            (40.6413, -73.7781),
-        ],
-    },
-    {
-        'name': 'LGA 31 Arrival',
-        'airport': 'LGA',
-        'type': 'arrival',
-        'freq': 'high',
-        'coords': [
-            (40.72, -73.8),
-            (40.7233, -73.8067),
-            (40.7267, -73.8133),
-            (40.73, -73.82),
-            (40.7333, -73.8267),
-            (40.7367, -73.8333),
-            (40.74, -73.84),
-            (40.7467, -73.8467),
-            (40.7533, -73.8533),
-            (40.76, -73.86),
-            (40.7656, -73.8647),
-            (40.7713, -73.8693),
-            (40.7769, -73.874),
-        ],
-    },
-    {
-        'name': 'LGA 4 Departure',
-        'airport': 'LGA',
-        'type': 'departure',
-        'freq': 'high',
-        'coords': [
-            (40.7769, -73.874),
-            (40.7835, -73.872),
-            (40.79, -73.87),
-            (40.7967, -73.8667),
-            (40.8033, -73.8633),
-            (40.81, -73.86),
-            (40.8167, -73.8567),
-            (40.8233, -73.8533),
-            (40.83, -73.85),
-            (40.8375, -73.8475),
-            (40.845, -73.845),
-            (40.8525, -73.8425),
-            (40.86, -73.84),
-        ],
-    },
-    {
-        'name': 'LGA Expressway Visual 31',
-        'airport': 'LGA',
-        'type': 'arrival',
-        'freq': 'medium',
-        'coords': [
-            (40.78, -73.95),
-            (40.78, -73.94),
-            (40.78, -73.93),
-            (40.78, -73.92),
-            (40.78, -73.91),
-            (40.78, -73.9),
-            (40.78, -73.89),
-            (40.7784, -73.882),
-            (40.7769, -73.874),
-        ],
-    },
-    {
-        'name': 'EWR 4R Arrival',
-        'airport': 'EWR',
-        'type': 'arrival',
-        'freq': 'high',
-        'coords': [
-            (40.62, -74.1),
-            (40.6267, -74.1067),
-            (40.6333, -74.1133),
-            (40.64, -74.12),
-            (40.6467, -74.1267),
-            (40.6533, -74.1333),
-            (40.66, -74.14),
-            (40.6667, -74.1467),
-            (40.6733, -74.1533),
-            (40.68, -74.16),
-            (40.6848, -74.1672),
-            (40.6895, -74.1745),
-        ],
-    },
-    {
-        'name': 'EWR 22L Departure',
-        'airport': 'EWR',
-        'type': 'departure',
-        'freq': 'medium',
-        'coords': [
-            (40.6895, -74.1745),
-            (40.6848, -74.1773),
-            (40.68, -74.18),
-            (40.6733, -74.1833),
-            (40.6667, -74.1867),
-            (40.66, -74.19),
-            (40.6533, -74.1933),
-            (40.6467, -74.1967),
-            (40.64, -74.2),
-            (40.6333, -74.2067),
-            (40.6267, -74.2133),
-            (40.62, -74.22),
-        ],
-    },
-]
 
 AIRPORTS_MANCHESTER = [
     {'code': 'MAN', 'name': 'Manchester', 'lat': 53.3537, 'lon': -2.2750},
@@ -5325,8 +5162,449 @@ BAYAREA_QUIET = {
     'airport_sizes': {'SFO': 0.85, 'OAK': 0.85, 'SJC': 0.5},
     'corridor_weight': 1.25,
     'major_airports': ['SFO', 'OAK', 'SJC'],
+    'runway_use_period': '2026-07-01 to 2026-08-31',
 }
 # US-QUIET-BAYAREA:END
+
+# New York's aircraft geometry, fitted to the Port Authority's monitors the same way
+# (Bill, 2026-10-16: the hand-drawn corridors and Heathrow-sized circles read 15 of 17 JFK
+# monitors quieter than measured). The FAA's routes, runway lobes from flight-track use,
+# fitted sizes and corridor weight. The hand-drawn AIRPORTS_NYC and FLIGHT_PATHS_NYC are deleted.
+# US-QUIET-NYC:START (generated by scripts/measure_us_quiet_yardstick.py --write; do not hand-edit)
+AIRPORTS_NYC_FITTED = [
+    {'code': 'JFK', 'name': 'John F. Kennedy', 'lat': 40.639928, 'lon': -73.778692},
+    {'code': 'LGA', 'name': 'LaGuardia', 'lat': 40.777242, 'lon': -73.872606},
+    {'code': 'EWR', 'name': 'Newark Liberty', 'lat': 40.692481, 'lon': -74.168689},
+    {'code': 'TEB', 'name': 'Teterboro', 'lat': 40.850103, 'lon': -74.060833},
+]
+FLIGHT_PATHS_NYC_FITTED = [
+    {
+        'name': 'JFK 04R final approach',
+        'airport': 'JFK',
+        'kind': 'final',
+        'runway': '04R',
+        'coords': [
+            (40.4897, -73.8757),
+            (40.4972, -73.8698),
+            (40.5048, -73.864),
+            (40.5123, -73.8581),
+            (40.5199, -73.8523),
+            (40.5274, -73.8464),
+            (40.5349, -73.8406),
+            (40.5425, -73.8347),
+            (40.55, -73.8289),
+            (40.5576, -73.823),
+            (40.5651, -73.8172),
+            (40.5726, -73.8113),
+            (40.5802, -73.8055),
+            (40.5877, -73.7996),
+            (40.5953, -73.7938),
+            (40.6028, -73.7879),
+            (40.6103, -73.782),
+            (40.6179, -73.7762),
+            (40.6254, -73.7703),
+        ],
+    },
+    {
+        'name': 'JFK 22L final approach',
+        'airport': 'JFK',
+        'kind': 'final',
+        'runway': '22L',
+        'coords': [
+            (40.7809, -73.6495),
+            (40.7734, -73.6553),
+            (40.7659, -73.6612),
+            (40.7583, -73.667),
+            (40.7508, -73.6729),
+            (40.7432, -73.6787),
+            (40.7357, -73.6846),
+            (40.7282, -73.6904),
+            (40.7206, -73.6963),
+            (40.7131, -73.7022),
+            (40.7056, -73.708),
+            (40.698, -73.7139),
+            (40.6905, -73.7197),
+            (40.6829, -73.7256),
+            (40.6754, -73.7314),
+            (40.6679, -73.7373),
+            (40.6603, -73.7431),
+            (40.6528, -73.749),
+            (40.6452, -73.7549),
+        ],
+    },
+    {
+        'name': 'JFK 31R final approach',
+        'airport': 'JFK',
+        'kind': 'final',
+        'runway': '31R',
+        'coords': [
+            (40.5642, -73.5851),
+            (40.5687, -73.595),
+            (40.5732, -73.6048),
+            (40.5777, -73.6147),
+            (40.5822, -73.6245),
+            (40.5867, -73.6344),
+            (40.5912, -73.6442),
+            (40.5957, -73.6541),
+            (40.6002, -73.664),
+            (40.6047, -73.6738),
+            (40.6092, -73.6837),
+            (40.6137, -73.6935),
+            (40.6182, -73.7034),
+            (40.6227, -73.7132),
+            (40.6272, -73.7231),
+            (40.6317, -73.7329),
+            (40.6362, -73.7428),
+            (40.6407, -73.7526),
+            (40.6452, -73.7625),
+        ],
+    },
+    {
+        'name': 'LGA 04 final approach',
+        'airport': 'LGA',
+        'kind': 'final',
+        'runway': '04',
+        'coords': [
+            (40.6414, -73.989),
+            (40.6489, -73.9828),
+            (40.6564, -73.9766),
+            (40.6639, -73.9705),
+            (40.6714, -73.9643),
+            (40.679, -73.9581),
+            (40.6865, -73.952),
+            (40.694, -73.9458),
+            (40.7015, -73.9396),
+            (40.709, -73.9335),
+            (40.7165, -73.9273),
+            (40.7241, -73.9211),
+            (40.7316, -73.915),
+            (40.7391, -73.9088),
+            (40.7466, -73.9026),
+            (40.7541, -73.8965),
+            (40.7616, -73.8903),
+            (40.7692, -73.8841),
+        ],
+    },
+    {
+        'name': 'LGA 22 final approach',
+        'airport': 'LGA',
+        'kind': 'final',
+        'runway': '22',
+        'coords': [
+            (40.9192, -73.7609),
+            (40.9118, -73.767),
+            (40.9043, -73.7731),
+            (40.8969, -73.7792),
+            (40.8895, -73.7853),
+            (40.882, -73.7914),
+            (40.8746, -73.7975),
+            (40.8672, -73.8036),
+            (40.8597, -73.8097),
+            (40.8523, -73.8158),
+            (40.8449, -73.8219),
+            (40.8375, -73.828),
+            (40.83, -73.8341),
+            (40.8226, -73.8402),
+            (40.8152, -73.8463),
+            (40.8077, -73.8524),
+            (40.8003, -73.8585),
+            (40.7929, -73.8646),
+            (40.7854, -73.8707),
+        ],
+    },
+    {
+        'name': 'EWR 04R final approach',
+        'airport': 'EWR',
+        'kind': 'final',
+        'runway': '04R',
+        'coords': [
+            (40.536, -74.2637),
+            (40.544, -74.2586),
+            (40.552, -74.2535),
+            (40.5601, -74.2484),
+            (40.5681, -74.2434),
+            (40.5761, -74.2383),
+            (40.5842, -74.2332),
+            (40.5922, -74.2282),
+            (40.6002, -74.2231),
+            (40.6083, -74.218),
+            (40.6163, -74.2129),
+            (40.6243, -74.2079),
+            (40.6323, -74.2028),
+            (40.6404, -74.1977),
+            (40.6484, -74.1927),
+            (40.6564, -74.1876),
+            (40.6645, -74.1825),
+            (40.6725, -74.1774),
+            (40.6805, -74.1724),
+        ],
+    },
+    {
+        'name': 'EWR 22L final approach',
+        'airport': 'EWR',
+        'kind': 'final',
+        'runway': '22L',
+        'coords': [
+            (40.84, -74.0716),
+            (40.8321, -74.0766),
+            (40.8242, -74.0816),
+            (40.8163, -74.0865),
+            (40.8084, -74.0915),
+            (40.8005, -74.0965),
+            (40.7926, -74.1015),
+            (40.7847, -74.1065),
+            (40.7768, -74.1115),
+            (40.7689, -74.1165),
+            (40.761, -74.1215),
+            (40.7531, -74.1264),
+            (40.7452, -74.1314),
+            (40.7373, -74.1364),
+            (40.7294, -74.1414),
+            (40.7215, -74.1464),
+            (40.7136, -74.1514),
+            (40.7058, -74.1564),
+            (40.6979, -74.1614),
+        ],
+    },
+    {
+        'name': 'TEB 06 final approach',
+        'airport': 'TEB',
+        'kind': 'final',
+        'runway': '06',
+        'coords': [
+            (40.7412, -74.2244),
+            (40.7471, -74.2158),
+            (40.753, -74.2073),
+            (40.7588, -74.1987),
+            (40.7647, -74.1901),
+            (40.7705, -74.1816),
+            (40.7764, -74.173),
+            (40.7823, -74.1645),
+            (40.7881, -74.1559),
+            (40.794, -74.1473),
+            (40.7998, -74.1388),
+            (40.8057, -74.1302),
+            (40.8116, -74.1217),
+            (40.8174, -74.1131),
+            (40.8233, -74.1045),
+            (40.8291, -74.096),
+            (40.835, -74.0874),
+            (40.8409, -74.0789),
+            (40.8467, -74.0703),
+        ],
+    },
+    {
+        'name': 'TEB 19 final approach',
+        'airport': 'TEB',
+        'kind': 'final',
+        'runway': '19',
+        'coords': [
+            (41.0133, -74.0476),
+            (41.0046, -74.0482),
+            (40.9958, -74.0489),
+            (40.987, -74.0495),
+            (40.9783, -74.0501),
+            (40.9695, -74.0508),
+            (40.9608, -74.0514),
+            (40.952, -74.0521),
+            (40.9433, -74.0527),
+            (40.9345, -74.0533),
+            (40.9258, -74.054),
+            (40.917, -74.0546),
+            (40.9083, -74.0553),
+            (40.8995, -74.0559),
+            (40.8908, -74.0565),
+            (40.882, -74.0572),
+            (40.8733, -74.0578),
+            (40.8645, -74.0585),
+            (40.8558, -74.0591),
+        ],
+    },
+    {
+        'name': 'TEB 24 final approach',
+        'airport': 'TEB',
+        'kind': 'final',
+        'runway': '24',
+        'coords': [
+            (40.9566, -73.9096),
+            (40.9508, -73.9181),
+            (40.945, -73.9266),
+            (40.9392, -73.9351),
+            (40.9333, -73.9436),
+            (40.9275, -73.9521),
+            (40.9217, -73.9606),
+            (40.9159, -73.9691),
+            (40.9101, -73.9776),
+            (40.9043, -73.9861),
+            (40.8984, -73.9946),
+            (40.8926, -74.0031),
+            (40.8868, -74.0116),
+            (40.881, -74.0201),
+            (40.8752, -74.0286),
+            (40.8694, -74.0371),
+            (40.8636, -74.0456),
+            (40.8577, -74.0541),
+        ],
+    },
+    {
+        'name': 'JFK departure via DEEZZ6',
+        'airport': 'JFK',
+        'kind': 'departure',
+        'runway': '04L',
+        'coords': [
+            (40.6231, -73.7847),
+            (40.6301, -73.7793),
+            (40.6371, -73.7738),
+            (40.6442, -73.7683),
+            (40.6512, -73.7628),
+            (40.6582, -73.7573),
+            (40.6652, -73.7518),
+            (40.6722, -73.7464),
+        ],
+    },
+    {
+        'name': 'LGA departure via GLDMN8',
+        'airport': 'LGA',
+        'kind': 'departure',
+        'runway': '13',
+        'coords': [
+            (40.7823, -73.8785),
+            (40.7746, -73.8727),
+            (40.7668, -73.8668),
+            (40.7591, -73.861),
+            (40.7514, -73.8551),
+            (40.7437, -73.8493),
+            (40.736, -73.8434),
+            (40.7282, -73.8376),
+            (40.7205, -73.8317),
+            (40.7128, -73.8259),
+            (40.7073, -73.8343),
+            (40.7018, -73.8426),
+            (40.6963, -73.851),
+            (40.6908, -73.8594),
+            (40.6852, -73.8677),
+            (40.6797, -73.8761),
+            (40.6742, -73.8844),
+            (40.6687, -73.8928),
+            (40.6731, -73.9025),
+            (40.6774, -73.9121),
+            (40.6817, -73.9218),
+            (40.6861, -73.9314),
+            (40.6904, -73.941),
+            (40.6948, -73.9507),
+            (40.6991, -73.9603),
+            (40.7035, -73.97),
+        ],
+    },
+    {
+        'name': 'LGA departure via NTHNS6',
+        'airport': 'LGA',
+        'kind': 'departure',
+        'runway': '13',
+        'coords': [
+            (40.7823, -73.8785),
+            (40.7746, -73.8727),
+            (40.7668, -73.8668),
+            (40.7591, -73.861),
+            (40.7514, -73.8551),
+            (40.7437, -73.8493),
+            (40.736, -73.8434),
+            (40.7282, -73.8376),
+            (40.7205, -73.8317),
+            (40.7128, -73.8259),
+            (40.7046, -73.8281),
+            (40.6964, -73.8303),
+            (40.6882, -73.8325),
+            (40.68, -73.8347),
+            (40.6717, -73.837),
+            (40.6647, -73.8441),
+            (40.6577, -73.8512),
+            (40.6506, -73.8584),
+            (40.6436, -73.8655),
+            (40.6365, -73.8726),
+            (40.6295, -73.8798),
+            (40.6224, -73.8869),
+            (40.6153, -73.8927),
+            (40.6082, -73.8985),
+            (40.6011, -73.9042),
+            (40.594, -73.91),
+            (40.5869, -73.9158),
+            (40.5798, -73.9215),
+            (40.5727, -73.9273),
+            (40.5656, -73.9331),
+            (40.5585, -73.9388),
+            (40.5514, -73.9446),
+        ],
+    },
+    {
+        'name': 'TEB departure via WENTZ1',
+        'airport': 'TEB',
+        'kind': 'departure',
+        'runway': '24',
+        'coords': [
+            (40.8577, -74.0541),
+            (40.852, -74.0626),
+            (40.8462, -74.071),
+            (40.8405, -74.0795),
+            (40.8347, -74.0879),
+            (40.829, -74.0964),
+            (40.8264, -74.1059),
+            (40.8238, -74.1153),
+            (40.8211, -74.1248),
+            (40.8185, -74.1342),
+            (40.8159, -74.1437),
+            (40.8133, -74.1531),
+            (40.8135, -74.1645),
+            (40.8137, -74.1759),
+            (40.8139, -74.1872),
+            (40.8141, -74.1986),
+            (40.8144, -74.21),
+            (40.8146, -74.2213),
+            (40.8148, -74.2327),
+            (40.815, -74.2441),
+            (40.8152, -74.2554),
+            (40.8154, -74.2668),
+            (40.8156, -74.2782),
+        ],
+    },
+]
+NYC_QUIET = {
+    'runway_lobes': {
+        'JFK': [
+            {'bearing': 30.66, 'runway': '04L', 'kind': 'departure', 'share': 0.137},
+            {'bearing': 210.67, 'runway': '04R', 'kind': 'arrival', 'share': 0.146},
+            {'bearing': 120.84, 'runway': '13R', 'kind': 'departure', 'share': 0.14},
+            {'bearing': 30.68, 'runway': '22L', 'kind': 'arrival', 'share': 0.577},
+            {'bearing': 210.67, 'runway': '22R', 'kind': 'departure', 'share': 0.624},
+            {'bearing': 120.87, 'runway': '31R', 'kind': 'arrival', 'share': 0.144},
+        ],
+        'LGA': [
+            {'bearing': 212.03, 'runway': '04', 'kind': 'arrival', 'share': 0.311},
+            {'bearing': 32.03, 'runway': '04', 'kind': 'departure', 'share': 0.242},
+            {'bearing': 122.23, 'runway': '13', 'kind': 'departure', 'share': 0.586},
+            {'bearing': 32.04, 'runway': '22', 'kind': 'arrival', 'share': 0.669},
+            {'bearing': 302.25, 'runway': '31', 'kind': 'departure', 'share': 0.168},
+        ],
+        'EWR': [
+            {'bearing': 205.74, 'runway': '04R', 'kind': 'arrival', 'share': 0.355},
+            {'bearing': 25.74, 'runway': '04R', 'kind': 'departure', 'share': 0.3},
+            {'bearing': 25.74, 'runway': '22L', 'kind': 'arrival', 'share': 0.604},
+            {'bearing': 205.74, 'runway': '22R', 'kind': 'departure', 'share': 0.53},
+        ],
+        'TEB': [
+            {'bearing': 3.19, 'runway': '01', 'kind': 'departure', 'share': 0.341},
+            {'bearing': 228.05, 'runway': '06', 'kind': 'arrival', 'share': 0.312},
+            {'bearing': 3.19, 'runway': '19', 'kind': 'arrival', 'share': 0.553},
+            {'bearing': 48.06, 'runway': '24', 'kind': 'arrival', 'share': 0.122},
+            {'bearing': 228.06, 'runway': '24', 'kind': 'departure', 'share': 0.588},
+        ],
+    },
+    'airport_sizes': {'JFK': 1.8, 'LGA': 1.35, 'EWR': 1.0, 'TEB': 0.3},
+    'corridor_weight': 1.0,
+    'major_airports': ['JFK', 'LGA', 'EWR', 'TEB'],
+    'runway_use_period': '2026-07-01 to 2026-08-31',
+}
+# US-QUIET-NYC:END
 
 CITY_GEOMETRY = {
     'london': {
@@ -5339,12 +5617,17 @@ CITY_GEOMETRY = {
     # New York gets an explicit empty list rather than a missing key, so a future
     # city that genuinely has rotary sites fails loudly on a typo instead of
     # silently scoring as though it has none.
+    #
+    # Since 2026-10-16 New York scores from the FITTED block above, like the Bay Area:
+    # every airport is a major one ('major_airports'), so 'major_airport' and the old
+    # 'secondary_airport' (LGA) are None.
     'nyc': {
-        'airports': AIRPORTS_NYC,
-        'paths': FLIGHT_PATHS_NYC,
+        'airports': AIRPORTS_NYC_FITTED,
+        'paths': FLIGHT_PATHS_NYC_FITTED,
         'heliports': [],
-        'major_airport': 'JFK',
-        'secondary_airport': 'LGA',
+        'major_airport': None,
+        'secondary_airport': None,
+        **NYC_QUIET,
     },
     'westmidlands': {
         'airports': AIRPORTS_WESTMIDLANDS,
@@ -5723,7 +6006,8 @@ def runway_lobe_km(lat, lon, ap, lobes):
     shapes it, sqrt(along^2 + (AIRPORT_SHAPE_K * side)^2); behind it, the point
     is off the strip and reads AIRPORT_SHAPE_K times its distance. An airport
     with no lobes keeps a circle. Used only where a city's geometry carries
-    'runway_lobes'; no UK or New York city does, so their quiet cannot move.
+    'runway_lobes' (the Bay Area and, since 2026-10-16, New York); no UK city
+    does, so no UK quiet value can move.
     """
     d = haversine_km(lat, lon, ap['lat'], ap['lon'])
     if not lobes:
@@ -6989,11 +7273,27 @@ CITY_PROVENANCE = {
             'Borough metadata: curated from public New York City sources',
             'Crime: NYPD CompStat-derived offence rates per 1,000, against New York City population denominators',
             'Prices: curated New York borough median sale prices, in USD',
-            'Aviation noise context: JFK and LaGuardia approach geometry, curated borough-aggregate bands',
+            'Aviation noise context: ESTIMATED from the FAA routes of JFK, LaGuardia, Newark and Teterboro, '
+            'fitted to the Port Authority of New York and New Jersey noise-monitor readings for January-July '
+            '2026; NOT a measurement at this address',
+            'Borough aircraft band: the same estimate averaged over residents by 2020 ZIP Code Tabulation '
+            'Area, weighted by US Census Bureau ACS 2020-2024 population (public domain)',
             'Licence note: Open Government Licence v3.0 covers UK Crown copyright and does NOT apply to any data in this response',
         ],
         'breakdown': {
-            'quiet': 'Curated borough-aggregate aircraft-noise bands derived from JFK and LaGuardia approach geometry. NOT DEFRA — no published Lden survey covers New York, so the dB thresholds in METHODOLOGY §3 are not directly applicable. The chosen resolution is reported in context.quietResolution.',
+            'quiet': (
+                "ESTIMATED from the FAA's coded routes of JFK, LaGuardia, Newark and Teterboro: the "
+                'runway directions flown at least 10% of the time (counted from aircraft positions), with '
+                "each airport's size and the route weight fitted to the Port Authority of New York and New "
+                "Jersey's noise-monitor readings for January-July 2026, so that at every airport the "
+                'estimate reads louder than its monitors on average. NOT DEFRA and not a measurement at '
+                'this address: no published Lden survey covers New York, so the dB thresholds in '
+                'METHODOLOGY section 3 are not directly applicable. Known limitation: the runway use is a '
+                'summer count, so directions flown mostly in other seasons (such as JFK departures to the '
+                'north-west) are under-represented, and places on that side can read quieter than the '
+                'monitors there. A borough query reads a band derived from the same estimate, averaged '
+                "over the borough's residents. The chosen resolution is reported in context.quietResolution."
+            ),
             'afford': _afford_breakdown_line,
             'live': 'NYPD CompStat-derived crime rates with New York population denominators, plus curated school / transport / healthcare tiers. NOT ONS, Home Office, DfE, TfL or NHS — none has a New York remit. Cross-city comparison against UK boroughs should be approached with caution: different collection methodologies.',
         },
@@ -7382,6 +7682,33 @@ def _aip_source_line(city):
     return _AIP_SOURCE_LINE if _aip_airports(city) else None
 
 
+# US flight routes and runway use (2026-10-16). A city whose quiet geometry is the
+# FITTED US one - it carries 'runway_lobes': New York, and the Bay Area once it is served -
+# scores from the FAA's coded routes and from runway use Sky Score counted from adsb.lol
+# flight tracks. The FAA supplies its procedures "as is", without warranty, and asks for
+# that to travel with them; adsb.lol is ODbL, whose produced works must say so. Both are
+# derived from the geometry the engine scores with, like the AIP line above, and None
+# (dropped) everywhere else, so no UK response can carry them.
+_FAA_ROUTES_LINE = (
+    'Flight routes: FAA Coded Instrument Flight Procedures, derived by Sky Score for the '
+    'aircraft noise estimate; supplied "as is", without warranty, and not for navigation'
+)
+
+
+def _us_routes_source_line(city):
+    """The FAA credit, for a city scored from the fitted US geometry; else None."""
+    return _FAA_ROUTES_LINE if 'runway_lobes' in (CITY_GEOMETRY.get(city) or {}) else None
+
+
+def _runway_use_source_line(city):
+    """The adsb.lol (ODbL) credit, naming the period the runway use was counted over."""
+    period = (CITY_GEOMETRY.get(city) or {}).get('runway_use_period')
+    if not period:
+        return None
+    return (f'Runway use: counted by Sky Score from aircraft positions via adsb.lol (ODbL 1.0), '
+            f'{period}; the counts are offered under the ODbL')
+
+
 def _quiet_breakdown_with_routes(static):
     """Wrap a city's hand-written `quiet` lineage with where its routes come from.
 
@@ -7437,6 +7764,10 @@ for _city_key, _prov in CITY_PROVENANCE.items():
     # London's postcode line keeps its index-2 contract. Derived per city by
     # _aip_airports; None where the geometry is not the AIP's, and dropped.
     _prov['sources'].append(_aip_source_line)
+    # US ROUTES AND RUNWAY USE (2026-10-16), appended after the AIP line for the same
+    # reason; None, and dropped, for every city not scored from the fitted US geometry.
+    _prov['sources'].append(_us_routes_source_line)
+    _prov['sources'].append(_runway_use_source_line)
     _prov['breakdown']['quiet'] = _quiet_breakdown_with_routes(_prov['breakdown']['quiet'])
 del _prov, _city_key
 
@@ -8114,9 +8445,10 @@ _COVERAGE_NOTICES = {
     # regulator with no product covering any US city - the same city-blind
     # provenance shape as the 2026-07 NYC/OGL incident, one field over.
     'postcode-nyc': (
-        'Aircraft noise here is estimated from distance to JFK, LaGuardia, '
-        'Newark and Teterboro and flight-path geometry, not measured. No '
-        'published Lden survey covers New York.'
+        'Aircraft noise here is estimated from the FAA routes of JFK, '
+        'LaGuardia, Newark and Teterboro, fitted to the airports\' noise '
+        'monitors, not measured at this address. No published Lden survey '
+        'covers New York.'
     ),
     'borough': (
         'Aircraft noise here is a borough-wide average, not a figure for this '

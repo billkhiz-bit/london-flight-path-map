@@ -1,8 +1,7 @@
 {
-  "purpose": "How each Bay Area runway end is actually flown: the weights of the runway lobes in calc_postcode_quiet (scripts/measure_us_quiet_yardstick.py). A published runway is not a busy one.",
+  "purpose": "How each US runway end is actually flown: the weights of the runway lobes in calc_postcode_quiet (scripts/measure_us_quiet_yardstick.py). A published runway is not a busy one.",
   "source": "adsb.lol daily archive, extracted by scripts/adsb_extract.py and counted by scripts/adsb_movements.py --runways (feed-outage days left out)",
   "licence": "ODbL 1.0. Derived from adsb.lol data: credit 'aircraft positions via adsb.lol (ODbL)', and this file is offered under ODbL (accepted by Bill, 2026-10-15)",
-  "period": "62 day(s), 2026-07-01 to 2026-08-31",
   "unmatched": "'?' is a movement no runway matched by heading and position; kept here, left out of the shares",
   "airports": {
     "SFO": {
@@ -44,7 +43,8 @@
           "landing": 56,
           "take-off": 6626
         }
-      }
+      },
+      "period": "62 day(s), 2026-07-01 to 2026-08-31"
     },
     "OAK": {
       "days_kept": "55/62",
@@ -85,7 +85,8 @@
           "landing": 1465,
           "take-off": 3664
         }
-      }
+      },
+      "period": "62 day(s), 2026-07-01 to 2026-08-31"
     },
     "SJC": {
       "days_kept": "55/62",
@@ -110,7 +111,136 @@
           "landing": 887,
           "take-off": 1032
         }
-      }
+      },
+      "period": "62 day(s), 2026-07-01 to 2026-08-31"
+    },
+    "JFK": {
+      "days_kept": "55/62",
+      "runways": {
+        "04L": {
+          "landing": 608,
+          "take-off": 3648
+        },
+        "04R": {
+          "landing": 4666,
+          "take-off": 14
+        },
+        "13L": {
+          "landing": 987,
+          "take-off": 176
+        },
+        "13R": {
+          "landing": 610,
+          "take-off": 3725
+        },
+        "22L": {
+          "landing": 18406,
+          "take-off": 129
+        },
+        "22R": {
+          "landing": 1295,
+          "take-off": 16617
+        },
+        "31L": {
+          "landing": 713,
+          "take-off": 2237
+        },
+        "31R": {
+          "landing": 4605,
+          "take-off": 69
+        },
+        "?": {
+          "landing": 2863,
+          "take-off": 8224
+        }
+      },
+      "period": "62 day(s), 2026-07-01 to 2026-08-31"
+    },
+    "LGA": {
+      "days_kept": "55/62",
+      "runways": {
+        "04": {
+          "landing": 6357,
+          "take-off": 4688
+        },
+        "13": {
+          "landing": 77,
+          "take-off": 11364
+        },
+        "22": {
+          "landing": 13656,
+          "take-off": 93
+        },
+        "31": {
+          "landing": 329,
+          "take-off": 3252
+        },
+        "?": {
+          "landing": 4650,
+          "take-off": 5701
+        }
+      },
+      "period": "62 day(s), 2026-07-01 to 2026-08-31"
+    },
+    "EWR": {
+      "days_kept": "55/62",
+      "runways": {
+        "04L": {
+          "landing": 211,
+          "take-off": 2043
+        },
+        "04R": {
+          "landing": 10103,
+          "take-off": 8490
+        },
+        "11": {
+          "landing": 35,
+          "take-off": 72
+        },
+        "22L": {
+          "landing": 17170,
+          "take-off": 2453
+        },
+        "22R": {
+          "landing": 767,
+          "take-off": 14966
+        },
+        "29": {
+          "landing": 151,
+          "take-off": 239
+        },
+        "?": {
+          "landing": 88,
+          "take-off": 321
+        }
+      },
+      "period": "62 day(s), 2026-07-01 to 2026-08-31"
+    },
+    "TEB": {
+      "days_kept": "55/62",
+      "runways": {
+        "01": {
+          "landing": 148,
+          "take-off": 3899
+        },
+        "06": {
+          "landing": 3659,
+          "take-off": 612
+        },
+        "19": {
+          "landing": 6491,
+          "take-off": 199
+        },
+        "24": {
+          "landing": 1436,
+          "take-off": 6709
+        },
+        "?": {
+          "landing": 448,
+          "take-off": 658
+        }
+      },
+      "period": "62 day(s), 2026-07-01 to 2026-08-31"
     }
   }
 }

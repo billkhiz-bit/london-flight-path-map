@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-16 (evening) - New York's aircraft figures are fitted to its airports' noise monitors (v5.6, built, not yet live)
+
+- **New York now scores aircraft noise the way the Bay Area does**, on Bill's decision the same day: from the
+  FAA's published routes of the runways actually flown (counted from flight tracks), with each airport's size
+  and the route weight fitted to the Port Authority's own noise monitors. The old hand-drawn corridors read
+  quieter than measured at 15 of 17 JFK monitors; the fitted estimate reads louder than the monitors on average
+  at all four airports (1.25 to 1.70 points of error on monitors held out at JFK, LaGuardia and Teterboro).
+- **The borough figures follow, from where people live.** Each borough's band is the fitted estimate averaged
+  over its residents (2020 ZIP areas, Census population): Queens moves from the loudest band to the next,
+  Brooklyn and the Bronx both to the middle band (Brooklyn quieter than before, the Bronx louder, under
+  LaGuardia's approach). Manhattan and Staten Island are unchanged. No UK figure moves.
+- **The full map draws the routes it scores**, and the map and the API agree to the decimal at 713 points across
+  the city and every New York neighbourhood, checked on every commit.
+- **Stated limitation:** the runway count covers July and August, so a direction JFK flies mostly in other
+  seasons (north-west, over Howard Beach) reads 2 to 3 points quieter than the monitors there. Counting the same
+  months as the monitors is the next step.
+
 ## 2026-10-16 - "Postcodes, not addresses" is live everywhere, and July's flight count passes 14 of 15 airports
 
 - **The wording correction reached every other place the figures are described** (`f9e26ef`): 93 area pages,

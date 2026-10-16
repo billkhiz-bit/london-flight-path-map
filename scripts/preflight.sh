@@ -280,6 +280,10 @@ check "US flight paths == FAA CIFP"    python scripts/build_us_flight_paths.py -
 # leave-one-out, or if the real engine disagrees with the fit at any monitor.
 # Offline (every input is checked in), about 6 s. Proven red three ways.
 check "US quiet == airport monitors"   python scripts/measure_us_quiet_yardstick.py --check
+# New York's five borough bands are DERIVED from that fitted estimate (v5.6), weighted by
+# where people live; offline from the checked-in data/us-nyc-zcta.json, and it re-derives
+# that file from the Census sources when they are on disk. Both holders must agree.
+check "New York bands == fitted estimate"   python scripts/build_nyc_impact.py --check
 # The Bay Area flight-path page states, of fifty cities, which routes pass
 # overhead and how low. It is rendered from the record above, the Census
 # outlines and BTS's noise picture, and this re-renders it: a new CIFP cycle,
@@ -383,6 +387,13 @@ net_check "flood == EA service (georef)" python scripts/check_flood_georef.py --
 # before leaving BACKEND_ONLY_CITIES, which is a one-way door.
 # Proven able to fail: a single site-side band edit reds it at -3.8.
 check "site == Lambda (91 boroughs)"   node tests/borough-score-parity.mjs
+# New York's quiet is FITTED to the Port Authority's monitors (2026-10-16) and the fit
+# is written into both holders; the fit script's --check holds the two data blocks,
+# this holds the ARITHMETIC of both site ramps against calc_postcode_quiet at 713
+# grid points and every curated neighbourhood. A borough cannot see it: New York's
+# boroughs score from their impact band. Proven red three ways on site-only edits
+# (a size, the majors list, the lobe's behind-the-runway test).
+check "New York quiet: site == Lambda"   node tests/us-quiet-site-parity.mjs
 # The 285 curated postcode-district labels are the one output of the
 # neighbourhood builder that nothing downstream can contradict: a wrong price
 # reds "prices == HM Land Registry", a wrong borough shows up as a borough with

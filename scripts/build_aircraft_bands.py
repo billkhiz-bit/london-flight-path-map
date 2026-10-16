@@ -597,7 +597,9 @@ def check_or_write(args):
     #
     # london and nyc are exempt BY NAME and that is deliberate: neither is in
     # AIRPORTS because London is the ladder's calibration reference rather than
-    # a scaled city, and NYC has no DEFRA coverage at all. Naming them here
+    # a scaled city, and NYC has no DEFRA coverage at all (its five bands are
+    # derived from its monitor-fitted estimate by scripts/build_nyc_impact.py
+    # since v5.6). Naming them here
     # means adding a twelfth derived city cannot quietly join them - it lands in
     # `unexpected` until AIRPORTS covers it.
     DERIVATION_EXEMPT = {"london", "nyc"}
