@@ -236,7 +236,22 @@ for (const meta of PAGES) {
     // networkidle can never settle on a page with polling or long-lived
     // connections. Fall back rather than reporting a layout failure for what is
     // really a loading-strategy mismatch.
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    //
+    // The fallback retries a CONNECTION failure, and only that (2026-10-16): the
+    // local python http.server queues few connections, and twice in one evening a
+    // preflight on a busy machine got "interrupted by another navigation to
+    // chrome-error://chromewebdata/" - the server did not answer, nothing about the
+    // page. A layout fault never reaches here; anything else still throws at once.
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        break;
+      } catch (e) {
+        const connection = /chrome-error|ERR_CONNECTION|ERR_EMPTY_RESPONSE/.test(String(e && e.message));
+        if (!connection || attempt >= 3) throw e;
+        await page.waitForTimeout(1500 * attempt);
+      }
+    }
   }
   await page.waitForTimeout(meta.settle ?? 600);
 
