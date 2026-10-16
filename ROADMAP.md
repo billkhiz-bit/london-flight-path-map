@@ -1252,6 +1252,15 @@ engine:** the runway shares are derived from ODbL tracks, so a published score b
 credit and the shares offered under ODbL (accepted 15 Oct); the US route weight must be a per-country registry
 value, never a change to the UK's; OAK has no monitors in hand (its size is the larger fitted, pessimistic);
 and New York needs its own monitors before the same method can be said to hold there.
+**IN THE ENGINE, the same evening (committed locally, NOT pushed - see LICENSING):** `runway_lobe_km()` and four
+optional city fields in `calc_postcode_quiet` (`runway_lobes`, `airport_sizes`, `corridor_weight`, `major_airports`),
+read only where present, so no UK or New York value can move (`backend/tests/test_us_quiet.py` reds if one gains
+a field). `CITY_GEOMETRY['bayarea']` comes from the GENERATED `US-QUIET-BAYAREA` block
+(`measure_us_quiet_yardstick.py --write`); **`--check` is BLOCKING in preflight** (offline, ~6 s) and was proven red
+three ways: a hand-edited size (stale block), changed lobe arithmetic (refit differs), and a shifted bonus radius in
+the engine alone (engine vs fit 2.0 apart). Shares are over MATCHED movements (counting the unmatched only drops
+lobes, the quiet direction); the fit is unchanged by it. `'bayarea'` is in no `CITIES` entry: inert until release 2.
+The site's `MAJOR_AIRPORT` gained `bayarea: null` for the registry parity test (it scores no Bay Area quiet).
 
 | Input | Source | Geography, vintage | Licence | Confidence |
 |---|---|---|---|---|

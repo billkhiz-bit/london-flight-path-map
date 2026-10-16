@@ -244,6 +244,20 @@ often planes fly"). Measured privately; nothing derived from these is published:
   offered under ODbL, credited "aircraft positions via adsb.lol (ODbL)". Commercial use is
   allowed. **Bill accepted the share-alike on 2026-10-15**: the counts will be published
   under ODbL once they pass the per-airport floor (ROADMAP).
+- **Bay Area runway use, `data/us-runway-use.json` (2026-10-16), DERIVED FROM adsb.lol, so ODbL.**
+  Landings and take-offs per runway end at SFO, OAK and SJC over July-August 2026 (55 of 62
+  days kept), and the lobe shares built from them in the score Lambda's US-QUIET-BAYAREA block.
+  They WEIGHT the Bay Area's aircraft estimate; nothing is served from them yet ('bayarea' is in
+  no CITIES entry). **Committed locally and NOT pushed on 2026-10-16**: the repo is public, so a
+  push publishes this Derivative Database, and Bill's 15 Oct acceptance covered counts that pass
+  the per-airport floor, which a US airport cannot (no official monthly figure to test against).
+  Bill to confirm. When published: offered under ODbL, credited "aircraft positions via adsb.lol
+  (ODbL)", in the file (it says so) and wherever a Bay Area score is shown.
+- **US airport noise monitors, `data/us-noise-monitors.json` (2026-10-16)**, the yardstick for the
+  US aircraft estimate: **SFO** via DataSF's "Aircraft Noise Climates" (dataset qxw2-ncq3),
+  **PDDL 1.0** (public domain), read from the dataset's own metadata; **SJC** from its Quarterly
+  Noise Report to Caltrans (a public Title 21 filing; no licence stated, used as published
+  facts with the source named). Annual figures only; no raw files are redistributed.
 - **CAA airport statistics, Table 03.1 Aircraft Movements** (2025, `data/caa/`, gitignored):
   used to CHECK the tracked counts. The CAA's terms: "No statistical data provided by CAA
   maybe sold on to a third party. CAA insists that they are referenced in any publication

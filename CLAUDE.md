@@ -1011,6 +1011,12 @@ are, not how many aircraft use them".
   DEFRA and the Environment Agency for California.
 - `tests/test_bay_area_page.py` breaks the REAL inputs one way at a time (a
   mis-paired shapefile record, a picture one tile out, a missing city).
+- **Release 2's noise gate is BUILT (2026-10-16, engine only, inert):** `CITY_GEOMETRY['bayarea']` from the
+  generated `US-QUIET-BAYAREA` block, fitted to SFO's 29 and SJC's 13 monitors with runway use from adsb.lol
+  tracks (`data/us-runway-use.json`, ODbL - NOT pushed until Bill confirms, LICENSING); blocking
+  `measure_us_quiet_yardstick.py --check`. Per-city fields only (`runway_lobes`, `airport_sizes`,
+  `corridor_weight`, `major_airports`): never put US sizes in `AIRPORT_NOISE_SCALE`, which mirrors index.html.
+  Normal-year monitors prefer a route weight of 1.0 against the UK's provisional 0.5: a UK lead, not a change.
 - **Release 1 of the scored city is under way** (branch `bay-area-on-map`,
   fast-forwarded into master as it goes). Done by 2026-10-04: five of the
   page's eleven by-name New York tests ask the registry

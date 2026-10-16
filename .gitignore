@@ -99,6 +99,7 @@ data/*
 # stays ignored.
 !data/us-flight-procedures.json
 !data/us-noise-monitors.json
+!data/us-runway-use.json
 # Census outlines of the Bay Area's cities (2026-10-02), simplified, with the
 # frame the noise picture was cut to. scripts/build_bay_area_page.py --check, a
 # BLOCKING stage, renders the page from it. NOT named `*-boroughs.json`: five

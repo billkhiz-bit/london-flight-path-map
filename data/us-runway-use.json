@@ -1,0 +1,116 @@
+{
+  "purpose": "How each Bay Area runway end is actually flown: the weights of the runway lobes in calc_postcode_quiet (scripts/measure_us_quiet_yardstick.py). A published runway is not a busy one.",
+  "source": "adsb.lol daily archive, extracted by scripts/adsb_extract.py and counted by scripts/adsb_movements.py --runways (feed-outage days left out)",
+  "licence": "ODbL 1.0. Derived from adsb.lol data: credit 'aircraft positions via adsb.lol (ODbL)', and this file is offered under ODbL (accepted by Bill, 2026-10-15)",
+  "period": "62 day(s), 2026-07-01 to 2026-08-31",
+  "unmatched": "'?' is a movement no runway matched by heading and position; kept here, left out of the shares",
+  "airports": {
+    "SFO": {
+      "days_kept": "55/62",
+      "runways": {
+        "01L": {
+          "landing": 16,
+          "take-off": 8138
+        },
+        "01R": {
+          "landing": 2,
+          "take-off": 1
+        },
+        "10L": {
+          "landing": 9,
+          "take-off": 14
+        },
+        "10R": {
+          "landing": 1,
+          "take-off": 8
+        },
+        "19L": {
+          "landing": 4,
+          "take-off": 0
+        },
+        "19R": {
+          "landing": 94,
+          "take-off": 24
+        },
+        "28L": {
+          "landing": 13109,
+          "take-off": 14647
+        },
+        "28R": {
+          "landing": 19790,
+          "take-off": 3607
+        },
+        "?": {
+          "landing": 56,
+          "take-off": 6626
+        }
+      }
+    },
+    "OAK": {
+      "days_kept": "55/62",
+      "runways": {
+        "10L": {
+          "landing": 1031,
+          "take-off": 862
+        },
+        "10R": {
+          "landing": 262,
+          "take-off": 247
+        },
+        "12": {
+          "landing": 8,
+          "take-off": 8
+        },
+        "15": {
+          "landing": 2561,
+          "take-off": 258
+        },
+        "28L": {
+          "landing": 349,
+          "take-off": 160
+        },
+        "28R": {
+          "landing": 2985,
+          "take-off": 480
+        },
+        "30": {
+          "landing": 6730,
+          "take-off": 8014
+        },
+        "33": {
+          "landing": 106,
+          "take-off": 1602
+        },
+        "?": {
+          "landing": 1465,
+          "take-off": 3664
+        }
+      }
+    },
+    "SJC": {
+      "days_kept": "55/62",
+      "runways": {
+        "12L": {
+          "landing": 71,
+          "take-off": 424
+        },
+        "12R": {
+          "landing": 477,
+          "take-off": 171
+        },
+        "30L": {
+          "landing": 9233,
+          "take-off": 2905
+        },
+        "30R": {
+          "landing": 1326,
+          "take-off": 7364
+        },
+        "?": {
+          "landing": 887,
+          "take-off": 1032
+        }
+      }
+    }
+  }
+}

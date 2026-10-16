@@ -15,7 +15,11 @@
   the tracks is published yet.
 - **The Bay Area's scored release has started**, with the five decisions in ROADMAP accepted. Its first gate
   is the noise estimate, which must not read quieter than measured airport monitors before any Bay Area
-  score is published.
+  score is published. **Measured the same day and built into the scoring engine (not yet served):** today's
+  method read San Jose 2.3 points quieter than its monitors; scoring only the runways actually flown (counted
+  from flight tracks), each airport as the main one for its own area, and a route weight refitted on these
+  normal-year monitors brings SFO to 1.43 and San Jose to 1.06 points of error on monitors held out of the
+  fit, neither reading quieter. A new blocking check holds it to the monitors. No UK or New York score moves.
 
 ## 2026-10-15 - "Find areas" is live, and the flight count passes its first month
 
