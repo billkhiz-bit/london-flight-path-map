@@ -1017,6 +1017,11 @@ are, not how many aircraft use them".
   `measure_us_quiet_yardstick.py --check`. Per-city fields only (`runway_lobes`, `airport_sizes`,
   `corridor_weight`, `major_airports`): never put US sizes in `AIRPORT_NOISE_SCALE`, which mirrors index.html.
   Normal-year monitors prefer a route weight of 1.0 against the UK's provisional 0.5: a UK lead, not a change.
+  **The yardstick is ANEEM where published (SFO; Bill 2026-10-16)**, built by `scripts/build_sfo_noise_monitors.py`,
+  and the fit needs every airport 0.2 louder in sample (`MARGIN`) so it holds out: weight 1.25, SFO 0.96 held out.
+- **New York's published Quiet Skies reads QUIETER than measured near JFK (15 of 17 monitors, +2.38; 2026-10-16,
+  `scripts/measure_nyc_quiet_yardstick.py`, Port Authority monitors in `data/us-noise-monitors.json`).** The
+  fix (the Bay Area method) is measured, not applied: it moves live NY scores, so it is Bill's call (ROADMAP).
 - **Release 1 of the scored city is under way** (branch `bay-area-on-map`,
   fast-forwarded into master as it goes). Done by 2026-10-04: five of the
   page's eleven by-name New York tests ask the registry

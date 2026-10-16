@@ -256,9 +256,19 @@ often planes fly"). Measured privately; nothing derived from these is published:
   Area score built on it is shown (release 2).
 - **US airport noise monitors, `data/us-noise-monitors.json` (2026-10-16)**, the yardstick for the
   US aircraft estimate: **SFO** via DataSF's "Aircraft Noise Climates" (dataset qxw2-ncq3),
-  **PDDL 1.0** (public domain), read from the dataset's own metadata; **SJC** from its Quarterly
+  **PDDL 1.0** (public domain), read from the dataset's own metadata (both its conventional and ANEEM
+  columns are kept; ANEEM is the yardstick, `scripts/build_sfo_noise_monitors.py`); **SJC** from its Quarterly
   Noise Report to Caltrans (a public Title 21 filing; no licence stated, used as published
   facts with the source named). Annual figures only; no raw files are redistributed.
+- **New York airport noise monitors (2026-10-16)**, `data/us-noise-monitors.json` 'NYC': the Port Authority of NY &
+  NJ's Monthly Noise Monitor Report (a public report; no licence stated). Monthly figures transcribed and monitor
+  positions measured off its maps, used as published facts with the source named; no report images or tables
+  are redistributed. Runway use for the New York fit is counted from adsb.lol tracks (ODbL) into a gitignored file;
+  if it is ever published or scored from, it takes the same ODbL treatment as the Bay Area's.
+- **US Census Bureau ACS 5-year, table B25077 (2020-2024), `data/us-bayarea-prices.json` (2026-10-16)**: median
+  home value for the Bay Area's 50 cities, release 2's price input. Public domain (a US government work), from
+  the keyless summary file (the API now wants a key). "$2,000,000+" is coded 2000001: a floor, flagged
+  `top_coded` (16 of 50), never shown as a price.
 - **CAA airport statistics, Table 03.1 Aircraft Movements** (2025, `data/caa/`, gitignored):
   used to CHECK the tracked counts. The CAA's terms: "No statistical data provided by CAA
   maybe sold on to a third party. CAA insists that they are referenced in any publication

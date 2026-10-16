@@ -5322,8 +5322,8 @@ BAYAREA_QUIET = {
             {'bearing': 318.94, 'runway': '30R', 'kind': 'departure', 'share': 0.678},
         ],
     },
-    'airport_sizes': {'SFO': 0.8, 'OAK': 0.8, 'SJC': 0.7},
-    'corridor_weight': 1.0,
+    'airport_sizes': {'SFO': 0.85, 'OAK': 0.85, 'SJC': 0.5},
+    'corridor_weight': 1.25,
     'major_airports': ['SFO', 'OAK', 'SJC'],
 }
 # US-QUIET-BAYAREA:END

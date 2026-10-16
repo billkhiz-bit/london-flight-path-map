@@ -1,0 +1,461 @@
+{
+  "source": "US Census Bureau, American Community Survey 5-year estimates, table B25077 (median value, owner-occupied housing units, dollars)",
+  "vintage": "2020-2024",
+  "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25077.dat",
+  "licence": "public domain (a US government work)",
+  "generator": "scripts/build_bayarea_prices.py --write",
+  "top_code": "2000001 means \"$2,000,000+\": a floor, never a price (top_coded: true)",
+  "not_a_trend": "overlapping 5-year releases must not be compared (Census Bureau); this is a level only",
+  "cities": [
+    {
+      "geoid": "0600562",
+      "name": "Alameda",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1235700,
+      "margin_usd": 41564,
+      "top_coded": false
+    },
+    {
+      "geoid": "0600674",
+      "name": "Albany",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1202200,
+      "margin_usd": 41539,
+      "top_coded": false
+    },
+    {
+      "geoid": "0603092",
+      "name": "Atherton",
+      "kind": "town",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0605108",
+      "name": "Belmont",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0606000",
+      "name": "Berkeley",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1413900,
+      "margin_usd": 43756,
+      "top_coded": false
+    },
+    {
+      "geoid": "0608310",
+      "name": "Brisbane",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1232200,
+      "margin_usd": 204609,
+      "top_coded": false
+    },
+    {
+      "geoid": "0609066",
+      "name": "Burlingame",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0610345",
+      "name": "Campbell",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1617000,
+      "margin_usd": 44594,
+      "top_coded": false
+    },
+    {
+      "geoid": "0614736",
+      "name": "Colma",
+      "kind": "town",
+      "county": "San Mateo",
+      "median_value_usd": 1062000,
+      "margin_usd": 51255,
+      "top_coded": false
+    },
+    {
+      "geoid": "0617610",
+      "name": "Cupertino",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0617918",
+      "name": "Daly City",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1115000,
+      "margin_usd": 16930,
+      "top_coded": false
+    },
+    {
+      "geoid": "0620018",
+      "name": "Dublin",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1317100,
+      "margin_usd": 41188,
+      "top_coded": false
+    },
+    {
+      "geoid": "0620956",
+      "name": "East Palo Alto",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1102600,
+      "margin_usd": 75213,
+      "top_coded": false
+    },
+    {
+      "geoid": "0622594",
+      "name": "Emeryville",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 604800,
+      "margin_usd": 30972,
+      "top_coded": false
+    },
+    {
+      "geoid": "0625338",
+      "name": "Foster City",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1838200,
+      "margin_usd": 78375,
+      "top_coded": false
+    },
+    {
+      "geoid": "0626000",
+      "name": "Fremont",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1403800,
+      "margin_usd": 25461,
+      "top_coded": false
+    },
+    {
+      "geoid": "0629504",
+      "name": "Gilroy",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1027400,
+      "margin_usd": 26941,
+      "top_coded": false
+    },
+    {
+      "geoid": "0631708",
+      "name": "Half Moon Bay",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1549500,
+      "margin_usd": 110431,
+      "top_coded": false
+    },
+    {
+      "geoid": "0633000",
+      "name": "Hayward",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 854400,
+      "margin_usd": 12557,
+      "top_coded": false
+    },
+    {
+      "geoid": "0633798",
+      "name": "Hillsborough",
+      "kind": "town",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0641992",
+      "name": "Livermore",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1105600,
+      "margin_usd": 13623,
+      "top_coded": false
+    },
+    {
+      "geoid": "0643280",
+      "name": "Los Altos",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0643294",
+      "name": "Los Altos Hills",
+      "kind": "town",
+      "county": "Santa Clara",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0644112",
+      "name": "Los Gatos",
+      "kind": "town",
+      "county": "Santa Clara",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0646870",
+      "name": "Menlo Park",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0647486",
+      "name": "Millbrae",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1934900,
+      "margin_usd": 91218,
+      "top_coded": false
+    },
+    {
+      "geoid": "0647766",
+      "name": "Milpitas",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1251700,
+      "margin_usd": 39478,
+      "top_coded": false
+    },
+    {
+      "geoid": "0648956",
+      "name": "Monte Sereno",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0649278",
+      "name": "Morgan Hill",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1210200,
+      "margin_usd": 44466,
+      "top_coded": false
+    },
+    {
+      "geoid": "0649670",
+      "name": "Mountain View",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1927000,
+      "margin_usd": 91537,
+      "top_coded": false
+    },
+    {
+      "geoid": "0650916",
+      "name": "Newark",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1142800,
+      "margin_usd": 22900,
+      "top_coded": false
+    },
+    {
+      "geoid": "0653000",
+      "name": "Oakland",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 929900,
+      "margin_usd": 12301,
+      "top_coded": false
+    },
+    {
+      "geoid": "0654806",
+      "name": "Pacifica",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1249800,
+      "margin_usd": 35515,
+      "top_coded": false
+    },
+    {
+      "geoid": "0655282",
+      "name": "Palo Alto",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0656938",
+      "name": "Piedmont",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0657792",
+      "name": "Pleasanton",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1537100,
+      "margin_usd": 30347,
+      "top_coded": false
+    },
+    {
+      "geoid": "0658380",
+      "name": "Portola Valley",
+      "kind": "town",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0660102",
+      "name": "Redwood City",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1801700,
+      "margin_usd": 68925,
+      "top_coded": false
+    },
+    {
+      "geoid": "0665028",
+      "name": "San Bruno",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1207500,
+      "margin_usd": 42028,
+      "top_coded": false
+    },
+    {
+      "geoid": "0665070",
+      "name": "San Carlos",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0667000",
+      "name": "San Francisco",
+      "kind": "city",
+      "county": "San Francisco",
+      "median_value_usd": 1394500,
+      "margin_usd": 20642,
+      "top_coded": false
+    },
+    {
+      "geoid": "0668000",
+      "name": "San Jose",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1233200,
+      "margin_usd": 8331,
+      "top_coded": false
+    },
+    {
+      "geoid": "0668084",
+      "name": "San Leandro",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 844200,
+      "margin_usd": 13000,
+      "top_coded": false
+    },
+    {
+      "geoid": "0668252",
+      "name": "San Mateo",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1618700,
+      "margin_usd": 35518,
+      "top_coded": false
+    },
+    {
+      "geoid": "0669084",
+      "name": "Santa Clara",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1582600,
+      "margin_usd": 31968,
+      "top_coded": false
+    },
+    {
+      "geoid": "0670280",
+      "name": "Saratoga",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    },
+    {
+      "geoid": "0673262",
+      "name": "South San Francisco",
+      "kind": "city",
+      "county": "San Mateo",
+      "median_value_usd": 1188800,
+      "margin_usd": 21662,
+      "top_coded": false
+    },
+    {
+      "geoid": "0677000",
+      "name": "Sunnyvale",
+      "kind": "city",
+      "county": "Santa Clara",
+      "median_value_usd": 1801800,
+      "margin_usd": 63317,
+      "top_coded": false
+    },
+    {
+      "geoid": "0681204",
+      "name": "Union City",
+      "kind": "city",
+      "county": "Alameda",
+      "median_value_usd": 1104900,
+      "margin_usd": 29284,
+      "top_coded": false
+    },
+    {
+      "geoid": "0686440",
+      "name": "Woodside",
+      "kind": "town",
+      "county": "San Mateo",
+      "median_value_usd": 2000001,
+      "margin_usd": null,
+      "top_coded": true
+    }
+  ]
+}

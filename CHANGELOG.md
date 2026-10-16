@@ -20,6 +20,14 @@
   from flight tracks), each airport as the main one for its own area, and a route weight refitted on these
   normal-year monitors brings SFO to 1.43 and San Jose to 1.06 points of error on monitors held out of the
   fit, neither reading quieter. A new blocking check holds it to the monitors. No UK or New York score moves.
+- **New York measured the same way, and its published aircraft figure is too optimistic near JFK.** Against
+  the Port Authority's own monitors, the Quiet Skies New York shows today reads quieter than measured at 15 of
+  17 JFK monitors, by 2.4 points on average (29 monitors placed and checked against the streets they are on). The same method as the Bay Area's, fitted here, reads none of the
+  four airports quieter than measured. Bill decided the same evening to fix it; that is a release still to come.
+- **The US yardstick is now the fuller measurement.** SFO publishes two readings for every monitor: the
+  conventional one, and ANEEM, which also counts the quieter aircraft events. Near SFO, at Millbrae and
+  Burlingame, the conventional figure missed up to 9.5 dB. Fitted to ANEEM, the Bay Area estimate's error on
+  monitors held out of the fit falls from 1.43 to 0.96 points at SFO, still never reading quieter than measured.
 
 ## 2026-10-15 - "Find areas" is live, and the flight count passes its first month
 

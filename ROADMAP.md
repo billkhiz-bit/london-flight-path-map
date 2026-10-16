@@ -1270,6 +1270,42 @@ the site list gives a street and town only. JFK July 2025-June 2026 transcribed 
 +0.13, EWR +0.06, TEB +0.27 dB, so DNL plus that gap stands in for Lden. **Still to do:** positions (street +
 map pin, about 200 m), the January 2026 method change (ANEEM reads higher), LGA/EWR/TEB transcription, then the
 same fit for New York, whose published Quiet Skies uses the old Heathrow-sized circles.
+**NEW YORK MEASURED (2026-10-16, later):** 32 monitors placed off the report maps
+(`scripts/georef_panynj_monitors.py`: pins detected, maps calibrated SYMMETRICALLY on the FAA runway thresholds at
+three colour thresholds, position spread 7-116 m; three calibration failures on the way were each REFUSED, not
+shipped - Newark's pink frame read as runways put it in Michigan at a one-directional "0.00 px"), the four tables
+transcribed twice (`scripts/panynj_monthly_dnl.py`, 384 cells, 0 differ), all in `data/us-noise-monitors.json` ('NYC').
+**The map pins are illustrative**: checked against OpenStreetMap, 8 of 21 lay 238-648 m off their named street, so
+each monitor is now SNAPPED onto the street its site table names (`scripts/snap_panynj_monitors.py`, one combined
+Overpass query; strict names, so "147th Street" never matches 147th Avenue): 29 of 32 verified, 3 left out.
+**THE PUBLISHED NEW YORK QUIET SKIES READS QUIETER THAN MEASURED: at 15 of 17 JFK monitors, mean +2.38 points (all
+four airports +1.74, MAE 2.52, 29 street-verified monitors)** - the ROADMAP's 11 Oct inference, now measured. The Bay
+Area method fitted here (`scripts/measure_nyc_quiet_yardstick.py`, nested leave-one-out): JFK 1.41, LGA 1.22, EWR
+1.10 (2 monitors: too few to trust its size), TEB 1.98, all 1.43, mean -0.47, no airport quieter. **Two decisions for Bill:**
+(1) **fix New York's LIVE quiet** with this method - it moves published New York scores, needs the site mirror and
+NY's area pages, and its runway use is July-August only until the year-long track run; (2) **ANEEM as the US
+yardstick**: at SFO, where both are published all year, ANEEM - conventional is +0.19 dB median above 55 dB but up
+to +9.5 below (Millbrae, Burlingame); refitting the Bay Area on ANEEM takes SFO's held-out MAE 1.43 -> 0.96 but
+needs a 0.2 margin in the rule to hold out (SJC 1.06 -> 1.21). Recommended: both yes. Oakland: no public monitor
+data found.
+**SAN FRANCISCO: RELEASE 2's FIRST READER BUILT (2026-10-16), prices.** `scripts/build_bayarea_prices.py`
+(`--fetch/--write/--check`, advisory in preflight) writes `data/us-bayarea-prices.json` from the ACS 2020-24
+B25077 summary file: 50 of 50 cities, **16 top-coded at "$2,000,000+"** (Atherton, Palo Alto, Los Altos, Saratoga
+...), carried as a floor with `top_coded`, never as a price. The Census API now refuses keyless requests; the
+summary file does not. Check proven red (a changed value, a dropped city). **How a top-coded city scores on
+affordability is open**: a floor of $2M gives the MOST affordable score it could have, so it must be labelled
+or held back (Bill). Next readers: FHFA county trend, California DOJ crime, FEMA flood, BTS transit stops.
+**DECIDED 2026-10-16 (Bill):** (1) **fix New York's LIVE quiet** with the fitted method - YES (a release: API, site
+mirror, area pages, sanity probes; deploy is Bill's); (2) **ANEEM is the US yardstick** - YES, and DONE the same
+evening: `scripts/build_sfo_noise_monitors.py` rebuilds the SFO block reproducibly (it reproduced the shipped
+conventional values exactly) with both readings and `yardstick: aneem`; the fit's own rule now needs every airport
+at least `MARGIN` = 0.2 louder in sample, so held out it is not quieter (the gate's rule is unchanged). Refit: route
+weight 1.25, sizes SFO 0.85, OAK 0.85, SJC 0.5; **nested leave-one-out SFO 0.96 (was 1.43), SJC 1.21 (was 1.06)**,
+neither quieter. SJC stays conventional (it publishes nothing else). (3) **Top-coded prices: keep the $2,000,001
+floor in the formula** - with 16 of 50 capped the Bay Area pool's p95 IS the cap, so a capped city scores 0, the
+least-affordable end, whatever its true price; it can never flatter. Show "$2M+" (never the number), return a
+`priceTopCoded` flag in the API, show the 16 as tied, and say the scale's top is the Census top code (which reads
+$1.5-2M cities slightly LESS affordable: the cautious side). Recommended by Claude; Bill to confirm.
 
 | Input | Source | Geography, vintage | Licence | Confidence |
 |---|---|---|---|---|

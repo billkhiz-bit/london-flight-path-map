@@ -874,6 +874,13 @@ advise "borough bands == sources"       python scripts/build_borough_bands.py --
 # against HPI, beside a neighbourhood price on A+B in the same panel. 412 of
 # 485 published prices were wrong, TS26 Hartlepool by 40%.
 advise "neighbourhood medians == PPD"   python scripts/build_city_neighbourhoods.py --check
+# Added 2026-10-16 (Bay Area release 2, the price input). Offline it checks the file covers
+# exactly the 50 cities and that top_coded matches the $2,000,000+ code; with the gitignored
+# ACS summary file on disk (--fetch) it re-derives every value. Advisory until the Lambda reads it.
+advise "Bay Area prices == ACS B25077"   python scripts/build_bayarea_prices.py --check
+# Added 2026-10-16: the SFO monitor block (the US yardstick, ANEEM) equals what its daily
+# DataSF rows give. Advisory: the rows are gitignored (--fetch); INCONCLUSIVE without them.
+advise "SFO monitors == DataSF rows"     python scripts/build_sfo_noise_monitors.py --check
 
 # The checked-in aircraft footprint file against the DEFRA GeoTIFFs it was
 # measured from. Advisory because those rasters are 2.6-29 MB and gitignored.

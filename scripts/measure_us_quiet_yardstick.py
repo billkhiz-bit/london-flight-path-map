@@ -57,6 +57,11 @@ SFO MAE 1.43, mean -0.15; SJC MAE 1.06, mean -0.69; weight 1.0 in 35 of 42
 folds, 1.25 in 7. Neither airport reads quieter than measured. A replica of
 calc_postcode_quiet is used for speed and matches the engine exactly first.
 
+THEN ANEEM (Bill, same evening): SFO's yardstick is its ANEEM reading, which also
+counts the quieter aircraft events the conventional method misses (up to 9.5 dB at
+Millbrae); the fit needs each airport MARGIN = 0.2 louder in sample. Nested leave-one-
+out: SFO MAE 0.96, mean -0.17; SJC 1.21, mean -0.46; route weight 1.25.
+
 CNEL is taken as Lden with no conversion (the data file says why: the safe
 direction for this rule).
 """
@@ -85,9 +90,13 @@ def load():
         proc = json.load(fh)
     with open(REPO / 'data' / 'us-bayarea-routes.json', encoding='utf-8') as fh:
         routes = json.load(fh)['routes']
+    # Each airport's YARDSTICK: ANEEM where its block says so (SFO, which publishes both all
+    # year), else the conventional CNEL (SJC publishes only that). Bill, 2026-10-16.
     monitors = [
-        (code, m['id'], m['lat'], m['lon'], m['cnel_db'])
+        (code, m['id'], m['lat'], m['lon'],
+         m['aneem_cnel_db'] if block.get('yardstick') == 'aneem' else m['cnel_db'])
         for code, block in mons['airports'].items()
+        if code in CODES  # the file also holds New York's ('NYC'): never the Bay Area's yardstick
         for m in block['monitors']
     ]
     airports = [
@@ -215,6 +224,10 @@ def fit(monitors, airports, paths, keep=None):
 # ---------------------------------------------------------------------------
 
 MIN_SHARE = 0.10  # 10% and 20% gave identical fits on 2026-10-16
+# The fit's own rule is stricter than the gate's: in sample each airport must read at least
+# MARGIN louder than measured, so that HELD OUT it does not read quieter. Without it the
+# ANEEM yardstick fitted SFO to +0.12 quieter under nested leave-one-out (2026-10-16).
+MARGIN = 0.2
 WEIGHTS = (0.5, 0.75, 1.0, 1.25, 1.5)
 SIZE_GRID = [round(0.3 + 0.05 * i, 2) for i in range(75)]
 USAGE_JSON = REPO / 'data' / 'us-runway-use.json'
@@ -367,7 +380,7 @@ def fit_sizes(comps, weight, keep=None):
                 e = [err(c, trial, weight) for c in comps
                      if c[0] == target and (keep is None or (c[0], c[1]) in keep)]
                 mean, mae = st.mean(e), st.mean(abs(v) for v in e)
-                if mean <= 0 and (best is None or mae < best[1]):
+                if mean <= -MARGIN and (best is None or mae < best[1]):
                     best = (s, mae)
             sizes[target] = best[0] if best else SIZE_GRID[-1]
     sizes['OAK'] = max(sizes[c] for c in fitted)
