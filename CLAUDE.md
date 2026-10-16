@@ -658,7 +658,7 @@ measured from the FIELD, not the run's edge. **Nothing derived from it is publis
 share-alike (15 Oct: published counts go out under ODbL, credited); the per-airport floor is `coverage_verdict()`
 (same period as the CAA's figure, 300+ official movements, tracked within 95-105%); the "never say how often
 planes pass" copy rule lifts only for airports that pass it. **August 2026 against the CAA's August: 12 of 15 UK
-airports pass** (Heathrow 98.8%; fail Liverpool 94.8, Teesside 91.0, Norwich 94.0), once two more traps were
+airports pass** (Heathrow 98.8%; fail Liverpool 94.8, Teesside 91.0, Norwich 94.0), and **July 2026: 14 of 15** (2026-10-16; only Teesside short, 87.8%, as in August), once two more traps were
 handled (2026-10-15, both rules with tests proven red): **the archive has OUTAGES** (6 of 31 August days, the UK
 and US together, one THINNED to ~5% with no gap, so never test for gaps alone): `feed_gaps()` profiles distinct
 aircraft per 10 minutes per region against nearby days, outage days are left out and the CAA figure scaled by

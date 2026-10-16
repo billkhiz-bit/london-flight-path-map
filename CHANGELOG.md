@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-16 - "Postcodes, not addresses" is live everywhere, and July's flight count passes 14 of 15 airports
+
+- **The wording correction reached every other place the figures are described** (`f9e26ef`): 93 area pages,
+  the API reference, the `/talks/` write-up and its PDF, METHODOLOGY, README and EXPANSION now say the
+  road-noise, flood and station shares are over postcodes. No figure moved. Deployed and checked from the
+  origin: 35 pages, 38 data files and 103 area pages match the source, and Camden's live page reads "share of
+  postcodes".
+- **How often planes pass: July 2026 passes 14 of the 15 UK airports** against the CAA's July figures (August
+  passed 12), so August was not luck. Liverpool (95.9%) and Norwich (96.1%) now clear the floor; Teesside
+  (87.8%) is short in both months, much of its training traffic carrying no transponder that community
+  receivers hear. The feed had one 30-minute outage (11 July). East Midlands again fits only without its
+  training circuits (98.7%; 112.5% with them), and Cardiff only with them, as in August. Nothing derived from
+  the tracks is published yet.
+- **The Bay Area's scored release has started**, with the five decisions in ROADMAP accepted. Its first gate
+  is the noise estimate, which must not read quieter than measured airport monitors before any Bay Area
+  score is published.
+
 ## 2026-10-15 - "Find areas" is live, and the flight count passes its first month
 
 **On the front page, a visitor can now ask which council areas fit** a region, a budget, and

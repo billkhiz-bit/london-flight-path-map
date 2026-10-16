@@ -1,0 +1,400 @@
+{
+  "purpose": "Measured aircraft noise at permanent airport monitors: the US yardstick for the Quiet Skies estimate (ROADMAP 'Release 2 plan', decision 1, accepted 2026-10-16). Not a *-boroughs.json file on purpose: that suffix is globbed to enumerate cities.",
+  "metric": "CNEL, aircraft events only (California Title 21). Taken as Lden with no conversion: CNEL penalises 22:00-23:00 by 10 dB where Lden gives 5, and 19:00-22:00 by 4.77 dB where Lden gives 5, so CNEL reads the same or slightly louder. Treating it as Lden makes the yardstick no quieter than the truth, the safe direction for a rule that the estimate must not read quieter than measured.",
+  "airports": {
+    "SJC": {
+      "publisher": "San Jose Mineta International Airport, Airport Noise Office",
+      "report": "Quarterly Noise Report, 2nd Quarter 2026 (to Caltrans Division of Aeronautics), dated 2026-07-31",
+      "url": "https://www.flysanjose.com/sites/default/files/noise/2Q%202026%20QNR.pdf",
+      "period": [
+        "2025-07-01",
+        "2026-06-30"
+      ],
+      "system": "Envirosuite ANOMS; CNEL correlated to local aircraft operations",
+      "coordinates_from": "Table 2, Remote Monitoring Terminal (RMT) Locations (text in the PDF)",
+      "cnel_from": "Table 7, Annual CNEL, '2nd Quarter 2026' column (an image in the PDF, transcribed 2026-10-16). Cross-checked: equal at all 13 RMTs to the 'Annual' row of Table 6, a separate image.",
+      "monitors": [
+        {
+          "id": "101",
+          "location": "Oak Street, San Jose",
+          "lat": 37.321292,
+          "lon": -121.881981,
+          "cnel_db": 61.6,
+          "days": 365
+        },
+        {
+          "id": "102",
+          "location": "Center for Performing Arts, San Jose",
+          "lat": 37.329572,
+          "lon": -121.892365,
+          "cnel_db": 64.9,
+          "days": 352
+        },
+        {
+          "id": "104",
+          "location": "Bellarmine Prep School, San Jose",
+          "lat": 37.340997,
+          "lon": -121.917993,
+          "cnel_db": 55.5,
+          "days": 343
+        },
+        {
+          "id": "105",
+          "location": "Rosemary Garden, San Jose",
+          "lat": 37.3624,
+          "lon": -121.91475,
+          "cnel_db": 56.9,
+          "days": 365
+        },
+        {
+          "id": "106",
+          "location": "St. John/Autumn, San Jose",
+          "lat": 37.33424,
+          "lon": -121.899946,
+          "cnel_db": 64.1,
+          "days": 365
+        },
+        {
+          "id": "107",
+          "location": "Fire Station 6, Santa Clara",
+          "lat": 37.39516,
+          "lon": -121.949916,
+          "cnel_db": 59.4,
+          "days": 365
+        },
+        {
+          "id": "108",
+          "location": "MacGregor Lane, Santa Clara",
+          "lat": 37.386895,
+          "lon": -121.946527,
+          "cnel_db": 62.8,
+          "days": 341
+        },
+        {
+          "id": "109",
+          "location": "Lake Santa Clara, Santa Clara",
+          "lat": 37.392133,
+          "lon": -121.967717,
+          "cnel_db": 60.3,
+          "days": 365
+        },
+        {
+          "id": "110",
+          "location": "Chestnut Street, Santa Clara",
+          "lat": 37.390153,
+          "lon": -121.959598,
+          "cnel_db": 63.1,
+          "days": 365
+        },
+        {
+          "id": "111",
+          "location": "Fuller Street Park, Santa Clara",
+          "lat": 37.397987,
+          "lon": -121.965516,
+          "cnel_db": 64.4,
+          "days": 365
+        },
+        {
+          "id": "112",
+          "location": "Mountain View/Alviso, Santa Clara",
+          "lat": 37.40969,
+          "lon": -121.97944,
+          "cnel_db": 57.9,
+          "days": 346
+        },
+        {
+          "id": "114",
+          "location": "Fairway Glen Park, Santa Clara",
+          "lat": 37.405623,
+          "lon": -121.961404,
+          "cnel_db": 57.0,
+          "days": 365
+        },
+        {
+          "id": "115",
+          "location": "3rd/Reed, San Jose",
+          "lat": 37.328608,
+          "lon": -121.882987,
+          "cnel_db": 55.7,
+          "days": 365
+        }
+      ]
+    },
+    "SFO": {
+      "publisher": "San Francisco International Airport (SFO), Noise Abatement Office, via DataSF",
+      "report": "DataSF 'Aircraft Noise Climates' (dataset qxw2-ncq3), daily Aircraft CNEL per monitor",
+      "url": "https://data.sf.gov/resource/qxw2-ncq3.csv",
+      "licence": "Open Data Commons Public Domain Dedication and License (PDDL) 1.0, read from the dataset metadata 2026-10-16",
+      "period": [
+        "2025-07-01",
+        "2026-06-30"
+      ],
+      "system": "SFO's 29 community noise monitors; cnel_db = aircraft_cnel, all aircraft events; sfo_only_cnel_db = sfo_cnel, SFO's own. They differ by at most 1.0 dB at the 19 sites within 10 km of SFO, and by up to 5.5 dB further out, where other airports' traffic is a larger share",
+      "coordinates_from": "the dataset latitude/longitude columns (rounded by the publisher to 3 decimal places, about 100 m)",
+      "cnel_from": "energy mean of daily aircraft_cnel over days with at least 90% monitor uptime: 10 log10(mean 10^(L/10)). The method reproduces SJC's published annual CNEL from its monthly values to 0.05 dB at 4 of 4 monitors tried (101, 104, 108, 111).",
+      "monitors": [
+        {
+          "id": "1",
+          "location": "San Bruno",
+          "lat": 37.632,
+          "lon": -122.408,
+          "cnel_db": 73.9,
+          "sfo_only_cnel_db": 73.9,
+          "days": 364
+        },
+        {
+          "id": "2",
+          "location": "San Bruno",
+          "lat": 37.631,
+          "lon": -122.44,
+          "cnel_db": 57.1,
+          "sfo_only_cnel_db": 57.1,
+          "days": 364
+        },
+        {
+          "id": "3",
+          "location": "South San Francisco",
+          "lat": 37.658,
+          "lon": -122.412,
+          "cnel_db": 57.1,
+          "sfo_only_cnel_db": 57.1,
+          "days": 365
+        },
+        {
+          "id": "4",
+          "location": "South San Francisco",
+          "lat": 37.641,
+          "lon": -122.427,
+          "cnel_db": 68.5,
+          "sfo_only_cnel_db": 68.5,
+          "days": 352
+        },
+        {
+          "id": "5",
+          "location": "San Bruno",
+          "lat": 37.628,
+          "lon": -122.413,
+          "cnel_db": 67.7,
+          "sfo_only_cnel_db": 67.7,
+          "days": 365
+        },
+        {
+          "id": "6",
+          "location": "South San Francisco",
+          "lat": 37.649,
+          "lon": -122.435,
+          "cnel_db": 65.4,
+          "sfo_only_cnel_db": 65.4,
+          "days": 365
+        },
+        {
+          "id": "7",
+          "location": "Brisbane",
+          "lat": 37.677,
+          "lon": -122.402,
+          "cnel_db": 49.5,
+          "sfo_only_cnel_db": 49.4,
+          "days": 362
+        },
+        {
+          "id": "8",
+          "location": "Millbrae",
+          "lat": 37.602,
+          "lon": -122.386,
+          "cnel_db": 55.2,
+          "sfo_only_cnel_db": 55.1,
+          "days": 365
+        },
+        {
+          "id": "9",
+          "location": "Millbrae",
+          "lat": 37.595,
+          "lon": -122.399,
+          "cnel_db": 42.0,
+          "sfo_only_cnel_db": 41.3,
+          "days": 365
+        },
+        {
+          "id": "10",
+          "location": "Burlingame",
+          "lat": 37.583,
+          "lon": -122.391,
+          "cnel_db": 41.7,
+          "sfo_only_cnel_db": 41.2,
+          "days": 358
+        },
+        {
+          "id": "11",
+          "location": "Burlingame",
+          "lat": 37.588,
+          "lon": -122.38,
+          "cnel_db": 45.0,
+          "sfo_only_cnel_db": 44.2,
+          "days": 360
+        },
+        {
+          "id": "12",
+          "location": "Foster City",
+          "lat": 37.565,
+          "lon": -122.253,
+          "cnel_db": 62.6,
+          "sfo_only_cnel_db": 62.6,
+          "days": 365
+        },
+        {
+          "id": "13",
+          "location": "Hillsborough",
+          "lat": 37.564,
+          "lon": -122.376,
+          "cnel_db": 36.5,
+          "sfo_only_cnel_db": 35.5,
+          "days": 365
+        },
+        {
+          "id": "14",
+          "location": "South San Francisco",
+          "lat": 37.653,
+          "lon": -122.429,
+          "cnel_db": 61.3,
+          "sfo_only_cnel_db": 61.3,
+          "days": 365
+        },
+        {
+          "id": "15",
+          "location": "South San Francisco",
+          "lat": 37.663,
+          "lon": -122.38,
+          "cnel_db": 59.4,
+          "sfo_only_cnel_db": 59.4,
+          "days": 365
+        },
+        {
+          "id": "16",
+          "location": "South San Francisco",
+          "lat": 37.646,
+          "lon": -122.464,
+          "cnel_db": 59.8,
+          "sfo_only_cnel_db": 59.8,
+          "days": 365
+        },
+        {
+          "id": "17",
+          "location": "South San Francisco",
+          "lat": 37.662,
+          "lon": -122.452,
+          "cnel_db": 59.7,
+          "sfo_only_cnel_db": 59.7,
+          "days": 361
+        },
+        {
+          "id": "18",
+          "location": "Daly City",
+          "lat": 37.657,
+          "lon": -122.467,
+          "cnel_db": 64.3,
+          "sfo_only_cnel_db": 64.3,
+          "days": 365
+        },
+        {
+          "id": "19",
+          "location": "Pacifica",
+          "lat": 37.658,
+          "lon": -122.481,
+          "cnel_db": 61.0,
+          "sfo_only_cnel_db": 61.0,
+          "days": 365
+        },
+        {
+          "id": "20",
+          "location": "Daly City",
+          "lat": 37.708,
+          "lon": -122.441,
+          "cnel_db": 49.0,
+          "sfo_only_cnel_db": 48.5,
+          "days": 365
+        },
+        {
+          "id": "21",
+          "location": "San Francisco",
+          "lat": 37.74,
+          "lon": -122.433,
+          "cnel_db": 40.9,
+          "sfo_only_cnel_db": 37.4,
+          "days": 365
+        },
+        {
+          "id": "22",
+          "location": "San Bruno",
+          "lat": 37.617,
+          "lon": -122.405,
+          "cnel_db": 57.8,
+          "sfo_only_cnel_db": 57.7,
+          "days": 361
+        },
+        {
+          "id": "23",
+          "location": "San Francisco",
+          "lat": 37.711,
+          "lon": -122.399,
+          "cnel_db": 51.8,
+          "sfo_only_cnel_db": 51.7,
+          "days": 365
+        },
+        {
+          "id": "24",
+          "location": "San Francisco",
+          "lat": 37.726,
+          "lon": -122.411,
+          "cnel_db": 47.2,
+          "sfo_only_cnel_db": 45.5,
+          "days": 363
+        },
+        {
+          "id": "25",
+          "location": "San Francisco",
+          "lat": 37.729,
+          "lon": -122.466,
+          "cnel_db": 39.1,
+          "sfo_only_cnel_db": 37.2,
+          "days": 365
+        },
+        {
+          "id": "26",
+          "location": "San Francisco",
+          "lat": 37.748,
+          "lon": -122.467,
+          "cnel_db": 36.0,
+          "sfo_only_cnel_db": 33.2,
+          "days": 364
+        },
+        {
+          "id": "27",
+          "location": "San Francisco",
+          "lat": 37.792,
+          "lon": -122.437,
+          "cnel_db": 37.6,
+          "sfo_only_cnel_db": 32.1,
+          "days": 351
+        },
+        {
+          "id": "29",
+          "location": "San Mateo",
+          "lat": 37.581,
+          "lon": -122.314,
+          "cnel_db": 51.2,
+          "sfo_only_cnel_db": 51.2,
+          "days": 365
+        },
+        {
+          "id": "282",
+          "location": "Redwood City",
+          "lat": 37.475,
+          "lon": -122.241,
+          "cnel_db": 38.2,
+          "sfo_only_cnel_db": 36.3,
+          "days": 359
+        }
+      ]
+    }
+  }
+}
