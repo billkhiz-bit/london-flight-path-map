@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-10-17 - New York's aircraft estimate, counted over the right months (methodology 5.7)
+
+- **New York's runway use is now counted over January to July**, the months its airports' noise monitors cover,
+  not July and August. Summer winds favour different runways, so the estimate had read the streets north-west of
+  JFK (Howard Beach, 150th and 165th Avenues) 2 to 3 points quieter than the monitors there measure; they now
+  agree to within a point.
+- **A runway's flight line now stops 15 km out.** Counted over the winter, JFK's north-west departures became
+  busy enough to score, and an endless straight line from that runway pointed at Lower Manhattan, 19 km away,
+  where aircraft have long since turned and the US Department of Transportation's noise map shows nothing.
+  Without the limit, the West Village to Times Square would have read 3 to 4 points louder.
+- **Queens' aircraft noise band moves from high to severe** (its figure is 1.44, just under the 1.5 boundary,
+  and borough bands round towards the louder side), so its Sky Score goes from 5.0 to 4.4. The other four
+  boroughs keep their bands. Nothing in the UK changes, and the Bay Area's fit is unchanged.
+- **The project's working notes for future sessions were cut from 272 KB to 18 KB**, with the detail moved,
+  unchanged, into topic files.
+
 ## 2026-10-16 (late) - Live: New York's fitted figures and the audit fixes
 
 - **Deployed and checked against the live site**: New York's aircraft figures fitted to its airports' monitors,

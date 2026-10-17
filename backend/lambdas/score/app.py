@@ -199,7 +199,19 @@ METHODOLOGY_URL = 'https://github.com/billkhiz-bit/london-flight-path-map/blob/m
 #            (scripts/build_nyc_impact.py), rounded to the louder band: Queens
 #            severe -> high, Brooklyn high -> moderate-high, the Bronx low-moderate
 #            -> moderate, Staten Island low -> low-moderate. No UK value moves.
-METHODOLOGY_VERSION = '5.6'
+#
+#   quiet    v5.7 (2026-10-17): New York's runway use is counted over January-July
+#            2026 (every third day, 71 days), the months its monitors cover, not
+#            July-August, and a US runway lobe runs RUNWAY_LOBE_KM (15 km) straight
+#            out, not endlessly (Bill's ruling). Winter flow adds JFK 31L departures,
+#            whose endless line read Lower Manhattan 3-4 points louder where US
+#            DOT's 2022 map paints nothing. JFK's north-west monitors (Howard Beach,
+#            150th and 165th Avenues) go from 2-3 points quieter than measured to
+#            0.0, 0.0 and +1.0; nested leave-one-out MAE JFK 1.28 -> 1.04, sizes
+#            JFK 2.05, LGA 1.35, EWR 1.0, TEB 0.3. Queens 1.44 rounds to the louder
+#            band, high -> severe; the other four keep theirs. The Bay Area's fit is
+#            unchanged. No UK value moves.
+METHODOLOGY_VERSION = '5.7'
 API_VERSION = '1.0'
 MAX_BATCH_SIZE = 100
 # Parallel workers for /v1/score/batch. Each query is mostly waiting on
@@ -326,6 +338,17 @@ CORRIDOR_WEIGHT = 0.5
 # SiteApiGeometryParityTests compares the two. PROVISIONAL for the same 2021
 # reason as CORRIDOR_WEIGHT above.
 AIRPORT_SHAPE_K = 4.0
+
+# How far a US runway lobe runs straight out from its airport, km (v5.7, 2026-10-17).
+# runway_lobe_km treated a lobe as an endless half-line; the Jan-Jul runway count added
+# JFK's 31L departures, whose straight line points at Lower Manhattan 19 km out, and read
+# 10002-10038 3-4 points louder where US DOT's 2022 map paints nothing (the FAA's coded
+# climb-out turns away). 15 km is where a 3-degree glide reaches about 2,600 ft (the UK's
+# drawn finals stop at 3,000 ft) and the radius of the major-airport term; of the lengths
+# tried (8-20 km and none) it is the one that holds both regions' monitors under the
+# per-city rule with the Bay Area's fit unchanged (measured 2026-10-17). Mirrored as
+# RUNWAY_LOBE_KM in index.html; tests/test_us_quiet.py compares the two.
+RUNWAY_LOBE_KM = 15.0
 
 # Each airport's runway axis, degrees true: the doubled-angle mean of its AD
 # 2.12 runway bearings, generated from data/flight-procedures.json beside the
@@ -1748,7 +1771,7 @@ LONDON_BOROUGHS = {
 # comparison should be approached with caution (different methodologies).
 NYC_BOROUGHS = {
     'Queens': {
-        'impact': 'high',
+        'impact': 'severe',
         'avgPrice': 620000,
         'trend': 4.5,
         'schools': 'good',
@@ -5538,6 +5561,34 @@ FLIGHT_PATHS_NYC_FITTED = [
         ],
     },
     {
+        'name': 'EWR departure via PORTT4',
+        'airport': 'EWR',
+        'kind': 'departure',
+        'runway': '22L',
+        'coords': [
+            (40.6979, -74.1614),
+            (40.6894, -74.1648),
+            (40.681, -74.1682),
+            (40.6725, -74.1716),
+            (40.6641, -74.1751),
+            (40.6556, -74.1785),
+            (40.6472, -74.1819),
+            (40.6387, -74.1853),
+            (40.6303, -74.1888),
+            (40.6218, -74.1922),
+            (40.6187, -74.2024),
+            (40.6156, -74.2125),
+            (40.6125, -74.2227),
+            (40.6094, -74.2329),
+            (40.6063, -74.2431),
+            (40.6032, -74.2532),
+            (40.6001, -74.2634),
+            (40.597, -74.2736),
+            (40.5939, -74.2838),
+            (40.5908, -74.2939),
+        ],
+    },
+    {
         'name': 'TEB departure via WENTZ1',
         'airport': 'TEB',
         'kind': 'departure',
@@ -5573,37 +5624,39 @@ NYC_QUIET = {
     'runway_lobes': {
         'JFK': [
             {'bearing': 30.66, 'runway': '04L', 'kind': 'departure', 'share': 0.137},
-            {'bearing': 210.67, 'runway': '04R', 'kind': 'arrival', 'share': 0.146},
-            {'bearing': 120.84, 'runway': '13R', 'kind': 'departure', 'share': 0.14},
-            {'bearing': 30.68, 'runway': '22L', 'kind': 'arrival', 'share': 0.577},
-            {'bearing': 210.67, 'runway': '22R', 'kind': 'departure', 'share': 0.624},
-            {'bearing': 120.87, 'runway': '31R', 'kind': 'arrival', 'share': 0.144},
+            {'bearing': 210.67, 'runway': '04R', 'kind': 'arrival', 'share': 0.152},
+            {'bearing': 120.84, 'runway': '13R', 'kind': 'departure', 'share': 0.108},
+            {'bearing': 30.68, 'runway': '22L', 'kind': 'arrival', 'share': 0.479},
+            {'bearing': 210.67, 'runway': '22R', 'kind': 'departure', 'share': 0.536},
+            {'bearing': 300.86, 'runway': '31L', 'kind': 'departure', 'share': 0.2},
+            {'bearing': 120.87, 'runway': '31R', 'kind': 'arrival', 'share': 0.232},
         ],
         'LGA': [
-            {'bearing': 212.03, 'runway': '04', 'kind': 'arrival', 'share': 0.311},
-            {'bearing': 32.03, 'runway': '04', 'kind': 'departure', 'share': 0.242},
-            {'bearing': 122.23, 'runway': '13', 'kind': 'departure', 'share': 0.586},
-            {'bearing': 32.04, 'runway': '22', 'kind': 'arrival', 'share': 0.669},
-            {'bearing': 302.25, 'runway': '31', 'kind': 'departure', 'share': 0.168},
+            {'bearing': 212.03, 'runway': '04', 'kind': 'arrival', 'share': 0.206},
+            {'bearing': 32.03, 'runway': '04', 'kind': 'departure', 'share': 0.182},
+            {'bearing': 122.23, 'runway': '13', 'kind': 'departure', 'share': 0.682},
+            {'bearing': 32.04, 'runway': '22', 'kind': 'arrival', 'share': 0.72},
+            {'bearing': 302.25, 'runway': '31', 'kind': 'departure', 'share': 0.125},
         ],
         'EWR': [
-            {'bearing': 205.74, 'runway': '04R', 'kind': 'arrival', 'share': 0.355},
-            {'bearing': 25.74, 'runway': '04R', 'kind': 'departure', 'share': 0.3},
-            {'bearing': 25.74, 'runway': '22L', 'kind': 'arrival', 'share': 0.604},
-            {'bearing': 205.74, 'runway': '22R', 'kind': 'departure', 'share': 0.53},
+            {'bearing': 205.74, 'runway': '04R', 'kind': 'arrival', 'share': 0.317},
+            {'bearing': 25.74, 'runway': '04R', 'kind': 'departure', 'share': 0.271},
+            {'bearing': 25.74, 'runway': '22L', 'kind': 'arrival', 'share': 0.607},
+            {'bearing': 205.74, 'runway': '22L', 'kind': 'departure', 'share': 0.561},
+            {'bearing': 205.74, 'runway': '22R', 'kind': 'departure', 'share': 0.103},
         ],
         'TEB': [
-            {'bearing': 3.19, 'runway': '01', 'kind': 'departure', 'share': 0.341},
-            {'bearing': 228.05, 'runway': '06', 'kind': 'arrival', 'share': 0.312},
-            {'bearing': 3.19, 'runway': '19', 'kind': 'arrival', 'share': 0.553},
-            {'bearing': 48.06, 'runway': '24', 'kind': 'arrival', 'share': 0.122},
-            {'bearing': 228.06, 'runway': '24', 'kind': 'departure', 'share': 0.588},
+            {'bearing': 3.19, 'runway': '01', 'kind': 'departure', 'share': 0.306},
+            {'bearing': 228.05, 'runway': '06', 'kind': 'arrival', 'share': 0.293},
+            {'bearing': 3.19, 'runway': '19', 'kind': 'arrival', 'share': 0.489},
+            {'bearing': 48.06, 'runway': '24', 'kind': 'arrival', 'share': 0.188},
+            {'bearing': 228.06, 'runway': '24', 'kind': 'departure', 'share': 0.649},
         ],
     },
-    'airport_sizes': {'JFK': 1.8, 'LGA': 1.35, 'EWR': 1.0, 'TEB': 0.3},
+    'airport_sizes': {'JFK': 2.05, 'LGA': 1.35, 'EWR': 1.0, 'TEB': 0.3},
     'corridor_weight': 1.0,
     'major_airports': ['JFK', 'LGA', 'EWR', 'TEB'],
-    'runway_use_period': '2026-07-01 to 2026-08-31',
+    'runway_use_period': '2026-01-01 to 2026-07-30',
 }
 # US-QUIET-NYC:END
 
@@ -6005,10 +6058,13 @@ def runway_lobe_km(lat, lon, ap, lobes):
 
     On a lobe's side the distance is runway-shaped exactly as airport_distance_km
     shapes it, sqrt(along^2 + (AIRPORT_SHAPE_K * side)^2); behind it, the point
-    is off the strip and reads AIRPORT_SHAPE_K times its distance. An airport
-    with no lobes keeps a circle. Used only where a city's geometry carries
-    'runway_lobes' (the Bay Area and, since 2026-10-16, New York); no UK city
-    does, so no UK quiet value can move.
+    is off the strip and reads AIRPORT_SHAPE_K times its distance. Since v5.7 a
+    lobe runs RUNWAY_LOBE_KM straight out and no further: past its end the
+    distance along it counts AIRPORT_SHAPE_K times over, as it does across the
+    strip, so the reading is continuous at the end (no ring on the map). An
+    airport with no lobes keeps a circle. Used only where a city's geometry
+    carries 'runway_lobes' (the Bay Area and, since 2026-10-16, New York); no
+    UK city does, so no UK quiet value can move.
     """
     d = haversine_km(lat, lon, ap['lat'], ap['lon'])
     if not lobes:
@@ -6021,6 +6077,8 @@ def runway_lobe_km(lat, lon, ap, lobes):
     for lobe in lobes:
         off = bearing - lobe['bearing'] * p
         along, side = d * math.cos(off), d * math.sin(off)
+        if along > RUNWAY_LOBE_KM:
+            along = RUNWAY_LOBE_KM + AIRPORT_SHAPE_K * (along - RUNWAY_LOBE_KM)
         km = AIRPORT_SHAPE_K * d if along < 0 else math.hypot(along, AIRPORT_SHAPE_K * side)
         best = min(best, km)
     return best
@@ -7289,12 +7347,12 @@ CITY_PROVENANCE = {
                 'runway directions flown at least 10% of the time (counted from aircraft positions), with '
                 "each airport's size and the route weight fitted to the Port Authority of New York and New "
                 "Jersey's noise-monitor readings for January-July 2026, so that at every airport the "
-                'estimate reads louder than its monitors on average. NOT DEFRA and not a measurement at '
-                'this address: no published Lden survey covers New York, so the dB thresholds in '
-                'METHODOLOGY section 3 are not directly applicable. Known limitation: the runway use is a '
-                'summer count, so directions flown mostly in other seasons (such as JFK departures to the '
-                'north-west) are under-represented, and places on that side can read quieter than the '
-                'monitors there. A borough query reads a band derived from the same estimate, averaged '
+                'estimate reads louder than its monitors on average. Runway use is counted over the '
+                "monitors' own months (every third day, January-July 2026), and each flown direction "
+                'counts as a runway strip for 15 km out from the airport, the coded routes beyond. NOT '
+                'DEFRA and not a measurement at this address: no published Lden survey covers New York, '
+                'so the dB thresholds in METHODOLOGY section 3 are not directly applicable. A borough '
+                'query reads a band derived from the same estimate, averaged '
                 "over the borough's residents. The chosen resolution is reported in context.quietResolution."
             ),
             'afford': _afford_breakdown_line,

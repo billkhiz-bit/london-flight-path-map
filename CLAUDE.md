@@ -22,7 +22,7 @@ When something new is learned: add the one-line rule here and the story to the l
 | `neighbourhoods-and-stations.md` | PPD medians, generated neighbourhoods, NaPTAN stations, area labels, "best value" |
 | `in-progress-measurements.md` | AURN monitors, how often planes pass (adsb.lol vs CAA) |
 | `public-surfaces.md` | `/badge`, area pages, free tier, route throttles, signup verification (I17) |
-| `us-cities.md` | `/bay-area/`, Bay Area releases 1-2, the US noise yardstick, New York v5.6 |
+| `us-cities.md` | `/bay-area/`, Bay Area releases 1-2, the US noise yardstick, New York v5.6-v5.7 |
 | `product-rules.md` | scale direction, branding, why there is no basemap |
 | `quality-gates.md` | preflight stages, responsive / a11y gates, `/aws-debug` history |
 | `front-page-and-site.md` | `/` vs `/map/`, street report, pricing, top bar, count.mjs, Find areas, grid refs |
@@ -90,7 +90,7 @@ Or just describe what you need, I have full context of this project.
   in `BACKEND_ONLY_CITIES`: Cardiff (cannot leave: no Progress 8 in Wales) and Nottingham (judgement). Greater
   Norwich (3) is an API-only preview. Uncovered spot-check postcode: **`EX1 1HS`** (must say NOT COVERED YET,
   no link).
-- **Methodology v5.6** (`METHODOLOGY_VERSION` in `backend/lambdas/score/app.py`). Components: `quiet`
+- **Methodology v5.7** (`METHODOLOGY_VERSION` in `backend/lambdas/score/app.py`). Components: `quiet`
   (aircraft estimate), `afford` (national log p5-p95 per currency pool), `growth` (real-terms HPI trend vs the
   currency pool), `live` (crime, Progress 8, transport, healthcare), `env` (air 0.45 + road 0.35 + flood 0.20
   from CONTINUOUS fields; floor 2 inputs).
@@ -138,7 +138,9 @@ Or just describe what you need, I have full context of this project.
 - **Leaving `BACKEND_ONLY_CITIES` is a one-way door**: the site must then reproduce the API on every borough.
 - **Never name a non-city data file `*-boroughs.json`**: five scripts glob that suffix to enumerate cities.
 - **US quiet geometry uses per-city fields** (`runway_lobes`, `airport_sizes`, `corridor_weight`,
-  `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html).
+  `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html). A runway lobe
+  runs `RUNWAY_LOBE_KM` (15 km), mirrored in index.html. A fit only tests points near its monitors: check
+  anything far from every monitor against an independent source (v5.7: the US DOT map caught Manhattan).
 - **Pooled figures hide per-city optimism**: any fit must hold per city (no city may read quieter than its
   yardstick).
 

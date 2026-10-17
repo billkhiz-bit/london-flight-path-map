@@ -4389,7 +4389,7 @@
             target="_blank"
             rel="noopener"
           >
-            Methodology v5.6
+            Methodology v5.7
           </a>
           <span class="sep">·</span>
           <a href="/score-demo/api-docs.html" target="_blank" rel="noopener">API Reference</a>
@@ -5621,15 +5621,16 @@
           { name: "JFK departure via DEEZZ6", airport: "JFK", kind: "departure", runway: "04L", coordinates: [[-73.7847, 40.6231], [-73.7793, 40.6301], [-73.7738, 40.6371], [-73.7683, 40.6442], [-73.7628, 40.6512], [-73.7573, 40.6582], [-73.7518, 40.6652], [-73.7464, 40.6722]] },
           { name: "LGA departure via GLDMN8", airport: "LGA", kind: "departure", runway: "13", coordinates: [[-73.8785, 40.7823], [-73.8727, 40.7746], [-73.8668, 40.7668], [-73.861, 40.7591], [-73.8551, 40.7514], [-73.8493, 40.7437], [-73.8434, 40.736], [-73.8376, 40.7282], [-73.8317, 40.7205], [-73.8259, 40.7128], [-73.8343, 40.7073], [-73.8426, 40.7018], [-73.851, 40.6963], [-73.8594, 40.6908], [-73.8677, 40.6852], [-73.8761, 40.6797], [-73.8844, 40.6742], [-73.8928, 40.6687], [-73.9025, 40.6731], [-73.9121, 40.6774], [-73.9218, 40.6817], [-73.9314, 40.6861], [-73.941, 40.6904], [-73.9507, 40.6948], [-73.9603, 40.6991], [-73.97, 40.7035]] },
           { name: "LGA departure via NTHNS6", airport: "LGA", kind: "departure", runway: "13", coordinates: [[-73.8785, 40.7823], [-73.8727, 40.7746], [-73.8668, 40.7668], [-73.861, 40.7591], [-73.8551, 40.7514], [-73.8493, 40.7437], [-73.8434, 40.736], [-73.8376, 40.7282], [-73.8317, 40.7205], [-73.8259, 40.7128], [-73.8281, 40.7046], [-73.8303, 40.6964], [-73.8325, 40.6882], [-73.8347, 40.68], [-73.837, 40.6717], [-73.8441, 40.6647], [-73.8512, 40.6577], [-73.8584, 40.6506], [-73.8655, 40.6436], [-73.8726, 40.6365], [-73.8798, 40.6295], [-73.8869, 40.6224], [-73.8927, 40.6153], [-73.8985, 40.6082], [-73.9042, 40.6011], [-73.91, 40.594], [-73.9158, 40.5869], [-73.9215, 40.5798], [-73.9273, 40.5727], [-73.9331, 40.5656], [-73.9388, 40.5585], [-73.9446, 40.5514]] },
+          { name: "EWR departure via PORTT4", airport: "EWR", kind: "departure", runway: "22L", coordinates: [[-74.1614, 40.6979], [-74.1648, 40.6894], [-74.1682, 40.681], [-74.1716, 40.6725], [-74.1751, 40.6641], [-74.1785, 40.6556], [-74.1819, 40.6472], [-74.1853, 40.6387], [-74.1888, 40.6303], [-74.1922, 40.6218], [-74.2024, 40.6187], [-74.2125, 40.6156], [-74.2227, 40.6125], [-74.2329, 40.6094], [-74.2431, 40.6063], [-74.2532, 40.6032], [-74.2634, 40.6001], [-74.2736, 40.597], [-74.2838, 40.5939], [-74.2939, 40.5908]] },
           { name: "TEB departure via WENTZ1", airport: "TEB", kind: "departure", runway: "24", coordinates: [[-74.0541, 40.8577], [-74.0626, 40.852], [-74.071, 40.8462], [-74.0795, 40.8405], [-74.0879, 40.8347], [-74.0964, 40.829], [-74.1059, 40.8264], [-74.1153, 40.8238], [-74.1248, 40.8211], [-74.1342, 40.8185], [-74.1437, 40.8159], [-74.1531, 40.8133], [-74.1645, 40.8135], [-74.1759, 40.8137], [-74.1872, 40.8139], [-74.1986, 40.8141], [-74.21, 40.8144], [-74.2213, 40.8146], [-74.2327, 40.8148], [-74.2441, 40.815], [-74.2554, 40.8152], [-74.2668, 40.8154], [-74.2782, 40.8156]] },
         ],
         lobes: {
-          JFK: [30.66, 210.67, 120.84, 30.68, 210.67, 120.87],
+          JFK: [30.66, 210.67, 120.84, 30.68, 210.67, 300.86, 120.87],
           LGA: [212.03, 32.03, 122.23, 32.04, 302.25],
-          EWR: [205.74, 25.74, 25.74, 205.74],
+          EWR: [205.74, 25.74, 25.74, 205.74, 205.74],
           TEB: [3.19, 228.05, 3.19, 48.06, 228.06],
         },
-        sizes: { JFK: 1.8, LGA: 1.35, EWR: 1.0, TEB: 0.3 },
+        sizes: { JFK: 2.05, LGA: 1.35, EWR: 1.0, TEB: 0.3 },
         corridorWeight: 1.0,
         majors: ["JFK", "LGA", "EWR", "TEB"],
       };
@@ -5748,7 +5749,7 @@
 
       const NYC_BOROUGH_DATA_RAW = {
         Queens: {
-          impact: 'high',
+          impact: 'severe',
           avg_price: 620000,
           trend: 4.5,
           note: "JFK and LaGuardia are both in Queens. LaGuardia's routes pass within about a kilometre of Jackson Heights, Forest Hills and Ozone Park, JFK's runway 22L approach of Rosedale, and Howard Beach sits beside JFK. Bayside and Douglaston, in the north-east, are furthest from the routes.",
@@ -8239,9 +8240,13 @@
       // now names all four of its airports as majors in US_QUIET_NYC (the New York data).
       const SECONDARY_AIRPORT = {};
 
+      // How far a US runway lobe runs straight out, km (v5.7). Mirrors RUNWAY_LOBE_KM in
+      // the score Lambda; backend/tests/test_us_quiet.py compares the two.
+      const RUNWAY_LOBE_KM = 15;
       // Mirrors runway_lobe_km in the score Lambda term for term: the distance to the
-      // nearest FLOWN runway lobe, a half-line from the airport. On its side the distance is
-      // runway-shaped as runwayShapedKm shapes it; behind it, AIRPORT_SHAPE_K times `km`.
+      // nearest FLOWN runway lobe, a segment RUNWAY_LOBE_KM long from the airport. On its side
+      // the distance is runway-shaped as runwayShapedKm shapes it; past its end the distance
+      // along it counts AIRPORT_SHAPE_K times over; behind it, AIRPORT_SHAPE_K times `km`.
       function runwayLobeKm(lat, lon, ap, lobes, km) {
         if (!lobes || !lobes.length) return km;
         const p = Math.PI / 180;
@@ -8255,8 +8260,9 @@
         let best = Infinity;
         for (const b of lobes) {
           const off = bearing - b * p;
-          const along = km * Math.cos(off);
+          let along = km * Math.cos(off);
           const side = km * Math.sin(off);
+          if (along > RUNWAY_LOBE_KM) along = RUNWAY_LOBE_KM + AIRPORT_SHAPE_K * (along - RUNWAY_LOBE_KM);
           const d = along < 0 ? AIRPORT_SHAPE_K * km : Math.hypot(along, AIRPORT_SHAPE_K * side);
           if (d < best) best = d;
         }

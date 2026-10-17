@@ -10,6 +10,7 @@ runway_lobe_km means.
 
 import math
 import os
+import re
 import sys
 import unittest
 
@@ -59,11 +60,21 @@ class BayAreaGeometryTests(unittest.TestCase):
 
     def test_new_york_scores_from_its_fit(self):
         # Served: a New York point near JFK must read the fitted geometry, so
-        # changing JFK's fitted size moves calc_postcode_quiet. Howard Beach.
+        # changing JFK's fitted size moves calc_postcode_quiet. The point is FOUND,
+        # not borrowed: Howard Beach was the subject until v5.7, when the refit put it
+        # at 0.0 (the floor) whichever size JFK had, and the test could show nothing.
+        # So step east of JFK (between its lobes, clear of LaGuardia) to the first
+        # point that is at neither limit.
         self.assertIn('nyc', app.CITIES)
-        lat, lon = 40.6571, -73.8360
+        jfk = next(a for a in app.CITY_GEOMETRY['nyc']['airports'] if a['code'] == 'JFK')
         sizes = app.CITY_GEOMETRY['nyc']['airport_sizes']
-        fitted = app.calc_postcode_quiet(lat, lon, 'nyc', raster_lden=None)
+        for km in range(2, 31):
+            lat, lon = offset(jfk['lat'], jfk['lon'], 90, km)
+            fitted = app.calc_postcode_quiet(lat, lon, 'nyc', raster_lden=None)
+            if 0.0 < fitted < 10.0:
+                break
+        else:
+            self.fail('no point east of JFK reads between the limits')
         saved = sizes['JFK']
         try:
             sizes['JFK'] = saved / 2
@@ -104,6 +115,40 @@ class RunwayLobeTests(unittest.TestCase):
         d = app.haversine_km(lat, lon, self.AP['lat'], self.AP['lon'])
         both = app.runway_lobe_km(lat, lon, self.AP, [{'bearing': 300.0}, {'bearing': 120.0}])
         self.assertAlmostEqual(both, d, delta=0.01)
+
+    def test_a_lobe_ends_at_its_length(self):
+        # v5.7 (2026-10-17): a lobe is a SEGMENT, not an endless half-line. The Jan-Jul
+        # runway count added JFK's 31L departures, whose straight line points at Lower
+        # Manhattan 19 km out; endless, it read 10002-10038 3-4 points louder where US
+        # DOT's 2022 map paints nothing, though the FAA's coded climb-out turns away.
+        L, K = app.RUNWAY_LOBE_KM, app.AIRPORT_SHAPE_K
+        inside = offset(self.AP['lat'], self.AP['lon'], 300, L - 1.0)
+        d_in = app.haversine_km(*inside, self.AP['lat'], self.AP['lon'])
+        self.assertAlmostEqual(app.runway_lobe_km(*inside, self.AP, [{'bearing': 300.0}]), d_in, delta=0.01)
+        beyond = offset(self.AP['lat'], self.AP['lon'], 300, L + 4.0)
+        d_out = app.haversine_km(*beyond, self.AP['lat'], self.AP['lon'])
+        self.assertAlmostEqual(app.runway_lobe_km(*beyond, self.AP, [{'bearing': 300.0}]),
+                               L + K * (d_out - L), delta=0.05)
+
+    def test_the_lobe_end_is_continuous(self):
+        # No ring on the map where the lobe stops: just inside and just past its end agree.
+        L = app.RUNWAY_LOBE_KM
+        a = offset(self.AP['lat'], self.AP['lon'], 300, L - 0.001)
+        b = offset(self.AP['lat'], self.AP['lon'], 300, L + 0.001)
+        lobes = [{'bearing': 300.0}]
+        self.assertLess(abs(app.runway_lobe_km(*a, self.AP, lobes) - app.runway_lobe_km(*b, self.AP, lobes)), 0.01)
+
+    def test_the_site_mirrors_the_lobe_length(self):
+        # index.html's runwayLobeKm mirrors runway_lobe_km term for term; the length is
+        # the term most easily changed on one side only.
+        path = os.path.join(os.path.dirname(__file__), '..', '..', 'index.html')
+        src = open(os.path.abspath(path), encoding='utf-8').read()
+        m = re.search(r'const RUNWAY_LOBE_KM = ([\d.]+);', src)
+        self.assertIsNotNone(m, 'RUNWAY_LOBE_KM missing from index.html')
+        self.assertEqual(float(m.group(1)), app.RUNWAY_LOBE_KM)
+        body = src[src.index('function runwayLobeKm('):]
+        body = body[:body.index('\n      }\n')]
+        self.assertIn('RUNWAY_LOBE_KM', body, 'runwayLobeKm does not read RUNWAY_LOBE_KM')
 
     def test_two_lobes_reproduce_the_engine_axis(self):
         # Both directions of one runway flown = the v5.5 runway-shaped axis.

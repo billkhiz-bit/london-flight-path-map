@@ -17,13 +17,13 @@
 > verbatim (a script proved the split reproduces the old file byte for byte). Read the lesson file for an area
 > before working in it.
 >
-> **Running:** every third day of adsb.lol history, 1 Jan - 31 Jul 2026 (71 days), detached, under the unregistered
-> Python 3.13 (`C:/Users/bilal/tools/python-3.13.15`); resumable. **The 16 Oct run printed DONE but stopped at
-> 7 May** (the laptop shut down at 22:43; 18 days failed with Windows start-up errors and the driver ignored exit
-> codes). Restarted 17 Oct with a driver that prints DONE only when every day is extracted. When it lands: `adsb_movements.py --runways` over
-> those days, `measure_us_quiet_yardstick.py --usage-from <report> --region nyc`, check JFK's north-west monitors
-> (Howard Beach, 150th and 165th Avenues read 2-3 points quieter than measured on the summer count), then a v5.6.x
-> refit and redeploy if it holds.
+> **Methodology v5.7 (built 17 Oct, Bill's ruling): New York's runway use over January-July, and a US runway lobe
+> runs 15 km.** The every-third-day download finished (all 71 days; the 16 Oct run had died at 7 May while printing
+> DONE). Counted over the monitors' months, JFK's north-west monitors read 0.0 / 0.0 / +1.0 (were +3 / +2 / +3), JFK
+> held-out MAE 1.28 -> 1.04. The same count added a JFK 31L departure lobe pointing at Lower Manhattan 19 km out;
+> endless, it read 10002-10038 3-4 points louder where US DOT's map paints nothing, so `RUNWAY_LOBE_KM = 15` (both
+> holders, tested). Bay Area fit unchanged; Queens 1.44 -> severe (score 5.0 -> 4.4). Detail: METHODOLOGY s4 and
+> s20, `docs/lessons/us-cities.md`.
 >
 > **Bill's:** the rename (Overhush first: domains, then one attorney opinion; register screen on his Desktop), the
 > ICO fee and SPF/DMARC (then the researcher emails), FEMA's county flood files for the Bay Area (FEMA's hosts refuse

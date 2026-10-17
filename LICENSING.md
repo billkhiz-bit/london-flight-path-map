@@ -268,7 +268,7 @@ often planes fly"). Measured privately; nothing derived from these is published:
   by the 2026-10-16 audit: they feed the fitted (scored) estimate, which is this file's re-open trigger. 29 points
   are treated as an insubstantial extract, credited here and in the data file's notes, and never published per
   response; whether a response-level credit is also wanted is Bill's call. **New York's runway use is in `data/us-runway-use.json` since 2026-10-16** (JFK, LGA, EWR,
-  TEB, July-August 2026) and New York's score reads it (v5.6), so it takes the Bay Area's ODbL treatment: offered
+  TEB; every third day of January-July 2026 since v5.7, July-August before) and New York's score reads it, so it takes the Bay Area's ODbL treatment: offered
   under ODbL, credited "aircraft positions via adsb.lol (ODbL)" in the file and in every New York response's
   `sources` (with the period, from the engine's own block).
 - **US Census Bureau ACS 5-year, table B25077 (2020-2024), `data/us-bayarea-prices.json` (2026-10-16)**: median

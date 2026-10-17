@@ -62,6 +62,14 @@ counts the quieter aircraft events the conventional method misses (up to 9.5 dB 
 Millbrae); the fit needs each airport MARGIN = 0.2 louder in sample. Nested leave-one-
 out: SFO MAE 0.96, mean -0.17; SJC 1.21, mean -0.46; route weight 1.25.
 
+THEN v5.7 (Bill, 2026-10-17): New York's runway use is counted over its monitors'
+own months (every third day, January-July 2026) and a lobe runs app.RUNWAY_LOBE_KM
+(15 km), not endlessly. The winter count adds JFK 31L departures, whose endless lobe
+read Lower Manhattan, 19 km out and with no monitor, 3-4 points louder where US DOT's
+2022 map paints nothing. JFK's north-west monitors go +3/+2/+3 -> 0/0/+1 held out;
+the Bay Area's fit is unchanged. Points far from every monitor are extrapolation:
+check them against an independent source before trusting a fit there.
+
 CNEL is taken as Lden with no conversion (the data file says why: the safe
 direction for this rule).
 """

@@ -72,3 +72,21 @@ are, not how many aircraft use them".
   the live map's registry, where a city with no overall score is a new state
   for the score panel and the ranking.
 
+
+<!-- added 2026-10-17 -->
+**v5.7 (2026-10-17): New York's runway use over the monitors' months, and a lobe has a length (Bill's ruling).**
+The 16 Oct detached download of every third day of January-July died at 7 May when the laptop shut down, yet its
+driver printed `DONE` (it ignored exit codes); restarted with a driver that prints DONE only when all 71 days exist.
+Counted over January-July, JFK's north-west monitors went from +3.0 / +2.0 / +3.0 (held out, + = quieter than
+measured) to 0.0 / 0.0 / +1.0. **But the same count added a JFK 31L departure lobe (bearing 300.9) pointing straight
+at Lower Manhattan, 19 km out**, and `runway_lobe_km` treated a lobe as an endless half-line: 10002-10038 read 3-4
+points louder and Manhattan's band went moderate -> moderate-high, with every fit statistic IMPROVING, because no
+monitor is in Manhattan. US DOT's 2022 map (our own `data/aircraft-noise-nyc-laeq.png`, sampled at ZIP centroids)
+paints nothing there, below 45 dB, while the Howard Beach monitors sit in its 55-60 bands; the FAA's coded climb-out
+turns away. Fix: `RUNWAY_LOBE_KM = 15` in both holders; past the end the distance along the lobe counts
+`AIRPORT_SHAPE_K` times over, so the field is continuous (no ring on the map). Lengths 8/10/12/15/20 km and none
+were refitted for both regions: 15 km alone held both regions' monitors with the Bay Area's fit unchanged (12 km
+worsened SFO 0.96 -> 1.28). JFK's size 1.8 -> 2.05, LOO MAE 1.28 -> 1.04. Queens 1.44 rounds louder: high -> severe,
+borough score 5.0 -> 4.4. The embeddable Python 3.13 has no tz database, so `adsb_movements.py` (which reads only
+our own extracts) runs under the system Python; the extract step stays on 3.13. Lesson: **a fit only tests points
+near its monitors; check every point far from all of them against an independent source before shipping.**
