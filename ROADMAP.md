@@ -6,7 +6,7 @@
 
 > ## START HERE (2026-10-17)
 >
-> **Live:** v5.6 (New York fitted to the Port Authority's monitors; bands derived and rounded to the louder side),
+> **Live:** v5.7 (below); v5.6 (New York fitted to the Port Authority's monitors; bands derived and rounded to the louder side),
 > "avoid aircraft noise" needs no route across the area, the landscape phone map fits the clear band, Find areas'
 > accessibility fixes, the prototype's integrity hashes. **Batch 2 is LIVE too** (`e71ec13`, committed, pushed,
 > web-deploy + home-deploy, verified from the origin: drift 35 / 39 / 103): the phone layout below 500 px of height
@@ -17,8 +17,10 @@
 > verbatim (a script proved the split reproduces the old file byte for byte). Read the lesson file for an area
 > before working in it.
 >
-> **Methodology v5.7 (built 17 Oct, Bill's ruling): New York's runway use over January-July, and a US runway lobe
-> runs 15 km.** The every-third-day download finished (all 71 days; the 16 Oct run had died at 7 May while printing
+> **Methodology v5.7 is LIVE (`3361de5`, 17 Oct, Bill's ruling): New York's runway use over January-July, and a US
+> runway lobe runs 15 km.** Backend through a reviewed changeset (ScoreFunction code only), then data, web, area,
+> open-data, demo and meta; verified from the origin: drift 35 / 39 / 103, live Queens page 4.4 and Severe, live API
+> 5.7, preflight PASS with both live-API gates green. The every-third-day download finished (all 71 days; the 16 Oct run had died at 7 May while printing
 > DONE). Counted over the monitors' months, JFK's north-west monitors read 0.0 / 0.0 / +1.0 (were +3 / +2 / +3), JFK
 > held-out MAE 1.28 -> 1.04. The same count added a JFK 31L departure lobe pointing at Lower Manhattan 19 km out;
 > endless, it read 10002-10038 3-4 points louder where US DOT's map paints nothing, so `RUNWAY_LOBE_KM = 15` (both

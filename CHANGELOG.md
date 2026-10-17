@@ -2,6 +2,8 @@
 
 ## 2026-10-17 - New York's aircraft estimate, counted over the right months (methodology 5.7)
 
+- **Deployed and checked against the live site**: every page, data file and area page matches what was released,
+  and the API reports methodology 5.7.
 - **New York's runway use is now counted over January to July**, the months its airports' noise monitors cover,
   not July and August. Summer winds favour different runways, so the estimate had read the streets north-west of
   JFK (Howard Beach, 150th and 165th Avenues) 2 to 3 points quieter than the monitors there measure; they now

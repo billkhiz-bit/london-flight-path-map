@@ -277,6 +277,25 @@ to quote"); the plan called it recurring.
 that day), data licensing (narrowed to the UK AIP), name, company and controller, ICO
 fee, terms of business.
 
+## Aviation industry and airspace change (PARKED, added 2026-10-17)
+
+Bill asked to keep these in mind; nothing is drafted. The list is from memory to mid-2026 and **every row needs its
+current status checked, with a source, before anything is written** (the air-taxi sector moves fast: Lilium went
+insolvent). The gates in "Before any email goes out" apply in full, and so does the discipline rule above: nothing
+new starts until one invoice is paid.
+
+| Fit | Who | What Sky Score offers them |
+|---|---|---|
+| Strongest | eVTOL and vertiport developers (Vertical Aerospace, Skyports, Joby; UK Future Flight Challenge consortia) | Today's aircraft noise around a proposed site, street by street, as a baseline for community consultation |
+| Strongest | Airspace-change sponsors: UK airports consulting under the CAA's CAP1616 process; ACOG, which coordinates the national airspace modernisation programme | A public "what changes on my street" view of routes and noise, which those consultations lack |
+| Channel | Noise-monitoring vendors (Envirosuite / WebTrak, HBK, Casper) | Coverage between their monitors: their readings are points, Sky Score covers every address |
+| Research | ISVR Southampton, Salford Acoustics, the Aerospace Technology Institute, EU Clean Aviation, NASA (air-taxi noise), FAA ASCENT | A validated, open street-level estimate to test against their measurements |
+| Policy | Aviation Environment Federation, Sustainable Aviation (noise road-map), CAA ERCD, HACAN, GACC | Plain-English noise facts per area, from official sources |
+| Lowest | Manufacturers: Airbus, Rolls-Royce, Boeing, CFM (RISE open fan), ZeroAvia | Research or sponsorship at most: they measure at certification points and do not buy street-level estimates |
+
+The strongest later hook for the first two rows is **how often planes pass**, which "Never say" bars until an
+airport passes the CAA check; until then, pitch noise levels and route geometry only.
+
 ## Facts safe to quote
 
 Each is measured and in the repo. Re-check the source before quoting if the date is old.
