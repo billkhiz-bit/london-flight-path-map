@@ -1332,7 +1332,7 @@ neither quieter. SJC stays conventional (it publishes nothing else). (3) **Top-c
 floor in the formula** - with 16 of 50 capped the Bay Area pool's p95 IS the cap, so a capped city scores 0, the
 least-affordable end, whatever its true price; it can never flatter. Show "$2M+" (never the number), return a
 `priceTopCoded` flag in the API, show the 16 as tied, and say the scale's top is the Census top code (which reads
-$1.5-2M cities slightly LESS affordable: the cautious side). Recommended by Claude; Bill to confirm.
+$1.5-2M cities slightly LESS affordable: the cautious side). Recommended by Claude; **CONFIRMED by Bill 2026-10-17** ("yes").
 **NEW YORK FIX BUILT AS v5.6 (2026-10-16, evening; committed, NOT DEPLOYED - deploy is Bill's).** API and full map
 score New York from the fitted block (both holders generated; the map now DRAWS the scored FAA routes); site ==
 Lambda at 713 points and 127 neighbourhoods (`tests/us-quiet-site-parity.mjs`, blocking); borough bands derived,
@@ -1352,8 +1352,16 @@ RUNNING (every third day, 71 days, adsb.lol, under Python 3.13): when it lands, 
 **BAY AREA READERS BUILT (2026-10-16 night): trend and transit.** `scripts/build_bayarea_trend.py` (FHFA county
 HPI, 2025: Alameda -1.91%, San Francisco +0.50%, San Mateo -0.61%, Santa Clara -0.63%) and
 `scripts/build_bayarea_transit.py` (BTS: 334 rail/metro/light-rail stations; cable cars left out, Capitol
-Corridor a recorded gap), both advisory in preflight. Flood still needs FEMA's county files downloaded by hand
-(FEMA's hosts refuse this machine); crime needs the OpenJustice CSV link.
+Corridor a recorded gap), both advisory in preflight. **Crime UNBLOCKED (2026-10-17):** the OpenJustice page
+builds its links in JavaScript; read in Chrome, the file is
+`data-openjustice.doj.ca.gov/sites/default/files/dataset/2026-07/Crimes_and_Clearances_with_Arson-1985-2025.csv`
+(6.3 MB, 1 Jul 2026, plain HTTPS works from here) with its README beside it; both downloaded (Bill's OK) to
+gitignored `data/openjustice/`. Reader not built yet. **Flood: FEMA refuses Bill's UK NETWORK, not just
+scripts** (msc/hazards.fema.gov reset the connection in Chrome AND curl; www.fema.gov 403). Bill chose a US
+runner: `scripts/fetch_fema_flood.py` (stdlib only; box derived from the place file; layer found BY NAME on
+either documented service path; empty or truncated answers FAIL) run by the manual workflow
+`.github/workflows/fema-flood-fetch.yml` (read-only token, pinned SHAs, 7-day artifact), pulled with
+`gh run download` into gitignored `data/fema/`. Esri's copy stays prototype-only.
 **BAY AREA READERS, SOURCES VERIFIED (2026-10-16, research, nothing built):** **trend** - FHFA county annual HPI
 (`fhfa.gov/hpi/download/annual/hpi_at_county.xlsx`, keyless, "developmental", calendar 2025, updated 31 Mar 2026:
 Alameda -1.91%, San Francisco +0.50%, San Mateo -0.61%, Santa Clara -0.63%); public domain under FHFA's site

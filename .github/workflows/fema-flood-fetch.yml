@@ -1,0 +1,30 @@
+name: FEMA flood zones (manual fetch)
+
+# Run by hand only (Actions tab, or `gh workflow run fema-flood-fetch.yml`). FEMA's flood hosts
+# reset every connection from Bill's UK network, so this fetches the Bay Area's National Flood
+# Hazard Layer polygons on a US runner and keeps them as a 7-day artifact, which a session pulls
+# with `gh run download` into gitignored data/fema/ (scripts/fetch_fema_flood.py says why and how).
+on:
+  workflow_dispatch:
+
+# Least privilege, as in ci.yml: the job reads the repo and writes nothing back to it.
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      # Standard library only: nothing is installed.
+      - run: python -I scripts/fetch_fema_flood.py --out fema-out
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fema-nfhl-bayarea
+          path: fema-out/
+          retention-days: 7
+          if-no-files-found: error
