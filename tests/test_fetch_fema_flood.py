@@ -51,6 +51,36 @@ def test_an_empty_answer_is_a_failed_fetch_not_no_flood():
         ff.object_ids('L', [0, 0, 1, 1], lambda url, params, tries=4: {'objectIds': None})
 
 
+def test_tiles_cover_the_box_without_gaps():
+    box = [-122.6, 37.2, -121.9, 37.75]
+    ts = ff.tiles(box, 0.25)
+    assert min(t[0] for t in ts) == box[0] and max(t[2] for t in ts) == box[2]
+    assert min(t[1] for t in ts) == box[1] and max(t[3] for t in ts) == box[3]
+    assert all(t[2] - t[0] <= 0.25 + 1e-9 and t[3] - t[1] <= 0.25 + 1e-9 for t in ts)
+    area = sum((t[2] - t[0]) * (t[3] - t[1]) for t in ts)
+    assert area == pytest.approx((box[2] - box[0]) * (box[3] - box[1]))
+
+
+def test_a_refused_tile_is_split_and_its_ids_are_unioned():
+    # The 17 Oct run: FEMA refused the whole box ("Failed to execute query"). Here any tile wider
+    # than 0.1 degrees is refused, so every 0.25 tile must split until it is answered.
+    def get(url, params, tries=4):
+        x0, y0, x1, y1 = map(float, params['geometry'].split(','))
+        if x1 - x0 > 0.1:
+            raise ff.ServiceError('Failed to execute query')
+        return {'objectIds': [int(x0 * 1000), 7]}  # 7 appears in every tile: the union must dedupe
+    ids = ff.object_ids('L', [0.0, 0.0, 0.5, 0.25], get)
+    assert 7 in ids and len(ids) == len(set(ids))
+    assert len(ids) > 2
+
+
+def test_a_tile_refused_at_the_smallest_size_fails_naming_it():
+    def get(url, params, tries=4):
+        raise ff.ServiceError('Failed to execute query')
+    with pytest.raises(SystemExit, match='refused even at'):
+        ff.object_ids('L', [0.0, 0.0, 0.25, 0.25], get)
+
+
 def test_features_are_fetched_in_chunks_and_a_short_chunk_fails():
     ids = list(range(ff.CHUNK + 5))
     calls = []
@@ -58,11 +88,11 @@ def test_features_are_fetched_in_chunks_and_a_short_chunk_fails():
     def get(url, params, tries=4):
         chunk = params['objectIds'].split(',')
         calls.append(len(chunk))
-        return {'features': [{'properties': {'FLD_ZONE': 'AE'}} for _ in chunk]}
+        return {'features': [{'attributes': {'FLD_ZONE': 'AE'}, 'geometry': {'rings': []}} for _ in chunk]}
     assert len(ff.features('L', ids, get)) == len(ids)
     assert calls == [ff.CHUNK, 5]
 
     def short(url, params, tries=4):
-        return {'features': [{'properties': {}}]}
+        return {'features': [{'attributes': {}}]}
     with pytest.raises(SystemExit, match='truncated'):
         ff.features('L', ids, short)
