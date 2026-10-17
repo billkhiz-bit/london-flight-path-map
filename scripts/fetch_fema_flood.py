@@ -15,10 +15,16 @@ WHAT IT FETCHES, and the guards:
 - The layer is found BY NAME ("Flood Hazard Zones") in the service's own layer list, and the
   service is tried at both of FEMA's documented paths, because a layer id or path guessed from
   memory would fail silently as "no flood anywhere".
-- Object ids first, then features in chunks, so the service's record cap cannot truncate the set.
+- Object ids first, searched tile by tile, then features in id chunks, so neither the service's
+  record cap nor a heavy query can truncate the set. FEMA answers a heavy query in one of two ways,
+  both seen on the US runner on 2026-10-17: a 400 "Failed to execute query" (run 39066895696,
+  the whole box at once) or a dropped connection (run 39069350042, after 6,707 ids). Both are
+  treated alike: the tile or chunk is SPLIT and retried, and only a refusal at the smallest size
+  fails the run, naming what was refused.
 - A fetch that finds NO features fails: an empty result is not "no flood risk" (the EA flood tile
   cached all-zero is this repo's precedent).
-- Standard library only, so the runner installs nothing.
+- Standard library only, so the runner installs nothing; a short pause between requests, because
+  this is a shared public service.
 
 Usage: python -I scripts/fetch_fema_flood.py --out <dir>
 Writes <dir>/nfhl-bayarea.esrijson.gz and <dir>/manifest.json (service, layer, box, count, sha256).
@@ -44,11 +50,21 @@ SERVICES = (
 )
 LAYER_NAME = 'flood hazard zones'
 FIELDS = 'FLD_ZONE,ZONE_SUBTY,SFHA_TF,DFIRM_ID,VERSION_ID'
-CHUNK = 200  # features per request: well under any NFHL record cap, small enough to retry
-TILE_DEG = 0.25  # first search tile; a refused tile is split in four
-MIN_TILE_DEG = 0.02  # ...down to this, then the run fails naming the tile
+CHUNK = 100  # features per request; a refused chunk is halved, down to one feature
+TILE_DEG = 0.1  # first search tile; a refused tile is split in four
+MIN_TILE_DEG = 0.0125  # ...down to this, then the run fails naming the tile
 MARGIN_DEG = 0.01
+PAUSE_S = 0.3  # between requests: a shared public service
+TRIES = 2  # per request before the tile or chunk is split instead
 UA = {'User-Agent': 'Sky Score data fetch (skyscore.co.uk; public-domain FEMA NFHL)'}
+
+
+class ServiceError(Exception):
+    """The service answered, with an error body: a refusal."""
+
+
+class NetworkError(Exception):
+    """No answer after TRIES attempts: on FEMA, a dropped connection under a heavy query."""
 
 
 def city_box(places_doc):
@@ -66,26 +82,22 @@ def city_box(places_doc):
     return [min(xs) - MARGIN_DEG, min(ys) - MARGIN_DEG, max(xs) + MARGIN_DEG, max(ys) + MARGIN_DEG]
 
 
-class ServiceError(Exception):
-    """The service answered, with an error body: a refusal, not a network failure."""
-
-
-def get_json(url, params, tries=4):
+def get_json(url, params, tries=TRIES):
     query = urllib.parse.urlencode(params)
     for attempt in range(tries):
         try:
             req = urllib.request.Request(f'{url}?{query}', headers=UA)
             with urllib.request.urlopen(req, timeout=120) as r:
                 doc = json.loads(r.read().decode('utf-8'))
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+        except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError) as exc:
             if attempt == tries - 1:
-                raise SystemExit(f'{url}: {exc} after {tries} tries; nothing was written') from exc
+                raise NetworkError(f'{url}: {exc} after {tries} tries') from exc
             time.sleep(5 * (attempt + 1))
             continue
         if 'error' in doc:  # ArcGIS answers 200 with an error body
             raise ServiceError(f'{url}: the service refused the request: {doc["error"]}')
         return doc
-    raise SystemExit(f'{url}: unreachable')  # pragma: no cover
+    raise NetworkError(f'{url}: unreachable')  # pragma: no cover
 
 
 def find_layer(get=get_json):
@@ -93,8 +105,8 @@ def find_layer(get=get_json):
     tried = []
     for service in SERVICES:
         try:
-            doc = get(service, {'f': 'json'}, tries=2)
-        except (SystemExit, ServiceError) as exc:
+            doc = get(service, {'f': 'json'})
+        except (ServiceError, NetworkError) as exc:
             tried.append(str(exc))
             continue
         for layer in doc.get('layers', []):
@@ -119,16 +131,10 @@ def tiles(box, size):
 
 
 def object_ids(layer_url, box, get=get_json):
-    """Every flood polygon id intersecting the box, searched tile by tile.
-
-    The first run (2026-10-17, run 39066895696) asked for the whole 1.5 x 1 degree box at once and
-    FEMA answered 400 "Failed to execute query": too heavy a spatial query on a national layer. So
-    the box is searched in TILE_DEG tiles, and a tile the service refuses is split into four and
-    retried, down to MIN_TILE_DEG; a tile refused even then fails the run, naming it.
-    """
+    """Every flood polygon id intersecting the box, searched tile by tile; a refused tile is split."""
     ids = set()
     todo = tiles(box, TILE_DEG)
-    done = 0
+    done = split = 0
     while todo:
         t = todo.pop()
         try:
@@ -136,17 +142,43 @@ def object_ids(layer_url, box, get=get_json):
                 'where': '1=1', 'geometry': ','.join(map(str, t)), 'geometryType': 'esriGeometryEnvelope',
                 'inSR': 4326, 'spatialRel': 'esriSpatialRelIntersects', 'returnIdsOnly': 'true', 'f': 'json',
             })
-        except ServiceError as exc:
+        except (ServiceError, NetworkError) as exc:
             if t[2] - t[0] <= MIN_TILE_DEG:
                 raise SystemExit(f'tile {t} refused even at {MIN_TILE_DEG} degrees: {exc}') from exc
             todo.extend(tiles(t, (t[2] - t[0]) / 2))
+            split += 1
             continue
+        finally:
+            time.sleep(PAUSE_S)
         ids.update(doc.get('objectIds') or [])
         done += 1
-        print(f'  tile {done}: {len(ids):,} ids so far', flush=True)
+        if done % 10 == 0 or not todo:
+            print(f'  {done} tiles answered ({split} split): {len(ids):,} ids', flush=True)
     if not ids:
         raise SystemExit('FEMA returned no flood polygons over the Bay Area box: a failed fetch, not "no flood"')
     return sorted(ids)
+
+
+def fetch_chunk(layer_url, chunk, get):
+    """Esri JSON features for these ids; a refused chunk is halved, and one refused id fails the run."""
+    try:
+        doc = get(f'{layer_url}/query', {
+            'objectIds': ','.join(map(str, chunk)), 'outFields': FIELDS, 'returnGeometry': 'true',
+            'outSR': 4326, 'geometryPrecision': 6, 'f': 'json',
+        })
+    except (ServiceError, NetworkError) as exc:
+        if len(chunk) == 1:
+            raise SystemExit(f'feature {chunk[0]} refused on its own: {exc}') from exc
+        half = len(chunk) // 2
+        return fetch_chunk(layer_url, chunk[:half], get) + fetch_chunk(layer_url, chunk[half:], get)
+    finally:
+        time.sleep(PAUSE_S)
+    got = doc.get('features')
+    if got is None:
+        raise SystemExit(f'{layer_url}: no "features" in the reply')
+    if len(got) != len(chunk):
+        raise SystemExit(f'{layer_url}: asked for {len(chunk)} features, got {len(got)}: a truncated set')
+    return got
 
 
 def features(layer_url, ids, get=get_json):
@@ -157,21 +189,9 @@ def features(layer_url, ids, get=get_json):
     """
     out = []
     for i in range(0, len(ids), CHUNK):
-        chunk = ids[i:i + CHUNK]
-        try:
-            doc = get(f'{layer_url}/query', {
-                'objectIds': ','.join(map(str, chunk)), 'outFields': FIELDS, 'returnGeometry': 'true',
-                'outSR': 4326, 'geometryPrecision': 6, 'f': 'json',
-            })
-        except ServiceError as exc:
-            raise SystemExit(str(exc)) from exc
-        got = doc.get('features')
-        if got is None:
-            raise SystemExit(f'{layer_url}: no "features" in the reply')
-        if len(got) != len(chunk):
-            raise SystemExit(f'{layer_url}: asked for {len(chunk)} features, got {len(got)}: a truncated set')
-        out.extend(got)
-        print(f'  {len(out):,} of {len(ids):,} features', flush=True)
+        out.extend(fetch_chunk(layer_url, ids[i:i + CHUNK], get))
+        if (i // CHUNK) % 10 == 9 or i + CHUNK >= len(ids):
+            print(f'  {len(out):,} of {len(ids):,} features', flush=True)
     return out
 
 
