@@ -184,3 +184,29 @@ def test_only_tiles_that_touch_a_city_are_searched():
     ff.object_ids('L', [-122.5, 36.9, -121.9, 37.5], get, near=[city])
     assert asked and all(ff.touches(t, city) for t in asked)
     assert len(asked) < len(ff.tiles([-122.5, 36.9, -121.9, 37.5], ff.TILE_DEG))
+
+
+def test_a_feature_refused_with_every_field_is_fetched_with_only_the_two_the_reader_needs():
+    # Run 39142466860: FEMA served an extent but refused the five fields; the geometry was fine
+    def get(url, params, tries=ff.TRIES):
+        chunk = params['objectIds'].split(',')
+        if '41' in chunk and params.get('outFields') != ff.MIN_FIELDS:
+            raise ff.ServiceError('Failed to execute query')
+        return {'features': [feature(i) for i in chunk]}
+    ledger = ff.Ledger()
+    assert len(ff.features('L', [40, 41, 42], ledger, get)) == 3
+    assert ledger.minimal == {41} and not ledger.generalised and not ledger.refused
+
+
+def test_a_feature_refused_even_with_two_fields_has_each_field_probed_and_named():
+    def get(url, params, tries=ff.TRIES):
+        if params.get('returnExtentOnly') == 'true':
+            return {'extent': {'xmin': -122.4, 'ymin': 37.6, 'xmax': -122.39, 'ymax': 37.61}}
+        if params.get('returnGeometry') == 'false' and params.get('outFields') == 'SFHA_TF':
+            return {'features': [{'attributes': {'SFHA_TF': 'T'}}]}
+        raise ff.ServiceError('Failed to execute query')
+    ledger = ff.Ledger()
+    assert ff.features('L', [41], ledger, get) == []
+    fields = ledger.refused[41]['fields']
+    assert fields['SFHA_TF'] == 'ok' and fields['FLD_ZONE'] == 'refused' and set(fields) == set(ff.FIELDS.split(','))
+

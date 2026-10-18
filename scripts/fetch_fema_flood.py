@@ -52,6 +52,10 @@ SERVICES = (
 )
 LAYER_NAME = 'flood hazard zones'
 FIELDS = 'FLD_ZONE,ZONE_SUBTY,SFHA_TF,DFIRM_ID,VERSION_ID'
+# Run 39142466860: for a refused feature FEMA answered an EXTENT query (no fields) but refused even an
+# attributes-only query with FIELDS, so the failure follows the fields, not the geometry. A feature refused
+# alone is asked again with only what the reader needs; one refused even then has each field probed alone.
+MIN_FIELDS = 'FLD_ZONE,SFHA_TF'
 CHUNK = 100  # features per request; a refused chunk is halved, down to one feature
 TILE_DEG = 0.1  # first search tile; a refused tile is split in four
 MIN_TILE_DEG = 0.0125  # ...down to this, then the run fails naming the tile
@@ -65,7 +69,7 @@ GENERALISE_DEG = (0.00001, 0.00005, 0.0002)
 # Run 39134615637 refused feature 352386 even at 20 m, so its size is not the cause. A polygon refused at every
 # tolerance is LEFT OUT and recorded with what FEMA will say about it (attributes, extent): the reader counts a
 # resident in no polygon as UNKNOWN, never safe. More than this many is systemic, and fails the run.
-MAX_REFUSED = 3
+MAX_REFUSED = 25  # near the cities; a systemic failure refuses thousands (run 4 refused 3 near, all tiny)
 # A refused polygon whose extent touches no city's box cannot hold a city resident: it is recorded apart
 # and does not count towards MAX_REFUSED (a box that misses every city box misses every city).
 UA = {'User-Agent': 'Sky Score data fetch (skyscore.co.uk; public-domain FEMA NFHL)'}
@@ -77,6 +81,7 @@ class Ledger:
     def __init__(self, near=None):
         self.near = near  # the cities' boxes; None means every refusal counts
         self.generalised, self.refused, self.outside = {}, {}, {}
+        self.minimal = set()  # ids fetched with MIN_FIELDS only
 
 
 class ServiceError(Exception):
@@ -200,8 +205,16 @@ def refuse(layer_url, oid, get, ledger, exc):
     """Record a polygon FEMA will not return at any tolerance, with its attributes and extent where FEMA
     gives those, and leave it out. One whose extent touches no city is recorded apart; past MAX_REFUSED
     near the cities the run fails: that is no longer one bad outline."""
-    note = {'error': str(exc)[:200]}
-    for key, extra in (('attributes', {'returnGeometry': 'false', 'outFields': FIELDS}),
+    note = {'error': str(exc)[:200], 'fields': {}}
+    for field in FIELDS.split(','):  # which field FEMA cannot serve for this record
+        try:
+            get(f'{layer_url}/query', {'objectIds': str(oid), 'f': 'json', 'returnGeometry': 'false', 'outFields': field})
+            note['fields'][field] = 'ok'
+        except (ServiceError, NetworkError):
+            note['fields'][field] = 'refused'
+        finally:
+            time.sleep(PAUSE_S)
+    for key, extra in (('attributes', {'returnGeometry': 'false', 'outFields': MIN_FIELDS}),
                        ('extent', {'returnExtentOnly': 'true', 'outSR': 4326})):
         try:
             doc = get(f'{layer_url}/query', {'objectIds': str(oid), 'f': 'json', **extra})
@@ -224,12 +237,12 @@ def refuse(layer_url, oid, get, ledger, exc):
     return []
 
 
-def fetch_chunk(layer_url, chunk, get, ledger, offset=None):
+def fetch_chunk(layer_url, chunk, get, ledger, offset=None, fields=FIELDS):
     """Esri JSON features for these ids. A refused chunk is halved; one id refused alone is asked for
-    again with its outline simplified (GENERALISE_DEG, recorded in the ledger); refused even then, it
-    is left out and recorded (see refuse())."""
+    again with MIN_FIELDS, then with its outline simplified (GENERALISE_DEG), each recorded in the ledger;
+    refused even then, it is left out and recorded (see refuse())."""
     params = {
-        'objectIds': ','.join(map(str, chunk)), 'outFields': FIELDS, 'returnGeometry': 'true',
+        'objectIds': ','.join(map(str, chunk)), 'outFields': fields, 'returnGeometry': 'true',
         'outSR': 4326, 'geometryPrecision': 6, 'f': 'json',
     }
     if offset is not None:
@@ -241,10 +254,12 @@ def fetch_chunk(layer_url, chunk, get, ledger, offset=None):
             half = len(chunk) // 2
             return (fetch_chunk(layer_url, chunk[:half], get, ledger)
                     + fetch_chunk(layer_url, chunk[half:], get, ledger))
+        if fields != MIN_FIELDS:
+            return fetch_chunk(layer_url, chunk, get, ledger, None, MIN_FIELDS)
         tried = GENERALISE_DEG if offset is None else GENERALISE_DEG[GENERALISE_DEG.index(offset) + 1:]
         if not tried:
             return refuse(layer_url, chunk[0], get, ledger, exc)
-        return fetch_chunk(layer_url, chunk, get, ledger, tried[0])
+        return fetch_chunk(layer_url, chunk, get, ledger, tried[0], MIN_FIELDS)
     finally:
         time.sleep(PAUSE_S)
     got = doc.get('features')
@@ -252,6 +267,8 @@ def fetch_chunk(layer_url, chunk, get, ledger, offset=None):
         raise SystemExit(f'{layer_url}: no "features" in the reply')
     if len(got) != len(chunk):
         raise SystemExit(f'{layer_url}: asked for {len(chunk)} features, got {len(got)}: a truncated set')
+    if fields == MIN_FIELDS:
+        ledger.minimal.add(chunk[0])
     if offset is not None:
         ledger.generalised[chunk[0]] = offset  # the tolerance that WORKED, recorded by the call that used it
     return got
@@ -295,6 +312,7 @@ def main():
         'zones': zones, 'generalised_deg': {str(k): v for k, v in sorted(ledger.generalised.items())},
         'refused': {str(k): v for k, v in sorted(ledger.refused.items())},
         'refused_outside_cities': {str(k): v for k, v in sorted(ledger.outside.items())},
+        'minimal_fields': {'fields': MIN_FIELDS, 'ids': sorted(ledger.minimal)},
         'fetched_utc': dt.datetime.now(dt.UTC).isoformat(timespec='seconds'),
         'sha256_gz': hashlib.sha256(blob).hexdigest(),
     }
