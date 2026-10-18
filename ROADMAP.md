@@ -6,10 +6,14 @@
 
 > ## START HERE (2026-10-18)
 >
-> **Bay Area release 2: three of the four remaining readers BUILT, the fourth waiting on FEMA's file.** The FEMA
-> simplify fallback is committed and pushed (`66bc1d8`, preflight PASS); run `39134615637` was started from it. When
-> it passes: `gh run download 39134615637 -D data/fema/`, read `manifest.json` (`generalised_deg`), then
-> `python scripts/build_bayarea_flood.py --write` and add its `advise` stage to preflight.
+> **Bay Area release 2: three of the four remaining readers BUILT, the fourth waiting on FEMA's file.** FEMA, three
+> runs today: `39134615637` refused feature 352386 even at 20 m (so not its size); `39137323723` (polygons refused
+> at every tolerance left out and recorded) then hit 352386-352389 in a row, even ATTRIBUTES refused, and stopped at
+> the cap. FEMA still gave their extents: all in **Santa Cruz County**, near no city, caught because the one search
+> box reached into it. Fix: search only tiles that touch a city's own box (82 of 160), and a refusal whose extent
+> touches no city is recorded apart (`refused_outside_cities`), outside the cap. Next run: when it passes,
+> `gh run download <run> -D data/fema/`, read `manifest.json`, `python scripts/build_bayarea_flood.py --write`, add
+> its `advise` stage.
 > - **Resident frame** (`scripts/bayarea_blocks.py`): 2020 Census blocks from the PL 94-171 geographic header,
 >   weighted by population, placed by the Census (cross-checked against the Block Assignment File; proven red on
 >   a one-field shift). 36,056 residents' blocks, 4.95m people in the 50 cities. The US analogue of "share of

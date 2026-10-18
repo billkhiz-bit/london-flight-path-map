@@ -11,7 +11,9 @@ runner and keeps the output as a short-lived artifact. Bill chose that route on 
 WHAT IT FETCHES, and the guards:
 - The search box is DERIVED from data/us-bayarea-places.json (the 43 cities and 7 towns), never
   typed in, so it follows the city set. Polygons are selected SPATIALLY, never by county code
-  (ROADMAP: a county's DFIRM can reach over its line).
+  (ROADMAP: a county's DFIRM can reach over its line), and only in tiles that touch a city's own
+  box: the overall box reaches into Santa Cruz County, whose records FEMA refuses to serve at all
+  (run 39137323723: ids 352386-352389, even attributes refused).
 - The layer is found BY NAME ("Flood Hazard Zones") in the service's own layer list, and the
   service is tried at both of FEMA's documented paths, because a layer id or path guessed from
   memory would fail silently as "no flood anywhere".
@@ -64,7 +66,17 @@ GENERALISE_DEG = (0.00001, 0.00005, 0.0002)
 # tolerance is LEFT OUT and recorded with what FEMA will say about it (attributes, extent): the reader counts a
 # resident in no polygon as UNKNOWN, never safe. More than this many is systemic, and fails the run.
 MAX_REFUSED = 3
+# A refused polygon whose extent touches no city's box cannot hold a city resident: it is recorded apart
+# and does not count towards MAX_REFUSED (a box that misses every city box misses every city).
 UA = {'User-Agent': 'Sky Score data fetch (skyscore.co.uk; public-domain FEMA NFHL)'}
+
+
+class Ledger:
+    """What the fetch had to do to a polygon: simplify it, or leave it out (near a city, or not)."""
+
+    def __init__(self, near=None):
+        self.near = near  # the cities' boxes; None means every refusal counts
+        self.generalised, self.refused, self.outside = {}, {}, {}
 
 
 class ServiceError(Exception):
@@ -73,6 +85,22 @@ class ServiceError(Exception):
 
 class NetworkError(Exception):
     """No answer after TRIES attempts: on FEMA, a dropped connection under a heavy query."""
+
+
+def touches(a, b):
+    """Whether two [xmin, ymin, xmax, ymax] boxes overlap."""
+    return a[0] <= b[2] and b[0] <= a[2] and a[1] <= b[3] and b[1] <= a[3]
+
+
+def city_boxes(places_doc):
+    """Each scored place's own box over its rings, with the margin."""
+    out = []
+    for p in places_doc['places']:
+        if p['kind'] in ('city', 'town'):
+            xs = [lon for ring in p['rings'] for lon, _ in ring]
+            ys = [lat for ring in p['rings'] for _, lat in ring]
+            out.append([min(xs) - MARGIN_DEG, min(ys) - MARGIN_DEG, max(xs) + MARGIN_DEG, max(ys) + MARGIN_DEG])
+    return out
 
 
 def city_box(places_doc):
@@ -138,10 +166,11 @@ def tiles(box, size):
     return out
 
 
-def object_ids(layer_url, box, get=get_json):
-    """Every flood polygon id intersecting the box, searched tile by tile; a refused tile is split."""
+def object_ids(layer_url, box, get=get_json, near=None):
+    """Every flood polygon id in the box's tiles that touch a city (`near`), tile by tile; a refused
+    tile is split."""
     ids = set()
-    todo = tiles(box, TILE_DEG)
+    todo = [t for t in tiles(box, TILE_DEG) if near is None or any(touches(t, c) for c in near)]
     done = split = 0
     while todo:
         t = todo.pop()
@@ -167,11 +196,10 @@ def object_ids(layer_url, box, get=get_json):
     return sorted(ids)
 
 
-def refuse(layer_url, oid, get, refused, exc):
+def refuse(layer_url, oid, get, ledger, exc):
     """Record a polygon FEMA will not return at any tolerance, with its attributes and extent where FEMA
-    gives those, and leave it out. Past MAX_REFUSED the run fails: that is no longer one bad outline."""
-    if len(refused) >= MAX_REFUSED:
-        raise SystemExit(f'feature {oid} is refused even simplified, after {sorted(refused)}: systemic ({exc})')
+    gives those, and leave it out. One whose extent touches no city is recorded apart; past MAX_REFUSED
+    near the cities the run fails: that is no longer one bad outline."""
     note = {'error': str(exc)[:200]}
     for key, extra in (('attributes', {'returnGeometry': 'false', 'outFields': FIELDS}),
                        ('extent', {'returnExtentOnly': 'true', 'outSR': 4326})):
@@ -183,15 +211,23 @@ def refuse(layer_url, oid, get, refused, exc):
             note[key] = f'refused too: {e}'[:200]
         finally:
             time.sleep(PAUSE_S)
-    refused[oid] = note
+    ext = note.get('extent')
+    if isinstance(ext, dict) and ledger.near is not None and not any(
+            touches([ext['xmin'], ext['ymin'], ext['xmax'], ext['ymax']], c) for c in ledger.near):
+        ledger.outside[oid] = note
+        print(f'  feature {oid} refused, but its extent touches no city: left out, recorded apart', flush=True)
+        return []
+    if len(ledger.refused) >= MAX_REFUSED:
+        raise SystemExit(f'feature {oid} is refused even simplified, after {sorted(ledger.refused)}: systemic ({exc})')
+    ledger.refused[oid] = note
     print(f'  feature {oid} REFUSED at every tolerance: left out, recorded as {note}', flush=True)
     return []
 
 
-def fetch_chunk(layer_url, chunk, get, generalised, refused, offset=None):
+def fetch_chunk(layer_url, chunk, get, ledger, offset=None):
     """Esri JSON features for these ids. A refused chunk is halved; one id refused alone is asked for
-    again with its outline simplified (GENERALISE_DEG, recorded in `generalised`); refused even then, it
-    is left out and recorded in `refused` (see refuse())."""
+    again with its outline simplified (GENERALISE_DEG, recorded in the ledger); refused even then, it
+    is left out and recorded (see refuse())."""
     params = {
         'objectIds': ','.join(map(str, chunk)), 'outFields': FIELDS, 'returnGeometry': 'true',
         'outSR': 4326, 'geometryPrecision': 6, 'f': 'json',
@@ -203,12 +239,12 @@ def fetch_chunk(layer_url, chunk, get, generalised, refused, offset=None):
     except (ServiceError, NetworkError) as exc:
         if len(chunk) > 1:
             half = len(chunk) // 2
-            return (fetch_chunk(layer_url, chunk[:half], get, generalised, refused)
-                    + fetch_chunk(layer_url, chunk[half:], get, generalised, refused))
+            return (fetch_chunk(layer_url, chunk[:half], get, ledger)
+                    + fetch_chunk(layer_url, chunk[half:], get, ledger))
         tried = GENERALISE_DEG if offset is None else GENERALISE_DEG[GENERALISE_DEG.index(offset) + 1:]
         if not tried:
-            return refuse(layer_url, chunk[0], get, refused, exc)
-        return fetch_chunk(layer_url, chunk, get, generalised, refused, tried[0])
+            return refuse(layer_url, chunk[0], get, ledger, exc)
+        return fetch_chunk(layer_url, chunk, get, ledger, tried[0])
     finally:
         time.sleep(PAUSE_S)
     got = doc.get('features')
@@ -217,11 +253,11 @@ def fetch_chunk(layer_url, chunk, get, generalised, refused, offset=None):
     if len(got) != len(chunk):
         raise SystemExit(f'{layer_url}: asked for {len(chunk)} features, got {len(got)}: a truncated set')
     if offset is not None:
-        generalised[chunk[0]] = offset  # the tolerance that WORKED, recorded by the call that used it
+        ledger.generalised[chunk[0]] = offset  # the tolerance that WORKED, recorded by the call that used it
     return got
 
 
-def features(layer_url, ids, generalised, refused, get=get_json):
+def features(layer_url, ids, ledger, get=get_json):
     """Esri JSON features (attributes + geometry rings, WGS84), in id chunks.
 
     Esri JSON, not GeoJSON: every ArcGIS server speaks it, and a reader tests a point against a
@@ -229,7 +265,7 @@ def features(layer_url, ids, generalised, refused, get=get_json):
     """
     out = []
     for i in range(0, len(ids), CHUNK):
-        out.extend(fetch_chunk(layer_url, ids[i:i + CHUNK], get, generalised, refused))
+        out.extend(fetch_chunk(layer_url, ids[i:i + CHUNK], get, ledger))
         if (i // CHUNK) % 10 == 9 or i + CHUNK >= len(ids):
             print(f'  {len(out):,} of {len(ids):,} features', flush=True)
     return out
@@ -239,13 +275,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--out', type=Path, required=True)
     args = ap.parse_args()
-    box = city_box(json.loads(PLACES.read_text(encoding='utf-8')))
+    places = json.loads(PLACES.read_text(encoding='utf-8'))
+    box, near = city_box(places), city_boxes(places)
     service, layer_id, layer_name = find_layer()
     layer_url = f'{service}/{layer_id}'
     print(f'{layer_name} at {layer_url}; box {box}', flush=True)
-    ids = object_ids(layer_url, box)
-    generalised, refused = {}, {}
-    feats = features(layer_url, ids, generalised, refused)
+    ids = object_ids(layer_url, box, near=near)
+    ledger = Ledger(near)
+    feats = features(layer_url, ids, ledger)
     doc = {'format': 'esrijson', 'spatialReference': {'wkid': 4326}, 'features': feats}
     args.out.mkdir(parents=True, exist_ok=True)
     blob = gzip.compress(json.dumps(doc, separators=(',', ':')).encode('utf-8'), mtime=0)
@@ -255,8 +292,9 @@ def main():
         'source': 'FEMA National Flood Hazard Layer (public domain, US government work)', 'format': 'esrijson',
         'service': service, 'layer_id': layer_id, 'layer_name': layer_name, 'fields': FIELDS,
         'box_lonlat': box, 'box_from': str(PLACES.relative_to(REPO)), 'features': len(feats),
-        'zones': zones, 'generalised_deg': {str(k): v for k, v in sorted(generalised.items())},
-        'refused': {str(k): v for k, v in sorted(refused.items())},
+        'zones': zones, 'generalised_deg': {str(k): v for k, v in sorted(ledger.generalised.items())},
+        'refused': {str(k): v for k, v in sorted(ledger.refused.items())},
+        'refused_outside_cities': {str(k): v for k, v in sorted(ledger.outside.items())},
         'fetched_utc': dt.datetime.now(dt.UTC).isoformat(timespec='seconds'),
         'sha256_gz': hashlib.sha256(blob).hexdigest(),
     }

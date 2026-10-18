@@ -100,13 +100,13 @@ def test_features_are_fetched_in_chunks_and_a_short_chunk_fails():
         chunk = params['objectIds'].split(',')
         calls.append(len(chunk))
         return {'features': [feature(i) for i in chunk]}
-    assert len(ff.features('L', ids, {}, {}, get)) == len(ids)
+    assert len(ff.features('L', ids, ff.Ledger(), get)) == len(ids)
     assert calls == [ff.CHUNK, 5]
 
     def short(url, params, tries=ff.TRIES):
         return {'features': [feature(0)]}
     with pytest.raises(SystemExit, match='truncated'):
-        ff.features('L', ids, {}, {}, short)
+        ff.features('L', ids, ff.Ledger(), short)
 
 
 def test_a_refused_chunk_is_halved_until_answered():
@@ -119,7 +119,7 @@ def test_a_refused_chunk_is_halved_until_answered():
         sizes.append(len(chunk))
         return {'features': [feature(i) for i in chunk]}
     ids = list(range(ff.CHUNK))
-    assert len(ff.features('L', ids, {}, {}, get)) == len(ids)
+    assert len(ff.features('L', ids, ff.Ledger(), get)) == len(ids)
     assert max(sizes) <= 10 and sum(sizes) == len(ids)
 
 
@@ -134,19 +134,19 @@ def test_a_feature_refused_at_every_tolerance_is_left_out_and_recorded_with_what
         if '41' in chunk:
             raise ff.ServiceError('Failed to execute query')
         return {'features': [feature(i) for i in chunk]}
-    refused = {}
-    got = ff.features('L', [40, 41, 42], {}, refused, get)
+    ledger = ff.Ledger(near=[[-122.5, 37.3, -122.0, 37.8]])
+    got = ff.features('L', [40, 41, 42], ledger, get)
     assert len(got) == 2
-    assert set(refused) == {41}
-    assert refused[41]['attributes'] == {'FLD_ZONE': 'AE', 'SFHA_TF': 'T'}
-    assert refused[41]['extent']['xmin'] == -122.4
+    assert set(ledger.refused) == {41} and not ledger.outside
+    assert ledger.refused[41]['attributes'] == {'FLD_ZONE': 'AE', 'SFHA_TF': 'T'}
+    assert ledger.refused[41]['extent']['xmin'] == -122.4
 
 
 def test_more_refusals_than_the_cap_fail_the_run_as_systemic():
     def get(url, params, tries=ff.TRIES):
         raise ff.ServiceError('Failed to execute query')
     with pytest.raises(SystemExit, match='systemic'):
-        ff.features('L', list(range(ff.MAX_REFUSED + 1)), {}, {}, get)
+        ff.features('L', list(range(ff.MAX_REFUSED + 1)), ff.Ledger(), get)
 
 
 def test_a_heavy_feature_is_fetched_simplified_and_the_tolerance_that_worked_is_recorded():
@@ -157,7 +157,30 @@ def test_a_heavy_feature_is_fetched_simplified_and_the_tolerance_that_worked_is_
         if '41' in chunk and params.get('maxAllowableOffset', 0) < ff.GENERALISE_DEG[1]:
             raise ff.ServiceError('Failed to execute query')
         return {'features': [feature(i) for i in chunk]}
-    generalised = {}
-    got = ff.features('L', [40, 41, 42], generalised, {}, get)
+    ledger = ff.Ledger()
+    got = ff.features('L', [40, 41, 42], ledger, get)
     assert len(got) == 3
-    assert generalised == {41: ff.GENERALISE_DEG[1]}
+    assert ledger.generalised == {41: ff.GENERALISE_DEG[1]}
+
+
+def test_refusals_whose_extent_touches_no_city_are_recorded_apart_and_do_not_reach_the_cap():
+    # Run 39137323723: 352386-352389 lie in Santa Cruz County, outside every city; FEMA gives only the extent
+    def get(url, params, tries=ff.TRIES):
+        if params.get('returnExtentOnly') == 'true':
+            return {'extent': {'xmin': -122.05, 'ymin': 36.97, 'xmax': -122.02, 'ymax': 37.01}}
+        raise ff.ServiceError('Failed to execute query')
+    ledger = ff.Ledger(near=[[-122.2, 37.4, -121.8, 37.5]])
+    assert ff.features('L', list(range(ff.MAX_REFUSED + 3)), ledger, get) == []
+    assert len(ledger.outside) == ff.MAX_REFUSED + 3 and not ledger.refused
+
+
+def test_only_tiles_that_touch_a_city_are_searched():
+    asked = []
+
+    def get(url, params, tries=ff.TRIES):
+        asked.append([float(v) for v in params['geometry'].split(',')])
+        return {'objectIds': [1]}
+    city = [-122.25, 37.35, -122.15, 37.45]
+    ff.object_ids('L', [-122.5, 36.9, -121.9, 37.5], get, near=[city])
+    assert asked and all(ff.touches(t, city) for t in asked)
+    assert len(asked) < len(ff.tiles([-122.5, 36.9, -121.9, 37.5], ff.TILE_DEG))
