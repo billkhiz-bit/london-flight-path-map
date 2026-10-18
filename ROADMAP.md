@@ -2,7 +2,9 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-18 - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
+**Last reviewed:** 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
+four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
+flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
 > ## START HERE (2026-10-18)
 >
@@ -15,7 +17,12 @@
 > but stopped on 1067721 BY SFO: FEMA answered its EXTENT (no fields) yet refused even an attributes-only query, so
 > the failure follows the requested FIELDS, not the geometry. Fix: a feature refused alone is asked again with only
 > `FLD_ZONE,SFHA_TF` (`minimal_fields` in the manifest); one refused even then has each field probed alone, so the
-> manifest names the field FEMA cannot serve; cap 25 near the cities. Next run: when it passes,
+> manifest names the field FEMA cannot serve; cap 25 near the cities. **Then FEMA stopped answering the runner:**
+> run 5 (`39145398172`) was refused at the FIRST request (service discovery, both paths), and run 6
+> (`39156542239`, the one retry) found 82 tiles / 7,094 ids in a minute, then HUNG on the feature fetch until the
+> workflow's 30-minute limit. **Next:** ONE more run (`gh workflow run 387953204 --ref master`); if it hangs too,
+> the per-county bulk route, whose download address is UNVERIFIED (FEMA's direct-download guide resets from this
+> machine and from WebFetch), so a runner job fetches that guide first. When a run passes:
 > `gh run download <run> -D data/fema/`, read `manifest.json`, `python scripts/build_bayarea_flood.py --write`, add
 > its `advise` stage.
 > - **Resident frame** (`scripts/bayarea_blocks.py`): 2020 Census blocks from the PL 94-171 geographic header,
@@ -31,8 +38,10 @@
 >   Share counted from 45 dB LAeq (the band holding WHO's 53 Lden). Bay Area 0.9-24.8%, UK 27.9-95.6%: **not on
 >   the UK scale; a US scale anchored on a published reference (Bill, 2026-10-18): California's statewide share
 >   in the same band, MEASURED 6.88%** (39.5m residents, 4,499 tiles, 0 unexplained 404s; `--fetch-state`, held in
->   the file's `california` block), almost exactly the Bay Area's median city (7.2%). The ramp shape is the scoring
->   step's.
+>   the file's `california` block), almost exactly the Bay Area's median city (7.2%). **Ramp: LINEAR (Bill, 18 Oct)**,
+>   for crime and road alike: `us_anchored_to_score` = 10 at zero, 5.0 at California's figure, 0 at double (chosen
+>   over a log form that put 9 cities at 10 on crime). `backend/tests/test_us_scales.py` holds it by PROPERTIES of
+>   the derived files and is red on the log form. Built, not wired.
 > - **Flood** (`build_bayarea_flood.py`): written and tested; zone D or no polygon is UNKNOWN, never safe.
 > - **Pool key DONE (build-order step 2, 18 Oct, not deployed: a refactor):** `pool_of(city)` in the Lambda and
 >   `poolOf` in index.html, a city's `pool` (None/null = none) else its currency. All 816 API scores
@@ -47,8 +56,13 @@
 >   `_afford_breakdown_line`'s non-sterling scope ("New York is the only city ... outside the United Kingdom"),
 >   index.html's pool comments, and `build_area_pages.py`'s growth and afford notes ("New York's five boroughs,
 >   the only US prices held"). Find them with `grep -n -E "this currency|currency pool|USD pool|only US prices"`.
-> - **Next after flood:** the scoring wiring (`CITIES['bayarea']` with `pool`, the US crime and road scales, the
->   site through the one-way door, area pages), a release with a reviewed changeset.
+> - **By-name New York branches: 4 of the Lambda's 5 RETIRED (18 Oct)** for `uk_shape(city)`, a `country` question
+>   (816 scores byte-identical). Left, each needing Bay Area CONTENT first: `_postcode_coverage_notice` (New York's
+>   own wording) and the page's five (`tests/test_us_city_branches.py` declares them).
+> - **FAA cycle 2611 is BUILT on branch `faa-2611`** (`5ca394e`; only Oakland changed, no score moves). On 29 Oct:
+>   merge it, then deploy (Bill's). That branch's ROADMAP lists two cycle steps the old procedure missed.
+> - **Next after flood:** the scoring wiring (`CITIES['bayarea']` with `pool`, `us_anchored_to_score` wired for crime
+>   and road, the site through the one-way door, area pages), a release with a reviewed changeset.
 > - **Earl's Court:** sheets regenerated 18 Oct (Desktop), correction note drafted; Bill sends. The 12 Oct note
 >   above was wrong on one point: the Earls Court sheet's summary sentence DOES change (Earls Court Square is now
 >   the loudest point). **DEFRA PCM 2025:** not out on 18 Oct (datastore 404).
@@ -1471,6 +1485,10 @@ datasets"); Zillow stays gated (its terms page answers 403).
 5. **Held out:** healthcare and air quality, declared absent. Liveability from crime +
    transport (+ schools if CDE's terms allow), environment from flood + road: both clear the
    two-input floor.
+6. **The US scales' shape (Bill, 2026-10-18):** LINEAR on the California anchor, crime and road
+   alike: 10 at zero, 5.0 at California's figure (22.27 per 1,000; 6.88% of residents), 0 at
+   double (`us_anchored_to_score`). Chosen over a log form that put 9 Bay Area cities at 10 on
+   crime; the same form as the UK's road and crime ramps.
 
 **Build order** (each step behind its own gate, the repo's pattern): (1) retire the twelve
 by-name New York branches `tests/test_us_city_branches.py` declares; (2) the pool key, with a

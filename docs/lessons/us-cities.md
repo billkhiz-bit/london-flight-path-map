@@ -144,3 +144,16 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   to a word the body already uses is a shadowing trap. The review also found: the Lambda must read `None` as
   the currency (`or`, as the site's `||`), because the site's key-parity gate will put `pool: null` on every
   city; and the site pools the API-only cities as sterling, now refused by build_hpi_prices.py for any other.
+- **The US scales (Bill, 2026-10-18): LINEAR on the California anchor.** `us_anchored_to_score(value, anchor)`:
+  10 at zero, 5.0 at the anchor, 0 at double; None in, None out; a missing or non-positive anchor raises. The log
+  form (5 at the anchor, 10 at half) was rejected: it put 9 of 45 cities at 10 on crime and 7 on road, where the
+  UK's linear ramps give 10 only to none at all. The tests read the anchors from the generated files and assert
+  PROPERTIES (0 exactly at double or more, 10 only at zero, above 5 only below the anchor, monotonic), not named
+  cities' scores, which change with every roll; they are red on the log form.
+- **`uk_shape(city)` (2026-10-18)** replaced four `city != 'nyc'` tests ("is this the UK's liveability shape"):
+  a `country` question, unknown cities read as UK exactly as before, 816 scores byte-identical. The by-name gate
+  scans DOCSTRINGS as well as code (it skips only `#` lines), so describe an old by-name test without quoting it.
+- **FEMA after the fields fix (2026-10-18):** run 5 was reset at the first request and run 6 found 7,094 ids in a
+  minute, then hung on the feature fetch until the 30-minute workflow limit: throttling or an outage on FEMA's side
+  for GitHub's runner, after five runs and thousands of requests that day. One retry per day at most. The bulk
+  route's download address could not be read (FEMA's guide resets here and from WebFetch).
