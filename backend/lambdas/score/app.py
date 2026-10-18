@@ -7098,7 +7098,7 @@ def _live_inputs_present(city, bd=None):
         # retired curated band without a Progress 8 figure is DEFAULTED, not
         # measured (METHODOLOGY 4.4), so it must not be credited as an input
         # here - the two sentences travel in the same response and must agree.
-        if city != 'nyc' and bd.get('p8') is None and 'schools' in present:
+        if uk_shape(city) and bd.get('p8') is None and 'schools' in present:
             present.remove('schools')
         return present
     cfg = CITIES.get(city)
@@ -7971,6 +7971,35 @@ def round_1dp(x):
     (both send -2.5 to -2), so the two holders cannot drift on a tie again.
     """
     return math.floor(x * 10 + 0.5) / 10
+
+
+def uk_shape(city):
+    """Whether the UK liveability shape applies here: the curated UK bands, with Progress 8 standing in for the
+    schools band in England. A REGISTRY question (`country`), where it was a by-name test against New York in four
+    places, so a new US city cannot fall into the UK shape by not being named (tests/test_us_city_branches.py). A
+    city outside CITIES reads as UK, exactly as that test did; every caller passes a registry key.
+    """
+    cfg = CITIES.get(city)
+    return cfg is None or cfg['country'] == 'United Kingdom'
+
+
+def us_anchored_to_score(value, anchor):
+    """A US measure (crime per 1,000, or the share of residents in BTS's road band holding WHO's 53 dB Lden)
+    to 0-10, LINEAR on its California anchor: 10 at zero, 5.0 at the anchor, 0 at double or more.
+
+    Bill, 2026-10-18, over a log form that put 9 Bay Area cities at 10 on crime: the same form as the UK's road
+    and crime ramps, so no city reaches 10 unless it has none. The anchors are published, never the loaded
+    cohort's range (the min-max trap METHODOLOGY 7.1 rejects): California's 2025 rate, 22.27 per 1,000, from every
+    agency in the state (scripts/build_bayarea_crime.py), and its statewide road share, 6.88%
+    (scripts/build_bayarea_road.py). NOT comparable with the UK scores, whose counting differs (decision 4).
+    Absent is absent: None in, None out, never a stand-in value. Not wired into any score until the Bay Area's
+    release.
+    """
+    if value is None:
+        return None
+    if not anchor or anchor <= 0:
+        raise ValueError(f'a US scale needs a positive anchor, got {anchor!r}')
+    return max(0.0, min(10.0, 10.0 - 5.0 * value / anchor))
 
 
 def crime_to_score(rate):
@@ -9173,7 +9202,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     # formula collapsed 14 of 33 boroughs onto one value.
     growth = growth_score(scored_trend(bd), max_trend, min_trend)
 
-    live = get_live_score(bd, english=(city != 'nyc'))
+    live = get_live_score(bd, english=uk_shape(city))
 
     # `live` is None when fewer than two of its four inputs exist, so the
     # component would say nothing about this place. Drop it and rescale the
@@ -9287,7 +9316,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
             },
             'noiseImpactBand': bd['impact'],
             'quietResolution': quiet_source,
-            'liveResolution': live_resolution(bd, english=(city != 'nyc')),
+            'liveResolution': live_resolution(bd, english=uk_shape(city)),
             'environmentResolution': env_resolution(bd),
             # True when `env` rests on one measured input rather than two, so a
             # ranking surface can exclude the borough from "best environment"
@@ -9309,7 +9338,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
         # 'postcode' means. See build_coverage.
         'coverage': build_coverage(
             quiet_source,
-            live_resolution(bd, english=(city != 'nyc')),
+            live_resolution(bd, english=uk_shape(city)),
             env_resolution(bd),
             city=city,
         ),

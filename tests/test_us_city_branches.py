@@ -40,17 +40,14 @@ PAGE_DECLARED = {
     "currentCity === 'nyc'": 1,
 }
 
-# The score Lambda. All five are the England question ("does Progress 8 exist
-# here", "is this the UK's liveability shape") or the ZIP route, and are
-# generalised with the Bay Area's Lambda entry, in the deploy that adds it.
+# The score Lambda. One left: _postcode_coverage_notice() picks New York's OWN
+# wording, so it goes when the Bay Area has its notice, in the deploy that adds it.
 LAMBDA_DECLARED = {
     # ("if city != 'nyc'" left on 2026-10-16: the UK outside-coverage loop chooses UK
-    # cities by country now, so the Bay Area cannot slip into it either.)
-    "if city != 'nyc' and bd.get('p8') is None and 'schools' in present:": 1,
+    # cities by country now, so the Bay Area cannot slip into it either. The four
+    # "is this the UK's liveability shape" tests left on 2026-10-18 for uk_shape(),
+    # a registry question; all 816 scores byte-identical across the change.)
     "if city == 'nyc':": 1,
-    "live = get_live_score(bd, english=(city != 'nyc'))": 1,
-    "'liveResolution': live_resolution(bd, english=(city != 'nyc')),": 1,
-    "live_resolution(bd, english=(city != 'nyc')),": 1,
 }
 
 
