@@ -2,8 +2,34 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
+**Last reviewed:** 2026-10-18 - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-18)
+>
+> **Bay Area release 2: three of the four remaining readers BUILT, the fourth waiting on FEMA's file.** The FEMA
+> simplify fallback is committed and pushed (`66bc1d8`, preflight PASS); run `39134615637` was started from it. When
+> it passes: `gh run download 39134615637 -D data/fema/`, read `manifest.json` (`generalised_deg`), then
+> `python scripts/build_bayarea_flood.py --write` and add its `advise` stage to preflight.
+> - **Resident frame** (`scripts/bayarea_blocks.py`): 2020 Census blocks from the PL 94-171 geographic header,
+>   weighted by population, placed by the Census (cross-checked against the Block Assignment File; proven red on
+>   a one-field shift). 36,056 residents' blocks, 4.95m people in the 50 cities. The US analogue of "share of
+>   postcodes".
+> - **Crime** (`build_bayarea_crime.py`, `data/us-bayarea-crime.json`): 45 of 50 rated; the five sheriff-contract
+>   cities `null` with a reason; California anchor DERIVED, 22.27 per 1,000 (violent + property). Few-residents
+>   note on Colma and Emeryville (under 20,000 AND over 3x the state rate: Claude's rule, Bill 2026-10-18 "do what
+>   is recommended").
+> - **Road** (`build_bayarea_road.py`, `data/us-bayarea-road.json`): BTS 2022 road tiles at every block. The road
+>   service has a LEGEND equal to NOISE_SCALE_BTS; its cache stops at level 12 (a 404 above is "not cached").
+>   Share counted from 45 dB LAeq (the band holding WHO's 53 Lden). Bay Area 0.9-24.8%, UK 27.9-95.6%: **not on
+>   the UK scale; a US scale anchored on a published reference (Bill, 2026-10-18), proposed: California's
+>   statewide share in the same band.** Fix it at the scoring step.
+> - **Flood** (`build_bayarea_flood.py`): written and tested; zone D or no polygon is UNKNOWN, never safe.
+> - **Next after flood:** the scoring wiring (pool key, `CITIES['bayarea']`, the US crime and road scales, the
+>   site through the one-way door, area pages), a release with a reviewed changeset.
+> - **Earl's Court:** sheets regenerated 18 Oct (Desktop), correction note drafted; Bill sends. The 12 Oct note
+>   above was wrong on one point: the Earls Court sheet's summary sentence DOES change (Earls Court Square is now
+>   the loudest point). **DEFRA PCM 2025:** not out on 18 Oct (datastore 404).
+>
 > ## START HERE (2026-10-17)
 >
 > **Live:** v5.7 (below); v5.6 (New York fitted to the Port Authority's monitors; bands derived and rounded to the louder side),

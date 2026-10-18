@@ -141,6 +141,9 @@ Or just describe what you need, I have full context of this project.
   `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html). A runway lobe
   runs `RUNWAY_LOBE_KM` (15 km), mirrored in index.html. A fit only tests points near its monitors: check
   anything far from every monitor against an independent source (v5.7: the US DOT map caught Manhattan).
+- **A tile service's 404 is "not cached", never "quiet"**: measure which levels a cache holds before reading
+  a tile as a reading (BTS's road cache stops at 12 though it lists 24). US shares (crime, road, flood) are
+  not on the UK scales: each needs a US scale (`docs/lessons/us-cities.md`, 2026-10-18).
 - **Pooled figures hide per-city optimism**: any fit must hold per city (no city may read quieter than its
   yardstick).
 

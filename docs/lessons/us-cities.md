@@ -90,3 +90,35 @@ worsened SFO 0.96 -> 1.28). JFK's size 1.8 -> 2.05, LOO MAE 1.28 -> 1.04. Queens
 borough score 5.0 -> 4.4. The embeddable Python 3.13 has no tz database, so `adsb_movements.py` (which reads only
 our own extracts) runs under the system Python; the extract step stays on 3.13. Lesson: **a fit only tests points
 near its monitors; check every point far from all of them against an independent source before shipping.**
+
+
+<!-- added 2026-10-18 -->
+**Release 2's readers, 2026-10-18: crime, road noise and flood, over one resident frame.** The UK's flood and
+road inputs are shares of a borough's live POSTCODES, so the US ones are shares of RESIDENTS: 2020 Census blocks
+(`scripts/bayarea_blocks.py`), each block's internal point weighted by its population, in the city the Census
+places it in. The source is the geographic header of California's PL 94-171 file (population, internal point
+and place code in one row; 80 MB, where the state TIGER block file with population is 382 MB and the
+per-county TIGER2020PL files carry NO population column). It has no header line, so fields are read by
+position, and `--check` holds the positions against the separate Block Assignment File: shifting PLACE by one
+field reds 45,686 blocks (proven). The 2020 base differs from the counted blocks by tens of people (count
+question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or 50, whichever is larger.
+- **Crime** (`build_bayarea_crime.py`): violent + property over every California agency gives 22.27 per 1,000,
+  decision 4's 22.3 (arson in: 22.45), so the definition is derived from the anchor and the anchor is
+  recomputed, never typed. 45 of 50 cities matched by name; the five sheriff-contract cities are a SET held
+  both ways (a city gaining a DOJ row stops the build). The places file holds 78 places (28 CDPs): Broadmoor, a
+  CDP with its own police district, matched too, so the reader selects the 50 by kind first. The Census
+  estimates file is Latin-1. The "few residents" note: under 20,000 residents AND over 3x the state rate
+  (Colma and Emeryville only), Claude's recommendation, accepted by Bill 2026-10-18 ("do what is recommended").
+- **Road** (`build_bayarea_road.py`): BTS's 2022 road service, unlike its aviation one, publishes a LEGEND
+  (45-49.9 ... > 90 dB LAeq) in exactly NOISE_SCALE_BTS's colours, which is strong (not proof) evidence the
+  aviation bands mean the same. **The cache stops at level 12**: 13 and 14 answer 404 even over US-101, so a
+  404 is "not cached", never "quiet" (read as quiet, every city would have scored 0%). Level 12 is about 30 m
+  at this latitude, BTS's own grid. WHO's 53 dB Lden is about 46.6 LAeq, inside the 45 band, so the share
+  counts from 45 (the louder side). **Not on the UK scale**: Bay Area 0.9-24.8% (median 7.2%) against UK
+  boroughs 27.9-95.6% (median 55.0%), because BTS models highway traffic; a score from it needs a US scale (Bill, 2026-10-18). The UK ramp is FIXED
+  (0% over WHO = 10, 100% = 0; `road_to_score` refuses min-max), so the US one must be anchored on a published
+  reference as crime is: proposed, California's statewide share of residents in the same BTS band, from the
+  same block frame. Fixed at the scoring step, not before.
+- **Flood** (`build_bayarea_flood.py`, waiting on FEMA's file): FEMA maps all studied land, zone X included,
+  so a resident in zone D or in no polygon is UNKNOWN, counted and left out of the share, and over 5% of a city
+  fails the check; overlapping studies take the riskier reading.

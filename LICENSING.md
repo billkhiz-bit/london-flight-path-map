@@ -285,6 +285,20 @@ often planes fly"). Measured privately; nothing derived from these is published:
   credit "US Department of Transportation, Bureau of Transportation Statistics" wherever it is shown; the Bay
   Area agencies list their own feeds as public domain. Cable cars are left out (a decision, recorded in the
   file); Capitol Corridor (Amtrak) is absent from the layer (a known gap, recorded, not filled).
+- **California DOJ OpenJustice "Crimes and Clearances" (1985-2025) and the US Census Bureau Vintage 2025 city
+  population estimates (`sub-est2025_6.csv`), `data/us-bayarea-crime.json` (2026-10-18)**: violent + property
+  crimes per 1,000 residents for 45 of the 50 cities, release 2's crime input. Both public domain
+  (oag.ca.gov/conditions: "Considered in the public domain"; the estimates a US government work). The five
+  San Mateo sheriff-contract cities have no rate of their own (`null`, with the reason); never apportion the
+  sheriff's county total among them. Not comparable with the UK's ONS Table C4 rate.
+- **US Census Bureau 2020 redistricting file (PL 94-171) geographic header, and the 2020 Block Assignment File
+  (2026-10-18)**: block population and internal points, the resident frame for the Bay Area's road and flood
+  shares (`scripts/bayarea_blocks.py`). Public domain. Gitignored inputs; only derived city shares are published.
+- **BTS National Transportation Noise Map 2022, road (`NTAD_Noise_2022_CONUS_road` tiles),
+  `data/us-bayarea-road.json` (2026-10-18)**: the share of each city's residents in the 45 dB LAeq band or
+  louder, release 2's road-noise input. A US government work; credit "USDOT Bureau of Transportation
+  Statistics". BTS: simplified modelling that "should not be used to evaluate noise levels in individual
+  locations", so only a city share is published, never a reading at a point.
 - **US Census Bureau ACS 5-year, table B01003 (2020-2024), and the 2024 ZCTA gazetteer, `data/us-nyc-zcta.json`
   (2026-10-16)**: population and internal point of the 211 ZIP Code Tabulation Areas inside New York's five
   boroughs, which weight New York's borough aircraft bands (`scripts/build_nyc_impact.py`). Public domain (US

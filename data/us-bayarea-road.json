@@ -1,0 +1,860 @@
+{
+ "source": "USDOT Bureau of Transportation Statistics, National Transportation Noise Map 2022, road (24-hour LAeq, 30 m, highway traffic 2022/23), read at the 2020 Census block internal points",
+ "service": "https://tiles.arcgis.com/tiles/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Noise_2022_CONUS_road/MapServer",
+ "licence": "US government work; credit USDOT Bureau of Transportation Statistics",
+ "generator": "scripts/build_bayarea_road.py --write",
+ "measure": "share of residents at or above 45 dB LAeq, the BTS band holding WHO's 53 dB Lden (Lden = LAeq + 6.4 dB under BTS's flat-day model): the louder side of WHO",
+ "scope": "BTS: simplified modelling, not for individual locations; a city share only. NOT ON THE UK SCALE: BTS models highway traffic, DEFRA far more of the urban network, and the two do not overlap (measured 2026-10-18: Bay Area 0.9-24.8%, median 7.2%; UK boroughs 27.9-95.6%, median 55.0%), so a score from this needs a US scale, never the UK ramp",
+ "cities": [
+  {
+   "geoid": "0600562",
+   "name": "Alameda",
+   "county": "Alameda",
+   "residents": 78280,
+   "share_at_or_above_45_db_pct": 13.3,
+   "residents_by_band": {
+    "below_45": 67877,
+    "45": 4691,
+    "50": 3477,
+    "55": 1113,
+    "60": 910,
+    "70": 212,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0600674",
+   "name": "Albany",
+   "county": "Alameda",
+   "residents": 20271,
+   "share_at_or_above_45_db_pct": 10.2,
+   "residents_by_band": {
+    "below_45": 18202,
+    "45": 1022,
+    "50": 766,
+    "55": 88,
+    "60": 126,
+    "70": 0,
+    "80": 67,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0603092",
+   "name": "Atherton",
+   "county": "San Mateo",
+   "residents": 7188,
+   "share_at_or_above_45_db_pct": 1.3,
+   "residents_by_band": {
+    "below_45": 7096,
+    "45": 51,
+    "50": 41,
+    "55": 0,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0605108",
+   "name": "Belmont",
+   "county": "San Mateo",
+   "residents": 28335,
+   "share_at_or_above_45_db_pct": 5.4,
+   "residents_by_band": {
+    "below_45": 26802,
+    "45": 1104,
+    "50": 364,
+    "55": 65,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0606000",
+   "name": "Berkeley",
+   "county": "Alameda",
+   "residents": 124321,
+   "share_at_or_above_45_db_pct": 11.2,
+   "residents_by_band": {
+    "below_45": 110421,
+    "45": 7860,
+    "50": 3671,
+    "55": 1427,
+    "60": 895,
+    "70": 47,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0608310",
+   "name": "Brisbane",
+   "county": "San Mateo",
+   "residents": 4851,
+   "share_at_or_above_45_db_pct": 7.0,
+   "residents_by_band": {
+    "below_45": 4512,
+    "45": 339,
+    "50": 0,
+    "55": 0,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0609066",
+   "name": "Burlingame",
+   "county": "San Mateo",
+   "residents": 31386,
+   "share_at_or_above_45_db_pct": 11.8,
+   "residents_by_band": {
+    "below_45": 27690,
+    "45": 2120,
+    "50": 1059,
+    "55": 187,
+    "60": 330,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0610345",
+   "name": "Campbell",
+   "county": "Santa Clara",
+   "residents": 43959,
+   "share_at_or_above_45_db_pct": 11.7,
+   "residents_by_band": {
+    "below_45": 38814,
+    "45": 2644,
+    "50": 1943,
+    "55": 558,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0614736",
+   "name": "Colma",
+   "county": "San Mateo",
+   "residents": 1507,
+   "share_at_or_above_45_db_pct": 8.3,
+   "residents_by_band": {
+    "below_45": 1382,
+    "45": 121,
+    "50": 0,
+    "55": 0,
+    "60": 4,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0617610",
+   "name": "Cupertino",
+   "county": "Santa Clara",
+   "residents": 60381,
+   "share_at_or_above_45_db_pct": 7.4,
+   "residents_by_band": {
+    "below_45": 55921,
+    "45": 1983,
+    "50": 777,
+    "55": 1021,
+    "60": 616,
+    "70": 63,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0617918",
+   "name": "Daly City",
+   "county": "San Mateo",
+   "residents": 104901,
+   "share_at_or_above_45_db_pct": 8.5,
+   "residents_by_band": {
+    "below_45": 96005,
+    "45": 3268,
+    "50": 2747,
+    "55": 1107,
+    "60": 1774,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0620018",
+   "name": "Dublin",
+   "county": "Alameda",
+   "residents": 72589,
+   "share_at_or_above_45_db_pct": 5.5,
+   "residents_by_band": {
+    "below_45": 68572,
+    "45": 2778,
+    "50": 353,
+    "55": 430,
+    "60": 456,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0620956",
+   "name": "East Palo Alto",
+   "county": "San Mateo",
+   "residents": 30034,
+   "share_at_or_above_45_db_pct": 15.0,
+   "residents_by_band": {
+    "below_45": 25534,
+    "45": 2244,
+    "50": 1675,
+    "55": 371,
+    "60": 210,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0622594",
+   "name": "Emeryville",
+   "county": "Alameda",
+   "residents": 12905,
+   "share_at_or_above_45_db_pct": 24.8,
+   "residents_by_band": {
+    "below_45": 9711,
+    "45": 1009,
+    "50": 84,
+    "55": 1869,
+    "60": 232,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0625338",
+   "name": "Foster City",
+   "county": "San Mateo",
+   "residents": 33805,
+   "share_at_or_above_45_db_pct": 6.3,
+   "residents_by_band": {
+    "below_45": 31680,
+    "45": 608,
+    "50": 1116,
+    "55": 401,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0626000",
+   "name": "Fremont",
+   "county": "Alameda",
+   "residents": 230504,
+   "share_at_or_above_45_db_pct": 6.9,
+   "residents_by_band": {
+    "below_45": 214680,
+    "45": 6356,
+    "50": 4196,
+    "55": 3225,
+    "60": 2043,
+    "70": 4,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0629504",
+   "name": "Gilroy",
+   "county": "Santa Clara",
+   "residents": 59520,
+   "share_at_or_above_45_db_pct": 5.9,
+   "residents_by_band": {
+    "below_45": 56015,
+    "45": 2916,
+    "50": 456,
+    "55": 31,
+    "60": 91,
+    "70": 11,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0631708",
+   "name": "Half Moon Bay",
+   "county": "San Mateo",
+   "residents": 11795,
+   "share_at_or_above_45_db_pct": 3.8,
+   "residents_by_band": {
+    "below_45": 11346,
+    "45": 207,
+    "50": 185,
+    "55": 57,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0633000",
+   "name": "Hayward",
+   "county": "Alameda",
+   "residents": 162954,
+   "share_at_or_above_45_db_pct": 11.1,
+   "residents_by_band": {
+    "below_45": 144804,
+    "45": 10027,
+    "50": 5379,
+    "55": 1472,
+    "60": 570,
+    "70": 702,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0633798",
+   "name": "Hillsborough",
+   "county": "San Mateo",
+   "residents": 11387,
+   "share_at_or_above_45_db_pct": 3.5,
+   "residents_by_band": {
+    "below_45": 10992,
+    "45": 160,
+    "50": 160,
+    "55": 0,
+    "60": 75,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0641992",
+   "name": "Livermore",
+   "county": "Alameda",
+   "residents": 87955,
+   "share_at_or_above_45_db_pct": 4.8,
+   "residents_by_band": {
+    "below_45": 83748,
+    "45": 1780,
+    "50": 1639,
+    "55": 670,
+    "60": 73,
+    "70": 34,
+    "80": 11,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0643280",
+   "name": "Los Altos",
+   "county": "Santa Clara",
+   "residents": 31625,
+   "share_at_or_above_45_db_pct": 4.6,
+   "residents_by_band": {
+    "below_45": 30174,
+    "45": 827,
+    "50": 624,
+    "55": 0,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0643294",
+   "name": "Los Altos Hills",
+   "county": "Santa Clara",
+   "residents": 8489,
+   "share_at_or_above_45_db_pct": 2.6,
+   "residents_by_band": {
+    "below_45": 8269,
+    "45": 187,
+    "50": 10,
+    "55": 0,
+    "60": 20,
+    "70": 3,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0644112",
+   "name": "Los Gatos",
+   "county": "Santa Clara",
+   "residents": 33529,
+   "share_at_or_above_45_db_pct": 7.3,
+   "residents_by_band": {
+    "below_45": 31083,
+    "45": 1514,
+    "50": 824,
+    "55": 108,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0646870",
+   "name": "Menlo Park",
+   "county": "San Mateo",
+   "residents": 33780,
+   "share_at_or_above_45_db_pct": 7.8,
+   "residents_by_band": {
+    "below_45": 31155,
+    "45": 1977,
+    "50": 357,
+    "55": 128,
+    "60": 133,
+    "70": 30,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0647486",
+   "name": "Millbrae",
+   "county": "San Mateo",
+   "residents": 23216,
+   "share_at_or_above_45_db_pct": 12.1,
+   "residents_by_band": {
+    "below_45": 20412,
+    "45": 1804,
+    "50": 683,
+    "55": 63,
+    "60": 141,
+    "70": 113,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0647766",
+   "name": "Milpitas",
+   "county": "Santa Clara",
+   "residents": 80273,
+   "share_at_or_above_45_db_pct": 10.0,
+   "residents_by_band": {
+    "below_45": 72264,
+    "45": 5683,
+    "50": 1402,
+    "55": 0,
+    "60": 924,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0648956",
+   "name": "Monte Sereno",
+   "county": "Santa Clara",
+   "residents": 3479,
+   "share_at_or_above_45_db_pct": 0.9,
+   "residents_by_band": {
+    "below_45": 3447,
+    "45": 32,
+    "50": 0,
+    "55": 0,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0649278",
+   "name": "Morgan Hill",
+   "county": "Santa Clara",
+   "residents": 45483,
+   "share_at_or_above_45_db_pct": 2.6,
+   "residents_by_band": {
+    "below_45": 44317,
+    "45": 237,
+    "50": 324,
+    "55": 194,
+    "60": 411,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0649670",
+   "name": "Mountain View",
+   "county": "Santa Clara",
+   "residents": 82376,
+   "share_at_or_above_45_db_pct": 8.6,
+   "residents_by_band": {
+    "below_45": 75307,
+    "45": 3828,
+    "50": 2118,
+    "55": 842,
+    "60": 237,
+    "70": 44,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0650916",
+   "name": "Newark",
+   "county": "Alameda",
+   "residents": 47529,
+   "share_at_or_above_45_db_pct": 5.7,
+   "residents_by_band": {
+    "below_45": 44825,
+    "45": 718,
+    "50": 1765,
+    "55": 168,
+    "60": 53,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0653000",
+   "name": "Oakland",
+   "county": "Alameda",
+   "residents": 440646,
+   "share_at_or_above_45_db_pct": 17.0,
+   "residents_by_band": {
+    "below_45": 365924,
+    "45": 37215,
+    "50": 21625,
+    "55": 8960,
+    "60": 4534,
+    "70": 1391,
+    "80": 997,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0654806",
+   "name": "Pacifica",
+   "county": "San Mateo",
+   "residents": 38640,
+   "share_at_or_above_45_db_pct": 4.3,
+   "residents_by_band": {
+    "below_45": 36993,
+    "45": 515,
+    "50": 359,
+    "55": 758,
+    "60": 15,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0655282",
+   "name": "Palo Alto",
+   "county": "Santa Clara",
+   "residents": 68572,
+   "share_at_or_above_45_db_pct": 5.3,
+   "residents_by_band": {
+    "below_45": 64949,
+    "45": 2281,
+    "50": 665,
+    "55": 558,
+    "60": 119,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0656938",
+   "name": "Piedmont",
+   "county": "Alameda",
+   "residents": 11270,
+   "share_at_or_above_45_db_pct": 2.8,
+   "residents_by_band": {
+    "below_45": 10951,
+    "45": 79,
+    "50": 240,
+    "55": 0,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0657792",
+   "name": "Pleasanton",
+   "county": "Alameda",
+   "residents": 79871,
+   "share_at_or_above_45_db_pct": 6.2,
+   "residents_by_band": {
+    "below_45": 74925,
+    "45": 3060,
+    "50": 1454,
+    "55": 173,
+    "60": 238,
+    "70": 21,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0658380",
+   "name": "Portola Valley",
+   "county": "San Mateo",
+   "residents": 4456,
+   "share_at_or_above_45_db_pct": 1.6,
+   "residents_by_band": {
+    "below_45": 4385,
+    "45": 71,
+    "50": 0,
+    "55": 0,
+    "60": 0,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0660102",
+   "name": "Redwood City",
+   "county": "San Mateo",
+   "residents": 84292,
+   "share_at_or_above_45_db_pct": 9.2,
+   "residents_by_band": {
+    "below_45": 76512,
+    "45": 3324,
+    "50": 3923,
+    "55": 204,
+    "60": 329,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0665028",
+   "name": "San Bruno",
+   "county": "San Mateo",
+   "residents": 43908,
+   "share_at_or_above_45_db_pct": 11.0,
+   "residents_by_band": {
+    "below_45": 39069,
+    "45": 2584,
+    "50": 1674,
+    "55": 429,
+    "60": 59,
+    "70": 0,
+    "80": 93,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0665070",
+   "name": "San Carlos",
+   "county": "San Mateo",
+   "residents": 30722,
+   "share_at_or_above_45_db_pct": 3.3,
+   "residents_by_band": {
+    "below_45": 29696,
+    "45": 426,
+    "50": 148,
+    "55": 154,
+    "60": 298,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0667000",
+   "name": "San Francisco",
+   "county": "San Francisco",
+   "residents": 873965,
+   "share_at_or_above_45_db_pct": 12.2,
+   "residents_by_band": {
+    "below_45": 767398,
+    "45": 55885,
+    "50": 29154,
+    "55": 14332,
+    "60": 6263,
+    "70": 596,
+    "80": 337,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0668000",
+   "name": "San Jose",
+   "county": "Santa Clara",
+   "residents": 1013240,
+   "share_at_or_above_45_db_pct": 7.6,
+   "residents_by_band": {
+    "below_45": 935987,
+    "45": 48242,
+    "50": 17660,
+    "55": 7973,
+    "60": 2024,
+    "70": 491,
+    "80": 863,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0668084",
+   "name": "San Leandro",
+   "county": "Alameda",
+   "residents": 91008,
+   "share_at_or_above_45_db_pct": 10.4,
+   "residents_by_band": {
+    "below_45": 81569,
+    "45": 6119,
+    "50": 1389,
+    "55": 1102,
+    "60": 810,
+    "70": 19,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0668252",
+   "name": "San Mateo",
+   "county": "San Mateo",
+   "residents": 105661,
+   "share_at_or_above_45_db_pct": 16.4,
+   "residents_by_band": {
+    "below_45": 88307,
+    "45": 9033,
+    "50": 6284,
+    "55": 1055,
+    "60": 642,
+    "70": 340,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0669084",
+   "name": "Santa Clara",
+   "county": "Santa Clara",
+   "residents": 127647,
+   "share_at_or_above_45_db_pct": 4.1,
+   "residents_by_band": {
+    "below_45": 122363,
+    "45": 1816,
+    "50": 1646,
+    "55": 742,
+    "60": 937,
+    "70": 143,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0670280",
+   "name": "Saratoga",
+   "county": "Santa Clara",
+   "residents": 31051,
+   "share_at_or_above_45_db_pct": 5.3,
+   "residents_by_band": {
+    "below_45": 29390,
+    "45": 1310,
+    "50": 181,
+    "55": 0,
+    "60": 170,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0673262",
+   "name": "South San Francisco",
+   "county": "San Mateo",
+   "residents": 66105,
+   "share_at_or_above_45_db_pct": 10.4,
+   "residents_by_band": {
+    "below_45": 59204,
+    "45": 3267,
+    "50": 2848,
+    "55": 293,
+    "60": 493,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0677000",
+   "name": "Sunnyvale",
+   "county": "Santa Clara",
+   "residents": 155805,
+   "share_at_or_above_45_db_pct": 6.4,
+   "residents_by_band": {
+    "below_45": 145805,
+    "45": 5422,
+    "50": 2470,
+    "55": 1767,
+    "60": 322,
+    "70": 19,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0681204",
+   "name": "Union City",
+   "county": "Alameda",
+   "residents": 70143,
+   "share_at_or_above_45_db_pct": 7.7,
+   "residents_by_band": {
+    "below_45": 64753,
+    "45": 1919,
+    "50": 1748,
+    "55": 1099,
+    "60": 562,
+    "70": 62,
+    "80": 0,
+    "90": 0
+   }
+  },
+  {
+   "geoid": "0686440",
+   "name": "Woodside",
+   "county": "San Mateo",
+   "residents": 5309,
+   "share_at_or_above_45_db_pct": 4.3,
+   "residents_by_band": {
+    "below_45": 5083,
+    "45": 104,
+    "50": 0,
+    "55": 111,
+    "60": 11,
+    "70": 0,
+    "80": 0,
+    "90": 0
+   }
+  }
+ ]
+}

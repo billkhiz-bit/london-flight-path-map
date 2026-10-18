@@ -897,6 +897,13 @@ advise "Bay Area prices == ACS B25077"   python scripts/build_bayarea_prices.py 
 # with the gitignored raw input on disk (--fetch) it re-derives every value. Advisory until served.
 advise "Bay Area trend == FHFA county HPI"   python scripts/build_bayarea_trend.py --check
 advise "Bay Area stations == BTS transit map"   python scripts/build_bayarea_transit.py --check
+# Added 2026-10-18 (release 2: crime, and road noise over the 2020 resident frame). Offline each checks its
+# file's coverage and arithmetic (crime also the sheriff-contract SET both ways); with the gitignored raw
+# inputs on disk (--fetch) it re-derives every value, else INCONCLUSIVE. Advisory until served. The flood
+# reader joins once FEMA's file has been pulled from the US runner and its output exists.
+advise "Bay Area crime == DOJ + Census"   python scripts/build_bayarea_crime.py --check
+advise "Bay Area residents == Census"   python scripts/bayarea_blocks.py --check
+advise "Bay Area road == BTS road tiles"   python scripts/build_bayarea_road.py --check
 # Added 2026-10-16: the SFO monitor block (the US yardstick, ANEEM) equals what its daily
 # DataSF rows give. Advisory: the rows are gitignored (--fetch); INCONCLUSIVE without them.
 advise "SFO monitors == DataSF rows"     python scripts/build_sfo_noise_monitors.py --check

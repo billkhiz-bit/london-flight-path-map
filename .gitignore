@@ -103,6 +103,9 @@ data/*
 !data/us-bayarea-prices.json
 !data/us-bayarea-trend.json
 !data/us-bayarea-transit.json
+!data/us-bayarea-crime.json
+!data/us-bayarea-road.json
+!data/us-bayarea-flood.json
 # Census outlines of the Bay Area's cities (2026-10-02), simplified, with the
 # frame the noise picture was cut to. scripts/build_bay_area_page.py --check, a
 # BLOCKING stage, renders the page from it. NOT named `*-boroughs.json`: five
