@@ -123,3 +123,23 @@ commit does not go out regardless of what else is green:
   new". Before the first commit of a new directory run
   `git add -n <dir>` and compare the list with `ls -R`; anchor ignore
   lines for root folders with a leading slash.
+- **A local server the SESSION started can turn a blocking stage red
+  (2026-10-18).** Claude served an internal preview with
+  `python -m http.server 8941` while preflight ran in the background, and
+  "front page is a tool, not a picture" (`tests/front-page.mjs`, which starts
+  its own server on 127.0.0.1:8941) failed with `EADDRINUSE`: a red gate with
+  nothing wrong in the code under test. The tests bind fixed ports (measured
+  that day: 8000 8099 8123 8765 8921-8926 8931 8934 8937 8941 8942 8955 8962).
+  Before serving anything locally, list them with
+  `grep -rhoE '(127\.0\.0\.1|localhost):[0-9]{4,5}|PORT\s*=\s*[0-9]{4,5}' tests scripts`
+  and pick one outside them (8977 was free). When a stage fails with
+  `EADDRINUSE`, look for a server the session started before suspecting the
+  code, stop it, and re-run; never commit past the red run.
+  **Second form, same day: stopping a background preflight does not stop
+  it.** On Windows, stopping the harness task ended only its wrapper shell;
+  `sh scripts/preflight.sh` and its test servers ran on for 40 minutes beside
+  the next run, and "every city switches" (`tests/city-switch.mjs`, port 8924)
+  failed with `EADDRINUSE` against the orphan. After stopping one, find the
+  tree with `Get-CimInstance Win32_Process | Where-Object CommandLine -match
+  'preflight\.sh'` and end it with `taskkill /T /F /PID <the oldest sh.exe>`,
+  then confirm no `tests/*.mjs` node or `chrome-headless-shell` is left.
