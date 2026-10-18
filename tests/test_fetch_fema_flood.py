@@ -100,13 +100,13 @@ def test_features_are_fetched_in_chunks_and_a_short_chunk_fails():
         chunk = params['objectIds'].split(',')
         calls.append(len(chunk))
         return {'features': [feature(i) for i in chunk]}
-    assert len(ff.features('L', ids, get)) == len(ids)
+    assert len(ff.features('L', ids, {}, get)) == len(ids)
     assert calls == [ff.CHUNK, 5]
 
     def short(url, params, tries=ff.TRIES):
         return {'features': [feature(0)]}
     with pytest.raises(SystemExit, match='truncated'):
-        ff.features('L', ids, short)
+        ff.features('L', ids, {}, short)
 
 
 def test_a_refused_chunk_is_halved_until_answered():
@@ -119,12 +119,26 @@ def test_a_refused_chunk_is_halved_until_answered():
         sizes.append(len(chunk))
         return {'features': [feature(i) for i in chunk]}
     ids = list(range(ff.CHUNK))
-    assert len(ff.features('L', ids, get)) == len(ids)
+    assert len(ff.features('L', ids, {}, get)) == len(ids)
     assert max(sizes) <= 10 and sum(sizes) == len(ids)
 
 
-def test_one_feature_refused_on_its_own_fails_naming_it():
+def test_one_feature_refused_at_every_tolerance_fails_naming_it():
     def get(url, params, tries=ff.TRIES):
         raise ff.ServiceError('Failed to execute query')
-    with pytest.raises(SystemExit, match='refused on its own'):
-        ff.features('L', [41], get)
+    with pytest.raises(SystemExit, match='feature 41 refused on its own, even simplified'):
+        ff.features('L', [41], {}, get)
+
+
+def test_a_heavy_feature_is_fetched_simplified_and_the_tolerance_that_worked_is_recorded():
+    # Run 39072503762: feature 352386 was refused even alone. Here full detail and the 1 m
+    # tolerance are refused and 5 m works, so the record must say 5 m, not the first one tried.
+    def get(url, params, tries=ff.TRIES):
+        chunk = params['objectIds'].split(',')
+        if '41' in chunk and params.get('maxAllowableOffset', 0) < ff.GENERALISE_DEG[1]:
+            raise ff.ServiceError('Failed to execute query')
+        return {'features': [feature(i) for i in chunk]}
+    generalised = {}
+    got = ff.features('L', [40, 41, 42], generalised, get)
+    assert len(got) == 3
+    assert generalised == {41: ff.GENERALISE_DEG[1]}

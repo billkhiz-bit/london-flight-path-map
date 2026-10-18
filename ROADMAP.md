@@ -27,6 +27,22 @@
 > holders, tested). Bay Area fit unchanged; Queens 1.44 -> severe (score 5.0 -> 4.4). Detail: METHODOLOGY s4 and
 > s20, `docs/lessons/us-cities.md`.
 >
+> **Bay Area release 2, 17 Oct evening (Bill: "yes to both"):** the top-coded price rule is CONFIRMED ("$2M+",
+> flagged, tied). **Crime is unblocked**: the OpenJustice CSV was found in Chrome and downloaded to gitignored
+> `data/openjustice/` (agencies are listed by NAME; the San Mateo sheriff-contract cities have no row of their own).
+> **Flood: FEMA refuses Bill's UK network** (Chrome and curl), so `scripts/fetch_fema_flood.py` runs on a US runner
+> via the manual workflow `fema-flood-fetch.yml`. Run 1 reached FEMA and found layer 28 by name, then FEMA refused
+> the whole box; run 2 tiled and got 6,707 ids before FEMA dropped the connection; run 3 (`39072503762`, from
+> `a64a0e7`: split on refusal OR dropped connection, 0.1-degree tiles, halving chunks) answered ALL 169 tiles
+> (8,468 polygon ids) and then failed on ONE polygon, feature 352386, refused even alone (a huge outline). The fix is
+> written and tested but **UNCOMMITTED at log-off**: a polygon refused alone is fetched again simplified to about 1,
+> then 5, then 20 m (`GENERALISE_DEG`), and the manifest records per id the tolerance that worked (13 tests pass).
+> **Next session:** preflight, commit, push to master, `gh workflow run 387953204 --ref master`; when it passes,
+> `gh run download <run> -D data/fema/` and check `manifest.json` (features, zones, `generalised_deg`). Then build:
+> the crime reader (US scale anchored on California's 2025 rate, decision 4), the flood reader (share of each city in
+> the 1%-annual-chance zone, `SFHA_TF`, even-odd over Esri rings), the road-noise reader, then the scoring wiring
+> (`/v1/score`, the US metro pool of decision 2, the map showing scores).
+>
 > **Bill's:** the rename (Overhush first: domains, then one attorney opinion; register screen on his Desktop), the
 > ICO fee and SPF/DMARC (then the researcher emails), FEMA's county flood files for the Bay Area (FEMA's hosts refuse
 > this machine), the OpenJustice crime CSV link. Python 3.11 is patched to 3.11.9.
