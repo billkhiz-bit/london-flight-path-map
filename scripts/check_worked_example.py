@@ -102,19 +102,19 @@ def main():
               if b.get('avgPrice')]
     # v5.1: the extremes growth is scaled against are over the trend the
     # engine SCORES - real terms where held - never the nominal one.
-    # v5.2: and they are the CURRENCY POOL's, through the engine's own helper,
+    # v5.2: and they are the POOL's (pool_of, decision 2), through the engine's own helper,
     # never a list built here from London alone - which is what this read
     # until 2026-09-16, and would have kept agreeing with a section 6 that
     # quoted London's extremes after the engine had stopped using them.
     max_trend, min_trend = app.national_trend_bounds(
-        CITY, app.CITIES[CITY]['boroughs'], app.CITIES[CITY]['currency']
+        CITY, app.CITIES[CITY]['boroughs'], app.pool_of(CITY)
     )
     # v5.0: affordability is anchored on the NATIONAL price band, so the cohort
     # min/max price it used to quote is no longer part of the derivation and is
     # not checked - the p5/p95 pair is. Keeping a stale price-cohort check here
     # would hold section 6 to arithmetic the engine has stopped doing.
     afford_p5, afford_p95 = app.national_price_bounds(
-        CITY, app.CITIES[CITY]['boroughs'], app.CITIES[CITY]['currency']
+        CITY, app.CITIES[CITY]['boroughs'], app.pool_of(CITY)
     )
     del prices
     for label, pattern, real in (
@@ -159,7 +159,7 @@ def main():
     # It is derived properly now, through the same helpers the engine uses, so
     # it cannot silently stop comparing again.
     afford_p5, afford_p95 = app.national_price_bounds(
-        CITY, app.CITIES[CITY]['boroughs'], app.CITIES[CITY]['currency']
+        CITY, app.CITIES[CITY]['boroughs'], app.pool_of(CITY)
     )
     derived = {
         'afford': app.afford_score(bd['avgPrice'], afford_p5, afford_p95),

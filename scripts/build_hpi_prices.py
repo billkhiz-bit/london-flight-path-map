@@ -796,6 +796,17 @@ def refresh_backend_only_prices() -> int:
         )
         return 1
 
+    # The site adds these to its STERLING pool only (index.html, nationalPriceBounds/nationalTrendBounds),
+    # so an API-only city in any other pool would put, say, dollar prices into every UK anchor on the site
+    # (code review of the pool key, 2026-10-18). Refuse it; give such a city its own site mirror instead.
+    not_sterling = sorted(c for c in backend_only if app.pool_of(c) != "GBP")
+    if not_sterling:
+        print(
+            f"BACKEND_ONLY_CITIES {not_sterling} are not in the sterling pool; the site would pool them as sterling",
+            file=sys.stderr,
+        )
+        return 1
+
     lines = [f"      {BACKEND_ONLY_START}", "      const BACKEND_ONLY_PRICES = {"]
     for city_id in sorted(backend_only):
         prices = [b["avgPrice"] for b in app.CITIES[city_id]["boroughs"].values()]

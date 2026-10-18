@@ -34,7 +34,20 @@
 >   the file's `california` block), almost exactly the Bay Area's median city (7.2%). The ramp shape is the scoring
 >   step's.
 > - **Flood** (`build_bayarea_flood.py`): written and tested; zone D or no polygon is UNKNOWN, never safe.
-> - **Next after flood:** the scoring wiring (pool key, `CITIES['bayarea']`, the US crime and road scales, the
+> - **Pool key DONE (build-order step 2, 18 Oct, not deployed: a refactor):** `pool_of(city)` in the Lambda and
+>   `poolOf` in index.html, a city's `pool` (None/null = none) else its currency. All 816 API scores
+>   byte-identical before and after (a full snapshot; it caught a shadowed `pool` first), site == Lambda on 182 pairs,
+>   `backend/tests/test_pool_key.py` (a metro in its own pool leaves New York byte-identical; the same metro in
+>   the dollar pool moves it; red on a `pool_of` that ignores the key). The SITE's `poolOf` is only truly tested
+>   once a site city names its own pool: the Bay Area's arrival grows `borough-score-parity` to 141 boroughs.
+>   An API-only city outside the sterling pool is now REFUSED by `build_hpi_prices.py` (the site pools them all
+>   as sterling). **Wording that is wrong once the Bay Area has its own pool** (published text, so it changes
+>   WITH that release, not before; code review, 18 Oct): app.py's field help "every borough Sky Score covers in
+>   this currency" (3 places), `_growth_breakdown_line`'s non-GBP basis ("the USD pool is exactly them"),
+>   `_afford_breakdown_line`'s non-sterling scope ("New York is the only city ... outside the United Kingdom"),
+>   index.html's pool comments, and `build_area_pages.py`'s growth and afford notes ("New York's five boroughs,
+>   the only US prices held"). Find them with `grep -n -E "this currency|currency pool|USD pool|only US prices"`.
+> - **Next after flood:** the scoring wiring (`CITIES['bayarea']` with `pool`, the US crime and road scales, the
 >   site through the one-way door, area pages), a release with a reviewed changeset.
 > - **Earl's Court:** sheets regenerated 18 Oct (Desktop), correction note drafted; Bill sends. The 12 Oct note
 >   above was wrong on one point: the Earls Court sheet's summary sentence DOES change (Earls Court Square is now

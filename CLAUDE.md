@@ -131,7 +131,9 @@ Or just describe what you need, I have full context of this project.
 - **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh`; it must move `SNAPSHOT_VINTAGE_LABEL`,
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.
-- **National anchors are per CURRENCY**: never pool USD with GBP. The site needs `BACKEND_ONLY_PRICES` /
+- **National anchors are per POOL** (`pool_of(city)` / site `poolOf`: a city's `pool`, else its currency;
+  one per US metro: decision 2 of 2026-10-16, built 2026-10-18): never pool USD with GBP, nor the Bay Area
+  with New York. The site needs `BACKEND_ONLY_PRICES` /
   `BACKEND_ONLY_TRENDS` to pool what the API pools; only `tests/borough-score-parity.mjs` (output parity)
   can see a miss.
 - **`weights` in a response is the APPLIED table**; reproduction residual is published as "under 0.08".

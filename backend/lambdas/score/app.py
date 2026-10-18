@@ -850,7 +850,7 @@ def benchmarks(boroughs, city='london', previous=False):
     # from the score it explains is not a yardstick. v5.2: over the POOL, with
     # `boroughs` standing in for this city's slice; the price range below stays
     # the city's, because it is published as context and not as an anchor.
-    pool = national_trend_pool(city, boroughs, CITIES[city]['currency'])
+    pool = national_trend_pool(city, boroughs, pool_of(city))
     prices = {name: bd['avgPrice'] for name, bd in boroughs.items()}
     max_trend = max(t for _, t in pool)
     min_trend = min(t for _, t in pool)
@@ -1256,7 +1256,7 @@ def build_why(
             # from the new formula. A shown sum that does not reach its own
             # answer is worse than no sum, so this reproduces the real one.
             afford_p5, afford_p95 = national_price_bounds(
-                city, CITIES[city]['boroughs'], CITIES[city]['currency']
+                city, CITIES[city]['boroughs'], pool_of(city)
             )
             driver['steps'].append(
                 'Affordability is measured against borough prices across the whole country, not just this '
@@ -7178,7 +7178,7 @@ def _growth_breakdown_line(city):
             'growth since methodology v5.1, so a flat score of 5.0 means prices held their value '
             'against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct '
             'the figure scored. Methodology v5.2 scales each tail against the real-terms fastest '
-            f'riser and steepest faller across ALL {_pool_size(cfg["currency"])} boroughs in the sterling '
+            f'riser and steepest faller across ALL {_pool_size(pool_of(city))} boroughs in the sterling '
             'pool, not this city cohort - a city-sized cohort put one borough per city on each rail '
             'every month by construction. Growth is therefore comparable BETWEEN cities; '
             'context.growthRankInCity carries the within-city standing'
@@ -7244,12 +7244,12 @@ def _afford_breakdown_line(city, bd=None):
     national distribution re-describes every city's lineage by itself.
     """
     currency = CITIES[city]['currency']
-    p5, p95 = national_price_bounds(city, CITIES[city]['boroughs'], currency)
-    pool = sum(len(c['boroughs']) for c in CITIES.values() if c['currency'] == currency)
+    p5, p95 = national_price_bounds(city, CITIES[city]['boroughs'], pool_of(city))
+    pool = _pool_size(pool_of(city))
     # The OTHER pool's size, for the sentence that contrasts the two. It was
     # the literal '94-borough' three lines under the line deriving `pool`
     # (audit M10) - right today, and the shape this docstring warns about.
-    gbp_pool = sum(len(c['boroughs']) for c in CITIES.values() if c['currency'] == 'GBP')
+    gbp_pool = _pool_size('GBP')
     unit = 'GBP' if currency == 'GBP' else 'USD'
 
     if currency == 'GBP':
@@ -8902,8 +8902,22 @@ _NATIONAL_AFFORD_BOUNDS = {}
 _NATIONAL_GROWTH_BOUNDS = {}
 
 
-def national_trend_pool(city, boroughs, currency):
-    """Every borough in the currency pool with the trend growth is SCORED on,
+def pool_of(city):
+    """The pool a city's affordability and growth anchors are taken over.
+
+    DECISION 2 of the Bay Area's release 2 (Bill, 2026-10-16): one pool per US METRO, not one per
+    currency, because adding the Bay Area to the dollar pool as it stood would put the p95 anchor on
+    the "$2M+" top code and MOVE New York's published affordability (Queens 6.5 -> 9.9). A city takes
+    its own pool by naming it in CITIES (`'pool'`); every city without one, or with `'pool': None`,
+    pools by its currency, which is every city on 2026-10-18, so introducing the key moved no score
+    (816 of 816 identical). `or`, not a .get default, so that a None reads as the currency exactly as
+    the site's `poolOf` reads `pool: null` (its key-parity gate puts `pool` on EVERY city once one has it).
+    """
+    return CITIES[city].get('pool') or CITIES[city]['currency']
+
+
+def national_trend_pool(city, boroughs, pool):
+    """Every borough in the pool (pool_of) with the trend growth is SCORED on,
     as (label, trend) pairs - v5.2's growth cohort.
 
     `boroughs` stands in for `city`'s own slice, exactly as in
@@ -8914,24 +8928,24 @@ def national_trend_pool(city, boroughs, currency):
     "Trafford" in a London explanation reads as a borough the reader cannot
     find on the London map.
     """
-    pool = []
+    members = []
     for other, cfg in CITIES.items():
-        if cfg['currency'] != currency:
+        if pool_of(other) != pool:
             continue
         source = boroughs if other == city else cfg['boroughs']
         for name, bd in source.items():
             label = name if other == city else f"{name} ({cfg['name']})"
-            pool.append((label, scored_trend(bd)))
-    return pool
+            members.append((label, scored_trend(bd)))
+    return members
 
 
-def _pool_size(currency):
-    """How many boroughs share `currency` - the cohort size v5.2 growth names."""
-    return sum(len(cfg['boroughs']) for cfg in CITIES.values() if cfg['currency'] == currency)
+def _pool_size(pool):
+    """How many boroughs share `pool` - the cohort size v5.2 growth names."""
+    return sum(len(cfg['boroughs']) for name, cfg in CITIES.items() if pool_of(name) == pool)
 
 
-def national_trend_bounds(city, boroughs, currency):
-    """(max_trend, min_trend) across the whole currency pool - v5.2.
+def national_trend_bounds(city, boroughs, pool):
+    """(max_trend, min_trend) across the whole pool (pool_of) - v5.2.
 
     WHY THE COHORT WENT NATIONAL (2026-09-16). Until v5.2 each city's growth
     was dual-anchored against ITS OWN fastest riser and steepest faller, so by
@@ -8948,7 +8962,7 @@ def national_trend_bounds(city, boroughs, currency):
     measured and rejected: it barely touches the churn (0.95) because the
     per-city rails stay, and it would publish a trend that no longer equals
     HMLR's own Annual_Change, which is what an integrator verifies against.
-    Same argument as v5.0's affordability, same shape, same per-currency pool:
+    Same argument as v5.0's affordability, same shape, same pool (pool_of):
     a narrow cohort manufactures spread it has not measured.
 
     The 5.0 = flat anchor is unchanged and absolute; only the two tails'
@@ -8956,20 +8970,21 @@ def national_trend_bounds(city, boroughs, currency):
     own five boroughs, so nothing changes there.
     """
     override = boroughs is not CITIES[city]['boroughs']
-    if not override and currency in _NATIONAL_GROWTH_BOUNDS:
-        return _NATIONAL_GROWTH_BOUNDS[currency]
-    trends = [t for _, t in national_trend_pool(city, boroughs, currency)]
+    if not override and pool in _NATIONAL_GROWTH_BOUNDS:
+        return _NATIONAL_GROWTH_BOUNDS[pool]
+    trends = [t for _, t in national_trend_pool(city, boroughs, pool)]
     bounds = (max(trends), min(trends))
     if not override:
-        _NATIONAL_GROWTH_BOUNDS[currency] = bounds
+        _NATIONAL_GROWTH_BOUNDS[pool] = bounds
     return bounds
 
 
-def national_price_bounds(city, boroughs, currency):
+def national_price_bounds(city, boroughs, pool):
     """The 5th and 95th percentile borough median price across the whole
-    currency pool - v5.0's affordability anchor.
+    pool (pool_of) - v5.0's affordability anchor.
 
-    THE POOL IS PER CURRENCY, NOT GLOBAL. New York's medians are curated USD
+    THE POOL IS NEVER GLOBAL: per pool_of, which is the currency unless a city names its own (one per
+    US metro, decision 2). New York's medians are curated USD
     figures, not HM Land Registry sterling, so pooling them with the UK would be
     a category error rather than a wider cohort. In practice that makes the USD
     pool exactly NYC's five boroughs, and the methodology says so instead of
@@ -8988,17 +9003,17 @@ def national_price_bounds(city, boroughs, currency):
     honest fix is a previous-vintage price for every city, not this docstring.
     """
     override = boroughs is not CITIES[city]['boroughs']
-    if not override and currency in _NATIONAL_AFFORD_BOUNDS:
-        return _NATIONAL_AFFORD_BOUNDS[currency]
+    if not override and pool in _NATIONAL_AFFORD_BOUNDS:
+        return _NATIONAL_AFFORD_BOUNDS[pool]
     prices = []
     for other, cfg in CITIES.items():
-        if cfg['currency'] != currency:
+        if pool_of(other) != pool:
             continue
         source = boroughs if other == city else cfg['boroughs']
         prices.extend(b['avgPrice'] for b in source.values())
     bounds = (_percentile(prices, 0.05), _percentile(prices, 0.95))
     if not override:
-        _NATIONAL_AFFORD_BOUNDS[currency] = bounds
+        _NATIONAL_AFFORD_BOUNDS[pool] = bounds
     return bounds
 
 
@@ -9142,7 +9157,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     # v5.0: NATIONAL log anchor, not the city cohort. See afford_score() for the
     # 1,619 inverted cross-city pairs this replaced, and for why the linear
     # p10/p90 first proposed was rejected on measurement.
-    p5, p95 = national_price_bounds(city, boroughs, CITIES[city]['currency'])
+    p5, p95 = national_price_bounds(city, boroughs, pool_of(city))
     afford = afford_score(bd['avgPrice'], p5, p95)
 
     # v5.1: scored on the REAL-terms trend where the city has one (every
@@ -9152,7 +9167,7 @@ def calc_score(borough_name, city, weights, lat=None, lon=None, postcode_clean=N
     # riser and steepest faller.
     # v5.2: those extremes are the CURRENCY POOL's, not the city's - see
     # national_trend_bounds() for the 24-month replay that decided it.
-    max_trend, min_trend = national_trend_bounds(city, boroughs, CITIES[city]['currency'])
+    max_trend, min_trend = national_trend_bounds(city, boroughs, pool_of(city))
     # Methodology v3.4: dual-anchor — 0% growth sits at 5.0, each tail scaled
     # to its own extreme. See growth_score() for why the v3.2 single-anchor
     # formula collapsed 14 of 33 boroughs onto one value.

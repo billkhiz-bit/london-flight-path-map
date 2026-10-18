@@ -7946,24 +7946,37 @@
       // Derived from the registry, never a hardcoded pair: a new city changes
       // the national distribution, and a constant here would silently keep
       // scoring against the distribution as it was on the day it was written.
+      //
+      // The POOL is poolOf(), mirroring pool_of() in the score Lambda (decision 2 of the Bay Area's
+      // release 2, 2026-10-16): a city may name its own `pool` in CITY_DATA, one per US metro, so a
+      // new dollar city cannot move New York's anchors; every city without one pools by its
+      // currency, which is every city on 2026-10-18 (816 API scores byte-identical across the change).
+      // Site pools are named by the currency SYMBOL ('£', '$'), the Lambda's by code ('GBP', 'USD'):
+      // the GROUPING is what must match. tests/smoke-local.mjs holds every CITY_DATA entry to the same
+      // keys, so once one city names a pool the rest carry `pool: null`, which `||` reads as the
+      // currency, as `or` does in the Lambda. The API-only cities join the '£' pool only, and
+      // build_hpi_prices.py refuses to generate one that is not sterling.
+      function poolOf(cityId) {
+        return cityOf(cityId).pool || cityOf(cityId).currency;
+      }
       const _nationalBounds = {};
       function nationalPriceBounds(cityId) {
-        const currency = cityOf(cityId).currency;
-        if (!_nationalBounds[currency]) {
+        const pool = poolOf(cityId);
+        if (!_nationalBounds[pool]) {
           const prices = [];
           for (const id of Object.keys(CITY_DATA)) {
-            if (cityOf(id).currency !== currency) continue;
+            if (poolOf(id) !== pool) continue;
             for (const d of Object.values(cityOf(id).boroughRaw())) prices.push(d.avg_price);
           }
           // The API-only cities. Sterling pool only - both are UK, and pooling
           // them into the USD band would be the category error the comment on
           // this function warns about.
-          if (currency === '£') {
+          if (pool === '£') {
             for (const list of Object.values(BACKEND_ONLY_PRICES)) prices.push(...list);
           }
-          _nationalBounds[currency] = [percentileOf(prices, 0.05), percentileOf(prices, 0.95)];
+          _nationalBounds[pool] = [percentileOf(prices, 0.05), percentileOf(prices, 0.95)];
         }
-        return _nationalBounds[currency];
+        return _nationalBounds[pool];
       }
 
       // v5.2 growth anchor: the fastest real-terms riser and steepest faller
@@ -7979,14 +7992,14 @@
       // reason their prices enter through BACKEND_ONLY_PRICES.
       const _nationalTrendBounds = {};
       function nationalTrendBounds(cityId) {
-        const currency = cityOf(cityId).currency;
-        if (!_nationalTrendBounds[currency]) {
+        const pool = poolOf(cityId);
+        if (!_nationalTrendBounds[pool]) {
           const trends = [];
           for (const id of Object.keys(CITY_DATA)) {
-            if (cityOf(id).currency !== currency) continue;
+            if (poolOf(id) !== pool) continue;
             for (const d of Object.values(cityOf(id).boroughRaw())) trends.push(scoredTrend(d.trend, id));
           }
-          if (currency === '£') {
+          if (pool === '£') {
             // Both API-only cities are sterling and neither is in CITY_DATA,
             // so scoredTrend's currency test is answered by passing a sterling
             // city; the deflator is the same one constant either way.
@@ -7994,9 +8007,9 @@
               for (const trend of list) trends.push(scoredTrend(trend, 'london'));
             }
           }
-          _nationalTrendBounds[currency] = [Math.max(...trends), Math.min(...trends)];
+          _nationalTrendBounds[pool] = [Math.max(...trends), Math.min(...trends)];
         }
-        return _nationalTrendBounds[currency];
+        return _nationalTrendBounds[pool];
       }
 
       // Cheaper is higher; 10.0 at or below p5, 0.0 at or above p95. LOG, not

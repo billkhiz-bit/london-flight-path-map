@@ -134,3 +134,13 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   The fetcher now retries a refused feature with `FLD_ZONE,SFHA_TF` only, and probes each field alone for any still
   refused, so the manifest names the field. Lesson: when a service refuses a record, vary WHAT is asked for before
   varying HOW MUCH.
+- **The pool key (2026-10-18, decision 2, build-order step 2):** affordability and growth anchors are taken over
+  `pool_of(city)` (Lambda) / `poolOf` (index.html): a city's `pool`, else its currency. Introduced as a pure
+  refactor, proven by a byte-for-byte snapshot of all 816 scores (14 cities x 8 personas) before and after; the
+  snapshot was itself proven red (London alone in a pool moved 728 of 816). It caught a shadowing bug first:
+  the trend function's local result list was also named `pool`, so `pool = []` replaced the parameter and every
+  city was skipped (any calc_score then raised ValueError, so the existing tests would have caught it too; an
+  earlier note here said otherwise and was wrong, corrected after a code review). Lesson: renaming a parameter
+  to a word the body already uses is a shadowing trap. The review also found: the Lambda must read `None` as
+  the currency (`or`, as the site's `||`), because the site's key-parity gate will put `pool: null` on every
+  city; and the site pools the API-only cities as sterling, now refused by build_hpi_prices.py for any other.
