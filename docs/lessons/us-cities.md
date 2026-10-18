@@ -122,3 +122,15 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
 - **Flood** (`build_bayarea_flood.py`, waiting on FEMA's file): FEMA maps all studied land, zone X included,
   so a resident in zone D or in no polygon is UNKNOWN, counted and left out of the share, and over 5% of a city
   fails the check; overlapping studies take the riskier reading.
+- **The road anchor, measured (2026-10-18):** California's statewide share in the 45 dB band or louder is 6.88%
+  (39.5m residents over 4,499 zoom-12 tiles; `--fetch-state`). A 404 there is accepted as EMPTY only when the first
+  parent tile that answers paints nothing over that quarter (`_area_painted`); none were needed. It sits on the Bay
+  Area's median city (7.2%), so a scale anchored there splits the region rather than flattering it.
+- **FEMA's refusals follow the FIELDS, not the geometry (2026-10-18, four runs).** Run 1 refused the whole box; run
+  3 one polygon "even alone"; simplifying to 20 m did not help (run 2). Run 3's leave-out-and-record hit four in a
+  row in Santa Cruz County (the one search box reached into it: now only tiles touching a city's own box are
+  searched, and a refusal whose extent touches no city is recorded apart). Run 4 then hit one by SFO, and for it
+  FEMA answered an EXTENT query (no fields) but refused an attributes-only query: the requested fields break it.
+  The fetcher now retries a refused feature with `FLD_ZONE,SFHA_TF` only, and probes each field alone for any still
+  refused, so the manifest names the field. Lesson: when a service refuses a record, vary WHAT is asked for before
+  varying HOW MUCH.

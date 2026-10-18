@@ -5,6 +5,12 @@
  "generator": "scripts/build_bayarea_road.py --write",
  "measure": "share of residents at or above 45 dB LAeq, the BTS band holding WHO's 53 dB Lden (Lden = LAeq + 6.4 dB under BTS's flat-day model): the louder side of WHO",
  "scope": "BTS: simplified modelling, not for individual locations; a city share only. NOT ON THE UK SCALE: BTS models highway traffic, DEFRA far more of the urban network, and the two do not overlap (measured 2026-10-18: Bay Area 0.9-24.8%, median 7.2%; UK boroughs 27.9-95.6%, median 55.0%), so a score from this needs a US scale, never the UK ramp",
+ "california": {
+  "residents": 39538223,
+  "share_at_or_above_45_db_pct": 6.88,
+  "empty_tiles": 0
+ },
+ "anchor": "the US road scale is anchored on california.share_at_or_above_45_db_pct (Bill, 2026-10-18), as the US crime scale is on the state rate: never the UK ramp",
  "cities": [
   {
    "geoid": "0600562",

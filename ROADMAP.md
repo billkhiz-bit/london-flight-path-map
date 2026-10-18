@@ -11,7 +11,11 @@
 > at every tolerance left out and recorded) then hit 352386-352389 in a row, even ATTRIBUTES refused, and stopped at
 > the cap. FEMA still gave their extents: all in **Santa Cruz County**, near no city, caught because the one search
 > box reached into it. Fix: search only tiles that touch a city's own box (82 of 160), and a refusal whose extent
-> touches no city is recorded apart (`refused_outside_cities`), outside the cap. Next run: when it passes,
+> touches no city is recorded apart (`refused_outside_cities`), outside the cap. Run 4 (`39142466860`) set many apart
+> but stopped on 1067721 BY SFO: FEMA answered its EXTENT (no fields) yet refused even an attributes-only query, so
+> the failure follows the requested FIELDS, not the geometry. Fix: a feature refused alone is asked again with only
+> `FLD_ZONE,SFHA_TF` (`minimal_fields` in the manifest); one refused even then has each field probed alone, so the
+> manifest names the field FEMA cannot serve; cap 25 near the cities. Next run: when it passes,
 > `gh run download <run> -D data/fema/`, read `manifest.json`, `python scripts/build_bayarea_flood.py --write`, add
 > its `advise` stage.
 > - **Resident frame** (`scripts/bayarea_blocks.py`): 2020 Census blocks from the PL 94-171 geographic header,
@@ -25,8 +29,10 @@
 > - **Road** (`build_bayarea_road.py`, `data/us-bayarea-road.json`): BTS 2022 road tiles at every block. The road
 >   service has a LEGEND equal to NOISE_SCALE_BTS; its cache stops at level 12 (a 404 above is "not cached").
 >   Share counted from 45 dB LAeq (the band holding WHO's 53 Lden). Bay Area 0.9-24.8%, UK 27.9-95.6%: **not on
->   the UK scale; a US scale anchored on a published reference (Bill, 2026-10-18), proposed: California's
->   statewide share in the same band.** Fix it at the scoring step.
+>   the UK scale; a US scale anchored on a published reference (Bill, 2026-10-18): California's statewide share
+>   in the same band, MEASURED 6.88%** (39.5m residents, 4,499 tiles, 0 unexplained 404s; `--fetch-state`, held in
+>   the file's `california` block), almost exactly the Bay Area's median city (7.2%). The ramp shape is the scoring
+>   step's.
 > - **Flood** (`build_bayarea_flood.py`): written and tested; zone D or no polygon is UNKNOWN, never safe.
 > - **Next after flood:** the scoring wiring (pool key, `CITIES['bayarea']`, the US crime and road scales, the
 >   site through the one-way door, area pages), a release with a reviewed changeset.

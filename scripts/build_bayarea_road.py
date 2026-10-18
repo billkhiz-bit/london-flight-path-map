@@ -16,6 +16,8 @@ Licence: a US government work (BTS, USDOT). Credit "USDOT Bureau of Transportati
 
   python scripts/build_bayarea_road.py --fetch   the legend and every zoom-12 tile holding a block
                                                  (about 60 PNGs) into gitignored data/bts-road-2022/
+  python scripts/build_bayarea_road.py --fetch-state  every zoom-12 tile holding a CALIFORNIA resident
+                                                 (4,499), for the US scale's anchor (Bill, 2026-10-18)
   python scripts/build_bayarea_road.py --write   write data/us-bayarea-road.json
   python scripts/build_bayarea_road.py --check   the file is sound (offline); and, with the tiles and
                                                  the block frame on disk, every share against them
@@ -29,6 +31,7 @@ import json
 import math
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -40,6 +43,7 @@ OUT = REPO / 'data' / 'us-bayarea-road.json'
 # 2026-10-18), so a 404 is "not cached", never "quiet", and fails the fetch. Level 12 is about 30 m a
 # pixel at the Bay Area's latitude, BTS's own grid, so a point reads its own cell.
 ZOOM = 12
+MIN_ZOOM = 6  # a 404 is proven empty by climbing to the first parent that answers, never past this
 TILE = 256
 COUNT_FROM_DB = 45  # the band holding WHO's 53 dB Lden (46.6 dB LAeq); see the docstring
 PAUSE_S = 0.05
@@ -107,6 +111,95 @@ def fetch(frame):
     print(f'{len(tiles):,} tiles needed, {got:,} fetched, the rest already on disk')
 
 
+def _tile(z, x, y, fetch):
+    """A cached tile's path, or None where the service answered 404 (recorded, so it is asked once)."""
+    path, miss = RAW / f'{z}_{x}_{y}.png', RAW / f'{z}_{x}_{y}.404'
+    if path.exists():
+        return path
+    if miss.exists():
+        return None
+    if not fetch:
+        raise SystemExit(f'{path.name} is not on disk (run --fetch-state)')
+    try:
+        with urllib.request.urlopen(urllib.request.Request(f'{SERVICE}/tile/{z}/{y}/{x}', headers=UA),  # noqa: S310
+                                    timeout=60) as r:
+            body = r.read()
+    except urllib.error.HTTPError as exc:
+        if exc.code != 404:
+            raise
+        miss.write_text('404\n', encoding='utf-8')
+        return None
+    finally:
+        time.sleep(PAUSE_S)
+    if not body.startswith(b'\x89PNG'):
+        raise SystemExit(f'tile {z}/{y}/{x}: not a PNG ({body[:60]!r})')
+    path.write_bytes(body)
+    return path
+
+
+def _area_painted(z, x, y, x0, y0, size, fetch):
+    """Whether tile (z, x, y) paints anything in its square [x0, x0 + size), climbing parents through 404s:
+    the cache skips blank tiles, so a 404 is EMPTY only when the first parent that answers paints nothing there."""
+    from PIL import Image  # noqa: PLC0415
+    path = _tile(z, x, y, fetch)
+    if path is None:
+        if z <= MIN_ZOOM:
+            raise SystemExit(f'no tile answers over {z}/{y}/{x} down to zoom {MIN_ZOOM}: not cached, not quiet')
+        return _area_painted(z - 1, x // 2, y // 2, (x % 2) * 128 + x0 // 2, (y % 2) * 128 + y0 // 2,
+                             max(1, size // 2), fetch)
+    return any(px[3] for px in Image.open(path).convert('RGBA').crop((x0, y0, x0 + size, y0 + size)).getdata())
+
+
+def _state_by_tile():
+    """{(tile x, tile y): [(pixel x, pixel y, residents)]} for every California block with residents."""
+    out = {}
+    for _, _, pop, lon, lat in _load('bayarea_blocks').pl_blocks():
+        if pop > 0:
+            tx, ty, px, py = tile_of(lon, lat)
+            out.setdefault((tx, ty), []).append((px, py, pop))
+    return out
+
+
+def _empty(tx, ty, fetch):
+    """A zoom-12 404, proven empty by its parent, or the run fails: a 404 under paint is unexplained."""
+    if _area_painted(ZOOM - 1, tx // 2, ty // 2, (tx % 2) * 128, (ty % 2) * 128, 128, fetch):
+        raise SystemExit(f'tile {ZOOM}/{ty}/{tx}: 404, yet its parent paints that quarter; not cached, not quiet')
+    return True
+
+
+def fetch_state():
+    by_tile = _state_by_tile()
+    for i, (tx, ty) in enumerate(sorted(by_tile)):
+        if _tile(ZOOM, tx, ty, fetch=True) is None:
+            _empty(tx, ty, fetch=True)
+        if i % 500 == 499:
+            print(f'  {i + 1:,} of {len(by_tile):,} tiles', flush=True)
+    print(f'{len(by_tile):,} tiles hold California residents; all on disk')
+
+
+def state_share():
+    """California's share of residents at or above COUNT_FROM_DB: the anchor of the US road scale (Bill,
+    2026-10-18: a US scale anchored on a published reference, as crime is on the state rate)."""
+    from PIL import Image  # noqa: PLC0415
+    bands = legend_bands()
+    people = loud = empty = 0
+    for (tx, ty), pts in sorted(_state_by_tile().items()):
+        path = _tile(ZOOM, tx, ty, fetch=False)
+        n = sum(p for _, _, p in pts)
+        people += n
+        if path is None:
+            empty += _empty(tx, ty, fetch=False)
+            continue
+        im = Image.open(path).convert('RGBA')
+        for px, py, pop in pts:
+            r, g, b, a = im.getpixel((px, py))
+            if a and (r, g, b) not in bands:
+                raise SystemExit(f'tile {ZOOM}/{ty}/{tx}: a colour outside the legend, {(r, g, b, a)}')
+            if a and bands[(r, g, b)] >= COUNT_FROM_DB:
+                loud += pop
+    return {'residents': people, 'share_at_or_above_45_db_pct': round(100 * loud / people, 2), 'empty_tiles': empty}
+
+
 def build(frame):
     from PIL import Image  # noqa: PLC0415
     bands = legend_bands()
@@ -150,6 +243,9 @@ def build(frame):
                  'SCALE: BTS models highway traffic, DEFRA far more of the urban network, and the two do not '
                  'overlap (measured 2026-10-18: Bay Area 0.9-24.8%, median 7.2%; UK boroughs 27.9-95.6%, '
                  'median 55.0%), so a score from this needs a US scale, never the UK ramp',
+        'california': state_share(),
+        'anchor': 'the US road scale is anchored on california.share_at_or_above_45_db_pct (Bill, 2026-10-18), '
+                  'as the US crime scale is on the state rate: never the UK ramp',
         'cities': rows,
     }
 
@@ -166,6 +262,9 @@ def problems(doc, want):
         loud = sum(v for k, v in r['residents_by_band'].items() if k != 'below_45' and int(k) >= COUNT_FROM_DB)
         if r['share_at_or_above_45_db_pct'] != round(100 * loud / r['residents'], 1):
             out.append(f"{r['name']}: the share is not its bands'")
+    ca = doc.get('california') or {}
+    if not (ca.get('residents', 0) > 30_000_000 and 0 < ca.get('share_at_or_above_45_db_pct', 0) < 100):
+        out.append(f'the California anchor is missing or implausible: {ca}')
     return out
 
 
@@ -173,6 +272,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument('--fetch', action='store_true')
+    g.add_argument('--fetch-state', action='store_true')
     g.add_argument('--write', action='store_true')
     g.add_argument('--check', action='store_true')
     a = ap.parse_args()
@@ -180,13 +280,17 @@ def main():
     if a.fetch:
         fetch(blocks.blocks())
         return 0
+    if a.fetch_state:
+        fetch_state()
+        return 0
     if a.write:
         doc = build(blocks.blocks())
         OUT.write_text(json.dumps(doc, indent=1) + '\n', encoding='utf-8', newline='\n')
         top = sorted(doc['cities'], key=lambda r: -r['share_at_or_above_45_db_pct'])
         print(f"wrote {OUT.relative_to(REPO)}: {len(top)} cities; loudest "
               + ', '.join(f"{r['name']} {r['share_at_or_above_45_db_pct']}%" for r in top[:4])
-              + '; quietest ' + ', '.join(f"{r['name']} {r['share_at_or_above_45_db_pct']}%" for r in top[-3:]))
+              + '; quietest ' + ', '.join(f"{r['name']} {r['share_at_or_above_45_db_pct']}%" for r in top[-3:])
+              + f"; California {doc['california']['share_at_or_above_45_db_pct']}%")
         return 0
     doc = json.loads(OUT.read_text(encoding='utf-8'))
     failures = problems(doc, blocks.cities())
