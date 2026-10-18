@@ -60,6 +60,10 @@ TRIES = 2  # per request before the tile or chunk is split instead
 # asked for again with its outline simplified by these tolerances in degrees (about 1, 5 and 20 m), and the
 # tolerance used is recorded per id in the manifest. 20 m is negligible for the share of a city in a zone.
 GENERALISE_DEG = (0.00001, 0.00005, 0.0002)
+# Run 39134615637 refused feature 352386 even at 20 m, so its size is not the cause. A polygon refused at every
+# tolerance is LEFT OUT and recorded with what FEMA will say about it (attributes, extent): the reader counts a
+# resident in no polygon as UNKNOWN, never safe. More than this many is systemic, and fails the run.
+MAX_REFUSED = 3
 UA = {'User-Agent': 'Sky Score data fetch (skyscore.co.uk; public-domain FEMA NFHL)'}
 
 
@@ -163,10 +167,31 @@ def object_ids(layer_url, box, get=get_json):
     return sorted(ids)
 
 
-def fetch_chunk(layer_url, chunk, get, generalised, offset=None):
+def refuse(layer_url, oid, get, refused, exc):
+    """Record a polygon FEMA will not return at any tolerance, with its attributes and extent where FEMA
+    gives those, and leave it out. Past MAX_REFUSED the run fails: that is no longer one bad outline."""
+    if len(refused) >= MAX_REFUSED:
+        raise SystemExit(f'feature {oid} is refused even simplified, after {sorted(refused)}: systemic ({exc})')
+    note = {'error': str(exc)[:200]}
+    for key, extra in (('attributes', {'returnGeometry': 'false', 'outFields': FIELDS}),
+                       ('extent', {'returnExtentOnly': 'true', 'outSR': 4326})):
+        try:
+            doc = get(f'{layer_url}/query', {'objectIds': str(oid), 'f': 'json', **extra})
+            note[key] = ((doc.get('features') or [{}])[0].get('attributes') if key == 'attributes'
+                         else doc.get('extent'))
+        except (ServiceError, NetworkError) as e:
+            note[key] = f'refused too: {e}'[:200]
+        finally:
+            time.sleep(PAUSE_S)
+    refused[oid] = note
+    print(f'  feature {oid} REFUSED at every tolerance: left out, recorded as {note}', flush=True)
+    return []
+
+
+def fetch_chunk(layer_url, chunk, get, generalised, refused, offset=None):
     """Esri JSON features for these ids. A refused chunk is halved; one id refused alone is asked for
-    again with its outline simplified (GENERALISE_DEG, recorded in `generalised`); refused even then,
-    the run fails naming it."""
+    again with its outline simplified (GENERALISE_DEG, recorded in `generalised`); refused even then, it
+    is left out and recorded in `refused` (see refuse())."""
     params = {
         'objectIds': ','.join(map(str, chunk)), 'outFields': FIELDS, 'returnGeometry': 'true',
         'outSR': 4326, 'geometryPrecision': 6, 'f': 'json',
@@ -178,13 +203,12 @@ def fetch_chunk(layer_url, chunk, get, generalised, offset=None):
     except (ServiceError, NetworkError) as exc:
         if len(chunk) > 1:
             half = len(chunk) // 2
-            return (fetch_chunk(layer_url, chunk[:half], get, generalised)
-                    + fetch_chunk(layer_url, chunk[half:], get, generalised))
+            return (fetch_chunk(layer_url, chunk[:half], get, generalised, refused)
+                    + fetch_chunk(layer_url, chunk[half:], get, generalised, refused))
         tried = GENERALISE_DEG if offset is None else GENERALISE_DEG[GENERALISE_DEG.index(offset) + 1:]
         if not tried:
-            raise SystemExit(f'feature {chunk[0]} refused on its own, even simplified to '
-                             f'{GENERALISE_DEG[-1]} degrees: {exc}') from exc
-        return fetch_chunk(layer_url, chunk, get, generalised, tried[0])
+            return refuse(layer_url, chunk[0], get, refused, exc)
+        return fetch_chunk(layer_url, chunk, get, generalised, refused, tried[0])
     finally:
         time.sleep(PAUSE_S)
     got = doc.get('features')
@@ -197,7 +221,7 @@ def fetch_chunk(layer_url, chunk, get, generalised, offset=None):
     return got
 
 
-def features(layer_url, ids, generalised, get=get_json):
+def features(layer_url, ids, generalised, refused, get=get_json):
     """Esri JSON features (attributes + geometry rings, WGS84), in id chunks.
 
     Esri JSON, not GeoJSON: every ArcGIS server speaks it, and a reader tests a point against a
@@ -205,7 +229,7 @@ def features(layer_url, ids, generalised, get=get_json):
     """
     out = []
     for i in range(0, len(ids), CHUNK):
-        out.extend(fetch_chunk(layer_url, ids[i:i + CHUNK], get, generalised))
+        out.extend(fetch_chunk(layer_url, ids[i:i + CHUNK], get, generalised, refused))
         if (i // CHUNK) % 10 == 9 or i + CHUNK >= len(ids):
             print(f'  {len(out):,} of {len(ids):,} features', flush=True)
     return out
@@ -220,8 +244,8 @@ def main():
     layer_url = f'{service}/{layer_id}'
     print(f'{layer_name} at {layer_url}; box {box}', flush=True)
     ids = object_ids(layer_url, box)
-    generalised = {}
-    feats = features(layer_url, ids, generalised)
+    generalised, refused = {}, {}
+    feats = features(layer_url, ids, generalised, refused)
     doc = {'format': 'esrijson', 'spatialReference': {'wkid': 4326}, 'features': feats}
     args.out.mkdir(parents=True, exist_ok=True)
     blob = gzip.compress(json.dumps(doc, separators=(',', ':')).encode('utf-8'), mtime=0)
@@ -232,6 +256,7 @@ def main():
         'service': service, 'layer_id': layer_id, 'layer_name': layer_name, 'fields': FIELDS,
         'box_lonlat': box, 'box_from': str(PLACES.relative_to(REPO)), 'features': len(feats),
         'zones': zones, 'generalised_deg': {str(k): v for k, v in sorted(generalised.items())},
+        'refused': {str(k): v for k, v in sorted(refused.items())},
         'fetched_utc': dt.datetime.now(dt.UTC).isoformat(timespec='seconds'),
         'sha256_gz': hashlib.sha256(blob).hexdigest(),
     }

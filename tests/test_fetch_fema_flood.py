@@ -100,13 +100,13 @@ def test_features_are_fetched_in_chunks_and_a_short_chunk_fails():
         chunk = params['objectIds'].split(',')
         calls.append(len(chunk))
         return {'features': [feature(i) for i in chunk]}
-    assert len(ff.features('L', ids, {}, get)) == len(ids)
+    assert len(ff.features('L', ids, {}, {}, get)) == len(ids)
     assert calls == [ff.CHUNK, 5]
 
     def short(url, params, tries=ff.TRIES):
         return {'features': [feature(0)]}
     with pytest.raises(SystemExit, match='truncated'):
-        ff.features('L', ids, {}, short)
+        ff.features('L', ids, {}, {}, short)
 
 
 def test_a_refused_chunk_is_halved_until_answered():
@@ -119,15 +119,34 @@ def test_a_refused_chunk_is_halved_until_answered():
         sizes.append(len(chunk))
         return {'features': [feature(i) for i in chunk]}
     ids = list(range(ff.CHUNK))
-    assert len(ff.features('L', ids, {}, get)) == len(ids)
+    assert len(ff.features('L', ids, {}, {}, get)) == len(ids)
     assert max(sizes) <= 10 and sum(sizes) == len(ids)
 
 
-def test_one_feature_refused_at_every_tolerance_fails_naming_it():
+def test_a_feature_refused_at_every_tolerance_is_left_out_and_recorded_with_what_fema_will_say():
+    # Run 39134615637: feature 352386 refused even at 20 m. FEMA still answers for its attributes and extent.
+    def get(url, params, tries=ff.TRIES):
+        if params.get('returnGeometry') == 'false':
+            return {'features': [{'attributes': {'FLD_ZONE': 'AE', 'SFHA_TF': 'T'}}]}
+        if params.get('returnExtentOnly') == 'true':
+            return {'extent': {'xmin': -122.4, 'ymin': 37.4, 'xmax': -122.1, 'ymax': 37.6}}
+        chunk = params['objectIds'].split(',')
+        if '41' in chunk:
+            raise ff.ServiceError('Failed to execute query')
+        return {'features': [feature(i) for i in chunk]}
+    refused = {}
+    got = ff.features('L', [40, 41, 42], {}, refused, get)
+    assert len(got) == 2
+    assert set(refused) == {41}
+    assert refused[41]['attributes'] == {'FLD_ZONE': 'AE', 'SFHA_TF': 'T'}
+    assert refused[41]['extent']['xmin'] == -122.4
+
+
+def test_more_refusals_than_the_cap_fail_the_run_as_systemic():
     def get(url, params, tries=ff.TRIES):
         raise ff.ServiceError('Failed to execute query')
-    with pytest.raises(SystemExit, match='feature 41 refused on its own, even simplified'):
-        ff.features('L', [41], {}, get)
+    with pytest.raises(SystemExit, match='systemic'):
+        ff.features('L', list(range(ff.MAX_REFUSED + 1)), {}, {}, get)
 
 
 def test_a_heavy_feature_is_fetched_simplified_and_the_tolerance_that_worked_is_recorded():
@@ -139,6 +158,6 @@ def test_a_heavy_feature_is_fetched_simplified_and_the_tolerance_that_worked_is_
             raise ff.ServiceError('Failed to execute query')
         return {'features': [feature(i) for i in chunk]}
     generalised = {}
-    got = ff.features('L', [40, 41, 42], generalised, get)
+    got = ff.features('L', [40, 41, 42], generalised, {}, get)
     assert len(got) == 3
     assert generalised == {41: ff.GENERALISE_DEG[1]}
