@@ -2,7 +2,8 @@
 
 ## 2026-10-19 - Air measured nearby, on the front page and in the street report
 
-- **Not yet deployed.** Shown, never scored: the score and its methodology are unchanged.
+- **Deployed and checked against the live site** (19 Oct): every page and data file matches what was released,
+  and the site and the API agree on every score. Shown, never scored: the score and its methodology are unchanged.
 - **London: the nearest Breathe London sensor.** A postcode's answer names the nearest of London's low-cost
   air sensors within 5 km, with its type (background, roadside or kerbside), its distance from the kerb, and its
   nitrogen dioxide and fine-particle averages over the last 12 whole months, beside DEFRA's background figure.

@@ -13,11 +13,16 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > deployed: nothing reads the file). `scripts/fetch_breathe_london.py --fetch` (key from `.env` only) wrote
 > `data/breathe-london-sensors.json`: 116 of 153 live sensors with a 12-month NO2 and/or PM2.5 mean over Oct 2025 to
 > Sep 2026, all 33 boroughs covered; `--check` is a blocking preflight stage, `--verify` advisory, and the freshness
-> report reads NEWER 45 days after the window ends (monthly roll, Bill's key needed). **Steps 3-4 BUILT the same
-> day, not yet deployed:** the nearest sensor (London) and the nearest official monitor (every city) within 5 km on
+> report reads NEWER 45 days after the window ends (monthly roll, Bill's key needed). **Steps 3-4 BUILT and DEPLOYED
+> the same day** (`fc5029f`; from the origin: 35 pages, 41 data files, 103 area pages match, site == API on 6
+> postcodes; seen live at TW9 3PZ): the nearest sensor (London) and the nearest official monitor (every city) within 5 km on
 > the front page and both street reports, credited, never scored; deploy is `data-deploy` (now 41 files, drift
 > floor raised to match), then `web-deploy` (js/), then `home-deploy`. **Also asked today (Bill): one About page** (our story, real questions, talks and events with the
-> AI Tinkerers recording), waiting on Bill's inputs; `/talks/` must keep working (printed QR codes).
+> AI Tinkerers recording), waiting on Bill's inputs; `/talks/` must keep working (printed QR codes). **Then two
+> front-page additions (Bill agreed, after looking at another data site):** a coverage strip under the search (the
+> covered regions as "live" chips, GENERATED from the city registry so it cannot drift from the coverage sentence)
+> and a developer band (a copyable `/v1/score` request; the API is the product, one card of four today). Not a
+> restyle (that waits for the rename) and no customer logos (there are none to show).
 >
 > ## START HERE (2026-10-18)
 >
@@ -1119,7 +1124,7 @@ update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
    holding one; the window is the 12 whole months before the fetch month; `--check` blocking in
    preflight, `--verify` advisory; the borough comes from our ONS-coded boundaries. Detail and the
    API's three traps: `docs/lessons/in-progress-measurements.md`.
-   **Steps 3 and 4 BUILT 2026-10-19 (not yet deployed):** `nearestSensor()` / `nearestMonitor()` in
+   **Steps 3 and 4 BUILT and DEPLOYED 2026-10-19 (`fc5029f`, verified from the origin):** `nearestSensor()` / `nearestMonitor()` in
    `js/street_report.mjs`, one holder for the front page, the free report and the PDF; 5 km for both
    and London shows both (Bill, 2026-10-19); a sensor file 45+ days past its window is hidden; each
    reading's credit linked; `tests/front-page.mjs` works the expected lines out independently at
