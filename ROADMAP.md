@@ -2,10 +2,22 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
+**Last reviewed:** 2026-10-19 - Breathe London's data half built (GLA key received; 116 sensors' 12-month means
+in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-19)
+>
+> **Breathe London: the GLA key arrived and step 1 of "The plan for Breathe London" is BUILT** (not shown, not
+> deployed: nothing reads the file). `scripts/fetch_breathe_london.py --fetch` (key from `.env` only) wrote
+> `data/breathe-london-sensors.json`: 116 of 153 live sensors with a 12-month NO2 and/or PM2.5 mean over Oct 2025 to
+> Sep 2026, all 33 boroughs covered; `--check` is a blocking preflight stage, `--verify` advisory, and the freshness
+> report reads NEWER 45 days after the window ends (monthly roll, Bill's key needed). **Next: step 3**, the
+> "nearest sensor" line on the front page and street report beside DEFRA's background figure, with the AURN line
+> for every city. **Also asked today (Bill): one About page** (our story, real questions, talks and events with the
+> AI Tinkerers recording), waiting on Bill's inputs; `/talks/` must keep working (printed QR codes).
+>
 > ## START HERE (2026-10-18)
 >
 > **Bay Area release 2: three of the four remaining readers BUILT, the fourth waiting on FEMA's file.** FEMA, three
@@ -1060,7 +1072,7 @@ far sparser than Breathe London, but it would give every city a "nearest officia
 row, so London gains a layer rather than being the only city with measurements. Licence and
 update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
 
-#### The plan for Breathe London (written 2026-10-11, Bill's request; nothing built)
+#### The plan for Breathe London (written 2026-10-11, Bill's request; step 1's DATA built 2026-10-19, nothing shown)
 
 **What the two APIs actually offer (read on their own pages 2026-10-11, no key used):**
 
@@ -1101,6 +1113,12 @@ update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
    blocking: schema, coordinates inside London, a capture floor, the attribution string, and
    no key anywhere in the file. A row in `check_data_freshness.py`: a window ending more
    than 45 days ago is a roll to do.
+   **BUILT 2026-10-19 (GLA key received the same day, held in `.env` only):** 116 of 153 live
+   sensors usable over Oct 2025-Sep 2026 (114 NO2, 104 PM2.5), every one of the 33 boroughs
+   holding one; the window is the 12 whole months before the fetch month; `--check` blocking in
+   preflight, `--verify` advisory; the borough comes from our ONS-coded boundaries. Detail and the
+   API's three traps: `docs/lessons/in-progress-measurements.md`. **Next: step 3**, the line on
+   the front page and street report (AURN beside it for every city), then step 4's gates.
 2. **The same for AURN, every city** (`scripts/fetch_aurn.py`, keyless): the nearest official
    monitor's annual mean and site type. Same release, so London is not the only city with a
    measurement. **DATA HALF BUILT 2026-10-13, nothing displays it yet:** `data/aurn-sites.json`

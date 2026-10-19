@@ -20,7 +20,7 @@ When something new is learned: add the one-line rule here and the story to the l
 | `adding-a-city.md` | any new city (gitignore, borough-extra, generated constants, registry, switcher) |
 | `map-layers-and-legends.md` | fill layers, legends, `FILL_LAYER_COLOURS`, noise-legend palettes, panel caveat |
 | `neighbourhoods-and-stations.md` | PPD medians, generated neighbourhoods, NaPTAN stations, area labels, "best value" |
-| `in-progress-measurements.md` | AURN monitors, how often planes pass (adsb.lol vs CAA) |
+| `in-progress-measurements.md` | AURN monitors, Breathe London sensors, how often planes pass (adsb.lol vs CAA) |
 | `public-surfaces.md` | `/badge`, area pages, free tier, route throttles, signup verification (I17) |
 | `us-cities.md` | `/bay-area/`, Bay Area releases 1-2, the US noise yardstick, New York v5.6-v5.7 |
 | `product-rules.md` | scale direction, branding, why there is no basemap |
@@ -138,6 +138,10 @@ Or just describe what you need, I have full context of this project.
   can see a miss.
 - **`weights` in a response is the APPLIED table**; reproduction residual is published as "under 0.08".
 - **Leaving `BACKEND_ONLY_CITIES` is a one-way door**: the site must then reproduce the API on every borough.
+- **The Breathe London key lives ONLY in `.env`** (`BREATHE_LONDON_API_KEY`, typed in by Bill, never pasted into
+  a chat, never `cat .env`): sent as the `X-API-KEY` header; check it by printing set/MISSING and its length.
+  A missing hour is a row with a null value, so capture is valid hours over the WINDOW's hours, never the rows;
+  `/SensorData` returns every INSTALLATION's hours, so only the current place's count (`measuring_since`).
 - **Never name a non-city data file `*-boroughs.json`**: five scripts glob that suffix to enumerate cities.
 - **US quiet geometry uses per-city fields** (`runway_lobes`, `airport_sizes`, `corridor_weight`,
   `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html). A runway lobe

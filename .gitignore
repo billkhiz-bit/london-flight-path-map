@@ -175,6 +175,10 @@ data/*
 # because `fetch_aurn.py --check` is BLOCKING; the raw R files it is built from
 # stay in the ignored data/aurn/.
 !data/aurn-sites.json
+# Breathe London's sensors, one row per live sensor with a 12-month mean
+# (2026-10-19). Checked in because `fetch_breathe_london.py --check` is
+# BLOCKING; the raw API answers stay in the ignored data/breathe-london/.
+!data/breathe-london-sensors.json
 # Greater Manchester borough boundaries (66 KB), from the spike branch's ONS
 # LAD extract. Checked in for the same reason as the two above, and the failure
 # mode without it is quiet rather than loud: `data/*` ignores this directory, so

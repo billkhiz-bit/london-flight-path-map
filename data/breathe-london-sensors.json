@@ -1,0 +1,3157 @@
+{
+ "source": "Breathe London (Greater London Authority), hourly sensor readings from the Breathe London API",
+ "attribution": "Contains Breathe London data licensed under the Open Government License v3.0",
+ "attributionLink": "https://www.breathelondon.org/",
+ "licence": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+ "window": {
+  "from": "2025-10-01",
+  "to": "2026-09-30"
+ },
+ "captureFloor": 0.75,
+ "fetched": "2026-10-19",
+ "note": "Display only, never scored. Low-cost sensors, provisional values that are recalibrated over time. Kerbside, roadside and background sensors measure different things: show the nearest with its classification, never rank them.",
+ "sites": [
+  {
+   "code": "BL0001",
+   "name": "Elephant & Castle",
+   "borough": "E09000028",
+   "boroughName": "Southwark",
+   "classification": "Urban Background",
+   "locationType": "Co-Location (Gold)",
+   "kerbDistanceM": 43.0,
+   "heightM": 2.5,
+   "lat": 51.49323,
+   "lon": -0.10155,
+   "measuringSince": "2021-02-17",
+   "no2": {
+    "mean": 27.1,
+    "capture": 0.993,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0004",
+   "name": "Bexley Belvedere",
+   "borough": "E09000004",
+   "boroughName": "Bexley",
+   "classification": "Urban Background",
+   "locationType": "Co-Location (Silver)",
+   "kerbDistanceM": 7.0,
+   "heightM": 2.0,
+   "lat": 51.49088,
+   "lon": 0.1592,
+   "measuringSince": "2025-03-27",
+   "no2": {
+    "mean": 20.7,
+    "capture": 0.995,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0005",
+   "name": "Ley Street",
+   "borough": "E09000026",
+   "boroughName": "Redbridge",
+   "classification": "Urban Background",
+   "locationType": "Co-Location (Silver)",
+   "kerbDistanceM": 53.0,
+   "heightM": 2.0,
+   "lat": 51.56952,
+   "lon": 0.08309,
+   "measuringSince": "2021-02-19",
+   "no2": {
+    "mean": 18.0,
+    "capture": 0.994,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0007",
+   "name": "Northwold Road",
+   "borough": "E09000012",
+   "boroughName": "Hackney",
+   "classification": "Urban Background",
+   "locationType": "Co-Location (Gold)",
+   "kerbDistanceM": 2.0,
+   "heightM": 2.0,
+   "lat": 51.563,
+   "lon": -0.05841,
+   "measuringSince": "2025-03-16",
+   "no2": {
+    "mean": 25.7,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0008",
+   "name": "Heathrow Bath Road",
+   "borough": "E09000017",
+   "boroughName": "Hillingdon",
+   "classification": "Roadside",
+   "locationType": "Co-Location (Gold)",
+   "kerbDistanceM": 4.5,
+   "heightM": 1.5,
+   "lat": 51.48109,
+   "lon": -0.44201,
+   "measuringSince": "2025-04-02",
+   "no2": {
+    "mean": 32.0,
+    "capture": 0.99,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.994,
+    "ratified": 0.249
+   }
+  },
+  {
+   "code": "BL0009",
+   "name": "Barnet Tally Ho",
+   "borough": "E09000003",
+   "boroughName": "Barnet",
+   "classification": "Kerbside",
+   "locationType": "Co-Location (Silver)",
+   "kerbDistanceM": 1.0,
+   "heightM": 3.0,
+   "lat": 51.61468,
+   "lon": -0.17658,
+   "measuringSince": "2025-03-28",
+   "no2": {
+    "mean": 17.9,
+    "capture": 0.99,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.991,
+    "ratified": 0.253
+   }
+  },
+  {
+   "code": "BL0010",
+   "name": "Dawlish Road",
+   "borough": "E09000031",
+   "boroughName": "Waltham Forest",
+   "classification": "Urban Background",
+   "locationType": "Co-Location (Silver)",
+   "kerbDistanceM": 10.0,
+   "heightM": 2.0,
+   "lat": 51.56233,
+   "lon": -0.00507,
+   "measuringSince": "2025-04-11",
+   "no2": {
+    "mean": 20.7,
+    "capture": 0.967,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.977,
+    "ratified": 0.255
+   }
+  },
+  {
+   "code": "BL0013",
+   "name": "Poverest Allotments",
+   "borough": "E09000006",
+   "boroughName": "Bromley",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 100.0,
+   "heightM": 1.5,
+   "lat": 51.38496,
+   "lon": 0.1002,
+   "measuringSince": "2025-04-19",
+   "no2": {
+    "mean": 16.5,
+    "capture": 0.848,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0014",
+   "name": "Cat Hill Allotments",
+   "borough": "E09000003",
+   "boroughName": "Barnet",
+   "classification": "Roadside",
+   "locationType": "Community",
+   "kerbDistanceM": 0.6,
+   "heightM": 2.4,
+   "lat": 51.64493,
+   "lon": -0.15876,
+   "measuringSince": "2021-09-04",
+   "no2": {
+    "mean": 21.3,
+    "capture": 0.991,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 9.3,
+    "capture": 0.994,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0015",
+   "name": "Billets Hart Allotments",
+   "borough": "E09000009",
+   "boroughName": "Ealing",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 37.0,
+   "heightM": 2.0,
+   "lat": 51.50465,
+   "lon": -0.34401,
+   "measuringSince": "2021-10-17",
+   "no2": {
+    "mean": 20.5,
+    "capture": 0.916,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.978,
+    "ratified": 0.236
+   }
+  },
+  {
+   "code": "BL0016",
+   "name": "Malden & Coombe Horticultural Society",
+   "borough": "E09000021",
+   "boroughName": "Kingston upon Thames",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 34.0,
+   "heightM": 2.7,
+   "lat": 51.40801,
+   "lon": -0.26555,
+   "measuringSince": "2021-10-28",
+   "no2": {
+    "mean": 18.2,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0017",
+   "name": "Cray Road Allotments",
+   "borough": "E09000004",
+   "boroughName": "Bexley",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 75.0,
+   "heightM": 2.0,
+   "lat": 51.4172,
+   "lon": 0.11474,
+   "measuringSince": "2021-10-30",
+   "no2": {
+    "mean": 19.9,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0018",
+   "name": "London Wildlife Trust Centre For Wildlife Gardening",
+   "borough": "E09000028",
+   "boroughName": "Southwark",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 40.0,
+   "heightM": 3.2,
+   "lat": 51.46293,
+   "lon": -0.07541,
+   "measuringSince": "2021-11-05",
+   "no2": {
+    "mean": 20.4,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0019",
+   "name": "19th Wimbledon Scout Group",
+   "borough": "E09000024",
+   "boroughName": "Merton",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 40.0,
+   "heightM": 2.5,
+   "lat": 51.41527,
+   "lon": -0.24095,
+   "measuringSince": "2025-03-09",
+   "no2": {
+    "mean": 19.5,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0021",
+   "name": "Newham University Hospital",
+   "borough": "E09000025",
+   "boroughName": "Newham",
+   "classification": "Urban Background",
+   "locationType": "Hospital",
+   "kerbDistanceM": 5.0,
+   "heightM": 2.7,
+   "lat": 51.52319,
+   "lon": 0.03351,
+   "measuringSince": "2025-04-17",
+   "no2": {
+    "mean": 17.3,
+    "capture": 0.797,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0022",
+   "name": "Whipps Cross Hospital",
+   "borough": "E09000031",
+   "boroughName": "Waltham Forest",
+   "classification": "Urban Background",
+   "locationType": "Hospital",
+   "kerbDistanceM": 10.0,
+   "heightM": 3.4,
+   "lat": 51.57762,
+   "lon": 0.002,
+   "measuringSince": "2025-04-25",
+   "no2": {
+    "mean": 22.6,
+    "capture": 0.963,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.795,
+    "ratified": 0.316
+   }
+  },
+  {
+   "code": "BL0024",
+   "name": "Royal Marsden Hospital - Chelsea",
+   "borough": "E09000020",
+   "boroughName": "Kensington and Chelsea",
+   "classification": "Roadside",
+   "locationType": "Hospital",
+   "kerbDistanceM": 3.2,
+   "heightM": 1.8,
+   "lat": 51.49081,
+   "lon": -0.17328,
+   "measuringSince": "2021-01-23",
+   "no2": {
+    "mean": 25.0,
+    "capture": 0.838,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.9,
+    "capture": 0.844,
+    "ratified": 0.283
+   }
+  },
+  {
+   "code": "BL0025",
+   "name": "Royal Free Hospital",
+   "borough": "E09000007",
+   "boroughName": "Camden",
+   "classification": "Roadside",
+   "locationType": "Hospital",
+   "kerbDistanceM": 2.0,
+   "heightM": 3.0,
+   "lat": 51.5536,
+   "lon": -0.16687,
+   "measuringSince": "2021-01-28",
+   "no2": {
+    "mean": 24.3,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0027",
+   "name": "Guy's Hospital",
+   "borough": "E09000028",
+   "boroughName": "Southwark",
+   "classification": "Roadside",
+   "locationType": "Hospital",
+   "kerbDistanceM": 2.0,
+   "heightM": 3.5,
+   "lat": 51.50325,
+   "lon": -0.08775,
+   "measuringSince": "2021-06-23",
+   "no2": {
+    "mean": 14.7,
+    "capture": 0.993,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0028",
+   "name": "Croydon University Hospital",
+   "borough": "E09000008",
+   "boroughName": "Croydon",
+   "classification": "Roadside",
+   "locationType": "Hospital",
+   "kerbDistanceM": 1.0,
+   "heightM": 3.0,
+   "lat": 51.38993,
+   "lon": -0.112,
+   "measuringSince": "2025-04-25",
+   "no2": {
+    "mean": 26.1,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.998,
+    "ratified": 0.251
+   }
+  },
+  {
+   "code": "BL0029",
+   "name": "Kingston Hospital",
+   "borough": "E09000021",
+   "boroughName": "Kingston upon Thames",
+   "classification": "Roadside",
+   "locationType": "Hospital",
+   "kerbDistanceM": 0.4,
+   "heightM": 3.0,
+   "lat": 51.41431,
+   "lon": -0.28108,
+   "measuringSince": "2021-11-30",
+   "no2": {
+    "mean": 16.5,
+    "capture": 0.995,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0031",
+   "name": "St. Helier's Hospital",
+   "borough": "E09000029",
+   "boroughName": "Sutton",
+   "classification": "Roadside",
+   "locationType": "Hospital",
+   "kerbDistanceM": 3.5,
+   "heightM": 3.5,
+   "lat": 51.38156,
+   "lon": -0.18516,
+   "measuringSince": "2025-05-01",
+   "no2": {
+    "mean": 18.3,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0032",
+   "name": "Great Ormond Street Hospital",
+   "borough": "E09000007",
+   "boroughName": "Camden",
+   "classification": "Urban Background",
+   "locationType": "Hospital",
+   "kerbDistanceM": 5.0,
+   "heightM": 2.2,
+   "lat": 51.52179,
+   "lon": -0.12081,
+   "measuringSince": "2023-07-17",
+   "no2": {
+    "mean": 13.0,
+    "capture": 0.969,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.996,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0033",
+   "name": "Princess Royal Hospital",
+   "borough": "E09000006",
+   "boroughName": "Bromley",
+   "classification": "Urban Background",
+   "locationType": "Hospital",
+   "kerbDistanceM": 13.5,
+   "heightM": 2.0,
+   "lat": 51.36604,
+   "lon": 0.05842,
+   "measuringSince": "2024-05-01",
+   "no2": {
+    "mean": 24.3,
+    "capture": 0.974,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.84,
+    "ratified": 0.135
+   }
+  },
+  {
+   "code": "BL0039",
+   "name": "Blackwall Tunnel",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Roadside",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 4.2,
+   "heightM": 2.61,
+   "lat": 51.51513,
+   "lon": -0.00834,
+   "measuringSince": "2021-02-16",
+   "no2": {
+    "mean": 20.3,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0041",
+   "name": "A2 Falconwood",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Roadside",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 3.5,
+   "heightM": 2.6,
+   "lat": 51.4563,
+   "lon": 0.08561,
+   "measuringSince": "2021-02-16",
+   "no2": {
+    "mean": 17.3,
+    "capture": 0.866,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0042",
+   "name": "John Harrison Way",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Roadside",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 23.0,
+   "heightM": 2.7,
+   "lat": 51.49465,
+   "lon": 0.00921,
+   "measuringSince": "2021-02-16",
+   "no2": {
+    "mean": 22.9,
+    "capture": 0.828,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0043",
+   "name": "Beddington Lane North",
+   "borough": "E09000029",
+   "boroughName": "Sutton",
+   "classification": "Roadside",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 4.3,
+   "heightM": 2.6,
+   "lat": 51.38929,
+   "lon": -0.14166,
+   "measuringSince": "2021-02-17",
+   "no2": {
+    "mean": 13.1,
+    "capture": 0.848,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0044",
+   "name": "Burrage Grove",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Urban Background",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 10.0,
+   "heightM": 2.5,
+   "lat": 51.49053,
+   "lon": 0.074,
+   "measuringSince": "2021-02-23",
+   "no2": {
+    "mean": 20.0,
+    "capture": 0.994,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.995,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0045",
+   "name": "Rainham",
+   "borough": "E09000016",
+   "boroughName": "Havering",
+   "classification": "Roadside",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 8.0,
+   "heightM": 2.6,
+   "lat": 51.52078,
+   "lon": 0.20557,
+   "measuringSince": "2021-02-23",
+   "no2": {
+    "mean": 20.6,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0046",
+   "name": "Horseferry Road",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Urban Background",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 16.7,
+   "heightM": 2.6,
+   "lat": 51.49468,
+   "lon": -0.13194,
+   "measuringSince": "2021-02-19",
+   "no2": {
+    "mean": 23.9,
+    "capture": 0.917,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.982,
+    "ratified": 0.241
+   }
+  },
+  {
+   "code": "BL0047",
+   "name": "North Kensington AURN",
+   "borough": "E09000020",
+   "boroughName": "Kensington and Chelsea",
+   "classification": "Urban Background",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 10.0,
+   "heightM": 3.3,
+   "lat": 51.52048,
+   "lon": -0.21265,
+   "measuringSince": "2025-04-02",
+   "no2": {
+    "mean": 22.4,
+    "capture": 0.8,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.834,
+    "ratified": 0.247
+   }
+  },
+  {
+   "code": "BL0048",
+   "name": "Brent Ikea",
+   "borough": "E09000005",
+   "boroughName": "Brent",
+   "classification": "Roadside",
+   "locationType": "Reference Location",
+   "kerbDistanceM": 5.0,
+   "heightM": 3.0,
+   "lat": 51.55247,
+   "lon": -0.25809,
+   "measuringSince": "2021-02-19",
+   "no2": {
+    "mean": 20.5,
+    "capture": 0.97,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0053",
+   "name": "Melcombe Primary School",
+   "borough": "E09000013",
+   "boroughName": "Hammersmith and Fulham",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 4.5,
+   "heightM": 2.8,
+   "lat": 51.48628,
+   "lon": -0.2208,
+   "measuringSince": "2021-05-26",
+   "no2": {
+    "mean": 23.0,
+    "capture": 0.909,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.909,
+    "ratified": 0.247
+   }
+  },
+  {
+   "code": "BL0054",
+   "name": "William Hogarth School",
+   "borough": "E09000018",
+   "boroughName": "Hounslow",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 52.0,
+   "heightM": 2.4,
+   "lat": 51.48839,
+   "lon": -0.2562,
+   "measuringSince": "2021-06-09",
+   "no2": {
+    "mean": 22.5,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0057",
+   "name": "St Annes RC Primary School",
+   "borough": "E09000022",
+   "boroughName": "Lambeth",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 14.6,
+   "heightM": 2.9,
+   "lat": 51.48563,
+   "lon": -0.11916,
+   "measuringSince": "2021-05-26",
+   "no2": {
+    "mean": 18.3,
+    "capture": 0.826,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.827,
+    "ratified": 0.254
+   }
+  },
+  {
+   "code": "BL0059",
+   "name": "Oaklands Secondary School",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 20.0,
+   "heightM": 10.0,
+   "lat": 51.52966,
+   "lon": -0.06207,
+   "measuringSince": "2021-05-27",
+   "no2": {
+    "mean": 19.4,
+    "capture": 0.991,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 10.6,
+    "capture": 0.982,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0060",
+   "name": "Prior Weston Primary School",
+   "borough": "E09000001",
+   "boroughName": "City of London",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 8.8,
+   "heightM": 2.5,
+   "lat": 51.52148,
+   "lon": -0.09265,
+   "measuringSince": "2021-05-28",
+   "no2": {
+    "mean": 16.5,
+    "capture": 0.995,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.995,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0061",
+   "name": "Bonner Primary School",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 7.0,
+   "heightM": 3.5,
+   "lat": 51.52939,
+   "lon": -0.04833,
+   "measuringSince": "2025-05-01",
+   "no2": {
+    "mean": 21.3,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0062",
+   "name": "Tower Bridge Primary School",
+   "borough": "E09000028",
+   "boroughName": "Southwark",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 3.4,
+   "heightM": 3.5,
+   "lat": 51.50195,
+   "lon": -0.07756,
+   "measuringSince": "2021-05-25",
+   "no2": {
+    "mean": 19.6,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0064",
+   "name": "Alice Model Nursery School",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 14.0,
+   "heightM": 1.5,
+   "lat": 51.52102,
+   "lon": -0.0467,
+   "measuringSince": "2021-05-27",
+   "no2": {
+    "mean": 16.8,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0065",
+   "name": "Marner Primary School",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 29.0,
+   "heightM": 2.7,
+   "lat": 51.5231,
+   "lon": -0.01274,
+   "measuringSince": "2021-05-27",
+   "no2": {
+    "mean": 22.2,
+    "capture": 0.839,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.901,
+    "ratified": 0.177
+   }
+  },
+  {
+   "code": "BL0066",
+   "name": "Globe Nursery School",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 18.0,
+   "heightM": 2.1,
+   "lat": 51.52762,
+   "lon": -0.04709,
+   "measuringSince": "2021-05-28",
+   "no2": {
+    "mean": 16.3,
+    "capture": 0.871,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.872,
+    "ratified": 0.207
+   }
+  },
+  {
+   "code": "BL0067",
+   "name": "Meath Gardens Children's Centre",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 0.39,
+   "heightM": 2.4,
+   "lat": 51.52879,
+   "lon": -0.04494,
+   "measuringSince": "2021-10-06",
+   "no2": {
+    "mean": 19.7,
+    "capture": 0.992,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.993,
+    "ratified": 0.253
+   }
+  },
+  {
+   "code": "BL0068",
+   "name": "Stockwell Primary",
+   "borough": "E09000022",
+   "boroughName": "Lambeth",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 30.0,
+   "heightM": 2.5,
+   "lat": 51.46672,
+   "lon": -0.11818,
+   "measuringSince": "2025-04-12",
+   "no2": {
+    "mean": 16.7,
+    "capture": 0.967,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.968,
+    "ratified": 0.26
+   }
+  },
+  {
+   "code": "BL0069",
+   "name": "East Sheen Primary School",
+   "borough": "E09000027",
+   "boroughName": "Richmond upon Thames",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 28.5,
+   "heightM": 2.7,
+   "lat": 51.46511,
+   "lon": -0.25474,
+   "measuringSince": "2021-06-08",
+   "no2": {
+    "mean": 18.2,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0070",
+   "name": "St James Hatcham C of E School",
+   "borough": "E09000023",
+   "boroughName": "Lewisham",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 13.5,
+   "heightM": 2.0,
+   "lat": 51.47414,
+   "lon": -0.03854,
+   "measuringSince": "2021-06-08",
+   "no2": {
+    "mean": 18.8,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0071",
+   "name": "Oxford Gardens Primary School",
+   "borough": "E09000020",
+   "boroughName": "Kensington and Chelsea",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 5.6,
+   "heightM": 3.0,
+   "lat": 51.51657,
+   "lon": -0.21849,
+   "measuringSince": "2021-06-09",
+   "no2": {
+    "mean": 16.6,
+    "capture": 0.994,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.996,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0072",
+   "name": "Gospel Oak Primary School",
+   "borough": "E09000007",
+   "boroughName": "Camden",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 37.7,
+   "heightM": 2.6,
+   "lat": 51.5553,
+   "lon": -0.15239,
+   "measuringSince": "2021-06-10",
+   "no2": {
+    "mean": 20.5,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0073",
+   "name": "St Mary Magdalene CE School",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 23.0,
+   "heightM": 2.7,
+   "lat": 51.4946,
+   "lon": 0.00848,
+   "measuringSince": "2021-06-22",
+   "no2": {
+    "mean": 16.6,
+    "capture": 0.878,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.879,
+    "ratified": 0.286
+   }
+  },
+  {
+   "code": "BL0074",
+   "name": "Scotts Primary School",
+   "borough": "E09000016",
+   "boroughName": "Havering",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 66.0,
+   "heightM": 3.0,
+   "lat": 51.54398,
+   "lon": 0.21176,
+   "measuringSince": "2025-03-16",
+   "no2": {
+    "mean": 17.9,
+    "capture": 0.842,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0075",
+   "name": "The Orion Primary School",
+   "borough": "E09000003",
+   "boroughName": "Barnet",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 64.0,
+   "heightM": 2.4,
+   "lat": 51.60831,
+   "lon": -0.24632,
+   "measuringSince": "2021-06-10",
+   "no2": {
+    "mean": 19.1,
+    "capture": 0.994,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.996,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0076",
+   "name": "Wessex Gardens Primary School",
+   "borough": "E09000003",
+   "boroughName": "Barnet",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 12.0,
+   "heightM": 3.3,
+   "lat": 51.57162,
+   "lon": -0.21003,
+   "measuringSince": "2021-06-10",
+   "no2": {
+    "mean": 19.3,
+    "capture": 0.971,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0078",
+   "name": "St John's Upper Holloway CE Primary School",
+   "borough": "E09000019",
+   "boroughName": "Islington",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 15.5,
+   "heightM": 2.2,
+   "lat": 51.56301,
+   "lon": -0.13296,
+   "measuringSince": "2021-06-11",
+   "no2": {
+    "mean": 20.8,
+    "capture": 0.807,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.6,
+    "capture": 0.807,
+    "ratified": 0.311
+   }
+  },
+  {
+   "code": "BL0079",
+   "name": "William Patten Primary School",
+   "borough": "E09000012",
+   "boroughName": "Hackney",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 26.0,
+   "heightM": 3.0,
+   "lat": 51.5618,
+   "lon": -0.07587,
+   "measuringSince": "2025-03-16",
+   "no2": {
+    "mean": 21.5,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0080",
+   "name": "Haimo Primary School",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 64.0,
+   "heightM": 3.0,
+   "lat": 51.45554,
+   "lon": 0.04135,
+   "measuringSince": "2021-06-23",
+   "no2": {
+    "mean": 16.0,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0081",
+   "name": "Holy Trinity Church of England Primary School",
+   "borough": "E09000020",
+   "boroughName": "Kensington and Chelsea",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 5.0,
+   "heightM": 2.2,
+   "lat": 51.49323,
+   "lon": -0.15882,
+   "measuringSince": "2021-06-15",
+   "no2": {
+    "mean": 15.2,
+    "capture": 0.986,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.988,
+    "ratified": 0.254
+   }
+  },
+  {
+   "code": "BL0082",
+   "name": "St Edwards Catholic Primary School",
+   "borough": "E09000025",
+   "boroughName": "Newham",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 6.9,
+   "heightM": 3.0,
+   "lat": 51.53317,
+   "lon": 0.03781,
+   "measuringSince": "2021-05-28",
+   "no2": {
+    "mean": 17.4,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 8.2,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0084",
+   "name": "Oliver Goldsmith Primary School",
+   "borough": "E09000028",
+   "boroughName": "Southwark",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 11.0,
+   "heightM": 3.0,
+   "lat": 51.47429,
+   "lon": -0.07814,
+   "measuringSince": "2021-06-16",
+   "no2": {
+    "mean": 14.5,
+    "capture": 0.969,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.97,
+    "ratified": 0.259
+   }
+  },
+  {
+   "code": "BL0085",
+   "name": "St Clement Danes CE School",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 6.0,
+   "heightM": 3.0,
+   "lat": 51.51347,
+   "lon": -0.1193,
+   "measuringSince": "2021-06-23",
+   "no2": {
+    "mean": 20.9,
+    "capture": 0.984,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.986,
+    "ratified": 0.255
+   }
+  },
+  {
+   "code": "BL0086",
+   "name": "Goresbrook School",
+   "borough": "E09000002",
+   "boroughName": "Barking and Dagenham",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 17.0,
+   "heightM": 3.5,
+   "lat": 51.53167,
+   "lon": 0.13056,
+   "measuringSince": "2021-06-29",
+   "no2": {
+    "mean": 18.4,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0087",
+   "name": "Griffin School",
+   "borough": "E09000032",
+   "boroughName": "Wandsworth",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 0.6,
+   "heightM": 2.9,
+   "lat": 51.47401,
+   "lon": -0.13901,
+   "measuringSince": "2021-06-30",
+   "no2": null,
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.778,
+    "ratified": 0.044
+   }
+  },
+  {
+   "code": "BL0088",
+   "name": "Brampton Primary Academy",
+   "borough": "E09000004",
+   "boroughName": "Bexley",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 50.0,
+   "heightM": 3.0,
+   "lat": 51.46649,
+   "lon": 0.12814,
+   "measuringSince": "2021-06-30",
+   "no2": {
+    "mean": 20.5,
+    "capture": 0.959,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.962,
+    "ratified": 0.229
+   }
+  },
+  {
+   "code": "BL0089",
+   "name": "Martin Primary School Playground",
+   "borough": "E09000003",
+   "boroughName": "Barnet",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 28.0,
+   "heightM": 2.3,
+   "lat": 51.59463,
+   "lon": -0.16757,
+   "measuringSince": "2021-07-21",
+   "no2": {
+    "mean": 47.2,
+    "capture": 0.809,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.866,
+    "ratified": 0.139
+   }
+  },
+  {
+   "code": "BL0090",
+   "name": "Peareswood Primary School",
+   "borough": "E09000004",
+   "boroughName": "Bexley",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 2.5,
+   "heightM": 4.0,
+   "lat": 51.47134,
+   "lon": 0.18194,
+   "measuringSince": "2021-07-23",
+   "no2": {
+    "mean": 14.6,
+    "capture": 0.981,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0091",
+   "name": "Mount Stewart Junior School",
+   "borough": "E09000005",
+   "boroughName": "Brent",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.5,
+   "lat": 51.57794,
+   "lon": -0.30359,
+   "measuringSince": "2025-04-10",
+   "no2": {
+    "mean": 15.4,
+    "capture": 0.994,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.994,
+    "ratified": 0.253
+   }
+  },
+  {
+   "code": "BL0092",
+   "name": "Bannockburn Primary School",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 0.5,
+   "heightM": 2.75,
+   "lat": 51.48773,
+   "lon": 0.09436,
+   "measuringSince": "2021-09-23",
+   "no2": {
+    "mean": 20.8,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0093",
+   "name": "James Wolfe Primary School",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 1.21,
+   "heightM": 2.9,
+   "lat": 51.47666,
+   "lon": -0.00943,
+   "measuringSince": "2021-09-25",
+   "no2": {
+    "mean": 16.7,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.996,
+    "ratified": 0.253
+   }
+  },
+  {
+   "code": "BL0094",
+   "name": "St Mary Magdelene Primary School",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 3.0,
+   "heightM": 3.0,
+   "lat": 51.49107,
+   "lon": 0.06181,
+   "measuringSince": "2025-03-27",
+   "no2": {
+    "mean": 21.7,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.999,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0096",
+   "name": "Bedfords Park Walled Garden",
+   "borough": "E09000016",
+   "boroughName": "Havering",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 68.0,
+   "heightM": 2.7,
+   "lat": 51.60942,
+   "lon": 0.19531,
+   "measuringSince": "2021-09-29",
+   "no2": {
+    "mean": 40.6,
+    "capture": 0.931,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.973,
+    "ratified": 0.247
+   }
+  },
+  {
+   "code": "BL0097",
+   "name": "Featherstone Primary School",
+   "borough": "E09000009",
+   "boroughName": "Ealing",
+   "classification": "Roadside",
+   "locationType": "School",
+   "kerbDistanceM": 0.45,
+   "heightM": 2.0,
+   "lat": 51.4985,
+   "lon": -0.395,
+   "measuringSince": "2021-10-19",
+   "no2": {
+    "mean": 18.3,
+    "capture": 0.993,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0098",
+   "name": "Chesterton Primary School",
+   "borough": "E09000032",
+   "boroughName": "Wandsworth",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 28.0,
+   "heightM": 4.0,
+   "lat": 51.47338,
+   "lon": -0.15799,
+   "measuringSince": "2021-10-28",
+   "no2": {
+    "mean": 22.5,
+    "capture": 0.94,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 8.6,
+    "capture": 0.938,
+    "ratified": 0.208
+   }
+  },
+  {
+   "code": "BL0100",
+   "name": "Sunnyhill Primary School",
+   "borough": "E09000022",
+   "boroughName": "Lambeth",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 7.1,
+   "heightM": 2.7,
+   "lat": 51.42881,
+   "lon": -0.12056,
+   "measuringSince": "2022-03-01",
+   "no2": {
+    "mean": 19.6,
+    "capture": 0.959,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.96,
+    "ratified": 0.238
+   }
+  },
+  {
+   "code": "BL0105",
+   "name": "Meridian Angel Primary School",
+   "borough": "E09000010",
+   "boroughName": "Enfield",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.61171,
+   "lon": -0.05248,
+   "measuringSince": "2025-03-29",
+   "no2": {
+    "mean": 17.2,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0106",
+   "name": "Harringay Green Lanes",
+   "borough": "E09000014",
+   "boroughName": "Haringey",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.58088,
+   "lon": -0.09949,
+   "measuringSince": "2025-04-03",
+   "no2": {
+    "mean": 35.9,
+    "capture": 0.944,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 8.7,
+    "capture": 0.944,
+    "ratified": 0.24
+   }
+  },
+  {
+   "code": "BL0107",
+   "name": "William Byrd Primary Academy - Victoria Lane",
+   "borough": "E09000017",
+   "boroughName": "Hillingdon",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 50.0,
+   "heightM": 3.0,
+   "lat": 51.49018,
+   "lon": -0.43888,
+   "measuringSince": "2025-04-26",
+   "no2": {
+    "mean": 21.0,
+    "capture": 0.924,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0109",
+   "name": "Plashet School",
+   "borough": "E09000025",
+   "boroughName": "Newham",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 25.0,
+   "heightM": 3.0,
+   "lat": 51.53983,
+   "lon": 0.04884,
+   "measuringSince": "2025-04-17",
+   "no2": {
+    "mean": 22.2,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.999,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0112",
+   "name": "Tavistock Road",
+   "borough": "E09000017",
+   "boroughName": "Hillingdon",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.75,
+   "heightM": 2.5,
+   "lat": 51.51164,
+   "lon": -0.47774,
+   "measuringSince": "2021-06-03",
+   "no2": {
+    "mean": 16.0,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0113",
+   "name": "Tottenham Hale",
+   "borough": "E09000014",
+   "boroughName": "Haringey",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.5,
+   "lat": 51.58902,
+   "lon": -0.06085,
+   "measuringSince": "2021-06-18",
+   "no2": {
+    "mean": 21.2,
+    "capture": 0.901,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0114",
+   "name": "Whitehall Road",
+   "borough": "E09000008",
+   "boroughName": "Croydon",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 2.35,
+   "heightM": 3.45,
+   "lat": 51.39222,
+   "lon": -0.11449,
+   "measuringSince": "2021-06-28",
+   "no2": {
+    "mean": 22.4,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0115",
+   "name": "South Kensington Underground Station",
+   "borough": "E09000020",
+   "boroughName": "Kensington and Chelsea",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.6,
+   "heightM": 3.5,
+   "lat": 51.49426,
+   "lon": -0.17445,
+   "measuringSince": "2021-06-29",
+   "no2": {
+    "mean": 22.8,
+    "capture": 0.978,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0116",
+   "name": "Al Maanar - Acklam Road",
+   "borough": "E09000020",
+   "boroughName": "Kensington and Chelsea",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 1.7,
+   "heightM": 3.1,
+   "lat": 51.52146,
+   "lon": -0.20378,
+   "measuringSince": "2021-06-29",
+   "no2": {
+    "mean": 31.2,
+    "capture": 0.791,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.9,
+    "capture": 0.808,
+    "ratified": 0.076
+   }
+  },
+  {
+   "code": "BL0118",
+   "name": "Kensington High Street",
+   "borough": "E09000020",
+   "boroughName": "Kensington and Chelsea",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.9,
+   "heightM": 4.0,
+   "lat": 51.49947,
+   "lon": -0.1977,
+   "measuringSince": "2025-06-27",
+   "no2": {
+    "mean": 18.3,
+    "capture": 0.983,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.986,
+    "ratified": 0.255
+   }
+  },
+  {
+   "code": "BL0120",
+   "name": "Peckham Rye",
+   "borough": "E09000028",
+   "boroughName": "Southwark",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.46388,
+   "lon": -0.06644,
+   "measuringSince": "2025-03-12",
+   "no2": {
+    "mean": 18.2,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.999,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0121",
+   "name": "Inverton Road",
+   "borough": "E09000028",
+   "boroughName": "Southwark",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.45795,
+   "lon": -0.04769,
+   "measuringSince": "2025-03-12",
+   "no2": {
+    "mean": 18.0,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0125",
+   "name": "Chrisp Street Market",
+   "borough": "E09000030",
+   "boroughName": "Tower Hamlets",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.85,
+   "heightM": 2.51,
+   "lat": 51.51285,
+   "lon": -0.01389,
+   "measuringSince": "2021-07-23",
+   "no2": {
+    "mean": 25.3,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0130",
+   "name": "Redbridge Ley Street BLEN",
+   "borough": "E09000026",
+   "boroughName": "Redbridge",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 2.7,
+   "lat": 51.56968,
+   "lon": 0.08384,
+   "measuringSince": "2021-07-20",
+   "no2": {
+    "mean": 20.6,
+    "capture": 0.961,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0133",
+   "name": "George Street",
+   "borough": "E09000027",
+   "boroughName": "Richmond upon Thames",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.7,
+   "heightM": 2.6,
+   "lat": 51.46118,
+   "lon": -0.30381,
+   "measuringSince": "2021-08-31",
+   "no2": {
+    "mean": 18.7,
+    "capture": 0.871,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.872,
+    "ratified": 0.15
+   }
+  },
+  {
+   "code": "BL0134",
+   "name": "Silvertown Way",
+   "borough": "E09000025",
+   "boroughName": "Newham",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 1.0,
+   "heightM": 3.5,
+   "lat": 51.51405,
+   "lon": 0.00912,
+   "measuringSince": "2021-09-09",
+   "no2": {
+    "mean": 20.9,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0135",
+   "name": "Wembley Triangle",
+   "borough": "E09000005",
+   "boroughName": "Brent",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 1.5,
+   "heightM": 2.4,
+   "lat": 51.55361,
+   "lon": -0.28702,
+   "measuringSince": "2025-04-17",
+   "no2": {
+    "mean": 27.0,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.9,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0137",
+   "name": "All Saints School",
+   "borough": "E09000024",
+   "boroughName": "Merton",
+   "classification": "Urban Background",
+   "locationType": "Street",
+   "kerbDistanceM": 3.0,
+   "heightM": 2.6,
+   "lat": 51.41826,
+   "lon": -0.18808,
+   "measuringSince": "2021-09-07",
+   "no2": {
+    "mean": 12.7,
+    "capture": 0.913,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.1,
+    "capture": 0.923,
+    "ratified": 0.192
+   }
+  },
+  {
+   "code": "BL0138",
+   "name": "Horn Link Way",
+   "borough": "E09000011",
+   "boroughName": "Greenwich",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 3.17,
+   "heightM": 2.9,
+   "lat": 51.49132,
+   "lon": 0.01843,
+   "measuringSince": "2021-09-25",
+   "no2": {
+    "mean": 18.8,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0142",
+   "name": "South Woodford",
+   "borough": "E09000026",
+   "boroughName": "Redbridge",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.6,
+   "heightM": 2.7,
+   "lat": 51.59211,
+   "lon": 0.02739,
+   "measuringSince": "2021-10-08",
+   "no2": {
+    "mean": 22.3,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0143",
+   "name": "Cotleigh Road",
+   "borough": "E09000016",
+   "boroughName": "Havering",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.5,
+   "lat": 51.57444,
+   "lon": 0.175,
+   "measuringSince": "2021-10-08",
+   "no2": {
+    "mean": 17.9,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0144",
+   "name": "Castle Avenue",
+   "borough": "E09000016",
+   "boroughName": "Havering",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 4.0,
+   "lat": 51.5359,
+   "lon": 0.17934,
+   "measuringSince": "2025-04-04",
+   "no2": {
+    "mean": 19.5,
+    "capture": 0.933,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.807,
+    "ratified": 0.265
+   }
+  },
+  {
+   "code": "BL0148",
+   "name": "Boston Place",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 4.0,
+   "lat": 51.52475,
+   "lon": -0.16328,
+   "measuringSince": "2021-10-26",
+   "no2": {
+    "mean": 37.2,
+    "capture": 0.954,
+    "ratified": 0.0
+   },
+   "pm25": null
+  },
+  {
+   "code": "BL0149",
+   "name": "High Street Wealdstone",
+   "borough": "E09000015",
+   "boroughName": "Harrow",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.7,
+   "heightM": 2.98,
+   "lat": 51.59638,
+   "lon": -0.3355,
+   "measuringSince": "2022-01-06",
+   "no2": {
+    "mean": 45.4,
+    "capture": 0.947,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0150",
+   "name": "Harlington High Street",
+   "borough": "E09000017",
+   "boroughName": "Hillingdon",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.48118,
+   "lon": -0.43423,
+   "measuringSince": "2025-04-13",
+   "no2": {
+    "mean": 28.7,
+    "capture": 0.834,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.79,
+    "ratified": 0.318
+   }
+  },
+  {
+   "code": "BL0152",
+   "name": "Piccadilly Circus",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Urban Background",
+   "locationType": "Street",
+   "kerbDistanceM": 8.0,
+   "heightM": 4.0,
+   "lat": 51.51023,
+   "lon": -0.13445,
+   "measuringSince": "2021-12-09",
+   "no2": {
+    "mean": 28.5,
+    "capture": 0.997,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 8.2,
+    "capture": 0.996,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0153",
+   "name": "Hallfield Estate",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 1.0,
+   "heightM": 4.0,
+   "lat": 51.51516,
+   "lon": -0.18537,
+   "measuringSince": "2021-12-09",
+   "no2": {
+    "mean": 20.8,
+    "capture": 0.994,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0154",
+   "name": "Strand/Wellington Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 4.0,
+   "heightM": 4.0,
+   "lat": 51.51133,
+   "lon": -0.11944,
+   "measuringSince": "2021-12-09",
+   "no2": {
+    "mean": 18.5,
+    "capture": 0.978,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.979,
+    "ratified": 0.257
+   }
+  },
+  {
+   "code": "BL0155",
+   "name": "Kings Cross Eco Moorings",
+   "borough": "E09000019",
+   "boroughName": "Islington",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 50.0,
+   "heightM": 2.0,
+   "lat": 51.53549,
+   "lon": -0.12106,
+   "measuringSince": "2025-04-13",
+   "no2": {
+    "mean": 22.9,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.9,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0156",
+   "name": "Cody Dock",
+   "borough": "E09000025",
+   "boroughName": "Newham",
+   "classification": "Urban Background",
+   "locationType": "Community",
+   "kerbDistanceM": 35.0,
+   "heightM": 1.5,
+   "lat": 51.51829,
+   "lon": -0.00273,
+   "measuringSince": "2025-04-09",
+   "no2": {
+    "mean": 23.3,
+    "capture": 0.958,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 8.5,
+    "capture": 0.959,
+    "ratified": 0.238
+   }
+  },
+  {
+   "code": "BL0157",
+   "name": "Southbank BID",
+   "borough": "E09000022",
+   "boroughName": "Lambeth",
+   "classification": "Urban Background",
+   "locationType": "Street",
+   "kerbDistanceM": null,
+   "heightM": null,
+   "lat": 51.50249,
+   "lon": -0.11618,
+   "measuringSince": "2025-07-25",
+   "no2": {
+    "mean": 24.8,
+    "capture": 0.936,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.995,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0158",
+   "name": "127 Oxford Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 3.9,
+   "heightM": 3.5,
+   "lat": 51.51586,
+   "lon": -0.13595,
+   "measuringSince": "2025-05-17",
+   "no2": {
+    "mean": 25.1,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0159",
+   "name": "The Oxford Street Experience Store",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 8.0,
+   "heightM": 3.5,
+   "lat": 51.51444,
+   "lon": -0.14812,
+   "measuringSince": "2025-05-17",
+   "no2": {
+    "mean": 23.1,
+    "capture": 0.995,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.5,
+    "capture": 0.996,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0160",
+   "name": "Great Portland Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": null,
+   "heightM": null,
+   "lat": 51.51545,
+   "lon": -0.14089,
+   "measuringSince": "2025-06-22",
+   "no2": {
+    "mean": 15.8,
+    "capture": 0.994,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.6,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0161",
+   "name": "Duke Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": null,
+   "heightM": null,
+   "lat": 51.51488,
+   "lon": -0.15142,
+   "measuringSince": "2025-06-22",
+   "no2": {
+    "mean": 31.1,
+    "capture": 0.99,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.996,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0162",
+   "name": "Wigmore Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": null,
+   "heightM": null,
+   "lat": 51.51575,
+   "lon": -0.15245,
+   "measuringSince": "2025-06-22",
+   "no2": {
+    "mean": 29.9,
+    "capture": 0.992,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0163",
+   "name": "New Bond Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": null,
+   "heightM": null,
+   "lat": 51.51461,
+   "lon": -0.14604,
+   "measuringSince": "2025-06-22",
+   "no2": {
+    "mean": 33.2,
+    "capture": 0.976,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.7,
+    "capture": 0.996,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0168",
+   "name": "Holy Trinity CofE Primary School",
+   "borough": "E09000014",
+   "boroughName": "Haringey",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 17.0,
+   "heightM": 2.5,
+   "lat": 51.58928,
+   "lon": -0.06991,
+   "measuringSince": "2025-04-27",
+   "no2": {
+    "mean": 27.6,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.2,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0169",
+   "name": "Royal Marsden Hospital - Sutton",
+   "borough": "E09000029",
+   "boroughName": "Sutton",
+   "classification": "Roadside",
+   "locationType": "Hospital",
+   "kerbDistanceM": 0.7,
+   "heightM": 3.0,
+   "lat": 51.34314,
+   "lon": -0.18882,
+   "measuringSince": "2025-05-01",
+   "no2": {
+    "mean": 17.4,
+    "capture": 0.996,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.7,
+    "capture": 0.998,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0171",
+   "name": "Gants Hill",
+   "borough": "E09000026",
+   "boroughName": "Redbridge",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 2.5,
+   "heightM": 3.0,
+   "lat": 51.57456,
+   "lon": 0.06642,
+   "measuringSince": "2025-05-02",
+   "no2": {
+    "mean": 19.4,
+    "capture": 0.998,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.998,
+    "ratified": 0.251
+   }
+  },
+  {
+   "code": "BL0174",
+   "name": "City of London School for Girls",
+   "borough": "E09000001",
+   "boroughName": "City of London",
+   "classification": "Urban Background",
+   "locationType": "School",
+   "kerbDistanceM": 100.0,
+   "heightM": 2.5,
+   "lat": 51.51879,
+   "lon": -0.09568,
+   "measuringSince": "2025-06-07",
+   "no2": {
+    "mean": 14.7,
+    "capture": 0.99,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 6.8,
+    "capture": 0.993,
+    "ratified": 0.253
+   }
+  },
+  {
+   "code": "BL0176",
+   "name": "St Boniface School",
+   "borough": "E09000032",
+   "boroughName": "Wandsworth",
+   "classification": "Kerbside",
+   "locationType": "School",
+   "kerbDistanceM": 1.0,
+   "heightM": 3.5,
+   "lat": 51.427,
+   "lon": -0.16526,
+   "measuringSince": "2025-07-29",
+   "no2": {
+    "mean": 28.9,
+    "capture": 0.925,
+    "ratified": 0.0
+   },
+   "pm25": {
+    "mean": 7.0,
+    "capture": 0.997,
+    "ratified": 0.252
+   }
+  },
+  {
+   "code": "BL0177",
+   "name": "Trafalgar Square",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Roadside",
+   "locationType": "Street",
+   "kerbDistanceM": 2.5,
+   "heightM": 2.6,
+   "lat": 51.50824,
+   "lon": -0.12894,
+   "measuringSince": "2025-12-16",
+   "no2": null,
+   "pm25": {
+    "mean": 8.0,
+    "capture": 0.778,
+    "ratified": 0.044
+   }
+  }
+ ],
+ "excluded": [
+  {
+   "code": "BL0005",
+   "site": "Ley Street",
+   "pollutant": "pm25",
+   "reason": "capture 32% of hours"
+  },
+  {
+   "code": "BL0011",
+   "site": "Bexley Belvedere West",
+   "pollutant": "no2",
+   "reason": "capture 71% of hours"
+  },
+  {
+   "code": "BL0011",
+   "site": "Bexley Belvedere West",
+   "pollutant": "pm25",
+   "reason": "capture 71% of hours"
+  },
+  {
+   "code": "BL0012",
+   "site": "Laurence House - Catford",
+   "pollutant": "no2",
+   "reason": "capture 66% of hours"
+  },
+  {
+   "code": "BL0012",
+   "site": "Laurence House - Catford",
+   "pollutant": "pm25",
+   "reason": "capture 66% of hours"
+  },
+  {
+   "code": "BL0013",
+   "site": "Poverest Allotments",
+   "pollutant": "pm25",
+   "reason": "capture 51% of hours"
+  },
+  {
+   "code": "BL0020",
+   "site": "North Middlesex University Hospital",
+   "pollutant": "no2",
+   "reason": "capture 72% of hours"
+  },
+  {
+   "code": "BL0020",
+   "site": "North Middlesex University Hospital",
+   "pollutant": "pm25",
+   "reason": "capture 72% of hours"
+  },
+  {
+   "code": "BL0021",
+   "site": "Newham University Hospital",
+   "pollutant": "pm25",
+   "reason": "capture 28% of hours"
+  },
+  {
+   "code": "BL0026",
+   "site": "St Thomas' Hospital",
+   "pollutant": "no2",
+   "reason": "capture 69% of hours"
+  },
+  {
+   "code": "BL0026",
+   "site": "St Thomas' Hospital",
+   "pollutant": "pm25",
+   "reason": "capture 69% of hours"
+  },
+  {
+   "code": "BL0041",
+   "site": "A2 Falconwood",
+   "pollutant": "pm25",
+   "reason": "capture 38% of hours"
+  },
+  {
+   "code": "BL0042",
+   "site": "John Harrison Way",
+   "pollutant": "pm25",
+   "reason": "capture 17% of hours"
+  },
+  {
+   "code": "BL0043",
+   "site": "Beddington Lane North",
+   "pollutant": "pm25",
+   "reason": "capture 54% of hours"
+  },
+  {
+   "code": "BL0048",
+   "site": "Brent Ikea",
+   "pollutant": "pm25",
+   "reason": "capture 56% of hours"
+  },
+  {
+   "code": "BL0051",
+   "site": "Marylebone Road",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0051",
+   "site": "Marylebone Road",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0052",
+   "site": "Byward Street / Great Tower Street",
+   "pollutant": "no2",
+   "reason": "capture 46% of hours"
+  },
+  {
+   "code": "BL0052",
+   "site": "Byward Street / Great Tower Street",
+   "pollutant": "pm25",
+   "reason": "capture 49% of hours"
+  },
+  {
+   "code": "BL0056",
+   "site": "Christopher Hatton Primary School",
+   "pollutant": "no2",
+   "reason": "capture 51% of hours"
+  },
+  {
+   "code": "BL0056",
+   "site": "Christopher Hatton Primary School",
+   "pollutant": "pm25",
+   "reason": "capture 59% of hours"
+  },
+  {
+   "code": "BL0074",
+   "site": "Scotts Primary School",
+   "pollutant": "pm25",
+   "reason": "capture 59% of hours"
+  },
+  {
+   "code": "BL0076",
+   "site": "Wessex Gardens Primary School",
+   "pollutant": "pm25",
+   "reason": "capture 65% of hours"
+  },
+  {
+   "code": "BL0087",
+   "site": "Griffin School",
+   "pollutant": "no2",
+   "reason": "capture 59% of hours"
+  },
+  {
+   "code": "BL0099",
+   "site": "St Jerome Bilingual School",
+   "pollutant": "no2",
+   "reason": "capture 8% of hours"
+  },
+  {
+   "code": "BL0099",
+   "site": "St Jerome Bilingual School",
+   "pollutant": "pm25",
+   "reason": "capture 34% of hours"
+  },
+  {
+   "code": "BL0107",
+   "site": "William Byrd Primary Academy - Victoria Lane",
+   "pollutant": "pm25",
+   "reason": "capture 12% of hours"
+  },
+  {
+   "code": "BL0113",
+   "site": "Tottenham Hale",
+   "pollutant": "pm25",
+   "reason": "capture 65% of hours"
+  },
+  {
+   "code": "BL0123",
+   "site": "North Circular Road",
+   "pollutant": "no2",
+   "reason": "capture 36% of hours"
+  },
+  {
+   "code": "BL0123",
+   "site": "North Circular Road",
+   "pollutant": "pm25",
+   "reason": "capture 37% of hours"
+  },
+  {
+   "code": "BL0124",
+   "site": "Hogarth Roundabout - Great West Road",
+   "pollutant": "no2",
+   "reason": "capture 46% of hours"
+  },
+  {
+   "code": "BL0124",
+   "site": "Hogarth Roundabout - Great West Road",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours"
+  },
+  {
+   "code": "BL0136",
+   "site": "Ampthill Square Estate",
+   "pollutant": "no2",
+   "reason": "capture 70% of hours"
+  },
+  {
+   "code": "BL0136",
+   "site": "Ampthill Square Estate",
+   "pollutant": "pm25",
+   "reason": "capture 70% of hours"
+  },
+  {
+   "code": "BL0146",
+   "site": "Brownhill Road",
+   "pollutant": "no2",
+   "reason": "capture 46% of hours"
+  },
+  {
+   "code": "BL0146",
+   "site": "Brownhill Road",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours"
+  },
+  {
+   "code": "BL0147",
+   "site": "Plassy Road",
+   "pollutant": "no2",
+   "reason": "capture 46% of hours"
+  },
+  {
+   "code": "BL0147",
+   "site": "Plassy Road",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours"
+  },
+  {
+   "code": "BL0148",
+   "site": "Boston Place",
+   "pollutant": "pm25",
+   "reason": "capture 37% of hours"
+  },
+  {
+   "code": "BL0164",
+   "site": "Orchard Street j/w Portman Mews South",
+   "pollutant": "no2",
+   "reason": "capture 65% of hours (measuring here since 2026-01-21)"
+  },
+  {
+   "code": "BL0164",
+   "site": "Orchard Street j/w Portman Mews South",
+   "pollutant": "pm25",
+   "reason": "capture 69% of hours (measuring here since 2026-01-21)"
+  },
+  {
+   "code": "BL0165",
+   "site": "Holles Street",
+   "pollutant": "no2",
+   "reason": "capture 65% of hours (measuring here since 2026-01-21)"
+  },
+  {
+   "code": "BL0165",
+   "site": "Holles Street",
+   "pollutant": "pm25",
+   "reason": "capture 69% of hours (measuring here since 2026-01-21)"
+  },
+  {
+   "code": "BL0166",
+   "site": "Margaret Street",
+   "pollutant": "no2",
+   "reason": "capture 65% of hours (measuring here since 2026-01-21)"
+  },
+  {
+   "code": "BL0166",
+   "site": "Margaret Street",
+   "pollutant": "pm25",
+   "reason": "capture 69% of hours (measuring here since 2026-01-21)"
+  },
+  {
+   "code": "BL0175",
+   "site": "The Bath House",
+   "pollutant": "no2",
+   "reason": "capture 64% of hours"
+  },
+  {
+   "code": "BL0175",
+   "site": "The Bath House",
+   "pollutant": "pm25",
+   "reason": "capture 64% of hours"
+  },
+  {
+   "code": "BL0177",
+   "site": "Trafalgar Square",
+   "pollutant": "no2",
+   "reason": "capture 73% of hours (measuring here since 2025-12-16)"
+  },
+  {
+   "code": "BL0178",
+   "site": "Arkwright Road",
+   "pollutant": "no2",
+   "reason": "capture 61% of hours (measuring here since 2026-01-28)"
+  },
+  {
+   "code": "BL0178",
+   "site": "Arkwright Road",
+   "pollutant": "pm25",
+   "reason": "capture 62% of hours (measuring here since 2026-01-28)"
+  },
+  {
+   "code": "BL0179",
+   "site": "Nutley Terrace",
+   "pollutant": "no2",
+   "reason": "capture 63% of hours (measuring here since 2026-01-28)"
+  },
+  {
+   "code": "BL0179",
+   "site": "Nutley Terrace",
+   "pollutant": "pm25",
+   "reason": "capture 65% of hours (measuring here since 2026-01-28)"
+  },
+  {
+   "code": "BL0180",
+   "site": "Heath Street",
+   "pollutant": "no2",
+   "reason": "capture 61% of hours (measuring here since 2026-01-29)"
+  },
+  {
+   "code": "BL0180",
+   "site": "Heath Street",
+   "pollutant": "pm25",
+   "reason": "capture 63% of hours (measuring here since 2026-01-29)"
+  },
+  {
+   "code": "BL0181",
+   "site": "St Francis RC Primary School",
+   "pollutant": "no2",
+   "reason": "capture 48% of hours (measuring here since 2026-02-17)"
+  },
+  {
+   "code": "BL0181",
+   "site": "St Francis RC Primary School",
+   "pollutant": "pm25",
+   "reason": "capture 51% of hours (measuring here since 2026-02-17)"
+  },
+  {
+   "code": "BL0182",
+   "site": "Westway",
+   "pollutant": "no2",
+   "reason": "capture 46% of hours (measuring here since 2026-04-01)"
+  },
+  {
+   "code": "BL0182",
+   "site": "Westway",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours (measuring here since 2026-04-01)"
+  },
+  {
+   "code": "BL0183",
+   "site": "China Hall",
+   "pollutant": "no2",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0183",
+   "site": "China Hall",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0184",
+   "site": "Redriff Road",
+   "pollutant": "no2",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0184",
+   "site": "Redriff Road",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0185",
+   "site": "Lower Road",
+   "pollutant": "no2",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0185",
+   "site": "Lower Road",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0186",
+   "site": "Hawkstone Road",
+   "pollutant": "no2",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0186",
+   "site": "Hawkstone Road",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+  },
+  {
+   "code": "BL0187",
+   "site": "Rotherhithe New Road",
+   "pollutant": "no2",
+   "reason": "capture 34% of hours (measuring here since 2026-03-06)"
+  },
+  {
+   "code": "BL0187",
+   "site": "Rotherhithe New Road",
+   "pollutant": "pm25",
+   "reason": "capture 34% of hours (measuring here since 2026-03-06)"
+  },
+  {
+   "code": "BL0188",
+   "site": "Bush Road",
+   "pollutant": "no2",
+   "reason": "capture 46% of hours (measuring here since 2026-04-01)"
+  },
+  {
+   "code": "BL0188",
+   "site": "Bush Road",
+   "pollutant": "pm25",
+   "reason": "capture 50% of hours (measuring here since 2026-04-01)"
+  },
+  {
+   "code": "BL0189",
+   "site": "Glendower Prep School",
+   "pollutant": "no2",
+   "reason": "capture 15% of hours (measuring here since 2026-06-16)"
+  },
+  {
+   "code": "BL0189",
+   "site": "Glendower Prep School",
+   "pollutant": "pm25",
+   "reason": "capture 15% of hours (measuring here since 2026-06-16)"
+  },
+  {
+   "code": "BL0190",
+   "site": "Bexley Allotments - Old Farm Avenue",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0190",
+   "site": "Bexley Allotments - Old Farm Avenue",
+   "pollutant": "pm25",
+   "reason": "capture 14% of hours (measuring here since 2026-07-23)"
+  },
+  {
+   "code": "BL0191",
+   "site": "Rose Court Care Home",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0191",
+   "site": "Rose Court Care Home",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0192",
+   "site": "Cow Lane",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0192",
+   "site": "Cow Lane",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0193",
+   "site": "Gomm Road",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0193",
+   "site": "Gomm Road",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0194",
+   "site": "Albion Primary School",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0194",
+   "site": "Albion Primary School",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0195",
+   "site": "Llewelyn Street",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0195",
+   "site": "Llewelyn Street",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0196",
+   "site": "William Byrd Primary Academy - Hudson Road",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0196",
+   "site": "William Byrd Primary Academy - Hudson Road",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0197",
+   "site": "Bedfont Primary School",
+   "pollutant": "no2",
+   "reason": "no readings in the window"
+  },
+  {
+   "code": "BL0197",
+   "site": "Bedfont Primary School",
+   "pollutant": "pm25",
+   "reason": "no readings in the window"
+  }
+ ]
+}

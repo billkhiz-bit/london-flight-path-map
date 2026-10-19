@@ -1,7 +1,7 @@
 # Measurements held, not yet shown
 
 > Moved verbatim from `CLAUDE.md` on 2026-10-17 to keep the session-start file small.
-> DEFRA AURN monitors; how often planes pass (adsb.lol, CAA comparison, outages, circuits).
+> DEFRA AURN monitors; Breathe London sensors; how often planes pass (adsb.lol, CAA comparison, outages, circuits).
 > Statements are dated as written; re-measure a number before relying on it, and when a
 > rule here changes, update the one-line rule in `CLAUDE.md` too.
 
@@ -15,6 +15,36 @@ only (a site that closed mid-year counts to its closing day), 75% capture, UK-AI
 never ranked (UK-AIR: "not scientifically sound"). Nothing reads it yet: the "nearest official monitor" line ships
 with the Breathe London half (ROADMAP plan, GLA key pending) and needs a distance scope - Greater Norwich's
 nearest NO2 clearing the floor is 77 km away.
+
+**BREATHE LONDON'S SENSORS ARE HELD, not shown (2026-10-19).** `scripts/fetch_breathe_london.py --fetch` writes
+`data/breathe-london-sensors.json` (checked in; the raw API answers, ~15 MB gzipped, in ignored
+`data/breathe-london/<fetch day>/`, so a re-run the same day resumes and `--verify` re-derives exactly). The GLA key is
+in `.env` as `BREATHE_LONDON_API_KEY` ONLY: Bill typed it in with Notepad, it was never pasted into the chat, and every
+command that uses it reads `.env` itself and prints nothing of it (a check prints set/MISSING and the length). It
+travels in the `X-API-KEY` header, never a URL; error bodies are redacted; `--fetch` refuses to cache or write
+anything holding it and `--check` (BLOCKING) searches the file for it. Three API shapes measured on day one, each
+held by a test proven RED on a scratch copy of the script: `endTime` is INCLUSIVE (two days returned 49 hours), a
+missing hour is a ROW with a null `ScaledValue` (so capture is valid hours over the WINDOW's hours, never over the
+rows returned: a sensor installed mid-window has no rows before it and would read 100%), and a null is missing,
+never zero. The window is the 12 whole months before the fetch month (UTC), 75% capture, the borough by
+point-in-polygon on `london-boroughs.json` keyed by ONS code (the API's borough NAME disagreed once: Prior Weston
+Primary School, BL0060, on the City/Islington line; postcodes.io's two nearest postcodes are City of London, so the
+boundary stands and the API names the school's council), a usable sensor in EVERY borough or a `NO_SENSOR_INSIDE`
+reason. **First fetch, 19 Oct (window Oct 2025-Sep 2026): 116 of 153 live sensors usable** (114 NO2, 104 PM2.5),
+all 33 boroughs; 49 of the 88 dropped means are places that began measuring after the window opened, 39 belong
+to 26 sensors in place all year with too many gaps (8-72% of hours). Kerbside survives worst (7 of 23; all 16
+left out are new). **ONE PLACE PER MEAN (review, same day):** `/ListSensors` is one row per INSTALLATION (327
+rows, 153 live) and `/SensorData` by site code returns EVERY installation's hours (BL0005: 5,996 valid hours
+before its live device went in), so a sensor moved under its code would blend two places into one mean.
+`measuring_since()` keeps only hours since the run of same-place installations (position ~10 m,
+classification, kerb distance; height ignored, BL0056's swap rose 0.4 m) began; `--check` refuses a capture
+larger than those hours allow. On 19 Oct none had moved (27 overlapping installations, all same-post swaps),
+so no mean changed; my first count of "new" sensors (78) had used the live device's date and was wrong.
+The same review: urllib copies `X-API-KEY` onto a REDIRECT to any host (redirects now refused), error bodies
+are redacted before being cut, and every line printed while the key is known goes through a redacting
+stream (a check that FINDS the key in a field would otherwise echo it). Each proven red on a scratch copy. 2.16 million hourly values, none
+negative or zero. Medians NO2 19.9 background / 20.6 roadside / 29.9 kerbside; PM2.5 about 7 everywhere. Display
+only, never scored, never ranked; `check_data_freshness.py` reads NEWER 45 days after the window ends.
 
 **HOW OFTEN PLANES PASS IS BEING MEASURED, NOT SHOWN (2026-10-15).** Bill: as accurate as possible, time no
 object; the plan and its gates are ROADMAP "IN PROGRESS: how often planes fly". `scripts/adsb_extract.py` streams

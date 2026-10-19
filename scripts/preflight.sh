@@ -322,6 +322,12 @@ check "COVID understatement == pages"   python scripts/measure_covid_understatem
 # for word; the 75% capture floor; and a usable site inside EVERY covered city,
 # because a count floor says how many sites survived, never which.
 check "AURN monitors keep their rules"  python scripts/fetch_aurn.py --check
+# Breathe London's sensors (2026-10-19), held in data/breathe-london-sensors.json
+# for the "nearest sensor" line (London only). Offline: the window is the 12
+# months before the fetch month, the attribution word for word, the 75% capture
+# floor, each sensor inside the borough it is filed under, a usable sensor in
+# EVERY borough, and the API key (read from .env) nowhere in the file.
+check "Breathe London keeps its rules" python scripts/fetch_breathe_london.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
@@ -922,6 +928,9 @@ advise "aircraft footprint == DEFRA"    python scripts/measure_aircraft_footprin
 # cannot pass. Advisory for the same reason as the stage above: the raw files
 # are gitignored (and need pyreadr), so a fresh clone reports INCONCLUSIVE.
 advise "AURN monitors == DEFRA files"   python scripts/fetch_aurn.py --verify
+# The Breathe London file re-derived from the cached API answers (gitignored, so
+# a fresh clone reports INCONCLUSIVE), so a hand edit of the JSON cannot pass.
+advise "Breathe London == API answers"  python scripts/fetch_breathe_london.py --verify
 # Added 2026-09-02. `Quiet Skies` is the headline component and for most
 # postcodes it is an ESTIMATE; its accuracy had been measured ONCE during the
 # v3.8 work and recorded only in CLAUDE.md prose. api/index.html now PUBLISHES

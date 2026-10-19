@@ -48,6 +48,7 @@ import build_hpi_prices  # noqa: E402
 import build_progress8  # noqa: E402
 import build_us_flight_paths  # noqa: E402
 import check_air_quality_vintage  # noqa: E402
+import fetch_breathe_london  # noqa: E402
 import load_defra_air_quality  # noqa: E402
 import load_nspl  # noqa: E402
 import refresh_crime_from_ons  # noqa: E402
@@ -238,6 +239,18 @@ def ppd():
             'complete calendar years; build_city_neighbourhoods.py --years N --write-index')
 
 
+def breathe():
+    # Offline: the window rolls by the calendar, so the newest is the one a fetch
+    # today would take. A month's grace before it reads as a roll (ROADMAP's plan:
+    # a window ending more than 45 days ago is a roll to do).
+    served = json.loads(fetch_breathe_london.OUT.read_text(encoding='utf-8'))['window']['to']
+    newest = fetch_breathe_london.window_label(*fetch_breathe_london.window(TODAY))['to']
+    late = (TODAY - datetime.date.fromisoformat(served)).days > 45
+    status = 'current' if newest == served else ('NEWER' if late else 'info')
+    return (served, newest, status,
+            'monthly, 12-month window; fetch_breathe_london.py --fetch (needs the key in .env)')
+
+
 CHECKED = [
     ('HM Land Registry UK HPI (prices, growth)', hpi),
     ('ONS recorded crime (Table C4)', crime),
@@ -248,6 +261,7 @@ CHECKED = [
     ('UK AIP flight procedures (AIRAC)', airac),
     ('FAA CIFP flight procedures (US)', cifp),
     ('HM Land Registry Price Paid (medians)', ppd),
+    ('Breathe London sensors (12-month means)', breathe),
 ]
 
 NOT_ROLLED = [
