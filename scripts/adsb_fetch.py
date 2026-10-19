@@ -28,6 +28,7 @@ library alone, so any current Python will do; on Bill's machine that is an unreg
 Usage:
     python -I -u scripts/adsb_fetch.py 2026-08-01 2026-08-31
     python -I -u scripts/adsb_fetch.py 2026-08-01 2026-08-31 --keep-raw
+    python -I -u scripts/adsb_fetch.py 2026-01-01 2026-10-18 --workers 3   (gentler while the PC is in use)
 """
 
 import argparse
@@ -113,7 +114,7 @@ def download(url, path, size):
     return path.exists() and path.stat().st_size == size
 
 
-def run_day(day, keep_raw):
+def run_day(day, keep_raw, workers):
     out = EXTRACT / f'{day:%Y-%m-%d}.jsonl.gz'
     if out.exists():
         log(f'{day:%Y-%m-%d}: extract exists, skipped')
@@ -127,7 +128,7 @@ def run_day(day, keep_raw):
             log(f'{day:%Y-%m-%d}: {name} did not download in full; raw kept')
             return False
     res = subprocess.run(  # noqa: S603  (our own script; the path is ours, built from a parsed date)
-        [sys.executable, '-I', str(ROOT / 'scripts' / 'adsb_extract.py'), str(day_dir)],
+        [sys.executable, '-I', str(ROOT / 'scripts' / 'adsb_extract.py'), str(day_dir), '--workers', str(workers)],
         capture_output=True, text=True)
     summary = (res.stdout.strip().splitlines() or [''])[-1]
     if res.returncode != 0 or not out.exists():
@@ -146,13 +147,18 @@ def main():
     ap.add_argument('first', type=dt.date.fromisoformat)
     ap.add_argument('last', type=dt.date.fromisoformat)
     ap.add_argument('--keep-raw', action='store_true', help='keep each day\'s archive after extracting')
+    # Six extract workers suit an idle machine; on one in use (2026-10-19: Chrome at 17 GB) they starved it of
+    # memory, so a run can ask for fewer. The day's result is the same either way, only slower.
+    ap.add_argument('--workers', type=int, default=6, help='extract worker processes (default 6)')
     args = ap.parse_args()
     if args.last < args.first:
         raise SystemExit('last day is before the first')
+    if not 1 <= args.workers <= 16:
+        raise SystemExit('--workers must be between 1 and 16')
     failed, day = [], args.first
     while day <= args.last:
         try:
-            if not run_day(day, args.keep_raw):
+            if not run_day(day, args.keep_raw, args.workers):
                 failed.append(day)
         except (OSError, RuntimeError, ValueError) as exc:
             log(f'{day:%Y-%m-%d}: FAILED ({exc})')

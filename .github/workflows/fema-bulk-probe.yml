@@ -6,6 +6,12 @@ name: FEMA bulk-download probe (manual)
 # not be read from here (the guide resets this machine and WebFetch). This job fetches FEMA's own direct-download
 # guide and records how FEMA's hosts answer a browser User-Agent, so the bulk fetcher is built from what the guide
 # says rather than a guess. It writes nothing back to the repo; the result is a 7-day artifact.
+#
+# Run 39320864104 (2026-10-19): the portal pages answered 200, but the guide and both MapServer roots failed with
+# curl exit 35 (TLS reset), and the guide resets in Bill's own browser too. So the second step reads the address from
+# FEMA's OWN code instead: it saves the portal page and the scripts it loads FROM msc.fema.gov ONLY, and searches
+# them for the download address. Everything fetched is untrusted data: saved under sanitised names and searched with
+# grep, never executed.
 on:
   workflow_dispatch:
 
@@ -36,6 +42,38 @@ jobs:
           probe 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer?f=json'
           cat out/probe.tsv
           ls -la out
+      - name: Read the download address from the portal's own scripts
+        run: |
+          mkdir -p out/portal/js
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
+          get() { curl -s -f -L --proto '=https' -A "$UA" --max-time 60 --max-filesize 10000000 -o "$2" "$1"; }
+          for page in advanceSearch home; do
+            get "https://msc.fema.gov/portal/$page" "out/portal/$page.html" || echo "$page: curl exit $?" >> out/portal/errors.txt
+          done
+          # Script sources on msc.fema.gov only (absolute, root-relative or page-relative); anything on another host
+          # is listed, not fetched. At most 60, each saved under a name of [A-Za-z0-9._-] alone.
+          # (GitHub runs this with pipefail, so a page with no scripts must not fail the step.)
+          { cat out/portal/*.html 2>/dev/null | grep -oE '<script[^>]+src="[^"]+"' | sed -E 's/.*src="([^"]+)".*/\1/' \
+            | sort -u; } > out/portal/script-srcs.txt || true
+          n=0
+          while IFS= read -r src && [ "$n" -lt 60 ]; do
+            case "$src" in
+              https://msc.fema.gov/*) url="$src" ;;
+              //*|http://*|https://*) echo "other host, not fetched: $src" >> out/portal/errors.txt; continue ;;
+              /*) url="https://msc.fema.gov$src" ;;
+              *) url="https://msc.fema.gov/portal/$src" ;;
+            esac
+            n=$((n + 1))
+            name="$(printf '%03d-%s' "$n" "$(basename "${src%%\?*}")" | tr -c 'A-Za-z0-9._-' '_')"
+            get "$url" "out/portal/js/$name" || echo "$url: curl exit $?" >> out/portal/errors.txt
+          done < out/portal/script-srcs.txt
+          # Each mention of a download route or an NFHL product, with up to 150 characters before and 250 after it:
+          # minified scripts are one long line, so whole lines would say nothing.
+          grep -n -o -E '.{0,150}(downloadProduct|productTypeID|productSubTypeID|NFHL|msccontent|ProductsDownLoad).{0,250}' \
+            out/portal/*.html out/portal/js/* 2>/dev/null > out/portal/download-refs.txt || true
+          wc -l out/portal/script-srcs.txt out/portal/download-refs.txt
+          head -40 out/portal/download-refs.txt
+          cat out/portal/errors.txt 2>/dev/null || true
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: fema-bulk-probe

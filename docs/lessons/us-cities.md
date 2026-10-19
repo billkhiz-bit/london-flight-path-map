@@ -157,3 +157,9 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   minute, then hung on the feature fetch until the 30-minute workflow limit: throttling or an outage on FEMA's side
   for GitHub's runner, after five runs and thousands of requests that day. One retry per day at most. The bulk
   route's download address could not be read (FEMA's guide resets here and from WebFetch).
+- **The bulk route, probed (2026-10-19, `fema-bulk-probe.yml`, run `39320864104`):** from GitHub,
+  `msc.fema.gov/portal/home` and `/portal/advanceSearch` answer 200; both NFHL MapServer roots on `hazards.fema.gov`
+  and the direct-download guide (`msc.fema.gov/msccontent/...pdf`) fail with curl exit 35 (TLS reset), and the guide
+  resets in Bill's own browser too, so it is not only cloud addresses. The one open door is the portal: the probe's
+  second step saves the portal page and the scripts it loads from msc.fema.gov, and searches them for the address
+  its Download buttons use (FEMA's own code, not a guess; tested on a fixture with a stubbed network first).

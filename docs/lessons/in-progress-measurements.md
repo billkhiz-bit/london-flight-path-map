@@ -68,3 +68,17 @@ almost every day after it). And **circuits are movements** by the CAA's definiti
 `circuits` or without (never the floor on one and the ceiling on the other: that passed 110%/80%), and a pair under
 `CIRCUIT_MIN_S` (30 s) is a low approach or a glitch, not a circuit. The report takes ~2.5 min a month on six workers.
 
+**AN OVERFLIGHT IS CAP 1498's, AND THE FETCH IS SAFE TO STOP (2026-10-19).** Bill chose the CAA's CAP 1498
+definition for step 2: an aircraft above a 48.5 degree elevation angle (the headline; 60 degrees computed alongside)
+and below 7,000 ft; CAP 1498 says results must state both thresholds. At 48.5 degrees the cone's radius is 0.885 x
+the height. A prototype (outside the repo) on two days settled three questions: (1) altitude: barometric and GPS
+differ by ~500 ft on a day (GPS is above the ellipsoid; the geoid is ~46 m above it here), so use GPS minus the
+geoid where present (63-65% of points), else barometric plus that DAY'S median offset; (2) 100 m steps along each
+segment are enough (25 m gave identical counts); (3) a day must be classed westerly or easterly before averaging:
+Kew TW9 3PZ counted 296 on 14 Oct (westerly) and 0 on 15 Aug (easterly). 48.5 vs 60 barely differs under a
+centreline (296/295) but does off it (Silvertown 90/54). **`adsb_fetch.py --workers N`** (default 6) passes N to
+the extractor: six workers on a machine in use (Chrome at 17 GB) ran it out of memory and background jobs were
+stopped; 3 gives the same extracts, more slowly. **Stopping is always safe:** a day is skipped only when its
+extract EXISTS, and the extractor writes `<day>.jsonl.gz.partial` and renames it when complete, so a killed day is
+redone, never half-counted; a part download resumes from the bytes it has.
+

@@ -32,6 +32,19 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > linear US scales, `914ce60`): `sold_prices` to pass through `transactionCategory` (so a repossession or company
 > purchase of a HOME is marked too), `estateType` (freehold/leasehold) and `saon` (it drops "FLAT 2" today).
 >
+> **Evening, all DEPLOYED (`f0e289e`; from the origin, and seen live at TW9 3PZ):** "Sky Score" links home from
+> every page (`tests/test_brand_links_home.py` finds all 123); for a postcode whose nearest airport is Heathrow or
+> London City, the front page and street report link to that airport's noise pages and the CAA's airspace change
+> portal (`HAVE_YOUR_SAY`, links checked live; other airports get none until checked), and both offer "Spotted
+> something wrong?". The responsive gate caught the map's link on phones (the title is visually hidden there, so
+> the link was a focusable control under the city chips): it now exists only where the title renders. **How often
+> planes pass:** the overflight definition is DECIDED (the CAA's CAP 1498; step 2 of "IN PROGRESS: how often
+> planes fly") and a prototype settled the design; every 2026 day not yet held is being FETCHED (started 19 Oct,
+> `adsb_fetch.py 2026-01-01 2026-10-18 --workers 3`, safe to stop and restart). **FEMA's bulk route, probed**
+> (`fema-bulk-probe.yml`, run `39320864104`): from GitHub the MSC portal pages answer 200, but both NFHL map
+> services and FEMA's direct-download guide reset the connection, and the guide resets in Bill's own browser too.
+> The probe now reads the download address from the portal's OWN scripts (run after this commit).
+>
 > ## START HERE (2026-10-18)
 >
 > **Bay Area release 2: three of the four remaining readers BUILT, the fourth waiting on FEMA's file.** FEMA, three
@@ -149,7 +162,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > are read in GoatCounter only (paths starting `want/`). Bill submitted the GLA
 > key request (acknowledged, pending approval). Queued for 14 Oct: "Spotted something wrong?" on the front page
 > and street report (it exists only on the full map), "have your say where it counts" signposts (verified links
-> only, Heathrow and London City first), a residents' groups page; the full map's NOT COVERED panel could take
+> only, Heathrow and London City first), a residents' groups page (19 Oct: the first two DEPLOYED in `f0e289e`;
+> the third became a draft airspace-consultation guide, outside the repo until Bill approves it); the full map's
+> NOT COVERED panel could take
 > the same vote. Privacy s2c wording for counted actions is Bill's (legal batch 2), and with the vote live
 > the page is now behind the site by two counted actions (the front page's engagement events and the vote).
 > Optional: a script reading the `want/` counts through GoatCounter's API, once Bill puts a key in `.env`.
@@ -1823,6 +1838,12 @@ Geovation advised (2026-10-02) and the question residents actually ask ("one pla
 2. **A full year of tracks** (~1.3 TB streamed a day at a time, ~30 GB of extracts kept),
    so seasonal runway direction is in the average. Per postcode: flights per average
    day below a height, westerly and easterly days separately.
+   **An overflight is the CAA's CAP 1498 definition (Bill, 2026-10-19):** above a 48.5 degree elevation angle
+   (the headline; 60 degrees computed alongside) and below 7,000 ft, always presented with both thresholds.
+   A prototype on two days settled the design: GPS height minus the geoid where present, else barometric plus
+   that DAY'S measured offset; 100 m steps along each segment (25 m changed no count); each day classed westerly
+   or easterly before averaging (Kew TW9 3PZ: 296 on westerly 14 Oct, 0 on easterly 15 Aug). The fetch of every
+   2026 day STARTED 19 Oct. Next: `scripts/adsb_overflights.py`, counts per 100 m grid cell per day.
 3. **N65 / N70 per postcode** (flights louder than 65 / 70 dB a day) by the standard
    aircraft-noise calculation (ECAC Doc 29: aircraft type, height, distance). It needs
    EASA's ANP noise data, which is **by request, not a download** (request drafted,
