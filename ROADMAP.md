@@ -21,7 +21,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > AI Tinkerers recording), waiting on Bill's inputs; `/talks/` must keep working (printed QR codes). **Then two
 > front-page additions (Bill agreed, after looking at another data site):** a coverage strip under the search (the
 > covered regions as "live" chips, GENERATED from the city registry so it cannot drift from the coverage sentence)
-> and a developer band (a copyable `/v1/score` request; the API is the product, one card of four today). Not a
+> and a developer band (a copyable `/v1/score` request; the API is the product, one card of four today). **The
+> coverage line is BUILT the same day** (`scripts/build_coverage_strip.py`, a one-line `<details>` in the search
+> card: written out, the list made the card cover the whole faded map, Bill's 7 Oct backdrop). Not a
 > restyle (that waits for the rename) and no customer logos (there are none to show).
 > **Sold prices (Bill, same day): the full map's list now names each sale's property type** and marks Land
 > Registry's type "other" (a shop or its lease, always its non-standard category B) as "not a home"; display only,

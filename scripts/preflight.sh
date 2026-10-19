@@ -328,6 +328,10 @@ check "AURN monitors keep their rules"  python scripts/fetch_aurn.py --check
 # floor, each sensor inside the borough it is filed under, a usable sensor in
 # EVERY borough, and the API key (read from .env) nowhere in the file.
 check "Breathe London keeps its rules" python scripts/fetch_breathe_london.py --check
+# The front page's coverage strip (2026-10-19), generated from the score Lambda's
+# registry: offline, the markup between its markers equals a fresh derivation, and
+# its UK numbers add up to the page's own "97 council areas in 13 UK city regions".
+check "coverage strip == registry"   python scripts/build_coverage_strip.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the

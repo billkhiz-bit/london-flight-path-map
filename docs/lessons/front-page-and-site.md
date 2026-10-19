@@ -258,6 +258,14 @@
 >   place to measure from). `tests/uk-city-panel.mjs` works the expected names out from postcodes.io's position:
 >   SW11 1AA shows BOTH (sensor 1.1 km, monitor 4.0 km), M1 1AE / B15 2TT / LS1 4DY a monitor, 10001 no section;
 >   proven red by removing the call and by rendering the section for every city.
+> - **THE COVERAGE LINE IS GENERATED (2026-10-19).** "Which places does it cover?" in the search card is a
+>   `<details>` written by `scripts/build_coverage_strip.py` between the COVERAGE-STRIP markers, from the score
+>   Lambda's registry (`app.CITIES`: name, country, council areas) and the Bay Area's outlines; `--check` (blocking)
+>   holds the markup to the registry AND its UK numbers to the page's own "97 ... in 13" figure. It is ONE line
+>   on purpose: written out in full it made the card four lines taller, and the card then covered the whole faded
+>   London map (the backdrop check probed 0 points clear of it). Even one line cost probes: 8 px found 34 under
+>   the floor of 40, so the grid went to 6 px, the precedent of 14 Oct (the floor stays; the grid gets finer).
+>   A plain list, not chips: nothing in it is clickable until the area index has a heading id per region.
 > - **"Cubitt33" stays on `privacy.html` and `terms.html` ONLY.** Bill asked for it off the
 >   site for now; the legal pages must still name the company (trading disclosures, and
 >   the controller in the privacy notice). Footers say "All figures from official public

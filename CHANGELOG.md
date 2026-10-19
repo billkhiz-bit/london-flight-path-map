@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-19 - The front page says where it covers
+
+- **"Which places does it cover?"** under the search opens the list of every region the search answers for,
+  with its council areas: the 13 UK city regions (Cardiff, Nottingham and Greater Norwich among them, which the
+  map's city buttons never named), plus New York's boroughs and the Bay Area's cities (facts only). A visitor
+  no longer has to search to find out.
+- **Generated from the API's own list of cities**, never typed, and checked on every commit to add up to the
+  page's "97 council areas in 13 UK city regions".
+
 ## 2026-10-19 - Sold prices say what was sold
 
 - **Each sale on the full map's sold-prices list now names the kind of property**: flat, terraced, semi-detached or

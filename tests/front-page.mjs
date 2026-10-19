@@ -240,6 +240,37 @@ const introState = () =>
   });
 const before = await introState();
 ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpacity < 0.5, 'on a wide screen the page opens as the question, centred over a faded map', JSON.stringify(before));
+// WHERE THE SEARCH COVERS, before anyone types (2026-10-19): every UK region the API serves, its council
+// areas adding up to the page's own figure, then New York and the Bay Area. Cardiff is the region the
+// map's city buttons never named. scripts/build_coverage_strip.py --check holds the markup to the
+// registry; this holds what a visitor sees.
+// It is ONE LINE that opens the list: written out, the list made the card cover the whole faded map
+// (the backdrop check below probed 0 points), so the summary is asserted visible and the list read open.
+{
+  const covers = await page.evaluate(() => {
+    const el = document.querySelector('details.covers');
+    if (!el) return null;
+    const summary = el.querySelector('summary');
+    const line = summary && summary.getBoundingClientRect().height > 0 && !el.open;
+    el.open = true;
+    const read = {
+      visible: line,
+      text: el.innerText,
+      regions: [...el.querySelectorAll('li')].map((li) => [li.firstChild.textContent.trim(), Number(li.querySelector('b').textContent)]),
+      figure: document.querySelector('.fig')?.textContent || '',
+    };
+    el.open = false; // closed again, so the checks that follow see the card as a visitor first does
+    return read;
+  });
+  const fig = covers && /^(\d+)\s*council areas in (\d+) UK city regions/.exec(covers.figure);
+  const total = covers ? covers.regions.reduce((s, [, n]) => s + n, 0) : 0;
+  ok(
+    Boolean(covers && fig) && covers.visible && covers.regions.length === Number(fig[2]) && total === Number(fig[1]) &&
+      covers.regions.some(([name]) => name === 'Cardiff') && /plus New York's \d+ boroughs and \d+ Bay Area cities \(facts only\)/.test(covers.text),
+    "before any search one line offers where it covers, and opens to every UK region adding up to the page's own figure, then New York and the Bay Area",
+    JSON.stringify(covers && { regions: covers.regions.length, total, figure: covers.figure.slice(0, 50) })
+  );
+}
 // The faded map is a BACKDROP while the question covers it (Bill, 2026-10-07): no hover, no
 // tooltip, no click, no Tab stop behind the card (WCAG 2.2 2.4.11). Asked of the BROWSER, not of
 // the attribute the fix sets: an 8 px grid over every council area's box, clear of the card and
@@ -256,9 +287,10 @@ const backdrop = await page.evaluate(() => {
   let probed = 0;
   let hits = 0;
   // 8 px since 2026-10-14: the panel's tab row made the card taller, and a 12 px grid then found 33
-  // points clear of it, under the floor below. The floor stays; the grid got finer.
-  for (let x = Math.max(map.left, 0) + 2; x < Math.min(map.right, innerWidth); x += 8) {
-    for (let y = Math.max(map.top, 0) + 2; y < Math.min(map.bottom, innerHeight); y += 8) {
+  // points clear of it, under the floor below. The floor stays; the grid got finer. 6 px since
+  // 2026-10-19, for the same reason: the coverage line made the card one line taller and 8 px found 34.
+  for (let x = Math.max(map.left, 0) + 2; x < Math.min(map.right, innerWidth); x += 6) {
+    for (let y = Math.max(map.top, 0) + 2; y < Math.min(map.bottom, innerHeight); y += 6) {
       if (x > panel.left - 8 && x < panel.right + 8 && y > panel.top - 8 && y < panel.bottom + 8) continue;
       if (!boxes.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)) continue;
       probed++;
@@ -590,6 +622,7 @@ const airBlock = async () => {
     JSON.stringify(edge)
   );
 }
+ok(await page.locator('.covers').isHidden(), 'the coverage strip steps aside once an answer shows, as "Try" does');
 const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
 ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.score}`) && area.includes(`${richmond.flood_medium_or_high_pct}% of postcodes at medium or high flood risk`), 'the council-area line carries the CSV score and flood share', area);
