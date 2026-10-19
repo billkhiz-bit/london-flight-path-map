@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-19 - A developers' section on the front page; the map's measured air laid out clearly
+
+- **For developers:** a dark section on the front page with two requests to paste, each with a Copy button:
+  a postcode's score (with a free key; the page shows only a placeholder) and the noise and air figures at a
+  point, which need no key. Links to the key sign-up, the docs and the full API reference.
+- **The full map's measured air reads clearly:** the section now comes after "Additional insights" (whose Air
+  Quality card is DEFRA's modelled council-area figure), says so in one line, and lists the sensor and the
+  monitor as rows, name and distance first, then what each is and what it read, with the credits on their
+  own line. The same words as the front page, laid out for the panel.
+
 ## 2026-10-19 - The front page says where it covers
 
 - **"Which places does it cover?"** under the search opens the list of every region the search answers for,

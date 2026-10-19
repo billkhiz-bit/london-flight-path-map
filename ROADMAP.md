@@ -23,7 +23,8 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > covered regions as "live" chips, GENERATED from the city registry so it cannot drift from the coverage sentence)
 > and a developer band (a copyable `/v1/score` request; the API is the product, one card of four today). **The
 > coverage line is BUILT the same day** (`scripts/build_coverage_strip.py`, a one-line `<details>` in the search
-> card: written out, the list made the card cover the whole faded map, Bill's 7 Oct backdrop). Not a
+> card: written out, the list made the card cover the whole faded map, Bill's 7 Oct backdrop), **and so is the
+> developer band** (two requests with Copy; `/v1/environment` by lat/lon, since by postcode it answers 400). Not a
 > restyle (that waits for the rename) and no customer logos (there are none to show).
 > **Sold prices (Bill, same day): the full map's list now names each sale's property type** and marks Land
 > Registry's type "other" (a shop or its lease, always its non-standard category B) as "not a home"; display only,

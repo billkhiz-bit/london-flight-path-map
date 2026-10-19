@@ -94,17 +94,30 @@ const ugm3 = (v) => `${v.toFixed(1)} µg/m³`;
 const pollutants = (r) =>
   [r.no2 && `nitrogen dioxide ${ugm3(r.no2.mean)}`, r.pm25 && `fine particles ${ugm3(r.pm25.mean)}`].filter(Boolean).join(' and ');
 const SENSOR_KIND = { 'Urban Background': 'background', Roadside: 'roadside', Kerbside: 'kerbside' };
-// Plain text: the front page sets it as textContent, the report escapes it.
+// Plain text: the front page sets it as textContent, the report escapes it. The PIECES are exported so
+// the full map can lay the same words out as rows (Bill, 2026-10-19: the panel's one paragraph was
+// unclear) without wording anything differently.
+/** "roadside, 0.7 m from the kerb" */
+export function sensorSetting(s) {
+  const kind = SENSOR_KIND[s.classification] || String(s.classification).toLowerCase();
+  return typeof s.kerbDistanceM === 'number' ? `${kind}, ${Number(s.kerbDistanceM.toFixed(1))} m from the kerb` : kind;
+}
+/** "nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026" */
+export function sensorReadings(s) {
+  const month = new Date(`${s.to}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return `${pollutants(s)} over the 12 months to ${month}`;
+}
+/** "suburban industrial" */
+export const monitorSetting = (m) => String(m.type).toLowerCase();
+/** "nitrogen dioxide 14.2 µg/m³ in 2024" */
+export const monitorReadings = (m) => `${pollutants(m)} in ${m.year}`;
 /** "Nearest Breathe London sensor: George Street, 1.5 km away (roadside, 0.7 m from the kerb): nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026." */
 export function sensorLine(s) {
-  const kind = SENSOR_KIND[s.classification] || String(s.classification).toLowerCase();
-  const kerb = typeof s.kerbDistanceM === 'number' ? `, ${Number(s.kerbDistanceM.toFixed(1))} m from the kerb` : '';
-  const month = new Date(`${s.to}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  return `Nearest Breathe London sensor: ${s.name}, ${stationDistance(s.km)} away (${kind}${kerb}): ${pollutants(s)} over the 12 months to ${month}.`;
+  return `Nearest Breathe London sensor: ${s.name}, ${stationDistance(s.km)} away (${sensorSetting(s)}): ${sensorReadings(s)}.`;
 }
 /** "Nearest official monitor: Manchester Sharston, 1.7 km away (suburban industrial): nitrogen dioxide 14.2 µg/m³ in 2024." */
 export function monitorLine(m) {
-  return `Nearest official monitor: ${m.name}, ${stationDistance(m.km)} away (${String(m.type).toLowerCase()}): ${pollutants(m)} in ${m.year}.`;
+  return `Nearest official monitor: ${m.name}, ${stationDistance(m.km)} away (${monitorSetting(m)}): ${monitorReadings(m)}.`;
 }
 /** What kind of measurement each line is, and why a sensor by a road reads above DEFRA's background figure. */
 export function airNotes(sensor, monitor) {

@@ -258,6 +258,17 @@
 >   place to measure from). `tests/uk-city-panel.mjs` works the expected names out from postcodes.io's position:
 >   SW11 1AA shows BOTH (sensor 1.1 km, monitor 4.0 km), M1 1AE / B15 2TT / LS1 4DY a monitor, 10001 no section;
 >   proven red by removing the call and by rendering the section for every city.
+> - **THE DEVELOPER BAND (2026-10-19)** shows two requests with Copy buttons: `/v1/score?postcode=` with the header
+>   value `YOUR_KEY` (never a key) and `/v1/environment?lat=&lon=`, which needs no key. BOTH WERE TRIED before
+>   they were written (403 without a key; 200), and the first draft's `/v1/environment?postcode=` would have
+>   published a 400 ("lat and lon are required"). The host is held to `js/api-base.js` by
+>   `scripts/check_api_url_drift.sh`, which did NOT read `home/index.html` until this change (proven: a planted
+>   host now reds it). `tests/front-page.mjs` stubs the clipboard and asserts Copy copies exactly what is shown;
+>   proving it red, a heredoc ate a backslash and planted a syntax error that CRASHED the run, which a
+>   "no FAIL lines = green" harness reported as STILL GREEN: read the exit code and the summary, always.
+>   The full map's measured air (`renderAirNearby`) comes AFTER "Additional insights" and names the Air
+>   Quality card above only when it is there (Bill: above it, the two read as unrelated); rows from the front
+>   page's exported pieces (`sensorSetting`, `sensorReadings`, `monitorSetting`, `monitorReadings`).
 > - **THE COVERAGE LINE IS GENERATED (2026-10-19).** "Which places does it cover?" in the search card is a
 >   `<details>` written by `scripts/build_coverage_strip.py` between the COVERAGE-STRIP markers, from the score
 >   Lambda's registry (`app.CITIES`: name, country, council areas) and the Bay Area's outlines; `--check` (blocking)

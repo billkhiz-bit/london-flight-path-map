@@ -287,6 +287,24 @@
       .card .go-row a.go { margin-top: 0; }
       .card a.also { display: inline-block; padding: 5px 0; font-size: 14px; font-weight: 600; color: var(--orange-ink); }
 
+      /* For developers (2026-10-19): a dark panel in the gutter, rounded like the cards. Colours on #141414:
+         text #fbfaf8, labels #c9c7c0, links the brand orange (6.8:1), the focus ring #d35a12 (3.6:1, over 3:1). */
+      section.dev { margin: 40px var(--gutter) 0; padding: 30px; border-radius: 16px; background: var(--dark); color: var(--paper);
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px 32px; align-items: start; }
+      section.dev h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.02em; margin: 0 0 12px; }
+      section.dev p { margin: 0 0 14px; }
+      section.dev .go-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin: 4px 0 0; }
+      section.dev a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--paper); color: var(--dark); font-size: 14px; }
+      section.dev a.also { font-size: 14px; font-weight: 600; color: var(--orange); }
+      section.dev .dev-label { font-size: 13px; color: #c9c7c0; margin: 0 0 6px; }
+      section.dev .code { position: relative; margin: 0 0 16px; }
+      section.dev pre { margin: 0; padding: 14px 76px 14px 14px; background: #000; border: 1px solid #333; border-radius: 10px; color: var(--paper);
+        font: 13px/1.55 var(--font-mono); overflow-x: auto; white-space: pre; }
+      section.dev button.copy { position: absolute; top: 8px; right: 8px; min-height: 28px; padding: 4px 10px; border: 1px solid #555; border-radius: 8px;
+        background: #1f1f1f; color: var(--paper); font: 600 12px var(--font-body); cursor: pointer; }
+      section.dev button.copy:hover { border-color: var(--paper); }
+      section.dev .copy-status { margin: 0; min-height: 1.2em; font-size: 13px; color: #c9c7c0; }
+
       section.who { padding: 40px var(--gutter) 56px; }
       section.who p { margin: 0; max-width: 80ch; font-size: 17px; color: var(--mid); }
       section.who p b { color: var(--dark); font-weight: 600; }
@@ -477,6 +495,33 @@
             <div class="fig">10,000<small>lookups a month on the free tier</small></div>
             <div class="go-row"><a class="go quiet" href="/api/">Read the docs</a><a class="also" href="/pricing">Pricing</a></div>
           </article>
+        </div>
+      </section>
+
+      <!-- FOR DEVELOPERS (2026-10-19): the API is the product, and on this page it was one card of four.
+           Two requests a developer can paste, each with a Copy button: the score (key-gated: the header
+           holds a placeholder, never a key) and the environment figures, which need no key. Both URLs
+           were tried before they were written here (403 without a key; 200), and the host is held to
+           js/api-base.js by scripts/check_api_url_drift.sh, which now reads this page too. -->
+      <section class="dev" aria-labelledby="dev">
+        <div class="dev-copy">
+          <h2 id="dev">For developers: the same figures, one request away</h2>
+          <p>Send a postcode and get back the score, its five components and the source of every figure, as JSON. The noise and air figures at any point need no key at all.</p>
+          <p class="go-row"><a class="go" href="/api/">Get a key and read the docs</a><a class="also" href="/score-demo/api-docs.html">Full API reference</a></p>
+        </div>
+        <div class="dev-code">
+          <p class="dev-label">The score for a postcode (with a free key)</p>
+          <div class="code">
+            <pre tabindex="0" role="region" aria-label="Example request for a postcode's score" id="dev-score">curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=TW9+3PZ' \
+  -H 'X-Api-Key: YOUR_KEY'</pre>
+            <button type="button" class="copy" data-copy="dev-score" aria-label="Copy the score request">Copy</button>
+          </div>
+          <p class="dev-label">Noise and air at a point (no key needed)</p>
+          <div class="code">
+            <pre tabindex="0" role="region" aria-label="Example request for the environment figures" id="dev-env">curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860'</pre>
+            <button type="button" class="copy" data-copy="dev-env" aria-label="Copy the environment request">Copy</button>
+          </div>
+          <p class="copy-status" id="copy-status" aria-live="polite"></p>
         </div>
       </section>
 

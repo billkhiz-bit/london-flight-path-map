@@ -297,23 +297,40 @@ for (const c of CASES) {
     }
     const air = await page.evaluate(() => {
       const s = document.getElementById('postcode-air-section');
-      return s ? { hidden: s.hidden, text: s.innerText, links: Array.from(s.querySelectorAll('a')).map((a) => a.textContent.trim()) } : null;
+      if (!s) return null;
+      // Where it sits: AFTER "Additional insights" (whose Air Quality card is DEFRA's modelled figure),
+      // so the panel reads modelled first, then measured (Bill, 2026-10-19).
+      const insights = Array.from(document.querySelectorAll('#sidebar h3')).find((h) => /ADDITIONAL INSIGHTS/.test(h.textContent));
+      const insightsSection = insights && insights.closest('.sidebar-section');
+      return {
+        hidden: s.hidden,
+        text: s.innerText,
+        names: Array.from(s.querySelectorAll('.station-name')).map((n) => n.textContent.trim()),
+        links: Array.from(s.querySelectorAll('a')).map((a) => a.textContent.trim()),
+        afterInsights: insightsSection ? Boolean(insightsSection.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING) : null,
+        aqCard: Boolean(insightsSection && /AIR QUALITY/i.test(insightsSection.innerText)),
+      };
     });
-    const wantLines = [
-      want.sensor && `Nearest Breathe London sensor: ${want.sensor.name}, `,
-      want.monitor && `Nearest official monitor: ${want.monitor.name}, `,
-    ].filter(Boolean);
+    const wantNames = [want.sensor && want.sensor.name, want.monitor && want.monitor.name].filter(Boolean);
     const wantCredits = [want.sensor && AIR_SENSORS.attribution, want.monitor && AIR_MONITORS.attribution].filter(Boolean);
     check(
-      `  ${c.city}: air measured nearby names ${wantLines.length ? wantLines.map((l) => l.split(':')[0].toLowerCase()).join(' and ') : 'nothing (none within 5 km)'}`,
-      wantLines.length
-        ? Boolean(air) && !air.hidden && wantLines.every((l) => air.text.includes(l)) &&
-            Boolean(want.sensor) === /Breathe London sensor/.test(air.text) &&
-            Boolean(want.monitor) === /official monitor/.test(air.text)
+      `  ${c.city}: air measured nearby lists ${wantNames.length ? wantNames.join(' and ') : 'nothing (none within 5 km)'}, each saying what it is`,
+      wantNames.length
+        ? Boolean(air) && !air.hidden && JSON.stringify(air.names) === JSON.stringify(wantNames) &&
+            Boolean(want.sensor) === /Breathe London sensor \(low-cost\), /.test(air.text) &&
+            Boolean(want.monitor) === /Official DEFRA monitor, /.test(air.text)
         : !air || air.hidden,
-      air ? air.text.slice(0, 200) : 'no air section',
+      air ? `${JSON.stringify(air.names)} | ${air.text.slice(0, 160)}` : 'no air section',
     );
-    if (wantLines.length) {
+    if (wantNames.length) {
+      check(
+        `  ${c.city}: it comes after "Additional insights", and names the Air Quality card above only when it is there`,
+        Boolean(air) && air.afterInsights !== false &&
+          air.aqCard === /The Air Quality card above is DEFRA's modelled average/.test(air.text),
+        JSON.stringify(air && { afterInsights: air.afterInsights, aqCard: air.aqCard }),
+      );
+    }
+    if (wantNames.length) {
       check(
         `  ${c.city}: each reading carries its publisher's credit, word for word`,
         Boolean(air) && wantCredits.every((t) => air.links.includes(t)) && air.links.length === wantCredits.length,

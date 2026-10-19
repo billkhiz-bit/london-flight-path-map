@@ -265,6 +265,30 @@ byId('explore-map')?.addEventListener('click', () => {
   document.querySelector('#map .boro')?.focus({ preventScroll: true });
 });
 
+// "For developers" (2026-10-19): Copy puts the request EXACTLY as shown on the clipboard, and says so in
+// a polite live region. Where the clipboard is refused (no permission, an old browser), the request is
+// selected instead and the visitor is told to press Ctrl+C. Copying counts as engagement, like the
+// other first actions, so B2B interest on this page can be read in GoatCounter.
+document.querySelectorAll('section.dev button.copy[data-copy]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const pre = byId(button.dataset.copy);
+    const status = byId('copy-status');
+    if (!pre) return;
+    engaged('api-copy');
+    try {
+      await navigator.clipboard.writeText(pre.textContent);
+      if (status) status.textContent = 'Copied. Paste it into a terminal.';
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(pre);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      if (status) status.textContent = 'Selected. Press Ctrl+C to copy.';
+    }
+  });
+});
+
 const ramp = byId('ramp');
 // The ramp is the palette of the picture on the map: DEFRA's in England, BTS's
 // in the Bay Area. It was DEFRA's everywhere, so not one colour painted over

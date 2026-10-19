@@ -244,6 +244,32 @@ ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpa
 // areas adding up to the page's own figure, then New York and the Bay Area. Cardiff is the region the
 // map's city buttons never named. scripts/build_coverage_strip.py --check holds the markup to the
 // registry; this holds what a visitor sees.
+// FOR DEVELOPERS (2026-10-19): two requests a developer can paste. Both on the API host js/api-base.js
+// holds (window.API_BASE), the key ONLY ever the placeholder, the no-key one by lat and lon (the form
+// /v1/environment answers; by postcode it is a 400), and Copy copies exactly what is shown. The clipboard
+// is stubbed: a headless browser has none to read back.
+{
+  const dev = await page.evaluate(async () => {
+    const copied = [];
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { copied.push(t); } } });
+    document.querySelector('button.copy[data-copy="dev-score"]')?.click();
+    await new Promise((r) => setTimeout(r, 100));
+    return {
+      api: window.API_BASE || '',
+      score: document.getElementById('dev-score')?.textContent || '',
+      env: document.getElementById('dev-env')?.textContent || '',
+      copied,
+      status: document.getElementById('copy-status')?.textContent || '',
+    };
+  });
+  ok(
+    Boolean(dev.api) && dev.score === `curl '${dev.api}/v1/score?postcode=TW9+3PZ' \\\n  -H 'X-Api-Key: YOUR_KEY'` &&
+      dev.env === `curl '${dev.api}/v1/environment?lat=51.4790&lon=-0.2860'` &&
+      dev.copied.length === 1 && dev.copied[0] === dev.score && /^Copied/.test(dev.status),
+    'the developer band shows two requests on the live API host, the key only a placeholder, and Copy copies exactly what is shown',
+    JSON.stringify({ api: dev.api, score: dev.score.slice(0, 90), env: dev.env.slice(-50), copied: dev.copied.length, status: dev.status })
+  );
+}
 // It is ONE LINE that opens the list: written out, the list made the card cover the whole faded map
 // (the backdrop check below probed 0 points), so the summary is asserted visible and the list read open.
 {

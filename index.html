@@ -10815,16 +10815,25 @@
           const sensor = sensors ? m.nearestSensor(sensors, lat, lon) : null;
           const monitor = monitors ? m.nearestMonitor(monitors, lat, lon) : null;
           if (!sensor && !monitor) return;
+          // Laid out as the nearest stations are: the place and its distance on one row, then one line on
+          // what it is and what it read, all from the front page's own pieces (the same words, in rows).
+          const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+          const row = (name, km, line) =>
+            `<div class="transport-row"><span class="station-name">${escapeHtml(name)}</span><span class="station-dist">${escapeHtml(m.stationDistance(km))}</span></div>` +
+            `<p class="info-note" style="margin:2px 0 8px;">${escapeHtml(line)}</p>`;
           const credits = [sensor && sensor.credit, monitor && monitor.credit]
             .filter(Boolean)
             .map((c) => `<a href="${escapeHtml(c.href)}" target="_blank" rel="noopener">${escapeHtml(c.text)}</a>`)
-            .join(' ');
+            .join(' &middot; ');
           el.innerHTML =
-            [sensor && m.sensorLine(sensor), monitor && m.monitorLine(monitor)]
-              .filter(Boolean)
-              .map((line) => `<p class="info-note">${escapeHtml(line)}</p>`)
-              .join('') +
-            `<p class="info-note" style="margin-top:6px;font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))} ${credits}</p>`;
+            (sensor
+              ? row(sensor.name, sensor.km, `Breathe London sensor (low-cost), ${m.sensorSetting(sensor)}. ${cap(m.sensorReadings(sensor))}.`)
+              : '') +
+            (monitor
+              ? row(monitor.name, monitor.km, `Official DEFRA monitor, ${m.monitorSetting(monitor)}. ${cap(m.monitorReadings(monitor))}.`)
+              : '') +
+            `<p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p>` +
+            `<p class="info-note" style="font-size:11px;">Sources: ${credits}</p>`;
           section.hidden = false;
         } catch (e) {
           // A module from an older cache without these functions: say nothing rather than half a line.
@@ -13010,17 +13019,25 @@
       <div id="postcode-transport-data"><span class="info-note">NYC subway data coming soon. Check <a href="https://new.mta.info" target="_blank" style="color:var(--orange);">MTA.info</a> for schedules.</span></div>
     </div>`
     }
+    ${buildOptionalSections(extra, 'pc')}
     ${
-      // Air measured nearby (2026-10-19): filled by renderAirNearby(), and left hidden when
-      // nothing is in reach, so the panel never says "no monitor nearby".
+      // Air quality measured nearby (2026-10-19): AFTER "Additional insights", whose Air Quality card is
+      // DEFRA's modelled council-area average, so the panel reads modelled first, then measured (Bill:
+      // above it, the two read as unrelated). Filled by renderAirNearby(); left hidden when nothing is
+      // in reach, so the panel never says "no monitor nearby". The framing line names the card only
+      // when the card is there.
       isUkCity(currentCity) && !analysis.isOutcode
         ? `<div class="sidebar-section" id="postcode-air-section" hidden>
-      <h3>AIR MEASURED NEARBY</h3>
+      <h3>AIR QUALITY MEASURED NEARBY</h3>
+      ${
+        extra && extra.airQuality
+          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area. Below are readings from the nearest sensor and monitor within 5 km.</p>`
+          : ''
+      }
       <div id="postcode-air-data"></div>
     </div>`
         : ''
     }
-    ${buildOptionalSections(extra, 'pc')}
     ${buildPropertyLinks(analysis.postcode, analysis.borough)}
     ${
       analysis.postcode && !analysis.isOutcode
