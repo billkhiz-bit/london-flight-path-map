@@ -119,6 +119,30 @@ export function sensorLine(s) {
 export function monitorLine(m) {
   return `Nearest official monitor: ${m.name}, ${stationDistance(m.km)} away (${monitorSetting(m)}): ${monitorReadings(m)}.`;
 }
+// ---- Where to have your say (Bill, 2026-10-19), for the airports whose own pages were VERIFIED ----
+// Each link was checked live on 2026-10-19 (status and content; London City's in a real browser, since its
+// site turns scripts away). An airport joins only when its pages have been checked: a wrong link is a false
+// claim (the full map's WebTrak lesson, 2026-08-24). Never imply a complaint moves a route: routes change
+// through the CAA's airspace change process, which Heathrow itself says.
+export const HAVE_YOUR_SAY = {
+  LHR: [
+    { text: 'contact Heathrow about noise', href: 'https://www.heathrow.com/company/local-community/noise/what-you-can-do/contact-us-about-noise' },
+    { text: 'find a flight on WebTrak', href: 'https://webtrak.emsbk.com/lhr6' },
+  ],
+  LCY: [
+    { text: 'London City enquiries and complaints', href: 'https://www.londoncityairport.com/corporate/environment/enquiries-and-complaints' },
+    { text: 'its flight track and noise monitoring', href: 'https://www.londoncityairport.com/corporate/environment/noise-management-and-monitoring/flight-track-and-monitoring-system' },
+  ],
+};
+export const AIRSPACE_CHANGE = { text: "the CAA's airspace change portal", href: 'https://airspacechange.caa.co.uk/having-your-say/' };
+/** The links for the nearest airport in scope (`routesNear(...).scope`), or null when its pages are not verified. */
+export function haveYourSay(scope) {
+  const ap = (scope || [])[0];
+  return ap && Object.hasOwn(HAVE_YOUR_SAY, ap.code) ? { code: ap.code, links: HAVE_YOUR_SAY[ap.code], change: AIRSPACE_CHANGE } : null;
+}
+/** The correction address, as the full map's "Spotted something wrong?" has used since before 2026-10-13. */
+export const correctionHref = (place) => `mailto:support@skyscore.co.uk?subject=${encodeURIComponent(`Correction: ${place}`)}`;
+
 /** What kind of measurement each line is, and why a sensor by a road reads above DEFRA's background figure. */
 export function airNotes(sensor, monitor) {
   const notes = [];
@@ -457,6 +481,11 @@ export function reportParts(spec, f) {
           .map(esc)
           .join(' ')
       : '';
+  // Where to have your say: the nearest airport in scope, only if its pages were verified (HAVE_YOUR_SAY).
+  const say = haveYourSay(routes.scope);
+  const sayLine = say
+    ? `${say.links.map((l) => `<a href="${esc(l.href)}">${esc(l.text)}</a>`).join(' &middot; ')}. Flight paths change through the CAA's airspace change process: <a href="${esc(say.change.href)}">${esc(say.change.text)}</a> shows each proposal and the stage it has reached.`
+    : '';
   const airCredits = [f.sensor, f.monitor]
     .filter(Boolean)
     .map((r) => ` <a href="${esc(r.credit.href)}">${esc(r.credit.text)}</a>${r.credit.text.endsWith('.') ? '' : '.'}`)
@@ -528,6 +557,8 @@ ${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('\n
 ${district ? `<div><h2>How it compares within ${esc(district.outcode)}</h2><p class="cap">Quiet Skies scores of the ${district.n.toLocaleString('en-GB')} postcodes on DEFRA's map. This postcode's band is in orange.</p>${districtSvg(district)}</div>` : ''}</div>
 ${also.length ? `<p class="note"><strong>Also at this postcode:</strong> ${also.join('; ')}.</p>` : ''}
 ${airMeasured ? `<p class="note"><strong>Air measured nearby.</strong> ${airMeasured}</p>` : ''}
+${sayLine ? `<p class="note"><strong>Have your say.</strong> ${sayLine}</p>` : ''}
+<p class="note"><strong>Spotted something wrong?</strong> <a href="${esc(correctionHref(f.postcode))}">Tell us</a>: local knowledge is the best check on data like this.</p>
 <p class="note"><strong>Reading this report.</strong> Lden is a yearly average of the outdoor level, with evening and night flights weighted more heavily; it does not describe single loud events or the number of flights. ${vintage} The route lines are the published centre lines: aircraft fly either side of them, and the path to joining a final approach is directed by air traffic control and is not drawn. This is information, not a survey or an environmental search; visit at different times of day before deciding.</p>
 <footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? 'CAA ERCD Report 2501; ' : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS).${airCredits} Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
 `;

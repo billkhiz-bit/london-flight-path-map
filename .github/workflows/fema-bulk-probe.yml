@@ -1,0 +1,44 @@
+name: FEMA bulk-download probe (manual)
+
+# Run by hand only (Actions tab, or `gh workflow run fema-bulk-probe.yml`). FEMA's NFHL query service now resets
+# every connection from GitHub's runners as well as from Bill's network: run 39282176347 (2026-10-19) was reset on
+# both MapServer paths within seconds. The other route is FEMA's per-county bulk downloads, whose URL format could
+# not be read from here (the guide resets this machine and WebFetch). This job fetches FEMA's own direct-download
+# guide and records how FEMA's hosts answer a browser User-Agent, so the bulk fetcher is built from what the guide
+# says rather than a guess. It writes nothing back to the repo; the result is a 7-day artifact.
+on:
+  workflow_dispatch:
+
+# Least privilege, as in ci.yml and fema-flood-fetch.yml.
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch FEMA's direct-download guide and probe its hosts
+        run: |
+          mkdir -p out
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
+          probe() {
+            printf '%s\t' "$1" >> out/probe.tsv
+            curl -s -o /dev/null -w '%{http_code}\t%{url_effective}\t%{time_total}s\n' -A "$UA" --max-time 60 "$1" >> out/probe.tsv \
+              || printf 'curl exit %s\n' "$?" >> out/probe.tsv
+          }
+          curl -s -f -L -A "$UA" --max-time 120 -o out/FEMA_Hazard_Products_Direct_Download.pdf \
+            https://msc.fema.gov/msccontent/FEMA_Hazard_Products_Direct_Download.pdf \
+            || printf 'guide\tcurl exit %s\n' "$?" >> out/probe.tsv
+          probe https://msc.fema.gov/portal/home
+          probe https://msc.fema.gov/portal/advanceSearch
+          probe 'https://hazards.fema.gov/arcgis/rest/services/public/NFHL/MapServer?f=json'
+          probe 'https://hazards.fema.gov/gis/nfhl/rest/services/public/NFHL/MapServer?f=json'
+          cat out/probe.tsv
+          ls -la out
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fema-bulk-probe
+          path: out/
+          retention-days: 7
+          if-no-files-found: error

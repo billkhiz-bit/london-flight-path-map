@@ -242,6 +242,18 @@
         left: 32px;
         z-index: 10;
       }
+      /* The brand links home (2026-10-19): it keeps the heading's look, and underlines on hover. The
+         padding takes the 17px heading to the 24px tap target WCAG 2.2 (2.5.8) asks for. */
+      .map-title-home {
+        color: inherit;
+        text-decoration: none;
+        display: inline-block;
+        padding: 4px 0;
+      }
+      .map-title-home[href]:hover h1 {
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
       .map-title h1 {
         font-family: var(--font-mono);
         font-size: 13px;
@@ -3983,7 +3995,9 @@
     <div id="app" class="app" style="display: none">
       <main class="map-container" id="map-container">
         <div class="map-title">
-          <h1 id="map-title-text">Sky Score</h1>
+          <!-- The brand goes home, as on every other page (Bill, 2026-10-19). The link WRAPS the heading:
+               applyCityChrome() sets the heading's textContent, which would erase a link inside it. -->
+          <a class="map-title-home" href="/"><h1 id="map-title-text">Sky Score</h1></a>
           <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVEABILITY DATA</div>
         </div>
         <!-- First-paint hint to teach the search interaction. role="status" was
@@ -13854,6 +13868,24 @@
         const bands = scale.map((b, i) => (i === last ? `over ${b.from}` : `${b.from} to ${scale[i + 1].from}`));
         bar.setAttribute('aria-label', `Noise bands in decibels, quietest to loudest: ${bands.join(', ')}`);
       }
+
+      // THE BRAND IS A LINK ONLY WHERE IT CAN BE SEEN (2026-10-19). On phones and tablets in the search view
+      // the title is visually hidden but kept as the page's heading (audit M32), so a link there would be a
+      // focusable control nobody can see, under the city chips (tests/responsive.mjs found it at 11 sizes).
+      // The title's RENDERED box decides, not a breakpoint: clipped to 1px, the anchor loses its href (an <a>
+      // without one is not a link, and the heading is still announced); visible again, it gets it back.
+      (function keepTheBrandLinkWhereItShows() {
+        const title = document.querySelector('.map-title');
+        const home = document.querySelector('.map-title-home');
+        if (!title || !home || typeof ResizeObserver !== 'function') return;
+        const sync = () => {
+          const r = title.getBoundingClientRect();
+          if (r.width > 1 && r.height > 1) home.setAttribute('href', '/');
+          else home.removeAttribute('href');
+        };
+        new ResizeObserver(sync).observe(title);
+        sync();
+      })();
 
       function applyCityChrome(city) {
         const cfg = cityOf(city);

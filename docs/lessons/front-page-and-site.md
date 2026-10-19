@@ -258,6 +258,20 @@
 >   place to measure from). `tests/uk-city-panel.mjs` works the expected names out from postcodes.io's position:
 >   SW11 1AA shows BOTH (sensor 1.1 km, monitor 4.0 km), M1 1AE / B15 2TT / LS1 4DY a monitor, 10001 no section;
 >   proven red by removing the call and by rendering the section for every city.
+> - **THE BRAND GOES HOME; HAVE YOUR SAY; SPOTTED SOMETHING WRONG? (2026-10-19, Bill).** The first "Sky Score" on
+>   every public page links to "/": `tests/test_brand_links_home.py` FINDS the pages (globs, 123 on the day) and
+>   declares the four without a brand (two /preview/ redirect stubs, two printed talk handouts), two-way. The full
+>   map's link WRAPS `#map-title-text`, because `applyCityChrome()` sets its textContent. "Have your say" links
+>   live ONLY in `HAVE_YOUR_SAY` in `js/street_report.mjs` (LHR, LCY: verified live that day, LCY in a real
+>   browser since its site turns scripts away) plus `AIRSPACE_CHANGE`; `haveYourSay(scope)` answers for the nearest
+>   airport in scope only, so Manchester gets nothing rather than a guessed link. `correctionHref()` is the map's
+>   mailto, now on the front page and both reports. Proven red: a planted MAN entry and a postcode-less subject.
+>   **The map's brand is a link ONLY where it can be seen**: on phones and tablets in the search view the title is
+>   visually hidden (audit M32 keeps it as the page's heading), and the always-on link was a focusable control
+>   nobody could see, under the city chips: `tests/responsive.mjs` failed 27 of 132 combinations on it (COVERED at
+>   11 sizes). A `ResizeObserver` on `.map-title` now removes the anchor's `href` when the title renders at 1px and
+>   restores it when visible (measured: phone/tablet `href` null, desktop `/`, 25 px tall for 2.5.8). The gate was NOT
+>   loosened: a clipped control is a design question, and a visible wordmark on the phone map stays Bill's call.
 > - **THE DEVELOPER BAND (2026-10-19)** shows two requests with Copy buttons: `/v1/score?postcode=` with the header
 >   value `YOUR_KEY` (never a key) and `/v1/environment?lat=&lon=`, which needs no key. BOTH WERE TRIED before
 >   they were written (403 without a key; 200), and the first draft's `/v1/environment?postcode=` would have

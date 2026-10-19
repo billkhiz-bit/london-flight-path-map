@@ -27,7 +27,7 @@ import { createServer } from 'node:http';
 import { readFile, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { extname, join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { stubLiveApi } from './stub-live-api.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -649,6 +649,30 @@ const airBlock = async () => {
   );
 }
 ok(await page.locator('.covers').isHidden(), 'the coverage strip steps aside once an answer shows, as "Try" does');
+// HAVE YOUR SAY and SPOTTED SOMETHING WRONG? (Bill, 2026-10-19). Kew's nearest airport is Heathrow, whose
+// pages were verified: its two links and the CAA's portal, exactly as js/street_report.mjs holds them, so a
+// link edited in one place and not the other reds here. The correction goes to support@ with the postcode.
+{
+  const { HAVE_YOUR_SAY, AIRSPACE_CHANGE } = await import(pathToFileURL(join(ROOT, 'js', 'street_report.mjs')).href);
+  const want = [...HAVE_YOUR_SAY.LHR, AIRSPACE_CHANGE].map((l) => [l.text, l.href]);
+  const lines = await page.evaluate(() => {
+    const read = (id) => {
+      const el = document.getElementById(id);
+      return el && { hidden: el.hidden, text: el.textContent, links: [...el.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]) };
+    };
+    return { say: read('ans-say'), wrong: read('ans-wrong') };
+  });
+  ok(
+    lines.say && !lines.say.hidden && JSON.stringify(lines.say.links) === JSON.stringify(want) && /^Have your say: /.test(lines.say.text),
+    "Kew's answer says where to have your say: Heathrow's verified pages and the CAA's airspace change portal",
+    JSON.stringify(lines.say)
+  );
+  ok(
+    lines.wrong && !lines.wrong.hidden && lines.wrong.links.length === 1 && lines.wrong.links[0][1] === `mailto:support@skyscore.co.uk?subject=${encodeURIComponent('Correction: TW9 3PZ')}`,
+    'the answer offers a way to report a figure that looks wrong, addressed with the postcode',
+    JSON.stringify(lines.wrong)
+  );
+}
 const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
 ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.score}`) && area.includes(`${richmond.flood_medium_or_high_pct}% of postcodes at medium or high flood risk`), 'the council-area line carries the CSV score and flood share', area);
@@ -759,6 +783,10 @@ ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes
     `${air.text.slice(0, 200)} | expected ${monitor.name}, ${km.toFixed(1)} km`
   );
   ok(air.links.length === 1 && air.links[0][0] === monitorFile.attribution && air.links[0][1] === monitorFile.licence, "the monitor's reading carries UK-AIR's credit word for word, linked to the OGL", JSON.stringify(air.links));
+  // Manchester's airport pages have not been verified: no "have your say" line at all, never a guessed link;
+  // the correction route is for every covered postcode.
+  const say = await page.evaluate(() => ({ say: document.getElementById('ans-say')?.hidden, wrong: document.getElementById('ans-wrong')?.hidden }));
+  ok(say.say === true && say.wrong === false, 'a Manchester postcode gets no unverified "have your say" link, but can still report a figure', JSON.stringify(say));
 }
 
 // 11a. A SLOWER EARLIER SEARCH MUST NOT OVERWRITE A LATER ONE (audit 2026-10-09 I-3). TW9 3PZ's lookup is
@@ -1469,6 +1497,16 @@ const makeReport = async (pc) => {
   const kewSensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
   ok(airNote.startsWith(`Air measured nearby. Nearest Breathe London sensor: ${kewSensor.name}, `), 'the report names the nearest Breathe London sensor, from the same function as the front page', airNote.slice(0, 140));
   ok(foot.includes(sensorFile.attribution), "the report's sources carry Breathe London's credit word for word", foot.slice(-300));
+  const reportSay = ready
+    ? await sheetDoc().locator('p.note', { hasText: 'Have your say.' }).evaluate((p) => [...p.querySelectorAll('a')].map((a) => a.getAttribute('href')))
+    : [];
+  const reportWrong = ready ? await sheetDoc().locator('p.note', { hasText: 'Spotted something wrong?' }).evaluate((p) => p.querySelector('a')?.getAttribute('href')) : '';
+  ok(
+    reportSay.includes('https://webtrak.emsbk.com/lhr6') && reportSay.includes('https://airspacechange.caa.co.uk/having-your-say/') &&
+      reportWrong === `mailto:support@skyscore.co.uk?subject=${encodeURIComponent('Correction: TW9 3PZ')}`,
+    'the report says where to have your say and how to report a figure that looks wrong, from the same functions as the front page',
+    JSON.stringify({ reportSay, reportWrong })
+  );
   // PROTECTION FOR THE FREE COPY (Bill, 2026-10-06: "people can screenshot and maybe edit it"): a
   // watermark, a reference tied to the figures and the day, a check link with a QR code, the terms line.
   const today = new Date().toISOString().slice(0, 10);

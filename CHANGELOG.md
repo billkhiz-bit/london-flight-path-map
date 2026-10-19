@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-19 - "Sky Score" goes home everywhere; where to have your say; reporting a figure
+
+- **The "Sky Score" name links back to the front page on every page**, now including the full map and the API
+  demo page, which did not. A test finds every page and fails on any that misses it.
+- **Have your say.** For a postcode whose nearest airport is Heathrow or London City, the front page and the street
+  report link to that airport's noise contact and flight-tracking pages and to the CAA's airspace change portal.
+  Only links checked live are shown; other airports get none until their pages have been checked.
+- **Spotted something wrong?** The front page and the street report now offer what the map already did: an
+  email to support with the postcode in the subject.
+
 ## 2026-10-19 - A developers' section on the front page; the map's measured air laid out clearly
 
 - **For developers:** a dark section on the front page with two requests to paste, each with a Copy button:

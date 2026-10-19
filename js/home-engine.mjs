@@ -19,6 +19,8 @@ import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
   airNotes,
+  correctionHref,
+  haveYourSay,
   monitorLine,
   nearestMonitor,
   nearestSensor,
@@ -1442,6 +1444,27 @@ function render(postcode, district, city, e, lat, lon) {
         air.hidden = false;
       });
     }
+  }
+  // Where to have your say, for the nearest airport whose pages were verified (HAVE_YOUR_SAY), and a
+  // way to report a figure that looks wrong: the street report carries both, from the same functions.
+  const anchorFor = (l) => Object.assign(document.createElement('a'), { href: l.href, textContent: l.text });
+  const sayEl = byId('ans-say');
+  if (sayEl) {
+    sayEl.hidden = true;
+    sayEl.replaceChildren();
+    const say = city && state.proc ? haveYourSay(routesNear(state.proc, plane(lat, lon), AIRPORT_SCOPE_KM).scope) : null;
+    if (say) {
+      sayEl.append('Have your say: ');
+      say.links.forEach((l, i) => sayEl.append(...(i ? [' · ', anchorFor(l)] : [anchorFor(l)])));
+      sayEl.append(". Flight paths change through the CAA's airspace change process: ", anchorFor(say.change), ' shows each proposal and the stage it has reached.');
+      sayEl.hidden = false;
+    }
+  }
+  const wrong = byId('ans-wrong');
+  if (wrong) {
+    wrong.replaceChildren();
+    wrong.hidden = !city;
+    if (city) wrong.append('Spotted something wrong? ', anchorFor({ href: correctionHref(postcode), text: 'Tell us' }), ': local knowledge is the best check on data like this.');
   }
   const area = byId('ans-area');
   if (area) {

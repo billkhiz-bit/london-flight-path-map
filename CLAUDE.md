@@ -165,6 +165,8 @@ Or just describe what you need, I have full context of this project.
 - **`.no-result-yet`, not `.empty-state`**, marks "nothing searched yet".
 - **Air measured nearby is ONE pair of functions** (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`)
   for the front page, the full map's panel (dynamic import) and both reports: 5 km, never "none nearby", a stale sensor file hidden, credits linked.
+- **The brand links home on every page** (`tests/test_brand_links_home.py` finds them). **"Have your say" links come
+  only from `HAVE_YOUR_SAY`** (verified live; add an airport only after checking its pages).
 - **Focus rings use `--focus: #d35a12`**, never the brand orange `#f27d26` (fails 3:1).
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`).
