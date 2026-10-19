@@ -23,6 +23,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > covered regions as "live" chips, GENERATED from the city registry so it cannot drift from the coverage sentence)
 > and a developer band (a copyable `/v1/score` request; the API is the product, one card of four today). Not a
 > restyle (that waits for the rename) and no customer logos (there are none to show).
+> **Sold prices (Bill, same day): the full map's list now names each sale's property type** and marks Land
+> Registry's type "other" (a shop or its lease, always its non-standard category B) as "not a home"; display only,
+> the medians were already category A. **Waiting for the next Lambda deploy** (which would also ship the undeployed
+> linear US scales, `914ce60`): `sold_prices` to pass through `transactionCategory` (so a repossession or company
+> purchase of a HOME is marked too), `estateType` (freehold/leasehold) and `saon` (it drops "FLAT 2" today).
 >
 > ## START HERE (2026-10-18)
 >

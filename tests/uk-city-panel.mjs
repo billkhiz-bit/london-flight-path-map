@@ -559,6 +559,23 @@ const SOLD_STATES = [
     },
     want: /£250,000/,
   },
+  {
+    // The Kew rows Bill found (TW9 3PZ, 2026-10-19): a £20,000 sale of Land Registry property type
+    // 'other' (a shop or its lease) listed beside £1.475m flats with nothing to tell them apart.
+    // Types exactly as the Lambda sends them (`_pref_label`: 'other', 'flat-maisonette').
+    name: 'a sale that is not a home says so',
+    fulfil: {
+      status: 200,
+      body: {
+        postcode: 'TW9 3PZ',
+        transactions: [
+          { price: 20000, date: '2025-09-11', address: '16', street: 'STATION PARADE', type: 'other' },
+          { price: 1475000, date: '2025-05-09', address: '4A', street: 'STATION PARADE', type: 'flat-maisonette' },
+        ],
+      },
+    },
+    want: /£20,000\s*not a home · 16 STATION PARADE[\s\S]*£1,475,000\s*flat · 4A STATION PARADE[\s\S]*"Not a home": Land Registry records the sale as another kind of property/,
+  },
 ];
 await page.evaluate((city) => window.switchCity(city), 'manchester');
 await page.waitForTimeout(1200);

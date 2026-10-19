@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-19 - Sold prices say what was sold
+
+- **Each sale on the full map's sold-prices list now names the kind of property**: flat, terraced, semi-detached or
+  detached house. A sale Land Registry records as another kind of property, such as a shop or its lease, reads
+  "not a home", with a note under the list. At TW9 3PZ a £20,000 sale at 16 Station Parade had sat beside
+  £1.2m-£1.5m flats with nothing to tell them apart.
+- **No score moves.** Sky Score's price figures already used Land Registry's standard category of sales only,
+  which leaves these out.
+
 ## 2026-10-19 - Air measured nearby, on the front page and in the street report
 
 - **Deployed and checked against the live site** (19 Oct): every page and data file matches what was released,

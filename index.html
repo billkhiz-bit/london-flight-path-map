@@ -2089,6 +2089,9 @@
         min-width: 60px;
         text-align: right;
       }
+      .sold-type {
+        color: var(--dark);
+      }
 
       /* Transport live data */
       .transport-station {
@@ -11162,6 +11165,19 @@
           '<p class="info-note" style="margin-top:8px;">Source: OpenStreetMap (ODbL); cross-link to nhs.uk service search.</p>';
       }
 
+      // WHAT WAS SOLD, said on each row (2026-10-19). Bill found "£20,000, 16 Station Parade, 2025"
+      // at TW9 3PZ listed beside £1.2m-£1.5m flats and asked whether it was rent. It is a SALE, of
+      // Land Registry property type 'other' (a shop or its lease), in its non-standard category B;
+      // every type-'other' row is category B (build_city_neighbourhoods.py, PPD_CATEGORY_A), and
+      // Sky Score's price figures use category A only. The Lambda sends the type as Land Registry
+      // labels it (`_pref_label`); an unknown or missing type shows nothing rather than a guess.
+      const SOLD_PROPERTY_TYPE = {
+        'flat-maisonette': 'flat',
+        terraced: 'terraced house',
+        'semi-detached': 'semi-detached house',
+        detached: 'detached house',
+        other: 'not a home',
+      };
       function renderSoldPrices(containerId, soldData, postcode) {
         const el = document.getElementById(containerId);
         if (!el) return;
@@ -11221,13 +11237,17 @@
               }).format(s.price);
               const date = escapeHtml(s.date ? s.date.substring(0, 10) : '');
               const address = escapeHtml((s.address || '').trim());
+              const kind = Object.prototype.hasOwnProperty.call(SOLD_PROPERTY_TYPE, s.type) ? SOLD_PROPERTY_TYPE[s.type] : '';
               return `<div class="sold-row">
       <span class="sold-price">${price}</span>
-      <span class="sold-address">${address}</span>
+      <span class="sold-address">${kind ? `<span class="sold-type">${kind}</span> &middot; ` : ''}${address}</span>
       <span class="sold-date">${date}</span>
     </div>`;
             })
             .join('') +
+          (soldData.some((s) => s.type === 'other')
+            ? '<div class="info-note" style="margin-top:6px;">&quot;Not a home&quot;: Land Registry records the sale as another kind of property, such as a shop or its lease, outside its standard category of house sales. Sky Score&#39;s price figures leave such sales out.</div>'
+            : '') +
           '<div class="info-note" style="margin-top:6px;">Source: HM Land Registry Price Paid Data (Open Government Licence).</div>';
       }
 
