@@ -1129,6 +1129,8 @@ update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
    and London shows both (Bill, 2026-10-19); a sensor file 45+ days past its window is hidden; each
    reading's credit linked; `tests/front-page.mjs` works the expected lines out independently at
    TW9 3PZ (sensor yes, monitor 7.6 km no) and M22 5RX (no sensor, monitor yes), each proven red.
+   **The full map's postcode panel too** (same day, Bill): `renderAirNearby()` in `index.html`, gated by
+   `tests/uk-city-panel.mjs` (SW11 1AA both, three cities a monitor, New York none).
    **Next: step 5** (`/v1/environment`) after the line has run a month.
 2. **The same for AURN, every city** (`scripts/fetch_aurn.py`, keyless): the nearest official
    monitor's annual mean and site type. Same release, so London is not the only city with a

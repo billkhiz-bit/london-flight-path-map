@@ -15,6 +15,8 @@
   readings for at least 75% of the hours in their period, so a nearer one may exist and have been left out.
 - **Each reading carries its publisher's credit**, word for word and linked. The paid PDF report carries the same
   lines, from the same functions.
+- **The full map too** (same day): a postcode search on `/map/` shows an "Air measured nearby" section in the
+  panel, from the same functions, for every UK postcode with a sensor or monitor in reach. New York has none.
 
 ## 2026-10-17 - New York's aircraft estimate, counted over the right months (methodology 5.7)
 

@@ -149,6 +149,30 @@ function check(name, pass, detail) {
 
 console.log('\nNon-London area-search panel\n============================\n');
 
+// AIR MEASURED NEARBY (2026-10-19): the panel names the nearest Breathe London sensor and the
+// nearest official monitor within 5 km, from the front page's functions. The expected names are
+// worked out HERE, from postcodes.io's position and the two data files with this test's own
+// distance maths, so the shared functions cannot pass by agreeing with themselves. SW11 1AA has
+// both (London shows both: Bill, 2026-10-19); M1 1AE, B15 2TT and LS1 4DY a monitor and no sensor.
+const AIR_SENSORS = JSON.parse(await readFile(join(ROOT, 'data', 'breathe-london-sensors.json'), 'utf8'));
+const AIR_MONITORS = JSON.parse(await readFile(join(ROOT, 'data', 'aurn-sites.json'), 'utf8'));
+const kmBetween = (lat1, lon1, lat2, lon2) => {
+  const r = Math.PI / 180, dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+  return 2 * 6371.0088 * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) ** 2));
+};
+const nearestWithin5 = (sites, lat, lon) => {
+  const best = sites.reduce((a, s) => (kmBetween(lat, lon, s.lat, s.lon) < kmBetween(lat, lon, a.lat, a.lon) ? s : a));
+  return kmBetween(lat, lon, best.lat, best.lon) <= 5 ? best : null;
+};
+async function expectedAir(postcode) {
+  const resp = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`, { signal: AbortSignal.timeout(20000) });
+  const { result } = await resp.json();
+  return {
+    sensor: nearestWithin5(AIR_SENSORS.sites, result.latitude, result.longitude),
+    monitor: nearestWithin5(AIR_MONITORS.sites, result.latitude, result.longitude),
+  };
+}
+
 for (const c of CASES) {
   await page.evaluate((city) => window.switchCity(city), c.city);
   await page.waitForTimeout(1200);
@@ -262,12 +286,48 @@ for (const c of CASES) {
       panel.nhs === Boolean(c.london),
       `nhs=${panel.nhs} london=${Boolean(c.london)}`,
     );
+    const want = await expectedAir(c.postcode);
+    if (want.sensor || want.monitor) {
+      await page
+        .waitForFunction(() => {
+          const s = document.getElementById('postcode-air-section');
+          return s && !s.hidden;
+        }, null, { timeout: 15000 })
+        .catch(() => {});
+    }
+    const air = await page.evaluate(() => {
+      const s = document.getElementById('postcode-air-section');
+      return s ? { hidden: s.hidden, text: s.innerText, links: Array.from(s.querySelectorAll('a')).map((a) => a.textContent.trim()) } : null;
+    });
+    const wantLines = [
+      want.sensor && `Nearest Breathe London sensor: ${want.sensor.name}, `,
+      want.monitor && `Nearest official monitor: ${want.monitor.name}, `,
+    ].filter(Boolean);
+    const wantCredits = [want.sensor && AIR_SENSORS.attribution, want.monitor && AIR_MONITORS.attribution].filter(Boolean);
+    check(
+      `  ${c.city}: air measured nearby names ${wantLines.length ? wantLines.map((l) => l.split(':')[0].toLowerCase()).join(' and ') : 'nothing (none within 5 km)'}`,
+      wantLines.length
+        ? Boolean(air) && !air.hidden && wantLines.every((l) => air.text.includes(l)) &&
+            Boolean(want.sensor) === /Breathe London sensor/.test(air.text) &&
+            Boolean(want.monitor) === /official monitor/.test(air.text)
+        : !air || air.hidden,
+      air ? air.text.slice(0, 200) : 'no air section',
+    );
+    if (wantLines.length) {
+      check(
+        `  ${c.city}: each reading carries its publisher's credit, word for word`,
+        Boolean(air) && wantCredits.every((t) => air.links.includes(t)) && air.links.length === wantCredits.length,
+        JSON.stringify(air && air.links),
+      );
+    }
   } else {
     check(
       `  ${c.city}: keeps its own transit copy`,
       /subway/i.test(panel.text),
       'NYC must still say subway - NaPTAN is UK-only',
     );
+    const air = await page.evaluate(() => Boolean(document.getElementById('postcode-air-section')));
+    check(`  ${c.city}: no air-measured-nearby section (UK sources only)`, !air, air ? 'section rendered' : '');
   }
   console.log('');
 }

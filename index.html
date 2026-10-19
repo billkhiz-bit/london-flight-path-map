@@ -10777,6 +10777,58 @@
         return true;
       }
 
+      // AIR MEASURED NEARBY (2026-10-19; Bill asked for the map too): the nearest Breathe London
+      // sensor and the nearest DEFRA reference monitor within 5 km, from the SAME functions the
+      // front page and both street reports use (js/street_report.mjs), so the map cannot word or
+      // scope it differently. Shown, never scored. The section stays hidden when neither is in
+      // reach, or when anything fails to load: nothing is said beyond 5 km, never "none nearby".
+      let _airNearbyLoad = null;
+      function loadAirNearby() {
+        if (!_airNearbyLoad) {
+          const json = (path) =>
+            fetch(path, { cache: 'no-cache' })
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null);
+          _airNearbyLoad = Promise.all([
+            import('/js/street_report.mjs'),
+            json('/data/breathe-london-sensors.json'),
+            json('/data/aurn-sites.json'),
+          ]).catch((e) => {
+            _airNearbyLoad = null; // a failed load is retried on the next search
+            console.warn('[Sky Score] air measured nearby not loaded:', e);
+            return null;
+          });
+        }
+        return _airNearbyLoad;
+      }
+      async function renderAirNearby(lat, lon, stillCurrent) {
+        const loaded = await loadAirNearby();
+        if (!loaded || !stillCurrent()) return;
+        const [m, sensors, monitors] = loaded;
+        const section = document.getElementById('postcode-air-section');
+        const el = document.getElementById('postcode-air-data');
+        if (!section || !el) return;
+        try {
+          const sensor = sensors ? m.nearestSensor(sensors, lat, lon) : null;
+          const monitor = monitors ? m.nearestMonitor(monitors, lat, lon) : null;
+          if (!sensor && !monitor) return;
+          const credits = [sensor && sensor.credit, monitor && monitor.credit]
+            .filter(Boolean)
+            .map((c) => `<a href="${escapeHtml(c.href)}" target="_blank" rel="noopener">${escapeHtml(c.text)}</a>`)
+            .join(' ');
+          el.innerHTML =
+            [sensor && m.sensorLine(sensor), monitor && m.monitorLine(monitor)]
+              .filter(Boolean)
+              .map((line) => `<p class="info-note">${escapeHtml(line)}</p>`)
+              .join('') +
+            `<p class="info-note" style="margin-top:6px;font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))} ${credits}</p>`;
+          section.hidden = false;
+        } catch (e) {
+          // A module from an older cache without these functions: say nothing rather than half a line.
+          console.warn('[Sky Score] air measured nearby not shown:', e);
+        }
+      }
+
       function renderTransportData(containerId, data) {
         const el = document.getElementById(containerId);
         if (!el || !data) return;
@@ -12938,6 +12990,16 @@
       <div id="postcode-transport-data"><span class="info-note">NYC subway data coming soon. Check <a href="https://new.mta.info" target="_blank" style="color:var(--orange);">MTA.info</a> for schedules.</span></div>
     </div>`
     }
+    ${
+      // Air measured nearby (2026-10-19): filled by renderAirNearby(), and left hidden when
+      // nothing is in reach, so the panel never says "no monitor nearby".
+      isUkCity(currentCity) && !analysis.isOutcode
+        ? `<div class="sidebar-section" id="postcode-air-section" hidden>
+      <h3>AIR MEASURED NEARBY</h3>
+      <div id="postcode-air-data"></div>
+    </div>`
+        : ''
+    }
     ${buildOptionalSections(extra, 'pc')}
     ${buildPropertyLinks(analysis.postcode, analysis.borough)}
     ${
@@ -13033,6 +13095,10 @@
               tEl.innerHTML =
                 '<p class="info-note">No rail, metro or tram station in the NaPTAN register near this postcode.</p>';
           }
+        }
+        // Air measured nearby, for a full UK postcode (an outcode's centre is not a place to measure from).
+        if (isUkCity(currentCity) && !analysis.isOutcode) {
+          renderAirNearby(analysis.lat, analysis.lon, () => isCurrentSearch(req));
         }
 
         if (isUkCity(currentCity)) {

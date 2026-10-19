@@ -164,7 +164,7 @@ Or just describe what you need, I have full context of this project.
   rule (`tests/test_phone_layout_query.py`). Never test `innerWidth` against 900.
 - **`.no-result-yet`, not `.empty-state`**, marks "nothing searched yet".
 - **Air measured nearby is ONE pair of functions** (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`)
-  for the front page and both reports: 5 km, never "none nearby", a stale sensor file hidden, credits linked.
+  for the front page, the full map's panel (dynamic import) and both reports: 5 km, never "none nearby", a stale sensor file hidden, credits linked.
 - **Focus rings use `--focus: #d35a12`**, never the brand orange `#f27d26` (fails 3:1).
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`).

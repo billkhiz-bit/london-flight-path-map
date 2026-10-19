@@ -252,6 +252,12 @@
 >   works the expected lines out with its own maths at TW9 3PZ (George Street 1.5 km; the monitor 7.6 km away must
 >   not appear) and M22 5RX (no sensor; Manchester Sharston 1.7 km), and the existing "every file the pages fetched
 >   is one a Makefile target uploads" gate caught the two files missing from `data-deploy` on the first run.
+>   **The full map's postcode panel shows it too (same day, Bill):** `renderAirNearby()` in `index.html` loads the
+>   same module by dynamic `import()` (as the flight geometry is loaded), fills a hidden "AIR MEASURED NEARBY"
+>   section and unhides it only when a reading is in reach; UK full postcodes only (an outcode's centre is not a
+>   place to measure from). `tests/uk-city-panel.mjs` works the expected names out from postcodes.io's position:
+>   SW11 1AA shows BOTH (sensor 1.1 km, monitor 4.0 km), M1 1AE / B15 2TT / LS1 4DY a monitor, 10001 no section;
+>   proven red by removing the call and by rendering the section for every city.
 > - **"Cubitt33" stays on `privacy.html` and `terms.html` ONLY.** Bill asked for it off the
 >   site for now; the legal pages must still name the company (trading disclosures, and
 >   the controller in the privacy notice). Footers say "All figures from official public
