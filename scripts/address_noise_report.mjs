@@ -51,6 +51,8 @@ import {
   SCOPE_KM,
   districtComparison,
   mapSvg,
+  nearestMonitor,
+  nearestSensor,
   nearestStation,
   rasterFor,
   reportDocument,
@@ -180,6 +182,11 @@ const html = reportDocument(
     covid: await readJson('data/covid-understatement.json'),
     // The nearest station, as the free report shows it (one holder: nearestStation).
     station: existsSync(resolve('data/stations.json')) ? nearestStation(await readJson('data/stations.json'), loc.latitude, loc.longitude) : null,
+    // The air measured nearby, as the free report shows it (one holder each: nearestSensor, nearestMonitor).
+    sensor: existsSync(resolve('data/breathe-london-sensors.json'))
+      ? nearestSensor(await readJson('data/breathe-london-sensors.json'), loc.latitude, loc.longitude)
+      : null,
+    monitor: existsSync(resolve('data/aurn-sites.json')) ? nearestMonitor(await readJson('data/aurn-sites.json'), loc.latitude, loc.longitude) : null,
     airac: proc.airac,
     map: mapSvg({
       pl,

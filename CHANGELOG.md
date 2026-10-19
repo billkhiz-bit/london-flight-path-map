@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-10-19 - Air measured nearby, on the front page and in the street report
+
+- **Not yet deployed.** Shown, never scored: the score and its methodology are unchanged.
+- **London: the nearest Breathe London sensor.** A postcode's answer names the nearest of London's low-cost
+  air sensors within 5 km, with its type (background, roadside or kerbside), its distance from the kerb, and its
+  nitrogen dioxide and fine-particle averages over the last 12 whole months, beside DEFRA's background figure.
+  A sensor by a road can read higher than DEFRA's 1 km average, and the answer says why. The figures are
+  provisional (the network recalibrates them), and a sensor file more than 45 days past its period is not shown.
+- **Every city: the nearest official monitor.** DEFRA's reference monitor within 5 km, with its type and its
+  ratified annual average for the same year as the background figure. In London both lines can appear.
+- **Beyond 5 km nothing is said**, never "no monitor nearby": the files hold only sensors and monitors with
+  readings for at least 75% of the hours in their period, so a nearer one may exist and have been left out.
+- **Each reading carries its publisher's credit**, word for word and linked. The paid PDF report carries the same
+  lines, from the same functions.
+
 ## 2026-10-17 - New York's aircraft estimate, counted over the right months (methodology 5.7)
 
 - **Deployed and checked against the live site**: every page, data file and area page matches what was released,

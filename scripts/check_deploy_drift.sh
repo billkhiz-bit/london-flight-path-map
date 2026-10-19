@@ -230,8 +230,11 @@ done
 # with the target, not after an incident.
 #
 # Raised 18 -> 25 on 2026-09-26 with the seven city aircraft-noise PNGs.
-if [ "$DATA_CHECKED" -lt 25 ]; then
-  printf 'FAIL: compared only %d deployed data files, expected at least 25. The\n' "$DATA_CHECKED"
+# Raised 25 -> 41 on 2026-10-19: the target had grown to 39 with no edit
+# here (the floor trailed by 14, so 14 files could have been dropped
+# unseen), and the two air files (breathe-london-sensors, aurn-sites) make 41.
+if [ "$DATA_CHECKED" -lt 41 ]; then
+  printf 'FAIL: compared only %d deployed data files, expected at least 41. The\n' "$DATA_CHECKED"
   printf '  data-deploy parse is broken or the files have moved - either way this\n'
   printf '  pass reported agreement it never measured.\n'
   exit 1

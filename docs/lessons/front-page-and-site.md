@@ -239,6 +239,19 @@
 >   INSIDE the covered cities, so "no station near" could be false at a city's edge. The score's
 >   transport input stays the council area's share within 800 m; scoring per address would be a
 >   measured v5.6 that REPLACES that share, never adds to it (double count).
+> - **AIR MEASURED NEARBY IS SHOWN, NOT SCORED (2026-10-19, ROADMAP "The plan for Breathe London" steps 3-4).** The
+>   front page's answer (`#ans-air`) and every street report (free and PDF) name the nearest Breathe London sensor
+>   (London) and the nearest DEFRA AURN monitor (every city), each within `AIR_SCOPE_KM` (5; Bill, 2026-10-19, after
+>   measuring: a monitor is within 5 km of about half of places outside London, 21% in Leicester, 20% in West
+>   Yorkshire; a London sensor is within 4 km of 90%), through ONE pair of functions, `nearestSensor()` /
+>   `nearestMonitor()` in `js/street_report.mjs`. London shows BOTH (Bill). Beyond the scope NOTHING is said (the
+>   files hold only what cleared the 75% floor). A sensor file more than `SENSOR_STALE_DAYS` (45) past its window is
+>   hidden, never shown as current. The roadside sentence says a sensor by a road "CAN read higher" than DEFRA's
+>   background: medians were roadside 20.6 against background 19.9, so "reads higher" would be false on some pages.
+>   Each reading's credit is linked, word for word from the file (`--check` holds the wording). `tests/front-page.mjs`
+>   works the expected lines out with its own maths at TW9 3PZ (George Street 1.5 km; the monitor 7.6 km away must
+>   not appear) and M22 5RX (no sensor; Manchester Sharston 1.7 km), and the existing "every file the pages fetched
+>   is one a Makefile target uploads" gate caught the two files missing from `data-deploy` on the first run.
 > - **"Cubitt33" stays on `privacy.html` and `terms.html` ONLY.** Bill asked for it off the
 >   site for now; the legal pages must still name the company (trading disclosures, and
 >   the controller in the privacy notice). Footers say "All figures from official public

@@ -13,9 +13,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > deployed: nothing reads the file). `scripts/fetch_breathe_london.py --fetch` (key from `.env` only) wrote
 > `data/breathe-london-sensors.json`: 116 of 153 live sensors with a 12-month NO2 and/or PM2.5 mean over Oct 2025 to
 > Sep 2026, all 33 boroughs covered; `--check` is a blocking preflight stage, `--verify` advisory, and the freshness
-> report reads NEWER 45 days after the window ends (monthly roll, Bill's key needed). **Next: step 3**, the
-> "nearest sensor" line on the front page and street report beside DEFRA's background figure, with the AURN line
-> for every city. **Also asked today (Bill): one About page** (our story, real questions, talks and events with the
+> report reads NEWER 45 days after the window ends (monthly roll, Bill's key needed). **Steps 3-4 BUILT the same
+> day, not yet deployed:** the nearest sensor (London) and the nearest official monitor (every city) within 5 km on
+> the front page and both street reports, credited, never scored; deploy is `data-deploy` (now 41 files, drift
+> floor raised to match), then `web-deploy` (js/), then `home-deploy`. **Also asked today (Bill): one About page** (our story, real questions, talks and events with the
 > AI Tinkerers recording), waiting on Bill's inputs; `/talks/` must keep working (printed QR codes).
 >
 > ## START HERE (2026-10-18)
@@ -1117,8 +1118,13 @@ update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
    sensors usable over Oct 2025-Sep 2026 (114 NO2, 104 PM2.5), every one of the 33 boroughs
    holding one; the window is the 12 whole months before the fetch month; `--check` blocking in
    preflight, `--verify` advisory; the borough comes from our ONS-coded boundaries. Detail and the
-   API's three traps: `docs/lessons/in-progress-measurements.md`. **Next: step 3**, the line on
-   the front page and street report (AURN beside it for every city), then step 4's gates.
+   API's three traps: `docs/lessons/in-progress-measurements.md`.
+   **Steps 3 and 4 BUILT 2026-10-19 (not yet deployed):** `nearestSensor()` / `nearestMonitor()` in
+   `js/street_report.mjs`, one holder for the front page, the free report and the PDF; 5 km for both
+   and London shows both (Bill, 2026-10-19); a sensor file 45+ days past its window is hidden; each
+   reading's credit linked; `tests/front-page.mjs` works the expected lines out independently at
+   TW9 3PZ (sensor yes, monitor 7.6 km no) and M22 5RX (no sensor, monitor yes), each proven red.
+   **Next: step 5** (`/v1/environment`) after the line has run a month.
 2. **The same for AURN, every city** (`scripts/fetch_aurn.py`, keyless): the nearest official
    monitor's annual mean and site type. Same release, so London is not the only city with a
    measurement. **DATA HALF BUILT 2026-10-13, nothing displays it yet:** `data/aurn-sites.json`

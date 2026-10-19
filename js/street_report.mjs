@@ -56,6 +56,66 @@ export const stationDistance = (km) => {
   const m = Math.round(km * 100) * 10;
   return m < 1000 ? `${m} m` : `${km.toFixed(1)} km`;
 };
+
+// ---- Air measured nearby (ROADMAP "The plan for Breathe London", step 3), shown and NOT scored ----
+// Two files, each written and checked offline: data/breathe-london-sensors.json (London's low-cost
+// sensors, a 12-month mean; scripts/fetch_breathe_london.py) and data/aurn-sites.json (DEFRA's
+// reference monitors, the PCM year's annual mean; scripts/fetch_aurn.py). One holder for the front
+// page, the free report and the PDF, as for the station. Beyond AIR_SCOPE_KM nothing is said (Bill,
+// 2026-10-19: 5 km for both, and London shows both), never "no monitor near": the files hold only
+// what cleared the capture floor, so a nearer one may exist and have been left out. Never ranked:
+// a kerbside sensor and a background monitor measure different things.
+export const AIR_SCOPE_KM = 5;
+// A sensor file whose window ended longer ago than this is not shown at all, rather than shown as
+// current (Bill, 2026-10-13); check_data_freshness.py reads NEWER at the same age.
+export const SENSOR_STALE_DAYS = 45;
+const CAPTURE_FLOOR_PCT = 75;
+const nearestWithin = (rows, lat, lon) => {
+  let best = null;
+  for (const r of rows || []) {
+    const km = haversineKm(lat, lon, r.lat, r.lon);
+    if (!best || km < best.km) best = { row: r, km };
+  }
+  return best && best.km <= AIR_SCOPE_KM ? best : null;
+};
+/** The nearest Breathe London sensor, or null: beyond the scope, or the file past its window. */
+export function nearestSensor(file, lat, lon, today = new Date()) {
+  const to = file?.window?.to;
+  if (!to || Math.floor((today.getTime() - Date.parse(`${to}T00:00:00Z`)) / 86400000) > SENSOR_STALE_DAYS) return null;
+  const best = nearestWithin(file.sites, lat, lon);
+  return best && { ...best.row, km: best.km, to, credit: { text: file.attribution, href: file.attributionLink } };
+}
+/** The nearest DEFRA AURN monitor, or null beyond the scope. */
+export function nearestMonitor(file, lat, lon) {
+  const best = nearestWithin(file?.sites, lat, lon);
+  return best && { ...best.row, km: best.km, year: file.year, credit: { text: file.attribution, href: file.licence } };
+}
+const ugm3 = (v) => `${v.toFixed(1)} µg/m³`;
+const pollutants = (r) =>
+  [r.no2 && `nitrogen dioxide ${ugm3(r.no2.mean)}`, r.pm25 && `fine particles ${ugm3(r.pm25.mean)}`].filter(Boolean).join(' and ');
+const SENSOR_KIND = { 'Urban Background': 'background', Roadside: 'roadside', Kerbside: 'kerbside' };
+// Plain text: the front page sets it as textContent, the report escapes it.
+/** "Nearest Breathe London sensor: George Street, 1.5 km away (roadside, 0.7 m from the kerb): nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026." */
+export function sensorLine(s) {
+  const kind = SENSOR_KIND[s.classification] || String(s.classification).toLowerCase();
+  const kerb = typeof s.kerbDistanceM === 'number' ? `, ${Number(s.kerbDistanceM.toFixed(1))} m from the kerb` : '';
+  const month = new Date(`${s.to}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return `Nearest Breathe London sensor: ${s.name}, ${stationDistance(s.km)} away (${kind}${kerb}): ${pollutants(s)} over the 12 months to ${month}.`;
+}
+/** "Nearest official monitor: Manchester Sharston, 1.7 km away (suburban industrial): nitrogen dioxide 14.2 µg/m³ in 2024." */
+export function monitorLine(m) {
+  return `Nearest official monitor: ${m.name}, ${stationDistance(m.km)} away (${String(m.type).toLowerCase()}): ${pollutants(m)} in ${m.year}.`;
+}
+/** What kind of measurement each line is, and why a sensor by a road reads above DEFRA's background figure. */
+export function airNotes(sensor, monitor) {
+  const notes = [];
+  if (sensor) notes.push('Breathe London sensors are low-cost: their figures are provisional and are recalibrated over time.');
+  if (sensor && sensor.classification !== 'Urban Background')
+    notes.push("A sensor by a road can read higher than DEFRA's background figure: it measures the traffic beside it, where DEFRA's is the average across a 1 km square.");
+  if (monitor) notes.push("Official monitors are DEFRA's reference instruments, and their figures are ratified.");
+  notes.push(`Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.`);
+  return notes.join(' ');
+}
 const MAP = { w: 1000, h: 345, padKm: 5, minHeightKm: 11 };
 
 // DEFRA's Lden bands for its aircraft map. A MIRROR of NOISE_SCALE_DEFRA_LDEN in
@@ -375,6 +435,19 @@ export function reportParts(spec, f) {
       `fine particles ${env.pm25AnnualMeanUgm3.toFixed(1)} &micro;g/m&sup3; (guideline ${Number(env.pm25WhoGuidelineUgm3)})`
     );
   if (f.station) also.push(`nearest station ${esc(f.station.name)}, ${stationDistance(f.station.km)} in a straight line`);
+  // Air measured nearby, from the same functions as the front page; each reading's credit, word for
+  // word as its publisher requires and linked, goes in the sources line.
+  const airMeasured =
+    f.sensor || f.monitor
+      ? [f.sensor && sensorLine(f.sensor), f.monitor && monitorLine(f.monitor), airNotes(f.sensor, f.monitor)]
+          .filter(Boolean)
+          .map(esc)
+          .join(' ')
+      : '';
+  const airCredits = [f.sensor, f.monitor]
+    .filter(Boolean)
+    .map((r) => ` <a href="${esc(r.credit.href)}">${esc(r.credit.text)}</a>${r.credit.text.endsWith('.') ? '' : '.'}`)
+    .join('');
 
   const c55 =
     covid && routes.airports[0] && routes.airports[0].code === covid.airport
@@ -441,8 +514,9 @@ ${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('\n
 <div class="cols"><div><h2>What this shows</h2><ul>${bullets.map((b) => `<li>${b}</li>`).join('')}</ul></div>
 ${district ? `<div><h2>How it compares within ${esc(district.outcode)}</h2><p class="cap">Quiet Skies scores of the ${district.n.toLocaleString('en-GB')} postcodes on DEFRA's map. This postcode's band is in orange.</p>${districtSvg(district)}</div>` : ''}</div>
 ${also.length ? `<p class="note"><strong>Also at this postcode:</strong> ${also.join('; ')}.</p>` : ''}
+${airMeasured ? `<p class="note"><strong>Air measured nearby.</strong> ${airMeasured}</p>` : ''}
 <p class="note"><strong>Reading this report.</strong> Lden is a yearly average of the outdoor level, with evening and night flights weighted more heavily; it does not describe single loud events or the number of flights. ${vintage} The route lines are the published centre lines: aircraft fly either side of them, and the path to joining a final approach is directed by air traffic control and is not drawn. This is information, not a survey or an environmental search; visit at different times of day before deciding.</p>
-<footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? 'CAA ERCD Report 2501; ' : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS). Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
+<footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? 'CAA ERCD Report 2501; ' : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS).${airCredits} Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
 `;
   return { title, css, body };
 }

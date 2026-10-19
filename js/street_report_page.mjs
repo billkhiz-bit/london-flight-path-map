@@ -13,6 +13,8 @@ import {
   SCOPE_KM,
   districtComparison,
   mapSvg,
+  nearestMonitor,
+  nearestSensor,
   nearestStation,
   rasterFor,
   reportDocument,
@@ -140,12 +142,14 @@ async function make(raw, check = null) {
     }
     const resolvedAs = envBody.location && envBody.location.postcode !== loc.postcode ? envBody.location.postcode : null;
 
-    const [proc, regions, covid, stations] = await Promise.all([
+    const [proc, regions, covid, stations, sensors, monitors] = await Promise.all([
       getJson('/data/flight-procedures.json', 'The route file'),
       getJson('/data/aircraft-noise-rasters.json', 'The noise map index'),
       getJson('/data/covid-understatement.json', 'The 2021 comparison'),
-      // The nearest station is a line, not a fact the report depends on.
+      // The nearest station and the air measured nearby are lines, not facts the report depends on.
       maybeJson('/data/stations.json'),
+      maybeJson('/data/breathe-london-sensors.json'),
+      maybeJson('/data/aurn-sites.json'),
     ]);
     const pl = plane(loc.latitude, loc.longitude);
     const routes = routesNear(proc, pl, SCOPE_KM);
@@ -193,6 +197,8 @@ async function make(raw, check = null) {
         district,
         covid,
         station: stations ? nearestStation(stations, loc.latitude, loc.longitude) : null,
+        sensor: sensors ? nearestSensor(sensors, loc.latitude, loc.longitude) : null,
+        monitor: monitors ? nearestMonitor(monitors, loc.latitude, loc.longitude) : null,
         airac: proc.airac,
         map: mapSvg({
           pl,

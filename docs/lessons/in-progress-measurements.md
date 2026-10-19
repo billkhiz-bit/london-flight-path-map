@@ -12,9 +12,9 @@ pyreadr`). Its year is `load_defra_air_quality.PCM_YEAR`, never the newest summa
 of the same year, and `--check` (BLOCKING, offline) reds when air quality rolls until it is re-fetched. Ratified
 only (a site that closed mid-year counts to its closing day), 75% capture, UK-AIR's attribution word for word
 ("licenced"), a usable site inside EVERY covered city or a `NO_SITE_INSIDE` reason. Display only, never scored,
-never ranked (UK-AIR: "not scientifically sound"). Nothing reads it yet: the "nearest official monitor" line ships
-with the Breathe London half (ROADMAP plan, GLA key pending) and needs a distance scope - Greater Norwich's
-nearest NO2 clearing the floor is 77 km away.
+never ranked (UK-AIR: "not scientifically sound"). Shown since 2026-10-19 (built; see
+`front-page-and-site.md`, "AIR MEASURED NEARBY"): within 5 km only, so Greater Norwich (nearest NO2 clearing the
+floor 77 km away) says nothing.
 
 **BREATHE LONDON'S SENSORS ARE HELD, not shown (2026-10-19).** `scripts/fetch_breathe_london.py --fetch` writes
 `data/breathe-london-sensors.json` (checked in; the raw API answers, ~15 MB gzipped, in ignored

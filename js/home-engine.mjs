@@ -15,7 +15,17 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
-import { DEFRA_LDEN_SCALE, LONDON_RASTER, nearestStation, stationDistance } from '/js/street_report.mjs';
+import {
+  DEFRA_LDEN_SCALE,
+  LONDON_RASTER,
+  airNotes,
+  monitorLine,
+  nearestMonitor,
+  nearestSensor,
+  nearestStation,
+  sensorLine,
+  stationDistance,
+} from '/js/street_report.mjs';
 
 // The full map's address since the front page took / (2026-10-06). Every link
 // from here to the map goes through it.
@@ -1320,6 +1330,15 @@ let stationsLoad = null;
 let stationSeq = 0;
 const loadStations = () => (stationsLoad ??= d3.json('/data/stations.json').catch(() => null));
 
+// Air measured nearby (ROADMAP "The plan for Breathe London", step 3): shown, never scored. The
+// nearest Breathe London sensor and the nearest official (AURN) monitor within 5 km, each with its
+// publisher's credit; London shows both (Bill, 2026-10-19). Fetched on the first answer, then kept.
+let sensorsLoad = null;
+let monitorsLoad = null;
+let airSeq = 0;
+const loadSensors = () => (sensorsLoad ??= d3.json('/data/breathe-london-sensors.json').catch(() => null));
+const loadMonitors = () => (monitorsLoad ??= d3.json('/data/aurn-sites.json').catch(() => null));
+
 function render(postcode, district, city, e, lat, lon) {
   const title = byId('ans-title'), where = byId('ans-where');
   if (title) title.textContent = postcode;
@@ -1371,6 +1390,32 @@ function render(postcode, district, city, e, lat, lon) {
         if (!near) return;
         station.textContent = `Nearest station: ${near.name}, ${stationDistance(near.km)} in a straight line.`;
         station.hidden = false;
+      });
+    }
+  }
+  const air = byId('ans-air');
+  if (air) {
+    air.hidden = true;
+    air.replaceChildren();
+    // As for the station: a later search owns the block.
+    const seq = ++airSeq;
+    if (city) {
+      Promise.all([loadSensors(), loadMonitors()]).then(([sensors, monitors]) => {
+        if (seq !== airSeq) return;
+        const sensor = sensors ? nearestSensor(sensors, lat, lon) : null;
+        const monitor = monitors ? nearestMonitor(monitors, lat, lon) : null;
+        if (!sensor && !monitor) return;
+        const para = (className, text) => Object.assign(document.createElement('p'), { className, textContent: text });
+        if (sensor) air.append(para('', sensorLine(sensor)));
+        if (monitor) air.append(para('', monitorLine(monitor)));
+        air.append(para('air-note', airNotes(sensor, monitor)));
+        const credit = para('air-credit', '');
+        for (const c of [sensor?.credit, monitor?.credit].filter(Boolean)) {
+          if (credit.childNodes.length) credit.append(' ');
+          credit.append(Object.assign(document.createElement('a'), { href: c.href, textContent: c.text }));
+        }
+        air.append(credit);
+        air.hidden = false;
       });
     }
   }

@@ -199,6 +199,11 @@
       .answer .more, .borough .more { margin: 12px 0 0; font-size: 14px; }
       .answer .more a, .borough .more a { color: var(--orange-ink); font-weight: 600; }
       .answer .routes, .answer .area { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
+      /* Air measured nearby (2026-10-19): the readings, what kind each is, then each publisher's credit. */
+      .answer .air p { margin: 4px 0 0; }
+      .answer .air p:first-child { margin-top: 0; }
+      .answer .air .air-note, .answer .air .air-credit { font-size: 12px; }
+      .answer .air .air-credit a { color: inherit; }
       .answer .area b { color: var(--dark); font-weight: 600; }
       button.linkish { font: inherit; font-weight: 600; color: var(--orange-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
       /* "Count my vote" (2026-10-13): where a visitor the map does not cover wants it next. */
@@ -385,6 +390,7 @@
             <div class="rows" id="ans-rows"></div>
             <p class="routes" id="ans-routes"></p>
             <p class="routes" id="ans-station" hidden></p>
+            <div class="routes air" id="ans-air" hidden></div>
             <p class="area" id="ans-area"></p>
             <p class="want" id="ans-want" aria-live="polite" hidden></p>
             <p class="more"><a id="ans-link" href="/map/">See the full picture on the map</a></p>

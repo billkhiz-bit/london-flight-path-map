@@ -535,6 +535,61 @@ ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.te
     JSON.stringify(dist)
   );
 }
+// Air measured nearby (ROADMAP "The plan for Breathe London", step 3; Bill, 2026-10-19: within 5 km,
+// London shows the sensor AND the official monitor). Worked out HERE over the two data files with this
+// test's own distance maths, as the station is, so the shared functions cannot pass by agreeing with
+// themselves. From Kew the nearest sensor is in reach and the nearest official monitor is not.
+const kmBetween = (lat1, lon1, lat2, lon2) => {
+  const r = Math.PI / 180, dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+  return 2 * 6371.0088 * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) ** 2));
+};
+const sensorFile = JSON.parse(await readFile(join(ROOT, 'data', 'breathe-london-sensors.json'), 'utf8'));
+const monitorFile = JSON.parse(await readFile(join(ROOT, 'data', 'aurn-sites.json'), 'utf8'));
+const nearestTo = (sites, lat, lon) => sites.reduce((a, s) => (kmBetween(lat, lon, s.lat, s.lon) < kmBetween(lat, lon, a.lat, a.lon) ? s : a));
+const airBlock = async () => {
+  await page.waitForFunction(() => !document.getElementById('ans-air').hidden, null, { timeout: 10000 }).catch(() => {});
+  return page.locator('#ans-air').evaluate((d) => ({ hidden: d.hidden, text: d.textContent, links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]) }));
+};
+{
+  const sensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
+  const monitor = nearestTo(monitorFile.sites, 51.4713, -0.2894);
+  const sensorKm = kmBetween(51.4713, -0.2894, sensor.lat, sensor.lon);
+  const air = await airBlock();
+  ok(
+    !air.hidden && sensorKm <= 5 && air.text.startsWith(`Nearest Breathe London sensor: ${sensor.name}, ${sensorKm.toFixed(1)} km away (${sensor.classification.toLowerCase()}`),
+    'Kew names its nearest Breathe London sensor, as worked out independently from the sensor file',
+    `${air.text.slice(0, 160)} | expected ${sensor.name}, ${sensorKm.toFixed(1)} km`
+  );
+  ok(
+    kmBetween(51.4713, -0.2894, monitor.lat, monitor.lon) > 5 && !air.text.includes('Nearest official monitor'),
+    'the nearest official monitor is over 5 km from Kew, so it is not mentioned at all (never "none nearby")',
+    `${monitor.name} ${kmBetween(51.4713, -0.2894, monitor.lat, monitor.lon).toFixed(1)} km`
+  );
+  ok(/can read higher than DEFRA's background figure/.test(air.text) && /at least 75% of the hours/.test(air.text), 'a roadside sensor carries why it can read above the background, and the capture floor is stated', air.text.slice(-320));
+  ok(
+    air.links.length === 1 && air.links[0][0] === sensorFile.attribution && air.links[0][1] === sensorFile.attributionLink,
+    "the reading carries Breathe London's credit word for word, linked to breathelondon.org",
+    JSON.stringify(air.links)
+  );
+  // Scope and staleness on the shared functions, on made-up rows: 0.01 degrees is 1.1 km, 0.05 is 5.6 km.
+  const edge = await page.evaluate(async () => {
+    const m = await import('/js/street_report.mjs');
+    const file = { window: { to: '2026-09-30' }, attribution: 'a', attributionLink: 'b', sites: [{ name: 'A', lat: 0.01, lon: 0, no2: { mean: 20 }, pm25: null, classification: 'Kerbside' }] };
+    const far = { ...file, sites: [{ ...file.sites[0], lat: 0.05 }] };
+    const on = (day) => new Date(`${day}T12:00:00Z`);
+    return {
+      near: m.nearestSensor(file, 0, 0, on('2026-10-19'))?.name ?? null,
+      far: m.nearestSensor(far, 0, 0, on('2026-10-19')),
+      day45: m.nearestSensor(file, 0, 0, on('2026-11-14'))?.name ?? null,
+      day46: m.nearestSensor(file, 0, 0, on('2026-11-15')),
+    };
+  });
+  ok(
+    edge.near === 'A' && edge.far === null && edge.day45 === 'A' && edge.day46 === null,
+    'a sensor 1.1 km away is named and one 5.6 km away is not; a file 45 days past its window still shows, at 46 it is hidden, never shown as current',
+    JSON.stringify(edge)
+  );
+}
 const area = await page.locator('#ans-area').textContent();
 const richmond = csvRow('Richmond upon Thames');
 ok(area.includes('Richmond upon Thames') && area.includes(`Sky Score ${richmond.score}`) && area.includes(`${richmond.flood_medium_or_high_pct}% of postcodes at medium or high flood risk`), 'the council-area line carries the CSV score and flood share', area);
@@ -631,6 +686,21 @@ await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10 && document.querySelector('#answer.is-open'), null, { timeout: 10000 });
 ok(/published only as charts and are not drawn here/.test(await page.locator('#ans-routes').textContent()), 'Manchester\'s undrawn departures are said, not left silent (audit M-7)', await page.locator('#ans-routes').textContent());
 ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
+// Outside London no Breathe London line (the network is London's), and the official monitor within 5 km
+// is named with DEFRA's credit; worked out independently, as for Kew.
+{
+  const monitor = nearestTo(monitorFile.sites, 53.3677, -2.2644);
+  const km = kmBetween(53.3677, -2.2644, monitor.lat, monitor.lon);
+  const air = await airBlock();
+  ok(
+    !air.hidden && !/Breathe London/.test(air.text) && km <= 5 &&
+      air.text.startsWith(`Nearest official monitor: ${monitor.name}, ${km.toFixed(1)} km away (${monitor.type.toLowerCase()}): `) &&
+      air.text.includes(` in ${monitorFile.year}.`),
+    'a Manchester postcode names its nearest official monitor, and no Breathe London sensor',
+    `${air.text.slice(0, 200)} | expected ${monitor.name}, ${km.toFixed(1)} km`
+  );
+  ok(air.links.length === 1 && air.links[0][0] === monitorFile.attribution && air.links[0][1] === monitorFile.licence, "the monitor's reading carries UK-AIR's credit word for word, linked to the OGL", JSON.stringify(air.links));
+}
 
 // 11a. A SLOWER EARLIER SEARCH MUST NOT OVERWRITE A LATER ONE (audit 2026-10-09 I-3). TW9 3PZ's lookup is
 // held up; NW1 7PJ is searched while it waits, and answers first. Both are London, so the late TW9 lands on
@@ -1336,6 +1406,10 @@ const makeReport = async (pc) => {
   ok(/Free copy for personal use, not for use with clients/.test(foot), 'the free copy says on its face that it is for personal use, not for clients', foot.slice(-140));
   const alsoLine = ready ? await sheetDoc().locator('p.note', { hasText: 'Also at this postcode' }).textContent() : '';
   ok(/nearest station [^,]+, \d+ m in a straight line/.test(alsoLine), 'the report names the nearest station, from the same function as the front page', alsoLine.slice(-120));
+  const airNote = ready ? await sheetDoc().locator('p.note', { hasText: 'Air measured nearby' }).textContent() : '';
+  const kewSensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
+  ok(airNote.startsWith(`Air measured nearby. Nearest Breathe London sensor: ${kewSensor.name}, `), 'the report names the nearest Breathe London sensor, from the same function as the front page', airNote.slice(0, 140));
+  ok(foot.includes(sensorFile.attribution), "the report's sources carry Breathe London's credit word for word", foot.slice(-300));
   // PROTECTION FOR THE FREE COPY (Bill, 2026-10-06: "people can screenshot and maybe edit it"): a
   // watermark, a reference tied to the figures and the day, a check link with a QR code, the terms line.
   const today = new Date().toISOString().slice(0, 10);

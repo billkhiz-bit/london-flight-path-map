@@ -296,6 +296,18 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/stations.json \
 		s3://$(S3_BUCKET)/data/stations.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# Air measured nearby (2026-10-19): the front page and both street reports
+	# read these two on search, like stations.json, and like it they are NOT in
+	# sw.js SHELL_ASSETS. Both are written by blocking --check builders
+	# (fetch_breathe_london.py, fetch_aurn.py); no-cache so a monthly
+	# Breathe London roll or an AURN year roll reaches visitors at once.
+	# Before web-deploy and home-deploy, for the reason given above.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/breathe-london-sensors.json \
+		s3://$(S3_BUCKET)/data/breathe-london-sensors.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aurn-sites.json \
+		s3://$(S3_BUCKET)/data/aurn-sites.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/nyc-boroughs.json \
 		s3://$(S3_BUCKET)/data/nyc-boroughs.json \
 		--content-type "application/json" --region $(AWS_REGION)
