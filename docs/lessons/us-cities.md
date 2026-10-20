@@ -188,3 +188,16 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   the page builds (`productTypeID=NFHL&productSubTypeID=NFHL_STATE_DATA&productID=<name>`, the STATE subtype for
   county data too, kept as found). **When a service answers "not found", read its words, and look for the address
   its own page uses before guessing one.**
+- **ALL FOUR FETCHED (run `39443609009`, 2026-10-20): San Francisco's product is `NFHL_060298`** (4.3 MB, 260
+  polygons), listed under both "SAN FRANCISCO COUNTY ALL JURISDICTIONS" and "SAN FRANCISCO, CITY AND COUNTY OF", so
+  it was fetched twice (now one download per product name). The file also held zones `AREA NOT INCLUDED` (3) and
+  `OPEN WATER` (13), both `SFHA_TF 'F'`, which the reader counted as "outside" (safe): now UNKNOWN, as D is.
+- **Santa Clara's file leaves its valley floor BLANK (the first `--write`, same day).** Its zone D is drawn
+  explicitly (two polygons of 1,680 and 618 km2 over the hills), its 1% strips along the creeks and its 0.2% X
+  bands too, but across most of San Jose the unshaded "minimal hazard" zone X between them is not a polygon
+  (zone X covers 434 km2 there, against 1,739 in Alameda). So 766,952 of San Jose's 1,013,240 residents read
+  "unknown" and its share of KNOWN residents, 21.6%, is biased to the creeks; counting blank as unshaded X gives
+  about 5.2%. Eight other Santa Clara cities move under 3 points. The reader's >5% unknown check caught it
+  (proven useful on its first real run). **Bill's call:** Claude recommends reading "no polygon" as unshaded zone X
+  WHERE the county's FIRM is county-wide and codes undetermined land as D, stated with the figures; until then the
+  output is not committed.

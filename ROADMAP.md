@@ -22,7 +22,13 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > `advanceSearch?getCounty=06` and `?getCommunity=<county>&state=06`. Run `39436786877` (Santa Clara blocked that
 > time): the portal lists San Francisco as one jurisdiction, `06075C`, the very id FEMA cannot find, so the fetcher
 > now runs the page's own product search for it and downloads each `NFHL_COUNTY_DATA` product by its LISTED name
-> (never a guessed id).
+> (never a guessed id). **Run `39443609009`: ALL FOUR FETCHED** (San Francisco = `NFHL_060298`, 260 polygons;
+> 6,420 in all). The first `build_bayarea_flood.py --write`: East Palo Alto 32.5%, Milpitas 26.3%, Palo Alto 22.6%
+> of residents in the 1% zone, BUT Santa Clara's file leaves the valley floor blank (no unshaded zone X polygons),
+> so San Jose reads 76% "unknown" and 21.6% of the rest; blank read as zone X gives ~5.2%. **Waiting on Bill**
+> (lesson us-cities.md): read "no polygon" as unshaded X where the FIRM is county-wide and codes D explicitly?
+> Claude recommends yes. The flood output is not committed until then (`--write` rebuilds it in a minute from
+> `data/fema/`, gitignored).
 >
 > **Bay Area flood: FEMA's county downloads WORK.** `scripts/fetch_fema_nfhl_counties.py` + the manual workflow
 > `fema-nfhl-county-fetch.yml` download `NFHL_<county FIPS>C` from the MSC portal (the address from FEMA's own guide)

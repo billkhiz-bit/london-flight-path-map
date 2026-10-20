@@ -29,7 +29,10 @@ REPO = Path(__file__).resolve().parent.parent
 RAW = REPO / 'data' / 'fema' / 'nfhl-bayarea.esrijson.gz'
 MANIFEST = REPO / 'data' / 'fema' / 'manifest.json'
 OUT = REPO / 'data' / 'us-bayarea-flood.json'
-UNDETERMINED = {'D'}
+# Zones that are not a determination of flood risk, read as UNKNOWN like "no polygon". D is "possible but
+# undetermined"; the first real file (run 39443609009, 2026-10-20) also held 'AREA NOT INCLUDED' (3 polygons,
+# land outside the study) and 'OPEN WATER' (13), both SFHA_TF 'F', which read as 'outside' (safe) before.
+UNDETERMINED = {'D', 'AREA NOT INCLUDED', 'OPEN WATER'}
 UNKNOWN_MAX_PCT = 5.0
 CELL_DEG = 0.02  # polygon index cells, about 2 km
 

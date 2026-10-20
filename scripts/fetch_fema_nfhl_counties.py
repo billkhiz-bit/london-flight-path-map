@@ -351,7 +351,14 @@ def community_products(fips, name, portal=None):
                 products.append((str(c['label']).strip(), pname, SEARCH_DOWNLOAD + urllib.parse.quote(pname)))
     if not products:
         raise PortalError(f"{name} ({fips}): the portal's search lists no NFHL county data: {asked}"[:1500])
-    return sorted(set(products)), asked
+    # One download per product NAME: run 39443609009 found San Francisco's NFHL_060298 under both "SAN FRANCISCO
+    # COUNTY ALL JURISDICTIONS" and "SAN FRANCISCO, CITY AND COUNTY OF", fetched it twice and doubled its polygons.
+    by_name = {}
+    for label, pname, url in products:
+        labels, _ = by_name.setdefault(pname, ([], url))
+        if label not in labels:
+            labels.append(label)
+    return [(' / '.join(labels), pname, url) for pname, (labels, url) in sorted(by_name.items())], asked
 
 
 def keep_failure(name, fips, exc, raw, out):

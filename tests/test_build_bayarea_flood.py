@@ -46,6 +46,17 @@ def test_each_kind_of_point_is_classified_and_absence_is_unknown_not_safe():
     assert bf.classify(-122.295, 37.805, polys, cells) == 'sfha'     # AE under an overlapping X
 
 
+def test_land_outside_the_study_and_open_water_are_unknown_not_safe():
+    # FEMA's first real file (run 39443609009) held both, flagged SFHA_TF 'F': neither is a determination.
+    feats = [feature('AREA NOT INCLUDED', False, square(-122.30, 37.80, 0.02)),
+             feature('OPEN WATER', False, square(-122.25, 37.80, 0.02)),
+             feature('AE', True, square(-122.30, 37.80, 0.005))]  # a study over part of the excluded land
+    polys, cells = bf.zone_index(feats)
+    assert bf.classify(-122.29, 37.81, polys, cells) == 'unknown'
+    assert bf.classify(-122.24, 37.81, polys, cells) == 'unknown'
+    assert bf.classify(-122.298, 37.802, polys, cells) == 'sfha'  # a determined 1% reading still wins
+
+
 def test_the_check_reds_a_mostly_unknown_city_and_a_share_that_is_not_its_counts():
     want = [{'geoid': '0600001', 'name': 'A'}, {'geoid': '0600002', 'name': 'B'}]
     ok = {'cities': [

@@ -247,8 +247,10 @@ def test_a_4xx_or_a_broken_zip_is_one_county_failing_not_the_run(tmp_path, monke
 NOT_FOUND_PAGE = (b"<script> var userName = ''; </script><html><head><title>FEMA Flood Map Service Center | FEMA "
                   b"Flood Map Service Center</title></head><body>Sorry, the product you were looking for could not "
                   b"be found.</body></html>")
-# Run 39436786877: the portal lists San Francisco as one jurisdiction, whose plain NFHL id is "not found".
+# Runs 39436786877 and 39443609009: the portal lists San Francisco as its county-wide jurisdiction AND as the
+# city-county, and both searches list the same product, NFHL_060298.
 SF_COMMUNITIES = [{'value': '06075C', 'label': 'SAN FRANCISCO COUNTY ALL JURISDICTIONS'},
+                  {'value': '060298', 'label': 'SAN FRANCISCO, CITY AND COUNTY OF'},
                   {'value': 'none', 'label': '--Select--'}]  # not a product id: never searched
 
 
@@ -285,17 +287,20 @@ def _sf_by_the_portals_search(tmp_path, monkeypatch, listed):
 
 def test_a_county_fema_cannot_find_is_fetched_as_its_portal_search_lists_it(tmp_path, monkeypatch):
     code, asked, portal_calls = _sf_by_the_portals_search(
-        tmp_path, monkeypatch, [{'product_NAME': 'NFHL_06075C_20210323', 'product_FILE_SIZE': '9 MB'}])
+        tmp_path, monkeypatch, [{'product_NAME': 'NFHL_060298', 'product_FILE_SIZE': '4 MB'}])
     assert code == 0
     assert asked.count(('NFHL_06075C', False)) == 1  # FEMA's "not found" is an answer: not asked again
-    assert ('NFHL_06075C_20210323', True) in asked  # by its LISTED name, at the address the page builds
+    # By its LISTED name, at the address the page builds, and ONCE though both searches list it.
+    assert asked.count(('NFHL_060298', True)) == 1
     search = [c for c in portal_calls if 'method' in c]
-    assert len(search) == 1 and search[0]['selcommunity'] == search[0]['searchedCid'] == '06075C'
-    assert search[0]['selcounty'] == '06075' and search[0]['method'] == 'search'
+    assert [s['selcommunity'] for s in search] == ['06075C', '060298']
+    assert all(s['searchedCid'] == s['selcommunity'] and s['selcounty'] == '06075' for s in search)
     sf = next(p for p in _real(tmp_path / 'out' / 'manifest.json')['products'] if p['fips'] == '06075')
     assert sf['county_wide'] == fc.NOT_FOUND
-    assert [p['product_id'] for p in sf['products']] == ['NFHL_06075C_20210323']
-    assert sf['products'][0]['community'] == 'SAN FRANCISCO COUNTY ALL JURISDICTIONS'
+    assert [p['product_id'] for p in sf['products']] == ['NFHL_060298']
+    assert sf['products'][0]['community'] == ('SAN FRANCISCO COUNTY ALL JURISDICTIONS / '
+                                              'SAN FRANCISCO, CITY AND COUNTY OF')
+    assert sf['features'] == len(GEOJSON['features']) - 1  # not doubled (the geometry-less zone D is left out)
 
 
 def test_a_county_whose_search_lists_no_nfhl_fails_and_writes_nothing(tmp_path, monkeypatch):
