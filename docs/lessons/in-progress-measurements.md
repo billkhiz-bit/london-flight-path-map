@@ -82,3 +82,18 @@ stopped; 3 gives the same extracts, more slowly. **Stopping is always safe:** a 
 extract EXISTS, and the extractor writes `<day>.jsonl.gz.partial` and renames it when complete, so a killed day is
 redone, never half-counted; a part download resumes from the bytes it has.
 
+**THE OVERFLIGHT COUNTER IS BUILT (2026-10-20): `scripts/adsb_overflights.py`.** One file a day,
+`data/adsb/overflights/<day>.npz` (gitignored, ~8.6 MB, written `.partial` then renamed): for each angle (48.5 headline,
+60 alongside, under 7,000 ft) the count per 100 m British National Grid cell, in total and per airport, plus the day's
+feed profile, movements by runway and UTC hour, and the height offsets used. A pass counts ONCE per cell (hits more
+than 5 minutes apart are separate passes); each 100 m step is credited to the movement nearest in time (30 min before
+a landing, 15 after a take-off), else "other" (~40% of steps: transits, helicopters, Southend, Farnborough). Height:
+GPS minus the airport's EGM96 geoid where present, else barometric plus that AIRPORT's own day offset (186 ft at
+Newcastle to 425 ft at Gatwick on 14 Oct, so one UK offset would be wrong). Against the prototype on 14 Oct: Kew 296,
+Battersea 341, Hackney 14, Hounslow 4, Silvertown 147 at the point (140 for its cell, whose centre is up to 71 m
+away); 15 Aug (easterly) Kew 0. ~35 s and ~2 GB a day on one process. 17 tests, 15 mutations red. **Not settled:**
+`classify_day()` is BILL'S (westerly/easterly/mixed; days switch mid-day) and `--average` stops until it exists;
+heights are above sea level, not ground, so high airfields (Leeds Bradford ~200 m) count high; a low aircraft
+orbiting back over a cell within one pass counts once; `average()` does not apply `coverage_verdict()`, publishing
+must.
+

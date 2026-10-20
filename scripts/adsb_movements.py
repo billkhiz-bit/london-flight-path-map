@@ -358,19 +358,24 @@ def movements(rec, ap, field):
     return out, unseen
 
 
-def circuit_movements(moves):
-    """How many of one aircraft's movements (in time order, as movements()
-    returns them) are circuits: a landing followed by a take-off between
-    CIRCUIT_MIN_S and CIRCUIT_S later, two movements each."""
-    n, i = 0, 0
+def circuit_pairs(moves):
+    """The (landing, take-off) index pairs among one aircraft's movements (in
+    time order, as movements() returns them) that are circuits: a landing
+    followed by a take-off between CIRCUIT_MIN_S and CIRCUIT_S later."""
+    pairs, i = [], 0
     while i + 1 < len(moves):
         (k1, _, t1), (k2, _, t2) = moves[i], moves[i + 1]
         if k1 == 'landing' and k2 == 'take-off' and CIRCUIT_MIN_S <= t2 - t1 <= CIRCUIT_S:
-            n += 2
+            pairs.append((i, i + 1))
             i += 2
         else:
             i += 1
-    return n
+    return pairs
+
+
+def circuit_movements(moves):
+    """How many of one aircraft's movements are circuits, two movements each."""
+    return 2 * len(circuit_pairs(moves))
 
 
 def feed_profile(traces, day):
@@ -500,6 +505,25 @@ def period_verdict(tracked, official, same_period, missing_days, circuits=0,
     return coverage_verdict(tracked, official, same_period, circuits)
 
 
+def trace_boxes(traces):
+    """Each trace's (lat_min, lat_max, lon_min, lon_max), for near_traces()."""
+    return [(min(p[1] for p in r['pts']), max(p[1] for p in r['pts']),
+             min(p[2] for p in r['pts']), max(p[2] for p in r['pts'])) for r in traces]
+
+
+def near_traces(traces, boxes, ap):
+    """The traces with a point in the airport's zone. Each trace's box is tested
+    first: an airport's zone is a few km across, so most of a day's ~7,000
+    aircraft are ruled out by four comparisons instead of a great-circle
+    distance per point (~5M points x 22 airports)."""
+    (clat, clon), zone = ap['centre'], ap['zone_km']
+    dlat = zone / 111.2
+    dlon = zone / (111.2 * math.cos(math.radians(clat)))
+    return [r for r, (la0, la1, lo0, lo1) in zip(traces, boxes, strict=True)
+            if la0 <= clat + dlat and la1 >= clat - dlat and lo0 <= clon + dlon and lo1 >= clon - dlon
+            and any(km_between(p[1], p[2], clat, clon) <= zone for p in r['pts'])]
+
+
 def count_day(extract_path, only=None):
     """{'airports': {code: {'landing', 'take-off', 'circuits', 'runways',
     'unseen', 'field', 'how'} or None}, 'feed': feed_profile()} for one day's
@@ -509,21 +533,12 @@ def count_day(extract_path, only=None):
     with gzip.open(extract_path, 'rt', encoding='utf-8') as fh:
         traces = [json.loads(line) for line in fh]
     feed = feed_profile(traces, day_of(Path(extract_path)))
-    # Each trace's box, once: an airport's zone is a few km across, so most of a
-    # day's ~7,000 aircraft can be ruled out by four comparisons instead of a
-    # great-circle distance per point (~5M points x 22 airports).
-    boxes = [(min(p[1] for p in r['pts']), max(p[1] for p in r['pts']),
-              min(p[2] for p in r['pts']), max(p[2] for p in r['pts'])) for r in traces]
+    boxes = trace_boxes(traces)
     out = {}
     for code, ap in airports.items():
         if only and code not in only:
             continue
-        (clat, clon), zone = ap['centre'], ap['zone_km']
-        dlat = zone / 111.2
-        dlon = zone / (111.2 * math.cos(math.radians(clat)))
-        near = [r for r, (la0, la1, lo0, lo1) in zip(traces, boxes, strict=True)
-                if la0 <= clat + dlat and la1 >= clat - dlat and lo0 <= clon + dlon and lo1 >= clon - dlon
-                and any(km_between(p[1], p[2], clat, clon) <= zone for p in r['pts'])]
+        near = near_traces(traces, boxes, ap)
         field, how = field_level(near, ap)
         if field is None:
             out[code] = None
