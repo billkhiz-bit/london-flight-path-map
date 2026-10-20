@@ -43,6 +43,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
@@ -61,6 +62,11 @@ BETWEEN_S = 5  # between counties: a shared public service
 NOT_ZIP_TRIES = 2
 NOT_ZIP_PAUSE_S = 60
 KEEP_REPLY_BYTES = 500_000  # of a reply that was not the product, kept for reading (as text, never opened)
+NOT_FOUND = 'the product you were looking for could not be found'  # FEMA's own words, run 39430132007
+# FEMA's portal fills its search dropdowns from these (getAjaxData() in /portal/advanceSearch, as saved by
+# run 39327658467): ?getCounty=<state> and ?getCommunity=<county value>&state=<state>, each [{value, label}].
+PORTAL_SEARCH = 'https://msc.fema.gov/portal/advanceSearch'
+PRODUCT_VALUE = re.compile(r'^(\d{6}|\d{5}C)$')  # a community CID, or a county FIPS + C (the guide's two forms)
 MAX_BYTES = 2_000_000_000  # one download; a county's NFHL is tens of MB
 MAX_UNPACKED = 8_000_000_000  # one archive's members together
 
@@ -84,6 +90,14 @@ class NotAZip(Exception):
     """FEMA answered with a page, not the product. Run 39416950759 (2026-10-20): Alameda's NFHL_06001C came
     whole, then San Francisco's NFHL_06075C was the portal's page template, though the city-county's FIRM has
     been effective since 2021: a missing product or a throttle, which the kept reply should tell apart."""
+
+    def __init__(self, message, path=None, missing=False):
+        super().__init__(message)
+        self.path, self.missing = path, missing
+
+
+class PortalError(Exception):
+    """FEMA's portal search did not answer with the list its own page expects."""
 
 
 def counties(places_doc, trend_doc):
@@ -136,14 +150,18 @@ def download(url, dest, opener=urllib.request.urlopen, sleep=time.sleep):
 
 
 def require_zip(path):
-    """Raise NotAZip, quoting the reply's page title or its start, unless `path` is a zip."""
+    """Raise NotAZip, quoting the reply's page title or its start, unless `path` is a zip. Its `missing` is
+    true when the page is FEMA's "could not be found" (run 39430132007: NFHL_06075C, asked twice a minute
+    apart while the other three counties downloaded), which is an answer, not a throttle."""
     with open(path, 'rb') as fh:
-        head = fh.read(20000)
+        head = fh.read(KEEP_REPLY_BYTES)
     if not head.startswith(b'PK\x03\x04'):
         text = head.decode('utf-8', 'replace')
         title = re.search(r'<title[^>]*>(.*?)</title>', text, re.I | re.S)
         said = ' '.join((title.group(1) if title else text[:200]).split())
-        raise NotAZip(f'{path.name}: FEMA sent something that is not a zip ({path.stat().st_size:,} bytes): {said!r}')
+        missing = NOT_FOUND in ' '.join(text.split())
+        raise NotAZip(f'{path.name}: FEMA sent something that is not a zip ({path.stat().st_size:,} bytes): {said!r}'
+                      + (f' ("{NOT_FOUND}")' if missing else ''), path=path, missing=missing)
 
 
 def safe_extract(zip_path, dest):
@@ -207,20 +225,45 @@ def esri_features(geojson):
     return out, empty
 
 
-def fetch_county(name, fips, raw, get=None, read=None):
-    """(Esri JSON features, the manifest's record) for one county's NFHL download."""
+def fetch_county(name, fips, raw, get=None, read=None, portal=None):
+    """(Esri JSON features, the manifest's record) for one county: its county-wide NFHL download, or, where
+    FEMA has none, each of its communities' (community_products())."""
     get, read = get or download, read or read_layer  # looked up per call, so a test can stub them
+    portal = portal or portal_json
     pid = f'NFHL_{fips}C'
     url = DOWNLOAD + pid
-    zpath = raw / f'{pid}.zip'
     print(f'{name} ({fips}): {url}', flush=True)
+    try:
+        feats, record = fetch_product(f'{name} ({fips})', pid, raw, get, read)
+    except NotAZip as exc:
+        if not exc.missing:
+            raise
+        # No county-wide database: San Francisco, a consolidated city-county (run 39430132007). FEMA's guide
+        # names the other form, NFHL_<community CID>; which communities a county has is the portal's answer.
+        print(f'  {pid}: "{NOT_FOUND}"; asking the portal for {name} County\'s community products', flush=True)
+        products, asked = community_products(fips, name, portal)
+        feats, records = [], []
+        for label, cpid in products:
+            print(f'  {label}: {DOWNLOAD + cpid}', flush=True)
+            got, rec = fetch_product(f'{name} ({fips}) {label}', cpid, raw, get, read)
+            feats.extend(got)
+            records.append({**rec, 'community': label})
+        return feats, {'county': name, 'fips': fips, 'product_id': pid, 'county_wide': NOT_FOUND,
+                       'portal': asked, 'products': records, 'features': len(feats)}
+    return feats, {'county': name, 'fips': fips, **record}
+
+
+def fetch_product(label, pid, raw, get, read):
+    """(Esri JSON features, the record) for one NFHL product, county-wide or a community's."""
+    url = DOWNLOAD + pid
+    zpath = raw / f'{pid}.zip'
     for attempt in range(NOT_ZIP_TRIES):  # a page may be a throttle: asked again once, after a pause
         size, sha, served_as = get(url, zpath)
         try:
             require_zip(zpath)
             break
         except NotAZip as exc:
-            if attempt == NOT_ZIP_TRIES - 1:
+            if exc.missing or attempt == NOT_ZIP_TRIES - 1:
                 raise
             print(f'  {exc}; asking again in {NOT_ZIP_PAUSE_S} s', flush=True)
             time.sleep(NOT_ZIP_PAUSE_S)
@@ -229,18 +272,52 @@ def fetch_county(name, fips, raw, get=None, read=None):
     geojson, info = read(src, raw / pid)
     feats, empty = esri_features(geojson)
     if not feats:
-        raise SystemExit(f'{name} ({fips}): {pid} holds no flood polygons: a failed fetch, not "no flood"')
+        raise SystemExit(f'{label}: {pid} holds no flood polygons: a failed fetch, not "no flood"')
     dfirms = {}
     for f in feats:
         d = f['attributes'].get('DFIRM_ID')
         dfirms[d] = dfirms.get(d, 0) + 1
     print(f'  {size / 1e6:.1f} MB, {len(members)} members, {len(feats):,} polygons from {src.name}', flush=True)
     return feats, {
-        'county': name, 'fips': fips, 'product_id': pid, 'url': url, 'served_as': served_as, 'bytes': size,
+        'product_id': pid, 'url': url, 'served_as': served_as, 'bytes': size,
         'sha256': sha, 'members': members[:200], 'members_total': len(members),
         'source': str(src.relative_to(raw / pid)), 'source_layer_info': info[:4000],
         'features': len(feats), 'without_geometry': empty, 'dfirm_ids': dict(sorted(dfirms.items(), key=lambda kv: str(kv[0]))),
     }
+
+
+def portal_json(params, opener=urllib.request.urlopen):
+    """One of FEMA's portal dropdown lists, [{'value', 'label'}], as its own page asks for it."""
+    url = PORTAL_SEARCH + '?' + urllib.parse.urlencode(params)
+    try:
+        with opener(urllib.request.Request(url, headers=UA), timeout=60) as r:
+            doc = json.loads(r.read().decode('utf-8'))
+    except (urllib.error.URLError, OSError, http.client.HTTPException, json.JSONDecodeError) as exc:
+        raise PortalError(f'{url}: {exc}') from exc
+    if not isinstance(doc, list) or not all(isinstance(d, dict) and 'value' in d and 'label' in d for d in doc):
+        raise PortalError(f'{url}: not the [{{value, label}}] list the portal page reads: {str(doc)[:200]}')
+    return doc
+
+
+def community_products(fips, name, portal=None):
+    """([(community label, NFHL product id)], what the portal said) for a county with no county-wide NFHL.
+
+    The county is matched by its FIPS in the portal's value, else by its NAME in the label; anything else (none,
+    or two) fails rather than taking a neighbour's maps. Values that are neither a CID nor FIPS+C, the guide's
+    two forms, are not products and are listed in what is returned, never downloaded."""
+    portal = portal or portal_json
+    counties = portal({'getCounty': fips[:2]})
+    match = [c for c in counties if fips in str(c['value'])] or [
+        c for c in counties if re.search(rf'\b{re.escape(name)}\b', str(c['label']), re.I)]
+    if len(match) != 1:
+        raise PortalError(f'{name} ({fips}): {len(match)} portal counties match, of {counties[:60]}')
+    communities = portal({'getCommunity': match[0]['value'], 'state': fips[:2]})
+    asked = {'county': match[0], 'communities': communities}
+    products = [(str(c['label']).strip(), f'NFHL_{c["value"]}') for c in communities
+                if PRODUCT_VALUE.match(str(c['value']))]
+    if not products:
+        raise PortalError(f'{name} ({fips}): the portal lists no community product: {communities[:20]}')
+    return sorted(set(products)), asked
 
 
 def keep_failure(name, fips, exc, raw, out):
@@ -248,12 +325,12 @@ def keep_failure(name, fips, exc, raw, out):
     out/diagnostics/ as .txt: untrusted data to read, not a page to open."""
     pid = f'NFHL_{fips}C'
     note = {'county': name, 'fips': fips, 'product_id': pid, 'url': DOWNLOAD + pid, 'error': str(exc)[:500]}
-    reply = raw / f'{pid}.zip'
+    reply = getattr(exc, 'path', None) or raw / f'{pid}.zip'  # a community product's reply, in the fallback
     if isinstance(exc, NotAZip) and reply.exists():
         (out / 'diagnostics').mkdir(exist_ok=True)
         with open(reply, 'rb') as fh:
-            (out / 'diagnostics' / f'{pid}.reply.txt').write_bytes(fh.read(KEEP_REPLY_BYTES))
-        note['reply_kept'] = f'diagnostics/{pid}.reply.txt'
+            (out / 'diagnostics' / f'{reply.stem}.reply.txt').write_bytes(fh.read(KEEP_REPLY_BYTES))
+        note['reply_kept'] = f'diagnostics/{reply.stem}.reply.txt'
     return note
 
 
@@ -307,7 +384,8 @@ def main():
             continue
         try:
             got, record = fetch_county(name, fips, a.raw)
-        except (NotAZip, NetworkError, SystemExit, zipfile.BadZipFile, subprocess.CalledProcessError) as exc:
+        except (NotAZip, NetworkError, PortalError, SystemExit, zipfile.BadZipFile,
+                subprocess.CalledProcessError) as exc:
             # Any county's failure: every county is still tried, so one run says which are missing; then
             # nothing is written that build_bayarea_flood.py could read, since a missing county would read as
             # residents in no zone. (A 4xx, a broken zip or a GDAL error stopped the whole run before.)

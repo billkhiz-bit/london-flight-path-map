@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-20 - Sold prices say what kind of sale it was
+
+- **Each sale on the full map's sold-prices list now gives its tenure and flat**: "leasehold flat · FLAT 2, THE
+  CAFE, 2 STATION PARADE" where it read "flat · THE CAFE, 2 STATION PARADE", so two flats in one building no
+  longer look like one address.
+- **A home sold outside Land Registry's standard category says so**: "leasehold flat, not a standard sale", with a
+  note on what that covers (repossessions, sales to companies, buy-to-lets bought with a mortgage). Sky Score's price
+  figures already leave such sales out; the list showed them as ordinary sales. Shops and other property stay
+  "not a home".
+
 ## 2026-10-19 - "Sky Score" goes home everywhere; where to have your say; reporting a figure
 
 - **The "Sky Score" name links back to the front page on every page**, now including the full map and the API

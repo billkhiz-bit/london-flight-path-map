@@ -175,3 +175,12 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   the city-county's FIRM has been effective since 2021 (sf.gov). **A download's 200 is not the product: test its
   magic bytes.** The fetcher now asks a page again once, keeps it under `diagnostics/` as `.txt`, tries every
   county, and writes `failed.json` and NOTHING the reader takes unless all four came.
+- **San Francisco has no county-wide product (2026-10-20, run `39430132007`).** The same afternoon FEMA let the
+  runner through: Alameda, San Mateo and Santa Clara came whole (2,451 / 1,379 / 2,330 polygons, all SHAPEFILES),
+  and `NFHL_06075C` answered "Sorry, the product you were looking for could not be found" twice, a minute apart:
+  an answer, not a throttle (the kept reply said so; a page's TITLE did not). FEMA's guide (p.2) gives the other
+  form, `NFHL_<community CID>`; rather than guess San Francisco's CID, the fetcher asks the portal the way its own
+  page does (`getAjaxData()`: `advanceSearch?getCounty=06`, then `?getCommunity=<county value>&state=06`, each
+  `[{value, label}]`), matches the county by FIPS else by name (never two), and downloads every value that is a
+  CID or FIPS+C. **When a service answers "not found", read its words, and look for the address its own page
+  uses before guessing one.**

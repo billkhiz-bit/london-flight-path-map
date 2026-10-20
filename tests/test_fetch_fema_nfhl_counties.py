@@ -244,6 +244,71 @@ def test_a_4xx_or_a_broken_zip_is_one_county_failing_not_the_run(tmp_path, monke
     assert len(report['fetched']) == len(fc.counties(_real(fc.PLACES), _real(fc.TREND))) - 2
 
 
+NOT_FOUND_PAGE = (b"<script> var userName = ''; </script><html><head><title>FEMA Flood Map Service Center | FEMA "
+                  b"Flood Map Service Center</title></head><body>Sorry, the product you were looking for could not "
+                  b"be found.</body></html>")
+
+
+def _sf_has_only_a_community_product(tmp_path, monkeypatch, communities):
+    """Run main() with San Francisco's county-wide product "not found" (run 39430132007) and a stub portal."""
+    asked, portal_calls = [], []
+
+    def get(url, dest):
+        pid = url.rsplit('=', 1)[1]
+        asked.append(pid)
+        if pid == 'NFHL_06075C':
+            dest.write_bytes(NOT_FOUND_PAGE)
+        else:
+            _zip(dest, {'S_FLD_HAZ_AR.shp': b''})
+        return dest.stat().st_size, 'f' * 64, None
+
+    def portal(params):
+        portal_calls.append(params)
+        if 'getCounty' in params:
+            return [{'value': '06001', 'label': 'ALAMEDA COUNTY'}, {'value': '06075', 'label': 'SAN FRANCISCO COUNTY'}]
+        return communities
+
+    monkeypatch.setattr(fc, 'download', get)
+    monkeypatch.setattr(fc, 'portal_json', portal)
+    monkeypatch.setattr(fc, 'read_layer', lambda src, workdir: (GEOJSON, ''))
+    monkeypatch.setattr(fc, 'BETWEEN_S', 0)
+    monkeypatch.setattr(fc, 'NOT_ZIP_PAUSE_S', 0)
+    monkeypatch.setattr('sys.argv', ['x', '--out', str(tmp_path / 'out'), '--raw', str(tmp_path / 'raw')])
+    return fc.main(), asked, portal_calls
+
+
+def test_a_county_fema_says_is_not_found_is_fetched_by_its_communities(tmp_path, monkeypatch):
+    code, asked, portal_calls = _sf_has_only_a_community_product(tmp_path, monkeypatch, [
+        {'value': '060298', 'label': 'SAN FRANCISCO, CITY AND COUNTY OF'},
+        {'value': 'none', 'label': '--Select--'},  # not a product id: listed, never downloaded
+    ])
+    assert code == 0
+    assert asked.count('NFHL_06075C') == 1  # FEMA's "not found" is an answer: not asked again
+    assert 'NFHL_060298' in asked
+    assert portal_calls == [{'getCounty': '06'}, {'getCommunity': '06075', 'state': '06'}]
+    sf = next(p for p in _real(tmp_path / 'out' / 'manifest.json')['products'] if p['fips'] == '06075')
+    assert sf['county_wide'] == fc.NOT_FOUND and [p['product_id'] for p in sf['products']] == ['NFHL_060298']
+    assert sf['products'][0]['community'] == 'SAN FRANCISCO, CITY AND COUNTY OF'
+
+
+def test_a_not_found_county_with_no_community_product_fails_and_writes_nothing(tmp_path, monkeypatch):
+    code, _, _ = _sf_has_only_a_community_product(tmp_path, monkeypatch, [{'value': 'none', 'label': '--Select--'}])
+    assert code == 1
+    report = _real(tmp_path / 'out' / 'failed.json')
+    assert [f['fips'] for f in report['failed']] == ['06075'] and 'no community product' in report['failed'][0]['error']
+    assert not (tmp_path / 'out' / 'nfhl-bayarea.esrijson.gz').exists()
+
+
+def test_the_portal_county_is_matched_by_fips_else_by_name_and_never_two():
+    def portal(counties):
+        return lambda params: counties if 'getCounty' in params else [{'value': '060298', 'label': 'SF'}]
+    by_name = [{'value': 'K17', 'label': 'SAN MATEO COUNTY'}, {'value': 'K18', 'label': 'SAN FRANCISCO COUNTY'}]
+    assert fc.community_products('06075', 'San Francisco', portal(by_name))[1]['county']['value'] == 'K18'
+    twice = [{'value': 'A', 'label': 'SAN FRANCISCO COUNTY'}, {'value': 'B', 'label': 'San Francisco (old)'}]
+    with pytest.raises(fc.PortalError, match='2 portal counties match'):
+        fc.community_products('06075', 'San Francisco', portal(twice))
+
+
 def test_past_the_deadline_no_county_is_started(tmp_path, monkeypatch):
     monkeypatch.setattr(fc, 'DEADLINE_S', -1)
     monkeypatch.setattr(fc, 'download', lambda url, dest: pytest.fail('a county was started past the deadline'))

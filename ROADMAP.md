@@ -11,6 +11,17 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-10-20)
 >
+> **Afternoon (Bill: "retry FEMA and deploy if you can"):** **DEPLOYED** the backend through a reviewed changeset
+> (only `ScoreFunction` and `SoldPricesFunction` code changed; the others `Dynamic`, no replacement), shipping
+> sold prices, the linear US scales (`914ce60`) and the pool key (`6234dfd`): **all 29 probe postcodes' /v1/score
+> answers identical before and after, field by field**; then `web-deploy` (drift: 35 pages, 41 data files, 103 area
+> pages match; the live map at TW9 3PZ shows "leasehold flat · FLAT 2, ..."). **FEMA run `39430132007`: Alameda,
+> San Mateo and Santa Clara came whole** (2,451 / 1,379 / 2,330 polygons); San Francisco's `NFHL_06075C` answered
+> FEMA's "Sorry, the product you were looking for could not be found", twice, a minute apart. FEMA's guide names the
+> other form, `NFHL_<community CID>`, and the portal's own page fills its dropdowns from
+> `advanceSearch?getCounty=06` and `?getCommunity=<county>&state=06`: the fetcher now asks those for a "not found"
+> county and downloads each community's product (never a guessed CID).
+>
 > **Bay Area flood: FEMA's county downloads WORK.** `scripts/fetch_fema_nfhl_counties.py` + the manual workflow
 > `fema-nfhl-county-fetch.yml` download `NFHL_<county FIPS>C` from the MSC portal (the address from FEMA's own guide)
 > for the four counties the 50 cities lie in (derived from the place and trend files; `--check` places all 4,950,918
@@ -28,7 +39,7 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > Heathrow reads 48/26/14 and 65.4% westerly (published ~70/30). Next: count every held day, then per-postcode
 > averages for airports passing `coverage_verdict()`.
 > The fetch of every 2026 day was restarted 20 Oct 12:04 (146 days to go then).
-> **Sold prices (built, NOT deployed):** the `sold_prices` Lambda now passes `category` (Land Registry A/B, read from
+> **Sold prices (built; DEPLOYED the same afternoon, above):** the `sold_prices` Lambda now passes `category` (Land Registry A/B, read from
 > the concept URI), `estate` (freehold/leasehold) and `saon` ("FLAT 2"); the map shows "leasehold flat", the flat
 > number, and marks a HOME sold outside category A "not a standard sale" with a note. The page reads both the old
 > and the new Lambda (the panel test holds both), so it ships with the next reviewed changeset (Bill's), backend
