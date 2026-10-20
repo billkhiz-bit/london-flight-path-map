@@ -42,7 +42,8 @@ WHAT A DAY FILE HOLDS, AND WHAT IT DOES NOT DECIDE
 - It is NOT judged for feed outages: that needs the days around it (adsb_movements.feed_gaps()), so the
   averaging step judges it from the stored profiles and LEAVES OUT outage days, listing them.
 - It is NOT classed westerly or easterly: only the averaging step needs the direction (Kew TW9 3PZ read
-  296 on westerly 14 Oct and 0 on easterly 15 Aug), and it asks classify_day(), Bill's call.
+  296 on westerly 14 Oct and 0 on easterly 15 Aug), and it asks classify_day() (80% of movements on
+  westerly or easterly runway ends, else 'mixed'; chosen 2026-10-20), so the rule can change with no recount.
 
 LIMITS, stated so a figure is read correctly
 - GROUND ELEVATION is ignored: the height used is above sea level, not above the observer, so on high
@@ -109,6 +110,8 @@ ATTRIBUTE_AFTER_TAKEOFF_S = 900
 MIN_OFFSET_POINTS = 200  # points with both heights before an airport's own day offset is trusted
 OFFSET_BAND_FT = 1000  # offset_fit() takes one median per band of barometric height...
 MIN_BAND_POINTS = 50  # ...from a band holding at least this many points
+DIRECTION_DAY_SHARE = 0.8  # classify_day(): this share of movements on one direction's ends makes its day
+MIN_DAY_MOVEMENTS = 20  # ...and a day with fewer classed movements is left out of every direction
 
 
 class DayError(Exception):
@@ -576,9 +579,24 @@ def read_day(path):
 # ---------------------------------------------------------------- averaging
 
 
+def runway_direction(bearing):
+    """'westerly' for a runway end heading with a westward part (a true bearing over 180 up to 360), else
+    'easterly'. A runway's two ends are 180 degrees apart, so every runway has one of each, whichever way it
+    lies: Heathrow's 27L/27R are westerly as the airport says, Stansted's 22 and Birmingham's 33 are too."""
+    b = bearing % 360
+    return 'westerly' if b > 180 or b == 0 else 'easterly'
+
+
 def classify_day(code, movements, runways):
     """The direction an airport flew on one day, as a label the averaging step groups days by, or None
-    to leave the day out of every direction's average. BILL'S CALL (methodology), left as a stub.
+    to leave the day out of every direction's average. THE RULE (Bill asked Claude to choose, 2026-10-20):
+    landings and take-offs on runway ends of known bearing, training circuits subtracted, '?' ignored;
+    'westerly' when westerly ends carried at least DIRECTION_DAY_SHARE of them, 'easterly' when easterly ends
+    did, otherwise 'mixed', averaged as its own class rather than forced into one or dropped; None under
+    MIN_DAY_MOVEMENTS. Checked on 88 held 2026 days at Heathrow (every other day, 1 Jan to 14 Oct): 48
+    westerly, 26 easterly, 14 mixed; westerly ends carried 65.4% of the movements, near the airport's
+    published ~70/30; days are nearly all one way or the other, so the threshold barely matters (70%: 52/26/10,
+    90%: 48/25/15). Figures from it must state the threshold.
 
     `movements` is {'landing'|'take-off': {runway designator: [movements in each UTC hour, 0-23]}} for
     that airport and day (runway '?' when adsb_movements could not tell), plus 'circuits': the same shape
@@ -586,7 +604,7 @@ def classify_day(code, movements, runways):
     bearing in degrees}, from data/flight-procedures.json. Why it matters: Kew TW9 3PZ read 296 overflights
     on westerly 14 Oct and 0 on easterly 15 Aug, so an average over both kinds of day describes neither.
 
-    The options, and what each costs:
+    The options weighed (kept for whoever revisits the rule):
     - MAJORITY: the label of whichever direction carried most of the day's movements. Simple and never
       leaves a day out, but a day that switched at 14:00 puts its morning into the wrong average.
     - THRESHOLD: a direction only when it carried, say, 80% or more of the movements; otherwise 'mixed'
@@ -602,9 +620,24 @@ def classify_day(code, movements, runways):
       Birmingham's 15/33 and Stansted's 04/22 are not east-west: labelling by the bearing in use (the
       runway end, e.g. '27' vs '09') works everywhere.
     Heathrow publishes its yearly westerly/easterly split (about 70/30), a check on whatever rule is used.
+    BY HOUR stays the better rule if mixed days turn out to matter: it needs per-hour counts first.
     """
-    raise NotImplementedError('TODO(Bill): choose how a day is classed westerly / easterly / mixed '
-                              '(classify_day in scripts/adsb_overflights.py lists the options)')
+    circuits = movements.get('circuits', {})
+    flown = {'westerly': 0, 'easterly': 0}
+    for kind in ('landing', 'take-off'):
+        for runway, hours in movements.get(kind, {}).items():
+            if runway in runways:  # '?' and any designator the procedure file does not know are ignored
+                n = sum(hours) - sum(circuits.get(kind, {}).get(runway, ()))
+                flown[runway_direction(runways[runway])] += n
+    total = flown['westerly'] + flown['easterly']
+    if total < MIN_DAY_MOVEMENTS:
+        return None
+    # Each direction's OWN share against the one threshold: testing the westerly share against 1 - 0.8
+    # (0.19999999999999996 in floating point) classed a day exactly 80% easterly as mixed.
+    for direction in ('westerly', 'easterly'):
+        if flown[direction] / total >= DIRECTION_DAY_SHARE:
+            return direction
+    return 'mixed'
 
 
 def average(day_files, classify=None):
@@ -696,7 +729,7 @@ def main():
     ap.add_argument('--observe', type=_point, action='append', default=[],
                     help='also count passes at this exact BNG point (easting,northing), for validation')
     ap.add_argument('--at', type=_point, help='print the count in the cell holding this BNG point')
-    ap.add_argument('--average', action='store_true', help='average day files (needs classify_day)')
+    ap.add_argument('--average', action='store_true', help='average day files, per airport and classify_day() direction')
     ap.add_argument('--out', type=Path, help='--average: where to write the averages (.npz)')
     a = ap.parse_args()
 

@@ -89,11 +89,23 @@ feed profile, movements by runway and UTC hour, and the height offsets used. A p
 than 5 minutes apart are separate passes); each 100 m step is credited to the movement nearest in time (30 min before
 a landing, 15 after a take-off), else "other" (~40% of steps: transits, helicopters, Southend, Farnborough). Height:
 GPS minus the airport's EGM96 geoid where present, else barometric plus that AIRPORT's own day offset (186 ft at
-Newcastle to 425 ft at Gatwick on 14 Oct, so one UK offset would be wrong). Against the prototype on 14 Oct: Kew 296,
-Battersea 341, Hackney 14, Hounslow 4, Silvertown 147 at the point (140 for its cell, whose centre is up to 71 m
-away); 15 Aug (easterly) Kew 0. ~35 s and ~2 GB a day on one process. 17 tests, 15 mutations red. **Not settled:**
-`classify_day()` is BILL'S (westerly/easterly/mixed; days switch mid-day) and `--average` stops until it exists;
-heights are above sea level, not ground, so high airfields (Leeds Bradford ~200 m) count high; a low aircraft
-orbiting back over a cell within one pass counts once; `average()` does not apply `coverage_verdict()`, publishing
-must.
+Newcastle to 425 ft at Gatwick on 14 Oct, so one UK offset would be wrong), and the offset is a LINE in barometric
+height (`offset_fit()`, medians of 1,000 ft bands): **pressure height drifts from true height with height when the
+air is off ISA**, measured near Heathrow on 15 Aug as 123 ft under 1,000 ft and 348 ft at 7,000-8,000 ft, where one
+median (173 ft) was ~50 ft high near the ground and ~175 ft low at the ceiling. A code review also found the walk
+rounded its step count DOWN (a 199 m segment had only its ends, a gap a low cone missed), a bad day stopping a
+year's batch, `--observe` overwriting a day file, and averages summed as fractions; all fixed, each proven red.
+Against the prototype on 14 Oct, after the fixes: Kew 296, Battersea 341, Hackney 14, Hounslow 4, Silvertown 148 at
+the point (140 for its cell, whose centre is up to 71 m away); 15 Aug (easterly) Kew 0. ~35 s and ~2 GB a day on one
+process.
+**The direction rule (Bill asked Claude to choose, 2026-10-20): `classify_day()`.** A runway end with a bearing over
+180 is westerly (every runway has one end of each, so 04/22 and 15/33 work as 09/27 does); landings and take-offs,
+circuits subtracted, `?` ignored; 80% on one direction's ends makes the day that direction, else `mixed` (its own
+average); under 20 movements, left out. On 88 held 2026 days at Heathrow: 48 westerly, 26 easterly, 14 mixed;
+65.4% of movements westerly, near the published ~70/30; 70% or 90% instead moves 1-4 days. A first version tested
+the westerly share against `1 - 0.8` (0.19999999999999996), so a day exactly 80% easterly read "mixed": compare each
+direction's OWN share with the one threshold. Averaging 14 Oct + 15 Aug: Kew 292 a westerly day from Heathrow, 0
+easterly. **Not settled:** heights are above sea level, not ground, so high airfields (Leeds Bradford ~200 m) count
+high; a low aircraft orbiting back over a cell within one pass counts once; by-hour classing would place a mixed
+day's hours properly (needs per-hour counts); `average()` does not apply `coverage_verdict()`, publishing must.
 

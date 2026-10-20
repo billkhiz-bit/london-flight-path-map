@@ -3,7 +3,7 @@
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
 **Last reviewed:** 2026-10-20 - FEMA's county downloads work (Alameda fetched; San Francisco's product id to find),
-the overflight counter built (Bill to choose `classify_day()`), sold prices' category, tenure and flat built for the
+the overflight counter built and its direction rule chosen, sold prices' category, tenure and flat built for the
 next changeset; previously 2026-10-19 - Breathe London's data half built (GLA key received; 116 sensors' 12-month means
 in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
@@ -23,8 +23,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **How often planes pass: the counter is BUILT** (`scripts/adsb_overflights.py`, CAP 1498 at 48.5 and 60 degrees
 > under 7,000 ft, per 100 m British National Grid cell per day, credited to the airport whose movement it was;
 > 17 tests, 15 mutations red). It matches the 19 Oct prototype (Kew TW9 3PZ 296 on westerly 14 Oct, 0 on easterly
-> 15 Aug; Battersea 341). ~35 s a day, ~3.5 h a year. **`classify_day()` is Bill's call** (how a day that switched
-> runway direction is classed); until it is written, `--average` stops, by design; the per-day files never need it.
+> 15 Aug; Battersea 341). ~35 s a day, ~3.5 h a year. **The direction rule is CHOSEN** (Bill asked Claude, same
+> day): 80% of a day's movements on westerly or easterly runway ends, else `mixed`, its own average; on 88 held days
+> Heathrow reads 48/26/14 and 65.4% westerly (published ~70/30). Next: count every held day, then per-postcode
+> averages for airports passing `coverage_verdict()`.
 > The fetch of every 2026 day was restarted 20 Oct 12:04 (146 days to go then).
 > **Sold prices (built, NOT deployed):** the `sold_prices` Lambda now passes `category` (Land Registry A/B, read from
 > the concept URI), `estate` (freehold/leasehold) and `saon` ("FLAT 2"); the map shows "leasehold flat", the flat
@@ -1869,8 +1871,9 @@ Geovation advised (2026-10-02) and the question residents actually ask ("one pla
    that DAY'S measured offset; 100 m steps along each segment (25 m changed no count); each day classed westerly
    or easterly before averaging (Kew TW9 3PZ: 296 on westerly 14 Oct, 0 on easterly 15 Aug). The fetch of every
    2026 day STARTED 19 Oct. **`scripts/adsb_overflights.py` BUILT 20 Oct** (counts per 100 m grid cell per day,
-   both angles, per airport; matches the prototype). Next: Bill's `classify_day()` rule, the year's day files,
-   then per-postcode averages for airports passing `coverage_verdict()` only.
+   both angles, per airport; matches the prototype), and the direction rule chosen the same day (80% of a day's
+   movements one way, else `mixed`). Next: the year's day files, then per-postcode averages for airports passing
+   `coverage_verdict()` only.
 3. **N65 / N70 per postcode** (flights louder than 65 / 70 dB a day) by the standard
    aircraft-noise calculation (ECAC Doc 29: aircraft type, height, distance). It needs
    EASA's ANP noise data, which is **by request, not a download** (request drafted,

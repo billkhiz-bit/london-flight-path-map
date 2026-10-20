@@ -201,8 +201,10 @@ Or just describe what you need, I have full context of this project.
 - The Bash tool's cwd persists between calls, env vars do not: keep `source .env` + build + deploy in ONE call.
 - `Start-Process`: pass a script PATH (an `-lc '<cmd>'` string runs only its first word), and prepend
   `C:\Program Files\Git\usr\bin` to `$env:PATH` for `sh` runbooks. Run long loads detached with `python -u`.
-- adsb scripts run under `C:/Users/bilal/tools/python-3.13.15/python.exe -I` (untrusted archives); `adsb_fetch.py
-  --workers 3` while the PC is in use. Stopping it is always safe (an extract is written whole or not at all).
+- adsb scripts that open the ARCHIVES (`adsb_fetch.py`, `adsb_extract.py`) run under
+  `C:/Users/bilal/tools/python-3.13.15/python.exe -I` (untrusted input); `adsb_fetch.py --workers 3` while the PC is
+  in use. Stopping it is always safe (an extract is written whole or not at all). Readers of our OWN extracts
+  (`adsb_movements.py`, `adsb_overflights.py`) run under the system Python: they need tzdata, numpy and pyproj.
 - Look up D3, AWS SDK and SAM APIs with **context7** before using unfamiliar ones; use **security-guidance**
   on Lambda / API Gateway edits and **frontend-design** on UI changes in `index.html`.
 

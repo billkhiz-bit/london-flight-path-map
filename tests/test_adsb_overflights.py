@@ -5,7 +5,8 @@ the British National Grid. These tests fly synthetic aircraft past one cell near
 airport table, one rule at a time: the cone's radius at both of CAP 1498's angles, one count per pass
 however many steps cover a cell, nothing at or above 7,000 ft, the barometric fallback lifted by the
 day's measured offset, the 100 m walk finding a cell between two far-apart points, and the averaging
-step leaving out an outage day and asking classify_day() (Bill's call) for each day's direction.
+step leaving out an outage day and asking classify_day() for each day's direction, whose rule (80% of
+movements on one direction's runway ends, else 'mixed') is held on its own.
 Offline only.
 """
 import importlib.util
@@ -323,8 +324,9 @@ def test_the_average_leaves_out_an_outage_day_and_says_so(tmp_path):
 
 def test_the_average_asks_classify_day_and_groups_by_its_answer(tmp_path):
     files = [_day_file(tmp_path, f'2026-08-{d:02d}', d) for d in range(1, 10)]
-    with pytest.raises(NotImplementedError, match='TODO\\(Bill\\)'):
-        ao.average(files)  # the stub: averaging cannot run until the direction rule is chosen
+    # The real rule on days with no movements: every airport-day is unclassed and only OTHER is averaged.
+    res = ao.average(files)
+    assert res['groups'] == [[ao.OTHER, None]] and any(u.endswith(' LHR') for u in res['unclassified'])
     days = iter(range(1, 10))
 
     def classify(code, movements, runways):
@@ -340,6 +342,46 @@ def test_the_average_asks_classify_day_and_groups_by_its_answer(tmp_path):
     lhr_even = ao.lookup(res['runs'][48.5], E0, N0, groups.index(('LHR', 'even')))
     lhr_odd = ao.lookup(res['runs'][48.5], E0, N0, groups.index(('LHR', 'odd')))
     assert (lhr_even, lhr_odd) == (pytest.approx(5), pytest.approx(5))  # (2+4+6+8)/4 and (1+3+5+7+9)/5
+
+
+def _bearings(code):
+    return {d: b for d, (_, b) in AIRPORTS[code]['runways'].items()}
+
+
+def _day(**by_runway):
+    """movements as count_day stores them: each runway's landings, all in hour 9."""
+    return {'landing': {rw: [0] * 9 + [n] + [0] * 14 for rw, n in by_runway.items()}, 'take-off': {}}
+
+
+def test_every_airport_has_one_westerly_and_one_easterly_end_per_runway():
+    # Bearings from the procedure file, so a runway that lies north-east (Stansted 04/22) or north-west
+    # (Birmingham 15/33) is classed as surely as Heathrow's 09/27.
+    for code in CODES:
+        dirs = {d: ao.runway_direction(b) for d, b in _bearings(code).items()}
+        assert set(dirs.values()) == {'westerly', 'easterly'}, (code, dirs)
+    assert ao.runway_direction(_bearings('LHR')['27R']) == 'westerly'
+    assert ao.runway_direction(_bearings('STN')['22']) == 'westerly'
+    assert ao.runway_direction(_bearings('BHX')['15']) == 'easterly'
+
+
+def test_a_day_is_westerly_easterly_or_mixed_at_the_threshold():
+    lhr = _bearings('LHR')
+    assert ao.classify_day('LHR', _day(**{'27L': 400, '09R': 100}), lhr) == 'westerly'  # 80% exactly
+    assert ao.classify_day('LHR', _day(**{'27L': 399, '09R': 101}), lhr) == 'mixed'
+    assert ao.classify_day('LHR', _day(**{'27L': 100, '09R': 400}), lhr) == 'easterly'
+    assert ao.classify_day('LHR', _day(**{'27L': 101, '09R': 399}), lhr) == 'mixed'
+
+
+def test_circuits_unknown_runways_and_a_quiet_day():
+    lhr, ema = _bearings('LHR'), _bearings('EMA')
+    # East Midlands: 30 real arrivals on 09, and 40 circuit landings on 27 that would make it 'mixed'.
+    day = _day(**{'09': 30, '27': 40})
+    day['circuits'] = {'landing': {'27': [0] * 9 + [40] + [0] * 14}, 'take-off': {}}
+    assert ao.classify_day('EMA', day, ema) == 'easterly'
+    # '?' (runway not told) carries no direction, however many.
+    assert ao.classify_day('LHR', _day(**{'27L': 100, '?': 500}), lhr) == 'westerly'
+    # Under MIN_DAY_MOVEMENTS of classed movements, the day is left out.
+    assert ao.classify_day('LHR', _day(**{'27L': ao.MIN_DAY_MOVEMENTS - 1, '?': 500}), lhr) is None
 
 
 def test_a_day_classed_none_is_left_out_of_every_direction(tmp_path):
