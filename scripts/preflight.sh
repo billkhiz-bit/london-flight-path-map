@@ -914,6 +914,9 @@ advise "Bay Area stations == BTS transit map"   python scripts/build_bayarea_tra
 advise "Bay Area crime == DOJ + Census"   python scripts/build_bayarea_crime.py --check
 advise "Bay Area residents == Census"   python scripts/bayarea_blocks.py --check
 advise "Bay Area road == BTS road tiles"   python scripts/build_bayarea_road.py --check
+# Added 2026-10-20: FEMA's county-wide NFHL downloads cover every resident block of the 50 cities (the counties
+# are derived from the place and trend files; with the gitignored Census frame on disk, every block is placed).
+advise "Bay Area flood counties == Census"   python scripts/fetch_fema_nfhl_counties.py --check
 # Added 2026-10-16: the SFO monitor block (the US yardstick, ANEEM) equals what its daily
 # DataSF rows give. Advisory: the rows are gitignored (--fetch); INCONCLUSIVE without them.
 advise "SFO monitors == DataSF rows"     python scripts/build_sfo_noise_monitors.py --check

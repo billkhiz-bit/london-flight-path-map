@@ -1,0 +1,37 @@
+name: FEMA flood zones, county downloads (manual fetch)
+
+# Run by hand only (Actions tab, or `gh workflow run fema-nfhl-county-fetch.yml`). FEMA's other route to the
+# file fema-flood-fetch.yml makes: its NFHL query service stopped answering GitHub's runners on 2026-10-18/19,
+# so this downloads FEMA's county-wide NFHL databases from the MSC portal, at the address FEMA's own guide gives
+# (read in run 39327658467), for the counties the 50 Bay Area cities lie in (derived from committed data; see
+# scripts/fetch_fema_nfhl_counties.py). Same artifact name and files as fema-flood-fetch.yml, so a session pulls
+# either the same way: `gh run download <run> -n fema-nfhl-bayarea -D data/fema/`, then
+# `python scripts/build_bayarea_flood.py --write`.
+on:
+  workflow_dispatch:
+
+# Least privilege, as in ci.yml: the job reads the repo and writes nothing back to it.
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    # FEMA blocks on and off: each download retries for up to ~7 minutes before the run fails.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      # GDAL reads S_FLD_HAZ_AR whether a county download holds a shapefile or a file geodatabase (FEMA's guide
+      # does not say which). From Ubuntu's own archive; the Python side stays standard library only.
+      - run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends gdal-bin && ogr2ogr --version
+      # The downloads go to fema-raw/, which is NOT uploaded: only the derived file and its manifest are.
+      - run: python -I scripts/fetch_fema_nfhl_counties.py --out fema-out --raw fema-raw
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fema-nfhl-bayarea
+          path: fema-out/
+          retention-days: 7
+          if-no-files-found: error
