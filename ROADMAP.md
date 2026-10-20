@@ -46,7 +46,14 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > day): 80% of a day's movements on westerly or easterly runway ends, else `mixed`, its own average; on 88 held days
 > Heathrow reads 48/26/14 and 65.4% westerly (published ~70/30). Next: count every held day, then per-postcode
 > averages for airports passing `coverage_verdict()`.
-> The fetch of every 2026 day was restarted 20 Oct 12:04 (146 days to go then).
+> The fetch of every 2026 day was restarted 20 Oct 12:04 (146 days to go then; 247 of 291 held at 16:40, stopped
+> when Bill logged off: restart with `sky-score-drafts\adsb_fetch_start.ps1`, it carries on). **All 195 days held
+> by mid-afternoon were COUNTED** (`data/adsb/overflights/`, 0 failures, ~35 s a day); `average()` kept 180 (15
+> outage days left out). Heathrow's days: 98 westerly, 51 easterly, 31 mixed. **First readout, unpublished**, per
+> day at 48.5 degrees (60 in brackets): Kew TW9 3PZ 307 (307) westerly / 5 easterly / 180 mixed; Battersea SW11 1AA
+> 318 (310) / 2 / 177; Silvertown E16 2QD 105 (70) from Heathrow + 39 (1) from London City on westerly days;
+> Hackney N1 7SX 20 (12); Hounslow TW3 1ES 2. Next: count the remaining days once fetched, then per-postcode
+> averages for airports passing `coverage_verdict()`.
 > **Sold prices (built; DEPLOYED the same afternoon, above):** the `sold_prices` Lambda now passes `category` (Land Registry A/B, read from
 > the concept URI), `estate` (freehold/leasehold) and `saon` ("FLAT 2"); the map shows "leasehold flat", the flat
 > number, and marks a HOME sold outside category A "not a standard sale" with a note. The page reads both the old

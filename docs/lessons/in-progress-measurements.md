@@ -105,7 +105,12 @@ average); under 20 movements, left out. On 88 held 2026 days at Heathrow: 48 wes
 65.4% of movements westerly, near the published ~70/30; 70% or 90% instead moves 1-4 days. A first version tested
 the westerly share against `1 - 0.8` (0.19999999999999996), so a day exactly 80% easterly read "mixed": compare each
 direction's OWN share with the one threshold. Averaging 14 Oct + 15 Aug: Kew 292 a westerly day from Heathrow, 0
-easterly. **Not settled:** heights are above sea level, not ground, so high airfields (Leeds Bradford ~200 m) count
+easterly. **The first year-so-far run (2026-10-20):** all 195 held days counted in ~2 h on one process beside
+the fetch, none failed; `average()` left out 15 outage days (feed_gaps over the stored profiles) and classed
+Heathrow's 180 kept days 98 westerly / 51 easterly / 31 mixed. Kew 307 a westerly day, 5 easterly, 180 mixed;
+Battersea 318 / 2 / 177; Silvertown 105 from Heathrow and 39 from London City on westerly days, falling to 70 and 1
+at 60 degrees (off the centreline, and London City's 5.5 degree approach is ~250 ft there: a cone under 70 m
+wide), where Kew does not move (under the centreline). **Not settled:** heights are above sea level, not ground, so high airfields (Leeds Bradford ~200 m) count
 high; a low aircraft orbiting back over a cell within one pass counts once; by-hour classing would place a mixed
 day's hours properly (needs per-hour counts); `average()` does not apply `coverage_verdict()`, publishing must.
 
