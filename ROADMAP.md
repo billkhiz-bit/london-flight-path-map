@@ -2,11 +2,36 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-19 - Breathe London's data half built (GLA key received; 116 sensors' 12-month means
+**Last reviewed:** 2026-10-20 - FEMA's county downloads work (Alameda fetched; San Francisco's product id to find),
+the overflight counter built (Bill to choose `classify_day()`), sold prices' category, tenure and flat built for the
+next changeset; previously 2026-10-19 - Breathe London's data half built (GLA key received; 116 sensors' 12-month means
 in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-20)
+>
+> **Bay Area flood: FEMA's county downloads WORK.** `scripts/fetch_fema_nfhl_counties.py` + the manual workflow
+> `fema-nfhl-county-fetch.yml` download `NFHL_<county FIPS>C` from the MSC portal (the address from FEMA's own guide)
+> for the four counties the 50 cities lie in (derived from the place and trend files; `--check` places all 4,950,918
+> residents' blocks in them, an advisory preflight stage). Run `39416950759`: **Alameda came whole** (22.6 MB, 140
+> members, 2,451 flood polygons from a shapefile), then **San Francisco's `NFHL_06075C` was the portal's page**, not
+> a zip, though the city-county's FIRM has been effective since 2021. The fetcher now asks again once, keeps FEMA's
+> reply (`diagnostics/`), tries every county, and writes nothing for the reader unless all four came. Next: re-run,
+> read `failed.json` + the kept reply, find San Francisco's product id from FEMA's answer (never a guess), then
+> `build_bayarea_flood.py --write`.
+> **How often planes pass: the counter is BUILT** (`scripts/adsb_overflights.py`, CAP 1498 at 48.5 and 60 degrees
+> under 7,000 ft, per 100 m British National Grid cell per day, credited to the airport whose movement it was;
+> 17 tests, 15 mutations red). It matches the 19 Oct prototype (Kew TW9 3PZ 296 on westerly 14 Oct, 0 on easterly
+> 15 Aug; Battersea 341). ~35 s a day, ~3.5 h a year. **`classify_day()` is Bill's call** (how a day that switched
+> runway direction is classed); until it is written, `--average` stops, by design; the per-day files never need it.
+> The fetch of every 2026 day was restarted 20 Oct 12:04 (146 days to go then).
+> **Sold prices (built, NOT deployed):** the `sold_prices` Lambda now passes `category` (Land Registry A/B, read from
+> the concept URI), `estate` (freehold/leasehold) and `saon` ("FLAT 2"); the map shows "leasehold flat", the flat
+> number, and marks a HOME sold outside category A "not a standard sale" with a note. The page reads both the old
+> and the new Lambda (the panel test holds both), so it ships with the next reviewed changeset (Bill's), backend
+> first, then `web-deploy`.
+>
 > ## START HERE (2026-10-19)
 >
 > **Breathe London: the GLA key arrived and step 1 of "The plan for Breathe London" is BUILT** (not shown, not
@@ -1843,7 +1868,9 @@ Geovation advised (2026-10-02) and the question residents actually ask ("one pla
    A prototype on two days settled the design: GPS height minus the geoid where present, else barometric plus
    that DAY'S measured offset; 100 m steps along each segment (25 m changed no count); each day classed westerly
    or easterly before averaging (Kew TW9 3PZ: 296 on westerly 14 Oct, 0 on easterly 15 Aug). The fetch of every
-   2026 day STARTED 19 Oct. Next: `scripts/adsb_overflights.py`, counts per 100 m grid cell per day.
+   2026 day STARTED 19 Oct. **`scripts/adsb_overflights.py` BUILT 20 Oct** (counts per 100 m grid cell per day,
+   both angles, per airport; matches the prototype). Next: Bill's `classify_day()` rule, the year's day files,
+   then per-postcode averages for airports passing `coverage_verdict()` only.
 3. **N65 / N70 per postcode** (flights louder than 65 / 70 dB a day) by the standard
    aircraft-noise calculation (ECAC Doc 29: aircraft type, height, distance). It needs
    EASA's ANP noise data, which is **by request, not a download** (request drafted,

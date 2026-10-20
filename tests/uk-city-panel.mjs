@@ -592,6 +592,41 @@ const SOLD_STATES = [
       },
     },
     want: /£20,000\s*not a home · 16 STATION PARADE[\s\S]*£1,475,000\s*flat · 4A STATION PARADE[\s\S]*"Not a home": Land Registry records the sale as another kind of property/,
+    absent: /Not a standard sale|leasehold|freehold/i, // a Lambda without the new fields: rows exactly as before
+  },
+  {
+    // The same Kew rows with the fields the Lambda sends from 2026-10-20 (category, estate, saon,
+    // as Land Registry answered for TW9 3PZ): the shop stays "not a home" and gains nothing, the 1997
+    // sale shows its flat and tenure. A category-B row of type 'other' must not raise the second note.
+    name: 'tenure and flat shown, a shop still not a home',
+    fulfil: {
+      status: 200,
+      body: {
+        postcode: 'TW9 3PZ',
+        transactions: [
+          { price: 20000, date: '2025-09-11', saon: '', address: '16', street: 'STATION PARADE', type: 'other', category: 'B', estate: 'leasehold' },
+          { price: 79500, date: '1997-08-20', saon: 'FLAT 2', address: 'THE CAFE, 2', street: 'STATION PARADE', type: 'flat-maisonette', category: 'A', estate: 'leasehold' },
+        ],
+      },
+    },
+    want: /£20,000\s*not a home · 16 STATION PARADE[\s\S]*£79,500\s*leasehold flat · FLAT 2, THE CAFE, 2 STATION PARADE/,
+    absent: /Not a standard sale/i,
+  },
+  {
+    // A HOME sold outside category A (a repossession, a company, a mortgaged buy-to-let): the type
+    // alone called it a plain flat. Constructed row in the Lambda's shape; no TW9 3PZ sale is one.
+    name: 'a home sold outside the standard category says so',
+    fulfil: {
+      status: 200,
+      body: {
+        postcode: 'TW9 3PZ',
+        transactions: [
+          { price: 310000, date: '2024-02-01', saon: 'FLAT 5', address: '4A', street: 'STATION PARADE', type: 'flat-maisonette', category: 'B', estate: 'leasehold' },
+        ],
+      },
+    },
+    want: /£310,000\s*leasehold flat, not a standard sale · FLAT 5, 4A STATION PARADE[\s\S]*"Not a standard sale": Land Registry records the sale outside its standard category/,
+    absent: /"Not a home"/,
   },
 ];
 await page.evaluate((city) => window.switchCity(city), 'manchester');
@@ -627,6 +662,7 @@ for (const s of SOLD_STATES) {
     .catch(() => '');
   await page.unroute('**/sold-prices?**');
   check(`  sold prices, ${s.name}`, s.want.test(text), `reads "${text.replace(/\s+/g, ' ').slice(0, 90)}"`);
+  if (s.absent) check(`  sold prices, ${s.name}: nothing extra`, text !== '' && !s.absent.test(text), `reads "${text.replace(/\s+/g, ' ').slice(0, 120)}"`);
   // The false cause must never come back, in any state.
   check(`  sold prices, ${s.name}: no "browser security"`, !/browser security/i.test(text), '');
 }

@@ -56,6 +56,32 @@ def _pref_label(node):
     return ''
 
 
+def _concept_id(node):
+    """The last segment of a Land Registry concept's URI ('.../def/common/leasehold' -> 'leasehold'),
+    or '' when the node has no URI.
+
+    The URI is the concept's identity; its labels are display text and are not cased alike across
+    fields (estateType's prefLabel is 'Leasehold', propertyType's is 'flat-maisonette'; seen at
+    TW9 3PZ 2026-10-20). Matching the URI keeps a relabelling from silently emptying a field.
+    """
+    about = node.get('_about') if isinstance(node, dict) else None
+    if not isinstance(about, str) or '/' not in about:
+        return ''
+    # [-1], not [1]: a URI ending in '/' (or '/' alone) is empty once stripped, and [1] raised, turning
+    # one odd concept into a 500 for every sale at the postcode (code review, 2026-10-20).
+    return about.rstrip('/').rsplit('/', 1)[-1]
+
+
+# Price Paid Data's two categories. A: a standard sale at full market value to a private
+# individual, the only one Sky Score's price figures use. B ("additional price paid"):
+# repossessions, sales to companies, buy-to-lets identified by a mortgage, power-of-sale
+# transfers, and every property of type 'other'. A HOME can be category B, which the
+# property type alone cannot show (2026-10-19: the map named type 'other' "not a home").
+# An unrecognised URI maps to '': shown as nothing, never guessed.
+_CATEGORY = {'standardPricePaidTransaction': 'A', 'additionalPricePaidTransaction': 'B'}
+_ESTATE = {'freehold': 'freehold', 'leasehold': 'leasehold'}
+
+
 def _iso_date(raw):
     """Normalise Land Registry's RFC-style date to ISO, or '' if unparseable.
 
@@ -164,13 +190,19 @@ def handler(event, context):
             # sibling that returns '' "rather than a placeholder".
             if not isinstance(item.get('pricePaid'), (int, float)):
                 continue
+            address = item.get('propertyAddress') or {}
             results.append(
                 {
                     'price': item.get('pricePaid'),
                     'date': _iso_date(item.get('transactionDate', '')),
-                    'address': item.get('propertyAddress', {}).get('paon', ''),
-                    'street': item.get('propertyAddress', {}).get('street', ''),
+                    # saon is the flat or unit ('FLAT 2'); without it every flat in a
+                    # building read as the same address.
+                    'saon': address.get('saon') or '',
+                    'address': address.get('paon', ''),
+                    'street': address.get('street', ''),
                     'type': _pref_label(item.get('propertyType')),
+                    'category': _CATEGORY.get(_concept_id(item.get('transactionCategory')), ''),
+                    'estate': _ESTATE.get(_concept_id(item.get('estateType')), ''),
                     'newBuild': item.get('newBuild', False),
                 }
             )

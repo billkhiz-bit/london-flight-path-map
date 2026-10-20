@@ -10567,6 +10567,10 @@
             date: t.date,
             address: (t.address || '') + ' ' + (t.street || ''),
             type: t.type || '',
+            // Named here or dropped: this map is the only door from the Lambda to the list.
+            saon: t.saon || '',
+            category: t.category || '',
+            estate: t.estate || '',
           }));
         } catch (e) {
           if (isAbortError(e)) return null;
@@ -11201,6 +11205,17 @@
         detached: 'detached house',
         other: 'not a home',
       };
+      // A HOME sold outside category A (2026-10-20): Land Registry's category B also holds
+      // repossessions, sales to companies and mortgaged buy-to-lets of ordinary homes, which the
+      // type alone cannot show. The Lambda sends `category` ('A' | 'B' | '' unknown), `estate`
+      // ('freehold' | 'leasehold' | '') and `saon` (the flat, 'FLAT 2'); a Lambda deployed before
+      // them sends none, and each then shows nothing, exactly as before.
+      function soldRowKind(s) {
+        const kind = Object.prototype.hasOwnProperty.call(SOLD_PROPERTY_TYPE, s.type) ? SOLD_PROPERTY_TYPE[s.type] : '';
+        if (!kind || s.type === 'other') return kind;
+        const tenure = s.estate === 'freehold' || s.estate === 'leasehold' ? `${s.estate} ` : '';
+        return `${tenure}${kind}${s.category === 'B' ? ', not a standard sale' : ''}`;
+      }
       function renderSoldPrices(containerId, soldData, postcode) {
         const el = document.getElementById(containerId);
         if (!el) return;
@@ -11259,8 +11274,13 @@
                 maximumFractionDigits: 0,
               }).format(s.price);
               const date = escapeHtml(s.date ? s.date.substring(0, 10) : '');
-              const address = escapeHtml((s.address || '').trim());
-              const kind = Object.prototype.hasOwnProperty.call(SOLD_PROPERTY_TYPE, s.type) ? SOLD_PROPERTY_TYPE[s.type] : '';
+              const address = escapeHtml(
+                [s.saon, s.address]
+                  .map((part) => (part || '').trim())
+                  .filter(Boolean)
+                  .join(', '),
+              );
+              const kind = escapeHtml(soldRowKind(s));
               return `<div class="sold-row">
       <span class="sold-price">${price}</span>
       <span class="sold-address">${kind ? `<span class="sold-type">${kind}</span> &middot; ` : ''}${address}</span>
@@ -11270,6 +11290,10 @@
             .join('') +
           (soldData.some((s) => s.type === 'other')
             ? '<div class="info-note" style="margin-top:6px;">&quot;Not a home&quot;: Land Registry records the sale as another kind of property, such as a shop or its lease, outside its standard category of house sales. Sky Score&#39;s price figures leave such sales out.</div>'
+            : '') +
+          // The note's test is the label's own, so it never explains a label no row carries.
+          (soldData.some((s) => soldRowKind(s).endsWith(', not a standard sale'))
+            ? '<div class="info-note" style="margin-top:6px;">&quot;Not a standard sale&quot;: Land Registry records the sale outside its standard category, as it does for repossessions, sales to companies and buy-to-let purchases with a mortgage. Sky Score&#39;s price figures leave such sales out.</div>'
             : '') +
           '<div class="info-note" style="margin-top:6px;">Source: HM Land Registry Price Paid Data (Open Government Licence).</div>';
       }
