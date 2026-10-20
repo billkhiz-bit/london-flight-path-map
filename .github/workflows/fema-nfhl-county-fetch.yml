@@ -17,8 +17,9 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    # FEMA blocks on and off: each download retries for up to ~7 minutes before the run fails.
-    timeout-minutes: 45
+    # FEMA blocks on and off: a county's download retries for up to ~18 minutes (a hang each time); the
+    # fetcher starts no county after 40 minutes, so it can write failed.json before this limit.
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -29,7 +30,10 @@ jobs:
       - run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends gdal-bin && ogr2ogr --version
       # The downloads go to fema-raw/, which is NOT uploaded: only the derived file and its manifest are.
       - run: python -I scripts/fetch_fema_nfhl_counties.py --out fema-out --raw fema-raw
+      # Uploaded on failure too: then it holds only failed.json (rewritten after each failed county) and FEMA's
+      # replies (diagnostics/), never the file the reader takes, so a failed run cannot be mistaken for a fetch.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
         with:
           name: fema-nfhl-bayarea
           path: fema-out/

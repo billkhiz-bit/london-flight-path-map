@@ -104,7 +104,11 @@ def test_an_unreachable_county_fails_after_every_try(tmp_path):
 def test_a_page_instead_of_a_zip_fails_quoting_it(tmp_path):
     p = tmp_path / 'NFHL_06075C.zip'
     p.write_bytes(b'<!DOCTYPE html><html><body>No product found</body></html>')
-    with pytest.raises(SystemExit, match='not a zip.*No product found'):
+    with pytest.raises(fc.NotAZip, match='not a zip.*No product found'):
+        fc.require_zip(p)
+    p.write_bytes(b"<script> var userName = ''; </script><html><head><title>\n  FEMA Flood Map Service Center |\n"
+                  b"  Search </title></head><body>" + b'x' * 5000 + b'</body></html>')
+    with pytest.raises(fc.NotAZip, match=r"'FEMA Flood Map Service Center \| Search'"):
         fc.require_zip(p)
 
 
@@ -209,7 +213,68 @@ def test_a_county_with_no_polygons_fails_and_writes_nothing(tmp_path, monkeypatc
 
     monkeypatch.setattr(fc, 'download', get)
     monkeypatch.setattr(fc, 'read_layer', lambda src, workdir: ({'features': []}, ''))
+    monkeypatch.setattr(fc, 'BETWEEN_S', 0)
     monkeypatch.setattr('sys.argv', ['x', '--out', str(tmp_path / 'out'), '--raw', str(tmp_path / 'raw')])
-    with pytest.raises(SystemExit, match='not "no flood"'):
-        fc.main()
-    assert not (tmp_path / 'out').exists()
+    assert fc.main() == 1
+    report = _real(tmp_path / 'out' / 'failed.json')
+    assert report['failed'] and all('not "no flood"' in f['error'] for f in report['failed'])
+    assert not (tmp_path / 'out' / 'nfhl-bayarea.esrijson.gz').exists()
+
+
+def test_a_4xx_or_a_broken_zip_is_one_county_failing_not_the_run(tmp_path, monkeypatch):
+    # Code review 2026-10-20: these raised past main(), so the counties after them were never tried and no
+    # failed.json was written for the artifact.
+    def get(url, dest):
+        if url.endswith('NFHL_06001C'):
+            raise SystemExit(f'{url}: FEMA answered 403 Forbidden')
+        if url.endswith('NFHL_06075C'):
+            dest.write_bytes(b'PK\x03\x04 truncated')
+        else:
+            _zip(dest, {'S_FLD_HAZ_AR.shp': b''})
+        return dest.stat().st_size if dest.exists() else 0, 'f' * 64, None
+
+    monkeypatch.setattr(fc, 'download', get)
+    monkeypatch.setattr(fc, 'read_layer', lambda src, workdir: (GEOJSON, ''))
+    monkeypatch.setattr(fc, 'BETWEEN_S', 0)
+    monkeypatch.setattr('sys.argv', ['x', '--out', str(tmp_path / 'out'), '--raw', str(tmp_path / 'raw')])
+    assert fc.main() == 1
+    report = _real(tmp_path / 'out' / 'failed.json')
+    assert [f['product_id'] for f in report['failed']] == ['NFHL_06001C', 'NFHL_06075C']
+    assert '403' in report['failed'][0]['error']
+    assert len(report['fetched']) == len(fc.counties(_real(fc.PLACES), _real(fc.TREND))) - 2
+
+
+def test_past_the_deadline_no_county_is_started(tmp_path, monkeypatch):
+    monkeypatch.setattr(fc, 'DEADLINE_S', -1)
+    monkeypatch.setattr(fc, 'download', lambda url, dest: pytest.fail('a county was started past the deadline'))
+    monkeypatch.setattr('sys.argv', ['x', '--out', str(tmp_path / 'out'), '--raw', str(tmp_path / 'raw')])
+    assert fc.main() == 1
+    assert all(f['error'].startswith('not tried') for f in _real(tmp_path / 'out' / 'failed.json')['failed'])
+
+
+def test_a_county_sent_a_page_is_asked_again_then_recorded_and_the_rest_still_fetched(tmp_path, monkeypatch):
+    # Run 39416950759: Alameda's download came whole, San Francisco's was the portal's page.
+    asked = []
+
+    def get(url, dest):
+        asked.append(url.rsplit('=', 1)[1])
+        if url.endswith('NFHL_06075C'):
+            dest.write_bytes(b'<html><head><title>Search</title></head></html>')
+        else:
+            _zip(dest, {'S_FLD_HAZ_AR.shp': b''})
+        return dest.stat().st_size, 'f' * 64, None
+
+    monkeypatch.setattr(fc, 'download', get)
+    monkeypatch.setattr(fc, 'read_layer', lambda src, workdir: (GEOJSON, ''))
+    monkeypatch.setattr(fc, 'BETWEEN_S', 0)
+    monkeypatch.setattr(fc, 'NOT_ZIP_PAUSE_S', 0)
+    monkeypatch.setattr('sys.argv', ['x', '--out', str(tmp_path / 'out'), '--raw', str(tmp_path / 'raw')])
+    assert fc.main() == 1
+    want = [f'NFHL_{f}C' for _, f in fc.counties(_real(fc.PLACES), _real(fc.TREND))]
+    assert asked == [p for p in want for _ in range(2 if p == 'NFHL_06075C' else 1)]
+    report = _real(tmp_path / 'out' / 'failed.json')
+    assert [f['product_id'] for f in report['failed']] == ['NFHL_06075C']
+    assert [p['product_id'] for p in report['fetched']] == [p for p in want if p != 'NFHL_06075C']
+    assert (tmp_path / 'out' / report['failed'][0]['reply_kept']).read_bytes().startswith(b'<html>')
+    assert not (tmp_path / 'out' / 'nfhl-bayarea.esrijson.gz').exists()
+    assert not (tmp_path / 'out' / 'manifest.json').exists()

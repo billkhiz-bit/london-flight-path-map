@@ -16,8 +16,10 @@ can fall outside every download.
 
 THE GUARDS:
 - FEMA blocks on and off (run 39327658467 was reset on one request and answered the next), so a download is
-  retried with a growing pause; a county still unreachable fails the run, naming it, and NOTHING is written:
-  a partial file would read as "no flood map" for that county's cities.
+  retried with a growing pause, and a page in place of the product is asked for again once. A county still
+  failing, for any reason, is recorded in failed.json (rewritten after each failure) with FEMA's reply kept,
+  the other counties are still tried until DEADLINE_S, and NOTHING is written for the reader: a partial file
+  would read as "no flood map" for that county's cities.
 - The reply must be a zip (the portal can answer a missing product with a page, not an error status); its
   size and sha256 are recorded and its members listed, and it is extracted only after every member name is
   checked (no absolute path, no "..") and the unpacked size capped: these are untrusted archives.
@@ -53,8 +55,12 @@ LAYER = 'S_FLD_HAZ_AR'
 TRIES = 6
 PAUSE_S = 15  # before the first retry, doubled each time up to PAUSE_MAX_S: FEMA's blocks come and go
 PAUSE_MAX_S = 120
-TIMEOUT_S = 300
+TIMEOUT_S = 120  # a SILENCE this long is a hang (FEMA hung run 6 on 2026-10-18); a download streams throughout
+DEADLINE_S = 40 * 60  # no county is started after this, so the run ends inside the workflow's 55 minutes
 BETWEEN_S = 5  # between counties: a shared public service
+NOT_ZIP_TRIES = 2
+NOT_ZIP_PAUSE_S = 60
+KEEP_REPLY_BYTES = 500_000  # of a reply that was not the product, kept for reading (as text, never opened)
 MAX_BYTES = 2_000_000_000  # one download; a county's NFHL is tens of MB
 MAX_UNPACKED = 8_000_000_000  # one archive's members together
 
@@ -72,6 +78,12 @@ FIELDS, UA = _query_route.FIELDS, _query_route.UA  # one field list and one User
 
 class NetworkError(Exception):
     """No complete answer after TRIES attempts."""
+
+
+class NotAZip(Exception):
+    """FEMA answered with a page, not the product. Run 39416950759 (2026-10-20): Alameda's NFHL_06001C came
+    whole, then San Francisco's NFHL_06075C was the portal's page template, though the city-county's FIRM has
+    been effective since 2021: a missing product or a throttle, which the kept reply should tell apart."""
 
 
 def counties(places_doc, trend_doc):
@@ -124,12 +136,14 @@ def download(url, dest, opener=urllib.request.urlopen, sleep=time.sleep):
 
 
 def require_zip(path):
-    """Fail, quoting the start of the reply, unless `path` is a zip."""
+    """Raise NotAZip, quoting the reply's page title or its start, unless `path` is a zip."""
     with open(path, 'rb') as fh:
-        head = fh.read(400)
+        head = fh.read(20000)
     if not head.startswith(b'PK\x03\x04'):
-        text = head.decode('utf-8', 'replace').replace('\n', ' ')[:200]
-        raise SystemExit(f'{path.name}: FEMA sent something that is not a zip ({len(head)}+ bytes): {text!r}')
+        text = head.decode('utf-8', 'replace')
+        title = re.search(r'<title[^>]*>(.*?)</title>', text, re.I | re.S)
+        said = ' '.join((title.group(1) if title else text[:200]).split())
+        raise NotAZip(f'{path.name}: FEMA sent something that is not a zip ({path.stat().st_size:,} bytes): {said!r}')
 
 
 def safe_extract(zip_path, dest):
@@ -200,8 +214,16 @@ def fetch_county(name, fips, raw, get=None, read=None):
     url = DOWNLOAD + pid
     zpath = raw / f'{pid}.zip'
     print(f'{name} ({fips}): {url}', flush=True)
-    size, sha, served_as = get(url, zpath)
-    require_zip(zpath)
+    for attempt in range(NOT_ZIP_TRIES):  # a page may be a throttle: asked again once, after a pause
+        size, sha, served_as = get(url, zpath)
+        try:
+            require_zip(zpath)
+            break
+        except NotAZip as exc:
+            if attempt == NOT_ZIP_TRIES - 1:
+                raise
+            print(f'  {exc}; asking again in {NOT_ZIP_PAUSE_S} s', flush=True)
+            time.sleep(NOT_ZIP_PAUSE_S)
     members = safe_extract(zpath, raw / pid)
     src = find_source(raw / pid)
     geojson, info = read(src, raw / pid)
@@ -219,6 +241,20 @@ def fetch_county(name, fips, raw, get=None, read=None):
         'source': str(src.relative_to(raw / pid)), 'source_layer_info': info[:4000],
         'features': len(feats), 'without_geometry': empty, 'dfirm_ids': dict(sorted(dfirms.items(), key=lambda kv: str(kv[0]))),
     }
+
+
+def keep_failure(name, fips, exc, raw, out):
+    """The manifest's record of a county that failed, with FEMA's reply (when there was one) kept under
+    out/diagnostics/ as .txt: untrusted data to read, not a page to open."""
+    pid = f'NFHL_{fips}C'
+    note = {'county': name, 'fips': fips, 'product_id': pid, 'url': DOWNLOAD + pid, 'error': str(exc)[:500]}
+    reply = raw / f'{pid}.zip'
+    if isinstance(exc, NotAZip) and reply.exists():
+        (out / 'diagnostics').mkdir(exist_ok=True)
+        with open(reply, 'rb') as fh:
+            (out / 'diagnostics' / f'{pid}.reply.txt').write_bytes(fh.read(KEEP_REPLY_BYTES))
+        note['reply_kept'] = f'diagnostics/{pid}.reply.txt'
+    return note
 
 
 def check(want):
@@ -256,14 +292,39 @@ def main():
     if not a.out:
         ap.error('--out is required unless --check')
     a.raw.mkdir(parents=True, exist_ok=True)
-    feats, products = [], []
+    a.out.mkdir(parents=True, exist_ok=True)
+    feats, products, failed = [], [], []
+    started = time.monotonic()
+
+    def report():  # rewritten after EVERY failure, so a run killed later still leaves what went wrong
+        doc = {'failed': failed, 'fetched': products, 'utc': dt.datetime.now(dt.UTC).isoformat(timespec='seconds')}
+        (a.out / 'failed.json').write_text(json.dumps(doc, indent=1) + '\n', encoding='utf-8', newline='\n')
+
     for name, fips in want:
-        got, record = fetch_county(name, fips, a.raw)
+        if time.monotonic() - started > DEADLINE_S:
+            failed.append({'county': name, 'fips': fips, 'error': f'not tried: {DEADLINE_S // 60} minutes gone'})
+            report()
+            continue
+        try:
+            got, record = fetch_county(name, fips, a.raw)
+        except (NotAZip, NetworkError, SystemExit, zipfile.BadZipFile, subprocess.CalledProcessError) as exc:
+            # Any county's failure: every county is still tried, so one run says which are missing; then
+            # nothing is written that build_bayarea_flood.py could read, since a missing county would read as
+            # residents in no zone. (A 4xx, a broken zip or a GDAL error stopped the whole run before.)
+            failed.append(keep_failure(name, fips, exc, a.raw, a.out))
+            report()
+            print(f'  FAILED: {exc}', flush=True)
+            continue
+        finally:
+            time.sleep(BETWEEN_S)
         feats.extend(got)
         products.append(record)
-        time.sleep(BETWEEN_S)
+    if failed:
+        report()  # once more, with the counties fetched after the last failure
+        print(f'{len(failed)} of {len(want)} counties failed ({", ".join(f["county"] for f in failed)}); '
+              f'nothing written for the reader: see failed.json and diagnostics/')
+        return 1
     doc = {'format': 'esrijson', 'spatialReference': {'wkid': 4326}, 'features': feats}
-    a.out.mkdir(parents=True, exist_ok=True)
     blob = gzip.compress(json.dumps(doc, separators=(',', ':')).encode('utf-8'), mtime=0)
     (a.out / 'nfhl-bayarea.esrijson.gz').write_bytes(blob)
     zones = sorted({f['attributes'].get('FLD_ZONE') for f in feats} - {None})

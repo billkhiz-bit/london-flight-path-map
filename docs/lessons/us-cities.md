@@ -163,3 +163,15 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   resets in Bill's own browser too, so it is not only cloud addresses. The one open door is the portal: the probe's
   second step saves the portal page and the scripts it loads from msc.fema.gov, and searches them for the address
   its Download buttons use (FEMA's own code, not a guess; tested on a fixture with a stubbed network first).
+- **The county downloads WORK (2026-10-20).** Run `39327658467` got the guide through once (FEMA blocks on and
+  off): `msc.fema.gov/portal/downloadProduct?productID=` + `NFHL_<5-digit county FIPS>C` is a whole county's NFHL.
+  `scripts/fetch_fema_nfhl_counties.py` (workflow `fema-nfhl-county-fetch.yml`) takes the counties from the place
+  file's county names and the trend file's FIPS, never typed, and `--check` proves every resident block of the 50
+  cities lies in them (4,950,918 residents in Alameda, San Francisco, San Mateo and Santa Clara; red with any one
+  removed). GDAL (`gdal-bin` on the runner) reads S_FLD_HAZ_AR whether the zip holds a shapefile or a geodatabase,
+  and the output is the query route's file, so `build_bayarea_flood.py` reads it unchanged (a test runs that
+  reader on it). Run `39416950759`: Alameda came whole in 40 s (22.6 MB, 140 members, 2,451 polygons, a
+  SHAPEFILE); San Francisco's `NFHL_06075C` answered 200 with the portal's page template (`var userName`), though
+  the city-county's FIRM has been effective since 2021 (sf.gov). **A download's 200 is not the product: test its
+  magic bytes.** The fetcher now asks a page again once, keeps it under `diagnostics/` as `.txt`, tries every
+  county, and writes `failed.json` and NOTHING the reader takes unless all four came.
