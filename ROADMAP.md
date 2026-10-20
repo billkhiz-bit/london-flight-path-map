@@ -19,8 +19,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > San Mateo and Santa Clara came whole** (2,451 / 1,379 / 2,330 polygons); San Francisco's `NFHL_06075C` answered
 > FEMA's "Sorry, the product you were looking for could not be found", twice, a minute apart. FEMA's guide names the
 > other form, `NFHL_<community CID>`, and the portal's own page fills its dropdowns from
-> `advanceSearch?getCounty=06` and `?getCommunity=<county>&state=06`: the fetcher now asks those for a "not found"
-> county and downloads each community's product (never a guessed CID).
+> `advanceSearch?getCounty=06` and `?getCommunity=<county>&state=06`. Run `39436786877` (Santa Clara blocked that
+> time): the portal lists San Francisco as one jurisdiction, `06075C`, the very id FEMA cannot find, so the fetcher
+> now runs the page's own product search for it and downloads each `NFHL_COUNTY_DATA` product by its LISTED name
+> (never a guessed id).
 >
 > **Bay Area flood: FEMA's county downloads WORK.** `scripts/fetch_fema_nfhl_counties.py` + the manual workflow
 > `fema-nfhl-county-fetch.yml` download `NFHL_<county FIPS>C` from the MSC portal (the address from FEMA's own guide)

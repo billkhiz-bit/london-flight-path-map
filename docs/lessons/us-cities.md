@@ -181,6 +181,10 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   an answer, not a throttle (the kept reply said so; a page's TITLE did not). FEMA's guide (p.2) gives the other
   form, `NFHL_<community CID>`; rather than guess San Francisco's CID, the fetcher asks the portal the way its own
   page does (`getAjaxData()`: `advanceSearch?getCounty=06`, then `?getCommunity=<county value>&state=06`, each
-  `[{value, label}]`), matches the county by FIPS else by name (never two), and downloads every value that is a
-  CID or FIPS+C. **When a service answers "not found", read its words, and look for the address its own page
-  uses before guessing one.**
+  `[{value, label}]`), matches the county by FIPS else by name (never two). Run `39436786877`: the portal lists
+  San Francisco as ONE jurisdiction, "SAN FRANCISCO COUNTY ALL JURISDICTIONS", value `06075C`, whose plain id is
+  the one FEMA cannot find; so each such community is searched as the page searches (a POST of its form with
+  `method=search`), and every `EFFECTIVE.NFHL_COUNTY_DATA[].product_NAME` it lists is downloaded at the address
+  the page builds (`productTypeID=NFHL&productSubTypeID=NFHL_STATE_DATA&productID=<name>`, the STATE subtype for
+  county data too, kept as found). **When a service answers "not found", read its words, and look for the address
+  its own page uses before guessing one.**

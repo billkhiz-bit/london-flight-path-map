@@ -67,6 +67,14 @@ NOT_FOUND = 'the product you were looking for could not be found'  # FEMA's own 
 # run 39327658467): ?getCounty=<state> and ?getCommunity=<county value>&state=<state>, each [{value, label}].
 PORTAL_SEARCH = 'https://msc.fema.gov/portal/advanceSearch'
 PRODUCT_VALUE = re.compile(r'^(\d{6}|\d{5}C)$')  # a community CID, or a county FIPS + C (the guide's two forms)
+# The page's search posts its whole form (jQuery("form").serialize() + "&method=search"); these are its fields.
+SEARCH_FORM = {'selstate': '', 'selcounty': '', 'selcommunity': '', 'searchedCid': '', 'txtjurisdictionname': '',
+               'jurisdictionkey': '', 'jurisdictionvalue': '', 'txtproductid': '', 'txtstartdate': '',
+               'txtenddate': '', 'searchedDateStart': '', 'searchedDateEnd': '', 'method': 'search'}
+# ...and a listed EFFECTIVE.NFHL_COUNTY_DATA product downloads where the page sends it: with the STATE subtype, as
+# the page builds it for county data too (FEMA's own code, run 39327658467's copy; kept as found).
+SEARCH_DOWNLOAD = ('https://msc.fema.gov/portal/downloadProduct?productTypeID=NFHL&productSubTypeID=NFHL_STATE_DATA'
+                   '&productID=')
 MAX_BYTES = 2_000_000_000  # one download; a county's NFHL is tens of MB
 MAX_UNPACKED = 8_000_000_000  # one archive's members together
 
@@ -243,9 +251,9 @@ def fetch_county(name, fips, raw, get=None, read=None, portal=None):
         print(f'  {pid}: "{NOT_FOUND}"; asking the portal for {name} County\'s community products', flush=True)
         products, asked = community_products(fips, name, portal)
         feats, records = [], []
-        for label, cpid in products:
-            print(f'  {label}: {DOWNLOAD + cpid}', flush=True)
-            got, rec = fetch_product(f'{name} ({fips}) {label}', cpid, raw, get, read)
+        for label, cpid, curl in products:
+            print(f'  {label}: {curl}', flush=True)
+            got, rec = fetch_product(f'{name} ({fips}) {label}', cpid, raw, get, read, curl)
             feats.extend(got)
             records.append({**rec, 'community': label})
         return feats, {'county': name, 'fips': fips, 'product_id': pid, 'county_wide': NOT_FOUND,
@@ -253,10 +261,11 @@ def fetch_county(name, fips, raw, get=None, read=None, portal=None):
     return feats, {'county': name, 'fips': fips, **record}
 
 
-def fetch_product(label, pid, raw, get, read):
-    """(Esri JSON features, the record) for one NFHL product, county-wide or a community's."""
-    url = DOWNLOAD + pid
-    zpath = raw / f'{pid}.zip'
+def fetch_product(label, pid, raw, get, read, url=None):
+    """(Esri JSON features, the record) for one NFHL product, county-wide or a community's, at the guide's
+    address or at `url`, the one FEMA's portal page builds for a product its search lists."""
+    url = url or DOWNLOAD + pid
+    zpath = raw / f'{re.sub(r"[^A-Za-z0-9._-]", "_", pid)}.zip'
     for attempt in range(NOT_ZIP_TRIES):  # a page may be a throttle: asked again once, after a pause
         size, sha, served_as = get(url, zpath)
         try:
@@ -286,25 +295,35 @@ def fetch_product(label, pid, raw, get, read):
     }
 
 
-def portal_json(params, opener=urllib.request.urlopen):
-    """One of FEMA's portal dropdown lists, [{'value', 'label'}], as its own page asks for it."""
-    url = PORTAL_SEARCH + '?' + urllib.parse.urlencode(params)
+def portal_json(params, opener=urllib.request.urlopen, form=None):
+    """FEMA's portal as its own page asks it: a dropdown list, [{'value', 'label'}], by GET `params`; or, with
+    `form`, the product search (a POST, like the page's jQuery.ajax), a dict of product groups."""
+    url = PORTAL_SEARCH + ('?' + urllib.parse.urlencode(params) if params else '')
+    body = urllib.parse.urlencode(form).encode('ascii') if form is not None else None
+    headers = {**UA, 'Content-Type': 'application/x-www-form-urlencoded'} if body else UA
     try:
-        with opener(urllib.request.Request(url, headers=UA), timeout=60) as r:
+        with opener(urllib.request.Request(url, data=body, headers=headers), timeout=120) as r:
             doc = json.loads(r.read().decode('utf-8'))
     except (urllib.error.URLError, OSError, http.client.HTTPException, json.JSONDecodeError) as exc:
         raise PortalError(f'{url}: {exc}') from exc
+    if form is not None:
+        if not isinstance(doc, dict):
+            raise PortalError(f'{url} (search): not the product groups the portal page reads: {str(doc)[:200]}')
+        return doc
     if not isinstance(doc, list) or not all(isinstance(d, dict) and 'value' in d and 'label' in d for d in doc):
         raise PortalError(f'{url}: not the [{{value, label}}] list the portal page reads: {str(doc)[:200]}')
     return doc
 
 
 def community_products(fips, name, portal=None):
-    """([(community label, NFHL product id)], what the portal said) for a county with no county-wide NFHL.
+    """([(community label, product name, download URL)], what the portal said) for a county whose plain
+    NFHL_<FIPS>C FEMA says "could not be found".
 
     The county is matched by its FIPS in the portal's value, else by its NAME in the label; anything else (none,
-    or two) fails rather than taking a neighbour's maps. Values that are neither a CID nor FIPS+C, the guide's
-    two forms, are not products and are listed in what is returned, never downloaded."""
+    or two) fails rather than taking a neighbour's maps. Each community whose value is a CID or FIPS+C (the
+    guide's two forms) is searched the way the portal page searches, and every EFFECTIVE.NFHL_COUNTY_DATA product
+    it lists is taken by its listed name (run 39436786877: the portal lists San Francisco as one jurisdiction,
+    06075C, whose plain NFHL id FEMA cannot find)."""
     portal = portal or portal_json
     counties = portal({'getCounty': fips[:2]})
     match = [c for c in counties if fips in str(c['value'])] or [
@@ -312,11 +331,26 @@ def community_products(fips, name, portal=None):
     if len(match) != 1:
         raise PortalError(f'{name} ({fips}): {len(match)} portal counties match, of {counties[:60]}')
     communities = portal({'getCommunity': match[0]['value'], 'state': fips[:2]})
-    asked = {'county': match[0], 'communities': communities}
-    products = [(str(c['label']).strip(), f'NFHL_{c["value"]}') for c in communities
-                if PRODUCT_VALUE.match(str(c['value']))]
+    asked = {'county': match[0], 'communities': communities, 'searches': {}}
+    products = []
+    for c in communities:
+        value = str(c['value'])
+        if not PRODUCT_VALUE.match(value):
+            continue
+        # The page's own search for this jurisdiction (setSearchCriteria(): searchedCid = the community chosen).
+        found = portal(None, form={**SEARCH_FORM, 'selstate': fips[:2], 'selcounty': match[0]['value'],
+                                   'selcommunity': value, 'searchedCid': value})
+        effective = found.get('EFFECTIVE') or {}
+        listed = (effective.get('NFHL_COUNTY_DATA') if isinstance(effective, dict) else None) or []
+        asked['searches'][value] = {
+            'effective_groups': sorted(effective) if isinstance(effective, dict) else str(effective)[:200],
+            'nfhl_county_data': listed[:20]}
+        for item in listed:
+            pname = str((item or {}).get('product_NAME') or '')
+            if re.fullmatch(r'[A-Za-z0-9._-]{3,80}', pname):
+                products.append((str(c['label']).strip(), pname, SEARCH_DOWNLOAD + urllib.parse.quote(pname)))
     if not products:
-        raise PortalError(f'{name} ({fips}): the portal lists no community product: {communities[:20]}')
+        raise PortalError(f"{name} ({fips}): the portal's search lists no NFHL county data: {asked}"[:1500])
     return sorted(set(products)), asked
 
 
