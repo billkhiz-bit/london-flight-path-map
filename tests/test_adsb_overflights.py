@@ -312,6 +312,36 @@ def _day_file(tmp_path, day, n_lhr, outage=False):
     return path
 
 
+def test_the_average_is_the_same_whatever_the_batch(tmp_path):
+    # 2026-10-21: a year (289 days, 388 million rows at 48.5 degrees) ran out of 32 GB when every day was held
+    # at once, so days are now summed in batches and folded. Whole counts sum exactly: batches of 1, 3 and 100
+    # must give IDENTICAL arrays, on runs that overlap and differ day to day, for two groups and both angles.
+    rng = np.random.default_rng(21)
+    i0, j0 = int(E0 // ao.CELL_M), int(N0 // ao.CELL_M)
+    files = []
+    for d in range(1, 8):
+        meta = {'day': f'2026-08-{d:02d}', 'codes': CODES + [ao.OTHER], 'feed': {'uk': [100] * (86400 // mv.FEED_BIN_S)},
+                'movements': {c: {'landing': {}, 'take-off': {}} for c in CODES}}
+        rows = []
+        for code in ('LHR', ao.OTHER):
+            k = meta['codes'].index(code)
+            for j in range(j0, j0 + 4):
+                lo = i0 + int(rng.integers(0, 6))
+                rows.append([k, j, lo, lo + int(rng.integers(0, 8)), int(rng.integers(1, 400))])
+        by_airport = np.array(sorted(rows), np.int32)
+        cells = {a: (by_airport[:, 1:], by_airport) for a in ao.ANGLES}
+        files.append(tmp_path / f'{meta["day"]}.npz')
+        ao.write_day(cells, meta, files[-1])
+    classify = lambda code, movements, runways: 'westerly'  # noqa: E731
+    want = ao.average(files, classify=classify, batch_days=100)
+    assert len(want['runs'][48.5]) > 8  # the runs really do overlap and split
+    for batch in (1, 3):
+        got = ao.average(files, classify=classify, batch_days=batch)
+        assert {k: v for k, v in got.items() if k != 'runs'} == {k: v for k, v in want.items() if k != 'runs'}
+        for angle in ao.ANGLES:
+            assert np.array_equal(got['runs'][angle], want['runs'][angle])
+
+
 def test_the_average_leaves_out_an_outage_day_and_says_so(tmp_path):
     files = [_day_file(tmp_path, f'2026-08-{d:02d}', 10) for d in range(1, 10) if d != 5]
     files.append(_day_file(tmp_path, '2026-08-05', 1000, outage=True))

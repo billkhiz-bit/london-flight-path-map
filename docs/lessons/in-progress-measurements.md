@@ -113,4 +113,14 @@ at 60 degrees (off the centreline, and London City's 5.5 degree approach is ~250
 wide), where Kew does not move (under the centreline). **Not settled:** heights are above sea level, not ground, so high airfields (Leeds Bradford ~200 m) count
 high; a low aircraft orbiting back over a cell within one pass counts once; by-hour classing would place a mixed
 day's hours properly (needs per-hour counts); `average()` does not apply `coverage_verdict()`, publishing must.
+**The year so far, 2026-10-21:** the fetch finished at 289 of 291 days (adsb.lol's 5 May archive is near-empty,
+6 May's is a 404), all counted (~35 s a day, none failed). **`average()` then ran out of 32 GB**: holding every
+day at once meant 388 million rows at 48.5 degrees, ~3 GB a column. It now reads the metas alone first, then
+each kept day's cells once, summing whole counts 30 days at a time (`BATCH_DAYS`) and folding each batch into a
+running total with `sweep()`; whole counts sum exactly, so the batch size changes nothing (identical arrays on
+40 real days at 7 and 30, and a test at 1, 3 and 100, proven red twice). Year readout (270 days kept, 19 outage
+days out; Heathrow 166 westerly / 66 easterly / 38 mixed = 72% westerly of the classed days), per day at 48.5
+degrees (60): Kew TW9 3PZ 309 (308) westerly / 4 easterly / 160 mixed; Battersea SW11 1AA 321 (313) / 4 / 189;
+Silvertown E16 2QD Heathrow 104 (68) + London City 36 (0) westerly; Hackney N1 7SX 20 (12); Hounslow TW3 1ES 1.
+Stable against the 195-day run (Kew 307, Battersea 318). Unpublished.
 

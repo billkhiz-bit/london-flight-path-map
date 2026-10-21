@@ -129,6 +129,7 @@ GEOID_M = {
 # Cell keys pack (group, row, column) into one int64: BNG northings stay under 1,300 km and eastings
 # under 700 km, so rows fit in 2**14 and columns in 2**13 with room for the "one past the end" column.
 NROWS, NCOLS = 1 << 14, 1 << 13
+BATCH_DAYS = 30  # days summed before folding into the running total (memory, not results)
 STEPS_PER_CHUNK = 200_000  # cone expansion is done this many steps at a time, at pass boundaries
 
 _TO_BNG = pyproj.Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
@@ -640,7 +641,19 @@ def classify_day(code, movements, runways):
     return 'mixed'
 
 
-def average(day_files, classify=None):
+def read_meta(path):
+    """A day file's meta alone: np.load reads an .npz member only when asked for it."""
+    with np.load(path, allow_pickle=False) as z:
+        return json.loads(str(z['meta']))
+
+
+def _fold(total, part):
+    """Two sets of summed runs as one: sweep() is a sum of intervals, so re-sweeping whole counts is exact."""
+    both = np.concatenate([total, part]) if len(total) else part
+    return sweep(*(both[:, c].astype(np.int64) for c in range(4)), both[:, 4])
+
+
+def average(day_files, classify=None, batch_days=BATCH_DAYS):
     """Average daily counts per cell, per airport and direction class, over the days whose feed was whole.
 
     Outage days (adsb_movements.feed_gaps() over the stored UK profiles) are LEFT OUT and listed, never
@@ -648,21 +661,27 @@ def average(day_files, classify=None):
     as adsb_movements.report() keeps them. Every kept airport-day goes through classify_day(), the
     explicit dependency: an airport's traffic is averaged over the days of its own class only. OTHER
     traffic has no runway to class it by and is averaged over every kept day. Publishing any airport's
-    figures still needs coverage_verdict() for the same period (adsb_movements.report())."""
+    figures still needs coverage_verdict() for the same period (adsb_movements.report()).
+
+    Two passes, so a year fits in memory (289 days held 388 million rows at 48.5 degrees and ran out of
+    32 GB, 2026-10-21): the metas alone first (outages, classes, days per group), then each kept day's cells
+    once, summed as whole counts `batch_days` at a time and folded into a running total by sweep(). Whole
+    counts sum exactly, so the batch size changes nothing (held by a test), and each group's total is divided
+    by its days only at the end."""
     classify = classify or classify_day
-    days = {}
+    metas = {}
     for path in day_files:
-        meta, cells = read_day(path)
-        days[dt.date.fromisoformat(meta['day'])] = (meta, cells)
-    if len(days) != len(day_files):
+        meta = read_meta(path)
+        metas[dt.date.fromisoformat(meta['day'])] = (meta, path)
+    if len(metas) != len(day_files):
         raise SystemExit('the same day appears twice among the day files')
-    gaps = mv.feed_gaps({d: m['feed']['uk'] for d, (m, _) in days.items()}, 'uk')
-    kept = sorted(d for d in days if not gaps[d])
+    gaps = mv.feed_gaps({d: m['feed']['uk'] for d, (m, _) in metas.items()}, 'uk')
+    kept = sorted(d for d in metas if not gaps[d])
     bearings = {code: {des: brg for des, (_, brg) in ap['runways'].items()} for code, ap in uk_airports().items()}
 
     labels, unknown = {}, set()
     for d in kept:
-        meta = days[d][0]
+        meta = metas[d][0]
         for code in meta['codes']:
             if code == OTHER:
                 continue
@@ -679,35 +698,45 @@ def average(day_files, classify=None):
             ndays[(code, lab)] += 1
     ndays[(OTHER, None)] = len(kept)
 
+    totals = {angle: np.empty((0, 5)) for angle in ANGLES}
+    for b in range(0, len(kept), max(1, batch_days)):
+        acc = {angle: [[], [], [], [], []] for angle in ANGLES}
+        for d in kept[b:b + max(1, batch_days)]:
+            meta, cells = read_day(metas[d][1])
+            for angle in ANGLES:
+                per = cells[angle][1]
+                for k, code in enumerate(meta['codes']):
+                    g = (OTHER, None) if code == OTHER else (code, labels[(d, code)])
+                    if g[1] is None and code != OTHER:
+                        continue
+                    mine = per[per[:, 0] == k]
+                    a = acc[angle]
+                    a[0].append(np.full(len(mine), gindex[g]))
+                    for lst, col in zip(a[1:4], (1, 2, 3), strict=True):
+                        lst.append(mine[:, col].astype(np.int64))
+                    a[4].append(mine[:, 4])
+        for angle in ANGLES:
+            cols = [np.concatenate(v) if v else np.empty(0) for v in acc[angle]]
+            if not len(cols[1]):
+                continue
+            part = sweep(cols[0].astype(np.int64), cols[1].astype(np.int64), cols[2].astype(np.int64),
+                         cols[3].astype(np.int64), cols[4].astype(np.int64))
+            totals[angle] = _fold(totals[angle], part)
     runs = {}
+    days_of = np.array([ndays[g] for g in groups], dtype=float)
     for angle in ANGLES:
-        acc = [[], [], [], [], []]
-        for d in kept:
-            meta, cells = days[d]
-            per = cells[angle][1]
-            for k, code in enumerate(meta['codes']):
-                g = (OTHER, None) if code == OTHER else (code, labels[(d, code)])
-                if g[1] is None and code != OTHER:
-                    continue
-                mine = per[per[:, 0] == k]
-                acc[0].append(np.full(len(mine), gindex[g]))
-                for lst, col in zip(acc[1:4], (1, 2, 3), strict=True):
-                    lst.append(mine[:, col].astype(np.int64))
-                acc[4].append(mine[:, 4])
-        cols = [np.concatenate(v) if v else np.empty(0) for v in acc]
-        # Summed as whole counts and divided by each group's days AFTER the sweep: summing fractions
-        # (count / days) over a year left float residue between rows, and a residue over the sweep's
-        # threshold made a run cross from one row into the next (code review, 2026-10-20).
-        summed = sweep(cols[0].astype(np.int64), cols[1].astype(np.int64), cols[2].astype(np.int64),
-                       cols[3].astype(np.int64), cols[4].astype(np.int64))
-        days_of = np.array([ndays[g] for g in groups], dtype=float)
-        summed[:, 4] /= days_of[summed[:, 0].astype(np.int64)] if len(summed) else 1
+        summed = totals[angle]
+        # Divided by each group's days AFTER summing whole counts: summing fractions (count / days) over a
+        # year left float residue between rows, and a residue over the sweep's threshold made a run cross
+        # from one row into the next (code review, 2026-10-20).
+        if len(summed):
+            summed[:, 4] /= days_of[summed[:, 0].astype(np.int64)]
         runs[angle] = summed
     return {
         'groups': [list(g) for g in groups], 'days_per_group': [ndays[g] for g in groups],
         'runs': runs, 'kept': [d.isoformat() for d in kept],
-        'left_out_outage': [d.isoformat() for d in sorted(days) if gaps[d]],
-        'not_judged': [d.isoformat() for d in sorted(days) if gaps[d] is None],
+        'left_out_outage': [d.isoformat() for d in sorted(metas) if gaps[d]],
+        'not_judged': [d.isoformat() for d in sorted(metas) if gaps[d] is None],
         'unclassified': sorted(f'{d} {code}' for (d, code), lab in labels.items() if lab is None),
         'airports_no_longer_drawn': sorted(unknown),
     }
