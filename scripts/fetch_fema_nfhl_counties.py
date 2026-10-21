@@ -278,24 +278,42 @@ def read_layer(src, workdir, run=subprocess.run):
     return json.loads(out.read_text(encoding='utf-8')), info
 
 
+NO_AREA = ('Point', 'MultiPoint', 'LineString', 'MultiLineString')
+
+
 def esri_features(geojson):
     """GeoJSON polygons as fetch_fema_flood.py's Esri JSON features, and how many had no geometry. Every ring
     of a polygon, or of each part of a multipolygon, goes in one list: the reader tests rings even-odd, which
-    needs no ring orientation and reads a multipolygon's parts (which do not overlap) as their union."""
-    out, empty = [], 0
+    needs no ring orientation and reads a multipolygon's parts (which do not overlap) as their union.
+
+    A GeometryCollection (Kings, Santa Cruz and Sierra hold some: run 39611484507) is read part by part, each
+    polygon its own feature with the zone's attributes, since nothing promises its parts do not overlap and
+    even-odd would read an overlap as outside. A line or point inside one has no area, so no resident can be in
+    it: it is dropped and counted in `parts_without_area`, which the manifest keeps. A zone that is ONLY a line
+    or a point is still refused: that is the wrong layer, not a zone."""
+    out, empty, dropped = [], 0, {}
     for f in geojson.get('features', []):
         g = f.get('geometry')
         if not g:
             empty += 1
             continue
-        if g['type'] == 'Polygon':
-            rings = g['coordinates']
-        elif g['type'] == 'MultiPolygon':
-            rings = [ring for part in g['coordinates'] for ring in part]
-        else:
-            raise SystemExit(f'{LAYER}: a {g["type"]} among the flood zones; polygons only')
-        out.append({'attributes': f.get('properties') or {}, 'geometry': {'rings': rings}})
-    return out, empty
+        parts = [g]
+        if g['type'] == 'GeometryCollection':
+            parts = []
+            for p in g.get('geometries', []):
+                if p['type'] in NO_AREA:
+                    dropped[p['type']] = dropped.get(p['type'], 0) + 1
+                else:
+                    parts.append(p)  # a polygon, or anything else, which the test below refuses
+        for p in parts:
+            if p['type'] == 'Polygon':
+                rings = p['coordinates']
+            elif p['type'] == 'MultiPolygon':
+                rings = [ring for part in p['coordinates'] for ring in part]
+            else:
+                raise SystemExit(f'{LAYER}: a {p["type"]} among the flood zones; polygons only')
+            out.append({'attributes': f.get('properties') or {}, 'geometry': {'rings': rings}})
+    return out, empty, dropped
 
 
 def fetch_county(name, fips, raw, get=None, read=None, portal=None):
@@ -345,7 +363,9 @@ def fetch_product(label, pid, raw, get, read, url=None):
     members = safe_extract(zpath, raw / pid)
     src = find_source(raw / pid)
     geojson, info = read(src, raw / pid)
-    feats, empty = esri_features(geojson)
+    feats, empty, dropped = esri_features(geojson)
+    if dropped:
+        print(f'  parts with no area dropped from geometry collections: {dropped}', flush=True)
     if not feats:
         raise SystemExit(f'{label}: {pid} holds no flood polygons: a failed fetch, not "no flood"')
     dfirms = {}
@@ -357,7 +377,8 @@ def fetch_product(label, pid, raw, get, read, url=None):
         'product_id': pid, 'url': url, 'served_as': served_as, 'bytes': size,
         'sha256': sha, 'members': members[:200], 'members_total': len(members),
         'source': str(src.relative_to(raw / pid)), 'source_layer_info': info[:4000],
-        'features': len(feats), 'without_geometry': empty, 'dfirm_ids': dict(sorted(dfirms.items(), key=lambda kv: str(kv[0]))),
+        'features': len(feats), 'without_geometry': empty, 'parts_without_area': dropped,
+        'dfirm_ids': dict(sorted(dfirms.items(), key=lambda kv: str(kv[0]))),
     }
 
 

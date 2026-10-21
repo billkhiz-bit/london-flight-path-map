@@ -159,6 +159,30 @@ def test_lines_among_the_zones_fail():
         fc.esri_features({'features': [{'properties': {}, 'geometry': {'type': 'LineString', 'coordinates': []}}]})
 
 
+def test_a_collection_is_read_part_by_part_and_an_overlap_stays_inside():
+    # Kings, Santa Cruz and Sierra (run 39611484507): zones held as GeometryCollections. Two overlapping AE
+    # squares and a stray line: pooled into one ring list, even-odd would read the overlap as OUTSIDE.
+    a = [[-122.30, 37.80], [-122.20, 37.80], [-122.20, 37.90], [-122.30, 37.90], [-122.30, 37.80]]
+    b = [[-122.25, 37.85], [-122.15, 37.85], [-122.15, 37.95], [-122.25, 37.95], [-122.25, 37.85]]
+    line = {'type': 'LineString', 'coordinates': [[-122.3, 37.8], [-122.2, 37.9]]}
+    zone = {'FLD_ZONE': 'AE', 'SFHA_TF': 'T', 'DFIRM_ID': '06031C'}
+    feats, empty, dropped = fc.esri_features({'features': [{'properties': zone, 'geometry': {
+        'type': 'GeometryCollection', 'geometries': [
+            {'type': 'Polygon', 'coordinates': [a]}, {'type': 'MultiPolygon', 'coordinates': [[b]]}, line]}}]})
+    assert [f['attributes'] for f in feats] == [zone, zone] and empty == 0
+    assert dropped == {'LineString': 1}
+    polys, cells = bf.zone_index(feats)
+    assert bf.classify(-122.22, 37.87, polys, cells) == 'sfha'      # in both squares
+    assert bf.classify(-122.28, 37.82, polys, cells) == 'sfha'      # in the first only
+    assert bf.classify(-122.10, 37.82, polys, cells) == 'unknown'   # in neither
+
+
+def test_a_collection_inside_a_collection_is_refused_not_dropped():
+    nested = {'type': 'GeometryCollection', 'geometries': [{'type': 'GeometryCollection', 'geometries': []}]}
+    with pytest.raises(SystemExit, match='a GeometryCollection among'):
+        fc.esri_features({'features': [{'properties': {}, 'geometry': nested}]})
+
+
 # A square zone AE with a square hole, and a two-part zone X: the shapes FEMA's layer holds.
 SQUARE = [[-122.30, 37.80], [-122.20, 37.80], [-122.20, 37.90], [-122.30, 37.90], [-122.30, 37.80]]
 HOLE = [[-122.26, 37.84], [-122.24, 37.84], [-122.24, 37.86], [-122.26, 37.86], [-122.26, 37.84]]
