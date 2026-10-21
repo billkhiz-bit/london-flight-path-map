@@ -27,8 +27,18 @@ THE GUARDS:
   file geodatabase alike, since the guide does not say which a county download holds; it is transformed to
   WGS84 with the fields fetch_fema_flood.py asks for. A county with no polygons fails: empty is not "no flood".
 
+THE STATE (2026-10-21, Bill: measure the US flood scale's anchor, as crime's and road's are): `--state` fetches
+every California county, the county list derived from the Census PL file's county rows into
+data/us-ca-counties.json (`--write-state-counties`, held by `--check`). Fifty-eight counties from a service that
+blocks on and off cannot be all-or-nothing, so each county is written the moment it arrives, as
+counties/<FIPS>.esrijson.gz with its own manifest counties/<FIPS>.json; a failed county is listed in failed.json
+and fetched again with `--only <FIPS,...>`. build_bayarea_flood.py --write-state refuses to measure until every
+county is on disk, so a missing county still cannot pass as "no flood".
+
 Usage: python -I scripts/fetch_fema_nfhl_counties.py --out <dir> [--raw <dir>]   (on the US runner)
+       python -I scripts/fetch_fema_nfhl_counties.py --state --out <dir> [--only 06037,06059]   (on the US runner)
        python scripts/fetch_fema_nfhl_counties.py --check   every resident block is in a fetched county
+       python scripts/fetch_fema_nfhl_counties.py --write-state-counties   California's counties, from Census
 """
 
 import argparse
@@ -39,6 +49,7 @@ import http.client
 import importlib.util
 import json
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -51,7 +62,10 @@ from pathlib import Path, PurePosixPath
 REPO = Path(__file__).resolve().parent.parent
 PLACES = REPO / 'data' / 'us-bayarea-places.json'
 TREND = REPO / 'data' / 'us-bayarea-trend.json'
-DOWNLOAD = 'https://msc.fema.gov/portal/downloadProduct?productID='
+CA_COUNTIES = REPO / 'data' / 'us-ca-counties.json'
+COUNTY_SUMLEV, BASENAME = '050', 86  # the PL header's county rows, and the position of a county's own name
+STATE_DEADLINE_S = 300 * 60  # --state: 58 counties; inside the workflow's 345 minutes (GitHub allows 360)
+DOWNLOAD ='https://msc.fema.gov/portal/downloadProduct?productID='
 LAYER = 'S_FLD_HAZ_AR'
 TRIES = 6
 PAUSE_S = 15  # before the first retry, doubled each time up to PAUSE_MAX_S: FEMA's blocks come and go
@@ -120,6 +134,57 @@ def counties(places_doc, trend_doc):
     if bad:
         raise SystemExit(f'{TREND.name}: {bad} are not California county FIPS codes')
     return out
+
+
+def census_counties(pl_rows):
+    """[{county, fips, residents}] from the PL geographic header's county rows (summary level 050): every
+    California county, as the Census Bureau names and counts it."""
+    b = _load('bayarea_blocks')  # one holder of the header's positions
+    out = []
+    for f in pl_rows:
+        if f[b.SUMLEV] == COUNTY_SUMLEV:
+            out.append({'county': f[BASENAME], 'fips': f[b.GEOCODE], 'residents': int(f[b.POP100])})
+    return sorted(out, key=lambda r: r['fips'])
+
+
+def _pl_rows():
+    blocks = _load('bayarea_blocks')
+    with zipfile.ZipFile(blocks.PL_RAW) as z, z.open('cageo2020.pl') as fh:
+        for raw in fh:
+            yield raw.decode('latin-1').rstrip('\r\n').split('|')
+
+
+def state_counties(doc, only=None):
+    """[(county name, FIPS)] for every California county with residents, from data/us-ca-counties.json; with
+    `only` (FIPS, comma-separated) just those, each of which must be one of them."""
+    rows = [(r['county'], r['fips']) for r in doc['counties'] if r['residents'] > 0]
+    fips = [f for _, f in rows]
+    if len(set(fips)) != len(fips) or not all(re.fullmatch(r'06\d{3}', f) for f in fips):
+        raise SystemExit(f'{CA_COUNTIES.name}: not one California FIPS per county: {fips}')
+    if only is None:
+        return rows
+    if not re.fullmatch(r'06\d{3}(,06\d{3})*', only):
+        raise SystemExit(f'--only takes California county FIPS, comma-separated (06037,06059), not {only!r}')
+    asked = only.split(',')
+    unknown = sorted(set(asked) - set(fips))
+    if unknown:
+        raise SystemExit(f'--only: {unknown} are not counties in {CA_COUNTIES.name}')
+    return [r for r in rows if r[1] in asked]
+
+
+def write_county(out, name, fips, feats, record):
+    """One county of a --state run, written the moment it arrives: its features and its own manifest."""
+    folder = out / 'counties'
+    folder.mkdir(parents=True, exist_ok=True)
+    doc = {'format': 'esrijson', 'spatialReference': {'wkid': 4326}, 'county': name, 'fips': fips, 'features': feats}
+    blob = gzip.compress(json.dumps(doc, separators=(',', ':')).encode('utf-8'), mtime=0)
+    tmp = folder / f'{fips}.esrijson.gz.partial'
+    tmp.write_bytes(blob)
+    tmp.replace(folder / f'{fips}.esrijson.gz')
+    manifest = {**record, 'county': name, 'fips': fips, 'features': len(feats),
+                'sha256_gz': hashlib.sha256(blob).hexdigest(),
+                'fetched_utc': dt.datetime.now(dt.UTC).isoformat(timespec='seconds')}
+    (folder / f'{fips}.json').write_text(json.dumps(manifest, indent=1) + '\n', encoding='utf-8', newline='\n')
 
 
 def _disposition_name(header):
@@ -265,6 +330,7 @@ def fetch_product(label, pid, raw, get, read, url=None):
     """(Esri JSON features, the record) for one NFHL product, county-wide or a community's, at the guide's
     address or at `url`, the one FEMA's portal page builds for a product its search lists."""
     url = url or DOWNLOAD + pid
+    raw.mkdir(parents=True, exist_ok=True)  # --state gives each county its own folder
     zpath = raw / f'{re.sub(r"[^A-Za-z0-9._-]", "_", pid)}.zip'
     for attempt in range(NOT_ZIP_TRIES):  # a page may be a throttle: asked again once, after a pause
         size, sha, served_as = get(url, zpath)
@@ -398,15 +464,54 @@ def check(want):
     return 0
 
 
+def check_state_counties():
+    """data/us-ca-counties.json is one California FIPS per county, and, with the PL file on disk, exactly the
+    Census Bureau's county rows."""
+    doc = json.loads(CA_COUNTIES.read_text(encoding='utf-8'))
+    rows = state_counties(doc)  # raises on a duplicate or a code that is not California's
+    if not _load('bayarea_blocks').PL_RAW.exists():
+        print(f'INCONCLUSIVE for values: the PL file is not on disk; {len(rows)} counties, shape checked')
+        return 0
+    if doc['counties'] != census_counties(_pl_rows()):
+        print(f'RESULT: FAIL: {CA_COUNTIES.name} is not the PL file\'s county rows (re-run --write-state-counties)')
+        return 1
+    print(f"  {CA_COUNTIES.name} == the PL file's {len(rows)} county rows "
+          f"({sum(r['residents'] for r in doc['counties']):,} residents)")
+    return 0
+
+
+def write_state_counties():
+    rows = census_counties(_pl_rows())
+    doc = {'source': 'US Census Bureau, 2020 Census redistricting data (PL 94-171), California geographic header, '
+                     'county rows (summary level 050)',
+           'generator': 'scripts/fetch_fema_nfhl_counties.py --write-state-counties', 'counties': rows}
+    CA_COUNTIES.write_text(json.dumps(doc, indent=1) + '\n', encoding='utf-8', newline='\n')
+    print(f"wrote {CA_COUNTIES.relative_to(REPO)}: {len(rows)} counties, {sum(r['residents'] for r in rows):,} residents")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--out', type=Path, help='where the Esri JSON and manifest go (the artifact)')
     ap.add_argument('--raw', type=Path, default=Path('fema-raw'), help='downloads, unpacked (not uploaded)')
     ap.add_argument('--check', action='store_true', help='every resident block is in a fetched county')
+    ap.add_argument('--state', action='store_true', help='every California county, one file each (the anchor)')
+    ap.add_argument('--only', help='with --state: these county FIPS only, comma-separated (to re-fetch failures)')
+    ap.add_argument('--write-state-counties', action='store_true',
+                    help=f'write {CA_COUNTIES.name} from the Census PL file (local)')
     a = ap.parse_args()
-    want = counties(json.loads(PLACES.read_text(encoding='utf-8')), json.loads(TREND.read_text(encoding='utf-8')))
+    if a.write_state_counties:
+        return write_state_counties()
+    if a.only and not a.state:
+        ap.error('--only goes with --state')
     if a.check:
-        return check(want)
+        bay = counties(json.loads(PLACES.read_text(encoding='utf-8')), json.loads(TREND.read_text(encoding='utf-8')))
+        return check(bay) | check_state_counties()
+    if a.state:
+        want = state_counties(json.loads(CA_COUNTIES.read_text(encoding='utf-8')), a.only)
+    else:
+        want = counties(json.loads(PLACES.read_text(encoding='utf-8')), json.loads(TREND.read_text(encoding='utf-8')))
+    deadline = STATE_DEADLINE_S if a.state else DEADLINE_S
     if not a.out:
         ap.error('--out is required unless --check')
     a.raw.mkdir(parents=True, exist_ok=True)
@@ -419,25 +524,40 @@ def main():
         (a.out / 'failed.json').write_text(json.dumps(doc, indent=1) + '\n', encoding='utf-8', newline='\n')
 
     for name, fips in want:
-        if time.monotonic() - started > DEADLINE_S:
-            failed.append({'county': name, 'fips': fips, 'error': f'not tried: {DEADLINE_S // 60} minutes gone'})
+        if time.monotonic() - started > deadline:
+            failed.append({'county': name, 'fips': fips, 'error': f'not tried: {deadline // 60} minutes gone'})
             report()
             continue
+        raw = a.raw / fips if a.state else a.raw  # --state: one folder a county, removed once it is read
         try:
-            got, record = fetch_county(name, fips, a.raw)
+            got, record = fetch_county(name, fips, raw)
         except (NotAZip, NetworkError, PortalError, SystemExit, zipfile.BadZipFile,
-                subprocess.CalledProcessError) as exc:
+                subprocess.CalledProcessError, OSError, ValueError, NotImplementedError) as exc:
             # Any county's failure: every county is still tried, so one run says which are missing; then
             # nothing is written that build_bayarea_flood.py could read, since a missing county would read as
-            # residents in no zone. (A 4xx, a broken zip or a GDAL error stopped the whole run before.)
-            failed.append(keep_failure(name, fips, exc, a.raw, a.out))
+            # residents in no zone. (A 4xx, a broken zip or a GDAL error stopped the whole run before; a disk
+            # error unpacking, GDAL's JSON unreadable or a zip method Python cannot read would have stopped a
+            # 58-county --state run at that county: code review, 2026-10-21.)
+            failed.append(keep_failure(name, fips, exc, raw, a.out))
             report()
             print(f'  FAILED: {exc}', flush=True)
             continue
         finally:
+            if a.state:  # 58 counties' unpacked downloads would not fit the runner's disk: each goes once read
+                shutil.rmtree(raw, ignore_errors=True)
             time.sleep(BETWEEN_S)
+        if a.state:  # written now, so a later failure, the deadline or a killed run cannot lose it
+            write_county(a.out, name, fips, got, record)
+            products.append({k: record.get(k) for k in ('county', 'fips', 'product_id', 'features')})
+            continue
         feats.extend(got)
         products.append(record)
+    if a.state:
+        report()
+        print(f'{len(products)} of {len(want)} counties written to {a.out / "counties"}; '
+              + (f'{len(failed)} failed ({", ".join(f["fips"] for f in failed)}): re-run with --only '
+                 f'{",".join(f["fips"] for f in failed)}' if failed else 'none failed'))
+        return 1 if failed else 0
     if failed:
         report()  # once more, with the counties fetched after the last failure
         print(f'{len(failed)} of {len(want)} counties failed ({", ".join(f["county"] for f in failed)}); '

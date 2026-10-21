@@ -7,8 +7,25 @@ name: FEMA flood zones, county downloads (manual fetch)
 # scripts/fetch_fema_nfhl_counties.py). Same artifact name and files as fema-flood-fetch.yml, so a session pulls
 # either the same way: `gh run download <run> -n fema-nfhl-bayarea -D data/fema/`, then
 # `python scripts/build_bayarea_flood.py --write`.
+#
+# scope=california (2026-10-21, the US flood scale's anchor): every California county, each written as it
+# arrives, so a failure costs only that county: `gh workflow run fema-nfhl-county-fetch.yml -f scope=california`,
+# then `gh run download <run> -n fema-nfhl-california -D data/fema/california/run-<run>/` (a fresh folder per run,
+# since a second run's failed.json would collide with the first's) and copy its counties/* into
+# data/fema/california/counties/; failed.json names the counties to fetch again with `-f only=06037,06059`.
+# Then `python scripts/build_bayarea_flood.py --write-state`.
 on:
   workflow_dispatch:
+    inputs:
+      scope:
+        description: 'bayarea: the 4 counties, all or nothing; california: all 58, one file each (the anchor)'
+        type: choice
+        options: [bayarea, california]
+        default: bayarea
+      only:
+        description: 'california only: county FIPS to fetch again, comma-separated (from failed.json); else empty'
+        type: string
+        default: ''
 
 # Least privilege, as in ci.yml: the job reads the repo and writes nothing back to it.
 permissions:
@@ -18,8 +35,9 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     # FEMA blocks on and off: a county's download retries for up to ~18 minutes (a hang each time); the
-    # fetcher starts no county after 40 minutes, so it can write failed.json before this limit.
-    timeout-minutes: 55
+    # fetcher starts no county after 40 minutes (bayarea) or 300 (california), so it can write failed.json
+    # before this limit. GitHub's own ceiling is 360.
+    timeout-minutes: ${{ inputs.scope == 'california' && 345 || 55 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -28,14 +46,28 @@ jobs:
       # GDAL reads S_FLD_HAZ_AR whether a county download holds a shapefile or a file geodatabase (FEMA's guide
       # does not say which). From Ubuntu's own archive; the Python side stays standard library only.
       - run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends gdal-bin && ogr2ogr --version
-      # The downloads go to fema-raw/, which is NOT uploaded: only the derived file and its manifest are.
-      - run: python -I scripts/fetch_fema_nfhl_counties.py --out fema-out --raw fema-raw
-      # Uploaded on failure too: then it holds only failed.json (rewritten after each failed county) and FEMA's
-      # replies (diagnostics/), never the file the reader takes, so a failed run cannot be mistaken for a fetch.
+      # The downloads go to fema-raw/, which is NOT uploaded: only the derived files and their manifests are.
+      # The inputs reach the shell as environment variables, never pasted into the script text, and the fetcher
+      # refuses an `only` that is not California county FIPS.
+      - name: Fetch
+        env:
+          SCOPE: ${{ inputs.scope }}
+          ONLY: ${{ inputs.only }}
+        run: |
+          if [ "$SCOPE" = california ]; then
+            set -- --state
+            if [ -n "$ONLY" ]; then set -- "$@" --only "$ONLY"; fi
+          else
+            set --
+          fi
+          python -I scripts/fetch_fema_nfhl_counties.py "$@" --out fema-out --raw fema-raw
+      # Uploaded on failure too. For bayarea it then holds only failed.json (rewritten after each failed county)
+      # and FEMA's replies (diagnostics/), never the file the reader takes, so a failed run cannot be mistaken for
+      # a fetch. For california it holds every county that DID arrive, each with its own manifest.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: fema-nfhl-bayarea
+          name: fema-nfhl-${{ inputs.scope || 'bayarea' }}
           path: fema-out/
           retention-days: 7
           if-no-files-found: error

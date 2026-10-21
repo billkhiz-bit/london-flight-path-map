@@ -22,7 +22,21 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > Menlo Park 14.8%, Redwood City 12.8%). **Next: the scoring wiring** ("Next after flood" in the 18 Oct block):
 > a withheld flood is SKIPPED and said so, env from air + road.
 > **How often planes pass:** the fetch finished 21 Oct: 289 of 291 days (adsb.lol's 5 May archive is near-empty and
-> 6 May has none: 404), so the year is as complete as the source; counting the new days is running.
+> 6 May has none: 404), so the year is as complete as the source; all 289 COUNTED. `average()` ran out of 32 GB
+> on the year and now folds 30-day batches (identical results, tested). **Year readout, unpublished** (270 days
+> kept): Kew 309 a westerly day, Battersea 321, Silvertown 104 + London City 36; Heathrow 72% westerly of the
+> classed days (lesson in-progress-measurements.md). Next: per-postcode averages for airports passing
+> `coverage_verdict()`, then N65 (needs EASA's data; Bill's request is drafted).
+> **Bay Area flood ANCHOR (Bill, 21 Oct: measure it):** the US flood scale needs California's own share of
+> residents in the 1% zone, as crime (22.27 per 1,000) and road (6.88%) have; without it the Bay Area has no
+> environment score (road alone is under the two-input floor). **The statewide fetch is BUILT** (58 counties
+> derived from the Census PL file, one file per county as it arrives, `--only` for re-runs; `--write-state` refuses
+> until every county is on disk). **Next: push, `gh workflow run fema-nfhl-county-fetch.yml -f scope=california`
+> (up to ~5 h), download each run's artifact to its own `data/fema/california/run-<id>/`, copy its `counties/*`
+> into `data/fema/california/counties/`, `build_bayarea_flood.py --write-state`.** The anchor counts only places
+> (and county remainders) FEMA has determined for 95%+ of residents, as a city's share does (code review: pooling
+> every determined resident read the Bay Area at 4.39% against 2.85% for the 41 cities with a share). Then
+> the Lambda wiring (`CITIES['bayarea']`), with the flood scale on the measured anchor.
 > **Breathe London:** Imperial asked (21 Oct) about commercial use of "BLC data"; none of ours is (LICENSING row:
 > all 116 sensors shown are the GLA's current Vodafone contract). Bill replied; a note to Imperial Projects follows.
 >

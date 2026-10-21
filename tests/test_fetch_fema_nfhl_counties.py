@@ -366,3 +366,96 @@ def test_a_county_sent_a_page_is_asked_again_then_recorded_and_the_rest_still_fe
     assert (tmp_path / 'out' / report['failed'][0]['reply_kept']).read_bytes().startswith(b'<html>')
     assert not (tmp_path / 'out' / 'nfhl-bayarea.esrijson.gz').exists()
     assert not (tmp_path / 'out' / 'manifest.json').exists()
+
+
+# ---------------------------------------------------------------- the state (the US flood scale's anchor)
+
+
+def test_the_state_county_list_is_the_census_rows_and_only_takes_its_own_counties():
+    doc = _real(fc.CA_COUNTIES)
+    rows = fc.state_counties(doc)
+    assert len(rows) == 58 and len({f for _, f in rows}) == 58  # every California county, once
+    assert sum(r['residents'] for r in doc['counties']) == 39_538_223  # the 2020 Census count of California
+    assert fc.state_counties(doc, '06037,06001') == [('Alameda', '06001'), ('Los Angeles', '06037')]
+    for bad in ('6037', '06037;rm -rf', '06037,'):  # not FIPS at all: said so, before any look-up
+        with pytest.raises(SystemExit, match='comma-separated'):
+            fc.state_counties(doc, bad)
+    with pytest.raises(SystemExit, match='not counties in'):  # a well-formed code that is no county
+        fc.state_counties(doc, '06999')
+    twice = {'counties': doc['counties'][:2] + doc['counties'][:1]}
+    with pytest.raises(SystemExit, match='one California FIPS per county'):
+        fc.state_counties(twice)
+
+
+def test_the_state_run_writes_each_county_as_it_comes_and_names_the_failures_to_fetch_again(tmp_path, monkeypatch):
+    three = {'counties': [{'county': 'Alameda', 'fips': '06001', 'residents': 1},
+                          {'county': 'Alpine', 'fips': '06003', 'residents': 1},
+                          {'county': 'Amador', 'fips': '06005', 'residents': 1}]}
+    (tmp_path / 'counties.json').write_text(json.dumps(three), encoding='utf-8')
+
+    def get(url, dest):
+        if url.endswith('NFHL_06003C'):
+            raise SystemExit(f'{url}: FEMA answered 403 Forbidden')
+        _zip(dest, {'S_FLD_HAZ_AR.shp': b''})
+        return dest.stat().st_size, 'f' * 64, None
+
+    monkeypatch.setattr(fc, 'CA_COUNTIES', tmp_path / 'counties.json')
+    monkeypatch.setattr(fc, 'download', get)
+    monkeypatch.setattr(fc, 'read_layer', lambda src, workdir: (GEOJSON, ''))
+    monkeypatch.setattr(fc, 'BETWEEN_S', 0)
+    out, raw = tmp_path / 'out', tmp_path / 'raw'
+    monkeypatch.setattr('sys.argv', ['x', '--state', '--out', str(out), '--raw', str(raw)])
+    assert fc.main() == 1
+    written = sorted(p.name for p in (out / 'counties').iterdir())
+    assert written == ['06001.esrijson.gz', '06001.json', '06005.esrijson.gz', '06005.json']
+    report = _real(out / 'failed.json')
+    assert [f['fips'] for f in report['failed']] == ['06003'] and '403' in report['failed'][0]['error']
+    assert not raw.exists() or not any(raw.iterdir())  # each county's download removed once read
+    assert not (out / 'nfhl-bayarea.esrijson.gz').exists()
+
+    # the flood reader takes a county file only when it is the file its manifest describes
+    monkeypatch.setattr(bf, 'STATE_DIR', out / 'counties')
+    assert len(bf.read_state_county('06001')) == 2  # the geometry-less zone D is left out, as before
+    blob = (out / 'counties' / '06005.esrijson.gz').read_bytes()
+    (out / 'counties' / '06005.esrijson.gz').write_bytes(blob[:-1] + bytes([blob[-1] ^ 1]))
+    with pytest.raises(SystemExit, match='not the file its manifest describes'):
+        bf.read_state_county('06005')
+
+    # the failed county alone is fetched again
+    asked = []
+    monkeypatch.setattr(fc, 'download', lambda url, dest: (asked.append(url), _zip(dest, {'S_FLD_HAZ_AR.shp': b''}),
+                                                           (dest.stat().st_size, 'f' * 64, None))[-1])
+    monkeypatch.setattr('sys.argv', ['x', '--state', '--only', '06003', '--out', str(out), '--raw', str(raw)])
+    assert fc.main() == 0
+    assert [u.rsplit('=', 1)[1] for u in asked] == ['NFHL_06003C']
+    assert (out / 'counties' / '06003.esrijson.gz').exists()
+
+
+def test_only_goes_with_the_state(tmp_path, monkeypatch):
+    monkeypatch.setattr('sys.argv', ['x', '--only', '06001', '--out', str(tmp_path)])
+    with pytest.raises(SystemExit):
+        fc.main()
+
+
+def test_an_unreadable_county_is_recorded_and_the_state_run_goes_on(tmp_path, monkeypatch):
+    # Code review, 2026-10-21: an error outside the caught list (GDAL's JSON unreadable, a disk error, a zip
+    # method Python cannot read) stopped a 58-county run at that county.
+    two = {'counties': [{'county': 'Alameda', 'fips': '06001', 'residents': 1},
+                        {'county': 'Alpine', 'fips': '06003', 'residents': 1}]}
+    (tmp_path / 'counties.json').write_text(json.dumps(two), encoding='utf-8')
+
+    def read(src, workdir):
+        if '06001' in str(workdir):
+            raise json.JSONDecodeError('Expecting value', '', 0)
+        return GEOJSON, ''
+
+    monkeypatch.setattr(fc, 'CA_COUNTIES', tmp_path / 'counties.json')
+    monkeypatch.setattr(fc, 'download', lambda url, dest: (_zip(dest, {'S_FLD_HAZ_AR.shp': b''}),
+                                                           (dest.stat().st_size, 'f' * 64, None))[-1])
+    monkeypatch.setattr(fc, 'read_layer', read)
+    monkeypatch.setattr(fc, 'BETWEEN_S', 0)
+    out = tmp_path / 'out'
+    monkeypatch.setattr('sys.argv', ['x', '--state', '--out', str(out), '--raw', str(tmp_path / 'raw')])
+    assert fc.main() == 1
+    assert [f['fips'] for f in _real(out / 'failed.json')['failed']] == ['06001']
+    assert (out / 'counties' / '06003.esrijson.gz').exists()

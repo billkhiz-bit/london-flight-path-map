@@ -1,0 +1,296 @@
+{
+ "source": "US Census Bureau, 2020 Census redistricting data (PL 94-171), California geographic header, county rows (summary level 050)",
+ "generator": "scripts/fetch_fema_nfhl_counties.py --write-state-counties",
+ "counties": [
+  {
+   "county": "Alameda",
+   "fips": "06001",
+   "residents": 1682353
+  },
+  {
+   "county": "Alpine",
+   "fips": "06003",
+   "residents": 1204
+  },
+  {
+   "county": "Amador",
+   "fips": "06005",
+   "residents": 40474
+  },
+  {
+   "county": "Butte",
+   "fips": "06007",
+   "residents": 211632
+  },
+  {
+   "county": "Calaveras",
+   "fips": "06009",
+   "residents": 45292
+  },
+  {
+   "county": "Colusa",
+   "fips": "06011",
+   "residents": 21839
+  },
+  {
+   "county": "Contra Costa",
+   "fips": "06013",
+   "residents": 1165927
+  },
+  {
+   "county": "Del Norte",
+   "fips": "06015",
+   "residents": 27743
+  },
+  {
+   "county": "El Dorado",
+   "fips": "06017",
+   "residents": 191185
+  },
+  {
+   "county": "Fresno",
+   "fips": "06019",
+   "residents": 1008654
+  },
+  {
+   "county": "Glenn",
+   "fips": "06021",
+   "residents": 28917
+  },
+  {
+   "county": "Humboldt",
+   "fips": "06023",
+   "residents": 136463
+  },
+  {
+   "county": "Imperial",
+   "fips": "06025",
+   "residents": 179702
+  },
+  {
+   "county": "Inyo",
+   "fips": "06027",
+   "residents": 19016
+  },
+  {
+   "county": "Kern",
+   "fips": "06029",
+   "residents": 909235
+  },
+  {
+   "county": "Kings",
+   "fips": "06031",
+   "residents": 152486
+  },
+  {
+   "county": "Lake",
+   "fips": "06033",
+   "residents": 68163
+  },
+  {
+   "county": "Lassen",
+   "fips": "06035",
+   "residents": 32730
+  },
+  {
+   "county": "Los Angeles",
+   "fips": "06037",
+   "residents": 10014009
+  },
+  {
+   "county": "Madera",
+   "fips": "06039",
+   "residents": 156255
+  },
+  {
+   "county": "Marin",
+   "fips": "06041",
+   "residents": 262321
+  },
+  {
+   "county": "Mariposa",
+   "fips": "06043",
+   "residents": 17131
+  },
+  {
+   "county": "Mendocino",
+   "fips": "06045",
+   "residents": 91601
+  },
+  {
+   "county": "Merced",
+   "fips": "06047",
+   "residents": 281202
+  },
+  {
+   "county": "Modoc",
+   "fips": "06049",
+   "residents": 8700
+  },
+  {
+   "county": "Mono",
+   "fips": "06051",
+   "residents": 13195
+  },
+  {
+   "county": "Monterey",
+   "fips": "06053",
+   "residents": 439035
+  },
+  {
+   "county": "Napa",
+   "fips": "06055",
+   "residents": 138019
+  },
+  {
+   "county": "Nevada",
+   "fips": "06057",
+   "residents": 102241
+  },
+  {
+   "county": "Orange",
+   "fips": "06059",
+   "residents": 3186989
+  },
+  {
+   "county": "Placer",
+   "fips": "06061",
+   "residents": 404739
+  },
+  {
+   "county": "Plumas",
+   "fips": "06063",
+   "residents": 19790
+  },
+  {
+   "county": "Riverside",
+   "fips": "06065",
+   "residents": 2418185
+  },
+  {
+   "county": "Sacramento",
+   "fips": "06067",
+   "residents": 1585055
+  },
+  {
+   "county": "San Benito",
+   "fips": "06069",
+   "residents": 64209
+  },
+  {
+   "county": "San Bernardino",
+   "fips": "06071",
+   "residents": 2181654
+  },
+  {
+   "county": "San Diego",
+   "fips": "06073",
+   "residents": 3298634
+  },
+  {
+   "county": "San Francisco",
+   "fips": "06075",
+   "residents": 873965
+  },
+  {
+   "county": "San Joaquin",
+   "fips": "06077",
+   "residents": 779233
+  },
+  {
+   "county": "San Luis Obispo",
+   "fips": "06079",
+   "residents": 282424
+  },
+  {
+   "county": "San Mateo",
+   "fips": "06081",
+   "residents": 764442
+  },
+  {
+   "county": "Santa Barbara",
+   "fips": "06083",
+   "residents": 448229
+  },
+  {
+   "county": "Santa Clara",
+   "fips": "06085",
+   "residents": 1936259
+  },
+  {
+   "county": "Santa Cruz",
+   "fips": "06087",
+   "residents": 270861
+  },
+  {
+   "county": "Shasta",
+   "fips": "06089",
+   "residents": 182155
+  },
+  {
+   "county": "Sierra",
+   "fips": "06091",
+   "residents": 3236
+  },
+  {
+   "county": "Siskiyou",
+   "fips": "06093",
+   "residents": 44076
+  },
+  {
+   "county": "Solano",
+   "fips": "06095",
+   "residents": 453491
+  },
+  {
+   "county": "Sonoma",
+   "fips": "06097",
+   "residents": 488863
+  },
+  {
+   "county": "Stanislaus",
+   "fips": "06099",
+   "residents": 552878
+  },
+  {
+   "county": "Sutter",
+   "fips": "06101",
+   "residents": 99633
+  },
+  {
+   "county": "Tehama",
+   "fips": "06103",
+   "residents": 65829
+  },
+  {
+   "county": "Trinity",
+   "fips": "06105",
+   "residents": 16112
+  },
+  {
+   "county": "Tulare",
+   "fips": "06107",
+   "residents": 473117
+  },
+  {
+   "county": "Tuolumne",
+   "fips": "06109",
+   "residents": 55620
+  },
+  {
+   "county": "Ventura",
+   "fips": "06111",
+   "residents": 843843
+  },
+  {
+   "county": "Yolo",
+   "fips": "06113",
+   "residents": 216403
+  },
+  {
+   "county": "Yuba",
+   "fips": "06115",
+   "residents": 81575
+  }
+ ]
+}

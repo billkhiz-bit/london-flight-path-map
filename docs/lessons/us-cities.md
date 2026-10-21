@@ -213,3 +213,21 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   dead code (and it keyed San Francisco by the manifest's requested id `06075C`, not the `060298` it holds).
   **Lesson: before asking Bill to decide what a gap MEANS, tally which zone the affected residents are actually
   in** (one loop over `classify()`'s hits); a description of a map read off its polygon areas is not that tally.
+- **The US flood scale's ANCHOR (Bill, 2026-10-21: measure it).** CLAUDE.md's rule gives crime, road AND flood a
+  US scale linear on a California figure; crime (22.27 per 1,000) and road (6.88%) had theirs, flood had none, and
+  without flood the Bay Area has NO environment score (road alone is under the two-input floor). Built: the
+  fetcher's `--state` mode fetches all 58 counties, the list derived from the PL file's county rows into
+  `data/us-ca-counties.json` (58 counties, 39,538,223 residents: the 2020 count to the person; `--check` holds it);
+  each county is written AS IT ARRIVES (`counties/<FIPS>.esrijson.gz` + its own manifest) and its download deleted,
+  since 58 unpacked downloads would not fit the runner's disk and one failure must not cost the rest; `--only
+  <FIPS,...>` fetches failures again; the workflow takes `scope` and `only` as env vars, 345 minutes for california.
+  `build_bayarea_flood.py --write-state` measures `data/us-california-flood.json` one county at a time (memory holds
+  one county), sha-checking each file against its manifest, and REFUSES while any county with residents is
+  missing. **The anchor counts only UNITS a city would get a share for** (`anchor_of()`, `share()`'s rule): each
+  place, and each county's land outside every place, with 95%+ of residents in a determined zone. The first
+  version pooled every determined resident, and the code review caught it: a withheld place's determined residents
+  are the creek-biased few FEMA studied (the 9 withheld Bay Area cities' read 14.2%), so pooling the 50 cities
+  gave 4.39% against 2.85% for the 41 with a share, an anchor that would read every US city safer. The pooled
+  figure is kept as `sfha_pct_all_determined`, for comparison only; `--check` reds an anchor resting on under
+  half of California's residents. Ten mutations proven red. Next: push, run `-f scope=california`, download each
+  run to its own folder, copy `counties/*` in, `--write-state`.

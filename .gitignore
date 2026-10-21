@@ -106,6 +106,9 @@ data/*
 !data/us-bayarea-crime.json
 !data/us-bayarea-road.json
 !data/us-bayarea-flood.json
+# California's counties (Census) and its flood share, the US flood scale's anchor (2026-10-21)
+!data/us-ca-counties.json
+!data/us-california-flood.json
 # Census outlines of the Bay Area's cities (2026-10-02), simplified, with the
 # frame the noise picture was cut to. scripts/build_bay_area_page.py --check, a
 # BLOCKING stage, renders the page from it. NOT named `*-boroughs.json`: five
