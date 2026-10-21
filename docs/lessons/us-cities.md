@@ -201,3 +201,15 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   (proven useful on its first real run). **Bill's call:** Claude recommends reading "no polygon" as unshaded zone X
   WHERE the county's FIRM is county-wide and codes undetermined land as D, stated with the figures; until then the
   output is not committed.
+- **CORRECTION, 2026-10-21: the valley floor is NOT blank, it is zone D.** Implementing the rule above (Bill had
+  said yes to it) found **0 residents in no polygon in all 50 cities**: every one of San Jose's 766,952 "unknown"
+  residents sits INSIDE Santa Clara's 1,682 km2 zone D polygon (full detail, 12 rings, its holes intact; nothing
+  generalised or refused). The "5.2%" was D read as safe, not blank read as X. The question had been put to Bill
+  on a wrong description, so it was put again: **Bill chose NO FLOOD FIGURE where FEMA has not determined the
+  risk**. A city over UNKNOWN_MAX_PCT (5%) unknown gets `sfha_pct: null` and a `withheld` reason, and is scored
+  without flood (env's floor is two inputs): nine Santa Clara cities (San Jose 76% D, Cupertino 27, Gilroy 13,
+  Milpitas 10, Campbell 9, Los Gatos 9, Los Altos 8, Morgan Hill 7, Los Altos Hills 5); 41 keep a share. The
+  blank-as-X code was written, tested, proven red and then REVERTED unshipped: a rule that applies to nobody is
+  dead code (and it keyed San Francisco by the manifest's requested id `06075C`, not the `060298` it holds).
+  **Lesson: before asking Bill to decide what a gap MEANS, tally which zone the affected residents are actually
+  in** (one loop over `classify()`'s hits); a description of a map read off its polygon areas is not that tally.

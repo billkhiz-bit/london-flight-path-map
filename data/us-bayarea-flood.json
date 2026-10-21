@@ -1,0 +1,512 @@
+{
+ "source": "FEMA National Flood Hazard Layer, flood hazard zones (Special Flood Hazard Area, 1% annual chance), read at the 2020 Census block internal points",
+ "fema_fetched_utc": "2026-10-20T15:00:39+00:00",
+ "fema_sha256_gz": "a4cfc3705f65adfba5cd52c313201ccf4390cd98a9a6183661d4aa00f6990b23",
+ "generalised_polygons": 0,
+ "refused_polygons": {},
+ "licence": "public domain (FEMA, a US government work)",
+ "generator": "scripts/build_bayarea_flood.py --write",
+ "measure": "share of residents in a determined zone who are inside the SFHA (SFHA_TF = T); residents in zone D or in no polygon are unknown, counted, and left out of the share; a city where they are over 5.0% of residents has no share, only the reason (withheld)",
+ "cities": [
+  {
+   "geoid": "0600562",
+   "name": "Alameda",
+   "county": "Alameda",
+   "residents": 78280,
+   "residents_sfha": 5508,
+   "residents_unknown": 0,
+   "sfha_pct": 7.04,
+   "withheld": null
+  },
+  {
+   "geoid": "0600674",
+   "name": "Albany",
+   "county": "Alameda",
+   "residents": 20271,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0603092",
+   "name": "Atherton",
+   "county": "San Mateo",
+   "residents": 7188,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0605108",
+   "name": "Belmont",
+   "county": "San Mateo",
+   "residents": 28335,
+   "residents_sfha": 396,
+   "residents_unknown": 0,
+   "sfha_pct": 1.4,
+   "withheld": null
+  },
+  {
+   "geoid": "0606000",
+   "name": "Berkeley",
+   "county": "Alameda",
+   "residents": 124321,
+   "residents_sfha": 0,
+   "residents_unknown": 21,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0608310",
+   "name": "Brisbane",
+   "county": "San Mateo",
+   "residents": 4851,
+   "residents_sfha": 30,
+   "residents_unknown": 0,
+   "sfha_pct": 0.62,
+   "withheld": null
+  },
+  {
+   "geoid": "0609066",
+   "name": "Burlingame",
+   "county": "San Mateo",
+   "residents": 31386,
+   "residents_sfha": 1062,
+   "residents_unknown": 0,
+   "sfha_pct": 3.38,
+   "withheld": null
+  },
+  {
+   "geoid": "0610345",
+   "name": "Campbell",
+   "county": "Santa Clara",
+   "residents": 43959,
+   "residents_sfha": 1234,
+   "residents_unknown": 4039,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 9% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0614736",
+   "name": "Colma",
+   "county": "San Mateo",
+   "residents": 1507,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0617610",
+   "name": "Cupertino",
+   "county": "Santa Clara",
+   "residents": 60381,
+   "residents_sfha": 308,
+   "residents_unknown": 16318,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 27% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0617918",
+   "name": "Daly City",
+   "county": "San Mateo",
+   "residents": 104901,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0620018",
+   "name": "Dublin",
+   "county": "Alameda",
+   "residents": 72589,
+   "residents_sfha": 201,
+   "residents_unknown": 0,
+   "sfha_pct": 0.28,
+   "withheld": null
+  },
+  {
+   "geoid": "0620956",
+   "name": "East Palo Alto",
+   "county": "San Mateo",
+   "residents": 30034,
+   "residents_sfha": 9747,
+   "residents_unknown": 0,
+   "sfha_pct": 32.45,
+   "withheld": null
+  },
+  {
+   "geoid": "0622594",
+   "name": "Emeryville",
+   "county": "Alameda",
+   "residents": 12905,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0625338",
+   "name": "Foster City",
+   "county": "San Mateo",
+   "residents": 33805,
+   "residents_sfha": 726,
+   "residents_unknown": 0,
+   "sfha_pct": 2.15,
+   "withheld": null
+  },
+  {
+   "geoid": "0626000",
+   "name": "Fremont",
+   "county": "Alameda",
+   "residents": 230504,
+   "residents_sfha": 1449,
+   "residents_unknown": 0,
+   "sfha_pct": 0.63,
+   "withheld": null
+  },
+  {
+   "geoid": "0629504",
+   "name": "Gilroy",
+   "county": "Santa Clara",
+   "residents": 59520,
+   "residents_sfha": 1119,
+   "residents_unknown": 7489,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 13% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0631708",
+   "name": "Half Moon Bay",
+   "county": "San Mateo",
+   "residents": 11795,
+   "residents_sfha": 32,
+   "residents_unknown": 0,
+   "sfha_pct": 0.27,
+   "withheld": null
+  },
+  {
+   "geoid": "0633000",
+   "name": "Hayward",
+   "county": "Alameda",
+   "residents": 162954,
+   "residents_sfha": 3291,
+   "residents_unknown": 0,
+   "sfha_pct": 2.02,
+   "withheld": null
+  },
+  {
+   "geoid": "0633798",
+   "name": "Hillsborough",
+   "county": "San Mateo",
+   "residents": 11387,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0641992",
+   "name": "Livermore",
+   "county": "Alameda",
+   "residents": 87955,
+   "residents_sfha": 931,
+   "residents_unknown": 0,
+   "sfha_pct": 1.06,
+   "withheld": null
+  },
+  {
+   "geoid": "0643280",
+   "name": "Los Altos",
+   "county": "Santa Clara",
+   "residents": 31625,
+   "residents_sfha": 508,
+   "residents_unknown": 2595,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 8% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0643294",
+   "name": "Los Altos Hills",
+   "county": "Santa Clara",
+   "residents": 8489,
+   "residents_sfha": 14,
+   "residents_unknown": 449,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 5% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0644112",
+   "name": "Los Gatos",
+   "county": "Santa Clara",
+   "residents": 33529,
+   "residents_sfha": 371,
+   "residents_unknown": 2963,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 9% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0646870",
+   "name": "Menlo Park",
+   "county": "San Mateo",
+   "residents": 33780,
+   "residents_sfha": 5008,
+   "residents_unknown": 0,
+   "sfha_pct": 14.83,
+   "withheld": null
+  },
+  {
+   "geoid": "0647486",
+   "name": "Millbrae",
+   "county": "San Mateo",
+   "residents": 23216,
+   "residents_sfha": 744,
+   "residents_unknown": 0,
+   "sfha_pct": 3.2,
+   "withheld": null
+  },
+  {
+   "geoid": "0647766",
+   "name": "Milpitas",
+   "county": "Santa Clara",
+   "residents": 80273,
+   "residents_sfha": 18926,
+   "residents_unknown": 8309,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 10% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0648956",
+   "name": "Monte Sereno",
+   "county": "Santa Clara",
+   "residents": 3479,
+   "residents_sfha": 0,
+   "residents_unknown": 30,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0649278",
+   "name": "Morgan Hill",
+   "county": "Santa Clara",
+   "residents": 45483,
+   "residents_sfha": 4188,
+   "residents_unknown": 3093,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 7% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0649670",
+   "name": "Mountain View",
+   "county": "Santa Clara",
+   "residents": 82376,
+   "residents_sfha": 44,
+   "residents_unknown": 0,
+   "sfha_pct": 0.05,
+   "withheld": null
+  },
+  {
+   "geoid": "0650916",
+   "name": "Newark",
+   "county": "Alameda",
+   "residents": 47529,
+   "residents_sfha": 1121,
+   "residents_unknown": 0,
+   "sfha_pct": 2.36,
+   "withheld": null
+  },
+  {
+   "geoid": "0653000",
+   "name": "Oakland",
+   "county": "Alameda",
+   "residents": 440646,
+   "residents_sfha": 3580,
+   "residents_unknown": 278,
+   "sfha_pct": 0.81,
+   "withheld": null
+  },
+  {
+   "geoid": "0654806",
+   "name": "Pacifica",
+   "county": "San Mateo",
+   "residents": 38640,
+   "residents_sfha": 602,
+   "residents_unknown": 0,
+   "sfha_pct": 1.56,
+   "withheld": null
+  },
+  {
+   "geoid": "0655282",
+   "name": "Palo Alto",
+   "county": "Santa Clara",
+   "residents": 68572,
+   "residents_sfha": 15492,
+   "residents_unknown": 3,
+   "sfha_pct": 22.59,
+   "withheld": null
+  },
+  {
+   "geoid": "0656938",
+   "name": "Piedmont",
+   "county": "Alameda",
+   "residents": 11270,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  },
+  {
+   "geoid": "0657792",
+   "name": "Pleasanton",
+   "county": "Alameda",
+   "residents": 79871,
+   "residents_sfha": 3260,
+   "residents_unknown": 0,
+   "sfha_pct": 4.08,
+   "withheld": null
+  },
+  {
+   "geoid": "0658380",
+   "name": "Portola Valley",
+   "county": "San Mateo",
+   "residents": 4456,
+   "residents_sfha": 204,
+   "residents_unknown": 0,
+   "sfha_pct": 4.58,
+   "withheld": null
+  },
+  {
+   "geoid": "0660102",
+   "name": "Redwood City",
+   "county": "San Mateo",
+   "residents": 84292,
+   "residents_sfha": 10811,
+   "residents_unknown": 0,
+   "sfha_pct": 12.83,
+   "withheld": null
+  },
+  {
+   "geoid": "0665028",
+   "name": "San Bruno",
+   "county": "San Mateo",
+   "residents": 43908,
+   "residents_sfha": 1702,
+   "residents_unknown": 855,
+   "sfha_pct": 3.95,
+   "withheld": null
+  },
+  {
+   "geoid": "0665070",
+   "name": "San Carlos",
+   "county": "San Mateo",
+   "residents": 30722,
+   "residents_sfha": 500,
+   "residents_unknown": 0,
+   "sfha_pct": 1.63,
+   "withheld": null
+  },
+  {
+   "geoid": "0667000",
+   "name": "San Francisco",
+   "county": "San Francisco",
+   "residents": 873965,
+   "residents_sfha": 2509,
+   "residents_unknown": 34,
+   "sfha_pct": 0.29,
+   "withheld": null
+  },
+  {
+   "geoid": "0668000",
+   "name": "San Jose",
+   "county": "Santa Clara",
+   "residents": 1013240,
+   "residents_sfha": 53189,
+   "residents_unknown": 766952,
+   "sfha_pct": null,
+   "withheld": "FEMA has not determined the flood risk for 76% of residents (zone D or unmapped)"
+  },
+  {
+   "geoid": "0668084",
+   "name": "San Leandro",
+   "county": "Alameda",
+   "residents": 91008,
+   "residents_sfha": 6467,
+   "residents_unknown": 0,
+   "sfha_pct": 7.11,
+   "withheld": null
+  },
+  {
+   "geoid": "0668252",
+   "name": "San Mateo",
+   "county": "San Mateo",
+   "residents": 105661,
+   "residents_sfha": 3088,
+   "residents_unknown": 0,
+   "sfha_pct": 2.92,
+   "withheld": null
+  },
+  {
+   "geoid": "0669084",
+   "name": "Santa Clara",
+   "county": "Santa Clara",
+   "residents": 127647,
+   "residents_sfha": 6859,
+   "residents_unknown": 1128,
+   "sfha_pct": 5.42,
+   "withheld": null
+  },
+  {
+   "geoid": "0670280",
+   "name": "Saratoga",
+   "county": "Santa Clara",
+   "residents": 31051,
+   "residents_sfha": 257,
+   "residents_unknown": 728,
+   "sfha_pct": 0.85,
+   "withheld": null
+  },
+  {
+   "geoid": "0673262",
+   "name": "South San Francisco",
+   "county": "San Mateo",
+   "residents": 66105,
+   "residents_sfha": 990,
+   "residents_unknown": 0,
+   "sfha_pct": 1.5,
+   "withheld": null
+  },
+  {
+   "geoid": "0677000",
+   "name": "Sunnyvale",
+   "county": "Santa Clara",
+   "residents": 155805,
+   "residents_sfha": 12657,
+   "residents_unknown": 0,
+   "sfha_pct": 8.12,
+   "withheld": null
+  },
+  {
+   "geoid": "0681204",
+   "name": "Union City",
+   "county": "Alameda",
+   "residents": 70143,
+   "residents_sfha": 2571,
+   "residents_unknown": 0,
+   "sfha_pct": 3.67,
+   "withheld": null
+  },
+  {
+   "geoid": "0686440",
+   "name": "Woodside",
+   "county": "San Mateo",
+   "residents": 5309,
+   "residents_sfha": 0,
+   "residents_unknown": 0,
+   "sfha_pct": 0.0,
+   "withheld": null
+  }
+ ]
+}

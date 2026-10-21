@@ -2,13 +2,30 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-20 - FEMA's county downloads work (Alameda fetched; San Francisco's product id to find),
+**Last reviewed:** 2026-10-21 - Bay Area flood BUILT (no figure where FEMA has not determined the risk: nine Santa
+Clara cities withheld, 41 with a share); the year's plane tracks fetched (289 of 291 days; adsb.lol has no 5-6 May);
+previously 2026-10-20 - FEMA's county downloads work (Alameda fetched; San Francisco's product id to find),
 the overflight counter built and its direction rule chosen, sold prices' category, tenure and flat built for the
 next changeset; previously 2026-10-19 - Breathe London's data half built (GLA key received; 116 sensors' 12-month means
 in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-21)
+>
+> **Bay Area flood: BUILT and decided** (`data/us-bayarea-flood.json`, `build_bayarea_flood.py --check` PASS at
+> every block). The 20 Oct "blank valley floor" was WRONG: 0 residents in all 50 cities are in no polygon; San
+> Jose's 766,952 "unknown" are inside an explicit zone D polygon (lesson us-cities.md, CORRECTION). Bill chose
+> (asked again on the true facts): **no flood figure where FEMA has not determined the risk**. Over 5% of
+> residents undetermined -> `sfha_pct: null` + a `withheld` reason: San Jose, Cupertino, Gilroy, Milpitas, Campbell,
+> Los Gatos, Los Altos, Morgan Hill, Los Altos Hills. 41 cities keep a share (East Palo Alto 32.5%, Palo Alto 22.6%,
+> Menlo Park 14.8%, Redwood City 12.8%). **Next: the scoring wiring** ("Next after flood" in the 18 Oct block):
+> a withheld flood is SKIPPED and said so, env from air + road.
+> **How often planes pass:** the fetch finished 21 Oct: 289 of 291 days (adsb.lol's 5 May archive is near-empty and
+> 6 May has none: 404), so the year is as complete as the source; counting the new days is running.
+> **Breathe London:** Imperial asked (21 Oct) about commercial use of "BLC data"; none of ours is (LICENSING row:
+> all 116 sensors shown are the GLA's current Vodafone contract). Bill replied; a note to Imperial Projects follows.
+>
 > ## START HERE (2026-10-20)
 >
 > **Afternoon (Bill: "retry FEMA and deploy if you can"):** **DEPLOYED** the backend through a reviewed changeset
@@ -24,7 +41,7 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > now runs the page's own product search for it and downloads each `NFHL_COUNTY_DATA` product by its LISTED name
 > (never a guessed id). **Run `39443609009`: ALL FOUR FETCHED** (San Francisco = `NFHL_060298`, 260 polygons;
 > 6,420 in all). The first `build_bayarea_flood.py --write`: East Palo Alto 32.5%, Milpitas 26.3%, Palo Alto 22.6%
-> of residents in the 1% zone, BUT Santa Clara's file leaves the valley floor blank (no unshaded zone X polygons),
+> of residents in the 1% zone, BUT Santa Clara's file leaves the valley floor blank (**WRONG, corrected 21 Oct: it is one explicit zone D polygon**),
 > so San Jose reads 76% "unknown" and 21.6% of the rest; blank read as zone X gives ~5.2%. **Waiting on Bill**
 > (lesson us-cities.md): read "no polygon" as unshaded X where the FIRM is county-wide and codes D explicitly?
 > Claude recommends yes. The flood output is not committed until then (`--write` rebuilds it in a minute from
@@ -2036,6 +2053,30 @@ Open, Bill's (the choice among the six is made: v2, 2 Oct; the v2+v3 combination
 then lives (the same `index.html` runs in the native app, about twenty gates
 and 103 area-page links assume the map at `/`); build under "Sky Score" or
 after the rename. Audiences on every version follow the Constraints above.
+
+### Parked idea: ask Sky Score on WhatsApp (raised by Bill, 2026-10-21)
+
+Bill, using another service's WhatsApp assistant: let people message a postcode and get the answer on WhatsApp.
+**Feasible and cheap; parked behind the name, the ICO fee and evidence of demand.**
+
+- **Build (~1-2 days):** a webhook Lambda for Meta's WhatsApp Cloud API (direct, no reseller fee) that takes a
+  message, finds the postcode and asks the EXISTING retrieval-only `ChatFunction` (`verify_answer()` and all), then
+  replies. Nothing new answers a question. Per-route throttle, as every unauthenticated route has.
+- **Running cost (read 2026-10-21, re-check Meta's rate card before building):** replies inside the 24-hour window
+  after a user writes are free (service messages free since 2024-11-01); only messages WE start (templates) are
+  charged, roughly GBP 0.01 utility / GBP 0.05 marketing in the UK per third-party rate tables. Bedrock about
+  GBP 0.0002 an answer. So ~GBP 0-5 a month at low volume.
+- **Blockers:** (1) the name: Meta reviews the display name, and a new public "Sky Score" channel during Sky's
+  dispute is unwise: after the rename. (2) Personal data: phone numbers and messages to Meta, and the chat calls
+  Bedrock in us-east-1, so the ICO fee and a privacy-policy section first (legal batch 2). (3) Meta's policy from
+  2026-01-15 bans GENERAL-PURPOSE AI assistants on the Business API; a bot answering about our own data is allowed,
+  so it must refuse off-topic questions.
+- **Demand first:** `/v1/chat` is API-key-gated, so no member of the public has ever been able to ask Sky Score a
+  question: there is no evidence yet that people want to ask rather than look. Cheapest test, in order: a
+  counted "Ask a question" entry on the front page (the `want/` counted-actions pattern, `js/count.mjs`), then the
+  chat on the website (same Lambda; no Meta, no phone numbers), then WhatsApp if the website chat is used.
+- **Possible any time, publishes nothing:** a private prototype on Meta's free test number (shown as "Test Number",
+  up to five recipients), e.g. for a demo.
 
 ### Open after the New York noise-layer repoint (2026-10-02)
 

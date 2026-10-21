@@ -57,18 +57,28 @@ def test_land_outside_the_study_and_open_water_are_unknown_not_safe():
     assert bf.classify(-122.298, 37.802, polys, cells) == 'sfha'  # a determined 1% reading still wins
 
 
-def test_the_check_reds_a_mostly_unknown_city_and_a_share_that_is_not_its_counts():
+def test_a_mostly_undetermined_city_has_no_share_only_the_reason():
+    # San Jose, 2026-10-21: 766,952 of 1,013,240 in zone D; 53,189 in the 1% zone, 21.6% of the rest
+    assert bf.share(1013240, 53189, 766952) == (
+        None, 'FEMA has not determined the flood risk for 76% of residents (zone D or unmapped)')
+    assert bf.share(43908, 1702, 855) == (3.95, None)  # San Bruno: 1.9% undetermined, the share stands
+    assert bf.share(1000, 0, 1000)[0] is None
+
+
+def test_the_check_reds_a_share_printed_where_fema_has_not_determined_and_one_not_its_counts():
     want = [{'geoid': '0600001', 'name': 'A'}, {'geoid': '0600002', 'name': 'B'}]
     ok = {'cities': [
         {'geoid': '0600001', 'name': 'A', 'residents': 1000, 'residents_sfha': 50, 'residents_unknown': 0,
-         'sfha_pct': 5.0},
-        {'geoid': '0600002', 'name': 'B', 'residents': 1000, 'residents_sfha': 0, 'residents_unknown': 20,
-         'sfha_pct': 0.0},
+         'sfha_pct': 5.0, 'withheld': None},
+        {'geoid': '0600002', 'name': 'B', 'residents': 1000, 'residents_sfha': 0, 'residents_unknown': 400,
+         'sfha_pct': None, 'withheld': 'FEMA has not determined the flood risk for 40% of residents (zone D or unmapped)'},
     ]}
     assert bf.problems(ok, want) == []
-    ok['cities'][1]['residents_unknown'] = 400
-    ok['cities'][1]['sfha_pct'] = 0.0
-    assert any('no determined zone' in p for p in bf.problems(ok, want))
-    ok['cities'][1]['residents_unknown'] = 20
+    ok['cities'][1]['sfha_pct'] = 0.0  # a share (and a reassuring one) where FEMA gave none
+    assert any('must be withheld' in p for p in bf.problems(ok, want))
+    ok['cities'][1]['sfha_pct'] = None
     ok['cities'][0]['sfha_pct'] = 0.5
+    assert any('not its counts' in p for p in bf.problems(ok, want))
+    ok['cities'][0]['sfha_pct'] = 5.0
+    ok['cities'][0]['withheld'] = 'made up'  # a reason where the share stands
     assert any('not its counts' in p for p in bf.problems(ok, want))

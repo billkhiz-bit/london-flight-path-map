@@ -917,6 +917,10 @@ advise "Bay Area road == BTS road tiles"   python scripts/build_bayarea_road.py 
 # Added 2026-10-20: FEMA's county-wide NFHL downloads cover every resident block of the 50 cities (the counties
 # are derived from the place and trend files; with the gitignored Census frame on disk, every block is placed).
 advise "Bay Area flood counties == Census"   python scripts/fetch_fema_nfhl_counties.py --check
+# Added 2026-10-21: the flood output itself. Offline it checks coverage, each share against its counts, and
+# that a city over 5% undetermined (zone D) carries no share, only the reason (Bill, 2026-10-21); with FEMA's
+# file and the Census frame on disk it re-derives every block, else INCONCLUSIVE for values. Advisory until served.
+advise "Bay Area flood == FEMA NFHL"   python scripts/build_bayarea_flood.py --check
 # Added 2026-10-16: the SFO monitor block (the US yardstick, ANEEM) equals what its daily
 # DataSF rows give. Advisory: the rows are gitignored (--fetch); INCONCLUSIVE without them.
 advise "SFO monitors == DataSF rows"     python scripts/build_sfo_noise_monitors.py --check

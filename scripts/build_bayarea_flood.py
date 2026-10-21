@@ -6,8 +6,12 @@ Flood Hazard Area (`SFHA_TF = 'T'`: zones A, AE, AH, AO, V, VE ...) is the same 
 is the share of a city's RESIDENTS (2020 blocks, scripts/bayarea_blocks.py) inside it.
 
 FEMA maps all of its studied land, minimal-risk zone X included, so a resident in NO polygon, or in zone
-D ("possible but undetermined"), has an UNKNOWN risk, not a zero one: they are counted as `unknown`,
-left out of the share, and the check fails a city where they are more than UNKNOWN_MAX_PCT of residents.
+D ("possible but undetermined"), has an UNKNOWN risk, not a zero one: they are counted as `unknown` and
+left out of the share. A city where they are more than UNKNOWN_MAX_PCT of residents gets NO share, only the
+reason (`withheld`), so it is scored without flood (Bill, 2026-10-21). That is nine Santa Clara cities, San
+Jose first: its valley floor is one explicit zone D polygon, so 76% of its residents have no determination,
+and the 21.6% of the rest sit mostly along the creeks FEMA did study. Neither D-as-safe (5.2%) nor that
+creek-biased share is a reading of San Jose.
 Points are tested even-odd over every ring of a polygon, so a hole is outside without being told.
 
 Input: data/fema/nfhl-bayarea.esrijson.gz and its manifest, pulled from the manual US-runner workflow
@@ -77,6 +81,15 @@ def classify(lon, lat, polys, cells):
     return 'sfha' if 'sfha' in hits else 'outside' if 'outside' in hits else 'unknown'
 
 
+def share(residents, sfha, unknown):
+    """(sfha_pct, withheld): the 1% share of residents in a determined zone, or None and the reason."""
+    if residents and 100 * unknown / residents > UNKNOWN_MAX_PCT:
+        return None, (f'FEMA has not determined the flood risk for {100 * unknown / residents:.0f}% of '
+                      f'residents (zone D or unmapped)')
+    known = residents - unknown
+    return (round(100 * sfha / known, 2), None) if known else (None, 'no resident is in a determined zone')
+
+
 def build(frame, features, manifest):
     polys, cells = zone_index(features)
     rows = []
@@ -84,10 +97,10 @@ def build(frame, features, manifest):
         n = {'sfha': 0, 'outside': 0, 'unknown': 0}
         for lon, lat, pop in frame[p['geoid']]:
             n[classify(lon, lat, polys, cells)] += pop
-        known = n['sfha'] + n['outside']
+        pct, withheld = share(sum(n.values()), n['sfha'], n['unknown'])
         rows.append({'geoid': p['geoid'], 'name': p['name'], 'county': p['county'],
                      'residents': sum(n.values()), 'residents_sfha': n['sfha'], 'residents_unknown': n['unknown'],
-                     'sfha_pct': round(100 * n['sfha'] / known, 2) if known else None})
+                     'sfha_pct': pct, 'withheld': withheld})
     return {
         'source': 'FEMA National Flood Hazard Layer, flood hazard zones (Special Flood Hazard Area, 1% annual '
                   'chance), read at the 2020 Census block internal points',
@@ -98,7 +111,8 @@ def build(frame, features, manifest):
         'licence': 'public domain (FEMA, a US government work)',
         'generator': 'scripts/build_bayarea_flood.py --write',
         'measure': 'share of residents in a determined zone who are inside the SFHA (SFHA_TF = T); residents in '
-                   'zone D or in no polygon are unknown, counted, and left out of the share',
+                   'zone D or in no polygon are unknown, counted, and left out of the share; a city where they are '
+                   f'over {UNKNOWN_MAX_PCT}% of residents has no share, only the reason (withheld)',
         'cities': rows,
     }
 
@@ -108,11 +122,10 @@ def problems(doc, want):
     if {r['geoid'] for r in doc['cities']} != {p['geoid'] for p in want}:
         out.append(f"coverage: {len(doc['cities'])} cities, not the {len(want)} of the places file")
     for r in doc['cities']:
-        if r['residents'] and 100 * r['residents_unknown'] / r['residents'] > UNKNOWN_MAX_PCT:
-            out.append(f"{r['name']}: {r['residents_unknown']:,} of {r['residents']:,} residents have no "
-                       f'determined zone (over {UNKNOWN_MAX_PCT}%); find out why before scoring it')
-        known = r['residents'] - r['residents_unknown']
-        if r['sfha_pct'] != (round(100 * r['residents_sfha'] / known, 2) if known else None):
+        pct, withheld = share(r['residents'], r['residents_sfha'], r['residents_unknown'])
+        if withheld and r['sfha_pct'] is not None:
+            out.append(f"{r['name']}: a share is printed, but {withheld}; it must be withheld")
+        elif r['sfha_pct'] != pct or r.get('withheld') != withheld:
             out.append(f"{r['name']}: sfha_pct is not its counts")
     return out
 
@@ -136,6 +149,8 @@ def main():
         OUT.write_text(json.dumps(doc, indent=1) + '\n', encoding='utf-8', newline='\n')
         top = sorted((r for r in doc['cities'] if r['sfha_pct'] is not None), key=lambda r: -r['sfha_pct'])
         print(f"wrote {OUT.relative_to(REPO)}: highest " + ', '.join(f"{r['name']} {r['sfha_pct']}%" for r in top[:5]))
+        held = [r['name'] for r in doc['cities'] if r['withheld']]
+        print(f'  withheld ({len(held)}): ' + ', '.join(held))
         for f in problems(doc, blocks.cities()):
             print('  WARNING: ' + f)
         return 0
