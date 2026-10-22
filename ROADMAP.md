@@ -12,6 +12,53 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-22, evening)
+>
+> **The Bay Area is SCORED BY THE API, in source (`CITIES['bayarea']`; NOT deployed).** The 50 cities answer
+> `/v1/score?city=bayarea&borough=Palo Alto` (by NAME: a Bay Area ZIP answers 404 with the city-name route,
+> because the only ZIP table gives a ZIP to the city with most of its LAND: 94010 goes to Hillsborough, and 7
+> cities hold no ZIP's majority). The site keeps its facts (`SITE_FACTS_ONLY_CITIES`, held both ways by
+> `test_borough_data_parity.py` and `borough-score-parity.mjs`, proven red). **Decided by Bill the same day, on
+> the audit's findings, before any Bay Area score was published:** (1) transport takes the UK's 75/50/25% cut-points
+> (the first build typed 50/25/10% and the question put to him called those the UK's: Claude's error, now parsed
+> from the UK holder) -> 1 excellent, 1 good, 4 moderate, 43 poor; (2) the crime anchor is LIKE FOR LIKE, agencies
+> that police residents, **21.39** (the all-agency 22.27 counted 34,447 crimes no city rate holds); (3) growth is
+> NOT scored for the Bay Area (county-wide FHFA trend: four values, on the rails in its own pool); (4) a missing
+> input follows the UK rule, disclosed (`context.inputsWithheld`, `coverage.notices`): 15 cities drop a component,
+> and Emeryville, Gilroy and Morgan Hill lead the region. Also: top-coded prices publish as `avgPriceUsdAtLeast`
+> with `priceTopCoded`; Colma and Emeryville carry `crimeNote`; `priceTrendArea` names the county. **Proof of no
+> collateral:** all 1,634 existing borough x persona x compare responses snapshotted before and after: every UK
+> one byte-identical, New York only its two lineage sentences (it had said it was the only city outside the UK).
+> **Fixed on the way:** a UK postcode in no city answered "Borough not currently supported in london" (EX1 1HS) and
+> now says "Not covered yet"; a New York ZIP sent with another city was answered as New York. OpenAPI updated
+> (15 cities, 152 boroughs, `growth`/`live` no longer required), the sanity check has a Bay Area probe that reads
+> PENDING until deployed, and area pages and the OGL CSV skip it. **DEPLOY: AFTER the 29 Oct FAA changeset, as its
+> own reviewed changeset** (keep `what-matters` off master until then, so the FAA deploy carries only the FAA
+> cycle), then verify from the origin with `python scripts/check_score_sanity.py --require-deployed` (without the
+> flag the Bay Area probe reads PENDING and the run says `PASS (INCOMPLETE ...)`). **A pre-commit code review the
+> same evening caught, all fixed with tests proven red:** the New York ZIP refusal also refused `city=london`, which
+> `score_bulk.py` sends on every row (now only another US city is refused); custom weights on only unscored
+> components answered 200 with 0.0 (now 400 with `scoredComponents`); a withheld or below-floor input was still
+> credited in `sources`; the top code showed as "USD 2,000,001" in the afford lineage; the 404's `note` (ask by
+> city name) was dropped by the batch and the MCP server; `plannedComponents` credited MHCLG and ONS in every US
+> response (New York too, before this); and the contract had no offline test (`backend/tests/test_bayarea_api.py`). **Next:** ZIP routing by RESIDENTS (2020 blocks to ZCTAs), then the site's
+> release (step 5), which must settle the thin-data ranking first.
+>
+> **How often planes pass, per postcode: BUILT, not published** (`scripts/adsb_postcode_averages.py`, built by a
+> background agent and code-reviewed before commit). 591,910 live postcodes in the 97 councils, each read at its
+> NSPL grid reference; the CAA's January-June tables fetched beside July-August; a year rule (`year_rule()`): every
+> checkable month must pass `coverage_verdict()` on ONE circuits reading, six months at least. **9 airports pass**
+> (Heathrow, Gatwick, Stansted, London City, Manchester, Birmingham, Bristol, East Midlands, Leeds Bradford); Luton,
+> Newcastle, Liverpool, Cardiff, Norwich and Teesside do not. Kew TW9 3PZ 309.9 a westerly day (Jan-Aug).
+> **For Bill:** stricter or looser year rule (Luton and Newcastle would pass on six months each if failed months were
+> dropped rather than the airport); add September when the CAA publishes it (~mid-Nov); fix Luton's field-level
+> fault (a transponder alternating 'ground'/0 ft, June; recount all 289 days, ~2.8 h); accept 5-6 May as outages.
+>
+> **Audit, 22 Oct** (`AUDIT_REPORT_2026-10-22.md`): 0 critical, 6 important (4 fixed the same day: the rename
+> candidate back in this file, and the three Bay Area numbers above), 15 minor (5 fixed: the MCP server's key
+> host, loose names, compare rows; the adsb tar member cap; a fixture's two staff names). Open: the sold-price rows truncate their labels (I-5), "Have your say" names
+> the nearest airport not the route's (I-6), and 10 minors. **The August HPI is published**: roll when ready.
+>
 > ## START HERE (2026-10-22)
 >
 > **Bay Area transport: DECIDED and BUILT (Bill, 22 Oct: "rail access, banded").** `scripts/build_bayarea_transport.py`
@@ -278,7 +325,7 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > the 1%-annual-chance zone, `SFHA_TF`, even-odd over Esri rings), the road-noise reader, then the scoring wiring
 > (`/v1/score`, the US metro pool of decision 2, the map showing scores).
 >
-> **Bill's:** the rename (Overhush first: domains, then one attorney opinion; register screen on his Desktop), the
+> **Bill's:** the rename (the first-choice name first: domains, then one attorney opinion; register screen on his Desktop), the
 > ICO fee and SPF/DMARC (then the researcher emails), FEMA's county flood files for the Bay Area (FEMA's hosts refuse
 > this machine), the OpenJustice crime CSV link. Python 3.11 is patched to 3.11.9.
 >
