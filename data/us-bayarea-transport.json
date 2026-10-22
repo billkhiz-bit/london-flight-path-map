@@ -1,0 +1,529 @@
+{
+ "source": "US Department of Transportation, Bureau of Transportation Statistics, National Transit Map Stops (rail, metro and light rail; data/us-bayarea-transit.json), over the 2020 Census block internal points weighted by population",
+ "licence": "CC-BY-3.0 US (BTS): credit US Department of Transportation, Bureau of Transportation Statistics",
+ "generator": "scripts/build_bayarea_transport.py --write",
+ "measure": "share of residents within 800 m (straight line) of a rail, metro or light-rail station; buses and ferries are not counted",
+ "walk_m": 800,
+ "bands": [
+  {
+   "from_pct": 50.0,
+   "band": "excellent"
+  },
+  {
+   "from_pct": 25.0,
+   "band": "good"
+  },
+  {
+   "from_pct": 10.0,
+   "band": "moderate"
+  },
+  {
+   "from_pct": 0.0,
+   "band": "poor"
+  }
+ ],
+ "banded_on": "the published share, rounded DOWN to one place, so every band can be reproduced from this file and rounding never lifts a city into a better band",
+ "decided": "Bill, 2026-10-22: rail access, banded into the UK four, scored by the same table",
+ "cities": [
+  {
+   "geoid": "0600562",
+   "name": "Alameda",
+   "county": "Alameda",
+   "residents": 78280,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0600674",
+   "name": "Albany",
+   "county": "Alameda",
+   "residents": 20271,
+   "residents_within_walk": 1595,
+   "share_within_walk_pct": 7.8,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0603092",
+   "name": "Atherton",
+   "county": "San Mateo",
+   "residents": 7188,
+   "residents_within_walk": 177,
+   "share_within_walk_pct": 2.4,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0605108",
+   "name": "Belmont",
+   "county": "San Mateo",
+   "residents": 28335,
+   "residents_within_walk": 4856,
+   "share_within_walk_pct": 17.1,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0606000",
+   "name": "Berkeley",
+   "county": "Alameda",
+   "residents": 124321,
+   "residents_within_walk": 38188,
+   "share_within_walk_pct": 30.7,
+   "band": "good",
+   "withheld": null
+  },
+  {
+   "geoid": "0608310",
+   "name": "Brisbane",
+   "county": "San Mateo",
+   "residents": 4851,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0609066",
+   "name": "Burlingame",
+   "county": "San Mateo",
+   "residents": 31386,
+   "residents_within_walk": 14316,
+   "share_within_walk_pct": 45.6,
+   "band": "good",
+   "withheld": null
+  },
+  {
+   "geoid": "0610345",
+   "name": "Campbell",
+   "county": "Santa Clara",
+   "residents": 43959,
+   "residents_within_walk": 12110,
+   "share_within_walk_pct": 27.5,
+   "band": "good",
+   "withheld": null
+  },
+  {
+   "geoid": "0614736",
+   "name": "Colma",
+   "county": "San Mateo",
+   "residents": 1507,
+   "residents_within_walk": 1218,
+   "share_within_walk_pct": 80.8,
+   "band": "excellent",
+   "withheld": null
+  },
+  {
+   "geoid": "0617610",
+   "name": "Cupertino",
+   "county": "Santa Clara",
+   "residents": 60381,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0617918",
+   "name": "Daly City",
+   "county": "San Mateo",
+   "residents": 104901,
+   "residents_within_walk": 18346,
+   "share_within_walk_pct": 17.4,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0620018",
+   "name": "Dublin",
+   "county": "Alameda",
+   "residents": 72589,
+   "residents_within_walk": 5704,
+   "share_within_walk_pct": 7.8,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0620956",
+   "name": "East Palo Alto",
+   "county": "San Mateo",
+   "residents": 30034,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0622594",
+   "name": "Emeryville",
+   "county": "Alameda",
+   "residents": 12905,
+   "residents_within_walk": null,
+   "share_within_walk_pct": null,
+   "band": null,
+   "withheld": "its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put back the city reads excellent, not poor (measured 2026-10-22)"
+  },
+  {
+   "geoid": "0625338",
+   "name": "Foster City",
+   "county": "San Mateo",
+   "residents": 33805,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0626000",
+   "name": "Fremont",
+   "county": "Alameda",
+   "residents": 230504,
+   "residents_within_walk": 19959,
+   "share_within_walk_pct": 8.6,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0629504",
+   "name": "Gilroy",
+   "county": "Santa Clara",
+   "residents": 59520,
+   "residents_within_walk": 9213,
+   "share_within_walk_pct": 15.4,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0631708",
+   "name": "Half Moon Bay",
+   "county": "San Mateo",
+   "residents": 11795,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0633000",
+   "name": "Hayward",
+   "county": "Alameda",
+   "residents": 162954,
+   "residents_within_walk": 17624,
+   "share_within_walk_pct": 10.8,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0633798",
+   "name": "Hillsborough",
+   "county": "San Mateo",
+   "residents": 11387,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0641992",
+   "name": "Livermore",
+   "county": "Alameda",
+   "residents": 87955,
+   "residents_within_walk": 6407,
+   "share_within_walk_pct": 7.2,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0643280",
+   "name": "Los Altos",
+   "county": "Santa Clara",
+   "residents": 31625,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0643294",
+   "name": "Los Altos Hills",
+   "county": "Santa Clara",
+   "residents": 8489,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0644112",
+   "name": "Los Gatos",
+   "county": "Santa Clara",
+   "residents": 33529,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0646870",
+   "name": "Menlo Park",
+   "county": "San Mateo",
+   "residents": 33780,
+   "residents_within_walk": 4481,
+   "share_within_walk_pct": 13.2,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0647486",
+   "name": "Millbrae",
+   "county": "San Mateo",
+   "residents": 23216,
+   "residents_within_walk": 4072,
+   "share_within_walk_pct": 17.5,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0647766",
+   "name": "Milpitas",
+   "county": "Santa Clara",
+   "residents": 80273,
+   "residents_within_walk": 19169,
+   "share_within_walk_pct": 23.8,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0648956",
+   "name": "Monte Sereno",
+   "county": "Santa Clara",
+   "residents": 3479,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0649278",
+   "name": "Morgan Hill",
+   "county": "Santa Clara",
+   "residents": 45483,
+   "residents_within_walk": 6007,
+   "share_within_walk_pct": 13.2,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0649670",
+   "name": "Mountain View",
+   "county": "Santa Clara",
+   "residents": 82376,
+   "residents_within_walk": 20441,
+   "share_within_walk_pct": 24.8,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0650916",
+   "name": "Newark",
+   "county": "Alameda",
+   "residents": 47529,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0653000",
+   "name": "Oakland",
+   "county": "Alameda",
+   "residents": 440646,
+   "residents_within_walk": 73811,
+   "share_within_walk_pct": 16.7,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0654806",
+   "name": "Pacifica",
+   "county": "San Mateo",
+   "residents": 38640,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0655282",
+   "name": "Palo Alto",
+   "county": "Santa Clara",
+   "residents": 68572,
+   "residents_within_walk": 10737,
+   "share_within_walk_pct": 15.6,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0656938",
+   "name": "Piedmont",
+   "county": "Alameda",
+   "residents": 11270,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0657792",
+   "name": "Pleasanton",
+   "county": "Alameda",
+   "residents": 79871,
+   "residents_within_walk": 5221,
+   "share_within_walk_pct": 6.5,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0658380",
+   "name": "Portola Valley",
+   "county": "San Mateo",
+   "residents": 4456,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0660102",
+   "name": "Redwood City",
+   "county": "San Mateo",
+   "residents": 84292,
+   "residents_within_walk": 9765,
+   "share_within_walk_pct": 11.5,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0665028",
+   "name": "San Bruno",
+   "county": "San Mateo",
+   "residents": 43908,
+   "residents_within_walk": 8534,
+   "share_within_walk_pct": 19.4,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0665070",
+   "name": "San Carlos",
+   "county": "San Mateo",
+   "residents": 30722,
+   "residents_within_walk": 6069,
+   "share_within_walk_pct": 19.7,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0667000",
+   "name": "San Francisco",
+   "county": "San Francisco",
+   "residents": 873965,
+   "residents_within_walk": 541443,
+   "share_within_walk_pct": 61.9,
+   "band": "excellent",
+   "withheld": null
+  },
+  {
+   "geoid": "0668000",
+   "name": "San Jose",
+   "county": "Santa Clara",
+   "residents": 1013240,
+   "residents_within_walk": 211660,
+   "share_within_walk_pct": 20.8,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0668084",
+   "name": "San Leandro",
+   "county": "Alameda",
+   "residents": 91008,
+   "residents_within_walk": 12006,
+   "share_within_walk_pct": 13.1,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0668252",
+   "name": "San Mateo",
+   "county": "San Mateo",
+   "residents": 105661,
+   "residents_within_walk": 28941,
+   "share_within_walk_pct": 27.3,
+   "band": "good",
+   "withheld": null
+  },
+  {
+   "geoid": "0669084",
+   "name": "Santa Clara",
+   "county": "Santa Clara",
+   "residents": 127647,
+   "residents_within_walk": 15528,
+   "share_within_walk_pct": 12.1,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0670280",
+   "name": "Saratoga",
+   "county": "Santa Clara",
+   "residents": 31051,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  },
+  {
+   "geoid": "0673262",
+   "name": "South San Francisco",
+   "county": "San Mateo",
+   "residents": 66105,
+   "residents_within_walk": 11881,
+   "share_within_walk_pct": 17.9,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0677000",
+   "name": "Sunnyvale",
+   "county": "Santa Clara",
+   "residents": 155805,
+   "residents_within_walk": 25341,
+   "share_within_walk_pct": 16.2,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0681204",
+   "name": "Union City",
+   "county": "Alameda",
+   "residents": 70143,
+   "residents_within_walk": 8131,
+   "share_within_walk_pct": 11.5,
+   "band": "moderate",
+   "withheld": null
+  },
+  {
+   "geoid": "0686440",
+   "name": "Woodside",
+   "county": "San Mateo",
+   "residents": 5309,
+   "residents_within_walk": 0,
+   "share_within_walk_pct": 0.0,
+   "band": "poor",
+   "withheld": null
+  }
+ ]
+}
