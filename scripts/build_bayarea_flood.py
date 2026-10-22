@@ -34,7 +34,9 @@ import gzip
 import hashlib
 import importlib.util
 import json
+import re
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -240,6 +242,69 @@ def build_state(blocks, counties):
     return state_doc(*state_tally(counties, points, read_state_county), files)
 
 
+# A CONTENT-KEYED CACHE for the anchor's re-measure (2026-10-22). With all 58 county files on disk, --check
+# re-measures California block by block (24 minutes on 2026-10-22), and preflight runs --check: a tax on every commit.
+# Built as check_flood_georef.py's cache is, to fail toward MORE verification: keyed on the bytes of every
+# input AND of the code that reads them, so any change re-measures; only a whole PASS is cached; it
+# hard-expires at 7 days; an unreadable or wrong-shaped cache re-measures; a cached result prints as cached,
+# in its own line; --no-cache forces a re-measure.
+STATE_CACHE = REPO / 'data' / 'fema' / 'california' / '.state-check-cache.json'
+STATE_CACHE_TTL_DAYS = 7
+
+
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def script_closure(name='build_bayarea_flood'):
+    """This script and every repo script it loads with _load('...'), followed transitively.
+
+    Found by reading the sources, never listed: the code review caught a hand-written list missing
+    build_bay_area_page.py, whose inside() classifies every block, so an edit to it would have been vouched for.
+    """
+    seen, todo = set(), [name]
+    while todo:
+        n = todo.pop()
+        if n not in seen:
+            seen.add(n)
+            todo += re.findall(r"_load\('([A-Za-z0-9_]+)'\)", (REPO / 'scripts' / f'{n}.py').read_text(encoding='utf-8'))
+    return [REPO / 'scripts' / f'{n}.py' for n in sorted(seen)]
+
+
+def state_check_key(blocks, counties, fetcher):
+    """sha256 over every file the anchor's re-measure reads, and every script that can run in it."""
+    paths = [STATE_DIR / f'{f}.{ext}' for _, f in counties for ext in ('esrijson.gz', 'json')]
+    paths += [blocks.PL_RAW, fetcher.CA_COUNTIES, STATE_OUT, *script_closure()]
+    h = hashlib.sha256()
+    for p in paths:
+        h.update(f'{p.relative_to(REPO).as_posix()}={_sha256(p)}\n'.encode())
+    return h.hexdigest()
+
+
+def state_check_cached(key):
+    """Days since this exact key last passed, or None: never, expired, or a cache that cannot be read."""
+    try:
+        rec = json.loads(STATE_CACHE.read_text(encoding='utf-8'))
+        if rec['key'] != key:
+            return None
+        age = (time.time() - float(rec['at'])) / 86400
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return age if 0 <= age < STATE_CACHE_TTL_DAYS else None
+
+
+def save_state_check(key):
+    try:
+        STATE_CACHE.write_text(json.dumps({'key': key, 'at': time.time()}) + '\n', encoding='utf-8')
+    except OSError as exc:
+        # never fatal: failing to WRITE a cache must not fail the check it speeds up
+        print(f'  (cache not written: {exc})')
+
+
 def read_raw():
     doc = json.loads(gzip.decompress(RAW.read_bytes()))
     if doc.get('format') != 'esrijson' or doc.get('spatialReference', {}).get('wkid') != 4326:
@@ -253,6 +318,7 @@ def main():
     g.add_argument('--write', action='store_true')
     g.add_argument('--write-state', action='store_true', help='measure the anchor (all 58 counties on disk)')
     g.add_argument('--check', action='store_true')
+    ap.add_argument('--no-cache', action='store_true', help="--check: re-measure the anchor whatever the cache says")
     a = ap.parse_args()
     blocks = _load('bayarea_blocks')
     fetcher = _load('fetch_fema_nfhl_counties')
@@ -286,14 +352,21 @@ def main():
             print(f'  FEMA file      {OUT.name} == {RAW.name} at every block')
     else:
         print('INCONCLUSIVE for values: the FEMA file or the block frame is not on disk; shape checked')
+    verified_key = None
     if STATE_OUT.exists():
         state = json.loads(STATE_OUT.read_text(encoding='utf-8'))
         failures += state_problems(state, ca)
-        whole = all((STATE_DIR / f'{f}.esrijson.gz').exists() for _, f in ca)
+        whole = all((STATE_DIR / f'{f}.{ext}').exists() for _, f in ca for ext in ('esrijson.gz', 'json'))
         if whole and blocks.PL_RAW.exists():
-            if build_state(blocks, ca) != state:
+            key = state_check_key(blocks, ca, fetcher)
+            age = None if a.no_cache else state_check_cached(key)
+            if age is not None:
+                print(f"  FEMA files     (cached) {STATE_OUT.name} == {len(ca)} county files: every input and the "
+                      f"code unchanged since a full re-measure {age:.1f}d ago (--no-cache re-measures)")
+            elif build_state(blocks, ca) != state:
                 failures.append(f'{STATE_OUT.name} is not what the 58 county files give (re-run --write-state)')
             else:
+                verified_key = key
                 print(f"  FEMA files     {STATE_OUT.name} == {len(ca)} county files at every block "
                       f"(California {state['sfha_pct']}%)")
         else:
@@ -305,6 +378,8 @@ def main():
         for f in failures:
             print('  ' + f)
         return 1
+    if verified_key:
+        save_state_check(verified_key)
     print(f"RESULT: PASS ({len(doc['cities'])} cities)")
     return 0
 

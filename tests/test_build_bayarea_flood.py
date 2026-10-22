@@ -130,3 +130,89 @@ def test_the_anchor_check_reds_a_share_not_its_units_and_an_anchor_on_under_half
                         'valley': {'sfha': 227, 'outside': 923, 'unknown': 750}}, {})
     assert any('under half of California' in p for p in bf.state_problems(doc, counties))
     assert any('counties, not the' in p for p in bf.state_problems(doc, counties + [('Alpine', '06003')]))
+
+
+def _cache_stand_in(tmp_path, monkeypatch):
+    """A repo-shaped stand-in: two counties' files, the frame, the county list and the anchor."""
+    import types
+    (tmp_path / 'scripts').mkdir()
+    counties = [('Alameda', '06001'), ('Alpine', '06003')]
+    state_dir = tmp_path / 'counties'
+    state_dir.mkdir()
+    for _, fips in counties:
+        (state_dir / f'{fips}.esrijson.gz').write_bytes(b'gz ' + fips.encode())
+        (state_dir / f'{fips}.json').write_text('{}', encoding='utf-8')
+    # the loads as the real scripts make them: one direct, one only through another script
+    scripts = {
+        'build_bayarea_flood.py': "inside = _load('build_bay_area_page').inside\nb = _load('bayarea_blocks')\n",
+        'bayarea_blocks.py': '# reads the Census frame\n',
+        'build_bay_area_page.py': "q = _load('fetch_helper')\n",
+        'fetch_helper.py': '# loaded only by build_bay_area_page\n',
+        'unrelated.py': '# loaded by nothing the re-measure runs\n',
+    }
+    for name, body in scripts.items():
+        (tmp_path / 'scripts' / name).write_text(body, encoding='utf-8')
+    paths = {'pl': tmp_path / 'pl.zip', 'ca': tmp_path / 'ca.json', 'out': tmp_path / 'state.json'}
+    for p in paths.values():
+        p.write_text(p.name, encoding='utf-8')
+    monkeypatch.setattr(bf, 'REPO', tmp_path)
+    monkeypatch.setattr(bf, 'STATE_DIR', state_dir)
+    monkeypatch.setattr(bf, 'STATE_OUT', paths['out'])
+    monkeypatch.setattr(bf, 'STATE_CACHE', tmp_path / '.state-check-cache.json')
+    blocks = types.SimpleNamespace(PL_RAW=paths['pl'])
+    fetcher = types.SimpleNamespace(CA_COUNTIES=paths['ca'])
+    return counties, blocks, fetcher, state_dir, paths
+
+
+def test_the_anchor_cache_vouches_only_for_the_same_bytes(tmp_path, monkeypatch):
+    counties, blocks, fetcher, state_dir, paths = _cache_stand_in(tmp_path, monkeypatch)
+    key = bf.state_check_key(blocks, counties, fetcher)
+    assert bf.state_check_cached(key) is None  # no cache yet
+    bf.save_state_check(key)
+    assert bf.state_check_cached(key) is not None
+    # any input or the code changing gives a new key, which the cache does not hold
+    scripts = tmp_path / 'scripts'
+    for path in (state_dir / '06003.esrijson.gz', state_dir / '06001.json', paths['pl'], paths['ca'], paths['out'],
+                 scripts / 'build_bayarea_flood.py', scripts / 'bayarea_blocks.py', scripts / 'build_bay_area_page.py',
+                 scripts / 'fetch_helper.py'):
+        before = path.read_bytes()
+        path.write_bytes(before + b' changed')
+        moved = bf.state_check_key(blocks, counties, fetcher)
+        assert moved != key, path.name
+        assert bf.state_check_cached(moved) is None, path.name
+        path.write_bytes(before)
+    assert bf.state_check_key(blocks, counties, fetcher) == key
+    # a script nothing loads is not the re-measure's code, so it does not spend the cache
+    (scripts / 'unrelated.py').write_text('# edited\n', encoding='utf-8')
+    assert bf.state_check_key(blocks, counties, fetcher) == key
+
+
+def test_the_key_follows_the_real_scripts_loads():
+    names = {p.name for p in bf.script_closure()}
+    # inside() classifies every block; fetch_fema_flood is loaded only through the county fetcher
+    assert {'build_bayarea_flood.py', 'build_bay_area_page.py', 'bayarea_blocks.py', 'fetch_fema_nfhl_counties.py',
+            'fetch_fema_flood.py'} <= names
+
+
+@pytest.mark.parametrize('cache', [
+    'not json',
+    '{"at": 1}',                      # no key
+    '{"key": "k", "at": "yesterday"}',  # an unreadable time
+    '[]',                             # the wrong shape
+])
+def test_an_unreadable_anchor_cache_re_measures(tmp_path, monkeypatch, cache):
+    monkeypatch.setattr(bf, 'STATE_CACHE', tmp_path / 'cache.json')
+    bf.STATE_CACHE.write_text(cache, encoding='utf-8')
+    assert bf.state_check_cached('k') is None
+
+
+def test_an_anchor_cache_older_than_a_week_re_measures(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr(bf, 'STATE_CACHE', tmp_path / 'cache.json')
+    now = bf.time.time()
+    bf.STATE_CACHE.write_text(json.dumps({'key': 'k', 'at': now - 6.9 * 86400}), encoding='utf-8')
+    assert bf.state_check_cached('k') is not None
+    bf.STATE_CACHE.write_text(json.dumps({'key': 'k', 'at': now - 7.1 * 86400}), encoding='utf-8')
+    assert bf.state_check_cached('k') is None
+    bf.STATE_CACHE.write_text(json.dumps({'key': 'k', 'at': now + 86400}), encoding='utf-8')  # from the future
+    assert bf.state_check_cached('k') is None
