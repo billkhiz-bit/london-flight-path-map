@@ -248,3 +248,55 @@ def test_the_key_is_read_from_dotenv_when_not_in_the_environment(tmp_path, monke
     (tmp_path / '.env').write_text(f'OTHER=x\n{s.KEY_VAR}={FAKE_KEY}\n', encoding='utf-8')
     monkeypatch.setattr(s, 'REPO', tmp_path)
     assert s.api_key() == FAKE_KEY
+
+
+# --- the audit of 2026-10-22 ---------------------------------------------------------------------------------
+
+def test_loose_names_mirror_the_api():
+    # The server finds a city by the API's own loose key, or it asks the wrong city: held against the Lambda's
+    # function over every borough it serves and the spellings ONS and postcodes.io use.
+    sys.path.insert(0, str(REPO_ROOT / 'backend' / 'lambdas' / 'score'))
+    import app  # noqa: E402
+    names = [b for cfg in app.CITIES.values() for b in cfg['boroughs']]
+    names += ['Bristol', 'Bristol, City of', 'Nottingham', 'the Wirral', 'St. Helens', 'Stockton-on-Tees', 'Palo Alto']
+    for name in names:
+        assert s.loose(name) == app._norm_borough_key(name), name
+
+
+@pytest.mark.anyio
+async def test_a_name_the_api_would_find_finds_its_city(wire):
+    regions = {'cities': [*REGIONS['cities'], {'id': 'bristol', 'boroughs': ['City of Bristol']},
+                          {'id': 'bayarea', 'boroughs': ['Palo Alto']}]}
+    w = wire((200, regions), (200, SCORE), (200, SCORE))
+    r = await call('score_area', {'place': 'Bristol'})
+    assert not r.isError and 'city=bristol' in w.requests[1].full_url
+    r = await call('score_area', {'place': 'Palo Alto'})
+    assert not r.isError and 'city=bayarea' in w.requests[2].full_url
+
+
+@pytest.mark.anyio
+async def test_compare_rows_keep_coverage_and_weights(wire):
+    # the coverage notices are how Claude learns an input is withheld; a comparison must not drop them
+    scored = {**SCORE, 'weights': {'quiet': 0.5}, 'coverage': {'notices': ['Flood risk is withheld here: x.']}}
+    wire((200, scored), (200, scored))
+    d = (await call('compare_areas', {'places': ['TW9 3PZ', 'SW11 1AA']})).structuredContent
+    assert all(p['coverage']['notices'] and p['weights'] for p in d['places'])
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize('base', ['http://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod',
+                                  'https://localhost:9000', 'https://stage.example.com'])
+async def test_the_key_goes_only_to_the_api_over_https(wire, monkeypatch, base):
+    monkeypatch.setattr(s, 'API_BASE', base)
+    w = wire()
+    r = await call('score_area', {'place': 'SW11 1AA'})
+    assert r.isError and 'not sent' in text(r) and w.requests == []
+
+
+@pytest.mark.anyio
+async def test_a_refusal_with_a_way_round_says_it_and_not_not_covered(wire):
+    # a Bay Area ZIP: the API refuses it but scores the city by name, so "NOT COVERED YET" would be false
+    wire((404, {'error': 'ZIP not currently supported: 94301',
+                'note': 'San Francisco Bay Area cities are scored by name: borough=<city>&city=bayarea.'}))
+    r = await call('score_area', {'place': '94301'})
+    assert r.isError and 'scored by name' in text(r) and 'NOT COVERED YET' not in text(r)

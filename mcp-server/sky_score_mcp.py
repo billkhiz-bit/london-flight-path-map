@@ -33,7 +33,11 @@ from mcp.server.fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 
 REPO = Path(__file__).resolve().parent.parent
-API_BASE = os.environ.get('SKY_SCORE_API_BASE', 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod')
+# Its OWN variable (the audit of 2026-10-22): it shared SKY_SCORE_API_BASE with the sanity check, so pointing
+# that at a stage or a local mock would have sent this server's key there too, over http if it said so.
+API_BASE = os.environ.get('SKY_SCORE_MCP_API_BASE', 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod')
+# The only hosts the key is ever sent to, over https: the API's own. Anything else is refused before a keyed call.
+KEY_HOSTS = frozenset({'2gjfdzg20c.execute-api.eu-west-2.amazonaws.com', 'api.skyscore.co.uk'})
 KEY_VAR = 'SKY_SCORE_MCP_KEY'
 TIMEOUT_S = 30
 UA = 'Sky Score local MCP server (skyscore.co.uk)'
@@ -44,8 +48,12 @@ NAME = re.compile(r"^[A-Za-z][A-Za-z .,'&()-]{0,59}$")
 CITY = re.compile(r'^[a-z]{2,20}$')
 
 INSTRUCTIONS = """\
-Sky Score measures how liveable a UK (or New York) area is: aircraft noise, affordability, price growth,
-liveability and environment. Answer ONLY from what the tools return, and follow these rules:
+Sky Score measures how liveable a UK, New York or San Francisco Bay Area place is: aircraft noise,
+affordability, price growth, liveability and environment. Answer ONLY from what the tools return, and follow
+these rules:
+- Bay Area cities are asked by NAME (Palo Alto), not ZIP. Their crime, road-noise and flood inputs are on US
+  scales anchored on California's own figures: never compare them with a UK score, and say growth is not
+  scored there.
 - Scores rise = better and are named for the good thing ("Quiet Skies 8/10"); measurements rise = worse and are
   named for the bad thing ("Aircraft noise 2/10"). They can be one value under two labels: never "correct" one
   to match the other.
@@ -79,9 +87,10 @@ def api_key():
 class ApiError(ToolError):
     """The API answered with an error status: its own message, and the status, never the key."""
 
-    def __init__(self, status, message):
+    def __init__(self, status, message, note=None):
         super().__init__(message)
         self.status = status
+        self.note = note  # the API's way round a refusal, where it gives one
 
 
 def _get(path, params=None, keyed=False):
@@ -92,13 +101,16 @@ def _get(path, params=None, keyed=False):
     req = urllib.request.Request(url, headers={'User-Agent': UA, 'Accept': 'application/json'})
     key = None
     if keyed:
+        base = urllib.parse.urlparse(API_BASE)
+        if base.scheme != 'https' or base.hostname not in KEY_HOSTS:
+            raise ToolError('SKY_SCORE_MCP_API_BASE is not the Sky Score API over https, so the key is not sent')
         key = api_key()
         if not key:
             raise ToolError(f'{KEY_VAR} is not set: add the server\'s own key to the repo\'s .env (see mcp-server/README.md)')
         # unredirected: urllib copies ordinary headers onto a redirect, to whatever host it names
         req.add_unredirected_header('X-Api-Key', key)
     try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT_S) as r:  # noqa: S310 - fixed https base
+        with urllib.request.urlopen(req, timeout=TIMEOUT_S) as r:  # noqa: S310 - a keyed call checks the base first
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
         try:
@@ -107,12 +119,17 @@ def _get(path, params=None, keyed=False):
             body = None
         message = (body.get('message') or body.get('error') or '') if isinstance(body, dict) else ''
         message = message if isinstance(message, str) else ''
+        # the way round a refusal travels with it (a Bay Area ZIP: its cities are scored by name)
+        note = body.get('note') if isinstance(body, dict) else None
+        note = note if isinstance(note, str) and note else None
+        if note:
+            message = f'{message} {note}'.strip()
         if e.code == 429:
             message = message or 'rate or monthly limit reached for this key'
         if key:
             # an error page that echoed the key would put it in Claude's context; it never leaves this function
             message = message.replace(key, '[key]')
-        raise ApiError(e.code, f'Sky Score API {e.code} on {path}: {message or e.reason}') from None
+        raise ApiError(e.code, f'Sky Score API {e.code} on {path}: {message or e.reason}', note) from None
     except (urllib.error.URLError, TimeoutError) as e:
         raise ToolError(f'Sky Score API unreachable on {path}: {getattr(e, "reason", e)}') from None
     except ValueError:
@@ -122,13 +139,31 @@ def _get(path, params=None, keyed=False):
 _regions = None
 
 
+def loose(name):
+    """The API's own loose key for a borough name (normalise_borough's last resort, `_norm_borough_key`), so a
+    name the API would find is one this server finds too: "Bristol" is "City of Bristol". Matched exactly
+    instead, "Bristol" and "Nottingham" found no city, went out with none, were asked in London, and read
+    NOT COVERED YET (the audit of 2026-10-22). Mirrors the Lambda; tests/test_mcp_server.py holds the two."""
+    s = (name or '').lower().replace('.', '').replace('-', ' ')
+    for tail in (', city of', ', county of'):
+        if s.endswith(tail):
+            s = s[: -len(tail)]
+    for prefix in ('city of ', 'county of ', 'the '):
+        if s.startswith(prefix):
+            s = s[len(prefix):]
+    for suffix in (' city', ' borough', ' district'):
+        if s.endswith(suffix):
+            s = s[: -len(suffix)]
+    return ' '.join(s.split())
+
+
 def cities_listing(name):
     """The city keys whose borough list (/v1/regions: open, no key, read once a session) holds `name`."""
     global _regions
     if _regions is None:
         cities = _get('/v1/regions').get('cities') or []
-        _regions = [(c['id'], {b.casefold() for b in c.get('boroughs') or []}) for c in cities]
-    return [cid for cid, names in _regions if name.casefold() in names]
+        _regions = [(c['id'], {loose(b) for b in c.get('boroughs') or []}) for c in cities]
+    return [cid for cid, names in _regions if loose(name) in names]
 
 
 def _place_params(place, city):
@@ -159,14 +194,18 @@ def _score(place, params, listing):
 
     NOT COVERED YET only where it is true: a postcode (the API placed it itself) or a name no city lists. A
     name some city DOES list, asked in another, was asked in the wrong city, and says so. The API's own 404
-    for an uncovered postcode names the default city (EX1 1HS: "Borough not currently supported in london",
-    measured 2026-10-22), so its words are kept after the plain statement, never instead of it.
+    for an uncovered postcode named the default city (EX1 1HS: "Borough not currently supported in london",
+    measured 2026-10-22) until the backend that answers "Not covered yet" is deployed, so its words are kept
+    after the plain statement, never instead of it.
     """
     try:
         return _get('/v1/score', params, keyed=True)
     except ApiError as e:
         if e.status != 404:
             raise
+        if e.note:
+            # a refusal with a way round it (a Bay Area ZIP: the city is scored by NAME) is not "not covered"
+            raise ToolError(f'{place} cannot be scored as asked. {e.note} ({e})') from None
         if listing:
             raise ToolError(f"{place} is not a borough of {params.get('city')}; Sky Score lists it under "
                             f"{', '.join(listing)}: ask again with that city. ({e})") from None
@@ -219,7 +258,10 @@ def compare_areas(places: list[str], city: str | None = None, persona: Persona =
         params, listing = _compare_params(place, city)
         params['persona'] = persona
         doc = _score(place, params, listing)
+        # `coverage` and `weights` travel with every row (the audit of 2026-10-22): the coverage notices are
+        # what tells Claude an input is withheld or a component dropped, and the instructions require saying so.
         rows.append({'place': place, 'score': doc.get('score'), 'components': doc.get('components'),
+                     'weights': doc.get('weights'), 'coverage': doc.get('coverage'),
                      'location': doc.get('location'), 'context': doc.get('context')})
         sources += [s for s in doc.get('sources') or [] if s not in sources]
     return {'persona': persona, 'places': rows, 'sources': sources}
