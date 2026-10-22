@@ -3,9 +3,16 @@
 Release 2's crime input (ROADMAP "Release 2 plan", decision 4): each city's police agency in the
 California DOJ OpenJustice "Crimes and Clearances" file, matched by NAME within its county (the file
 carries no place code), over the Census Bureau's 2025 city population estimate, matched on GEOID.
-Counted: violent + property crimes, the FBI's Part I groups, which is what reproduces decision 4's
-anchor (California 2025: 22.27 per 1,000; adding arson gives 22.45). The anchor is recomputed here
-from every agency in the state, so a US scale built on it is derived, never typed in.
+Counted: violent + property crimes, the FBI's Part I groups, which is what reproduced decision 4's
+anchor over every agency (California 2025: 22.27 per 1,000; adding arson gives 22.45). The anchor is
+recomputed here, so a US scale built on it is derived, never typed in.
+
+THE ANCHOR IS LIKE FOR LIKE (Bill, 2026-10-22, from the code review). A city's rate counts its own police
+agency's crimes; the all-agency state rate also counted ~34,000 recorded by agencies with no residents of their
+own (railroad police, universities, the Highway Patrol, transit, ports), crimes no city's rate can contain, so
+every city read better than its anchor by construction. The anchor now counts only agencies that police
+RESIDENTS (classify_agency: city and town police, county sheriffs, RESIDENT_AGENCIES), over the state's
+residents: 2025, 21.39 per 1,000 (34,447 crimes of 209 agencies left out). Every city reads about 0.2-0.4 lower on the US scale, the cautious side.
 
 Five cities have no rate of their own: the San Mateo County Sheriff polices them under contract,
 and DOJ's context PDF counts their crime in the sheriff's figures. They carry `per_1000: null` and a
@@ -23,6 +30,7 @@ estimates are a US government work). Keyless downloads.
 import argparse
 import csv
 import json
+import re
 import sys
 import urllib.request
 from pathlib import Path
@@ -37,6 +45,25 @@ PLACES = REPO / 'data' / 'us-bayarea-places.json'
 OUT = REPO / 'data' / 'us-bayarea-crime.json'
 YEAR = 2025
 KINDS = ('city', 'town')
+# An agency with no residents of its own (classify_agency): railroads, universities and colleges, school
+# districts, the Highway Patrol, transit, airports, ports and harbours, park districts and State Parks (DPR), Cal
+# Fire, state hospitals and centres, the State Fair, prosecutors' investigators and marshals. Read only for an
+# agency whose name is not a Census place, so a CITY whose name holds one of these words (Port Hueneme) is a city.
+NO_RESIDENTS = re.compile(
+    r'\b(RR|Railroad|Union Pacific|BNSF|UC|CSU|Cal Poly|University|College|School|Unified|Los Rios|'
+    r'Highway Patrol|BART|Transit|Trans\. Authority|Airport|Harbor|Port|Park Dist|DPR|Cal Fire|'
+    r'State Hospital|Developmental Center|State Fair|Investigations|Marshal)\b', re.I)
+# Agencies that police RESIDENTS under a name that is not a Census place name, so they count in the anchor:
+# a city named differently (Ventura is San Buenaventura, Paso Robles is El Paso de Robles, Suisun is Suisun
+# City, Carmel is Carmel-by-the-Sea, Buelton is DOJ's spelling of Buellton, Angels Camp is the city of Angels),
+# a joint municipal force (Central Marin: Corte Madera, Larkspur, San Anselmo), a sheriff-contract city reported
+# on its own row (La Canada-Flintridge, Big Bear), and community police districts (Broadmoor, Kensington, Bear
+# Valley, Lake Shastina, Stallion Springs). Held both ways: a name here that the year's file lacks, or that now
+# matches a place, stops the build, and so does an agency in no class.
+RESIDENT_AGENCIES = frozenset({
+    'Angels Camp', 'Bear Valley', 'Big Bear', 'Broadmoor', 'Buelton', 'Carmel', 'Central Marin', 'Kensington',
+    'La Canada-Flintridge', 'Lake Shastina', 'Paso Robles', 'Stallion Springs', 'Suisun', 'Ventura',
+})
 COUNTED = ('Violent_sum', 'Property_sum')
 # Policed by the San Mateo County Sheriff under contract (DOJ's context PDF). A SET the check holds
 # both ways: a city here that gains a DOJ row, or one not here that loses its row, fails the build.
@@ -110,10 +137,47 @@ def read_crime():
     return agencies, total
 
 
+def place_names(population):
+    """Every California city and town as DOJ names its police agency: the Census name less ' city'/' town'."""
+    return {re.sub(r' (city|town)$', '', name) for name, _ in population.values()}
+
+
+def classify_agency(agency, places):
+    """'place', 'sheriff', 'resident' or 'no-residents' for one DOJ agency name; anything else raises."""
+    if agency in places:
+        return 'place'
+    if 'sheriff' in agency.lower():
+        return 'sheriff'
+    if agency in RESIDENT_AGENCIES:
+        return 'resident'
+    if NO_RESIDENTS.search(agency):
+        return 'no-residents'
+    raise SystemExit(f'DOJ agency {agency!r} is in no class: decide whether it polices residents (add it to '
+                     'RESIDENT_AGENCIES) or has none of its own (NO_RESIDENTS) before writing')
+
+
+def state_anchor(agencies, population, state_pop):
+    """California's like-for-like rate: crimes of every agency policing residents, over the state's residents."""
+    places = place_names(population)
+    kinds = {name: classify_agency(name, places) for _, name in agencies}
+    stale = sorted(n for n in RESIDENT_AGENCIES if kinds.get(n) != 'resident')
+    if stale:
+        raise SystemExit(f'RESIDENT_AGENCIES names {stale}, which the {YEAR} file lacks or now holds as a place')
+    counted = sum(sum(v) for (_, name), v in agencies.items() if kinds[name] != 'no-residents')
+    left_out = [(name, sum(v)) for (_, name), v in agencies.items() if kinds[name] == 'no-residents']
+    return {'crimes': counted, 'population': state_pop, 'per_1000': round(1000 * counted / state_pop, 2),
+            'crimes_all_agencies': counted + sum(n for _, n in left_out),
+            'left_out': {'agencies': len(left_out), 'crimes': sum(n for _, n in left_out),
+                         'why': 'agencies with no residents of their own (railroads, universities and colleges, '
+                                'school districts, the Highway Patrol, transit, airports, ports, State Parks, Cal '
+                                "Fire, state hospitals): no city's rate can contain their crimes"}}
+
+
 def build():
-    agencies, state_crimes = read_crime()
+    agencies, _ = read_crime()
     population, state_pop = read_population()
-    state_per_1000 = round(1000 * state_crimes / state_pop, 2)
+    california = state_anchor(agencies, population, state_pop)
+    state_per_1000 = california['per_1000']
     rows = []
     for p in cities():
         name, pop = population.get(p['geoid'], (None, None))
@@ -142,7 +206,7 @@ def build():
         'licence': 'public domain (oag.ca.gov/conditions; Census estimates a US government work)',
         'generator': 'scripts/build_bayarea_crime.py --write',
         'counted': ' + '.join(COUNTED),
-        'california': {'crimes': state_crimes, 'population': state_pop, 'per_1000': state_per_1000},
+        'california': california,
         'scope': 'crimes where they were recorded, per RESIDENT; not comparable with the UK rate (ONS Table C4 '
                  'counts all recorded crime except fraud)',
         'cities': rows,
@@ -170,6 +234,8 @@ def problems(doc, want):
     ca = doc['california']
     if not 10 < ca['per_1000'] < 40 or ca['per_1000'] != round(1000 * ca['crimes'] / ca['population'], 2):
         out.append(f'implausible California anchor {ca}')
+    if ca.get('crimes_all_agencies') != ca['crimes'] + ca.get('left_out', {}).get('crimes', -1):
+        out.append('the anchor does not say what it left out: crimes + left_out must be the all-agency total')
     return out
 
 

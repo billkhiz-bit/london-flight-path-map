@@ -201,8 +201,8 @@ def components_in(rows):
     return tuple(sorted(seen))
 
 
-def fetch(base, key, postcode, timeout=30, attempts=4):
-    """GET one score, retrying on 429.
+def fetch(base, key, postcode, timeout=30, attempts=4, params=None):
+    """GET one score, retrying on 429. `params` replaces the postcode query (a by-name probe).
 
     The demo key is metered, and a tight loop over the probe list trips the rate
     limit partway through. Left unhandled that is worse than a slow check: the
@@ -210,7 +210,8 @@ def fetch(base, key, postcode, timeout=30, attempts=4):
     then pass on whatever happens to be left — a check that gets weaker exactly
     when it is working hardest.
     """
-    url = f'{base}/v1/score?postcode={urllib.parse.quote(postcode)}'
+    query = urllib.parse.urlencode(params) if params else f'postcode={urllib.parse.quote(postcode)}'
+    url = f'{base}/v1/score?{query}'
     req = urllib.request.Request(url, headers={'X-Api-Key': key})
     delay = 2.0
     for attempt in range(attempts):
@@ -232,6 +233,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--base', default=os.environ.get('SKY_SCORE_API_BASE', DEFAULT_BASE))
     ap.add_argument('--api-key', default=os.environ.get('SKY_SCORE_API_KEY', DEFAULT_KEY))
+    ap.add_argument('--require-deployed', action='store_true',
+                    help='fail, not PENDING, where the source scores a city the live API does not (post-deploy)')
     args = ap.parse_args()
 
     if not args.api_key:
@@ -450,6 +453,41 @@ def main():
              for s in (b.get('sources') or []) if 'Home Office' in s]
     check('sources credit only current suppliers', not stale, '; '.join(stale))
 
+    # 7. THE BAY AREA, BY NAME (2026-10-22). The API scores it and the site does not (SITE_FACTS_ONLY_CITIES),
+    #    and it is reached by city name, so no postcode probe above can see it. Until the backend carrying it
+    #    is deployed the live API answers 400 "Unsupported city": that is the deploy order, not a defect, so it
+    #    reads PENDING (never PASS), and the check arms itself the moment the live API scores the city. Armed,
+    #    it asserts what only a US city can get wrong: a UK body credited outside a NOT, the FAA's "as is" line
+    #    missing, or growth published although the Bay Area holds it out.
+    #    After a deploy, run with --require-deployed (the runbook does): PENDING then FAILS, so a backend deploy
+    #    that did not ship the city cannot pass the post-deploy check (code review, 2026-10-22).
+    pending = []
+    body, err = fetch(args.base, args.api_key, None, params={'city': 'bayarea', 'borough': 'San Francisco'})
+    if err and 'Unsupported city' in err:
+        if args.require_deployed:
+            check('Bay Area scores by name, on US sources', False, 'the live API does not serve bayarea')
+        else:
+            pending.append('bayarea')
+            print(f'  {"Bay Area scores by name":<46}PENDING (not deployed yet; the source scores it)')
+    else:
+        problems = [err] if err else []
+        if body:
+            # the unit test's list (test_non_uk_city_never_credits_uk_bodies), over the same three places
+            lines = ((body.get('sources') or []) + list((body.get('sourceBreakdown') or {}).values())
+                     + list((body.get('coverage') or {}).get('notices') or []))
+            uk_bodies = ('MHCLG', 'HM Land Registry', 'Home Office', 'Department for Education', 'DfE', 'TfL',
+                         'NHS', 'DEFRA', 'Environment Agency', 'NaPTAN', 'ONS ', 'CPIH')
+            problems += [f'credits {t}: {ln[:80]}' for ln in lines for t in uk_bodies if t in ln and 'NOT' not in ln]
+            if (body.get('location') or {}).get('city') != 'bayarea':
+                problems.append(f"resolved to {(body.get('location') or {}).get('city')!r}")
+            if not any('without warranty' in s for s in body.get('sources') or []):
+                problems.append("no FAA 'as is' line in sources")
+            if 'growth' in (body.get('components') or {}) or (body.get('context') or {}).get('growthBasis') != 'not scored':
+                problems.append('growth is published, though the Bay Area holds it out')
+            if not isinstance(body.get('score'), (int, float)) or not 0.0 <= body['score'] <= 10.0:
+                problems.append(f"score={body.get('score')!r}")
+        check('Bay Area scores by name, on US sources', not problems, '; '.join(problems))
+
     print()
     if failures:
         print('RESULT: FAIL')
@@ -461,6 +499,10 @@ def main():
               'loader and the table before assuming the Lambda is at fault.')
         return 1
 
+    if pending:
+        print(f'RESULT: PASS (INCOMPLETE: {", ".join(pending)} scored by the source, not yet by the live API; '
+              're-run with --require-deployed after the deploy) ({len(rows)} postcodes)')
+        return 0
     print(f'RESULT: PASS ({len(rows)} postcodes)')
     return 0
 

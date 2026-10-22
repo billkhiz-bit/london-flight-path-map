@@ -24,6 +24,7 @@ layer earlier, where it is cheaper to understand.
 
 import json
 import os
+import re
 
 import pytest
 
@@ -153,12 +154,13 @@ def test_backend_only_cities_are_declared_not_discovered():
     """
     lambda_cities = set(score_app.CITIES)
     site_cities = _site_cities()
+    facts_only = score_app.SITE_FACTS_ONLY_CITIES
 
-    undeclared = lambda_cities - site_cities - BACKEND_ONLY_CITIES
+    undeclared = lambda_cities - site_cities - BACKEND_ONLY_CITIES - facts_only
     assert not undeclared, (
         'city scored by the Lambda with no borough-extra.json data and not '
-        f'declared backend-only: {sorted(undeclared)}. The site cannot '
-        'reproduce its liveability, so the two will disagree on every borough.'
+        f'declared backend-only or site-facts-only: {sorted(undeclared)}. The site '
+        'cannot reproduce its liveability, so the two will disagree on every borough.'
     )
 
     no_longer_exempt = BACKEND_ONLY_CITIES & site_cities
@@ -166,6 +168,30 @@ def test_backend_only_cities_are_declared_not_discovered():
         f'{sorted(no_longer_exempt)} now has borough-extra.json data, so it '
         'must be removed from BACKEND_ONLY_CITIES and actually compared.'
     )
+
+
+def test_site_facts_only_cities_are_declared_both_ways():
+    """API first, site second (Bill, 2026-10-22): the Lambda scores these, the site shows FACTS.
+
+    The declaration's one holder is SITE_FACTS_ONLY_CITIES in the score Lambda. This half holds the data
+    side: each city on it is scored by the Lambda, is on the site's map (a CITY_DATA entry), carries no
+    borough-extra.json data (data there means the site has started scoring it, so it must leave the list and
+    be compared), and is not also backend-only. tests/borough-score-parity.mjs holds the other half in the
+    browser: a city on the list renders NO score, and a city rendering facts while the API scores it is on it.
+    """
+    facts_only = score_app.SITE_FACTS_ONLY_CITIES
+    assert facts_only <= set(score_app.CITIES), f'declared but not scored: {sorted(facts_only - set(score_app.CITIES))}'
+    assert not facts_only & BACKEND_ONLY_CITIES, 'a city cannot be backend-only (no site) and site-facts-only'
+    scored_on_site = facts_only & _site_cities()
+    assert not scored_on_site, (
+        f'{sorted(scored_on_site)} now has borough-extra.json data: it must leave SITE_FACTS_ONLY_CITIES '
+        'and be compared, which is the one-way door')
+    with open(os.path.join(os.path.dirname(DATA), os.pardir, 'index.html'), encoding='utf-8') as handle:
+        page = handle.read()
+    registry = page[page.index('const CITY_DATA = {'):]
+    for city in facts_only:
+        entry = re.search(rf'^ {{8}}{re.escape(city)}: \{{', registry, re.M)
+        assert entry, f'{city} is declared site-facts-only but has no CITY_DATA entry'
 
 
 def test_site_has_no_city_the_lambda_cannot_score():

@@ -30,12 +30,20 @@ def offset(lat, lon, bearing_deg, km):
 
 
 class BayAreaGeometryTests(unittest.TestCase):
-    def test_the_bay_area_is_not_served_yet(self):
-        # Release 2 wires 'bayarea' into CITIES. Until then the geometry must be
-        # inert: no endpoint can reach calc_postcode_quiet with it. When release 2
-        # lands, this assertion is changed on purpose, not discovered.
+    def test_the_bay_area_is_served_by_city_name_only(self):
+        # Release 2 wired 'bayarea' into CITIES (2026-10-22), reached by NAME: the
+        # Lambda holds no Bay Area ZIP table, so no request carries a Bay Area
+        # coordinate and calc_postcode_quiet is read only through the city bands
+        # build_bayarea_quiet.py derives. When ZIPs are routed, this is changed on
+        # purpose, not discovered.
         self.assertIn('bayarea', app.CITY_GEOMETRY)
-        self.assertNotIn('bayarea', app.CITIES)
+        self.assertIn('bayarea', app.CITIES)
+        body, status = app.resolve_query({'borough': 'Palo Alto', 'city': 'bayarea'})
+        self.assertEqual(status, 200)
+        self.assertEqual(body['context']['quietResolution'], 'borough')
+        body, status = app.resolve_query({'postcode': '94301'})
+        self.assertEqual(status, 404)
+        self.assertIn('city=bayarea', body['note'])
 
     def test_no_uk_city_carries_the_us_fields(self):
         # calc_postcode_quiet reads each US field only when present, so this is

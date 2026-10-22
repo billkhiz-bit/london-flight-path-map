@@ -6,6 +6,12 @@ WALK_M of a rail, metro or light-rail station (data/us-bayarea-transit.json, BTS
 into the four bands the UK uses, so the Lambda's TRANSPORT_SCORE table scores both and no new scale is needed.
 Buses and ferries are not counted (BTS's stops layer is read for rail only), and the file says so.
 
+THE UK'S CUT-POINTS, READ FROM THEIR HOLDER (corrected 2026-10-22). This builder first typed 50/25/10% and
+every note about it called those "the UK's four bands"; the UK's are 75/50/25% (build_borough_bands.py,
+TRANSPORT_*_SHARE), so 25 of 49 cities read a band better than the same share earns in the UK (the code review
+of 2026-10-22). Bill chose the UK's cut-points on the true figures, so BANDS is now parsed from that file, never
+typed: 1 excellent (Colma), 1 good (San Francisco, 61.9%), 4 moderate, 43 poor.
+
 The share is published ROUNDED DOWN to one place and the band taken from it, so anyone holding the file can
 reproduce every band, `--check` can hold them offline, and rounding can never lift a city into a better band
 (49.96% to nearest would publish 50.0, excellent): the err-loud rule of build_bayarea_quiet.py, from the code
@@ -13,7 +19,7 @@ review of 2026-10-22. No city sat within 0.05 of an edge when it changed, so no 
 
 A known gap in the source is WITHHELD, never read as no station: Capitol Corridor (Amtrak) is absent from
 BTS's layer. Measured 2026-10-22 with its four stations put back by hand (approximate points, a scratch check,
-never published): Emeryville 0.0% -> 50.5%, poor -> excellent; Berkeley 30.7 -> 34.4, Hayward 10.8 -> 11.0
+never published): Emeryville 0.0% -> 50.5%, poor -> good; Berkeley 30.7 -> 34.4, Hayward 10.8 -> 11.0
 and Oakland 16.8 -> 17.1 keep their bands. So Emeryville alone is withheld (SOURCE_GAP), and the set is held
 both ways: a city in it carries no share, and every name in it must appear in the transit file's `known_gap`.
 
@@ -26,6 +32,7 @@ Statistics". The resident frame is the 2020 Census (public domain).
 """
 
 import argparse
+import ast
 import importlib.util
 import json
 import math
@@ -36,11 +43,26 @@ REPO = Path(__file__).resolve().parent.parent
 STATIONS = REPO / 'data' / 'us-bayarea-transit.json'
 OUT = REPO / 'data' / 'us-bayarea-transport.json'
 WALK_M = 800  # about ten minutes' walk: the half-mile US transit planners use
-# Lower edge of each band, in percent of residents within WALK_M (Bill, 2026-10-22). Read top down.
-BANDS = ((50.0, 'excellent'), (25.0, 'good'), (10.0, 'moderate'), (0.0, 'poor'))
+
+
+def uk_bands(path=REPO / 'scripts' / 'build_borough_bands.py'):
+    """The UK's transport cut-points as ((lower edge %, band), ...), read top down, PARSED from their holder
+    rather than imported: that module loads pyproj and the NSPL helpers, which this builder never needs."""
+    tree = ast.parse(path.read_text(encoding='utf-8'))
+    found = {t.id: ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign)
+             for t in n.targets if isinstance(t, ast.Name) and t.id.startswith('TRANSPORT_')}
+    try:
+        return ((float(found['TRANSPORT_EXCELLENT_SHARE']), 'excellent'), (float(found['TRANSPORT_GOOD_SHARE']), 'good'),
+                (float(found['TRANSPORT_MODERATE_SHARE']), 'moderate'), (0.0, 'poor'))
+    except KeyError as missing:
+        raise SystemExit(f'{path.name} no longer holds {missing}: the Bay Area cannot take the UK bands') from None
+
+
+# Lower edge of each band, in percent of residents within WALK_M: the UK's own (Bill, 2026-10-22).
+BANDS = uk_bands()
 SOURCE_GAP = {
     'Emeryville': "its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put "
-                  'back the city reads excellent, not poor (measured 2026-10-22)',
+                  'back the city reads good, not poor (measured 2026-10-22)',
 }
 
 

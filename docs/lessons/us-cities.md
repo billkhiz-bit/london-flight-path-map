@@ -248,7 +248,7 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   City, Menlo Park, Palo Alto, East Palo Alto).
 - **Transport, DECIDED 2026-10-22 (Bill: "rail access, banded").** `scripts/build_bayarea_transport.py` writes
   `data/us-bayarea-transport.json`: the share of a city's residents (the 2020 block frame) within 800 m, straight
-  line, of a BTS rail, metro or light-rail station, put into the UK's four bands (excellent 50%+, good 25%+,
+  line, of a BTS rail, metro or light-rail station, put into what were CALLED the UK's four bands (excellent 50%+, good 25%+,
   moderate 10%+, poor below) so the Lambda's `TRANSPORT_SCORE` scores both countries with one table. Rejected: a
   continuous 10 x share (18 cities would score 0 because buses are not counted, harsher than the data supports),
   and holding transport out (liveability would then have only crime, under the two-input floor, for every city).
@@ -287,3 +287,47 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   shared with the UK's, a Bay Area road share of 13.3% would quietly score 8.7 on `road_to_score` instead of 0.3 on
   the US scale. A missing input carries its reader's reason under `withheld`, and only the three withholdable
   fields may be missing (tested). Inert until `CITIES['bayarea']` reads it.
+
+**Release 2's API entry, 2026-10-22: `CITIES['bayarea']`, API first (Bill), and three numbers the audit caught
+first.** The 50 cities are scored by `/v1/score` under `city=bayarea`, by NAME only; the site keeps its facts
+(`SITE_FACTS_ONLY_CITIES` in the Lambda, held both ways: `tests/test_borough_data_parity.py` the data half,
+`tests/borough-score-parity.mjs` the browser half, where a city on the list must render no score; proven red by
+declaring London facts-only). Lessons, each now held by a test:
+- **A claimed parity is a claim about a HOLDER: read it.** The transport builder typed 50/25/10% and every note,
+  and the question put to Bill, called them "the UK's four bands"; the UK's are 75/50/25% (`build_borough_bands.py`).
+  25 of 49 cities read a band better than the same share earns in the UK. Re-decided by Bill on the true figures
+  (the UK's), and `BANDS` is now PARSED from the UK file, with a test against the UK's own `transport_band()` over
+  every tenth of a point: 1 excellent, 1 good, 4 moderate, 43 poor.
+- **An anchor must count only what the unit it anchors can count.** California's 22.27 per 1,000 counted every
+  agency; a city's rate counts its own police only, so the ~34,000 crimes of railroad, university, Highway Patrol
+  and transit police sat in the anchor and in no city, and every city read better than its anchor by construction.
+  Like for like (Bill): 21.39, from agencies that police residents. Classing agencies by NAME is a trap both ways: a
+  name match misses municipal police filed under another name (Ventura is San Buenaventura, Central Marin is three
+  towns), and a word match misreads a city (Port Hueneme). So every agency is put in exactly one class (a Census
+  place, a sheriff, a declared resident force, a no-residents pattern), the place test first, and an unclassified
+  agency or a stale declared name stops the build.
+- **A coarse input in a narrow pool manufactures extremes.** FHFA's county trend gives the 50 cities four values,
+  and the dual anchor in their own pool put San Francisco (+0.5%, a real fall) on 10.0 and all of Alameda on 0.0.
+  Held out (Bill): `growthNotScored` drops the component and says so on every response; `priceTrendArea` names the
+  county, as LICENSING requires.
+- **Wiring rules that held:** a US field fills the UK slot on its own scale, and `validate_us_fields` raises at
+  import on a record carrying both, a US field in a city naming no California anchor, a top code not encoded as the
+  floor, or a withheld input with a value or no reason. Provenance for a non-UK city is DERIVED from its record
+  (`liveInputs`, `envNote`, `poolMembers`), never borrowed: reusing New York's lines would have said "New York is
+  the only city outside the United Kingdom" in New York's own response. A by-name branch became a registry one
+  (`postcode-<city>` notices). Proof of no collateral: every borough x persona x compare response of the 14 existing
+  cities snapshotted before and after (1,634): every UK response byte-identical, New York only its two lineage
+  sentences.
+- **A ZIP is not a city.** The site's ZIP table gives each ZIP to the city with most of its LAND: 94010 goes to
+  Hillsborough though it is Burlingame's ZIP, and 7 cities hold no ZIP's majority. A score needs residents, so the
+  API takes names and a Bay Area ZIP answers 404 with the city-name route; ZIP routing waits for a residents-based
+  table (2020 blocks). Also fixed: a New York ZIP sent with another city was answered as New York in silence.
+- **Thin data leads the table.** 15 of 50 drop a component under the two-input floor and Gilroy, Emeryville and
+  Morgan Hill top the region. Bill: the UK rule, disclosed; `context.inputsWithheld` and `coverage.notices` name
+  each input and reason. Revisit before the site ranks the Bay Area.
+- **A refusal must not break the documented default.** The first New York ZIP refusal (a ZIP asked of another
+  city) also refused `city=london`, the spec's default and what `scripts/score_bulk.py` sends on every row, so every
+  New York ZIP in a bulk book would have failed as "retired postcode". Refuse only what is wrong (another US
+  city); a UK city cannot hold a ZIP. Found by the pre-commit review, with four more: weights on only unscored
+  components (now 400), credits for withheld or below-floor inputs, the top code in a lineage sentence, and the
+  404's `note` lost on two paths. The release's contract now has its own offline test file.

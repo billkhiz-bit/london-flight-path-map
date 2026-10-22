@@ -79,13 +79,19 @@ for city, cfg in app.CITIES.items():
 # is DELIBERATELY absent from the site from one that has silently fallen
 # out of CITY_DATA - which used to shrink this comparison without
 # failing it.
+#
+# SITE_FACTS_ONLY_CITIES (its one holder is the Lambda): the API scores these and the site shows
+# FACTS (Bill, 2026-10-22: "API first, site second"). Exported so this gate can hold the list BOTH
+# ways: a city on it must render no score here, and a scored city must not.
 print(json.dumps({'scores': out, 'aliases': app.BOROUGH_ALIASES,
-                  'backendOnly': sorted(backend_only), 'personas': PERSONAS}))
+                  'backendOnly': sorted(backend_only), 'factsOnly': sorted(app.SITE_FACTS_ONLY_CITIES),
+                  'personas': PERSONAS}))
 `;
 const dumped = JSON.parse(execFileSync('python', ['-c', PY], { encoding: 'utf-8', cwd: ROOT }));
 const lambdaScores = dumped.scores;
 const PERSONAS = dumped.personas;
 const BACKEND_ONLY = dumped.backendOnly;
+const FACTS_ONLY = dumped.factsOnly;
 // canonical -> every site-side spelling that resolves to it
 const altNames = {};
 for (const [alias, canonical] of Object.entries(dumped.aliases)) {
@@ -118,10 +124,40 @@ await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: 'networkidle
 // and is reachable by name but absent from `window`. Reading window.CITY_DATA
 // yields undefined and this compared 0 boroughs while exiting 0-adjacent.
 const siteCities = await page.evaluate(() => Object.keys(CITY_DATA));
-const shared = siteCities.filter((c) => lambdaScores[c]);
+const shared = siteCities.filter((c) => lambdaScores[c] && !FACTS_ONLY.includes(c));
 
 const failures = [];
 let compared = 0;
+
+// The facts-only half (the data half is tests/test_borough_data_parity.py): every city on the list is
+// on the site and renders FACTS for every place, with no score. A city that starts scoring here has
+// crossed the one-way door without being compared, so it fails until it leaves the list and is.
+for (const city of FACTS_ONLY) {
+  if (!siteCities.includes(city)) {
+    failures.push(`${city}: declared site-facts-only but absent from CITY_DATA`);
+    continue;
+  }
+  await page.evaluate((c) => {
+    if (typeof switchCountry === 'function') switchCountry(CITY_DATA[c].country);
+    switchCity(c);
+  }, city);
+  // Its places arrive with its outline file, after switchCity returns: reading before then would find
+  // none and fail for the wrong reason (or, worse, a future empty list would pass the per-place check).
+  await page.waitForFunction((c) => Object.keys(CITY_DATA[c].boroughData() || {}).length > 0, city, { timeout: 15000 })
+    .catch(() => {});
+  const rendered = await page.evaluate(async (c) => {
+    const records = await CITY_DATA[c].boroughData();
+    return Object.entries(records || {}).map(([name, d]) => ({ name, facts: !!(d && d.facts), score: d ? d.score ?? null : null }));
+  }, city);
+  if (!rendered.length) failures.push(`${city}: site-facts-only, yet the site renders no places at all`);
+  for (const r of rendered) {
+    if (!r.facts || r.score !== null) {
+      failures.push(`${city}/${r.name}: declared site-facts-only, yet the site renders ${r.facts ? 'a score' : 'a non-facts record'}`);
+    }
+  }
+  const asDeclared = rendered.filter((r) => r.facts && r.score === null).length;
+  console.log(`facts-only ${city}: ${asDeclared} of ${rendered.length} places render facts and no score`);
+}
 for (const city of shared) {
   await page.evaluate((c) => {
     // Country tab first, exactly as the chip row does - switchCity alone
@@ -192,7 +228,7 @@ console.log(`compared ${compared} borough/persona pairs (${PERSONAS.join(' + ')}
 // cities the site actually offers, so it tracks a city being added or removed
 // with no edit here, and a CITY DROPPING OUT of the site is caught by the
 // second check rather than silently shrinking the first.
-const expectedCities = Object.keys(lambdaScores).filter((c) => !BACKEND_ONLY.includes(c));
+const expectedCities = Object.keys(lambdaScores).filter((c) => !BACKEND_ONLY.includes(c) && !FACTS_ONLY.includes(c));
 const missingCities = expectedCities.filter((c) => !shared.includes(c));
 if (missingCities.length) {
   console.log(`FAIL: the site no longer offers ${missingCities.join(', ')}, which the`);

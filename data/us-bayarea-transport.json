@@ -6,15 +6,15 @@
  "walk_m": 800,
  "bands": [
   {
-   "from_pct": 50.0,
+   "from_pct": 75.0,
    "band": "excellent"
   },
   {
-   "from_pct": 25.0,
+   "from_pct": 50.0,
    "band": "good"
   },
   {
-   "from_pct": 10.0,
+   "from_pct": 25.0,
    "band": "moderate"
   },
   {
@@ -62,7 +62,7 @@
    "residents": 28335,
    "residents_within_walk": 4856,
    "share_within_walk_pct": 17.1,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -72,7 +72,7 @@
    "residents": 124321,
    "residents_within_walk": 38188,
    "share_within_walk_pct": 30.7,
-   "band": "good",
+   "band": "moderate",
    "withheld": null
   },
   {
@@ -92,7 +92,7 @@
    "residents": 31386,
    "residents_within_walk": 14316,
    "share_within_walk_pct": 45.6,
-   "band": "good",
+   "band": "moderate",
    "withheld": null
   },
   {
@@ -102,7 +102,7 @@
    "residents": 43959,
    "residents_within_walk": 12110,
    "share_within_walk_pct": 27.5,
-   "band": "good",
+   "band": "moderate",
    "withheld": null
   },
   {
@@ -132,7 +132,7 @@
    "residents": 104901,
    "residents_within_walk": 18346,
    "share_within_walk_pct": 17.4,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -163,7 +163,7 @@
    "residents_within_walk": null,
    "share_within_walk_pct": null,
    "band": null,
-   "withheld": "its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put back the city reads excellent, not poor (measured 2026-10-22)"
+   "withheld": "its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put back the city reads good, not poor (measured 2026-10-22)"
   },
   {
    "geoid": "0625338",
@@ -192,7 +192,7 @@
    "residents": 59520,
    "residents_within_walk": 9213,
    "share_within_walk_pct": 15.4,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -212,7 +212,7 @@
    "residents": 162954,
    "residents_within_walk": 17624,
    "share_within_walk_pct": 10.8,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -272,7 +272,7 @@
    "residents": 33780,
    "residents_within_walk": 4481,
    "share_within_walk_pct": 13.2,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -282,7 +282,7 @@
    "residents": 23216,
    "residents_within_walk": 4072,
    "share_within_walk_pct": 17.5,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -292,7 +292,7 @@
    "residents": 80273,
    "residents_within_walk": 19169,
    "share_within_walk_pct": 23.8,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -312,7 +312,7 @@
    "residents": 45483,
    "residents_within_walk": 6007,
    "share_within_walk_pct": 13.2,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -322,7 +322,7 @@
    "residents": 82376,
    "residents_within_walk": 20441,
    "share_within_walk_pct": 24.8,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -342,7 +342,7 @@
    "residents": 440646,
    "residents_within_walk": 73811,
    "share_within_walk_pct": 16.7,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -362,7 +362,7 @@
    "residents": 68572,
    "residents_within_walk": 10737,
    "share_within_walk_pct": 15.6,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -402,7 +402,7 @@
    "residents": 84292,
    "residents_within_walk": 9765,
    "share_within_walk_pct": 11.5,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -412,7 +412,7 @@
    "residents": 43908,
    "residents_within_walk": 8534,
    "share_within_walk_pct": 19.4,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -422,7 +422,7 @@
    "residents": 30722,
    "residents_within_walk": 6069,
    "share_within_walk_pct": 19.7,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -432,7 +432,7 @@
    "residents": 873965,
    "residents_within_walk": 541443,
    "share_within_walk_pct": 61.9,
-   "band": "excellent",
+   "band": "good",
    "withheld": null
   },
   {
@@ -442,7 +442,7 @@
    "residents": 1013240,
    "residents_within_walk": 211660,
    "share_within_walk_pct": 20.8,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -452,7 +452,7 @@
    "residents": 91008,
    "residents_within_walk": 12006,
    "share_within_walk_pct": 13.1,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -462,7 +462,7 @@
    "residents": 105661,
    "residents_within_walk": 28941,
    "share_within_walk_pct": 27.3,
-   "band": "good",
+   "band": "moderate",
    "withheld": null
   },
   {
@@ -472,7 +472,7 @@
    "residents": 127647,
    "residents_within_walk": 15528,
    "share_within_walk_pct": 12.1,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -492,7 +492,7 @@
    "residents": 66105,
    "residents_within_walk": 11881,
    "share_within_walk_pct": 17.9,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -502,7 +502,7 @@
    "residents": 155805,
    "residents_within_walk": 25341,
    "share_within_walk_pct": 16.2,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {
@@ -512,7 +512,7 @@
    "residents": 70143,
    "residents_within_walk": 8131,
    "share_within_walk_pct": 11.5,
-   "band": "moderate",
+   "band": "poor",
    "withheld": null
   },
   {

@@ -33,15 +33,20 @@ info:
     The methodology is reproducible: a worked example walks through every
     calculation against a real postcode.
 
-    **Coverage.** 14 city-regions, 102 boroughs. 97 UK boroughs across 13
+    **Coverage.** 15 city-regions, 152 boroughs. 97 UK boroughs across 13
     city-regions - London (33), Greater Manchester (10), West Midlands (7),
     Leicester (8), West Yorkshire (5), Merseyside (5), Tyne and Wear (5),
     Teesside (5), South Yorkshire (4), Bristol (4), Cardiff (4),
     Nottingham (4) and Greater Norwich (3) - resolved by UK postcode, plus 5 NYC boroughs by
     borough-name lookup or 5-digit US ZIP auto-detection (~182 residential
     ZIPs covered; ~110 with per-ZIP centroid for finer quiet-score
-    resolution). GET /v1/regions returns the authoritative list and needs no
-    API key.
+    resolution), plus the San Francisco Bay Area's 50 cities by city name
+    (`city=bayarea&borough=Palo Alto`; Bay Area ZIPs are not resolved yet,
+    because a ZIP there spans cities). The Bay Area's crime, road-noise and
+    flood inputs are scored on US scales anchored on California's own
+    figures, NOT comparable with the UK's; its growth is not scored (the
+    price trend is county-wide). GET /v1/regions returns the authoritative
+    list and needs no API key.
   version: "1.1"
   contact:
     name: Sky Score
@@ -407,7 +412,7 @@ paths:
             type: string
             enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                    merseyside, tyneandwear, bristol, leicester, teesside,
-                   cardiff, nottingham, norwich]
+                   cardiff, nottingham, norwich, bayarea]
             default: london
         - name: persona
           in: query
@@ -529,7 +534,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScoreResponse'
         '400':
-          description: Invalid request (missing postcode/borough, or bad parameter).
+          description: >-
+            Invalid request (missing postcode/borough, or bad parameter), or
+            custom `weights` that fall only on components this place cannot
+            score (for example `growth` for a Bay Area city, `env` for New
+            York): refused with `scoredComponents` rather than answered 0.0.
           content:
             application/json:
               schema:
@@ -541,7 +550,12 @@ paths:
             Postcode not recognised by postcodes.io, or borough not in dataset
             for the requested city. Response includes `supportedBoroughs`
             for graceful fallback. Terminated (retired) postcodes are also
-            reported here unless `includeTerminated` is set.
+            reported here unless `includeTerminated` is set. A UK postcode in
+            no covered city, sent without `city`, answers "Not covered yet"
+            with `supportedCities` (since 2026-10-22; it named London before).
+            A ZIP other than New York's answers "ZIP not currently supported",
+            and a New York ZIP sent with another `city` is refused rather than
+            answered as New York.
           content:
             application/json:
               schema:
@@ -765,7 +779,7 @@ components:
                 type: string
                 enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                        merseyside, tyneandwear, bristol, leicester, teesside,
-                       cardiff, nottingham, norwich]
+                       cardiff, nottingham, norwich, bayarea]
               name:
                 type: string
               country:
@@ -804,7 +818,10 @@ components:
       # it, so a client that treats it as optional-but-expected is
       # correct and one that omits it entirely loses 0.14-0.18 of the
       # score. Absent from this spec entirely until 2026-09-03.
-      required: [quiet, afford, growth, live]
+      # `growth` and `live` left `required` on 2026-10-22 with the Bay Area:
+      # growth is not scored there, and a city missing crime or transport is
+      # below liveability's two-input floor. Absent means not scored, never zero.
+      required: [quiet, afford]
       properties:
         quiet:
           type: number
@@ -832,8 +849,12 @@ components:
             Barking and Dagenham at 10.0 for GBP 371,030 while Stockton-on-Tees
             took 0.0 at GBP 170,923. The within-city standing that scaling used
             to imply is now published explicitly as `context.priceRankInCity`.
-            Note the currency pools are separate and NOT comparable with each
-            other: the USD pool is New York's five boroughs.
+            Note the pools are separate and NOT comparable with each other:
+            sterling is one national pool, and each US metro is its own (New
+            York's five boroughs; the San Francisco Bay Area's 50 cities). A
+            Bay Area city at the Census top code ("USD 2,000,000 or more",
+            `context.priceTopCoded`) is scored on that floor, the pool's 95th
+            percentile, so it scores 0.0.
         growth:
           type: number
           format: float
@@ -845,20 +866,27 @@ components:
             inflation, rising areas spread 5-10 against the fastest real
             riser, falling areas 5-0 against the steepest real faller - both
             taken across EVERY borough in the currency pool since methodology
-            v5.2 (the 94 sterling boroughs; New York's five for USD), not the
+            v5.2 (every sterling borough; New York's five for New York), not the
             borough's own city, so growth is comparable between cities and a
             city's leader changing hands no longer flips a score across the
             whole scale. The within-city standing is `context.growthRankInCity`.
             The figure scored is `context.priceTrendRealPct`;
             `context.growthBasis` says `real` (sterling cities) or `nominal`
             (New York, where no inflation series is held). Weighted for the
-            `investor` persona only.
+            `investor` persona only. ABSENT, not null, for the San Francisco
+            Bay Area, where growth is not scored (FHFA's trend is county-wide,
+            so its 50 cities hold four values): `context.growthBasis` reads
+            `not scored` and `coverage.notices` says why.
         live:
           type: number
           format: float
           minimum: 0
           maximum: 10
-          description: Liveability composite (35% schools + 30% crime + 25% transport + 10% healthcare).
+          description: >-
+            Liveability composite (35% schools + 30% crime + 25% transport + 10%
+            healthcare), re-weighted over the inputs a borough has. For the San
+            Francisco Bay Area it is crime (on a US scale anchored on California's
+            rate) and rail access only, so a city missing either is not scored on it.
         env:
           type: number
           format: float
@@ -869,8 +897,12 @@ components:
             2021 guidelines, 35% share of postcodes over the WHO 53 dB road
             Lden guideline, 20% share at Environment Agency Medium-or-High
             flood risk). Scored since methodology v3.9; re-composed at v4.0.
-            Absent for New York, and for boroughs below the two-input floor -
-            `context.environmentResolution` says which.
+            For the San Francisco Bay Area: road noise (the share of residents
+            in BTS's 2022 road band holding WHO's guideline) and flood (the
+            share in FEMA's 1% flood zone), each on a US scale anchored on
+            California's own share, re-weighted over the two (no air quality
+            is held). Absent for New York, and for boroughs below the two-input
+            floor - `context.environmentResolution` says which.
 
     Context:
       type: object
@@ -881,7 +913,44 @@ components:
           description: Borough average sold price in GBP (London).
         avgPriceUsd:
           type: number
-          description: Borough average price in USD (NYC).
+          description: >-
+            Median price in USD: New York's curated borough sale prices; for the
+            Bay Area, the Census ACS median VALUE of owner-occupied homes. Absent
+            where `priceTopCoded` is true.
+        priceTrendArea:
+          type: string
+          description: >-
+            Bay Area only: the area `priceTrendPct` belongs to, its county
+            (FHFA publishes no city series), so a county's change is never read
+            as the city's own.
+        avgPriceUsdAtLeast:
+          type: number
+          description: >-
+            Bay Area only, in place of `avgPriceUsd` where the Census top-codes
+            the median: "USD 2,000,000 or more". A floor, never a price.
+        priceTopCoded:
+          type: boolean
+          description: >-
+            Bay Area only: whether this city's median home value is at the
+            Census top code.
+        inputsWithheld:
+          type: object
+          additionalProperties:
+            type: string
+          description: >-
+            A scoring input this borough's record withholds, keyed by input
+            (`crimeRate`, `transport`, `flood`), with the reason (for example
+            a Bay Area city FEMA has not mapped, or one policed by the county
+            sheriff). Absent where nothing is withheld. A withheld input is
+            not estimated; the component it feeds is scored without it, or
+            dropped below its floor.
+        crimeNote:
+          type: string
+          description: >-
+            Present where a city's crime rate per resident reads high because
+            far more people are there by day than live there (a city under
+            20,000 residents at over three times California's rate). The rate
+            and the score are unchanged by it.
         priceTrendPct:
           type: number
           description: >-
@@ -904,10 +973,12 @@ components:
             alongside it only.
         growthBasis:
           type: string
-          enum: [real, nominal]
+          enum: [real, nominal, not scored]
           description: >-
             Which trend `components.growth` was scored on. `real` for every
-            sterling city since v5.1; `nominal` for New York.
+            sterling city since v5.1; `nominal` for New York; `not scored`
+            for the San Francisco Bay Area, where `components.growth` is
+            absent.
         priceRankInCity:
           type: object
           description: >-
@@ -935,6 +1006,7 @@ components:
             The within-city signal that growth carried until v5.2 moved that
             component to the currency pool - the same move, and the same
             reason, as `priceRankInCity` at v5.0. Ties share the better rank.
+            Absent where growth is not scored (the Bay Area).
           required: [rank, of]
           properties:
             rank:
@@ -1012,7 +1084,7 @@ components:
           type: string
           enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                  merseyside, tyneandwear, bristol, leicester, teesside,
-                 cardiff, nottingham, norwich]
+                 cardiff, nottingham, norwich, bayarea]
         postcode:
           type: string
         borough:
@@ -1120,7 +1192,7 @@ components:
 
         The persona's NOMINAL table is unchanged and still documented under
         `persona`, where it is a definition rather than a reproduction aid.
-      required: [quiet, afford, growth]
+      required: [quiet, afford]
       properties:
         quiet:
           type: number
@@ -1169,7 +1241,7 @@ components:
                 type: string
                 enum: [london, nyc, manchester, westmidlands, westyorkshire, southyorkshire,
                        merseyside, tyneandwear, bristol, leicester, teesside,
-                       cardiff, nottingham, norwich]
+                       cardiff, nottingham, norwich, bayarea]
               persona:
                 type: string
                 enum: [balanced, family, investor, firsttime, quietlife, renter, commuter, laterlife]
@@ -1241,3 +1313,13 @@ components:
             type: string
         example:
           type: object
+        note:
+          type: string
+          description: >-
+            The way round a refusal, where there is one: for a Bay Area ZIP,
+            that its cities are scored by name (`city=bayarea`).
+        scoredComponents:
+          type: array
+          items:
+            type: string
+          description: What this place IS scored on, beside a weights refusal.

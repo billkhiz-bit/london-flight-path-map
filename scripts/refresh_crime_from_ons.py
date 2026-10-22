@@ -167,6 +167,8 @@ CITY_PFA = {
 # and for the same reason: a route in neither list must fail.
 NO_ONS_COMPARISON = {
     'nyc': 'ONS Table C4 is a UK release; NYC rates are NYPD CompStat-derived.',
+    'bayarea': ('ONS Table C4 is a UK release; Bay Area rates are California DOJ OpenJustice counts, held to '
+                'their raw files by scripts/build_bayarea_crime.py --check and scored on a US scale.'),
 }
 
 

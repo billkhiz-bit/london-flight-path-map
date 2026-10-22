@@ -53,11 +53,18 @@ class PoolKeyTest(unittest.TestCase):
         app._NATIONAL_AFFORD_BOUNDS.clear()
         app._NATIONAL_GROWTH_BOUNDS.clear()
 
-    def test_every_city_today_pools_by_its_currency(self):
+    def test_every_city_pools_by_its_currency_but_the_bay_area(self):
+        # The Bay Area is the one city naming its own pool (decision 2, served 2026-10-22); every other city
+        # pools by currency, so New York's dollar pool is New York alone. A SET, so a second city naming a
+        # pool fails here: update this test and decision 2's notes on purpose.
+        named = {city: cfg['pool'] for city, cfg in app.CITIES.items() if 'pool' in cfg}
+        self.assertEqual(named, {'bayarea': 'bayarea'})
         for city, cfg in app.CITIES.items():
-            self.assertNotIn('pool', cfg, f'{city} names a pool: update this test and decision 2\'s notes')
-            self.assertEqual(app.pool_of(city), cfg['currency'], city)
-        self.assertEqual({app.pool_of(c) for c in app.CITIES}, {'GBP', 'USD'})
+            if city not in named:
+                self.assertEqual(app.pool_of(city), cfg['currency'], city)
+        self.assertEqual({app.pool_of(c) for c in app.CITIES}, {'GBP', 'USD', 'bayarea'})
+        self.assertEqual(app._pool_size('USD'), len(app.CITIES['nyc']['boroughs']))
+        self.assertEqual(app._pool_size('bayarea'), len(app.CITIES['bayarea']['boroughs']))
 
     def test_a_metro_in_its_own_pool_leaves_new_york_byte_identical(self):
         self._add_metro('USD-test-metro')

@@ -1718,20 +1718,26 @@ class PostcodeTableTests(_LocalTierFixture, unittest.TestCase):
                          'two cities publish identical provenance')
 
     def test_non_uk_city_never_credits_uk_bodies(self):
-        body, status = app.resolve_query({'city': 'nyc', 'borough': 'Brooklyn'})
-        self.assertEqual(status, 200)
-        lines = body['sources'] + list(body['sourceBreakdown'].values())
-        for term in ('MHCLG', 'HM Land Registry', 'Home Office',
-                     'Department for Education', 'DfE', 'TfL', 'NHS', 'DEFRA'):
-            for line in lines:
-                if term in line:
-                    # Permitted only as an explicit disclaimer.
-                    self.assertIn('NOT', line,
-                                  f'NYC response credits {term}: {line}')
-        licence = [ln for ln in body['sources'] if 'Open Government Licence' in ln]
-        self.assertTrue(licence, 'NYC must address the OGL question, not omit it')
-        for ln in licence:
-            self.assertIn('does NOT apply', ln)
+        # EVERY non-UK city and EVERY borough of it, derived from the registry: this was hardcoded to New
+        # York's Brooklyn, so the Bay Area (and a borough-level line such as a withheld input's reason) would
+        # have been unguarded the day it was served.
+        non_uk = [c for c, cfg in app.CITIES.items() if cfg['country'] != 'United Kingdom']
+        self.assertEqual(set(non_uk), {'nyc', 'bayarea'})
+        for city in non_uk:
+            for borough in app.CITIES[city]['boroughs']:
+                body, status = app.resolve_query({'city': city, 'borough': borough})
+                self.assertEqual(status, 200)
+                lines = body['sources'] + list(body['sourceBreakdown'].values()) + body['coverage']['notices']
+                for term in ('MHCLG', 'HM Land Registry', 'Home Office', 'Department for Education', 'DfE',
+                             'TfL', 'NHS', 'DEFRA', 'Environment Agency', 'NaPTAN', 'ONS ', 'CPIH'):
+                    for line in lines:
+                        if term in line:
+                            # Permitted only as an explicit disclaimer.
+                            self.assertIn('NOT', line, f'{city}/{borough} response credits {term}: {line}')
+                licence = [ln for ln in body['sources'] if 'Open Government Licence' in ln]
+                self.assertTrue(licence, f'{city} must address the OGL question, not omit it')
+                for ln in licence:
+                    self.assertIn('does NOT apply', ln)
 
     def test_fully_sourced_city_carries_no_partial_disclosure(self):
         # The Manchester half of this test lives on the Core Cities branch,

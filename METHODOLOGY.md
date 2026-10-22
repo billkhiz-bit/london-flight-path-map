@@ -1085,6 +1085,39 @@ compares them. The ramps and the floor gained their first direct unit tests in
 only through `resolve_query`.
 
 
+### 4.8 The San Francisco Bay Area (release 2, built 2026-10-22: scored by the API; the site shows facts)
+
+The Bay Area's 50 incorporated cities and towns (San Francisco, San Mateo, Santa Clara and Alameda counties) are
+scored by `/v1/score` under `city=bayarea`, asked by city NAME (`borough=Palo Alto`). Bay Area ZIPs are not
+resolved yet: a ZIP there spans cities, and the only ZIP table held gives each ZIP to the city with most of its
+LAND, which sends Burlingame's 94010 to Hillsborough and leaves 7 of the 50 cities with no ZIP of their own. The
+consumer site keeps showing the Bay Area as facts with no score until its own release (Bill, 2026-10-22: "API
+first, site second"; `SITE_FACTS_ONLY_CITIES`, held both ways by the parity gates).
+
+**Every share is over RESIDENTS** (2020 Census blocks, weighted by population), never area or addresses.
+
+| Component | Bay Area input | Scale |
+|---|---|---|
+| `quiet` | The US aircraft estimate fitted to SFO's 29 and San Jose's 13 noise monitors (section 4.5's New York method), read at every resident block | The city's band is the one at or below its residents' average (never quieter); 11 cities between 9.06 and 9.99 publish 7.5 |
+| `afford` | US Census ACS 2020-2024 table B25077, the median VALUE of owner-occupied homes (not sale prices) | Log p5-p95 over the Bay Area's own pool (decision 2: one pool per US metro). 16 cities sit at the Census top code, "$2,000,000 or more": scored on that floor, the pool's 95th percentile, so 0.0; published as `avgPriceUsdAtLeast` with `priceTopCoded`, never as a price |
+| `growth` | NOT SCORED | FHFA's trend is county-wide, so the 50 cities hold four values, and scaled against each other they sat on the rails (San Francisco 10.0, all 14 Alameda cities 0.0). Dropped and its weight redistributed (Bill, 2026-10-22); `context.priceTrendPct` reports the county's change |
+| `live` | Crime: California DOJ OpenJustice 2025, violent and property crimes per 1,000 residents. Transport: the share of residents within 800 m of a BTS rail, metro or light-rail station | Crime on a US scale anchored on California's rate over the agencies that police residents, **21.39** (like for like with a city's own police: railroad, university, Highway Patrol and transit crimes, which no city rate holds, are left out). Transport on the UK's own cut-points (75/50/25%, parsed from `build_borough_bands.py`). Schools and healthcare are not held, so liveability is two inputs |
+| `env` | Road: BTS National Transportation Noise Map 2022, the share in its 45 dB LAeq band or louder. Flood: the share in FEMA's Special Flood Hazard Area | Each on a US scale anchored on California's own share: road **6.88%**, flood **3.14%** (measured over every county). Air quality is not held |
+
+**The US scale** (Bill, 2026-10-18): LINEAR on the California anchor, 10 at none, 5.0 at California's figure, 0 at
+double or more (`us_anchored_to_score`), the shape of the UK's own road and crime ramps. The anchors are
+California's published figures, recomputed from their sources by the builders, never the cohort's range. **None
+of these scales is comparable with a UK score.**
+
+**Missing inputs follow the UK rule** (Bill, 2026-10-22): an input that cannot be measured is WITHHELD, never
+estimated, and a component below its two-input floor is dropped and its weight redistributed. Withheld: flood
+for 9 Santa Clara cities (FEMA has not determined the risk for over 5% of their residents), crime for the 5 cities
+the San Mateo County Sheriff polices under contract (DOJ counts their crime in the sheriff's figures), and
+transport for Emeryville (its only station is missing from BTS's file). Those 15 cities drop a component, and
+some therefore rank high; each response names the input and the reason in `context.inputsWithheld` and
+`coverage.notices`. Colma and Emeryville, small cities whose shops draw far more people by day than live there,
+carry `context.crimeNote` beside an unchanged rate and score.
+
 ### 4.6 DEFRA raster sampling (v3.1, loaded 2026-07-26, quarantined 2026-08-03)
 
 When correctly populated, the v3.1 raster tier replaces Haversine with direct sampling of the DEFRA Strategic Noise Mapping (Round 4, 2022) Lden GeoTIFF at the postcode centroid. That remains the intended gold-standard method — but it is an aspiration, not a description of what runs today. **The table was loaded, found to be wrong, and the tier is quarantined; see the warning in §4.5.** This section describes the design, not the live path.
@@ -2338,6 +2371,16 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-10-22 (v5.7, no version change)**, **the San Francisco Bay Area is scored by the API** (section 4.8;
+  built, deploying through Bill's reviewed changeset; the site keeps showing facts). (1) *Change:* the 50 cities
+  join `/v1/score` by name on US scales anchored on California, with growth held out, its own price pool, and
+  every withheld input named with its reason. Found by the audit the same day and decided by Bill before any
+  Bay Area score was published: transport takes the UK's 75/50/25% cut-points (the first build had typed
+  50/25/10% and called them the UK's), the crime anchor counts only agencies that police residents (21.39, not
+  the all-agency 22.27), and growth is not scored. (2) *Effect:* no UK or New York score moves: every UK
+  response is byte-identical before and after (1,634 compared), and New York's changes only in two lineage
+  sentences, which had said it was "the only city outside the United Kingdom". A UK postcode in no covered city
+  now answers "Not covered yet" rather than naming London.
 - **2026-10-17 (v5.7)**, **New York's runway use is counted over the monitors' months, and a US runway lobe has a length.** (1) *Defect:* v5.6 counted New York's runway use over July and August while its monitors span January to July, and JFK's north-west monitors read 2 to 3 points quieter than measured. (2) *Change:* runway use counted every third day from 1 January to 30 July 2026 (71 days, adsb.lol); counted that way, winter flow adds JFK's runway 31L departures, whose endless lobe pointed at Lower Manhattan 19 km out and read it 3 to 4 points louder where US DOT's 2022 map paints nothing, so every US lobe now runs 15 km and no further (Bill's ruling). (3) *Effect:* Howard Beach, 150th and 165th Avenues read 0.0, 0.0 and +1.0 against their monitors (held out); JFK's nested leave-one-out error 1.28 -> 1.04, still louder than measured on average at all four airports; JFK's fitted size 1.8 -> 2.05. Queens' population-weighted estimate is 1.44, under the 1.5 cut, so its band moves high -> severe and its borough score 5.0 -> 4.4; the other four boroughs keep their bands. The Bay Area's fit is unchanged. No UK value moves.
 - **2026-10-16 (v5.6)**, **New York's aircraft estimate is fitted to its airports' noise monitors.** (1) *Defect:* New York read eight hand-drawn corridors and Heathrow-sized airports, and was quieter than the Port Authority's monitors measured at 15 of 17 JFK monitors (2.4 points on average); its borough bands were hand-written and disagreed with the estimate in four boroughs of five, in both directions. (2) *Change:* the FAA's coded routes of the runway directions flown 10% or more of the time (counted from adsb.lol tracks, July-August 2026), runway lobes, fitted sizes and route weight, all four airports major (§4); the borough bands derived from it, population-weighted by ZIP area; the full map draws the routes it scores. Bill's ruling, 2026-10-16, with ANEEM as the yardstick. (3) *Measured:* nested leave-one-out MAE JFK 1.28, LaGuardia 1.25, Teterboro 1.70, Newark 3.40 (two monitors); louder than the monitors on average at all four. (4) *Effect:* Queens severe → high (quiet 0.0 → 1.5), Brooklyn high → moderate-high (1.5 → 3.0), the Bronx low-moderate → moderate (7.5 → 5.0), Staten Island low → low-moderate (10.0 → 7.5), each band rounded to the louder side of the population-weighted estimate; ZIP- and neighbourhood-level quiet moves across the city. `sources` now credits the FAA ("as is", without warranty) and the adsb.lol runway counts (ODbL). No UK value moves. (5) *Known limitation:* a summer runway count; JFK's north-west side reads up to 3 points quieter than its monitors. (6) *Guards:* `measure_us_quiet_yardstick.py --check`, `build_nyc_impact.py --check` and `tests/us-quiet-site-parity.mjs`, all blocking.
 - **2026-10-07 (provenance, no version change)**, **The UK AIP is credited in `sources`.** (1) *Defect:* since v5.3-v5.5 the UK corridors and runway axes have been generated from the UK Aeronautical Information Publication (NATS), which is public but not openly licensed, and no response credited it, while `terms.html` obliges integrators to pass `sources` through to their own users (website audit 2026-10-06, C1). (2) *Change:* every city whose quiet geometry reads an AIP airport (the twelve UK cities with an airport) appends "Flight routes: UK Aeronautical Information Publication (NATS) ..." to `sources`, and `sourceBreakdown.quiet` names the airports; derived from the engine's own geometry, so South Yorkshire and New York carry none (§18). (3) *Effect on scores:* none; no weight, threshold or formula changed.

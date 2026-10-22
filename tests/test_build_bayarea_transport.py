@@ -61,16 +61,27 @@ def test_a_source_gap_city_is_withheld_not_read_as_no_station():
 
 
 @pytest.mark.parametrize('share, band', [
-    (50.0, 'excellent'), (49.9, 'good'), (25.0, 'good'), (24.9, 'moderate'),
-    (10.0, 'moderate'), (9.9, 'poor'), (0.0, 'poor'),
+    (75.0, 'excellent'), (74.9, 'good'), (50.0, 'good'), (49.9, 'moderate'),
+    (25.0, 'moderate'), (24.9, 'poor'), (0.0, 'poor'),
 ])
 def test_each_band_starts_at_its_edge(share, band):
     assert bt.band_of(share) == band
 
 
+def test_the_bands_are_the_uks_own():
+    # Bill, 2026-10-22, after the builder's typed 50/25/10 was found NOT to be the UK's 75/50/25: the same share
+    # must earn the same band on both sides. Against the UK's own banding FUNCTION, over every tenth of a point,
+    # so a moved UK cut-point (or a re-typed copy here) fails rather than drifting.
+    pytest.importorskip('pyproj')  # build_borough_bands imports it
+    uk = bt._load('build_borough_bands')
+    for tenth in range(0, 1001):
+        share = tenth / 10
+        assert bt.band_of(share) == uk.transport_band(share), share
+
+
 def test_rounding_down_never_lifts_a_city_into_a_better_band():
     # just under each edge: rounded to NEAREST these would read the better band
-    for edge in (50.0, 25.0, 10.0):
+    for edge in (75.0, 50.0, 25.0):
         assert bt.band_of(bt.floor1(edge - 0.04)) != bt.band_of(edge)
     assert bt.floor1(62.0) == 62.0 and bt.floor1(0.0) == 0.0
 

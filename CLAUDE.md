@@ -76,7 +76,7 @@ Or just describe what you need, I have full context of this project.
   cross-project state is `C:\Users\bilal\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
-- **Weekly audit**: the current one is `AUDIT_REPORT_2026-10-16.md`; suggest `/audit` when it is >7 days old.
+- **Weekly audit**: the current one is `AUDIT_REPORT_2026-10-22.md`; suggest `/audit` when it is >7 days old.
 
 ## The product, in facts safe to repeat
 
@@ -84,7 +84,9 @@ Or just describe what you need, I have full context of this project.
   `/v1/score` API is the product. Pivoted May 2026 from "AI-powered" to data-first.
 - **THE public coverage sentence, the only one to quote**: "97 council areas in 13 UK city regions, plus New
   York's 5 boroughs and 50 Bay Area cities (facts only)".
-- **Surfaces**: `/v1/score` serves 14 cities. The site SCORES 11 (London 33, NYC 5, Greater Manchester 10,
+- **Surfaces**: `/v1/score` serves 14 cities LIVE, and 15 in source: the Bay Area's 50 cities, BY NAME only
+  (`city=bayarea`), built 2026-10-22 and live once Bill's changeset deploys; the site keeps their facts
+  (`SITE_FACTS_ONLY_CITIES`, held both ways by both parity gates). The site SCORES 11 (London 33, NYC 5, Greater Manchester 10,
   West Midlands 7, West Yorkshire 5, South Yorkshire 4, Merseyside 5, Tyne and Wear 5, Bristol 4, Leicester 8,
   Teesside 5 = 91 boroughs) and shows the **Bay Area's 50 cities as facts with no score**. API-only, declared
   in `BACKEND_ONLY_CITIES`: Cardiff (cannot leave: no Progress 8 in Wales) and Nottingham (judgement). Greater
@@ -155,6 +157,9 @@ Or just describe what you need, I have full context of this project.
   zero, 5.0 at the anchor, 0 at double; Bill, 2026-10-18; `docs/lessons/us-cities.md`).
 - **Pooled figures hide per-city optimism**: any fit must hold per city (no city may read quieter than its
   yardstick).
+- **A parity claim is a claim about a holder: read it, never retype it.** The Bay Area's transport bands were
+  typed (50/25/10) and called "the UK's" (75/50/25) to Bill; they are now parsed from `build_borough_bands.py`.
+  Likewise an anchor counts only what its unit can (the crime anchor: agencies policing residents, 21.39).
 
 ### Frontend
 - **One registry, `CITY_DATA`.** No `if (city === 'x')`; add a registry field to ALL cities

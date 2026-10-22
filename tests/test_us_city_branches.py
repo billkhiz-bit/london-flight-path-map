@@ -40,14 +40,17 @@ PAGE_DECLARED = {
     "currentCity === 'nyc'": 1,
 }
 
-# The score Lambda. One left: _postcode_coverage_notice() picks New York's OWN
-# wording, so it goes when the Bay Area has its notice, in the deploy that adds it.
+# The score Lambda. One left: a New York ZIP asked of another city (below).
 LAMBDA_DECLARED = {
     # ("if city != 'nyc'" left on 2026-10-16: the UK outside-coverage loop chooses UK
     # cities by country now, so the Bay Area cannot slip into it either. The four
     # "is this the UK's liveability shape" tests left on 2026-10-18 for uk_shape(),
-    # a registry question; all 816 scores byte-identical across the change.)
-    "if city == 'nyc':": 1,
+    # a registry question; all 816 scores byte-identical across the change. "if city ==
+    # 'nyc':" in _postcode_coverage_notice left on 2026-10-22, when the Bay Area got its own
+    # notice: a non-UK city's sentence is now chosen by registry, `postcode-<city>`.)
+    # A New York ZIP asked of another city: the ZIP table IS New York's, so the question is
+    # whether the caller named New York, and no registry field answers it more honestly.
+    "if zip5 in NYC_ZIP_TO_BOROUGH and named_city and named_city != 'nyc' and not uk_shape(named_city):": 1,
 }
 
 

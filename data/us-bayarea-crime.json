@@ -9,9 +9,15 @@
  "generator": "scripts/build_bayarea_crime.py --write",
  "counted": "Violent_sum + Property_sum",
  "california": {
-  "crimes": 876322,
+  "crimes": 841875,
   "population": 39355309,
-  "per_1000": 22.27
+  "per_1000": 21.39,
+  "crimes_all_agencies": 876322,
+  "left_out": {
+   "agencies": 209,
+   "crimes": 34447,
+   "why": "agencies with no residents of their own (railroads, universities and colleges, school districts, the Highway Patrol, transit, airports, ports, State Parks, Cal Fire, state hospitals): no city's rate can contain their crimes"
+  }
  },
  "scope": "crimes where they were recorded, per RESIDENT; not comparable with the UK rate (ONS Table C4 counts all recorded crime except fraud)",
  "cities": [

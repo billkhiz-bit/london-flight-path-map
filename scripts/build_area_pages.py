@@ -633,6 +633,10 @@ def main() -> int:
 
     pages, thin, seen = [], [], {}
     for city, cfg in app.CITIES.items():
+        # The API scores these and the site shows FACTS (app.SITE_FACTS_ONLY_CITIES, Bill 2026-10-22): an area
+        # page is a published SCORE, so none is written until the city's site release crosses the one-way door.
+        if city in app.SITE_FACTS_ONLY_CITIES:
+            continue
         for borough in sorted(cfg['boroughs']):
             data = gather(city, borough)
             if data is None:
@@ -840,7 +844,9 @@ def open_data_rows() -> list[list]:
     code_for = {(c, b): code for code, (c, b) in app.LAD_TO_BOROUGH.items()}
     rows = []
     for city in sorted(app.CITIES):
-        if city == 'nyc':
+        # UK only, by REGISTRY: the file is published under the OGL, which covers no US data. This was
+        # `city == 'nyc'`, which would have put the Bay Area's 50 cities in the UK file the day it was scored.
+        if app.CITIES[city].get('country') != 'United Kingdom':
             continue
         for borough in sorted(app.CITIES[city]['boroughs']):
             body, status = app.resolve_query({'borough': borough, 'city': city})

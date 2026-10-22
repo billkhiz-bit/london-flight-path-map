@@ -248,13 +248,14 @@ often planes fly"). Measured privately; nothing derived from these is published:
 - **Bay Area runway use, `data/us-runway-use.json` (2026-10-16), DERIVED FROM adsb.lol, so ODbL.**
   Landings and take-offs per runway end at SFO, OAK and SJC over July-August 2026 (55 of 62
   days kept), and the lobe shares built from them in the score Lambda's US-QUIET-BAYAREA block.
-  They WEIGHT the Bay Area's aircraft estimate; nothing is served from them yet ('bayarea' is in
-  no CITIES entry). **PUBLISHED 2026-10-16 (`17d7ef1`, pushed to the public repo on Bill's "push")**,
+  They WEIGHT the Bay Area's aircraft estimate, which the API scores from release 2 (built 2026-10-22;
+  serving once Bill's changeset deploys), and every Bay Area response's `sources` carries the credit and
+  the period. **PUBLISHED 2026-10-16 (`17d7ef1`, pushed to the public repo on Bill's "push")**,
   after it was held back for his decision: his 15 Oct acceptance covered counts that pass the
   per-airport floor, which a US airport cannot (no official monthly figure to test against), and
   these weight runways rather than claim how often planes pass. Offered under ODbL and credited
   "aircraft positions via adsb.lol (ODbL)" in the file; the credit must also appear wherever a Bay
-  Area score built on it is shown (release 2).
+  Area score built on it is shown, which the API's `sources` does (release 2).
 - **US airport noise monitors, `data/us-noise-monitors.json` (2026-10-16)**, the yardstick for the
   US aircraft estimate: **SFO** via DataSF's "Aircraft Noise Climates" (dataset qxw2-ncq3),
   **PDDL 1.0** (public domain), read from the dataset's own metadata (both its conventional and ANEEM

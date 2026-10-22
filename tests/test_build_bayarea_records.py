@@ -79,7 +79,7 @@ def test_a_top_coded_price_is_the_census_code_never_a_typed_figure():
 
 @pytest.mark.parametrize('old, new', [
     ("'floodSfhaPct': 7.04}", "'floodSfhaPct': 7.0}"),   # a value edited by hand
-    ("US_CALIFORNIA_ANCHORS = {'crimePer1000Us': 22.27", "US_CALIFORNIA_ANCHORS = {'crimePer1000Us': 22.3"),
+    ("US_CALIFORNIA_ANCHORS = {'crimePer1000Us': 21.39", "US_CALIFORNIA_ANCHORS = {'crimePer1000Us': 21.4"),
 ])
 def test_the_check_reds_an_edited_block(tmp_path, monkeypatch, capsys, old, new):
     text = br.LAMBDA.read_text(encoding='utf-8')

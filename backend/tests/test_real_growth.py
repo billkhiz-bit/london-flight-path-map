@@ -202,7 +202,11 @@ class ProvenanceTests(unittest.TestCase):
         for city, cfg in app.CITIES.items():
             with self.subTest(city=city):
                 line = app._growth_breakdown_line(city)
-                if cfg['currency'] == 'GBP':
+                if cfg.get('growthNotScored'):  # the Bay Area: no component, and it says why
+                    self.assertIn('NOT scored', line)
+                    self.assertIn(cfg['growthNotScored'], line)
+                    self.assertNotIn('CPIH', line)
+                elif cfg['currency'] == 'GBP':
                     self.assertIn('REAL-terms', line)
                     self.assertIn(f'{app.CPIH_12M_PCT[app.SNAPSHOT_VINTAGE]}%', line)
                     self.assertIn(app.SNAPSHOT_VINTAGE_LABEL, line)

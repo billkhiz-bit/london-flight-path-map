@@ -479,7 +479,9 @@ on the registry, before any Bay Area data exists:
     yet (ROADMAP).
 
 **Build-order step 4, the Lambda entry: what `CITIES['bayarea']` touches** (code survey
-2026-10-22, read-only, nothing run; search for the names, line numbers move). The
+2026-10-22, read-only, nothing run; search for the names, line numbers move). **BUILT the same
+evening, in source (ROADMAP START HERE, 2026-10-22 evening); deploys as its own changeset after
+29 Oct.** ZIP routing (below) was left for a residents-based table; the rest is done as listed. The
 records and anchors are BUILT (`BAYAREA_BOROUGHS`, `US_CALIFORNIA_ANCHORS`,
 `scripts/build_bayarea_records.py`); everything below is still to do. Unwired today,
 a Bay Area city would score on quiet + afford + growth ONLY: every US field is
