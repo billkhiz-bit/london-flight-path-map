@@ -54,6 +54,15 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > dropped rather than the airport); add September when the CAA publishes it (~mid-Nov); fix Luton's field-level
 > fault (a transponder alternating 'ground'/0 ft, June; recount all 289 days, ~2.8 h); accept 5-6 May as outages.
 >
+> **`/how-it-works/` BUILT (Bill, 22 Oct), not deployed:** the method in plain English, with Hounslow taken apart
+> (each score times its weight, adding up to 3.4), the eight views' weights, and every movable figure derived by
+> `scripts/build_how_it_works.py` (blocking). Linked from the front page's answer and every footer. **The area pages
+> are now counted** (analytics + their own CSP; GoatCounter had never seen them). Both deploy with `web-deploy`,
+> `home-deploy`, `area-deploy` and `meta-deploy` once Bill says so. **Engagement (22 Oct):** two-thirds of views are
+> the front page and ~6% of them act; Reddit is the best channel; the evidence says answer first, count the area
+> pages, and shorten the API path (research summary in the session; next: mock the front page's answer-first
+> change for Bill).
+>
 > **Audit, 22 Oct** (`AUDIT_REPORT_2026-10-22.md`): 0 critical, 6 important (4 fixed the same day: the rename
 > candidate back in this file, and the three Bay Area numbers above), 15 minor (5 fixed: the MCP server's key
 > host, loose names, compare rows; the adsb tar member cap; a fixture's two staff names). Open: the sold-price rows truncate their labels (I-5), "Have your say" names

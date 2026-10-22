@@ -134,6 +134,7 @@ const PAGES = [
   // tests/front-page.mjs still drives the intro and asserts the backdrop takes nothing.
   { name: 'front page', slug: 'home/index', live: 'index', settle: 2500, full: true },
   { name: 'reports', slug: 'home/reports/index', live: 'reports/index' },
+  { name: 'how it works', slug: 'how-it-works/index' },
   { name: 'free street report', slug: 'home/reports/street/index', live: 'reports/street/index' },
   { name: 'what changed', slug: 'changes', settle: 2500 },
   { name: 'API landing', slug: 'api/index' },

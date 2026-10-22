@@ -43,6 +43,8 @@ set -a; . ./.env; set +a
 git status --short | grep -q . && echo "(uncommitted changes present - expected if you are deploying before committing)"
 python scripts/build_hpi_prices.py --check --all >/dev/null || { echo "prices == HPI is RED on the tree; fix before deploying"; exit 1; }
 echo "prices == HPI: green on the tree"
+# /how-it-works/ bakes Hounslow's worked example and the price month (2026-10-22): a roll moves both.
+python scripts/build_how_it_works.py --check >/dev/null || { echo "how-it-works is behind the engine: run python scripts/build_how_it_works.py --write first"; exit 1; }
 
 step "1. backend (SAM) - the API moves first"
 ( cd backend && rm -rf .aws-sam \

@@ -1338,6 +1338,7 @@ for (const [path, here] of [
   ['/pricing', '/pricing'],
   ['/api/', '/api/'],
   ['/open-data/', '/open-data/'],
+  ['/how-it-works/', null],
   ['/area/london/camden/', null],
   // The six that had none until 2026-10-07 (website audit M1). Three are dark pages, so the bar
   // takes the page's colours; the rules checked are the same.

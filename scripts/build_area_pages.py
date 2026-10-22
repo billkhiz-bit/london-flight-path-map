@@ -347,6 +347,11 @@ def gather(city: str, borough: str) -> dict | None:
     }
 
 
+# COUNTED SINCE 2026-10-22. The three templates below (an area page, the area index, open data) carried no
+# analytics, so the pages most likely to arrive from a search were the ones GoatCounter could not see. Each now
+# loads js/count.mjs (anonymous, cookieless, aggregate: privacy s2c) under the same strict policy the other
+# counting pages carry, which tests/test_analytics_first_party.py requires; they load nothing else but their own
+# styles and fonts, so the policy blocks nothing they use.
 PAGE = """<!doctype html>
 <html lang="en">
 <head>
@@ -363,6 +368,7 @@ PAGE = """<!doctype html>
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
 <style>
   /* `color-scheme` declared 2026-09-02 (audit D11). These pages carry a
      prefers-color-scheme block below, so they REPAINT for dark mode - but
@@ -442,9 +448,10 @@ Figures are for the whole borough; a single address can differ{map_note}.</p>
 </main>
 
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
 </footer>
 </div>
+<script type="module" src="/js/count.mjs"></script>
 </body>
 </html>
 """
@@ -575,6 +582,7 @@ INDEX = """<!doctype html>
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
 <style>
   /* See the note on the borough template: same reason, same fix. */
   :root {{ color-scheme: light dark;
@@ -618,6 +626,7 @@ INDEX = """<!doctype html>
 <p class="sub" style="margin-top:32px;"><a href="/map/">Back to the map</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/terms">Terms</a></p>
 </main>
 </div>
+<script type="module" src="/js/count.mjs"></script>
 </body>
 </html>
 """
@@ -903,6 +912,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
 <style>
   :root {{ color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
   * {{ box-sizing:border-box; }}
@@ -967,9 +977,10 @@ OPEN_DATA_PAGE = """<!doctype html>
 <p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10-15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: its Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's 2024 figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same figures are available per postcode through the <a href="/api/">API</a>.</p>
 </main>
 <footer>
-<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
 </footer>
 </div>
+<script type="module" src="/js/count.mjs"></script>
 </body>
 </html>
 """
@@ -1019,6 +1030,7 @@ STATIC_URLS = [
     ('/map/', '0.9', 'weekly'),
     ('/reports/', '0.8', 'monthly'),
     ('/reports/street/', '0.8', 'monthly'),
+    ('/how-it-works/', '0.7', 'monthly'),
     ('/open-data/', '0.7', 'monthly'),
     ('/bay-area/', '0.8', 'monthly'),
     ('/pricing', '0.8', 'monthly'),

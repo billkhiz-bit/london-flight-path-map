@@ -152,12 +152,17 @@ check(
 // exited 0. The loop below already reads every file for the duplicate-block
 // check, so this costs nothing.
 const noScript = [];
+const COUNT_TAG = '<script type="module" src="/js/count.mjs"></script>'; // the only script allowed, once
 const noScore = [];
 const badCta = [];
 let ctaChecked = 0;
 for (const pg of pages) {
   const html = readFileSync(pg.file, 'utf8');
-  if (/<script/i.test(html)) noScript.push(pg.url);
+  // Readable WITHOUT JavaScript is the point, so the one script a page may carry is the first-party
+  // analytics tag, once (2026-10-22: the area pages counted nothing, so the search entry pages were the
+  // unmeasured ones). It renders nothing, the facts stay in the served HTML (checked below), and any
+  // other script, or a second tag, still fails here.
+  if (/<script/i.test(html.replace(COUNT_TAG, ''))) noScript.push(pg.url);
   if (!/Sky Score out of 10/.test(html)) noScore.push(pg.url);
   // THE CALL-TO-ACTION MUST CARRY THE BOROUGH (2026-08-31, audit D1). Every
   // page links to `/?city=<key>&borough=<Name>`, and index.html read `city`
@@ -178,7 +183,7 @@ for (const pg of pages) {
   if (!/href="\/map\/\?city=[^"]*&amp;borough=[^"]+"/.test(html)) badCta.push(pg.url);
 }
 check(
-  'every page carries no script tag',
+  'every page carries no script but the analytics tag',
   noScript.length === 0,
   noScript.length ? `${noScript.length} page(s) carry <script>: ${noScript.slice(0, 3).join(', ')}` : `${pages.length} checked`,
 );

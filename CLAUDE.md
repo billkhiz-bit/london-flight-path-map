@@ -111,7 +111,7 @@ Or just describe what you need, I have full context of this project.
 
 ### Data and scoring
 - **Derive, never copy.** Anything between generated markers (`FLIGHT-PATHS-LONDON`, `RUNWAY-AXES`,
-  `<CITY>-NEIGHBOURHOODS`, `BACKEND-ONLY-PRICES`, `US-QUIET-NYC`, `US-QUIET-BAYAREA`, `AREA_SCORECARDS`, `COVERAGE-STRIP` ...)
+  `<CITY>-NEIGHBOURHOODS`, `BACKEND-ONLY-PRICES`, `US-QUIET-NYC`, `US-QUIET-BAYAREA`, `AREA_SCORECARDS`, `COVERAGE-STRIP`, `HOW-IT-WORKS-*` ...)
   is rewritten by its builder; never hand-edit it. Each builder's `--check` is the gate.
 - **Scoring inputs live in BOTH holders** (Lambda registry + `data/borough-extra.json` / `index.html`),
   held by `tests/test_borough_data_parity.py`. Use `build_borough_bands.py --write --write-lambda`, never

@@ -42,6 +42,7 @@ index.html|map/
 home/index.html|index.html
 home/reports/index.html|reports/
 home/reports/street/index.html|reports/street/
+how-it-works/index.html|how-it-works/
 home/moved/preview/index.html|preview/
 home/moved/preview/reports/index.html|preview/reports/
 pricing.html|pricing

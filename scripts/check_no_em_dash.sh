@@ -25,7 +25,7 @@ PAGES="index.html api/index.html pricing.html privacy.html changes.html
        terms.html open-data/index.html bay-area/index.html
        home/index.html home/reports/index.html home/reports/street/index.html home/moved/preview/index.html home/moved/preview/reports/index.html
        score-demo/index.html score-demo/status.html score-demo/api-docs.html
-       404.html"
+       how-it-works/index.html 404.html"
 
 # THE 100 area/ PAGES ARE DEPLOYED TOO (2026-08-31, audit I13). They were
 # outside this list entirely - 100 of the site's ~109 public URLs, and the only

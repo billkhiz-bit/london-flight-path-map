@@ -27,6 +27,7 @@ const PAGES = [
   { path: '/', name: 'front page', ready: '#map .boro' },
   { path: '/reports/', name: 'reports' },
   { path: '/reports/street/', name: 'free street report' },
+  { path: '/how-it-works/', name: 'how it works' },
   { path: '/api/', name: 'API landing' },
   { path: '/changes', name: 'what changed this quarter' },
   { path: '/score-demo/', name: 'score demo' },

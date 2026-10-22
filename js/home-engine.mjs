@@ -1470,7 +1470,7 @@ function render(postcode, district, city, e, lat, lon) {
   if (area) {
     const row = city ? rowFor(district) : null;
     area.innerHTML = row
-      ? `Council area: <b>${esc(row.borough)}</b>${row.score !== '' ? `, Sky Score ${esc(row.score)}` : ''}${row.flood_medium_or_high_pct !== '' ? `, ${esc(row.flood_medium_or_high_pct)}% of postcodes at medium or high flood risk` : ''}. <button type="button" class="linkish" id="ans-open-area">Its figures</button>`
+      ? `Council area: <b>${esc(row.borough)}</b>${row.score !== '' ? `, Sky Score ${esc(row.score)}` : ''}${row.flood_medium_or_high_pct !== '' ? `, ${esc(row.flood_medium_or_high_pct)}% of postcodes at medium or high flood risk` : ''}. <button type="button" class="linkish" id="ans-open-area">Its figures</button> &middot; <a href="/how-it-works/">How it is worked out</a>`
       : '';
     area.querySelector('#ans-open-area')?.addEventListener('click', () => selectBorough(row.borough, { scroll: true, focus: true }));
   }

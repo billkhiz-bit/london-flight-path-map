@@ -68,6 +68,7 @@ const PAGES = [
   { path: '/home/', name: 'front page', renderedWhen: '#map .boro' },
   { path: '/home/reports/', name: 'reports' },
   { path: '/home/reports/street/', name: 'free street report' },
+  { path: '/how-it-works/', name: 'how it works' },
   { path: '/api/', name: 'API landing' },
   {
     path: '/changes',

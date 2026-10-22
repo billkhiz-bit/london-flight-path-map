@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>How a score is worked out - Sky Score</title>
+    <meta name="description" content="Where each Sky Score number comes from: the five scores out of 10, which one is our estimate, how the overall score adds them up, and what none of them can tell you." />
+    <link rel="canonical" href="https://skyscore.co.uk/how-it-works/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://skyscore.co.uk/how-it-works/" />
+    <meta property="og:title" content="How a score is worked out - Sky Score" />
+    <meta property="og:description" content="Five scores out of 10, one overall score, and where every number comes from." />
+    <meta property="og:site_name" content="Sky Score" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
+    <!--
+      How a score is worked out, served at /how-it-works/ since 2026-10-22 (Bill: a plain-English page beside
+      the methodology, written for a reading age of about 10 to 12). Every figure that can move (the worked
+      example, the weights, the price month, the coverage line) sits between HOW-IT-WORKS markers and is
+      written by scripts/build_how_it_works.py from the score engine; edit the words around them, never the
+      blocks. Wording rules (CLAUDE.md): one licence per dataset, never one for the product; shares are of
+      postcodes; nothing here says how often planes fly; no prices of ours outside /pricing.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      :root {
+        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12;
+        --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+        --gutter: clamp(16px, 4vw, 48px);
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 17px; line-height: 1.6; }
+      a { color: inherit; text-underline-offset: 3px; }
+      a:hover { color: var(--orange-ink); }
+      :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); }
+      .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+      nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+      nav.top-nav a { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dark); }
+      nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight: 600; }
+      nav.top-nav a:hover { color: var(--dark); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
+      main { padding: 24px var(--gutter) 40px; max-width: 1080px; }
+      .read { max-width: 68ch; }
+      h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 14px; max-width: 16ch; text-wrap: balance; }
+      p.lead { margin: 0 0 22px; color: var(--mid); font-size: 19px; max-width: 56ch; }
+      nav.contents { margin: 0 0 40px; font-size: 15px; color: var(--mid); max-width: 76ch; }
+      nav.contents ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+      section { margin: 0 0 48px; scroll-margin-top: 16px; }
+      h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(23px, 2.6vw, 30px); letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 12px; }
+      p { margin: 0 0 14px; }
+      .quiet { color: var(--mid); font-size: 15px; }
+
+      /* The worked example: the arithmetic itself, as a receipt. Numbers are mono so the columns line up. */
+      .example { background: var(--paper); border-radius: 18px; padding: clamp(18px, 3vw, 30px); max-width: 760px; margin: 0 0 14px; }
+      table.sum { width: 100%; border-collapse: collapse; font-size: 16px; }
+      table.sum caption { text-align: left; font-family: var(--font-display); font-weight: 600; font-size: 18px; margin: 0 0 10px; }
+      table.sum th, table.sum td { padding: 9px 0; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--font-mono); font-size: 15px; font-variant-numeric: tabular-nums; }
+      table.sum th[scope="row"] { text-align: left; font-family: var(--font-body); font-size: 16px; font-weight: 500; }
+      table.sum thead th { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--mid); padding-top: 0; }
+      table.sum thead th:first-child { text-align: left; }
+      table.sum td { padding-left: 12px; white-space: nowrap; }
+      table.sum tfoot th, table.sum tfoot td { border-bottom: 0; border-top: 2px solid var(--dark); font-weight: 700; padding-top: 12px; }
+      table.sum td.total { font-family: var(--font-display); font-size: 30px; letter-spacing: -0.02em; line-height: 1; }
+      .tag { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 99px; font-family: var(--font-mono); font-size: 11px; line-height: 19px; vertical-align: 2px; white-space: nowrap; }
+      .tag.off { color: var(--mid); box-shadow: inset 0 0 0 1px #bdbab2; }
+      .tag.est { color: var(--orange-ink); box-shadow: inset 0 0 0 1.5px var(--orange-ink); }
+      .tag.band { color: var(--orange-ink); border: 1px dashed var(--orange-ink); line-height: 17px; }
+      .key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: 0; background: var(--line); }
+      .key-quiet { background: #8b897f; } .key-afford, .seg-afford { background: var(--orange-ink); }
+      .key-growth, .seg-growth { background: #c9c5bb; } .key-live, .seg-live { background: var(--dark); } .key-env, .seg-env { background: var(--orange); }
+      .seg-quiet { background: #8b897f; }
+      /* The total as a length on the 0-10 scale, one segment per score's points; what is left is unscored. */
+      .bar { display: flex; height: 16px; margin: 20px 0 4px; border-radius: 4px; background: repeating-linear-gradient(90deg, #ebe9e3 0 calc(10% - 1px), var(--line) calc(10% - 1px) 10%); overflow: hidden; }
+      .bar .seg { display: block; height: 100%; box-shadow: inset -2px 0 0 var(--paper); }
+      p.scale { display: flex; justify-content: space-between; margin: 0; font-family: var(--font-mono); font-size: 12px; color: var(--mid); }
+      p.cost { margin: 14px 0 0; color: var(--dark); font-size: 16px; }
+
+      dl.scores { margin: 0 0 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+      dl.scores div { padding-left: 14px; border-left: 3px solid var(--line); }
+      dl.scores dt { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+      dl.scores dd { margin: 2px 0 0; color: var(--mid); }
+      ul.plain { margin: 0 0 14px; padding-left: 20px; }
+      ul.plain li { margin: 6px 0; }
+      .two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin: 0 0 14px; max-width: 900px; }
+      @media (min-width: 760px) { .two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      .two > div { background: var(--paper); border-radius: 14px; padding: 18px 20px; }
+      .two h3 { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 0 0 6px; }
+      .two p { margin: 0; color: var(--mid); font-size: 16px; }
+      .two .est h3 { color: var(--orange-ink); }
+
+      .scroll { overflow-x: auto; max-width: 820px; margin: 0 0 14px; border-radius: 14px; background: var(--paper); }
+      table.weights { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 15px; }
+      table.weights caption { text-align: left; padding: 14px 16px 6px; color: var(--mid); font-size: 14px; }
+      table.weights th, table.weights td { padding: 8px 12px; border-top: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; }
+      table.weights td { font-family: var(--font-mono); font-size: 14px; }
+      table.weights th[scope="row"], table.weights thead th:first-child { text-align: left; }
+      /* On a phone the table scrolls inside its box; the view's name stays put so each row stays readable. */
+      table.weights th[scope="row"], table.weights thead th:first-child { position: sticky; left: 0; background: var(--paper); }
+      table.weights thead th { font-size: 13px; color: var(--mid); font-weight: 600; }
+      ul.credits { list-style: none; margin: 0 0 14px; padding: 0; font-size: 15px; color: var(--mid); }
+      ul.credits li { padding: 8px 0; border-top: 1px solid var(--line); }
+      ul.credits b { color: var(--dark); font-weight: 600; }
+      footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+      footer a { color: var(--mid); }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">Sky Score</a>
+      <nav class="top-nav" aria-label="Site">
+        <a class="nav-cta" href="/map/">Full map</a>
+        <a href="/reports/">Reports</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/api/">API</a>
+        <a href="/open-data/">Open data</a>
+      </nav>
+    </header>
+    <main>
+      <h1>How a Sky Score is worked out</h1>
+      <p class="lead">Type a postcode and you get five scores out of 10, and one overall score. This page shows where each number comes from, which one we estimate ourselves, and what none of them can tell you.</p>
+      <nav class="contents" aria-label="On this page">
+        <ul>
+          <li><a href="#example">A score, taken apart</a></li>
+          <li><a href="#scores">The five scores</a></li>
+          <li><a href="#data">Official data, and our own work</a></li>
+          <li><a href="#overall">The overall score</a></li>
+          <li><a href="#limits">What it can't tell you</a></li>
+          <li><a href="#credits">Where the data comes from</a></li>
+          <li><a href="#fresh">How up to date it is</a></li>
+          <li><a href="#coverage">Places we don't cover yet</a></li>
+        </ul>
+      </nav>
+
+      <section id="example" aria-labelledby="example-h">
+        <h2 id="example-h">A score, taken apart</h2>
+        <p class="read">Each score is out of 10, and higher is better. The overall score multiplies each one by its weight and adds them up. Here is Hounslow, the council area next to Heathrow.</p>
+        <div class="example">
+          <!-- HOW-IT-WORKS-EXAMPLE:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
+          <table class="sum">
+            <caption>Hounslow, balanced view, for the council area as a whole</caption>
+            <thead><tr><th scope="col">Score</th><th scope="col">Out of 10</th><th scope="col">Weight</th><th scope="col">Points</th></tr></thead>
+            <tbody>
+              <tr><th scope="row"><span class="key key-quiet" aria-hidden="true"></span>Quiet Skies <span class="tag band">area band</span></th><td>0.0</td><td>32%</td><td>0.00</td></tr>
+              <tr><th scope="row"><span class="key key-afford" aria-hidden="true"></span>Affordability <span class="tag off">official data</span></th><td>2.1</td><td>27%</td><td>0.57</td></tr>
+              <tr><th scope="row"><span class="key key-growth" aria-hidden="true"></span>Price growth <span class="tag off">official data</span></th><td>4.7</td><td>0%</td><td>0.00</td></tr>
+              <tr><th scope="row"><span class="key key-live" aria-hidden="true"></span>Liveability <span class="tag off">official data</span></th><td>7.2</td><td>27%</td><td>1.94</td></tr>
+              <tr><th scope="row"><span class="key key-env" aria-hidden="true"></span>Environment <span class="tag off">official data</span></th><td>6.5</td><td>14%</td><td>0.91</td></tr>
+            </tbody>
+            <tfoot><tr><th scope="row">Overall score</th><td></td><td>100%</td><td class="total">3.4</td></tr></tfoot>
+          </table>
+          <div class="bar" aria-hidden="true"><span class="seg seg-afford" style="width:5.7%"></span><span class="seg seg-live" style="width:19.4%"></span><span class="seg seg-env" style="width:9.1%"></span></div>
+          <p class="scale" aria-hidden="true"><span>0</span><span>10</span></p>
+          <p class="cost">Quiet Skies is 32% of the score in this view. At 0.0 next to an airport, 3.2 of the 10 possible points are out of reach before anything else is counted.</p>
+          <!-- HOW-IT-WORKS-EXAMPLE:END -->
+        </div>
+        <p class="read quiet">For a whole council area, Quiet Skies is a band we set from the aircraft noise across it. A postcode inside Hounslow gets its own figure instead, so scores change from street to street. The points are each score times its weight; the overall score is their total, rounded to one decimal place.</p>
+      </section>
+
+      <section id="scores" aria-labelledby="scores-h">
+        <h2 id="scores-h">The five scores</h2>
+        <dl class="scores read">
+          <div><dt>Quiet Skies</dt><dd>How free a place is from aircraft noise. 10 is the quietest. Where the government's official noise map covers a postcode, we use its figure. Everywhere else, we estimate it from the published flight routes.</dd></div>
+          <div><dt>Affordability</dt><dd>How cheap homes are, from the average price in the council area, compared with every council area we cover. 10 is the cheapest.</dd></div>
+          <div><dt>Price growth</dt><dd>How much prices rose over the last year, after inflation. Only the investor view counts it.</dd></div>
+          <div><dt>Liveability</dt><dd>Crime, school results, rail, metro and tram stations within an 800 metre walk (about ten minutes), and GP surgeries within 500 metres.</dd></div>
+          <div><dt>Environment</dt><dd>Air quality, road noise and flood risk.</dd></div>
+        </dl>
+        <p class="read">A score always rises when a place is better, and is named for the good thing: Quiet Skies 8 out of 10. Some views turn the same reading round and name it for the bad thing: Aircraft noise 2 out of 10. It is one reading, shown two ways.</p>
+      </section>
+
+      <section id="data" aria-labelledby="data-h">
+        <h2 id="data-h">Official data, and our own work</h2>
+        <p class="read">Almost every number comes straight from a public body's own published data. Quiet Skies is the exception: we work it out, and every answer says how.</p>
+        <div class="two">
+          <div class="est">
+            <h3>Our own work: Quiet Skies</h3>
+            <p>Where the official noise map has a figure for a postcode, we use it. Where it has none, we estimate it from the flight routes published in the UK Aeronautical Information Publication (NATS): how close a postcode is to the routes and the runway, and how big the airport is. A whole council area gets a band we set from the noise across it. Where both exist, we check our estimate against the official map and publish how far off it is on <a href="/api/">the API page</a>.</p>
+          </div>
+          <div>
+            <h3>Official data</h3>
+            <p>Prices from HM Land Registry, crime from the Office for National Statistics, school results from the Department for Education, stations from the Department for Transport, GP surgeries from the NHS, air quality and noise from DEFRA, and flood risk from the Environment Agency.</p>
+          </div>
+        </div>
+        <p class="read quiet">Some official data is itself a model, not a reading at your door. DEFRA's air quality and noise maps and the Environment Agency's flood map are worked out by those bodies from measurements and computer models.</p>
+      </section>
+
+      <section id="overall" aria-labelledby="overall-h">
+        <h2 id="overall-h">The overall score</h2>
+        <p class="read">Different people care about different things, so there are eight views. Each gives the five scores different weights, and a weight of 0% means that score is not counted in that view. Choose a view on <a href="/map/">the full map</a> and the overall score changes; the five scores stay the same.</p>
+        <div class="scroll" role="region" aria-label="Weights for each view" tabindex="0">
+          <!-- HOW-IT-WORKS-WEIGHTS:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
+          <table class="weights">
+            <caption>Weight of each score, by view</caption>
+            <thead><tr><th scope="col">View</th><th scope="col">Quiet Skies</th><th scope="col">Affordability</th><th scope="col">Price growth</th><th scope="col">Liveability</th><th scope="col">Environment</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Balanced</th><td>32%</td><td>27%</td><td>0%</td><td>27%</td><td>14%</td></tr>
+              <tr><th scope="row">Family</th><td>18%</td><td>18%</td><td>0%</td><td>46%</td><td>18%</td></tr>
+              <tr><th scope="row">Investor</th><td>9%</td><td>26%</td><td>34%</td><td>17%</td><td>14%</td></tr>
+              <tr><th scope="row">First-Time</th><td>16%</td><td>43%</td><td>0%</td><td>27%</td><td>14%</td></tr>
+              <tr><th scope="row">Quiet Life</th><td>48%</td><td>19%</td><td>0%</td><td>19%</td><td>14%</td></tr>
+              <tr><th scope="row">Renter</th><td>26%</td><td>30%</td><td>0%</td><td>30%</td><td>14%</td></tr>
+              <tr><th scope="row">Commuter</th><td>21%</td><td>30%</td><td>0%</td><td>35%</td><td>14%</td></tr>
+              <tr><th scope="row">Later life</th><td>36%</td><td>14%</td><td>0%</td><td>32%</td><td>18%</td></tr>
+            </tbody>
+          </table>
+          <!-- HOW-IT-WORKS-WEIGHTS:END -->
+        </div>
+        <p class="read">When a score can't be worked out, for example where no school results are published, we leave it out and share its weight among the others. We never fill a gap with a typical value, and the answer says what is missing. Liveability and environment each need at least two of their parts, or that score is left out.</p>
+      </section>
+
+      <section id="limits" aria-labelledby="limits-h">
+        <h2 id="limits-h">What it can't tell you</h2>
+        <ul class="plain read">
+          <li>How often planes fly over. The flight routes show where aircraft fly, not how many of them do.</li>
+          <li>Anything about one particular home, such as its condition or its value.</li>
+          <li>Whether a place is right for you. It is information to help you look, not advice.</li>
+          <li>It is not a survey, a valuation or a conveyancing search, and does not replace any of them.</li>
+          <li>Shares are of postcodes, not homes. "30% of postcodes" counts postcodes, and one postcode can hold one home or fifty.</li>
+        </ul>
+      </section>
+
+      <section id="credits" aria-labelledby="credits-h">
+        <h2 id="credits-h">Where the data comes from</h2>
+        <ul class="credits read">
+          <li><b>Prices:</b> HM Land Registry, UK House Price Index. Contains HM Land Registry data &copy; Crown copyright and database right 2026. This data is licensed under the Open Government Licence v3.0.</li>
+          <li><b>Crime:</b> Office for National Statistics, Crime in England and Wales. Open Government Licence v3.0.</li>
+          <li><b>Schools:</b> Department for Education, Key Stage 4 Progress 8. Open Government Licence v3.0.</li>
+          <li><b>Stations:</b> Department for Transport, National Public Transport Access Nodes (NaPTAN). Open Government Licence v3.0.</li>
+          <li><b>GP surgeries:</b> NHS Organisation Data Service. Open Government Licence v3.0.</li>
+          <li><b>Air quality and noise maps:</b> DEFRA. Open Government Licence v3.0.</li>
+          <li><b>Flood risk:</b> Environment Agency, Risk of Flooding from Rivers and Sea. Open Government Licence v3.0.</li>
+          <li><b>Postcodes:</b> Office for National Statistics, National Statistics Postcode Lookup, under the Open Government Licence v3.0. Contains OS data &copy; Crown copyright and database right; Royal Mail data &copy; Royal Mail copyright and database right; National Statistics data &copy; Crown copyright and database right.</li>
+          <li><b>Flight routes:</b> UK Aeronautical Information Publication (NATS), drawn by Sky Score for the aircraft noise estimate. Public, but not openly licensed, and not for navigation.</li>
+        </ul>
+        <p class="read quiet">Each licence covers its own dataset, not Sky Score as a whole.</p>
+      </section>
+
+      <section id="fresh" aria-labelledby="fresh-h">
+        <h2 id="fresh-h">How up to date it is</h2>
+        <ul class="plain read">
+          <!-- HOW-IT-WORKS-PRICES:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
+          <li><b>House prices</b> are HM Land Registry's monthly price index, now for July 2026. We update them each month.</li>
+          <!-- HOW-IT-WORKS-PRICES:END -->
+          <li><b>Noise maps</b> are DEFRA's latest, published in 2022. They describe 2021, a year with fewer flights and less traffic than usual, so they read quieter than today.</li>
+          <li><b>Air quality</b> is DEFRA's latest map of yearly averages.</li>
+          <li><b>Crime</b> is the Office for National Statistics' latest year, updated when it publishes.</li>
+          <li><b>School results</b> are the latest Progress 8 figures. The government has paused the measure for two years, so these stay until it returns.</li>
+          <li><b>Flight routes</b> are rebuilt from the official aeronautical publication and checked on every release.</li>
+        </ul>
+      </section>
+
+      <section id="coverage" aria-labelledby="coverage-h">
+        <h2 id="coverage-h">Places we don't cover yet</h2>
+        <div class="read">
+          <!-- HOW-IT-WORKS-COVERAGE:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
+          <p>Sky Score covers 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only, with no score on the site yet).</p>
+          <!-- HOW-IT-WORKS-COVERAGE:END -->
+          <p>Outside these places a postcode answers "not covered yet", and we don't guess. A score built from another city's figures would be wrong in a way you couldn't see.</p>
+          <p>For every threshold and its source, read <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">the full methodology</a>. Developers can get the same scores, with their sources, from <a href="/api/">the API</a>.</p>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <span>All figures from official public data, except Quiet Skies, which says how it was worked out.</span>
+      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+    </footer>
+    <script type="module" src="/js/count.mjs"></script>
+  </body>
+</html>

@@ -297,3 +297,23 @@
 >   data" - not "open government data", because the UK routes come from the AIP, public
 >   but not openly licensed.
 
+**`/how-it-works/` (2026-10-22): the method in plain English, its numbers derived.** Bill asked for it after the
+22 Oct engagement research (a page explaining the score backs the number up; plain copy at a reading age of 10-12
+converts better). Written to that reading age, linked from the front page's answer ("How it is worked out", beside
+"Its figures") and from the front page's, the map's (both footers: they must list the same links) and the area
+pages' footers. Its signature is the arithmetic itself: Hounslow taken apart, each score times its weight, adding
+up to the published 3.4, with each part tagged by WHO made it ("official data", "area band", "our estimate", the
+last two from `context.quietResolution`, never assumed). Every figure that can move (the example, the eight views'
+weights, the price month, the coverage line) sits between `HOW-IT-WORKS-*` markers written by
+`scripts/build_how_it_works.py` (blocking `--check` in preflight; `deploy_hpi_roll.sh` refuses to roll while it
+is behind, because a price roll moves Hounslow's affordability). A first draft tagged the council area's Quiet
+Skies "our estimate": wrong, a whole area reads the band we set, which is why the tag now follows the tier that
+answered. Registered in the ten places a new page needs (Makefile web-deploy and its invalidation, lint:html, the
+brand-link, a11y, e2e, responsive, fonts and top-bar tests, deploy drift, the em-dash list, the sitemap).
+
+**The area pages are COUNTED since 2026-10-22.** Until then the 102 area pages, the area index and `/open-data/`
+loaded no analytics, so the search entry pages were the unmeasured ones (GoatCounter showed ten paths in all).
+`scripts/build_area_pages.py` now writes `js/count.mjs` into all three templates, and with it the strict meta CSP
+the other counting pages carry, which `tests/test_analytics_first_party.py` requires of any page that counts (the
+pages load only their own styles and fonts, so it blocks nothing). The site has NO header CSP (a distribution-wide
+one blanks the prototype), so a page without its own meta policy has none at all.
