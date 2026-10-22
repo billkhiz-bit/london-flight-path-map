@@ -599,10 +599,13 @@ def check_or_write(args):
     # AIRPORTS because London is the ladder's calibration reference rather than
     # a scaled city, and NYC has no DEFRA coverage at all (its five bands are
     # derived from its monitor-fitted estimate by scripts/build_nyc_impact.py
-    # since v5.6). Naming them here
+    # since v5.6). bayarea likewise (2026-10-22, release 2): its fifty bands are
+    # derived from its monitor-fitted estimate over residents by
+    # scripts/build_bayarea_quiet.py, and written by build_bayarea_records.py,
+    # both checked in preflight. Naming them here
     # means adding a twelfth derived city cannot quietly join them - it lands in
     # `unexpected` until AIRPORTS covers it.
-    DERIVATION_EXEMPT = {"london", "nyc"}
+    DERIVATION_EXEMPT = {"london", "nyc", "bayarea"}
     if not args.city:
         declared = {
             m.group(1).lower()

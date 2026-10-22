@@ -306,6 +306,10 @@ check "Bay Area map data == page"     python scripts/build_bayarea_map_data.py -
 # Re-measures the stored outlines offline; re-derives them too when the DataSF and
 # Census source files are on disk (data/datasf/, data/census/, both ignored).
 check "Bay Area tiers == page"        python scripts/build_bayarea_areas.py --check
+# The Bay Area's 50 city records in the score Lambda (2026-10-22, release 2): the BAYAREA-BOROUGHS block and the
+# California anchors, joined by GEOID from the readers' committed files. Offline and exact, so blocking: a hand
+# edit, or a reader re-run without --write here, reds. Inert until CITIES['bayarea'] reads the block.
+check "Bay Area records == readers"   python scripts/build_bayarea_records.py --check
 # Each city's DEFRA aircraft PNG must exist, paint pixels, and be positioned at
 # the box it was rendered for (2026-09-26). A transparent PNG would be marked
 # loaded and advertised under a decibel scale; a hand-edited box would slide
@@ -921,6 +925,14 @@ advise "Bay Area flood counties == Census"   python scripts/fetch_fema_nfhl_coun
 # that a city over 5% undetermined (zone D) carries no share, only the reason (Bill, 2026-10-21); with FEMA's
 # file and the Census frame on disk it re-derives every block, else INCONCLUSIVE for values. Advisory until served.
 advise "Bay Area flood == FEMA NFHL"   python scripts/build_bayarea_flood.py --check
+# Added 2026-10-22: rail access, banded (Bill). Offline it checks coverage, each share and band against its
+# counts, and the withheld set (Emeryville, a gap in BTS's layer) both ways against the transit file's own
+# known_gap; with the Census frame on disk it re-derives every block, else INCONCLUSIVE. Advisory until served.
+advise "Bay Area transport == BTS stations"   python scripts/build_bayarea_transport.py --check
+# Added 2026-10-22: each city's aircraft band from the fitted geometry over its residents (New York's err-loud
+# rule). Offline it holds every band to its mean, the US-QUIET-BAYAREA block's fingerprint, and one probe per city
+# against the Lambda as it stands, so a refit not re-derived here reds without the Census frame. Advisory until served.
+advise "Bay Area quiet bands == the fit"   python scripts/build_bayarea_quiet.py --check
 # Added 2026-10-16: the SFO monitor block (the US yardstick, ANEEM) equals what its daily
 # DataSF rows give. Advisory: the rows are gitignored (--fetch); INCONCLUSIVE without them.
 advise "SFO monitors == DataSF rows"     python scripts/build_sfo_noise_monitors.py --check

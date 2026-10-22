@@ -1,0 +1,666 @@
+{
+ "source": "the Lambda's calc_postcode_quiet (the US-QUIET-BAYAREA fit to SFO's and San Jose's monitors) at every 2020 Census resident block of the 50 cities, weighted by population",
+ "generator": "scripts/build_bayarea_quiet.py --write",
+ "measure": "mean Quiet Skies of a resident (0-10), rounded down to two places; the band is the quietest whose IMPACT_TO_QUIET value does not exceed it (never quieter than the estimate)",
+ "impact_to_quiet": {
+  "low": 10.0,
+  "low-moderate": 7.5,
+  "moderate": 5.0,
+  "moderate-high": 3.0,
+  "high": 1.5,
+  "severe": 0.0
+ },
+ "geometry_sha256": "e0edd92cc682711bf41e473e937dbb7ca55b1183fd3d1bed1dd0f2cf91838cae",
+ "cities": [
+  {
+   "geoid": "0600562",
+   "name": "Alameda",
+   "county": "Alameda",
+   "residents": 78280,
+   "quiet_mean": 2.76,
+   "band": "high",
+   "probe": {
+    "lat": 37.7401265,
+    "lon": -122.2434775,
+    "quiet": 0.25
+   }
+  },
+  {
+   "geoid": "0600674",
+   "name": "Albany",
+   "county": "Alameda",
+   "residents": 20271,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.8948165,
+    "lon": -122.3048685,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0603092",
+   "name": "Atherton",
+   "county": "San Mateo",
+   "residents": 7188,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.4549456,
+    "lon": -122.1923995,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0605108",
+   "name": "Belmont",
+   "county": "San Mateo",
+   "residents": 28335,
+   "quiet_mean": 9.87,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.5104881,
+    "lon": -122.3096596,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0606000",
+   "name": "Berkeley",
+   "county": "Alameda",
+   "residents": 124321,
+   "quiet_mean": 9.91,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.8678602,
+    "lon": -122.2551292,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0608310",
+   "name": "Brisbane",
+   "county": "San Mateo",
+   "residents": 4851,
+   "quiet_mean": 6.74,
+   "band": "moderate",
+   "probe": {
+    "lat": 37.6940376,
+    "lon": -122.4167521,
+    "quiet": 7.5
+   }
+  },
+  {
+   "geoid": "0609066",
+   "name": "Burlingame",
+   "county": "San Mateo",
+   "residents": 31386,
+   "quiet_mean": 4.69,
+   "band": "moderate-high",
+   "probe": {
+    "lat": 37.5821954,
+    "lon": -122.3896361,
+    "quiet": 6.5
+   }
+  },
+  {
+   "geoid": "0610345",
+   "name": "Campbell",
+   "county": "Santa Clara",
+   "residents": 43959,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.278974,
+    "lon": -121.9515273,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0614736",
+   "name": "Colma",
+   "county": "San Mateo",
+   "residents": 1507,
+   "quiet_mean": 5.59,
+   "band": "moderate",
+   "probe": {
+    "lat": 37.6836517,
+    "lon": -122.4621292,
+    "quiet": 6.5
+   }
+  },
+  {
+   "geoid": "0617610",
+   "name": "Cupertino",
+   "county": "Santa Clara",
+   "residents": 60381,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.3214559,
+    "lon": -122.0253336,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0617918",
+   "name": "Daly City",
+   "county": "San Mateo",
+   "residents": 104901,
+   "quiet_mean": 6.01,
+   "band": "moderate",
+   "probe": {
+    "lat": 37.6723915,
+    "lon": -122.47835,
+    "quiet": 1.0
+   }
+  },
+  {
+   "geoid": "0620018",
+   "name": "Dublin",
+   "county": "Alameda",
+   "residents": 72589,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.718548,
+    "lon": -121.884058,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0620956",
+   "name": "East Palo Alto",
+   "county": "San Mateo",
+   "residents": 30034,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.4673592,
+    "lon": -122.1248578,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0622594",
+   "name": "Emeryville",
+   "county": "Alameda",
+   "residents": 12905,
+   "quiet_mean": 9.54,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.8391388,
+    "lon": -122.3020487,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0625338",
+   "name": "Foster City",
+   "county": "San Mateo",
+   "residents": 33805,
+   "quiet_mean": 5.28,
+   "band": "moderate",
+   "probe": {
+    "lat": 37.547351,
+    "lon": -122.2725584,
+    "quiet": 6.5
+   }
+  },
+  {
+   "geoid": "0626000",
+   "name": "Fremont",
+   "county": "Alameda",
+   "residents": 230504,
+   "quiet_mean": 9.67,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.5565261,
+    "lon": -121.9988097,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0629504",
+   "name": "Gilroy",
+   "county": "Santa Clara",
+   "residents": 59520,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.0117805,
+    "lon": -121.5905951,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0631708",
+   "name": "Half Moon Bay",
+   "county": "San Mateo",
+   "residents": 11795,
+   "quiet_mean": 9.13,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.477778,
+    "lon": -122.433439,
+    "quiet": 8.75
+   }
+  },
+  {
+   "geoid": "0633000",
+   "name": "Hayward",
+   "county": "Alameda",
+   "residents": 162954,
+   "quiet_mean": 6.2,
+   "band": "moderate",
+   "probe": {
+    "lat": 37.6259524,
+    "lon": -122.0981695,
+    "quiet": 4.0
+   }
+  },
+  {
+   "geoid": "0633798",
+   "name": "Hillsborough",
+   "county": "San Mateo",
+   "residents": 11387,
+   "quiet_mean": 9.06,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.5507668,
+    "lon": -122.3577366,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0641992",
+   "name": "Livermore",
+   "county": "Alameda",
+   "residents": 87955,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.7141524,
+    "lon": -121.7197502,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0643280",
+   "name": "Los Altos",
+   "county": "Santa Clara",
+   "residents": 31625,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.396959,
+    "lon": -122.123937,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0643294",
+   "name": "Los Altos Hills",
+   "county": "Santa Clara",
+   "residents": 8489,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.3760011,
+    "lon": -122.1557459,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0644112",
+   "name": "Los Gatos",
+   "county": "Santa Clara",
+   "residents": 33529,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.2305927,
+    "lon": -121.9757339,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0646870",
+   "name": "Menlo Park",
+   "county": "San Mateo",
+   "residents": 33780,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.4627656,
+    "lon": -122.1621857,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0647486",
+   "name": "Millbrae",
+   "county": "San Mateo",
+   "residents": 23216,
+   "quiet_mean": 2.53,
+   "band": "high",
+   "probe": {
+    "lat": 37.6096574,
+    "lon": -122.3996402,
+    "quiet": 0.0
+   }
+  },
+  {
+   "geoid": "0647766",
+   "name": "Milpitas",
+   "county": "Santa Clara",
+   "residents": 80273,
+   "quiet_mean": 9.91,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.4086179,
+    "lon": -121.9000626,
+    "quiet": 8.75
+   }
+  },
+  {
+   "geoid": "0648956",
+   "name": "Monte Sereno",
+   "county": "Santa Clara",
+   "residents": 3479,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.2382581,
+    "lon": -121.9888414,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0649278",
+   "name": "Morgan Hill",
+   "county": "Santa Clara",
+   "residents": 45483,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.137905,
+    "lon": -121.594747,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0649670",
+   "name": "Mountain View",
+   "county": "Santa Clara",
+   "residents": 82376,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.399737,
+    "lon": -122.0958487,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0650916",
+   "name": "Newark",
+   "county": "Alameda",
+   "residents": 47529,
+   "quiet_mean": 9.99,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.5180815,
+    "lon": -121.9961775,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0653000",
+   "name": "Oakland",
+   "county": "Alameda",
+   "residents": 440646,
+   "quiet_mean": 7.59,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.8035766,
+    "lon": -122.2650187,
+    "quiet": 6.0
+   }
+  },
+  {
+   "geoid": "0654806",
+   "name": "Pacifica",
+   "county": "San Mateo",
+   "residents": 38640,
+   "quiet_mean": 3.88,
+   "band": "moderate-high",
+   "probe": {
+    "lat": 37.6070481,
+    "lon": -122.4828159,
+    "quiet": 5.0
+   }
+  },
+  {
+   "geoid": "0655282",
+   "name": "Palo Alto",
+   "county": "Santa Clara",
+   "residents": 68572,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.432008,
+    "lon": -122.1869779,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0656938",
+   "name": "Piedmont",
+   "county": "Alameda",
+   "residents": 11270,
+   "quiet_mean": 8.18,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.8221596,
+    "lon": -122.2215755,
+    "quiet": 9.0
+   }
+  },
+  {
+   "geoid": "0657792",
+   "name": "Pleasanton",
+   "county": "Alameda",
+   "residents": 79871,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.6942899,
+    "lon": -121.8881418,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0658380",
+   "name": "Portola Valley",
+   "county": "San Mateo",
+   "residents": 4456,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.3652419,
+    "lon": -122.2329976,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0660102",
+   "name": "Redwood City",
+   "county": "San Mateo",
+   "residents": 84292,
+   "quiet_mean": 9.57,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.4998592,
+    "lon": -122.2299084,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0665028",
+   "name": "San Bruno",
+   "county": "San Mateo",
+   "residents": 43908,
+   "quiet_mean": 1.69,
+   "band": "high",
+   "probe": {
+    "lat": 37.6198423,
+    "lon": -122.4285718,
+    "quiet": 3.5
+   }
+  },
+  {
+   "geoid": "0665070",
+   "name": "San Carlos",
+   "county": "San Mateo",
+   "residents": 30722,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.4927171,
+    "lon": -122.287026,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0667000",
+   "name": "San Francisco",
+   "county": "San Francisco",
+   "residents": 873965,
+   "quiet_mean": 9.06,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.7814995,
+    "lon": -122.4129465,
+    "quiet": 8.75
+   }
+  },
+  {
+   "geoid": "0668000",
+   "name": "San Jose",
+   "county": "Santa Clara",
+   "residents": 1013240,
+   "quiet_mean": 7.58,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.3198131,
+    "lon": -121.9777881,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0668084",
+   "name": "San Leandro",
+   "county": "Alameda",
+   "residents": 91008,
+   "quiet_mean": 2.46,
+   "band": "high",
+   "probe": {
+    "lat": 37.7258058,
+    "lon": -122.1718675,
+    "quiet": 2.25
+   }
+  },
+  {
+   "geoid": "0668252",
+   "name": "San Mateo",
+   "county": "San Mateo",
+   "residents": 105661,
+   "quiet_mean": 6.9,
+   "band": "moderate",
+   "probe": {
+    "lat": 37.5784336,
+    "lon": -122.3292815,
+    "quiet": 3.5
+   }
+  },
+  {
+   "geoid": "0669084",
+   "name": "Santa Clara",
+   "county": "Santa Clara",
+   "residents": 127647,
+   "quiet_mean": 7.7,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.3485152,
+    "lon": -121.9371229,
+    "quiet": 3.5
+   }
+  },
+  {
+   "geoid": "0670280",
+   "name": "Saratoga",
+   "county": "Santa Clara",
+   "residents": 31051,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.2604701,
+    "lon": -122.0461695,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0673262",
+   "name": "South San Francisco",
+   "county": "San Mateo",
+   "residents": 66105,
+   "quiet_mean": 1.23,
+   "band": "severe",
+   "probe": {
+    "lat": 37.6640903,
+    "lon": -122.4202703,
+    "quiet": 2.25
+   }
+  },
+  {
+   "geoid": "0677000",
+   "name": "Sunnyvale",
+   "county": "Santa Clara",
+   "residents": 155805,
+   "quiet_mean": 9.84,
+   "band": "low-moderate",
+   "probe": {
+    "lat": 37.3422453,
+    "lon": -122.0395353,
+    "quiet": 10.0
+   }
+  },
+  {
+   "geoid": "0681204",
+   "name": "Union City",
+   "county": "Alameda",
+   "residents": 70143,
+   "quiet_mean": 7.49,
+   "band": "moderate",
+   "probe": {
+    "lat": 37.587681,
+    "lon": -122.0136535,
+    "quiet": 8.75
+   }
+  },
+  {
+   "geoid": "0686440",
+   "name": "Woodside",
+   "county": "San Mateo",
+   "residents": 5309,
+   "quiet_mean": 10.0,
+   "band": "low",
+   "probe": {
+    "lat": 37.437003,
+    "lon": -122.2540123,
+    "quiet": 10.0
+   }
+  }
+ ]
+}
