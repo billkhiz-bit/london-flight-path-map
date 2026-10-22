@@ -78,7 +78,9 @@ def check():
     people, disagree, n = dict.fromkeys(want, 0), [], 0
     for block, place, pop, _, _ in pl_blocks():
         n += 1
-        if (place or '').removeprefix('06') != ('' if place is None else baf.get(block, '')) and \
+        # Both ways (audit 2026-10-22, M-8): a block the PL header places nowhere (99999) but the Block
+        # Assignment File puts in a scored city compared '' with '' and was never flagged.
+        if (place or '').removeprefix('06') != baf.get(block, '') and \
                 (place in want or ('06' + baf.get(block, 'x')) in want):
             disagree.append(block)
         if place in want:

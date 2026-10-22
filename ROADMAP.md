@@ -65,8 +65,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 >
 > **Audit, 22 Oct** (`AUDIT_REPORT_2026-10-22.md`): 0 critical, 6 important (4 fixed the same day: the rename
 > candidate back in this file, and the three Bay Area numbers above), 15 minor (5 fixed: the MCP server's key
-> host, loose names, compare rows; the adsb tar member cap; a fixture's two staff names). Open: the sold-price rows truncate their labels (I-5), "Have your say" names
-> the nearest airport not the route's (I-6), and 10 minors. **The August HPI is published**: roll when ready.
+> host, loose names, compare rows; the adsb tar member cap; a fixture's two staff names). Later the same evening ALL SIX important and 12 of
+> 15 minors were fixed (the sold-price rows wrap; "Have your say" follows the route that passes nearest, tested;
+> the air rows, credits, focus rings, copy wording and /api/ reflow); open: M-5 user paths in docs, M-7 the
+> Staten Island note, M-9 the coverage strip's unsearchable names. **The August HPI is published**: roll when ready.
 >
 > ## START HERE (2026-10-22)
 >

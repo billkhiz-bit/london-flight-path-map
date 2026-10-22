@@ -75,8 +75,10 @@
   }
   h1 .accent { color: var(--amber); }
   /* The brand goes home, as on every other page (2026-10-19). */
-  h1 a.home { color: inherit; text-decoration: none; }
-  h1 a.home:hover { text-decoration: underline; text-underline-offset: 4px; }
+  /* Underlined at rest, so it reads as a link, and the site's focus ring (audit 2026-10-22, M-13). */
+  h1 a.home { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  h1 a.home:hover { text-decoration-thickness: 2px; }
+  h1 a.home:focus-visible { outline: 3px solid #d35a12; outline-offset: 2px; }
   .tag {
     color: var(--muted);
     font-size: 14px;
@@ -385,7 +387,7 @@
 <body>
 
 <header>
-  <h1><a class="home" href="/">Sky Score</a> API <span class="accent">, Live Demo</span></h1>
+  <h1><a class="home" href="/">Sky Score</a> API<span class="accent">, Live Demo</span></h1>
   <p class="tag">A noise and liveability data API for UK property. Live endpoint at <code>/v1/score</code>. Methodology: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">github</a>.</p>
 </header>
 

@@ -135,10 +135,20 @@ export const HAVE_YOUR_SAY = {
   ],
 };
 export const AIRSPACE_CHANGE = { text: "the CAA's airspace change portal", href: 'https://airspacechange.caa.co.uk/having-your-say/' };
-/** The links for the nearest airport in scope (`routesNear(...).scope`), or null when its pages are not verified. */
-export function haveYourSay(scope) {
-  const ap = (scope || [])[0];
-  return ap && Object.hasOwn(HAVE_YOUR_SAY, ap.code) ? { code: ap.code, links: HAVE_YOUR_SAY[ap.code], change: AIRSPACE_CHANGE } : null;
+/**
+ * The links for the airport whose published route passes NEAREST (`routesNear(...)`: its final approaches and
+ * departures, among the airports in scope), else the nearest airport in scope; null when that airport's pages
+ * are not verified, never another airport's. Picking the nearest AIRPORT sent Battersea, 1.1 km from Heathrow's
+ * 27L approach and nearer London City's runway, to London City's pages (audit 2026-10-22, I-6).
+ */
+export function haveYourSay(routes) {
+  const scope = (routes && routes.scope) || [];
+  const inScope = new Set(scope.map((a) => a.code));
+  const nearestRoute = [...((routes && routes.finals) || []), ...((routes && routes.departures) || [])]
+    .filter((r) => inScope.has(r.code))
+    .sort((a, b) => a.dist - b.dist)[0];
+  const code = nearestRoute ? nearestRoute.code : scope[0] && scope[0].code;
+  return code && Object.hasOwn(HAVE_YOUR_SAY, code) ? { code, links: HAVE_YOUR_SAY[code], change: AIRSPACE_CHANGE } : null;
 }
 /** The correction address, as the full map's "Spotted something wrong?" has used since before 2026-10-13. */
 export const correctionHref = (place) => `mailto:support@skyscore.co.uk?subject=${encodeURIComponent(`Correction: ${place}`)}`;
@@ -481,8 +491,8 @@ export function reportParts(spec, f) {
           .map(esc)
           .join(' ')
       : '';
-  // Where to have your say: the nearest airport in scope, only if its pages were verified (HAVE_YOUR_SAY).
-  const say = haveYourSay(routes.scope);
+  // Where to have your say: the airport whose route passes nearest, only if its pages were verified (HAVE_YOUR_SAY).
+  const say = haveYourSay(routes);
   const sayLine = say
     ? `${say.links.map((l) => `<a href="${esc(l.href)}">${esc(l.text)}</a>`).join(' &middot; ')}. Flight paths change through the CAA's airspace change process: <a href="${esc(say.change.href)}">${esc(say.change.text)}</a> shows each proposal and the stage it has reached.`
     : '';

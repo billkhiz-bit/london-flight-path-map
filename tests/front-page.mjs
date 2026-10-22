@@ -653,8 +653,18 @@ ok(await page.locator('.covers').isHidden(), 'the coverage strip steps aside onc
 // pages were verified: its two links and the CAA's portal, exactly as js/street_report.mjs holds them, so a
 // link edited in one place and not the other reds here. The correction goes to support@ with the postcode.
 {
-  const { HAVE_YOUR_SAY, AIRSPACE_CHANGE } = await import(pathToFileURL(join(ROOT, 'js', 'street_report.mjs')).href);
+  const { HAVE_YOUR_SAY, AIRSPACE_CHANGE, haveYourSay } = await import(pathToFileURL(join(ROOT, 'js', 'street_report.mjs')).href);
   const want = [...HAVE_YOUR_SAY.LHR, AIRSPACE_CHANGE].map((l) => [l.text, l.href]);
+  // The airport whose ROUTE passes nearest, not the nearest airport (audit 2026-10-22, I-6): Battersea is
+  // 1.1 km from Heathrow's 27L approach and nearer London City's runway, and was sent to London City. A route
+  // from an airport whose pages are unverified gets no links, never another airport's.
+  const battersea = { scope: [{ code: 'LCY', dist: 15.4 }, { code: 'LHR', dist: 18.5 }], finals: [{ code: 'LCY', dist: 9.2 }, { code: 'LHR', dist: 1.1 }], departures: [] };
+  const gatwickRoute = { scope: [{ code: 'LGW', dist: 12 }, { code: 'LHR', dist: 20 }], finals: [{ code: 'LHR', dist: 6 }], departures: [{ code: 'LGW', dist: 0.4 }] };
+  ok(
+    haveYourSay(battersea)?.code === 'LHR' && haveYourSay(gatwickRoute) === null && haveYourSay({ scope: [{ code: 'LHR', dist: 3 }] })?.code === 'LHR',
+    'have your say follows the route that passes nearest, falls back to the nearest airport, and never names an unverified airport\'s neighbour',
+    JSON.stringify([haveYourSay(battersea)?.code, haveYourSay(gatwickRoute), haveYourSay({ scope: [{ code: 'LHR', dist: 3 }] })?.code])
+  );
   const lines = await page.evaluate(() => {
     const read = (id) => {
       const el = document.getElementById(id);

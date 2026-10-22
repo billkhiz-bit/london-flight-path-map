@@ -269,8 +269,12 @@ byId('explore-map')?.addEventListener('click', () => {
 
 // "For developers" (2026-10-19): Copy puts the request EXACTLY as shown on the clipboard, and says so in
 // a polite live region. Where the clipboard is refused (no permission, an old browser), the request is
-// selected instead and the visitor is told to press Ctrl+C. Copying counts as engagement, like the
-// other first actions, so B2B interest on this page can be read in GoatCounter.
+// selected instead and the visitor is told how to copy on THEIR device: Ctrl+C, Cmd+C on a Mac, the
+// menu on a phone or tablet ("Ctrl+C" showed on an iPhone: audit 2026-10-22, M-14). Copying counts as
+// engagement, like the other first actions, so B2B interest on this page can be read in GoatCounter.
+const COPY_HOW = /iPhone|iPad|iPod|Android/.test(navigator.userAgent)
+  ? 'Selected. Copy it from the menu.'
+  : `Selected. Press ${/Mac/.test(navigator.userAgent) ? 'Cmd+C' : 'Ctrl+C'} to copy.`;
 document.querySelectorAll('section.dev button.copy[data-copy]').forEach((button) => {
   button.addEventListener('click', async () => {
     const pre = byId(button.dataset.copy);
@@ -286,7 +290,7 @@ document.querySelectorAll('section.dev button.copy[data-copy]').forEach((button)
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(range);
-      if (status) status.textContent = 'Selected. Press Ctrl+C to copy.';
+      if (status) status.textContent = COPY_HOW;
     }
   });
 });
@@ -1445,14 +1449,14 @@ function render(postcode, district, city, e, lat, lon) {
       });
     }
   }
-  // Where to have your say, for the nearest airport whose pages were verified (HAVE_YOUR_SAY), and a
+  // Where to have your say, for the airport whose route passes nearest, if its pages were verified (HAVE_YOUR_SAY), and a
   // way to report a figure that looks wrong: the street report carries both, from the same functions.
   const anchorFor = (l) => Object.assign(document.createElement('a'), { href: l.href, textContent: l.text });
   const sayEl = byId('ans-say');
   if (sayEl) {
     sayEl.hidden = true;
     sayEl.replaceChildren();
-    const say = city && state.proc ? haveYourSay(routesNear(state.proc, plane(lat, lon), AIRPORT_SCOPE_KM).scope) : null;
+    const say = city && state.proc ? haveYourSay(routesNear(state.proc, plane(lat, lon), AIRPORT_SCOPE_KM)) : null;
     if (say) {
       sayEl.append('Have your say: ');
       say.links.forEach((l, i) => sayEl.append(...(i ? [' · ', anchorFor(l)] : [anchorFor(l)])));

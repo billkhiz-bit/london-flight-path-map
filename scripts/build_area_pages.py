@@ -380,6 +380,7 @@ PAGE = """<!doctype html>
     --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
   * {{ box-sizing:border-box; }}
   body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
+  a:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }} /* the site's ring, not the browser's (audit 2026-10-22, M-13) */
   .wrap {{ max-width:720px; margin:0 auto; padding:24px 20px 64px; }}
   a {{ color:var(--orange); }}
   nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}
@@ -588,6 +589,7 @@ INDEX = """<!doctype html>
   :root {{ color-scheme: light dark;
     --dark:#141414; --mid:#636363; --line:#e7e5e4; --orange:#c2410c; }}
   body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); line-height:1.6; }}
+  a:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
   .wrap {{ max-width:720px; margin:0 auto; padding:24px 20px 64px; }}
   a {{ color:var(--orange); }}
   h1 {{ font-size:28px; margin:0 0 6px; }}
@@ -917,6 +919,7 @@ OPEN_DATA_PAGE = """<!doctype html>
   :root {{ color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
   * {{ box-sizing:border-box; }}
   body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
+  a:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
   .wrap {{ max-width:760px; margin:0 auto; padding:24px 20px 64px; }}
   a {{ color:var(--orange); }}
   nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}

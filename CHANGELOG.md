@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-22 - How a score is worked out; fixes from the week's audit
+
+- **A plain-English page on how a score is worked out** (`/how-it-works/`): one council area taken apart (each
+  score times its weight, adding up to its overall score), the eight views' weights, which figure is official
+  data and which is ours, every source's credit, and what none of it can tell you. Linked from the front page's
+  answer and every footer. Its figures come from the scoring engine, so they cannot drift from the API.
+- **"Have your say" points to the airport whose route passes you**, not simply the nearest airport: Battersea,
+  under Heathrow's approach, was offered London City's pages.
+- **Sold-price rows show the whole address again**: the new "leasehold flat, not a standard sale" labels had
+  pushed it out of a one-line cell.
+- Smaller fixes: the map's air readings lay out name and distance clearly, with their credits in the panel's
+  link colour; the site's own focus ring on every brand link and area page; the copy button tells a phone or a
+  Mac user the right way to copy; a long command no longer scrolls the API page sideways on a small phone.
+
 ## 2026-10-20 - Sold prices say what kind of sale it was
 
 - **Each sale on the full map's sold-prices list now gives its tenure and flat**: "leasehold flat · FLAT 2, THE

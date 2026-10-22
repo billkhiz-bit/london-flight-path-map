@@ -254,6 +254,11 @@
         text-decoration: underline;
         text-underline-offset: 4px;
       }
+      /* The site's own focus ring, not the browser's (audit 2026-10-22, M-13). */
+      .map-title-home:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 2px;
+      }
       .map-title h1 {
         font-family: var(--font-mono);
         font-size: 13px;
@@ -1928,6 +1933,15 @@
         color: #555;
         margin-top: 6px;
       }
+      /* The air readings' credit links take the panel's link colour and say they open a new tab (audit
+         2026-10-22, M-12: they were browser blue, unlike every other link in the panel). Scoped to the air
+         section: other notes style their own links, one with its own arrow. */
+      #postcode-air-section .info-note a {
+        color: var(--orange-text);
+      }
+      #postcode-air-section .info-note a[target='_blank']::after {
+        content: ' \2197';
+      }
 
       /* Autocomplete dropdown */
       .search-wrapper {
@@ -2074,7 +2088,8 @@
       .sold-row {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: baseline;
+        gap: 8px; /* the price and the text touched ("£450,000leasehold") */
         padding: 5px 0;
         border-bottom: 1px solid var(--bg);
         font-size: 10px;
@@ -2086,14 +2101,15 @@
         font-weight: 600;
         color: var(--dark);
       }
+      /* WRAPS, never ellipsised (audit 2026-10-22, I-5): since the sale's kind ("leasehold flat, not a standard
+         sale") comes before the address, a one-line cut hid the address on 3 of 4 rows at 1440 and on every row
+         on a phone, with no way to read the rest. */
       .sold-address {
         flex: 1;
-        margin-right: 8px;
+        min-width: 0;
         color: #555;
         font-size: 11px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        overflow-wrap: anywhere;
       }
       .sold-date {
         color: var(--mid);
@@ -2116,6 +2132,14 @@
       }
       .transport-station:last-child {
         border-bottom: none;
+      }
+      /* The nearest stations and the air readings are rows of a place and its distance (audit 2026-10-22,
+         M-11): with no rule, the two ran together ("Manchester Sharston1.7 km"). */
+      .transport-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
       }
       .station-name {
         font-weight: 600;
@@ -13073,7 +13097,7 @@
       <h3>AIR QUALITY MEASURED NEARBY</h3>
       ${
         extra && extra.airQuality
-          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area. Below are readings from the nearest sensor and monitor within 5 km.</p>`
+          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area. Below are the nearest air quality readings within 5 km.</p>`
           : ''
       }
       <div id="postcode-air-data"></div>
