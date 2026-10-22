@@ -118,8 +118,9 @@ class ResponseShapeTests(unittest.TestCase):
         r = app.calc_score('Wandsworth', 'london', app.PERSONAS['investor'])
         ctx = r['context']
         self.assertEqual(ctx['growthBasis'], 'real')
-        # July 2026 vintage: -5.5% nominal under CPIH 3.1 (was -5.2 / -7.8 for June).
-        self.assertEqual(ctx['priceTrendPct'], -5.5)
+        # August 2026 vintage: -5.3% nominal under CPIH 3.3 (was -5.5 / -8.3 for July,
+        # -5.2 / -7.8 for June): two months landing on one real figure, -8.3.
+        self.assertEqual(ctx['priceTrendPct'], -5.3)
         self.assertEqual(ctx['priceTrendRealPct'], -8.3)
         self.assertEqual(ctx['inflationPct'], app.CPIH_12M_PCT[app.SNAPSHOT_VINTAGE])
         # Reproducible from the response: the cohort extremes over the same quantity.

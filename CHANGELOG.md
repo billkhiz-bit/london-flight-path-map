@@ -2,6 +2,8 @@
 
 ## 2026-10-22 - How a score is worked out; fixes from the week's audit
 
+- **House prices are now August 2026's** (HM Land Registry's index; inflation 3.3%, ONS). Most balanced scores do
+  not move and none moves by more than 0.1; the investor view, the only one that weights price growth, moves more.
 - **A plain-English page on how a score is worked out** (`/how-it-works/`): one council area taken apart (each
   score times its weight, adding up to its overall score), the eight views' weights, which figure is official
   data and which is ours, every source's credit, and what none of it can tell you. Linked from the front page's

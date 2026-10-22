@@ -179,7 +179,10 @@ class TrendsFeatureTests(unittest.TestCase):
         self.assertEqual(comp['previousAvgPriceGbp'], 660000)
         # 680,105 under June; the July roll (2026-09-16) refreshed 2026-Q3 in
         # place and left Q2 at May, so the previous price did not move.
-        self.assertEqual(body['context']['avgPriceGbp'], 686076)
+        # 686,076 under July; 694,210 under August (2026-10-22), because the
+        # August roll refreshed 2026-Q3 in place again and Wandsworth's average
+        # rose 1.2%; Q2 still holds May's 660,000.
+        self.assertEqual(body['context']['avgPriceGbp'], 694210)
         self.assertEqual(comp['scoreChange'], round(body['score'] - comp['previousScore'], 1))
         # Under v3.3 the balanced persona does not weight growth, so
         # Wandsworth's growth signal still contributes nothing. The movement
@@ -237,6 +240,10 @@ class TrendsFeatureTests(unittest.TestCase):
         # persona and REPORTED as unweighted under balanced, and it moved
         # 3.5 -> 3.2. Asserted on the published components, the same surface
         # a caller reads.
+        # Under August (2026-10-22) affordability still reads 0.2 -> 0.3 and
+        # growth moves 3.5 -> 2.6: Wandsworth's real trend is -8.3% in both
+        # current months, but the steepest fall it is scaled against eased from
+        # Westminster's -23.1% to City of London's -17.3%.
         #
         # RE-PINNED 0.3 -> 0.2 for the PREVIOUS vintage on 2026-09-27, when
         # Greater Norwich joined the sterling pool. Its three boroughs pulled
@@ -396,7 +403,10 @@ class TrendsFeatureTests(unittest.TestCase):
         # direction of the headline.
         # 3.6 -> 3.8 under June; 3.6 -> 4.0 under July (Newham 390,349, down
         # from 403,032 - its price fell again, so affordability rose further).
-        self.assertIn('3.6 → 4.0', afford['title'])
+        # 3.6 -> 4.2 under August (2026-10-22): Newham fell again to 388,045
+        # (+0.04 on its own) and the national p95 ceiling rose 716,131 ->
+        # 732,271 (+0.09 on its own), both raising affordability.
+        self.assertIn('3.6 → 4.2', afford['title'])
         self.assertTrue(any('price here fell' in st for st in afford['steps']), afford['steps'])
 
     def test_changes_publishes_weights_so_attribution_is_checkable(self):
@@ -433,19 +443,34 @@ class TrendsFeatureTests(unittest.TestCase):
         # score moves between vintages on affordability alone. So this test no
         # longer pins a direction. It asserts the sentence AGREES WITH THE
         # TALLY published beside it, which is the property that was false.
-        self.assertLess(m['meanTrendPct'], m['previousMeanTrendPct'])
+        # The mean fell under July; under August (2026-10-22) it ROSE, -3.35%
+        # -> -3.08%, because the roll eased London's deepest falls
+        # (Westminster -20.7% -> -14.3%, Hammersmith and Fulham -9.0% -> -5.1%,
+        # City of London -17.4% -> -14.6%), lifting the mean 0.34 points on
+        # July's -3.42% and past Q2's. The July shape (trend down, scores up)
+        # is held by the CONSTRUCTED
+        # test_market_context_sentence_counts_scores_not_trend, not by live data.
+        self.assertGreater(m['meanTrendPct'], m['previousMeanTrendPct'])
         self.assertEqual(m['previousFallingAreas'], 20)
-        self.assertEqual(m['fallingAreas'], 21)
+        # 21 under July; 22 under August (2026-10-22): Hounslow, Lewisham,
+        # Southwark and Haringey turned negative, and Hillingdon, Merton and
+        # Richmond upon Thames reached 0.0% or better.
+        self.assertEqual(m['fallingAreas'], 22)
         # v5.2: the growth yardstick is the POOL's fastest real-terms riser,
         # and a London page may now name a borough outside London - qualified
         # with its city, so a reader can place it. Trafford, +6.3% real, July
         # 2026. Both vintages resolve to it because only London's slice moves
         # between them (previous_dataset is London-only) and no London borough
         # beats +6.3% in either.
-        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Trafford (Greater Manchester)')
-        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Trafford (Greater Manchester)')
-        # ...and that "previous" Trafford figure is JULY's: no city outside
-        # London is held at the previous vintage. Audit I-1 (2026-09-25): the
+        # Calderdale (West Yorkshire) under August (2026-10-22): Trafford eased
+        # +6.3% -> +3.0% real and Calderdale rose +1.2% -> +4.4%. Both vintages
+        # still resolve to it, since no London borough beats +4.4% in either
+        # (Kingston upon Thames +1.5% now, Waltham Forest +0.1% in Q2).
+        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Calderdale (West Yorkshire)')
+        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Calderdale (West Yorkshire)')
+        # ...and that "previous" Trafford figure is JULY's (Calderdale's
+        # AUGUST figure since 2026-10-22): no city outside London is held at
+        # the previous vintage. Audit I-1 (2026-09-25): the
         # summary called it a change from itself. It must say it stands in.
         self.assertTrue(m['previousBenchmarks']['strongestGrowthStandIn'])
         self.assertFalse(m['benchmarks']['strongestGrowthStandIn'])
@@ -509,7 +534,10 @@ class TrendsFeatureTests(unittest.TestCase):
         # again.
         # Westminster since the 2026-Q3 roll (-25.4%); City of London held
         # the steepest fall under the May vintage.
-        self.assertIn('Westminster', growth['workings'])
+        # City of London again under August (2026-10-22): -17.3% real against
+        # Westminster's -17.0%, Westminster's nominal fall having eased -20.7%
+        # -> -14.3%. Newham (-7.7% real) still sits in the falling tail.
+        self.assertIn('City of London', growth['workings'])
         self.assertIn('steepest fall', growth['workings'])
         # = 4.9 under v5.0 (nominal -1.4% against -25.4%); v5.1 works in real
         # terms (-4.1% against -27.4%, = 4.4). DERIVED from the driver's own
@@ -574,10 +602,15 @@ class TrendsFeatureTests(unittest.TestCase):
         barking = self._investor_why('Barking and Dagenham')
         growth = next(d for d in barking['drivers'] if d['factor'] == 'growth')
         self.assertEqual(growth['previousRank'], 14)
-        self.assertEqual(growth['rank'], 1)
+        # 1st under June and July; 2nd under August (2026-10-22), because
+        # Kingston upon Thames rose +0.2% -> +1.5% real and passed Barking,
+        # which eased +2.1% -> +1.4%. Barking still moved 14th -> 2nd and the
+        # steps still name both ranks, which is the property, so the subject
+        # stays and its rank is re-pinned.
+        self.assertEqual(growth['rank'], 2)
         self.assertEqual(growth['rankOf'], 33)
         steps = ' '.join(growth['steps'])
-        self.assertIn('14th of 33 to 1st of 33', steps)
+        self.assertIn('14th of 33 to 2nd of 33', steps)
 
     def test_why_explains_amplification_when_area_was_the_benchmark(self):
         """The main reason a big move looks extreme: the area WAS the yardstick.
@@ -724,13 +757,24 @@ class TrendsFeatureTests(unittest.TestCase):
         # positive at the July roll and it still sits below the 5.0 anchor,
         # because 0.8% nominal is a real-terms fall. Strictly ordered by depth
         # of fall; Westminster has been the steepest faller since June.
-        ealing, kc, wst = growth_of('Ealing'), growth_of('Kensington and Chelsea'), growth_of('Westminster')
-        self.assertLess(wst, kc)
+        #
+        # RE-AIMED Westminster -> City of London at the August roll
+        # (2026-10-22). The severe subject must BE the steepest faller, or the
+        # floor assertion below tests nothing, and Westminster no longer is:
+        # its fall eased -20.7% -> -14.3% nominal (-17.0% real) and it scores
+        # 0.1, while City of London's -14.6% nominal (-17.3% real) is now the
+        # pool's steepest and scores 0.0. Ealing (+1.8% nominal, -1.5% real,
+        # 4.6) and K&C (-13.8% nominal, -16.6% real, 0.2) still qualify, so
+        # only the severe subject moved; the assertions are unchanged.
+        ealing, kc, col = (
+            growth_of('Ealing'), growth_of('Kensington and Chelsea'), growth_of('City of London')
+        )
+        self.assertLess(col, kc)
         self.assertLess(kc, ealing)
         # All are falling, so all sit below the 5.0 flat-market anchor.
         self.assertLess(ealing, 5.0)
         # Only the steepest faller in the cohort may sit on the floor.
-        self.assertEqual(wst, 0.0)
+        self.assertEqual(col, 0.0)
 
         # The workings must name the benchmark the tail is scaled against rather
         # than assert a floor that no longer exists.
@@ -750,7 +794,10 @@ class TrendsFeatureTests(unittest.TestCase):
         # while it sits below its Q2 rank. The assertions ABOVE are the
         # invariant this test exists for - that mild and severe falls separate
         # at all - and they are unchanged.
-        self.assertEqual((growth['previousRank'], growth['rank']), (29, 30))
+        # (29, 31) again at the August roll (2026-10-22): K&C barely moved
+        # (-16.7% -> -16.6% real) while Tower Hamlets eased -17.0% -> -16.1%
+        # and passed it.
+        self.assertEqual((growth['previousRank'], growth['rank']), (29, 31))
 
         # And no borough may still publish the retired limitation as a caveat.
         body = json.loads(app.handle_changes({})['body'])
@@ -1001,7 +1048,11 @@ class CalcScoreTests(unittest.TestCase):
         # +1.5) and gave 3.6; the July roll deflates -5.5% by 3.1 to -8.3%
         # against a cohort of -23.1 to +2.1 and gives 3.2 - which METHODOLOGY
         # s6 walks through.
-        self.assertEqual(result['components']['growth'], 3.2)
+        # 3.2 under July; 2.6 under August (2026-10-22). Wandsworth's real
+        # trend did not move (-5.3% deflated by 3.3 is -8.3% again), but the
+        # steepest fall the tail is scaled against eased from Westminster's
+        # -23.1% to City of London's -17.3%: 5.0 - 8.3 / 17.3 x 5 = 2.6.
+        self.assertEqual(result['components']['growth'], 2.6)
         # live 7.9 -> 8.0 on 2026-08-03, when the crime rates were re-verified
         # against ONS Table C4 in full rather than by spot check. Wandsworth held
         # 82 per 1,000 against a published 76.4, so crime_to_score moves 7.87 ->
@@ -1018,8 +1069,10 @@ class CalcScoreTests(unittest.TestCase):
         # and Wandsworth's 800 m share fell 83.0% -> 74.8% once terminated
         # postcodes stopped counting, taking the band `excellent` -> `good`.
         self.assertEqual(result['components']['live'], 7.8)
-        # 660000 under the May vintage; 680105 under June; 686076 under July.
-        self.assertEqual(result['context']['avgPriceGbp'], 686076)
+        # 660000 under the May vintage; 680105 under June; 686076 under July;
+        # 694210 under August (2026-10-22), the August HPI roll's Wandsworth
+        # average (+1.2%).
+        self.assertEqual(result['context']['avgPriceGbp'], 694210)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
 
     def test_growth_clamped_to_scale(self):

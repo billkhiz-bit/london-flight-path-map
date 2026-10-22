@@ -63,7 +63,7 @@ import urllib.request
 from pathlib import Path
 
 # The vintage the registry claims, in CITY_PROVENANCE and in CLAUDE.md.
-DEFAULT_VINTAGE = "2026-07-01"  # July 2026 UK HPI, rolled 2026-09-16
+DEFAULT_VINTAGE = "2026-08-01"  # August 2026 UK HPI, rolled 2026-10-22
 # One cache file PER VINTAGE. It was a single `data/hpi-average-prices.csv`
 # for every vintage until 2026-09-14 (audit M26): fetch() returned early on
 # any existing file, so `--vintage 2026-07` against a June cache could only

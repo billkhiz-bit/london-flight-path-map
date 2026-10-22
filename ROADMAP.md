@@ -54,11 +54,18 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > dropped rather than the airport); add September when the CAA publishes it (~mid-Nov); fix Luton's field-level
 > fault (a transponder alternating 'ground'/0 ft, June; recount all 289 days, ~2.8 h); accept 5-6 May as outages.
 >
-> **`/how-it-works/` BUILT (Bill, 22 Oct), not deployed:** the method in plain English, with Hounslow taken apart
+> **AUGUST 2026 HPI ROLLED in source (Bill: "do hpi update", 22 Oct), NOT deployed:** 80 of 97 prices and 95 of 97
+> trends, CPIH 3.1 -> 3.3; balanced 21 of 97 scores by 0.1, investor 75 of 97 (Calderdale is the pool's new top
+> riser, the City of London its steepest faller); METHODOLOGY s6 re-derived; seven test pins moved with measured
+> reasons. The backend must NOT ship from this branch (it carries the Bay Area): it is built from a worktree of
+> master (== the live Lambda, compared 22 Oct) + the August prices, all 776 UK answers identical to this branch.
+> The classifier refused the build, so it is Bill's: Desktop `deploy-hpi-2026-08.md`; the site follows it.
+> The 29 Oct runbook is updated for it (skip its step 6; the Bay Area is Part B).
+> **`/how-it-works/` LIVE 22 Oct (Bill: "deploy when preflight is done"; `c7f4b97`, verified from the origin):** the method in plain English, with Hounslow taken apart
 > (each score times its weight, adding up to 3.4), the eight views' weights, and every movable figure derived by
 > `scripts/build_how_it_works.py` (blocking). Linked from the front page's answer and every footer. **The area pages
-> are now counted** (analytics + their own CSP; GoatCounter had never seen them). Both deploy with `web-deploy`,
-> `home-deploy`, `area-deploy` and `meta-deploy` once Bill says so. **Engagement (22 Oct):** two-thirds of views are
+> are now counted** (analytics + their own CSP; GoatCounter had never seen them), live too, with the audit's
+> front-end fixes. `demo-deploy` is held back: it carries the Bay Area API spec. **Engagement (22 Oct):** two-thirds of views are
 > the front page and ~6% of them act; Reddit is the best channel; the evidence says answer first, count the area
 > pages, and shorten the API path (research summary in the session; next: mock the front page's answer-first
 > change for Bill).
