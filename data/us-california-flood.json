@@ -1,0 +1,10468 @@
+{
+ "source": "FEMA National Flood Hazard Layer, county-wide downloads for every California county, read at the 2020 Census block internal points",
+ "licence": "public domain (FEMA, a US government work)",
+ "generator": "scripts/build_bayarea_flood.py --write-state",
+ "measure": "California's share of residents in a determined zone who are inside the SFHA (SFHA_TF = T): the anchor of the US flood scale (Bill, 2026-10-21). Read the way a city's share is: over the places (and each county's land outside every place) where FEMA has determined the risk for at least 95% of residents; a place over that is left out whole",
+ "sfha_pct": 3.14,
+ "residents_counted": 34928147,
+ "units_counted": 1414,
+ "units": 1664,
+ "sfha_pct_all_determined": 3.28,
+ "residents": 39538223,
+ "residents_sfha": 1241867,
+ "residents_unknown": 1713716,
+ "fema_files": {
+  "06001": "40b4812830ea18537a6a901c0501b29c73c5fcf35011982b5e24034a513fa0d2",
+  "06003": "30a2c3ead3e802d11ef674aeae0f1527c70a223dbaaa2e7a3469add713269918",
+  "06005": "f17af1025cfbac16bec8b5e9c518e291dbd40133aaa6fa2b7808472b36907f58",
+  "06007": "7c5768874e3f69cd79f95e4a946c6f55c47c6bca4303d9c9946f74a3dd50962a",
+  "06009": "6dbdd427fe5d68170e193617572905d9f68549a46903c863f7476cf28ed83b3c",
+  "06011": "66e35c1eea95fd13f36568baf9326d0a693966d522beaa0b82d3512412a495de",
+  "06013": "d19d611d18f132e598c3edb8be2c887a45706a20d794296661714c49f00b3b71",
+  "06015": "639aece7efce41bd93e0be859c627492364a9300e12675d3e2ca3f36be6b15fb",
+  "06017": "2b625666d792f7ae00e69f447099a144900715cb5155f18dd06529f7ab9a3e20",
+  "06019": "8ccc38219ef80af29f1a7bfeafed7c24d8193206d55473d1567338aa8b4b3d50",
+  "06021": "64fa69e34f672a1f791dd97e495cb5273c3f8d44d963461cd337f7b7e88bf035",
+  "06023": "2fb7ef80d0c9998615a314368396f0f9f5455f260485c83cdb8b08478cfaff33",
+  "06025": "125551c219e72943f143597a5b2e09e3b07056bde56ab12d54d19b9fd2a16bcf",
+  "06027": "022a2c3df7f7cf5fd03b14e020268b7f42926919b46206f941f7b29c724e44aa",
+  "06029": "8f26e4760e7af6b46b1d13b5746d144a4ded1a7a2ce0e35010bcaea9dc95ea85",
+  "06031": "daab50ebef8970e8a3174b887527e8b9135c7486b2c137b3ab3d14ec89a7ebb4",
+  "06033": "77a0e58b3919eee6d807eee8fedc7b87e4e215decb4975e59c2bfd62daa94c8a",
+  "06035": "f5ae0f4c867035366399d52ea62741eaefffa3ef78cce8a3a6dfe090a873b39f",
+  "06037": "076e300ca8de842836b43864ad8c041dd8662232511d917a20a623c6fb5e5a3e",
+  "06039": "d7474b60617360e823ff7842ee5703f9ebfc6c8773f7d0c63c2e283c231427c6",
+  "06041": "08c42245e1c7ebeff0549b0d145da007cc71472dab1f6f48c0684c0a1afaa134",
+  "06043": "e63520151a17eeb4ff44b944ea6a4637764c9b77fcc6dc8a025e099f2f1d28c9",
+  "06045": "e99f16228340a7448aa034363e08be5d02c1cf4c8502c0255ecd75229479c2c1",
+  "06047": "b86b5635d229ecef0e940787b0149fd0354301e80d657ad01aef98c20dd8dab6",
+  "06049": "c9e5e91ce1afb8c2b34c2126c32d5f0452d82bd3443543983ec71865adc507a5",
+  "06051": "70b087f1f3108addeb4dad3dc6ac92c51b7ba505094fdbdb7743a95e668dae57",
+  "06053": "f589447a2796aeac6caeb2208ba0c39ff8767be3f8ecf06bdffd68011398c21b",
+  "06055": "c3232a7908f5a791f7e7263e7b1eb23ab9e61bbb50ad38871dce8d8eb0643361",
+  "06057": "81567a7345fdfdfb4618e3757769eec7b015173614f9535d54ec15c561b1c20e",
+  "06059": "3450a368d9270bbe1c83ba6a4e03519d177ba2af4be74fdc012cf6de15907e0b",
+  "06061": "f812702b97090a2ac75ca0747cbd0bd5ffb62aa03203f351bc7fd4636e34f46c",
+  "06063": "8846a3a0bc63cd48caa24079d5aabe708fbf7ed89ce189f80d991434d6f58d26",
+  "06065": "2071a0681fcc8bbe6010a0be872c067a8ffb17024fae30a8998ac810196fc69a",
+  "06067": "8e86fcddfac329f503384d37cce9d1c95a36e7e61f07b54d246c8fc1b33ff2c6",
+  "06069": "e8a90e133a4d2422c813cf8a57953056c68d8fb5710fb922d59933959fd60773",
+  "06071": "e8212b5d1a1206f7a8f9580174db2f5dd4766c7d9955f9b8c2458297b992c61b",
+  "06073": "1f52ff1de86176a85a9dbae3fae2b381b952a67aaf01b463cf9e475c3c6609e6",
+  "06075": "e22aa08412b5962033885163f407156da3a8be9b3ca9caba6c5336c6bcf0736f",
+  "06077": "a8ac7eef2446faf5e45945e65e3f0c69cf595aa5a333388f40449b0f98dccd96",
+  "06079": "f8c71ee1381854e6c1c90f52c7e1b028caa62dc717f0862c7b3bf9e8ace392c4",
+  "06081": "4e5f313902d61878007731d94f1e284627751a0fcd6d0d218add8c534909d3d7",
+  "06083": "3f70439fbb61834cf587b70e55022f4f59ef1cc3d27cdcd4317768016be393ab",
+  "06085": "bd8c4b441cb8cf4098a28bebac90b8d50971e6ed569a456bbe537fe65dd4a2db",
+  "06087": "aadba47db1cc5314aa515fe4b95a2cecf9a6f1e16650d39cb8ce3e5ccf3324c6",
+  "06089": "349e2a63de19b8a6ead22da7ad0875df9f887907986ff3b873b93098677e22fb",
+  "06091": "d4d191d201fe4ab9772b6ad2df1daf0ee592baba13c12b93f0a7fd3226f2a97b",
+  "06093": "ceb0b0a542e269f8f9fcdfc9afe1907694a5a6b84b11738708b86f0cb9faaf59",
+  "06095": "342be43404ce87dcb2b0290c44e5ad13c02c756e6bfd7862a0ed0f07b57bc8de",
+  "06097": "3f10911bdbd94010f58f68bc44f0e56850b915471cda54399b0356127b51d97a",
+  "06099": "c431f631bb8f1b841b3fd84484367f36d1477ee54bfc1dcce4720095eb4bf7dd",
+  "06101": "77b84648dea7198e256570240ebb92b2d9202b7443f6b8021925a7b10277307e",
+  "06103": "b93b1331c0b966595682cedd5de07c8376990b7bc9d9d9c8f3f009dc65870c14",
+  "06105": "1f56bd62fc208f95d2c831380143a6fb4d60b67dc31140bf3c872142a6bbaa25",
+  "06107": "d7697dda6ff951a884dea59bdaad6c4889a29b2c06c4b938d8fcc238b9a44a15",
+  "06109": "1e169e1b8fd36c4b6e0cd7e3d47faae4a1039d8f56a4b36014b43cd87a209286",
+  "06111": "b915e50f8e06215753d59f27e6d8a05a86d7462b8788a2a3578369de58d0a5f4",
+  "06113": "45b37cff51a57cb04ca222254e226aa815011e415272b8304fbfc9cea2dadfd2",
+  "06115": "557124978180ac6ef165f7dfa0b62e3bb89d05f60f4cd0cdf12c867b1e0afdfa"
+ },
+ "counties": [
+  {
+   "county": "Alameda",
+   "fips": "06001",
+   "residents": 1682353,
+   "residents_sfha": 32427,
+   "residents_unknown": 393
+  },
+  {
+   "county": "Alpine",
+   "fips": "06003",
+   "residents": 1204,
+   "residents_sfha": 0,
+   "residents_unknown": 867
+  },
+  {
+   "county": "Amador",
+   "fips": "06005",
+   "residents": 40474,
+   "residents_sfha": 907,
+   "residents_unknown": 0
+  },
+  {
+   "county": "Butte",
+   "fips": "06007",
+   "residents": 211632,
+   "residents_sfha": 13871,
+   "residents_unknown": 0
+  },
+  {
+   "county": "Calaveras",
+   "fips": "06009",
+   "residents": 45292,
+   "residents_sfha": 851,
+   "residents_unknown": 28
+  },
+  {
+   "county": "Colusa",
+   "fips": "06011",
+   "residents": 21839,
+   "residents_sfha": 4195,
+   "residents_unknown": 181
+  },
+  {
+   "county": "Contra Costa",
+   "fips": "06013",
+   "residents": 1165927,
+   "residents_sfha": 29377,
+   "residents_unknown": 0
+  },
+  {
+   "county": "Del Norte",
+   "fips": "06015",
+   "residents": 27743,
+   "residents_sfha": 679,
+   "residents_unknown": 226
+  },
+  {
+   "county": "El Dorado",
+   "fips": "06017",
+   "residents": 191185,
+   "residents_sfha": 1468,
+   "residents_unknown": 8353
+  },
+  {
+   "county": "Fresno",
+   "fips": "06019",
+   "residents": 1008654,
+   "residents_sfha": 17576,
+   "residents_unknown": 0
+  },
+  {
+   "county": "Glenn",
+   "fips": "06021",
+   "residents": 28917,
+   "residents_sfha": 3882,
+   "residents_unknown": 163
+  },
+  {
+   "county": "Humboldt",
+   "fips": "06023",
+   "residents": 136463,
+   "residents_sfha": 5831,
+   "residents_unknown": 6324
+  },
+  {
+   "county": "Imperial",
+   "fips": "06025",
+   "residents": 179702,
+   "residents_sfha": 907,
+   "residents_unknown": 333
+  },
+  {
+   "county": "Inyo",
+   "fips": "06027",
+   "residents": 19016,
+   "residents_sfha": 124,
+   "residents_unknown": 0
+  },
+  {
+   "county": "Kern",
+   "fips": "06029",
+   "residents": 909235,
+   "residents_sfha": 46742,
+   "residents_unknown": 10599
+  },
+  {
+   "county": "Kings",
+   "fips": "06031",
+   "residents": 152486,
+   "residents_sfha": 8237,
+   "residents_unknown": 6649
+  },
+  {
+   "county": "Lake",
+   "fips": "06033",
+   "residents": 68163,
+   "residents_sfha": 9725,
+   "residents_unknown": 6402
+  },
+  {
+   "county": "Lassen",
+   "fips": "06035",
+   "residents": 32730,
+   "residents_sfha": 2149,
+   "residents_unknown": 1189
+  },
+  {
+   "county": "Los Angeles",
+   "fips": "06037",
+   "residents": 10014009,
+   "residents_sfha": 59542,
+   "residents_unknown": 176262
+  },
+  {
+   "county": "Madera",
+   "fips": "06039",
+   "residents": 156255,
+   "residents_sfha": 13303,
+   "residents_unknown": 4142
+  },
+  {
+   "county": "Marin",
+   "fips": "06041",
+   "residents": 262321,
+   "residents_sfha": 40802,
+   "residents_unknown": 603
+  },
+  {
+   "county": "Mariposa",
+   "fips": "06043",
+   "residents": 17131,
+   "residents_sfha": 131,
+   "residents_unknown": 3406
+  },
+  {
+   "county": "Mendocino",
+   "fips": "06045",
+   "residents": 91601,
+   "residents_sfha": 6663,
+   "residents_unknown": 2818
+  },
+  {
+   "county": "Merced",
+   "fips": "06047",
+   "residents": 281202,
+   "residents_sfha": 61951,
+   "residents_unknown": 4613
+  },
+  {
+   "county": "Modoc",
+   "fips": "06049",
+   "residents": 8700,
+   "residents_sfha": 892,
+   "residents_unknown": 1034
+  },
+  {
+   "county": "Mono",
+   "fips": "06051",
+   "residents": 13195,
+   "residents_sfha": 477,
+   "residents_unknown": 2376
+  },
+  {
+   "county": "Monterey",
+   "fips": "06053",
+   "residents": 439035,
+   "residents_sfha": 16167,
+   "residents_unknown": 4097
+  },
+  {
+   "county": "Napa",
+   "fips": "06055",
+   "residents": 138019,
+   "residents_sfha": 9065,
+   "residents_unknown": 30
+  },
+  {
+   "county": "Nevada",
+   "fips": "06057",
+   "residents": 102241,
+   "residents_sfha": 500,
+   "residents_unknown": 1556
+  },
+  {
+   "county": "Orange",
+   "fips": "06059",
+   "residents": 3186989,
+   "residents_sfha": 107340,
+   "residents_unknown": 925
+  },
+  {
+   "county": "Placer",
+   "fips": "06061",
+   "residents": 404739,
+   "residents_sfha": 8223,
+   "residents_unknown": 10
+  },
+  {
+   "county": "Plumas",
+   "fips": "06063",
+   "residents": 19790,
+   "residents_sfha": 981,
+   "residents_unknown": 2337
+  },
+  {
+   "county": "Riverside",
+   "fips": "06065",
+   "residents": 2418185,
+   "residents_sfha": 59030,
+   "residents_unknown": 124949
+  },
+  {
+   "county": "Sacramento",
+   "fips": "06067",
+   "residents": 1585055,
+   "residents_sfha": 150042,
+   "residents_unknown": 156
+  },
+  {
+   "county": "San Benito",
+   "fips": "06069",
+   "residents": 64209,
+   "residents_sfha": 1248,
+   "residents_unknown": 0
+  },
+  {
+   "county": "San Bernardino",
+   "fips": "06071",
+   "residents": 2181654,
+   "residents_sfha": 37180,
+   "residents_unknown": 262275
+  },
+  {
+   "county": "San Diego",
+   "fips": "06073",
+   "residents": 3298634,
+   "residents_sfha": 80641,
+   "residents_unknown": 28798
+  },
+  {
+   "county": "San Francisco",
+   "fips": "06075",
+   "residents": 873965,
+   "residents_sfha": 2509,
+   "residents_unknown": 34
+  },
+  {
+   "county": "San Joaquin",
+   "fips": "06077",
+   "residents": 779233,
+   "residents_sfha": 16040,
+   "residents_unknown": 0
+  },
+  {
+   "county": "San Luis Obispo",
+   "fips": "06079",
+   "residents": 282424,
+   "residents_sfha": 10589,
+   "residents_unknown": 995
+  },
+  {
+   "county": "San Mateo",
+   "fips": "06081",
+   "residents": 764442,
+   "residents_sfha": 36314,
+   "residents_unknown": 1416
+  },
+  {
+   "county": "Santa Barbara",
+   "fips": "06083",
+   "residents": 448229,
+   "residents_sfha": 17657,
+   "residents_unknown": 5177
+  },
+  {
+   "county": "Santa Clara",
+   "fips": "06085",
+   "residents": 1936259,
+   "residents_sfha": 118829,
+   "residents_unknown": 889799
+  },
+  {
+   "county": "Santa Cruz",
+   "fips": "06087",
+   "residents": 270861,
+   "residents_sfha": 24451,
+   "residents_unknown": 4
+  },
+  {
+   "county": "Shasta",
+   "fips": "06089",
+   "residents": 182155,
+   "residents_sfha": 8914,
+   "residents_unknown": 2473
+  },
+  {
+   "county": "Sierra",
+   "fips": "06091",
+   "residents": 3236,
+   "residents_sfha": 270,
+   "residents_unknown": 0
+  },
+  {
+   "county": "Siskiyou",
+   "fips": "06093",
+   "residents": 44076,
+   "residents_sfha": 2853,
+   "residents_unknown": 1705
+  },
+  {
+   "county": "Solano",
+   "fips": "06095",
+   "residents": 453491,
+   "residents_sfha": 21066,
+   "residents_unknown": 3802
+  },
+  {
+   "county": "Sonoma",
+   "fips": "06097",
+   "residents": 488863,
+   "residents_sfha": 11872,
+   "residents_unknown": 6765
+  },
+  {
+   "county": "Stanislaus",
+   "fips": "06099",
+   "residents": 552878,
+   "residents_sfha": 10784,
+   "residents_unknown": 0
+  },
+  {
+   "county": "Sutter",
+   "fips": "06101",
+   "residents": 99633,
+   "residents_sfha": 4758,
+   "residents_unknown": 68427
+  },
+  {
+   "county": "Tehama",
+   "fips": "06103",
+   "residents": 65829,
+   "residents_sfha": 8656,
+   "residents_unknown": 466
+  },
+  {
+   "county": "Trinity",
+   "fips": "06105",
+   "residents": 16112,
+   "residents_sfha": 481,
+   "residents_unknown": 7655
+  },
+  {
+   "county": "Tulare",
+   "fips": "06107",
+   "residents": 473117,
+   "residents_sfha": 67568,
+   "residents_unknown": 1250
+  },
+  {
+   "county": "Tuolumne",
+   "fips": "06109",
+   "residents": 55620,
+   "residents_sfha": 159,
+   "residents_unknown": 2707
+  },
+  {
+   "county": "Ventura",
+   "fips": "06111",
+   "residents": 843843,
+   "residents_sfha": 26835,
+   "residents_unknown": 1182
+  },
+  {
+   "county": "Yolo",
+   "fips": "06113",
+   "residents": 216403,
+   "residents_sfha": 11424,
+   "residents_unknown": 54504
+  },
+  {
+   "county": "Yuba",
+   "fips": "06115",
+   "residents": 81575,
+   "residents_sfha": 6712,
+   "residents_unknown": 3261
+  }
+ ],
+ "by_unit": [
+  {
+   "unit": "06001 rest",
+   "residents": 4191,
+   "residents_sfha": 87,
+   "residents_unknown": 94
+  },
+  {
+   "unit": "0600135",
+   "residents": 1285,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600156",
+   "residents": 334,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600212",
+   "residents": 7431,
+   "residents_sfha": 353,
+   "residents_unknown": 2546
+  },
+  {
+   "unit": "0600296",
+   "residents": 38046,
+   "residents_sfha": 289,
+   "residents_unknown": 23731
+  },
+  {
+   "unit": "06003 rest",
+   "residents": 336,
+   "residents_sfha": 0,
+   "residents_unknown": 278
+  },
+  {
+   "unit": "0600310",
+   "residents": 205,
+   "residents_sfha": 48,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600394",
+   "residents": 20299,
+   "residents_sfha": 0,
+   "residents_unknown": 300
+  },
+  {
+   "unit": "0600450",
+   "residents": 3451,
+   "residents_sfha": 95,
+   "residents_unknown": 86
+  },
+  {
+   "unit": "0600464",
+   "residents": 989,
+   "residents_sfha": 0,
+   "residents_unknown": 989
+  },
+  {
+   "unit": "0600478",
+   "residents": 2296,
+   "residents_sfha": 24,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06005 rest",
+   "residents": 12712,
+   "residents_sfha": 170,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600535",
+   "residents": 1389,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600562",
+   "residents": 78280,
+   "residents_sfha": 5508,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600618",
+   "residents": 15314,
+   "residents_sfha": 1384,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600674",
+   "residents": 20271,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06007 rest",
+   "residents": 26325,
+   "residents_sfha": 3097,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600716",
+   "residents": 153,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600786",
+   "residents": 137,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600884",
+   "residents": 82868,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600898",
+   "residents": 805,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06009 rest",
+   "residents": 15309,
+   "residents_sfha": 105,
+   "residents_unknown": 28
+  },
+  {
+   "unit": "0600947",
+   "residents": 52176,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600982",
+   "residents": 30,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0600996",
+   "residents": 1651,
+   "residents_sfha": 141,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601010",
+   "residents": 531,
+   "residents_sfha": 6,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601094",
+   "residents": 3,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06011 rest",
+   "residents": 4125,
+   "residents_sfha": 1253,
+   "residents_unknown": 181
+  },
+  {
+   "unit": "0601150",
+   "residents": 8569,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601164",
+   "residents": 871,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601192",
+   "residents": 14696,
+   "residents_sfha": 291,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601228",
+   "residents": 224,
+   "residents_sfha": 0,
+   "residents_unknown": 159
+  },
+  {
+   "unit": "0601276",
+   "residents": 615,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601290",
+   "residents": 42846,
+   "residents_sfha": 0,
+   "residents_unknown": 2231
+  },
+  {
+   "unit": "06013 rest",
+   "residents": 10522,
+   "residents_sfha": 1759,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601358",
+   "residents": 103,
+   "residents_sfha": 0,
+   "residents_unknown": 103
+  },
+  {
+   "unit": "0601360",
+   "residents": 7204,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601416",
+   "residents": 732,
+   "residents_sfha": 45,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601444",
+   "residents": 2715,
+   "residents_sfha": 514,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601458",
+   "residents": 12042,
+   "residents_sfha": 0,
+   "residents_unknown": 1768
+  },
+  {
+   "unit": "06015 rest",
+   "residents": 14673,
+   "residents_sfha": 296,
+   "residents_unknown": 226
+  },
+  {
+   "unit": "0601514",
+   "residents": 200,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601518",
+   "residents": 1118,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601640",
+   "residents": 21837,
+   "residents_sfha": 969,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0601651",
+   "residents": 2637,
+   "residents_sfha": 101,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06017 rest",
+   "residents": 54044,
+   "residents_sfha": 363,
+   "residents_unknown": 5731
+  },
+  {
+   "unit": "06019 rest",
+   "residents": 114300,
+   "residents_sfha": 4802,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602000",
+   "residents": 346824,
+   "residents_sfha": 2680,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602028",
+   "residents": 473,
+   "residents_sfha": 7,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602042",
+   "residents": 11323,
+   "residents_sfha": 1059,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06021 rest",
+   "residents": 11630,
+   "residents_sfha": 1846,
+   "residents_unknown": 163
+  },
+  {
+   "unit": "0602112",
+   "residents": 3667,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602168",
+   "residents": 2633,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602210",
+   "residents": 48733,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602252",
+   "residents": 115291,
+   "residents_sfha": 1854,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602294",
+   "residents": 3075,
+   "residents_sfha": 88,
+   "residents_unknown": 184
+  },
+  {
+   "unit": "06023 rest",
+   "residents": 21605,
+   "residents_sfha": 2795,
+   "residents_unknown": 1030
+  },
+  {
+   "unit": "0602364",
+   "residents": 75791,
+   "residents_sfha": 2287,
+   "residents_unknown": 36445
+  },
+  {
+   "unit": "0602378",
+   "residents": 6664,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602382",
+   "residents": 2383,
+   "residents_sfha": 77,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602420",
+   "residents": 3484,
+   "residents_sfha": 868,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602462",
+   "residents": 56681,
+   "residents_sfha": 0,
+   "residents_unknown": 1579
+  },
+  {
+   "unit": "0602476",
+   "residents": 18857,
+   "residents_sfha": 871,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06025 rest",
+   "residents": 18494,
+   "residents_sfha": 384,
+   "residents_unknown": 71
+  },
+  {
+   "unit": "0602553",
+   "residents": 94659,
+   "residents_sfha": 5195,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06027 rest",
+   "residents": 3199,
+   "residents_sfha": 43,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602700",
+   "residents": 4274,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602770",
+   "residents": 3288,
+   "residents_sfha": 94,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602812",
+   "residents": 2708,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602868",
+   "residents": 18441,
+   "residents_sfha": 51,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602896",
+   "residents": 16395,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06029 rest",
+   "residents": 43812,
+   "residents_sfha": 2807,
+   "residents_unknown": 1369
+  },
+  {
+   "unit": "0602910",
+   "residents": 295,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602924",
+   "residents": 19495,
+   "residents_sfha": 13632,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0602980",
+   "residents": 23823,
+   "residents_sfha": 1017,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603026",
+   "residents": 70,
+   "residents_sfha": 0,
+   "residents_unknown": 57
+  },
+  {
+   "unit": "0603064",
+   "residents": 29773,
+   "residents_sfha": 1336,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603092",
+   "residents": 7188,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06031 rest",
+   "residents": 15906,
+   "residents_sfha": 2275,
+   "residents_unknown": 81
+  },
+  {
+   "unit": "0603162",
+   "residents": 31970,
+   "residents_sfha": 1125,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603190",
+   "residents": 3238,
+   "residents_sfha": 42,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603204",
+   "residents": 13776,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603205",
+   "residents": 3388,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603209",
+   "residents": 8628,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603274",
+   "residents": 3460,
+   "residents_sfha": 400,
+   "residents_unknown": 138
+  },
+  {
+   "unit": "06033 rest",
+   "residents": 14225,
+   "residents_sfha": 2112,
+   "residents_unknown": 4267
+  },
+  {
+   "unit": "0603302",
+   "residents": 13696,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603316",
+   "residents": 636,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603330",
+   "residents": 1576,
+   "residents_sfha": 86,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603344",
+   "residents": 13317,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603386",
+   "residents": 50000,
+   "residents_sfha": 416,
+   "residents_unknown": 3865
+  },
+  {
+   "unit": "06035 rest",
+   "residents": 8458,
+   "residents_sfha": 354,
+   "residents_unknown": 682
+  },
+  {
+   "unit": "0603512",
+   "residents": 442,
+   "residents_sfha": 108,
+   "residents_unknown": 284
+  },
+  {
+   "unit": "0603526",
+   "residents": 403455,
+   "residents_sfha": 141,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603546",
+   "residents": 1715,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603666",
+   "residents": 72176,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603694",
+   "residents": 768,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06037 rest",
+   "residents": 87654,
+   "residents_sfha": 2226,
+   "residents_unknown": 9840
+  },
+  {
+   "unit": "0603708",
+   "residents": 347,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603792",
+   "residents": 695,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0603820",
+   "residents": 29505,
+   "residents_sfha": 890,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06039 rest",
+   "residents": 22838,
+   "residents_sfha": 3021,
+   "residents_unknown": 532
+  },
+  {
+   "unit": "0604030",
+   "residents": 25415,
+   "residents_sfha": 643,
+   "residents_unknown": 436
+  },
+  {
+   "unit": "06041 rest",
+   "residents": 18182,
+   "residents_sfha": 2712,
+   "residents_unknown": 463
+  },
+  {
+   "unit": "0604198",
+   "residents": 575,
+   "residents_sfha": 0,
+   "residents_unknown": 575
+  },
+  {
+   "unit": "06043 rest",
+   "residents": 9615,
+   "residents_sfha": 8,
+   "residents_unknown": 1678
+  },
+  {
+   "unit": "0604415",
+   "residents": 23896,
+   "residents_sfha": 676,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604470",
+   "residents": 1782,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604478",
+   "residents": 2619,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06045 rest",
+   "residents": 46917,
+   "residents_sfha": 2700,
+   "residents_unknown": 1716
+  },
+  {
+   "unit": "0604549",
+   "residents": 1693,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604576",
+   "residents": 1303,
+   "residents_sfha": 0,
+   "residents_unknown": 1303
+  },
+  {
+   "unit": "0604632",
+   "residents": 273,
+   "residents_sfha": 273,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06047 rest",
+   "residents": 40037,
+   "residents_sfha": 7843,
+   "residents_unknown": 2445
+  },
+  {
+   "unit": "0604716",
+   "residents": 128,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604730",
+   "residents": 156,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604734",
+   "residents": 5592,
+   "residents_sfha": 351,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604758",
+   "residents": 53036,
+   "residents_sfha": 284,
+   "residents_unknown": 1256
+  },
+  {
+   "unit": "0604772",
+   "residents": 478,
+   "residents_sfha": 23,
+   "residents_unknown": 101
+  },
+  {
+   "unit": "0604856",
+   "residents": 15,
+   "residents_sfha": 0,
+   "residents_unknown": 15
+  },
+  {
+   "unit": "0604870",
+   "residents": 33559,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06049 rest",
+   "residents": 3748,
+   "residents_sfha": 271,
+   "residents_unknown": 984
+  },
+  {
+   "unit": "0604926",
+   "residents": 3641,
+   "residents_sfha": 108,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604938",
+   "residents": 1946,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604982",
+   "residents": 79190,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0604996",
+   "residents": 39501,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06051 rest",
+   "residents": 549,
+   "residents_sfha": 22,
+   "residents_unknown": 371
+  },
+  {
+   "unit": "0605108",
+   "residents": 28335,
+   "residents_sfha": 396,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0605164",
+   "residents": 2126,
+   "residents_sfha": 826,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0605262",
+   "residents": 422,
+   "residents_sfha": 97,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0605276",
+   "residents": 603,
+   "residents_sfha": 45,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0605290",
+   "residents": 27131,
+   "residents_sfha": 340,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06053 rest",
+   "residents": 53325,
+   "residents_sfha": 4942,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0605332",
+   "residents": 6337,
+   "residents_sfha": 430,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0605346",
+   "residents": 279,
+   "residents_sfha": 6,
+   "residents_unknown": 138
+  },
+  {
+   "unit": "0605356",
+   "residents": 5333,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06055 rest",
+   "residents": 17566,
+   "residents_sfha": 1316,
+   "residents_unknown": 30
+  },
+  {
+   "unit": "06057 rest",
+   "residents": 48536,
+   "residents_sfha": 52,
+   "residents_unknown": 1232
+  },
+  {
+   "unit": "06059 rest",
+   "residents": 27779,
+   "residents_sfha": 227,
+   "residents_unknown": 66
+  },
+  {
+   "unit": "0606000",
+   "residents": 124321,
+   "residents_sfha": 0,
+   "residents_unknown": 21
+  },
+  {
+   "unit": "0606028",
+   "residents": 8244,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606070",
+   "residents": 1637,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06061 rest",
+   "residents": 59243,
+   "residents_sfha": 476,
+   "residents_unknown": 10
+  },
+  {
+   "unit": "0606150",
+   "residents": 2520,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606210",
+   "residents": 2131,
+   "residents_sfha": 2131,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06063 rest",
+   "residents": 2898,
+   "residents_sfha": 395,
+   "residents_unknown": 542
+  },
+  {
+   "unit": "0606308",
+   "residents": 32701,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606336",
+   "residents": 266,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606406",
+   "residents": 12738,
+   "residents_sfha": 1068,
+   "residents_unknown": 8825
+  },
+  {
+   "unit": "0606434",
+   "residents": 5046,
+   "residents_sfha": 176,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606475",
+   "residents": 79,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06065 rest",
+   "residents": 77608,
+   "residents_sfha": 4833,
+   "residents_unknown": 18859
+  },
+  {
+   "unit": "0606518",
+   "residents": 151,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606560",
+   "residents": 1964,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606567",
+   "residents": 161,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606616",
+   "residents": 1875,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606635",
+   "residents": 1084,
+   "residents_sfha": 0,
+   "residents_unknown": 1084
+  },
+  {
+   "unit": "06067 rest",
+   "residents": 15001,
+   "residents_sfha": 6212,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606728",
+   "residents": 1427,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606798",
+   "residents": 3819,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06069 rest",
+   "residents": 15444,
+   "residents_sfha": 691,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606928",
+   "residents": 9637,
+   "residents_sfha": 176,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606935",
+   "residents": 1016,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606982",
+   "residents": 1431,
+   "residents_sfha": 493,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0606994",
+   "residents": 38,
+   "residents_sfha": 25,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607036",
+   "residents": 338,
+   "residents_sfha": 37,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607064",
+   "residents": 24339,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06071 rest",
+   "residents": 120827,
+   "residents_sfha": 3615,
+   "residents_unknown": 33279
+  },
+  {
+   "unit": "0607162",
+   "residents": 1208,
+   "residents_sfha": 126,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607172",
+   "residents": 116,
+   "residents_sfha": 14,
+   "residents_unknown": 102
+  },
+  {
+   "unit": "0607218",
+   "residents": 18317,
+   "residents_sfha": 68,
+   "residents_unknown": 18249
+  },
+  {
+   "unit": "0607246",
+   "residents": 211,
+   "residents_sfha": 0,
+   "residents_unknown": 211
+  },
+  {
+   "unit": "0607260",
+   "residents": 912,
+   "residents_sfha": 10,
+   "residents_unknown": 217
+  },
+  {
+   "unit": "0607274",
+   "residents": 2008,
+   "residents_sfha": 150,
+   "residents_unknown": 13
+  },
+  {
+   "unit": "06073 rest",
+   "residents": 164679,
+   "residents_sfha": 1801,
+   "residents_unknown": 12508
+  },
+  {
+   "unit": "0607316",
+   "residents": 1483,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607372",
+   "residents": 231,
+   "residents_sfha": 64,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607378",
+   "residents": 5497,
+   "residents_sfha": 393,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607414",
+   "residents": 12917,
+   "residents_sfha": 418,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607470",
+   "residents": 2868,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607498",
+   "residents": 4546,
+   "residents_sfha": 95,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607512",
+   "residents": 1018,
+   "residents_sfha": 21,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607525",
+   "residents": 661,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607568",
+   "residents": 2086,
+   "residents_sfha": 386,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607578",
+   "residents": 1760,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607596",
+   "residents": 3073,
+   "residents_sfha": 2461,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607624",
+   "residents": 16882,
+   "residents_sfha": 723,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607652",
+   "residents": 5429,
+   "residents_sfha": 362,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607694",
+   "residents": 359,
+   "residents_sfha": 0,
+   "residents_unknown": 359
+  },
+  {
+   "unit": "06077 rest",
+   "residents": 73632,
+   "residents_sfha": 10255,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607750",
+   "residents": 158,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0607848",
+   "residents": 6215,
+   "residents_sfha": 258,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06079 rest",
+   "residents": 40801,
+   "residents_sfha": 1383,
+   "residents_unknown": 995
+  },
+  {
+   "unit": "0607946",
+   "residents": 921,
+   "residents_sfha": 0,
+   "residents_unknown": 75
+  },
+  {
+   "unit": "0607974",
+   "residents": 69,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608058",
+   "residents": 26416,
+   "residents_sfha": 6,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06081 rest",
+   "residents": 17545,
+   "residents_sfha": 633,
+   "residents_unknown": 123
+  },
+  {
+   "unit": "0608100",
+   "residents": 47325,
+   "residents_sfha": 4,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608142",
+   "residents": 64292,
+   "residents_sfha": 142,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608172",
+   "residents": 5135,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608240",
+   "residents": 553,
+   "residents_sfha": 84,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06083 rest",
+   "residents": 16239,
+   "residents_sfha": 1514,
+   "residents_unknown": 1575
+  },
+  {
+   "unit": "0608310",
+   "residents": 4851,
+   "residents_sfha": 30,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608338",
+   "residents": 4411,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608478",
+   "residents": 2043,
+   "residents_sfha": 59,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06085 rest",
+   "residents": 28196,
+   "residents_sfha": 2489,
+   "residents_unknown": 24881
+  },
+  {
+   "unit": "0608506",
+   "residents": 31,
+   "residents_sfha": 3,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608530",
+   "residents": 3632,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608680",
+   "residents": 2597,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06087 rest",
+   "residents": 25663,
+   "residents_sfha": 667,
+   "residents_unknown": 4
+  },
+  {
+   "unit": "0608716",
+   "residents": 21,
+   "residents_sfha": 0,
+   "residents_unknown": 21
+  },
+  {
+   "unit": "0608744",
+   "residents": 22,
+   "residents_sfha": 0,
+   "residents_unknown": 22
+  },
+  {
+   "unit": "0608758",
+   "residents": 5161,
+   "residents_sfha": 377,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608786",
+   "residents": 84034,
+   "residents_sfha": 174,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0608828",
+   "residents": 542,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06089 rest",
+   "residents": 33272,
+   "residents_sfha": 1797,
+   "residents_unknown": 1155
+  },
+  {
+   "unit": "0608954",
+   "residents": 107337,
+   "residents_sfha": 13,
+   "residents_unknown": 2969
+  },
+  {
+   "unit": "0608968",
+   "residents": 4940,
+   "residents_sfha": 0,
+   "residents_unknown": 4940
+  },
+  {
+   "unit": "0609066",
+   "residents": 31386,
+   "residents_sfha": 1062,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06091 rest",
+   "residents": 561,
+   "residents_sfha": 10,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609122",
+   "residents": 3000,
+   "residents_sfha": 434,
+   "residents_unknown": 5
+  },
+  {
+   "unit": "0609150",
+   "residents": 250,
+   "residents_sfha": 0,
+   "residents_unknown": 205
+  },
+  {
+   "unit": "06093 rest",
+   "residents": 18515,
+   "residents_sfha": 1162,
+   "residents_unknown": 1451
+  },
+  {
+   "unit": "0609310",
+   "residents": 780,
+   "residents_sfha": 59,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609318",
+   "residents": 74,
+   "residents_sfha": 11,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609324",
+   "residents": 945,
+   "residents_sfha": 41,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609332",
+   "residents": 1337,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609346",
+   "residents": 1140,
+   "residents_sfha": 110,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609353",
+   "residents": 3957,
+   "residents_sfha": 251,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609360",
+   "residents": 2629,
+   "residents_sfha": 990,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06095 rest",
+   "residents": 13564,
+   "residents_sfha": 2006,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609598",
+   "residents": 23241,
+   "residents_sfha": 0,
+   "residents_unknown": 3246
+  },
+  {
+   "unit": "06097 rest",
+   "residents": 84071,
+   "residents_sfha": 4007,
+   "residents_unknown": 4148
+  },
+  {
+   "unit": "0609710",
+   "residents": 38633,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609780",
+   "residents": 14973,
+   "residents_sfha": 683,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609822",
+   "residents": 50,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609834",
+   "residents": 473,
+   "residents_sfha": 7,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609835",
+   "residents": 8583,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609864",
+   "residents": 10026,
+   "residents_sfha": 0,
+   "residents_unknown": 410
+  },
+  {
+   "unit": "0609878",
+   "residents": 6515,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609892",
+   "residents": 5228,
+   "residents_sfha": 377,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06099 rest",
+   "residents": 51360,
+   "residents_sfha": 3244,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609948",
+   "residents": 1282,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0609990",
+   "residents": 799,
+   "residents_sfha": 13,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610004",
+   "residents": 223,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610032",
+   "residents": 1776,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610042",
+   "residents": 1070,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610044",
+   "residents": 964,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610046",
+   "residents": 70741,
+   "residents_sfha": 3281,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610074",
+   "residents": 5678,
+   "residents_sfha": 111,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610088",
+   "residents": 3719,
+   "residents_sfha": 0,
+   "residents_unknown": 3719
+  },
+  {
+   "unit": "06101 rest",
+   "residents": 15762,
+   "residents_sfha": 4016,
+   "residents_unknown": 6501
+  },
+  {
+   "unit": "0610256",
+   "residents": 18881,
+   "residents_sfha": 140,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610270",
+   "residents": 1871,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06103 rest",
+   "residents": 32057,
+   "residents_sfha": 5059,
+   "residents_unknown": 330
+  },
+  {
+   "unit": "0610301",
+   "residents": 4951,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610345",
+   "residents": 43959,
+   "residents_sfha": 1234,
+   "residents_unknown": 4039
+  },
+  {
+   "unit": "0610494",
+   "residents": 106,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06105 rest",
+   "residents": 2218,
+   "residents_sfha": 26,
+   "residents_unknown": 1585
+  },
+  {
+   "unit": "0610508",
+   "residents": 2955,
+   "residents_sfha": 0,
+   "residents_unknown": 1950
+  },
+  {
+   "unit": "0610554",
+   "residents": 9683,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610561",
+   "residents": 12468,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610676",
+   "residents": 158,
+   "residents_sfha": 0,
+   "residents_unknown": 83
+  },
+  {
+   "unit": "06107 rest",
+   "residents": 60906,
+   "residents_sfha": 6391,
+   "residents_unknown": 1250
+  },
+  {
+   "unit": "0610732",
+   "residents": 183,
+   "residents_sfha": 15,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610816",
+   "residents": 500,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06109 rest",
+   "residents": 21357,
+   "residents_sfha": 6,
+   "residents_unknown": 1229
+  },
+  {
+   "unit": "0610914",
+   "residents": 30,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0610928",
+   "residents": 11082,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611040",
+   "residents": 9938,
+   "residents_sfha": 433,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06111 rest",
+   "residents": 36861,
+   "residents_sfha": 2773,
+   "residents_unknown": 1182
+  },
+  {
+   "unit": "0611166",
+   "residents": 1,
+   "residents_sfha": 0,
+   "residents_unknown": 1
+  },
+  {
+   "unit": "0611194",
+   "residents": 114746,
+   "residents_sfha": 2639,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611250",
+   "residents": 3220,
+   "residents_sfha": 12,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06113 rest",
+   "residents": 8255,
+   "residents_sfha": 3054,
+   "residents_unknown": 6
+  },
+  {
+   "unit": "0611324",
+   "residents": 4524,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611376",
+   "residents": 55,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611390",
+   "residents": 79793,
+   "residents_sfha": 2112,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611418",
+   "residents": 518,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611446",
+   "residents": 13264,
+   "residents_sfha": 661,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611481",
+   "residents": 143,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "06115 rest",
+   "residents": 12877,
+   "residents_sfha": 2497,
+   "residents_unknown": 1796
+  },
+  {
+   "unit": "0611530",
+   "residents": 95558,
+   "residents_sfha": 30,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611600",
+   "residents": 62,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611614",
+   "residents": 2613,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611656",
+   "residents": 3267,
+   "residents_sfha": 455,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611691",
+   "residents": 19576,
+   "residents_sfha": 73,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611696",
+   "residents": 1804,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611754",
+   "residents": 147,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611768",
+   "residents": 500,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611782",
+   "residents": 207,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611796",
+   "residents": 18937,
+   "residents_sfha": 0,
+   "residents_unknown": 1716
+  },
+  {
+   "unit": "0611824",
+   "residents": 214,
+   "residents_sfha": 31,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611915",
+   "residents": 1271,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611964",
+   "residents": 66441,
+   "residents_sfha": 976,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0611978",
+   "residents": 7515,
+   "residents_sfha": 152,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612048",
+   "residents": 51493,
+   "residents_sfha": 1611,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612062",
+   "residents": 829,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612132",
+   "residents": 2505,
+   "residents_sfha": 48,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612146",
+   "residents": 298,
+   "residents_sfha": 65,
+   "residents_unknown": 5
+  },
+  {
+   "unit": "0612216",
+   "residents": 797,
+   "residents_sfha": 17,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612300",
+   "residents": 1235,
+   "residents_sfha": 0,
+   "residents_unknown": 301
+  },
+  {
+   "unit": "0612314",
+   "residents": 10,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612328",
+   "residents": 437,
+   "residents_sfha": 0,
+   "residents_unknown": 15
+  },
+  {
+   "unit": "0612412",
+   "residents": 378,
+   "residents_sfha": 61,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612415",
+   "residents": 2095,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612524",
+   "residents": 49302,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612552",
+   "residents": 49578,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612594",
+   "residents": 660,
+   "residents_sfha": 217,
+   "residents_unknown": 69
+  },
+  {
+   "unit": "0612612",
+   "residents": 1161,
+   "residents_sfha": 0,
+   "residents_unknown": 79
+  },
+  {
+   "unit": "0612669",
+   "residents": 2870,
+   "residents_sfha": 256,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612730",
+   "residents": 45,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612734",
+   "residents": 9739,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612818",
+   "residents": 88,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612860",
+   "residents": 206,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612902",
+   "residents": 15808,
+   "residents_sfha": 614,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0612916",
+   "residents": 6509,
+   "residents_sfha": 424,
+   "residents_unknown": 11
+  },
+  {
+   "unit": "0612930",
+   "residents": 2187,
+   "residents_sfha": 49,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613014",
+   "residents": 101475,
+   "residents_sfha": 5230,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613077",
+   "residents": 446,
+   "residents_sfha": 71,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613157",
+   "residents": 1757,
+   "residents_sfha": 305,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613182",
+   "residents": 90,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613210",
+   "residents": 91403,
+   "residents_sfha": 247,
+   "residents_unknown": 11871
+  },
+  {
+   "unit": "0613214",
+   "residents": 78411,
+   "residents_sfha": 1831,
+   "residents_unknown": 28872
+  },
+  {
+   "unit": "0613278",
+   "residents": 237,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613294",
+   "residents": 19039,
+   "residents_sfha": 3018,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613364",
+   "residents": 1185,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613392",
+   "residents": 275487,
+   "residents_sfha": 2178,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613560",
+   "residents": 10243,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613588",
+   "residents": 87583,
+   "residents_sfha": 1825,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613756",
+   "residents": 37266,
+   "residents_sfha": 0,
+   "residents_unknown": 2109
+  },
+  {
+   "unit": "0613784",
+   "residents": 402,
+   "residents_sfha": 402,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613854",
+   "residents": 1252,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613882",
+   "residents": 11070,
+   "residents_sfha": 353,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613910",
+   "residents": 175,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613945",
+   "residents": 16685,
+   "residents_sfha": 2430,
+   "residents_unknown": 1589
+  },
+  {
+   "unit": "0613966",
+   "residents": 2551,
+   "residents_sfha": 1240,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0613985",
+   "residents": 3410,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614008",
+   "residents": 622,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614106",
+   "residents": 77,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614148",
+   "residents": 160,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614190",
+   "residents": 8996,
+   "residents_sfha": 194,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614218",
+   "residents": 120124,
+   "residents_sfha": 2202,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614232",
+   "residents": 729,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614260",
+   "residents": 41941,
+   "residents_sfha": 13,
+   "residents_unknown": 330
+  },
+  {
+   "unit": "0614274",
+   "residents": 17590,
+   "residents_sfha": 720,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614288",
+   "residents": 4144,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614302",
+   "residents": 1295,
+   "residents_sfha": 11,
+   "residents_unknown": 209
+  },
+  {
+   "unit": "0614406",
+   "residents": 152,
+   "residents_sfha": 57,
+   "residents_unknown": 85
+  },
+  {
+   "unit": "0614442",
+   "residents": 830,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614450",
+   "residents": 556,
+   "residents_sfha": 14,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614454",
+   "residents": 123,
+   "residents_sfha": 0,
+   "residents_unknown": 123
+  },
+  {
+   "unit": "0614484",
+   "residents": 419,
+   "residents_sfha": 34,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614498",
+   "residents": 1995,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614554",
+   "residents": 292,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614708",
+   "residents": 2094,
+   "residents_sfha": 114,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614736",
+   "residents": 1507,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614764",
+   "residents": 521,
+   "residents_sfha": 71,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614890",
+   "residents": 53909,
+   "residents_sfha": 2108,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614904",
+   "residents": 2577,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614946",
+   "residents": 6411,
+   "residents_sfha": 842,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0614974",
+   "residents": 12378,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0615030",
+   "residents": 167,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0615044",
+   "residents": 95740,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616000",
+   "residents": 125410,
+   "residents_sfha": 1042,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616035",
+   "residents": 402,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616090",
+   "residents": 6808,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616210",
+   "residents": 3400,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616224",
+   "residents": 22339,
+   "residents_sfha": 5886,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616322",
+   "residents": 8244,
+   "residents_sfha": 849,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616350",
+   "residents": 157136,
+   "residents_sfha": 1787,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616378",
+   "residents": 20192,
+   "residents_sfha": 984,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616420",
+   "residents": 2639,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616434",
+   "residents": 2342,
+   "residents_sfha": 55,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616462",
+   "residents": 10222,
+   "residents_sfha": 2417,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616532",
+   "residents": 111918,
+   "residents_sfha": 566,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616560",
+   "residents": 7584,
+   "residents_sfha": 157,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616580",
+   "residents": 14710,
+   "residents_sfha": 30,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616623",
+   "residents": 3971,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616630",
+   "residents": 6268,
+   "residents_sfha": 89,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616644",
+   "residents": 115,
+   "residents_sfha": 39,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616651",
+   "residents": 10777,
+   "residents_sfha": 12,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616714",
+   "residents": 326,
+   "residents_sfha": 326,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616728",
+   "residents": 1394,
+   "residents_sfha": 0,
+   "residents_unknown": 948
+  },
+  {
+   "unit": "0616742",
+   "residents": 51268,
+   "residents_sfha": 0,
+   "residents_unknown": 726
+  },
+  {
+   "unit": "0616762",
+   "residents": 342,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0616886",
+   "residents": 29,
+   "residents_sfha": 0,
+   "residents_unknown": 29
+  },
+  {
+   "unit": "0617022",
+   "residents": 6673,
+   "residents_sfha": 42,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617050",
+   "residents": 206,
+   "residents_sfha": 19,
+   "residents_unknown": 9
+  },
+  {
+   "unit": "0617078",
+   "residents": 366,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617106",
+   "residents": 2828,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617162",
+   "residents": 11650,
+   "residents_sfha": 88,
+   "residents_unknown": 8263
+  },
+  {
+   "unit": "0617232",
+   "residents": 98,
+   "residents_sfha": 93,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617267",
+   "residents": 140,
+   "residents_sfha": 0,
+   "residents_unknown": 12
+  },
+  {
+   "unit": "0617274",
+   "residents": 3242,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617288",
+   "residents": 272,
+   "residents_sfha": 13,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617372",
+   "residents": 980,
+   "residents_sfha": 0,
+   "residents_unknown": 467
+  },
+  {
+   "unit": "0617428",
+   "residents": 322,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617498",
+   "residents": 22811,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617568",
+   "residents": 40779,
+   "residents_sfha": 38,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617610",
+   "residents": 60381,
+   "residents_sfha": 308,
+   "residents_unknown": 16318
+  },
+  {
+   "unit": "0617708",
+   "residents": 4480,
+   "residents_sfha": 1819,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617722",
+   "residents": 3223,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617727",
+   "residents": 37,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617750",
+   "residents": 50151,
+   "residents_sfha": 314,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617876",
+   "residents": 28,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617918",
+   "residents": 104901,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617946",
+   "residents": 33107,
+   "residents_sfha": 600,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617988",
+   "residents": 43582,
+   "residents_sfha": 647,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0617995",
+   "residents": 129,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618030",
+   "residents": 36,
+   "residents_sfha": 11,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618086",
+   "residents": 388,
+   "residents_sfha": 13,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618100",
+   "residents": 66850,
+   "residents_sfha": 3482,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618153",
+   "residents": 3410,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618324",
+   "residents": 1294,
+   "residents_sfha": 40,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618352",
+   "residents": 10338,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618394",
+   "residents": 51428,
+   "residents_sfha": 67,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618422",
+   "residents": 396,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618450",
+   "residents": 412,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618464",
+   "residents": 10656,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618485",
+   "residents": 802,
+   "residents_sfha": 14,
+   "residents_unknown": 766
+  },
+  {
+   "unit": "0618506",
+   "residents": 3954,
+   "residents_sfha": 429,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618590",
+   "residents": 4204,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618674",
+   "residents": 1358,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618688",
+   "residents": 1592,
+   "residents_sfha": 463,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618695",
+   "residents": 1399,
+   "residents_sfha": 364,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618856",
+   "residents": 4865,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618926",
+   "residents": 301,
+   "residents_sfha": 21,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618940",
+   "residents": 1499,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618982",
+   "residents": 256,
+   "residents_sfha": 0,
+   "residents_unknown": 256
+  },
+  {
+   "unit": "0618986",
+   "residents": 4180,
+   "residents_sfha": 463,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0618996",
+   "residents": 32512,
+   "residents_sfha": 2195,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619022",
+   "residents": 6686,
+   "residents_sfha": 698,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619024",
+   "residents": 1128,
+   "residents_sfha": 18,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619052",
+   "residents": 2676,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619150",
+   "residents": 1255,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619155",
+   "residents": 1669,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619192",
+   "residents": 55072,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619220",
+   "residents": 11345,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619248",
+   "residents": 400,
+   "residents_sfha": 400,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619262",
+   "residents": 246,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619318",
+   "residents": 24563,
+   "residents_sfha": 7511,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619339",
+   "residents": 15358,
+   "residents_sfha": 1570,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619402",
+   "residents": 18988,
+   "residents_sfha": 126,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619406",
+   "residents": 2780,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619416",
+   "residents": 551,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619440",
+   "residents": 2516,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619455",
+   "residents": 1261,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619570",
+   "residents": 519,
+   "residents_sfha": 10,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619584",
+   "residents": 860,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619612",
+   "residents": 5798,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619654",
+   "residents": 310,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619724",
+   "residents": 868,
+   "residents_sfha": 131,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619766",
+   "residents": 114355,
+   "residents_sfha": 21,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619794",
+   "residents": 290,
+   "residents_sfha": 35,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619878",
+   "residents": 536,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619976",
+   "residents": 186,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0619990",
+   "residents": 21727,
+   "residents_sfha": 0,
+   "residents_unknown": 1623
+  },
+  {
+   "unit": "0620018",
+   "residents": 72589,
+   "residents_sfha": 201,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620032",
+   "residents": 616,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620228",
+   "residents": 1382,
+   "residents_sfha": 127,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620242",
+   "residents": 1707,
+   "residents_sfha": 42,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620270",
+   "residents": 5834,
+   "residents_sfha": 2586,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620284",
+   "residents": 677,
+   "residents_sfha": 93,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620298",
+   "residents": 183,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620424",
+   "residents": 45,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620438",
+   "residents": 7679,
+   "residents_sfha": 1083,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620515",
+   "residents": 9749,
+   "residents_sfha": 482,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620574",
+   "residents": 28656,
+   "residents_sfha": 793,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620598",
+   "residents": 6803,
+   "residents_sfha": 0,
+   "residents_unknown": 6633
+  },
+  {
+   "unit": "0620697",
+   "residents": 19432,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620802",
+   "residents": 118786,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620900",
+   "residents": 223,
+   "residents_sfha": 174,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620903",
+   "residents": 28390,
+   "residents_sfha": 97,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620907",
+   "residents": 3201,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620928",
+   "residents": 1972,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620942",
+   "residents": 423,
+   "residents_sfha": 143,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0620956",
+   "residents": 30034,
+   "residents_sfha": 9596,
+   "residents_unknown": 151
+  },
+  {
+   "unit": "0620984",
+   "residents": 6021,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621012",
+   "residents": 5549,
+   "residents_sfha": 946,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621026",
+   "residents": 2463,
+   "residents_sfha": 14,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621034",
+   "residents": 15114,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621061",
+   "residents": 3460,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621096",
+   "residents": 22769,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621138",
+   "residents": 181,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621188",
+   "residents": 2431,
+   "residents_sfha": 18,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621210",
+   "residents": 773,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621230",
+   "residents": 69757,
+   "residents_sfha": 1394,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621292",
+   "residents": 10394,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621530",
+   "residents": 72,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621544",
+   "residents": 255,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621558",
+   "residents": 296,
+   "residents_sfha": 296,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621565",
+   "residents": 184,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621600",
+   "residents": 2135,
+   "residents_sfha": 0,
+   "residents_unknown": 2135
+  },
+  {
+   "unit": "0621691",
+   "residents": 391,
+   "residents_sfha": 391,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621712",
+   "residents": 106215,
+   "residents_sfha": 526,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621782",
+   "residents": 44322,
+   "residents_sfha": 16,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621788",
+   "residents": 280,
+   "residents_sfha": 0,
+   "residents_unknown": 262
+  },
+  {
+   "unit": "0621796",
+   "residents": 25962,
+   "residents_sfha": 1053,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621810",
+   "residents": 5058,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621880",
+   "residents": 50547,
+   "residents_sfha": 0,
+   "residents_unknown": 238
+  },
+  {
+   "unit": "0621894",
+   "residents": 1312,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621916",
+   "residents": 600,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621936",
+   "residents": 5481,
+   "residents_sfha": 86,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0621964",
+   "residents": 1651,
+   "residents_sfha": 13,
+   "residents_unknown": 118
+  },
+  {
+   "unit": "0622006",
+   "residents": 138,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622020",
+   "residents": 176124,
+   "residents_sfha": 2300,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622034",
+   "residents": 1588,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622104",
+   "residents": 1074,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622146",
+   "residents": 193,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622230",
+   "residents": 109450,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622235",
+   "residents": 156,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622286",
+   "residents": 331,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622300",
+   "residents": 31490,
+   "residents_sfha": 276,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622328",
+   "residents": 372,
+   "residents_sfha": 12,
+   "residents_unknown": 342
+  },
+  {
+   "unit": "0622360",
+   "residents": 96,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622370",
+   "residents": 7037,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622412",
+   "residents": 17272,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622454",
+   "residents": 15524,
+   "residents_sfha": 173,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622457",
+   "residents": 14039,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622510",
+   "residents": 3867,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622524",
+   "residents": 5435,
+   "residents_sfha": 229,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622587",
+   "residents": 4406,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622594",
+   "residents": 12905,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622622",
+   "residents": 4202,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622678",
+   "residents": 62007,
+   "residents_sfha": 275,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622790",
+   "residents": 7472,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622804",
+   "residents": 151038,
+   "residents_sfha": 11514,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622846",
+   "residents": 3572,
+   "residents_sfha": 27,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0622972",
+   "residents": 678,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623000",
+   "residents": 5517,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623042",
+   "residents": 26512,
+   "residents_sfha": 201,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623126",
+   "residents": 10321,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623150",
+   "residents": 3002,
+   "residents_sfha": 60,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623158",
+   "residents": 1879,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623168",
+   "residents": 7605,
+   "residents_sfha": 743,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623182",
+   "residents": 119881,
+   "residents_sfha": 2603,
+   "residents_unknown": 3802
+  },
+  {
+   "unit": "0623196",
+   "residents": 165,
+   "residents_sfha": 23,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623210",
+   "residents": 1235,
+   "residents_sfha": 199,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623294",
+   "residents": 32514,
+   "residents_sfha": 229,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623350",
+   "residents": 11341,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623462",
+   "residents": 32267,
+   "residents_sfha": 0,
+   "residents_unknown": 264
+  },
+  {
+   "unit": "0623532",
+   "residents": 616,
+   "residents_sfha": 220,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623616",
+   "residents": 10397,
+   "residents_sfha": 223,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623630",
+   "residents": 220,
+   "residents_sfha": 83,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623812",
+   "residents": 52,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623826",
+   "residents": 4489,
+   "residents_sfha": 617,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623910",
+   "residents": 1398,
+   "residents_sfha": 251,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623973",
+   "residents": 4233,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0623980",
+   "residents": 279,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624008",
+   "residents": 827,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624022",
+   "residents": 287,
+   "residents_sfha": 287,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624092",
+   "residents": 16419,
+   "residents_sfha": 452,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624134",
+   "residents": 8096,
+   "residents_sfha": 2409,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624218",
+   "residents": 49,
+   "residents_sfha": 0,
+   "residents_unknown": 49
+  },
+  {
+   "unit": "0624477",
+   "residents": 61983,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624498",
+   "residents": 52388,
+   "residents_sfha": 697,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624526",
+   "residents": 80,
+   "residents_sfha": 0,
+   "residents_unknown": 38
+  },
+  {
+   "unit": "0624568",
+   "residents": 117,
+   "residents_sfha": 31,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624638",
+   "residents": 80454,
+   "residents_sfha": 964,
+   "residents_unknown": 156
+  },
+  {
+   "unit": "0624680",
+   "residents": 208393,
+   "residents_sfha": 991,
+   "residents_unknown": 77
+  },
+  {
+   "unit": "0624722",
+   "residents": 35834,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624750",
+   "residents": 396,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624764",
+   "residents": 4348,
+   "residents_sfha": 0,
+   "residents_unknown": 4348
+  },
+  {
+   "unit": "0624834",
+   "residents": 1692,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624897",
+   "residents": 1276,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624918",
+   "residents": 1304,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0624960",
+   "residents": 3264,
+   "residents_sfha": 67,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625030",
+   "residents": 180,
+   "residents_sfha": 4,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625058",
+   "residents": 6983,
+   "residents_sfha": 17,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625086",
+   "residents": 912,
+   "residents_sfha": 187,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625093",
+   "residents": 250,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625114",
+   "residents": 8096,
+   "residents_sfha": 0,
+   "residents_unknown": 8096
+  },
+  {
+   "unit": "0625128",
+   "residents": 695,
+   "residents_sfha": 364,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625296",
+   "residents": 12516,
+   "residents_sfha": 253,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625300",
+   "residents": 255,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625338",
+   "residents": 33805,
+   "residents_sfha": 726,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625380",
+   "residents": 57047,
+   "residents_sfha": 6890,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625436",
+   "residents": 6700,
+   "residents_sfha": 288,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625488",
+   "residents": 6919,
+   "residents_sfha": 3025,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625506",
+   "residents": 167,
+   "residents_sfha": 145,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625534",
+   "residents": 2592,
+   "residents_sfha": 0,
+   "residents_unknown": 64
+  },
+  {
+   "unit": "0625576",
+   "residents": 3835,
+   "residents_sfha": 6,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0625590",
+   "residents": 58,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0626000",
+   "residents": 230504,
+   "residents_sfha": 1449,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0626028",
+   "residents": 3770,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0626056",
+   "residents": 373,
+   "residents_sfha": 20,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0626067",
+   "residents": 35280,
+   "residents_sfha": 428,
+   "residents_unknown": 8224
+  },
+  {
+   "unit": "0627000",
+   "residents": 542107,
+   "residents_sfha": 3336,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0627014",
+   "residents": 446,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0627080",
+   "residents": 989,
+   "residents_sfha": 0,
+   "residents_unknown": 989
+  },
+  {
+   "unit": "0627130",
+   "residents": 6102,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0627190",
+   "residents": 917,
+   "residents_sfha": 901,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628000",
+   "residents": 143617,
+   "residents_sfha": 1261,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628014",
+   "residents": 551,
+   "residents_sfha": 19,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628021",
+   "residents": 136,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628112",
+   "residents": 25383,
+   "residents_sfha": 18,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628154",
+   "residents": 818,
+   "residents_sfha": 18,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628168",
+   "residents": 61027,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628182",
+   "residents": 11398,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0628210",
+   "residents": 449,
+   "residents_sfha": 76,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629000",
+   "residents": 171949,
+   "residents_sfha": 28429,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629070",
+   "residents": 72,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629112",
+   "residents": 7118,
+   "residents_sfha": 3078,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629154",
+   "residents": 657,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629252",
+   "residents": 95,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629350",
+   "residents": 2255,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629392",
+   "residents": 1044,
+   "residents_sfha": 54,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629420",
+   "residents": 861,
+   "residents_sfha": 199,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0629504",
+   "residents": 59520,
+   "residents_sfha": 1119,
+   "residents_unknown": 7489
+  },
+  {
+   "unit": "0630000",
+   "residents": 196543,
+   "residents_sfha": 0,
+   "residents_unknown": 11614
+  },
+  {
+   "unit": "0630014",
+   "residents": 52558,
+   "residents_sfha": 0,
+   "residents_unknown": 5410
+  },
+  {
+   "unit": "0630028",
+   "residents": 714,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630126",
+   "residents": 158,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630282",
+   "residents": 9578,
+   "residents_sfha": 174,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630339",
+   "residents": 73,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630345",
+   "residents": 7844,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630378",
+   "residents": 32690,
+   "residents_sfha": 2576,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630392",
+   "residents": 8647,
+   "residents_sfha": 659,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630410",
+   "residents": 9468,
+   "residents_sfha": 0,
+   "residents_unknown": 8963
+  },
+  {
+   "unit": "0630412",
+   "residents": 121,
+   "residents_sfha": 99,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630420",
+   "residents": 69,
+   "residents_sfha": 2,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630476",
+   "residents": 4968,
+   "residents_sfha": 567,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630560",
+   "residents": 724,
+   "residents_sfha": 0,
+   "residents_unknown": 155
+  },
+  {
+   "unit": "0630658",
+   "residents": 13150,
+   "residents_sfha": 46,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630686",
+   "residents": 508,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630693",
+   "residents": 21247,
+   "residents_sfha": 250,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630703",
+   "residents": 3267,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630714",
+   "residents": 1,
+   "residents_sfha": 0,
+   "residents_unknown": 1
+  },
+  {
+   "unit": "0630798",
+   "residents": 14016,
+   "residents_sfha": 391,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630812",
+   "residents": 1683,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630882",
+   "residents": 1041,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630900",
+   "residents": 927,
+   "residents_sfha": 27,
+   "residents_unknown": 580
+  },
+  {
+   "unit": "0630938",
+   "residents": 5496,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630944",
+   "residents": 2918,
+   "residents_sfha": 396,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630987",
+   "residents": 3447,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0630994",
+   "residents": 18937,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631029",
+   "residents": 247,
+   "residents_sfha": 35,
+   "residents_unknown": 1
+  },
+  {
+   "unit": "0631092",
+   "residents": 1036,
+   "residents_sfha": 309,
+   "residents_unknown": 374
+  },
+  {
+   "unit": "0631099",
+   "residents": 1654,
+   "residents_sfha": 470,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631134",
+   "residents": 208,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631162",
+   "residents": 1026,
+   "residents_sfha": 0,
+   "residents_unknown": 86
+  },
+  {
+   "unit": "0631246",
+   "residents": 314,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631260",
+   "residents": 7421,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631288",
+   "residents": 296,
+   "residents_sfha": 11,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631302",
+   "residents": 1093,
+   "residents_sfha": 0,
+   "residents_unknown": 54
+  },
+  {
+   "unit": "0631372",
+   "residents": 540,
+   "residents_sfha": 0,
+   "residents_unknown": 32
+  },
+  {
+   "unit": "0631393",
+   "residents": 12701,
+   "residents_sfha": 49,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631414",
+   "residents": 8057,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631470",
+   "residents": 4552,
+   "residents_sfha": 1676,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631540",
+   "residents": 245,
+   "residents_sfha": 42,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631568",
+   "residents": 6110,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631596",
+   "residents": 54191,
+   "residents_sfha": 0,
+   "residents_unknown": 3162
+  },
+  {
+   "unit": "0631708",
+   "residents": 11795,
+   "residents_sfha": 32,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631883",
+   "residents": 505,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631890",
+   "residents": 2263,
+   "residents_sfha": 597,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0631960",
+   "residents": 57990,
+   "residents_sfha": 76,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632030",
+   "residents": 905,
+   "residents_sfha": 221,
+   "residents_unknown": 103
+  },
+  {
+   "unit": "0632036",
+   "residents": 4949,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632044",
+   "residents": 4048,
+   "residents_sfha": 156,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632156",
+   "residents": 151,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632212",
+   "residents": 2079,
+   "residents_sfha": 35,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632324",
+   "residents": 69,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632340",
+   "residents": 2430,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632385",
+   "residents": 1195,
+   "residents_sfha": 100,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632408",
+   "residents": 266,
+   "residents_sfha": 16,
+   "residents_unknown": 239
+  },
+  {
+   "unit": "0632506",
+   "residents": 14149,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632548",
+   "residents": 88083,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0632562",
+   "residents": 2324,
+   "residents_sfha": 85,
+   "residents_unknown": 404
+  },
+  {
+   "unit": "0633000",
+   "residents": 162954,
+   "residents_sfha": 3291,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633056",
+   "residents": 11340,
+   "residents_sfha": 974,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633084",
+   "residents": 6896,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633182",
+   "residents": 89833,
+   "residents_sfha": 1109,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633294",
+   "residents": 1160,
+   "residents_sfha": 67,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633308",
+   "residents": 26016,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633336",
+   "residents": 237,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633364",
+   "residents": 19728,
+   "residents_sfha": 13,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633434",
+   "residents": 99818,
+   "residents_sfha": 1449,
+   "residents_unknown": 1488
+  },
+  {
+   "unit": "0633504",
+   "residents": 604,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633518",
+   "residents": 1725,
+   "residents_sfha": 0,
+   "residents_unknown": 747
+  },
+  {
+   "unit": "0633532",
+   "residents": 4484,
+   "residents_sfha": 597,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633549",
+   "residents": 6235,
+   "residents_sfha": 634,
+   "residents_unknown": 134
+  },
+  {
+   "unit": "0633574",
+   "residents": 7515,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633588",
+   "residents": 56999,
+   "residents_sfha": 1153,
+   "residents_unknown": 4113
+  },
+  {
+   "unit": "0633632",
+   "residents": 2359,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633689",
+   "residents": 10528,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633798",
+   "residents": 11387,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633861",
+   "residents": 5164,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0633935",
+   "residents": 314,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634120",
+   "residents": 41678,
+   "residents_sfha": 286,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634246",
+   "residents": 5605,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634281",
+   "residents": 1653,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634302",
+   "residents": 11203,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634316",
+   "residents": 6772,
+   "residents_sfha": 542,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634392",
+   "residents": 2789,
+   "residents_sfha": 0,
+   "residents_unknown": 2789
+  },
+  {
+   "unit": "0634405",
+   "residents": 40,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634428",
+   "residents": 306,
+   "residents_sfha": 18,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634484",
+   "residents": 244,
+   "residents_sfha": 244,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634540",
+   "residents": 3167,
+   "residents_sfha": 0,
+   "residents_unknown": 3167
+  },
+  {
+   "unit": "0634652",
+   "residents": 661,
+   "residents_sfha": 232,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634694",
+   "residents": 266,
+   "residents_sfha": 50,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634708",
+   "residents": 38,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634904",
+   "residents": 7481,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0634928",
+   "residents": 3498,
+   "residents_sfha": 115,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636000",
+   "residents": 198711,
+   "residents_sfha": 12423,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636056",
+   "residents": 54883,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636084",
+   "residents": 6206,
+   "residents_sfha": 755,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636098",
+   "residents": 241,
+   "residents_sfha": 0,
+   "residents_unknown": 241
+  },
+  {
+   "unit": "0636126",
+   "residents": 1244,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636135",
+   "residents": 125,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636168",
+   "residents": 32,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636203",
+   "residents": 4163,
+   "residents_sfha": 33,
+   "residents_unknown": 2647
+  },
+  {
+   "unit": "0636252",
+   "residents": 103,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636280",
+   "residents": 20263,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636294",
+   "residents": 26137,
+   "residents_sfha": 751,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636350",
+   "residents": 593,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636364",
+   "residents": 79,
+   "residents_sfha": 0,
+   "residents_unknown": 79
+  },
+  {
+   "unit": "0636420",
+   "residents": 791,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636434",
+   "residents": 4757,
+   "residents_sfha": 16,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636448",
+   "residents": 89137,
+   "residents_sfha": 2935,
+   "residents_unknown": 5224
+  },
+  {
+   "unit": "0636452",
+   "residents": 1048,
+   "residents_sfha": 0,
+   "residents_unknown": 1048
+  },
+  {
+   "unit": "0636490",
+   "residents": 264,
+   "residents_sfha": 0,
+   "residents_unknown": 32
+  },
+  {
+   "unit": "0636546",
+   "residents": 107762,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636613",
+   "residents": 7368,
+   "residents_sfha": 1478,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636616",
+   "residents": 1379,
+   "residents_sfha": 25,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636658",
+   "residents": 988,
+   "residents_sfha": 263,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636672",
+   "residents": 5141,
+   "residents_sfha": 605,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636735",
+   "residents": 269,
+   "residents_sfha": 0,
+   "residents_unknown": 82
+  },
+  {
+   "unit": "0636770",
+   "residents": 307670,
+   "residents_sfha": 2101,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636826",
+   "residents": 1472,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636868",
+   "residents": 15500,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636882",
+   "residents": 794,
+   "residents_sfha": 794,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636910",
+   "residents": 4468,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0636980",
+   "residents": 5019,
+   "residents_sfha": 52,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637022",
+   "residents": 540,
+   "residents_sfha": 0,
+   "residents_unknown": 540
+  },
+  {
+   "unit": "0637106",
+   "residents": 3478,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637120",
+   "residents": 6179,
+   "residents_sfha": 0,
+   "residents_unknown": 1915
+  },
+  {
+   "unit": "0637134",
+   "residents": 2461,
+   "residents_sfha": 0,
+   "residents_unknown": 402
+  },
+  {
+   "unit": "0637274",
+   "residents": 122,
+   "residents_sfha": 10,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637400",
+   "residents": 113,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637442",
+   "residents": 686,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637484",
+   "residents": 973,
+   "residents_sfha": 126,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637512",
+   "residents": 22,
+   "residents_sfha": 0,
+   "residents_unknown": 19
+  },
+  {
+   "unit": "0637533",
+   "residents": 1160,
+   "residents_sfha": 0,
+   "residents_unknown": 505
+  },
+  {
+   "unit": "0637554",
+   "residents": 6489,
+   "residents_sfha": 226,
+   "residents_unknown": 2148
+  },
+  {
+   "unit": "0637568",
+   "residents": 41,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637582",
+   "residents": 1768,
+   "residents_sfha": 0,
+   "residents_unknown": 1762
+  },
+  {
+   "unit": "0637596",
+   "residents": 658,
+   "residents_sfha": 102,
+   "residents_unknown": 209
+  },
+  {
+   "unit": "0637624",
+   "residents": 611,
+   "residents_sfha": 29,
+   "residents_unknown": 582
+  },
+  {
+   "unit": "0637692",
+   "residents": 105053,
+   "residents_sfha": 1285,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637904",
+   "residents": 51,
+   "residents_sfha": 11,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637918",
+   "residents": 71,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0637946",
+   "residents": 469,
+   "residents_sfha": 19,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638024",
+   "residents": 3006,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638044",
+   "residents": 3382,
+   "residents_sfha": 227,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638065",
+   "residents": 3223,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638076",
+   "residents": 58,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638086",
+   "residents": 5428,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638114",
+   "residents": 6808,
+   "residents_sfha": 552,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638156",
+   "residents": 852,
+   "residents_sfha": 52,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638177",
+   "residents": 76,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638226",
+   "residents": 16016,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638310",
+   "residents": 1549,
+   "residents_sfha": 211,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638352",
+   "residents": 188,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638394",
+   "residents": 1242,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638422",
+   "residents": 5672,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638520",
+   "residents": 13332,
+   "residents_sfha": 478,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638548",
+   "residents": 3563,
+   "residents_sfha": 38,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638562",
+   "residents": 12380,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638604",
+   "residents": 128,
+   "residents_sfha": 18,
+   "residents_unknown": 110
+  },
+  {
+   "unit": "0638646",
+   "residents": 190,
+   "residents_sfha": 0,
+   "residents_unknown": 108
+  },
+  {
+   "unit": "0638702",
+   "residents": 1088,
+   "residents_sfha": 130,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638772",
+   "residents": 1596,
+   "residents_sfha": 166,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638786",
+   "residents": 112,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0638800",
+   "residents": 1117,
+   "residents_sfha": 1117,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639003",
+   "residents": 20573,
+   "residents_sfha": 0,
+   "residents_unknown": 3752
+  },
+  {
+   "unit": "0639045",
+   "residents": 19997,
+   "residents_sfha": 0,
+   "residents_unknown": 1135
+  },
+  {
+   "unit": "0639052",
+   "residents": 8787,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639094",
+   "residents": 1557,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639108",
+   "residents": 6654,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639114",
+   "residents": 26170,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639122",
+   "residents": 25391,
+   "residents_sfha": 591,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639164",
+   "residents": 166,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639178",
+   "residents": 23032,
+   "residents_sfha": 664,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639220",
+   "residents": 31374,
+   "residents_sfha": 1317,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639248",
+   "residents": 64355,
+   "residents_sfha": 722,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639259",
+   "residents": 17644,
+   "residents_sfha": 441,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639283",
+   "residents": 1924,
+   "residents_sfha": 99,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639290",
+   "residents": 63097,
+   "residents_sfha": 816,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639304",
+   "residents": 5682,
+   "residents_sfha": 0,
+   "residents_unknown": 2248
+  },
+  {
+   "unit": "0639318",
+   "residents": 979,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639411",
+   "residents": 451,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639420",
+   "residents": 366,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639425",
+   "residents": 211,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639444",
+   "residents": 12401,
+   "residents_sfha": 108,
+   "residents_unknown": 10379
+  },
+  {
+   "unit": "0639460",
+   "residents": 3377,
+   "residents_sfha": 525,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639472",
+   "residents": 71,
+   "residents_sfha": 0,
+   "residents_unknown": 20
+  },
+  {
+   "unit": "0639483",
+   "residents": 72,
+   "residents_sfha": 0,
+   "residents_unknown": 72
+  },
+  {
+   "unit": "0639484",
+   "residents": 1765,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639486",
+   "residents": 70265,
+   "residents_sfha": 6078,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639496",
+   "residents": 85858,
+   "residents_sfha": 162,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639514",
+   "residents": 469,
+   "residents_sfha": 0,
+   "residents_unknown": 146
+  },
+  {
+   "unit": "0639556",
+   "residents": 544,
+   "residents_sfha": 99,
+   "residents_unknown": 443
+  },
+  {
+   "unit": "0639570",
+   "residents": 3573,
+   "residents_sfha": 195,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639598",
+   "residents": 12364,
+   "residents_sfha": 691,
+   "residents_unknown": 4029
+  },
+  {
+   "unit": "0639612",
+   "residents": 13187,
+   "residents_sfha": 177,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639645",
+   "residents": 5972,
+   "residents_sfha": 0,
+   "residents_unknown": 1219
+  },
+  {
+   "unit": "0639670",
+   "residents": 2956,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639690",
+   "residents": 4301,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639696",
+   "residents": 790,
+   "residents_sfha": 52,
+   "residents_unknown": 131
+  },
+  {
+   "unit": "0639710",
+   "residents": 5026,
+   "residents_sfha": 1587,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639715",
+   "residents": 1375,
+   "residents_sfha": 0,
+   "residents_unknown": 1375
+  },
+  {
+   "unit": "0639724",
+   "residents": 5328,
+   "residents_sfha": 103,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639728",
+   "residents": 2401,
+   "residents_sfha": 176,
+   "residents_unknown": 107
+  },
+  {
+   "unit": "0639735",
+   "residents": 1759,
+   "residents_sfha": 236,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639759",
+   "residents": 843,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639766",
+   "residents": 21152,
+   "residents_sfha": 402,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639836",
+   "residents": 1977,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639885",
+   "residents": 5158,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0639892",
+   "residents": 82496,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640004",
+   "residents": 61121,
+   "residents_sfha": 59,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640032",
+   "residents": 48008,
+   "residents_sfha": 162,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640088",
+   "residents": 14049,
+   "residents_sfha": 13606,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640116",
+   "residents": 540,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640130",
+   "residents": 173516,
+   "residents_sfha": 698,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640256",
+   "residents": 15581,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640312",
+   "residents": 65,
+   "residents_sfha": 0,
+   "residents_unknown": 65
+  },
+  {
+   "unit": "0640326",
+   "residents": 35033,
+   "residents_sfha": 16,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640340",
+   "residents": 38062,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640354",
+   "residents": 37558,
+   "residents_sfha": 630,
+   "residents_unknown": 6
+  },
+  {
+   "unit": "0640410",
+   "residents": 11252,
+   "residents_sfha": 179,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640426",
+   "residents": 8492,
+   "residents_sfha": 419,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640438",
+   "residents": 13064,
+   "residents_sfha": 904,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640508",
+   "residents": 2531,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640526",
+   "residents": 5995,
+   "residents_sfha": 140,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640536",
+   "residents": 190,
+   "residents_sfha": 15,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640592",
+   "residents": 3046,
+   "residents_sfha": 30,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640704",
+   "residents": 28701,
+   "residents_sfha": 469,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640746",
+   "residents": 1622,
+   "residents_sfha": 13,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640830",
+   "residents": 31334,
+   "residents_sfha": 0,
+   "residents_unknown": 3034
+  },
+  {
+   "unit": "0640872",
+   "residents": 637,
+   "residents_sfha": 637,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640886",
+   "residents": 31807,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0640928",
+   "residents": 1152,
+   "residents_sfha": 12,
+   "residents_unknown": 154
+  },
+  {
+   "unit": "0640956",
+   "residents": 1239,
+   "residents_sfha": 44,
+   "residents_unknown": 14
+  },
+  {
+   "unit": "0640998",
+   "residents": 217,
+   "residents_sfha": 0,
+   "residents_unknown": 182
+  },
+  {
+   "unit": "0641026",
+   "residents": 77,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641040",
+   "residents": 1592,
+   "residents_sfha": 43,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641110",
+   "residents": 298,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641124",
+   "residents": 27627,
+   "residents_sfha": 39,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641142",
+   "residents": 14496,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641152",
+   "residents": 27038,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641166",
+   "residents": 6568,
+   "residents_sfha": 0,
+   "residents_unknown": 6568
+  },
+  {
+   "unit": "0641180",
+   "residents": 20323,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641194",
+   "residents": 3623,
+   "residents_sfha": 760,
+   "residents_unknown": 105
+  },
+  {
+   "unit": "0641208",
+   "residents": 1555,
+   "residents_sfha": 60,
+   "residents_unknown": 81
+  },
+  {
+   "unit": "0641278",
+   "residents": 1222,
+   "residents_sfha": 22,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641282",
+   "residents": 2492,
+   "residents_sfha": 86,
+   "residents_unknown": 2406
+  },
+  {
+   "unit": "0641390",
+   "residents": 58,
+   "residents_sfha": 5,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641474",
+   "residents": 49757,
+   "residents_sfha": 1141,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641558",
+   "residents": 4401,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641572",
+   "residents": 21654,
+   "residents_sfha": 2300,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641656",
+   "residents": 189,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641670",
+   "residents": 1863,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641712",
+   "residents": 12659,
+   "residents_sfha": 3094,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641740",
+   "residents": 696,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641782",
+   "residents": 160,
+   "residents_sfha": 25,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641789",
+   "residents": 25,
+   "residents_sfha": 0,
+   "residents_unknown": 25
+  },
+  {
+   "unit": "0641866",
+   "residents": 94,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641880",
+   "residents": 1535,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641908",
+   "residents": 84,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641922",
+   "residents": 17038,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0641936",
+   "residents": 9106,
+   "residents_sfha": 0,
+   "residents_unknown": 9106
+  },
+  {
+   "unit": "0641992",
+   "residents": 87955,
+   "residents_sfha": 931,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642006",
+   "residents": 14172,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642104",
+   "residents": 3333,
+   "residents_sfha": 377,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642142",
+   "residents": 495,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642146",
+   "residents": 368,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642202",
+   "residents": 66348,
+   "residents_sfha": 207,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642230",
+   "residents": 184,
+   "residents_sfha": 17,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642328",
+   "residents": 828,
+   "residents_sfha": 18,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642370",
+   "residents": 24791,
+   "residents_sfha": 1346,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642384",
+   "residents": 134,
+   "residents_sfha": 42,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642412",
+   "residents": 2409,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642468",
+   "residents": 20921,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642510",
+   "residents": 1154,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642524",
+   "residents": 44444,
+   "residents_sfha": 1343,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642566",
+   "residents": 1518,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642580",
+   "residents": 2014,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0642622",
+   "residents": 162,
+   "residents_sfha": 0,
+   "residents_unknown": 162
+  },
+  {
+   "unit": "0643000",
+   "residents": 466742,
+   "residents_sfha": 10511,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0643126",
+   "residents": 68,
+   "residents_sfha": 28,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0643140",
+   "residents": 6836,
+   "residents_sfha": 95,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0643224",
+   "residents": 11780,
+   "residents_sfha": 0,
+   "residents_unknown": 248
+  },
+  {
+   "unit": "0643252",
+   "residents": 1839,
+   "residents_sfha": 104,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0643280",
+   "residents": 31625,
+   "residents_sfha": 508,
+   "residents_unknown": 2595
+  },
+  {
+   "unit": "0643294",
+   "residents": 8489,
+   "residents_sfha": 14,
+   "residents_unknown": 449
+  },
+  {
+   "unit": "0644000",
+   "residents": 3898747,
+   "residents_sfha": 29527,
+   "residents_unknown": 41964
+  },
+  {
+   "unit": "0644028",
+   "residents": 45532,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644042",
+   "residents": 623,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644112",
+   "residents": 33529,
+   "residents_sfha": 371,
+   "residents_unknown": 2963
+  },
+  {
+   "unit": "0644140",
+   "residents": 2098,
+   "residents_sfha": 292,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644168",
+   "residents": 1202,
+   "residents_sfha": 50,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644182",
+   "residents": 14465,
+   "residents_sfha": 425,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644242",
+   "residents": 1516,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644280",
+   "residents": 2370,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644350",
+   "residents": 1276,
+   "residents_sfha": 54,
+   "residents_unknown": 33
+  },
+  {
+   "unit": "0644364",
+   "residents": 740,
+   "residents_sfha": 84,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644378",
+   "residents": 3491,
+   "residents_sfha": 0,
+   "residents_unknown": 3361
+  },
+  {
+   "unit": "0644399",
+   "residents": 6259,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644406",
+   "residents": 3266,
+   "residents_sfha": 248,
+   "residents_unknown": 71
+  },
+  {
+   "unit": "0644420",
+   "residents": 5331,
+   "residents_sfha": 0,
+   "residents_unknown": 5331
+  },
+  {
+   "unit": "0644574",
+   "residents": 67265,
+   "residents_sfha": 455,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644644",
+   "residents": 725,
+   "residents_sfha": 246,
+   "residents_unknown": 273
+  },
+  {
+   "unit": "0644672",
+   "residents": 181,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644700",
+   "residents": 334,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644760",
+   "residents": 926,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644770",
+   "residents": 15,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644784",
+   "residents": 945,
+   "residents_sfha": 482,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644812",
+   "residents": 86,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644826",
+   "residents": 14161,
+   "residents_sfha": 2279,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644830",
+   "residents": 45,
+   "residents_sfha": 0,
+   "residents_unknown": 25
+  },
+  {
+   "unit": "0644910",
+   "residents": 16262,
+   "residents_sfha": 185,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0644924",
+   "residents": 102,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645006",
+   "residents": 4480,
+   "residents_sfha": 307,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645008",
+   "residents": 21,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645022",
+   "residents": 66224,
+   "residents_sfha": 1904,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645050",
+   "residents": 9162,
+   "residents_sfha": 671,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645054",
+   "residents": 3623,
+   "residents_sfha": 519,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645064",
+   "residents": 581,
+   "residents_sfha": 534,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645092",
+   "residents": 361,
+   "residents_sfha": 0,
+   "residents_unknown": 361
+  },
+  {
+   "unit": "0645120",
+   "residents": 7795,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645232",
+   "residents": 884,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645246",
+   "residents": 10654,
+   "residents_sfha": 961,
+   "residents_unknown": 167
+  },
+  {
+   "unit": "0645358",
+   "residents": 7191,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645386",
+   "residents": 159,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645400",
+   "residents": 35506,
+   "residents_sfha": 133,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645414",
+   "residents": 798,
+   "residents_sfha": 15,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645484",
+   "residents": 83498,
+   "residents_sfha": 17,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645512",
+   "residents": 310,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645680",
+   "residents": 809,
+   "residents_sfha": 0,
+   "residents_unknown": 803
+  },
+  {
+   "unit": "0645736",
+   "residents": 1026,
+   "residents_sfha": 22,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645778",
+   "residents": 22359,
+   "residents_sfha": 17,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645806",
+   "residents": 11373,
+   "residents_sfha": 566,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645820",
+   "residents": 2993,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645932",
+   "residents": 1526,
+   "residents_sfha": 21,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0645988",
+   "residents": 191,
+   "residents_sfha": 0,
+   "residents_unknown": 191
+  },
+  {
+   "unit": "0646100",
+   "residents": 207,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646114",
+   "residents": 37287,
+   "residents_sfha": 3321,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646170",
+   "residents": 12844,
+   "residents_sfha": 59,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646223",
+   "residents": 1125,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646226",
+   "residents": 4698,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646338",
+   "residents": 1067,
+   "residents_sfha": 513,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646400",
+   "residents": 4831,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646436",
+   "residents": 5402,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646492",
+   "residents": 25138,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646520",
+   "residents": 3142,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646618",
+   "residents": 453,
+   "residents_sfha": 6,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646632",
+   "residents": 3263,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646646",
+   "residents": 19819,
+   "residents_sfha": 246,
+   "residents_unknown": 1011
+  },
+  {
+   "unit": "0646660",
+   "residents": 8219,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646702",
+   "residents": 3911,
+   "residents_sfha": 49,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646814",
+   "residents": 932,
+   "residents_sfha": 22,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646828",
+   "residents": 12595,
+   "residents_sfha": 146,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646842",
+   "residents": 102527,
+   "residents_sfha": 1690,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646870",
+   "residents": 33780,
+   "residents_sfha": 5008,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646884",
+   "residents": 9557,
+   "residents_sfha": 113,
+   "residents_unknown": 290
+  },
+  {
+   "unit": "0646898",
+   "residents": 86333,
+   "residents_sfha": 45659,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0646926",
+   "residents": 304,
+   "residents_sfha": 0,
+   "residents_unknown": 304
+  },
+  {
+   "unit": "0647013",
+   "residents": 275,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647066",
+   "residents": 766,
+   "residents_sfha": 0,
+   "residents_unknown": 766
+  },
+  {
+   "unit": "0647086",
+   "residents": 217,
+   "residents_sfha": 0,
+   "residents_unknown": 131
+  },
+  {
+   "unit": "0647164",
+   "residents": 90,
+   "residents_sfha": 90,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647192",
+   "residents": 283,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647206",
+   "residents": 2163,
+   "residents_sfha": 80,
+   "residents_unknown": 2083
+  },
+  {
+   "unit": "0647332",
+   "residents": 1114,
+   "residents_sfha": 441,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647374",
+   "residents": 379,
+   "residents_sfha": 0,
+   "residents_unknown": 236
+  },
+  {
+   "unit": "0647430",
+   "residents": 8825,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647472",
+   "residents": 147,
+   "residents_sfha": 0,
+   "residents_unknown": 83
+  },
+  {
+   "unit": "0647486",
+   "residents": 23216,
+   "residents_sfha": 459,
+   "residents_unknown": 285
+  },
+  {
+   "unit": "0647592",
+   "residents": 686,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647710",
+   "residents": 14231,
+   "residents_sfha": 2394,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647724",
+   "residents": 724,
+   "residents_sfha": 86,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0647766",
+   "residents": 80273,
+   "residents_sfha": 18926,
+   "residents_unknown": 8309
+  },
+  {
+   "unit": "0647794",
+   "residents": 136,
+   "residents_sfha": 0,
+   "residents_unknown": 136
+  },
+  {
+   "unit": "0647822",
+   "residents": 867,
+   "residents_sfha": 207,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648046",
+   "residents": 6618,
+   "residents_sfha": 697,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648060",
+   "residents": 441,
+   "residents_sfha": 6,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648147",
+   "residents": 2540,
+   "residents_sfha": 0,
+   "residents_unknown": 43
+  },
+  {
+   "unit": "0648186",
+   "residents": 3571,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648256",
+   "residents": 93653,
+   "residents_sfha": 407,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648298",
+   "residents": 935,
+   "residents_sfha": 0,
+   "residents_unknown": 226
+  },
+  {
+   "unit": "0648354",
+   "residents": 218464,
+   "residents_sfha": 1581,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648410",
+   "residents": 632,
+   "residents_sfha": 336,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648448",
+   "residents": 107,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648452",
+   "residents": 4699,
+   "residents_sfha": 1797,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648480",
+   "residents": 691,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648592",
+   "residents": 120,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648602",
+   "residents": 224,
+   "residents_sfha": 0,
+   "residents_unknown": 205
+  },
+  {
+   "unit": "0648641",
+   "residents": 3236,
+   "residents_sfha": 55,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648648",
+   "residents": 37931,
+   "residents_sfha": 0,
+   "residents_unknown": 996
+  },
+  {
+   "unit": "0648676",
+   "residents": 152,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648690",
+   "residents": 1226,
+   "residents_sfha": 10,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648718",
+   "residents": 3099,
+   "residents_sfha": 58,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648760",
+   "residents": 2833,
+   "residents_sfha": 37,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648788",
+   "residents": 37865,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648816",
+   "residents": 62640,
+   "residents_sfha": 517,
+   "residents_unknown": 528
+  },
+  {
+   "unit": "0648844",
+   "residents": 8638,
+   "residents_sfha": 364,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648872",
+   "residents": 30218,
+   "residents_sfha": 19,
+   "residents_unknown": 4097
+  },
+  {
+   "unit": "0648914",
+   "residents": 61096,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648916",
+   "residents": 164,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648928",
+   "residents": 1080,
+   "residents_sfha": 478,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0648956",
+   "residents": 3479,
+   "residents_sfha": 0,
+   "residents_unknown": 30
+  },
+  {
+   "unit": "0648998",
+   "residents": 176,
+   "residents_sfha": 0,
+   "residents_unknown": 55
+  },
+  {
+   "unit": "0649045",
+   "residents": 1702,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649138",
+   "residents": 36284,
+   "residents_sfha": 1844,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649180",
+   "residents": 4054,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649187",
+   "residents": 16870,
+   "residents_sfha": 202,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649270",
+   "residents": 208634,
+   "residents_sfha": 1641,
+   "residents_unknown": 68
+  },
+  {
+   "unit": "0649278",
+   "residents": 45483,
+   "residents_sfha": 4188,
+   "residents_unknown": 3093
+  },
+  {
+   "unit": "0649348",
+   "residents": 3514,
+   "residents_sfha": 845,
+   "residents_unknown": 1114
+  },
+  {
+   "unit": "0649362",
+   "residents": 10757,
+   "residents_sfha": 785,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649432",
+   "residents": 237,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649446",
+   "residents": 3214,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649488",
+   "residents": 237,
+   "residents_sfha": 7,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649544",
+   "residents": 66,
+   "residents_sfha": 0,
+   "residents_unknown": 66
+  },
+  {
+   "unit": "0649558",
+   "residents": 815,
+   "residents_sfha": 0,
+   "residents_unknown": 303
+  },
+  {
+   "unit": "0649582",
+   "residents": 24499,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649592",
+   "residents": 303,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649600",
+   "residents": 823,
+   "residents_sfha": 177,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649628",
+   "residents": 223,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649651",
+   "residents": 2622,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649670",
+   "residents": 82376,
+   "residents_sfha": 44,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649684",
+   "residents": 3337,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649726",
+   "residents": 154,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649768",
+   "residents": 103,
+   "residents_sfha": 68,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649796",
+   "residents": 1110,
+   "residents_sfha": 46,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0649810",
+   "residents": 74,
+   "residents_sfha": 0,
+   "residents_unknown": 74
+  },
+  {
+   "unit": "0649852",
+   "residents": 3223,
+   "residents_sfha": 0,
+   "residents_unknown": 44
+  },
+  {
+   "unit": "0649950",
+   "residents": 304,
+   "residents_sfha": 14,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0650034",
+   "residents": 1995,
+   "residents_sfha": 6,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0650076",
+   "residents": 110949,
+   "residents_sfha": 681,
+   "residents_unknown": 11350
+  },
+  {
+   "unit": "0650132",
+   "residents": 10719,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0650146",
+   "residents": 90,
+   "residents_sfha": 83,
+   "residents_unknown": 7
+  },
+  {
+   "unit": "0650188",
+   "residents": 4882,
+   "residents_sfha": 46,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0650258",
+   "residents": 79246,
+   "residents_sfha": 6074,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0650398",
+   "residents": 56173,
+   "residents_sfha": 1116,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0650734",
+   "residents": 4931,
+   "residents_sfha": 433,
+   "residents_unknown": 70
+  },
+  {
+   "unit": "0650874",
+   "residents": 3152,
+   "residents_sfha": 12,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0650916",
+   "residents": 47529,
+   "residents_sfha": 1121,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651000",
+   "residents": 1321,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651028",
+   "residents": 542,
+   "residents_sfha": 65,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651042",
+   "residents": 301,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651140",
+   "residents": 12351,
+   "residents_sfha": 1778,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651168",
+   "residents": 87,
+   "residents_sfha": 0,
+   "residents_unknown": 15
+  },
+  {
+   "unit": "0651182",
+   "residents": 85239,
+   "residents_sfha": 3128,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651280",
+   "residents": 81,
+   "residents_sfha": 40,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651294",
+   "residents": 2929,
+   "residents_sfha": 55,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651336",
+   "residents": 176,
+   "residents_sfha": 176,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651392",
+   "residents": 756,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651470",
+   "residents": 434,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651476",
+   "residents": 18176,
+   "residents_sfha": 212,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651560",
+   "residents": 26316,
+   "residents_sfha": 496,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651574",
+   "residents": 286,
+   "residents_sfha": 286,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651622",
+   "residents": 1313,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651637",
+   "residents": 13452,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651812",
+   "residents": 1054,
+   "residents_sfha": 622,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651820",
+   "residents": 3730,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651840",
+   "residents": 14027,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651868",
+   "residents": 3250,
+   "residents_sfha": 0,
+   "residents_unknown": 2258
+  },
+  {
+   "unit": "0651890",
+   "residents": 667,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651924",
+   "residents": 49327,
+   "residents_sfha": 1063,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0651990",
+   "residents": 3547,
+   "residents_sfha": 469,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652162",
+   "residents": 4175,
+   "residents_sfha": 7,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652246",
+   "residents": 245,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652302",
+   "residents": 3585,
+   "residents_sfha": 215,
+   "residents_unknown": 19
+  },
+  {
+   "unit": "0652379",
+   "residents": 25718,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652526",
+   "residents": 102773,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652582",
+   "residents": 53225,
+   "residents_sfha": 6194,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652610",
+   "residents": 19,
+   "residents_sfha": 19,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652624",
+   "residents": 6733,
+   "residents_sfha": 205,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652694",
+   "residents": 23181,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0652715",
+   "residents": 602,
+   "residents_sfha": 0,
+   "residents_unknown": 146
+  },
+  {
+   "unit": "0652760",
+   "residents": 9450,
+   "residents_sfha": 0,
+   "residents_unknown": 9450
+  },
+  {
+   "unit": "0652764",
+   "residents": 5945,
+   "residents_sfha": 82,
+   "residents_unknown": 777
+  },
+  {
+   "unit": "0653000",
+   "residents": 440646,
+   "residents_sfha": 3580,
+   "residents_unknown": 278
+  },
+  {
+   "unit": "0653070",
+   "residents": 43357,
+   "residents_sfha": 1241,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653116",
+   "residents": 13898,
+   "residents_sfha": 274,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653140",
+   "residents": 158,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653160",
+   "residents": 316,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653182",
+   "residents": 6215,
+   "residents_sfha": 37,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653196",
+   "residents": 49,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653224",
+   "residents": 4468,
+   "residents_sfha": 1133,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653266",
+   "residents": 1132,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653294",
+   "residents": 7183,
+   "residents_sfha": 555,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653322",
+   "residents": 174068,
+   "residents_sfha": 13648,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653378",
+   "residents": 215,
+   "residents_sfha": 76,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653448",
+   "residents": 36135,
+   "residents_sfha": 358,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653476",
+   "residents": 7637,
+   "residents_sfha": 41,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653490",
+   "residents": 131,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653503",
+   "residents": 568,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653505",
+   "residents": 5477,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653574",
+   "residents": 123,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653602",
+   "residents": 64,
+   "residents_sfha": 1,
+   "residents_unknown": 63
+  },
+  {
+   "unit": "0653603",
+   "residents": 3841,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653714",
+   "residents": 16595,
+   "residents_sfha": 795,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653882",
+   "residents": 93,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653896",
+   "residents": 175265,
+   "residents_sfha": 853,
+   "residents_unknown": 5397
+  },
+  {
+   "unit": "0653910",
+   "residents": 457,
+   "residents_sfha": 270,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653980",
+   "residents": 139911,
+   "residents_sfha": 4018,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0653987",
+   "residents": 1068,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654008",
+   "residents": 9649,
+   "residents_sfha": 1572,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654092",
+   "residents": 35569,
+   "residents_sfha": 127,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654120",
+   "residents": 32034,
+   "residents_sfha": 129,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654218",
+   "residents": 328,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654232",
+   "residents": 19514,
+   "residents_sfha": 85,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654274",
+   "residents": 8298,
+   "residents_sfha": 128,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654372",
+   "residents": 8329,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654386",
+   "residents": 20042,
+   "residents_sfha": 474,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654388",
+   "residents": 8038,
+   "residents_sfha": 23,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654652",
+   "residents": 202063,
+   "residents_sfha": 177,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654764",
+   "residents": 4183,
+   "residents_sfha": 1065,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654806",
+   "residents": 38640,
+   "residents_sfha": 602,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0654848",
+   "residents": 15090,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655044",
+   "residents": 2882,
+   "residents_sfha": 2882,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655048",
+   "residents": 122,
+   "residents_sfha": 32,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655058",
+   "residents": 1490,
+   "residents_sfha": 0,
+   "residents_unknown": 927
+  },
+  {
+   "unit": "0655086",
+   "residents": 5555,
+   "residents_sfha": 1072,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655156",
+   "residents": 169450,
+   "residents_sfha": 2658,
+   "residents_unknown": 34
+  },
+  {
+   "unit": "0655184",
+   "residents": 51163,
+   "residents_sfha": 99,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655254",
+   "residents": 44575,
+   "residents_sfha": 43,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655282",
+   "residents": 68572,
+   "residents_sfha": 15492,
+   "residents_unknown": 3
+  },
+  {
+   "unit": "0655296",
+   "residents": 2931,
+   "residents_sfha": 196,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655380",
+   "residents": 13347,
+   "residents_sfha": 62,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655422",
+   "residents": 152,
+   "residents_sfha": 85,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655506",
+   "residents": 44,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655520",
+   "residents": 4764,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655528",
+   "residents": 174,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655604",
+   "residents": 367,
+   "residents_sfha": 118,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655618",
+   "residents": 53733,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655728",
+   "residents": 1249,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655751",
+   "residents": 3234,
+   "residents_sfha": 751,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655800",
+   "residents": 15962,
+   "residents_sfha": 167,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655842",
+   "residents": 2307,
+   "residents_sfha": 2043,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0655856",
+   "residents": 14576,
+   "residents_sfha": 145,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656000",
+   "residents": 138699,
+   "residents_sfha": 0,
+   "residents_unknown": 108
+  },
+  {
+   "unit": "0656028",
+   "residents": 1093,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656042",
+   "residents": 110,
+   "residents_sfha": 32,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656112",
+   "residents": 23781,
+   "residents_sfha": 1359,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656120",
+   "residents": 1888,
+   "residents_sfha": 75,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656140",
+   "residents": 632,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656196",
+   "residents": 54,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656294",
+   "residents": 8,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656476",
+   "residents": 2637,
+   "residents_sfha": 193,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656518",
+   "residents": 1593,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656546",
+   "residents": 1150,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656598",
+   "residents": 2747,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656700",
+   "residents": 78700,
+   "residents_sfha": 2735,
+   "residents_unknown": 35
+  },
+  {
+   "unit": "0656756",
+   "residents": 595,
+   "residents_sfha": 279,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656784",
+   "residents": 59776,
+   "residents_sfha": 1650,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656786",
+   "residents": 709,
+   "residents_sfha": 0,
+   "residents_unknown": 709
+  },
+  {
+   "unit": "0656798",
+   "residents": 708,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656826",
+   "residents": 13859,
+   "residents_sfha": 575,
+   "residents_unknown": 9495
+  },
+  {
+   "unit": "0656854",
+   "residents": 124,
+   "residents_sfha": 84,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656868",
+   "residents": 319,
+   "residents_sfha": 46,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656870",
+   "residents": 4264,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656924",
+   "residents": 62088,
+   "residents_sfha": 21,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0656938",
+   "residents": 11270,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657011",
+   "residents": 59,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657036",
+   "residents": 159,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657070",
+   "residents": 1871,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657134",
+   "residents": 206,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657148",
+   "residents": 2891,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657204",
+   "residents": 3186,
+   "residents_sfha": 173,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657240",
+   "residents": 2422,
+   "residents_sfha": 0,
+   "residents_unknown": 2422
+  },
+  {
+   "unit": "0657244",
+   "residents": 2636,
+   "residents_sfha": 0,
+   "residents_unknown": 136
+  },
+  {
+   "unit": "0657260",
+   "residents": 1645,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657288",
+   "residents": 19022,
+   "residents_sfha": 31,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657302",
+   "residents": 7258,
+   "residents_sfha": 1015,
+   "residents_unknown": 5496
+  },
+  {
+   "unit": "0657330",
+   "residents": 1066,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657372",
+   "residents": 2587,
+   "residents_sfha": 1102,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657414",
+   "residents": 8072,
+   "residents_sfha": 585,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657456",
+   "residents": 76416,
+   "residents_sfha": 2152,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657512",
+   "residents": 3828,
+   "residents_sfha": 482,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657526",
+   "residents": 51824,
+   "residents_sfha": 678,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657540",
+   "residents": 10747,
+   "residents_sfha": 150,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657568",
+   "residents": 846,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657582",
+   "residents": 4164,
+   "residents_sfha": 3478,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657666",
+   "residents": 13,
+   "residents_sfha": 0,
+   "residents_unknown": 2
+  },
+  {
+   "unit": "0657764",
+   "residents": 34613,
+   "residents_sfha": 1927,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657792",
+   "residents": 79871,
+   "residents_sfha": 3260,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657825",
+   "residents": 5821,
+   "residents_sfha": 455,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657828",
+   "residents": 334,
+   "residents_sfha": 6,
+   "residents_unknown": 130
+  },
+  {
+   "unit": "0657829",
+   "residents": 8126,
+   "residents_sfha": 121,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657834",
+   "residents": 1078,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657876",
+   "residents": 460,
+   "residents_sfha": 18,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0657960",
+   "residents": 895,
+   "residents_sfha": 240,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658030",
+   "residents": 7112,
+   "residents_sfha": 0,
+   "residents_unknown": 139
+  },
+  {
+   "unit": "0658072",
+   "residents": 151713,
+   "residents_sfha": 0,
+   "residents_unknown": 13327
+  },
+  {
+   "unit": "0658134",
+   "residents": 51,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658191",
+   "residents": 2370,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658226",
+   "residents": 190,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658240",
+   "residents": 62623,
+   "residents_sfha": 3320,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658296",
+   "residents": 21954,
+   "residents_sfha": 55,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658352",
+   "residents": 2100,
+   "residents_sfha": 125,
+   "residents_unknown": 111
+  },
+  {
+   "unit": "0658380",
+   "residents": 4456,
+   "residents_sfha": 204,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658422",
+   "residents": 23,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658436",
+   "residents": 9,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658456",
+   "residents": 3032,
+   "residents_sfha": 0,
+   "residents_unknown": 3032
+  },
+  {
+   "unit": "0658471",
+   "residents": 9164,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658478",
+   "residents": 648,
+   "residents_sfha": 67,
+   "residents_unknown": 56
+  },
+  {
+   "unit": "0658506",
+   "residents": 665,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658520",
+   "residents": 48841,
+   "residents_sfha": 1226,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658618",
+   "residents": 24,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658758",
+   "residents": 309,
+   "residents_sfha": 253,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658814",
+   "residents": 237,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658870",
+   "residents": 18885,
+   "residents_sfha": 666,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0658940",
+   "residents": 421,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659052",
+   "residents": 11447,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659080",
+   "residents": 1630,
+   "residents_sfha": 140,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659115",
+   "residents": 210,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659220",
+   "residents": 316,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659248",
+   "residents": 1884,
+   "residents_sfha": 155,
+   "residents_unknown": 354
+  },
+  {
+   "unit": "0659290",
+   "residents": 303,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659346",
+   "residents": 21468,
+   "residents_sfha": 791,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659426",
+   "residents": 5590,
+   "residents_sfha": 235,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659444",
+   "residents": 79332,
+   "residents_sfha": 1919,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659451",
+   "residents": 174453,
+   "residents_sfha": 2122,
+   "residents_unknown": 619
+  },
+  {
+   "unit": "0659500",
+   "residents": 16999,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659503",
+   "residents": 10378,
+   "residents_sfha": 11,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659506",
+   "residents": 5903,
+   "residents_sfha": 419,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659514",
+   "residents": 42287,
+   "residents_sfha": 0,
+   "residents_unknown": 183
+  },
+  {
+   "unit": "0659550",
+   "residents": 21858,
+   "residents_sfha": 40,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659584",
+   "residents": 3156,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659587",
+   "residents": 47949,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659604",
+   "residents": 1572,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659668",
+   "residents": 45,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659892",
+   "residents": 14710,
+   "residents_sfha": 1303,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659896",
+   "residents": 1687,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659906",
+   "residents": 61,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659920",
+   "residents": 93611,
+   "residents_sfha": 4519,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0659962",
+   "residents": 73168,
+   "residents_sfha": 2023,
+   "residents_unknown": 881
+  },
+  {
+   "unit": "0660018",
+   "residents": 71576,
+   "residents_sfha": 58,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660088",
+   "residents": 1247,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660102",
+   "residents": 84292,
+   "residents_sfha": 10811,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660214",
+   "residents": 1843,
+   "residents_sfha": 285,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660242",
+   "residents": 25227,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660279",
+   "residents": 3354,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660370",
+   "residents": 3563,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660466",
+   "residents": 104026,
+   "residents_sfha": 157,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660592",
+   "residents": 309,
+   "residents_sfha": 16,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660606",
+   "residents": 2358,
+   "residents_sfha": 113,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660620",
+   "residents": 116448,
+   "residents_sfha": 124,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660662",
+   "residents": 234,
+   "residents_sfha": 25,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660704",
+   "residents": 27959,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660705",
+   "residents": 380,
+   "residents_sfha": 88,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660706",
+   "residents": 3212,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660900",
+   "residents": 3379,
+   "residents_sfha": 55,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660928",
+   "residents": 9128,
+   "residents_sfha": 358,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660942",
+   "residents": 15944,
+   "residents_sfha": 1484,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660970",
+   "residents": 372,
+   "residents_sfha": 316,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0660984",
+   "residents": 10005,
+   "residents_sfha": 433,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0661012",
+   "residents": 538,
+   "residents_sfha": 0,
+   "residents_unknown": 538
+  },
+  {
+   "unit": "0661026",
+   "residents": 16013,
+   "residents_sfha": 271,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0661068",
+   "residents": 24865,
+   "residents_sfha": 45,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0661096",
+   "residents": 3477,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0661106",
+   "residents": 1053,
+   "residents_sfha": 764,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0661108",
+   "residents": 195,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0661124",
+   "residents": 390,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662000",
+   "residents": 314998,
+   "residents_sfha": 2112,
+   "residents_unknown": 29158
+  },
+  {
+   "unit": "0662168",
+   "residents": 347,
+   "residents_sfha": 0,
+   "residents_unknown": 298
+  },
+  {
+   "unit": "0662200",
+   "residents": 89,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662364",
+   "residents": 71601,
+   "residents_sfha": 2092,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662490",
+   "residents": 9653,
+   "residents_sfha": 860,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662496",
+   "residents": 133,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662546",
+   "residents": 44390,
+   "residents_sfha": 454,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662602",
+   "residents": 1739,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662625",
+   "residents": 793,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662644",
+   "residents": 8280,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662700",
+   "residents": 3015,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662756",
+   "residents": 2005,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662826",
+   "residents": 20961,
+   "residents_sfha": 3577,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662854",
+   "residents": 18639,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662860",
+   "residents": 2927,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662896",
+   "residents": 51185,
+   "residents_sfha": 0,
+   "residents_unknown": 1
+  },
+  {
+   "unit": "0662910",
+   "residents": 23510,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662938",
+   "residents": 147773,
+   "residents_sfha": 4077,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0662980",
+   "residents": 2338,
+   "residents_sfha": 523,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0663050",
+   "residents": 10625,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0663106",
+   "residents": 905,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0663134",
+   "residents": 160,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0663148",
+   "residents": 482,
+   "residents_sfha": 1,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0663168",
+   "residents": 1913,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0663218",
+   "residents": 48231,
+   "residents_sfha": 0,
+   "residents_unknown": 677
+  },
+  {
+   "unit": "0663302",
+   "residents": 91,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0663316",
+   "residents": 5268,
+   "residents_sfha": 0,
+   "residents_unknown": 5268
+  },
+  {
+   "unit": "0663386",
+   "residents": 254,
+   "residents_sfha": 0,
+   "residents_unknown": 254
+  },
+  {
+   "unit": "0663400",
+   "residents": 115,
+   "residents_sfha": 4,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664000",
+   "residents": 524943,
+   "residents_sfha": 120514,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664056",
+   "residents": 3370,
+   "residents_sfha": 296,
+   "residents_unknown": 1559
+  },
+  {
+   "unit": "0664140",
+   "residents": 5430,
+   "residents_sfha": 252,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664210",
+   "residents": 13886,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664224",
+   "residents": 163542,
+   "residents_sfha": 5490,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664252",
+   "residents": 111,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664294",
+   "residents": 5155,
+   "residents_sfha": 213,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664308",
+   "residents": 508,
+   "residents_sfha": 45,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664378",
+   "residents": 389,
+   "residents_sfha": 9,
+   "residents_unknown": 91
+  },
+  {
+   "unit": "0664392",
+   "residents": 229,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664420",
+   "residents": 2994,
+   "residents_sfha": 137,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664434",
+   "residents": 12830,
+   "residents_sfha": 2166,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664462",
+   "residents": 3441,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0664476",
+   "residents": 392,
+   "residents_sfha": 39,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0665000",
+   "residents": 222101,
+   "residents_sfha": 2876,
+   "residents_unknown": 10
+  },
+  {
+   "unit": "0665028",
+   "residents": 43908,
+   "residents_sfha": 1702,
+   "residents_unknown": 855
+  },
+  {
+   "unit": "0665042",
+   "residents": 110763,
+   "residents_sfha": 162,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0665070",
+   "residents": 30722,
+   "residents_sfha": 500,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0665084",
+   "residents": 64293,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0665112",
+   "residents": 325,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0666000",
+   "residents": 1386932,
+   "residents_sfha": 30901,
+   "residents_unknown": 8035
+  },
+  {
+   "unit": "0666004",
+   "residents": 10395,
+   "residents_sfha": 0,
+   "residents_unknown": 54
+  },
+  {
+   "unit": "0666070",
+   "residents": 34924,
+   "residents_sfha": 0,
+   "residents_unknown": 10814
+  },
+  {
+   "unit": "0666140",
+   "residents": 23946,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0667000",
+   "residents": 873965,
+   "residents_sfha": 2509,
+   "residents_unknown": 34
+  },
+  {
+   "unit": "0667042",
+   "residents": 39568,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0667056",
+   "residents": 26617,
+   "residents_sfha": 760,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0667070",
+   "residents": 510,
+   "residents_sfha": 133,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0667112",
+   "residents": 53898,
+   "residents_sfha": 1249,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0667126",
+   "residents": 3701,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668000",
+   "residents": 1013240,
+   "residents_sfha": 53189,
+   "residents_unknown": 766952
+  },
+  {
+   "unit": "0668014",
+   "residents": 2089,
+   "residents_sfha": 248,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668028",
+   "residents": 35196,
+   "residents_sfha": 2684,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668084",
+   "residents": 91008,
+   "residents_sfha": 6467,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668112",
+   "residents": 29581,
+   "residents_sfha": 1345,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668140",
+   "residents": 324,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668154",
+   "residents": 47063,
+   "residents_sfha": 2695,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668196",
+   "residents": 94833,
+   "residents_sfha": 2902,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668224",
+   "residents": 12513,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668238",
+   "residents": 7008,
+   "residents_sfha": 1088,
+   "residents_unknown": 5856
+  },
+  {
+   "unit": "0668252",
+   "residents": 105661,
+   "residents_sfha": 3088,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668263",
+   "residents": 3591,
+   "residents_sfha": 132,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668266",
+   "residents": 3172,
+   "residents_sfha": 610,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668294",
+   "residents": 32127,
+   "residents_sfha": 2327,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668308",
+   "residents": 2101,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668364",
+   "residents": 61271,
+   "residents_sfha": 16952,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668378",
+   "residents": 84605,
+   "residents_sfha": 497,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0668434",
+   "residents": 445,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0669000",
+   "residents": 310227,
+   "residents_sfha": 23533,
+   "residents_unknown": 4
+  },
+  {
+   "unit": "0669070",
+   "residents": 88665,
+   "residents_sfha": 7209,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0669084",
+   "residents": 127647,
+   "residents_sfha": 6859,
+   "residents_unknown": 1128
+  },
+  {
+   "unit": "0669088",
+   "residents": 228673,
+   "residents_sfha": 8116,
+   "residents_unknown": 391
+  },
+  {
+   "unit": "0669112",
+   "residents": 62956,
+   "residents_sfha": 9926,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0669154",
+   "residents": 19219,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0669182",
+   "residents": 1291,
+   "residents_sfha": 274,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0669196",
+   "residents": 109707,
+   "residents_sfha": 874,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670000",
+   "residents": 93076,
+   "residents_sfha": 211,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670028",
+   "residents": 2211,
+   "residents_sfha": 0,
+   "residents_unknown": 2168
+  },
+  {
+   "unit": "0670042",
+   "residents": 30657,
+   "residents_sfha": 7591,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670098",
+   "residents": 178127,
+   "residents_sfha": 292,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670130",
+   "residents": 3312,
+   "residents_sfha": 188,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670140",
+   "residents": 1160,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670154",
+   "residents": 4289,
+   "residents_sfha": 1634,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670182",
+   "residents": 4505,
+   "residents_sfha": 259,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670224",
+   "residents": 60037,
+   "residents_sfha": 1339,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670266",
+   "residents": 5830,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670280",
+   "residents": 31051,
+   "residents_sfha": 257,
+   "residents_unknown": 728
+  },
+  {
+   "unit": "0670322",
+   "residents": 1133,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670336",
+   "residents": 44,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670364",
+   "residents": 7269,
+   "residents_sfha": 19,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670518",
+   "residents": 681,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670588",
+   "residents": 12224,
+   "residents_sfha": 72,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670644",
+   "residents": 3280,
+   "residents_sfha": 64,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670686",
+   "residents": 25242,
+   "residents_sfha": 399,
+   "residents_unknown": 607
+  },
+  {
+   "unit": "0670712",
+   "residents": 1169,
+   "residents_sfha": 0,
+   "residents_unknown": 1169
+  },
+  {
+   "unit": "0670728",
+   "residents": 1565,
+   "residents_sfha": 119,
+   "residents_unknown": 1343
+  },
+  {
+   "unit": "0670742",
+   "residents": 32366,
+   "residents_sfha": 2,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670770",
+   "residents": 7521,
+   "residents_sfha": 157,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670798",
+   "residents": 1729,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670882",
+   "residents": 24674,
+   "residents_sfha": 98,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0670966",
+   "residents": 24,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671000",
+   "residents": 107,
+   "residents_sfha": 1,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671078",
+   "residents": 446,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671106",
+   "residents": 19953,
+   "residents_sfha": 29,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671134",
+   "residents": 1168,
+   "residents_sfha": 73,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671218",
+   "residents": 1043,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671225",
+   "residents": 10371,
+   "residents_sfha": 338,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671246",
+   "residents": 580,
+   "residents_sfha": 11,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671362",
+   "residents": 1014,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671372",
+   "residents": 803,
+   "residents_sfha": 0,
+   "residents_unknown": 803
+  },
+  {
+   "unit": "0671414",
+   "residents": 1385,
+   "residents_sfha": 27,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671554",
+   "residents": 4660,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671568",
+   "residents": 2442,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671680",
+   "residents": 22,
+   "residents_sfha": 13,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671774",
+   "residents": 467,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671778",
+   "residents": 235,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671806",
+   "residents": 11268,
+   "residents_sfha": 0,
+   "residents_unknown": 1700
+  },
+  {
+   "unit": "0671834",
+   "residents": 411,
+   "residents_sfha": 0,
+   "residents_unknown": 411
+  },
+  {
+   "unit": "0671848",
+   "residents": 239,
+   "residents_sfha": 106,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671876",
+   "residents": 11848,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671918",
+   "residents": 932,
+   "residents_sfha": 74,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671927",
+   "residents": 948,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0671964",
+   "residents": 6317,
+   "residents_sfha": 86,
+   "residents_unknown": 4433
+  },
+  {
+   "unit": "0672016",
+   "residents": 126356,
+   "residents_sfha": 6011,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672086",
+   "residents": 191,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672156",
+   "residents": 2411,
+   "residents_sfha": 44,
+   "residents_unknown": 1351
+  },
+  {
+   "unit": "0672184",
+   "residents": 2401,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672282",
+   "residents": 185,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672338",
+   "residents": 594,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672380",
+   "residents": 906,
+   "residents_sfha": 24,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672408",
+   "residents": 238,
+   "residents_sfha": 57,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672478",
+   "residents": 1163,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672492",
+   "residents": 94,
+   "residents_sfha": 0,
+   "residents_unknown": 94
+  },
+  {
+   "unit": "0672506",
+   "residents": 12941,
+   "residents_sfha": 225,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672520",
+   "residents": 24925,
+   "residents_sfha": 309,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672576",
+   "residents": 6126,
+   "residents_sfha": 17,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672632",
+   "residents": 1429,
+   "residents_sfha": 31,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672646",
+   "residents": 10739,
+   "residents_sfha": 355,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672654",
+   "residents": 2679,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672674",
+   "residents": 5003,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672688",
+   "residents": 9980,
+   "residents_sfha": 632,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672772",
+   "residents": 2092,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672954",
+   "residents": 1747,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0672996",
+   "residents": 19567,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673080",
+   "residents": 92726,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673108",
+   "residents": 21330,
+   "residents_sfha": 650,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673167",
+   "residents": 6515,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673178",
+   "residents": 3235,
+   "residents_sfha": 14,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673220",
+   "residents": 26943,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673262",
+   "residents": 66105,
+   "residents_sfha": 988,
+   "residents_unknown": 2
+  },
+  {
+   "unit": "0673276",
+   "residents": 7920,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673290",
+   "residents": 19855,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673388",
+   "residents": 2100,
+   "residents_sfha": 150,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673430",
+   "residents": 56415,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673554",
+   "residents": 206,
+   "residents_sfha": 43,
+   "residents_unknown": 22
+  },
+  {
+   "unit": "0673612",
+   "residents": 692,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673654",
+   "residents": 19,
+   "residents_sfha": 12,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673690",
+   "residents": 964,
+   "residents_sfha": 51,
+   "residents_unknown": 99
+  },
+  {
+   "unit": "0673696",
+   "residents": 30998,
+   "residents_sfha": 459,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673700",
+   "residents": 9598,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673710",
+   "residents": 967,
+   "residents_sfha": 208,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673794",
+   "residents": 3564,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673815",
+   "residents": 760,
+   "residents_sfha": 87,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673868",
+   "residents": 3139,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0673906",
+   "residents": 21150,
+   "residents_sfha": 0,
+   "residents_unknown": 21150
+  },
+  {
+   "unit": "0673962",
+   "residents": 37962,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0674021",
+   "residents": 1423,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0674130",
+   "residents": 20178,
+   "residents_sfha": 57,
+   "residents_unknown": 2502
+  },
+  {
+   "unit": "0674144",
+   "residents": 275,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0674172",
+   "residents": 541,
+   "residents_sfha": 297,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0674186",
+   "residents": 284,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675000",
+   "residents": 320804,
+   "residents_sfha": 684,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675122",
+   "residents": 86,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675154",
+   "residents": 133,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675252",
+   "residents": 1121,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675280",
+   "residents": 2830,
+   "residents_sfha": 518,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675315",
+   "residents": 5447,
+   "residents_sfha": 527,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675322",
+   "residents": 87,
+   "residents_sfha": 0,
+   "residents_unknown": 87
+  },
+  {
+   "unit": "0675592",
+   "residents": 14,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675596",
+   "residents": 7,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675630",
+   "residents": 29518,
+   "residents_sfha": 3233,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675672",
+   "residents": 779,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675714",
+   "residents": 1222,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0675994",
+   "residents": 4627,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0676015",
+   "residents": 1555,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0676040",
+   "residents": 139,
+   "residents_sfha": 0,
+   "residents_unknown": 139
+  },
+  {
+   "unit": "0677000",
+   "residents": 155805,
+   "residents_sfha": 12657,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677042",
+   "residents": 922,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677308",
+   "residents": 12345,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677364",
+   "residents": 16728,
+   "residents_sfha": 1456,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677378",
+   "residents": 2997,
+   "residents_sfha": 0,
+   "residents_unknown": 2997
+  },
+  {
+   "unit": "0677392",
+   "residents": 2646,
+   "residents_sfha": 71,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677430",
+   "residents": 178,
+   "residents_sfha": 0,
+   "residents_unknown": 78
+  },
+  {
+   "unit": "0677574",
+   "residents": 8546,
+   "residents_sfha": 187,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677588",
+   "residents": 1999,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677595",
+   "residents": 1636,
+   "residents_sfha": 1127,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677700",
+   "residents": 1392,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677728",
+   "residents": 1034,
+   "residents_sfha": 0,
+   "residents_unknown": 108
+  },
+  {
+   "unit": "0677784",
+   "residents": 986,
+   "residents_sfha": 380,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677805",
+   "residents": 11492,
+   "residents_sfha": 706,
+   "residents_unknown": 109
+  },
+  {
+   "unit": "0677860",
+   "residents": 89,
+   "residents_sfha": 73,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677924",
+   "residents": 5364,
+   "residents_sfha": 86,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677934",
+   "residents": 18,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0677960",
+   "residents": 3997,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678008",
+   "residents": 123,
+   "residents_sfha": 23,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678050",
+   "residents": 120,
+   "residents_sfha": 14,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678092",
+   "residents": 12939,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678106",
+   "residents": 435,
+   "residents_sfha": 435,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678120",
+   "residents": 110003,
+   "residents_sfha": 1936,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678126",
+   "residents": 1500,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678138",
+   "residents": 26232,
+   "residents_sfha": 23,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678148",
+   "residents": 36494,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678162",
+   "residents": 8386,
+   "residents_sfha": 816,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678176",
+   "residents": 63,
+   "residents_sfha": 11,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678232",
+   "residents": 429,
+   "residents_sfha": 429,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678288",
+   "residents": 2910,
+   "residents_sfha": 48,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678336",
+   "residents": 1185,
+   "residents_sfha": 491,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678456",
+   "residents": 2676,
+   "residents_sfha": 1736,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678470",
+   "residents": 7198,
+   "residents_sfha": 935,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678568",
+   "residents": 1004,
+   "residents_sfha": 688,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678582",
+   "residents": 126966,
+   "residents_sfha": 1123,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678596",
+   "residents": 7967,
+   "residents_sfha": 7959,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678638",
+   "residents": 2053,
+   "residents_sfha": 198,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678652",
+   "residents": 248,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678666",
+   "residents": 9146,
+   "residents_sfha": 141,
+   "residents_unknown": 31
+  },
+  {
+   "unit": "0678715",
+   "residents": 171,
+   "residents_sfha": 13,
+   "residents_unknown": 158
+  },
+  {
+   "unit": "0678750",
+   "residents": 2519,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678792",
+   "residents": 19,
+   "residents_sfha": 0,
+   "residents_unknown": 19
+  },
+  {
+   "unit": "0678890",
+   "residents": 187,
+   "residents_sfha": 6,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678932",
+   "residents": 329,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678949",
+   "residents": 286,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0678960",
+   "residents": 8560,
+   "residents_sfha": 18,
+   "residents_unknown": 728
+  },
+  {
+   "unit": "0679030",
+   "residents": 150,
+   "residents_sfha": 1,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0679529",
+   "residents": 1835,
+   "residents_sfha": 59,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680000",
+   "residents": 147067,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680210",
+   "residents": 1020,
+   "residents_sfha": 62,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680238",
+   "residents": 93000,
+   "residents_sfha": 791,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680266",
+   "residents": 805,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680280",
+   "residents": 731,
+   "residents_sfha": 629,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680364",
+   "residents": 443,
+   "residents_sfha": 23,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680448",
+   "residents": 307,
+   "residents_sfha": 0,
+   "residents_unknown": 268
+  },
+  {
+   "unit": "0680476",
+   "residents": 198,
+   "residents_sfha": 0,
+   "residents_unknown": 198
+  },
+  {
+   "unit": "0680483",
+   "residents": 278,
+   "residents_sfha": 49,
+   "residents_unknown": 30
+  },
+  {
+   "unit": "0680515",
+   "residents": 11,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680560",
+   "residents": 229,
+   "residents_sfha": 76,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680588",
+   "residents": 16729,
+   "residents_sfha": 9,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680644",
+   "residents": 68875,
+   "residents_sfha": 582,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680686",
+   "residents": 902,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680763",
+   "residents": 1798,
+   "residents_sfha": 47,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680784",
+   "residents": 177,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680812",
+   "residents": 72740,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680854",
+   "residents": 80276,
+   "residents_sfha": 217,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680882",
+   "residents": 102,
+   "residents_sfha": 102,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680896",
+   "residents": 787,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680952",
+   "residents": 75,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680966",
+   "residents": 2378,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0680994",
+   "residents": 28065,
+   "residents_sfha": 3004,
+   "residents_unknown": 11840
+  },
+  {
+   "unit": "0681048",
+   "residents": 45,
+   "residents_sfha": 0,
+   "residents_unknown": 45
+  },
+  {
+   "unit": "0681050",
+   "residents": 4944,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681134",
+   "residents": 16607,
+   "residents_sfha": 2807,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681204",
+   "residents": 70143,
+   "residents_sfha": 2571,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681302",
+   "residents": 8525,
+   "residents_sfha": 0,
+   "residents_unknown": 583
+  },
+  {
+   "unit": "0681316",
+   "residents": 9710,
+   "residents_sfha": 1222,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681344",
+   "residents": 79040,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681358",
+   "residents": 1095,
+   "residents_sfha": 166,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681554",
+   "residents": 102386,
+   "residents_sfha": 6275,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681638",
+   "residents": 22437,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681652",
+   "residents": 442,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681666",
+   "residents": 126090,
+   "residents_sfha": 5439,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681708",
+   "residents": 16194,
+   "residents_sfha": 281,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681722",
+   "residents": 504,
+   "residents_sfha": 104,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681736",
+   "residents": 10087,
+   "residents_sfha": 22,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681778",
+   "residents": 148,
+   "residents_sfha": 0,
+   "residents_unknown": 148
+  },
+  {
+   "unit": "0681792",
+   "residents": 284,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681869",
+   "residents": 128,
+   "residents_sfha": 0,
+   "residents_unknown": 13
+  },
+  {
+   "unit": "0681890",
+   "residents": 3779,
+   "residents_sfha": 255,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0681967",
+   "residents": 2399,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682072",
+   "residents": 3559,
+   "residents_sfha": 0,
+   "residents_unknown": 3559
+  },
+  {
+   "unit": "0682086",
+   "residents": 7308,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682334",
+   "residents": 179,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682422",
+   "residents": 222,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682562",
+   "residents": 313,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682590",
+   "residents": 134810,
+   "residents_sfha": 803,
+   "residents_unknown": 4022
+  },
+  {
+   "unit": "0682667",
+   "residents": 11419,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682744",
+   "residents": 5843,
+   "residents_sfha": 162,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682786",
+   "residents": 198,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682815",
+   "residents": 15714,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682842",
+   "residents": 4323,
+   "residents_sfha": 103,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682852",
+   "residents": 43935,
+   "residents_sfha": 508,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682929",
+   "residents": 7,
+   "residents_sfha": 0,
+   "residents_unknown": 7
+  },
+  {
+   "unit": "0682954",
+   "residents": 141384,
+   "residents_sfha": 36870,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0682996",
+   "residents": 98381,
+   "residents_sfha": 1056,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683085",
+   "residents": 2607,
+   "residents_sfha": 0,
+   "residents_unknown": 5
+  },
+  {
+   "unit": "0683094",
+   "residents": 104,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683108",
+   "residents": 366,
+   "residents_sfha": 39,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683262",
+   "residents": 704,
+   "residents_sfha": 84,
+   "residents_unknown": 11
+  },
+  {
+   "unit": "0683304",
+   "residents": 479,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683332",
+   "residents": 28430,
+   "residents_sfha": 0,
+   "residents_unknown": 19327
+  },
+  {
+   "unit": "0683346",
+   "residents": 70127,
+   "residents_sfha": 1332,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683374",
+   "residents": 1452,
+   "residents_sfha": 975,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683402",
+   "residents": 15214,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683460",
+   "residents": 1586,
+   "residents_sfha": 66,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683494",
+   "residents": 8,
+   "residents_sfha": 0,
+   "residents_unknown": 8
+  },
+  {
+   "unit": "0683542",
+   "residents": 27047,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683570",
+   "residents": 101,
+   "residents_sfha": 20,
+   "residents_unknown": 81
+  },
+  {
+   "unit": "0683612",
+   "residents": 9120,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683626",
+   "residents": 534,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683668",
+   "residents": 52590,
+   "residents_sfha": 8377,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683724",
+   "residents": 80,
+   "residents_sfha": 27,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683730",
+   "residents": 48,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683766",
+   "residents": 111,
+   "residents_sfha": 2,
+   "residents_unknown": 109
+  },
+  {
+   "unit": "0683794",
+   "residents": 3667,
+   "residents_sfha": 0,
+   "residents_unknown": 960
+  },
+  {
+   "unit": "0683850",
+   "residents": 2862,
+   "residents_sfha": 51,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683863",
+   "residents": 2206,
+   "residents_sfha": 126,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683906",
+   "residents": 112,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0683948",
+   "residents": 2303,
+   "residents_sfha": 751,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684004",
+   "residents": 219,
+   "residents_sfha": 88,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684116",
+   "residents": 9393,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684120",
+   "residents": 2754,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684144",
+   "residents": 22870,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684200",
+   "residents": 109501,
+   "residents_sfha": 275,
+   "residents_unknown": 15799
+  },
+  {
+   "unit": "0684345",
+   "residents": 536,
+   "residents_sfha": 142,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684385",
+   "residents": 1187,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684410",
+   "residents": 35757,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684438",
+   "residents": 8029,
+   "residents_sfha": 0,
+   "residents_unknown": 417
+  },
+  {
+   "unit": "0684480",
+   "residents": 575,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684536",
+   "residents": 3930,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684550",
+   "residents": 90911,
+   "residents_sfha": 11140,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684578",
+   "residents": 5965,
+   "residents_sfha": 1365,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684592",
+   "residents": 33913,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684606",
+   "residents": 2014,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684680",
+   "residents": 1053,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684732",
+   "residents": 688,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684774",
+   "residents": 22959,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684780",
+   "residents": 24347,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684816",
+   "residents": 53915,
+   "residents_sfha": 0,
+   "residents_unknown": 53915
+  },
+  {
+   "unit": "0684863",
+   "residents": 143,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684921",
+   "residents": 25325,
+   "residents_sfha": 173,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0684928",
+   "residents": 1541,
+   "residents_sfha": 110,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685012",
+   "residents": 3712,
+   "residents_sfha": 940,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685086",
+   "residents": 144,
+   "residents_sfha": 0,
+   "residents_unknown": 4
+  },
+  {
+   "unit": "0685208",
+   "residents": 984,
+   "residents_sfha": 49,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685222",
+   "residents": 325,
+   "residents_sfha": 41,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685250",
+   "residents": 311,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685292",
+   "residents": 87306,
+   "residents_sfha": 0,
+   "residents_unknown": 1400
+  },
+  {
+   "unit": "0685446",
+   "residents": 36875,
+   "residents_sfha": 814,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685551",
+   "residents": 543,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685586",
+   "residents": 5538,
+   "residents_sfha": 430,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685587",
+   "residents": 93,
+   "residents_sfha": 8,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685600",
+   "residents": 4988,
+   "residents_sfha": 103,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685614",
+   "residents": 24295,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685642",
+   "residents": 1720,
+   "residents_sfha": 41,
+   "residents_unknown": 1049
+  },
+  {
+   "unit": "0685684",
+   "residents": 6293,
+   "residents_sfha": 1302,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685866",
+   "residents": 14,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685880",
+   "residents": 5958,
+   "residents_sfha": 1330,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685894",
+   "residents": 3068,
+   "residents_sfha": 322,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685922",
+   "residents": 26344,
+   "residents_sfha": 77,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0685992",
+   "residents": 22380,
+   "residents_sfha": 69,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686020",
+   "residents": 390,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686034",
+   "residents": 7115,
+   "residents_sfha": 420,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686076",
+   "residents": 11709,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686174",
+   "residents": 2213,
+   "residents_sfha": 154,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686216",
+   "residents": 1410,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686230",
+   "residents": 4031,
+   "residents_sfha": 516,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686244",
+   "residents": 15378,
+   "residents_sfha": 0,
+   "residents_unknown": 4941
+  },
+  {
+   "unit": "0686300",
+   "residents": 7419,
+   "residents_sfha": 2074,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686328",
+   "residents": 61032,
+   "residents_sfha": 1709,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686380",
+   "residents": 1933,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686440",
+   "residents": 5309,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686482",
+   "residents": 1680,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686489",
+   "residents": 729,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686496",
+   "residents": 108,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686594",
+   "residents": 4720,
+   "residents_sfha": 1232,
+   "residents_unknown": 832
+  },
+  {
+   "unit": "0686678",
+   "residents": 260,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686720",
+   "residents": 623,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686734",
+   "residents": 201,
+   "residents_sfha": 0,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686804",
+   "residents": 425,
+   "residents_sfha": 425,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686832",
+   "residents": 68336,
+   "residents_sfha": 522,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686878",
+   "residents": 5022,
+   "residents_sfha": 41,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686912",
+   "residents": 337,
+   "residents_sfha": 22,
+   "residents_unknown": 315
+  },
+  {
+   "unit": "0686916",
+   "residents": 47,
+   "residents_sfha": 0,
+   "residents_unknown": 47
+  },
+  {
+   "unit": "0686930",
+   "residents": 3436,
+   "residents_sfha": 33,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686944",
+   "residents": 7807,
+   "residents_sfha": 216,
+   "residents_unknown": 0
+  },
+  {
+   "unit": "0686972",
+   "residents": 70117,
+   "residents_sfha": 0,
+   "residents_unknown": 49221
+  },
+  {
+   "unit": "0687042",
+   "residents": 54542,
+   "residents_sfha": 707,
+   "residents_unknown": 4738
+  },
+  {
+   "unit": "0687056",
+   "residents": 21738,
+   "residents_sfha": 1418,
+   "residents_unknown": 8840
+  },
+  {
+   "unit": "0687090",
+   "residents": 729,
+   "residents_sfha": 73,
+   "residents_unknown": 0
+  }
+ ]
+}

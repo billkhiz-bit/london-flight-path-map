@@ -63,6 +63,16 @@ class UsScaleTest(unittest.TestCase):
         self._check_file([(r['name'], r['share_at_or_above_45_db_pct']) for r in doc['cities']],
                          doc['california']['share_at_or_above_45_db_pct'])
 
+    def test_flood_on_its_measured_anchor(self):
+        # Bill, 2026-10-21: the anchor MEASURED over every California county (build_bayarea_flood.py --write-state)
+        anchor = _load('us-california-flood.json')['sfha_pct']
+        doc = _load('us-bayarea-flood.json')
+        self._check_file([(r['name'], r['sfha_pct']) for r in doc['cities'] if r['withheld'] is None], anchor)
+        # a city FEMA has not determined has no share, so no score, never a stand-in
+        withheld = [r for r in doc['cities'] if r['withheld'] is not None]
+        self.assertTrue(withheld)
+        self.assertTrue(all(app.us_anchored_to_score(r['sfha_pct'], anchor) is None for r in withheld))
+
 
 if __name__ == '__main__':
     unittest.main()
