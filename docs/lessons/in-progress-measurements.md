@@ -124,3 +124,25 @@ degrees (60): Kew TW9 3PZ 309 (308) westerly / 4 easterly / 160 mixed; Battersea
 Silvertown E16 2QD Heathrow 104 (68) + London City 36 (0) westerly; Hackney N1 7SX 20 (12); Hounslow TW3 1ES 1.
 Stable against the 195-day run (Kew 307, Battersea 318). Unpublished.
 
+**PER-POSTCODE AVERAGES ARE BUILT, NOT SHOWN (2026-10-22): `scripts/adsb_postcode_averages.py`.** Every day file is
+read at the 100 m cell of each of the 591,910 live postcodes in the 97 covered councils (NSPL `east1m`/`north1m`
+only: `grid_ref()` gets a transformer that refuses; every BT row, 63,293, left out explicitly; gridind 9, no
+position, left out and counted). It writes `data/adsb/postcode-averages.npz`: per published airport, westerly /
+easterly / mixed, both angles, summed passes, days and mean; NaN where an airport had no day of a kind (not
+measured), 0 where it had days and no pass (measured); a failing airport absent with its reason once; `gridind`
+carried as position quality (1,582 imputed and 150 sector-mean positions kept and flagged, never silently read as
+exact); and `context_all_traffic_unpublishable`, every pass at the cell (all airports plus "other"), so a postcode
+under unpublished traffic cannot read quiet by omission (Biggin Hill TN16 3GH: 6.3 a westerly day from Heathrow
+under 28.8 of all traffic). The CAA's January-June tables now sit beside July and August; verdicts come from the
+day files' own movements, which reproduced `report()`'s July and August ratios to the tenth at all 15.
+**`year_rule()`: every checked month must pass, on ONE circuits reading, six months at least; only those months'
+days are averaged.** Nine pass; Luton (failed February 93.2% and June 72.7%), Newcastle, Liverpool, Cardiff,
+Norwich and Teesside do not. **A trap at Luton:** on 3-6 and 13-16 June a transponder alternated 'ground' and 0 ft,
+`field_level()` counted up to 111,382 "touchdowns" from it and set the field at 0 ft, the low band then sat under
+the runway, and the day's movements went uncounted (2-108 against ~420), so the overflights went to "other". It
+recurred on 10 May, 4 Jul, 30 Aug and 11-14 Sep. Unfixed: the monthly verdict refuses Luton's June. **A code review
+found the first tests could not fail on the main rule** (five mutations passed all six, among them the month
+filter removed and left-out days averaged as westerly, because a fixture put the same count on every day): the
+tests now vary the count by day and compare the build with `average()` itself; 20 mutations, all red. Kew 309.9 a
+westerly day over January-August; `--every-month` reproduces the 21 Oct readout exactly. ~3.5 min, 1.1 GiB.
+Unpublished; Bill's open calls are in ROADMAP's START HERE (2026-10-22, evening).
