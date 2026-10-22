@@ -88,7 +88,9 @@ jobs:
       # PyYAML is not a new need - backend/tests imports it and passes today
       # only because the ubuntu runner image happens to ship it. Naming it means
       # a runner image change cannot quietly take the backend suite down.
-      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml
+      # mcp (2026-10-22): tests/test_mcp_server.py drives the local MCP server in memory; pinned to the
+      # version the server was built and tested against, like the action SHAs above.
+      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml mcp==1.23.3
       # backend/tests — the maintained suite (the same one /preflight runs).
       - run: python -m pytest tests/ -v --tb=short
         working-directory: backend
