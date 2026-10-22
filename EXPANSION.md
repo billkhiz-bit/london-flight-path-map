@@ -478,6 +478,61 @@ on the registry, before any Bay Area data exists:
     its hand-drawn corridors are derived. `/preview/` does not draw arrivals
     yet (ROADMAP).
 
+**Build-order step 4, the Lambda entry: what `CITIES['bayarea']` touches** (code survey
+2026-10-22, read-only, nothing run; search for the names, line numbers move). The
+records and anchors are BUILT (`BAYAREA_BOROUGHS`, `US_CALIFORNIA_ANCHORS`,
+`scripts/build_bayarea_records.py`); everything below is still to do. Unwired today,
+a Bay Area city would score on quiet + afford + growth ONLY: every US field is
+ignored without error.
+
+- **Registry:** `postcodeFormat` and `postcodeResolver` are required (`handle_regions`
+  reads both; without them `/v1/regions` 500s); leave `hasHistory` out (compare
+  declines cleanly); `pool: 'bayarea'` or New York's published scores move
+  (decision 2), which flips `test_pool_key.py`'s "no city names a pool" assertion.
+- **Scoring:** `live_component_scores` must read `crimePer1000Us` through
+  `us_anchored_to_score` (today only `crimeRate`, the UK ramp); `env_component_scores`
+  must read `roadNoiseUsSharePct` and `floodSfhaPct` the same way (today only the UK
+  fields). `priceTopCoded` is read nowhere: it must reach the response (decision 3).
+- **ZIP routing:** the Lambda has no Bay Area ZIP table or centroids (only the site's
+  `data/us-bayarea-zips.json`); any non-NYC ZIP 404s "NYC ZIPs only", and a NYC ZIP sent
+  with `city=bayarea` is silently switched to `nyc`. Until a table is generated in, the
+  city is reachable by name only, so `CITY_GEOMETRY['bayarea']` is never reached.
+  `score_bulk.py` reads every `supportedNycBoroughs` 404 as "outside NYC".
+- **Provenance:** no `CITY_PROVENANCE['bayarea']`, so `sources` says "Provenance not
+  recorded" and `sourceBreakdown` is `{}` (no FAA "as is" line, no adsb.lol credit).
+  Reusing New York's callables prints New York wording: `_growth_breakdown_line`'s
+  "the USD pool is exactly them", `_afford_breakdown_line`'s "New York is the only city
+  ... outside the United Kingdom" (false in New York's OWN response once the Bay Area
+  is served), `_LIVE_INPUT_SOURCES` naming NaPTAN, `_env_breakdown_line`'s "DEFRA and
+  the EA publish for the UK only". `_postcode_coverage_notice` keeps its by-name `nyc`
+  branch (declared in `test_us_city_branches.py`); for SFO/OAK/SJC
+  `_defra_contour_status` would say "DEFRA publishes no noise contours".
+- **OpenAPI** (`score-demo/openapi.yaml`): four city enums, "14 city-regions, 102
+  boroughs", "NYC ZIPs", "USD pool is New York's five"; `check_openapi_matches_engine.py`
+  reds on the enum and the counts.
+- **Tests that flip or go red:** `test_us_quiet.py`'s `assertNotIn('bayarea', CITIES)`
+  (intended) and its FAA/adsb.lol line per provenance city; `test_score.py`'s "scoreable
+  but no provenance", the breakdown keys, the published worst residual (measure it);
+  the "non-UK city never credits UK bodies" test is HARDCODED to New York, so extend it;
+  `test_borough_data_parity.py` (a Lambda city with no borough-extra and not
+  backend-only); `refresh_crime_from_ons.py`'s `NO_ONS_COMPARISON` (blocking); no Bay Area
+  probe in `check_score_sanity.py` (blind, not red).
+- **The site (step 5), and the one decision in the way:** `CITY_DATA.bayarea` is facts
+  only (`facts: true`, `boroughRaw` `{}`), and `borough-score-parity.mjs` compares every
+  city in BOTH registries, so a backend-first deploy reds it for 50 cities. There is NO
+  declared state for "the API scores it, the site does not yet": `BACKEND_ONLY_CITIES`
+  means "no CITY_DATA" and is refused for a non-sterling city by `build_hpi_prices.py`.
+  So either the site scores in the same release (the one-way door), or a declared
+  "site shows facts while the API scores" list is added to the parity gates first.
+  **DECIDED 2026-10-22 (Bill): the declared list, API first, site second.** Held both
+  ways: a city on it must render NO score on the site, and leaving it is the one-way door.
+- **Area pages (step 6):** `build_area_pages.py` iterates CITIES, so it would write 50
+  `/area/bayarea/` pages with no price (`fmt_price` is sterling-only), New York's
+  afford note, and **50 Bay Area rows in the UK open-data CSV under the OGL**
+  (`open_data_rows` skips only `nyc`). `area-pages.mjs` checks UK credits only under
+  `/area/nyc/`. `js/home-engine.mjs` would then match "Oakland" to a CSV row before
+  the facts card.
+
 **The liveability component is now fully measured**, so depth is no longer the
 blocker it was: transport landed as v3.6 and healthcare as v3.7 on 2026-08-11.
 Breadth is now the reasonable next move - the ranked English city-regions above

@@ -2,7 +2,8 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-21 - Bay Area flood BUILT (no figure where FEMA has not determined the risk: nine Santa
+**Last reviewed:** 2026-10-22 - California's flood anchor measured (3.14%) and committed; Bay Area transport
+decided (Bill: rail access, banded) and its reader built; previously 2026-10-21 - Bay Area flood BUILT (no figure where FEMA has not determined the risk: nine Santa
 Clara cities withheld, 41 with a share); the year's plane tracks fetched (289 of 291 days; adsb.lol has no 5-6 May);
 previously 2026-10-20 - FEMA's county downloads work (Alameda fetched; San Francisco's product id to find),
 the overflight counter built and its direction rule chosen, sold prices' category, tenure and flat built for the
@@ -11,6 +12,52 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-22)
+>
+> **Bay Area transport: DECIDED and BUILT (Bill, 22 Oct: "rail access, banded").** `scripts/build_bayarea_transport.py`
+> writes `data/us-bayarea-transport.json`: the share of each city's residents within 800 m of a BTS rail, metro or
+> light-rail station, banded into the UK's four (excellent 50%+, good 25%+, moderate 10%+, poor) so
+> `TRANSPORT_SCORE` scores it; buses and ferries not counted, and said so; the share is rounded DOWN, so rounding
+> never lifts a band. 2 excellent (San Francisco 61.9%, Colma), 4 good, 20 moderate, 23 poor (in 17 of them no
+> resident is within 800 m of a station). **Emeryville WITHHELD**: its only station,
+> Capitol Corridor's, is missing from BTS's layer; put back by hand (a scratch check) it reads 50.5%, excellent, not
+> poor, while Berkeley, Hayward and Oakland keep their bands. Schools stay held out (CDE's terms unread), so
+> liveability is crime + transport: Emeryville and the five sheriff-contract cities fall under the two-input floor
+> and get no liveability component, said so. **The anchor's re-measure is now cached**: with all 58 county files on
+> disk, `build_bayarea_flood.py --check` re-measures California (24 minutes, measured) and preflight runs it, so a
+> content-keyed cache (every input's bytes AND every script the re-measure loads, followed transitively; passes
+> only; 7 days; `--no-cache`)
+> spares the commits in between. **Quiet bands BUILT** (`scripts/build_bayarea_quiet.py`, `data/us-bayarea-quiet.json`):
+> the fitted estimate at every resident block, weighted by residents, banded by New York's err-loud rule (Bill, 16 Oct):
+> low 21, low-moderate 15, moderate 7, moderate-high 2, high 4, severe 1 (South San Francisco). **Note for Bill:** the
+> rule costs 11 cities between 9.06 and 9.99 (San Francisco and Hillsborough 9.06 ... Newark 9.99) up to 2.5 points,
+> since `low` (10) needs a mean of exactly 10 and they publish 7.5; that is the six-band ladder every borough is scored on, unchanged. **Records
+> BUILT, inert** (`scripts/build_bayarea_records.py`, BLOCKING): the `BAYAREA-BOROUGHS` block in app.py, 50 cities
+> joined by GEOID, with `US_CALIFORNIA_ANCHORS` (crime 22.27, road 6.88, flood 3.14) from the same files; the US
+> measures carry their own field names (`crimePer1000Us`, `roadNoiseUsSharePct`, `floodSfhaPct`) so no UK ramp can
+> read them, and a missing input carries its reader's reason in `withheld` (flood 9, crime 5, transport 1).
+> **Next: `CITIES['bayarea']`**: every touchpoint is surveyed in EXPANSION.md ("Build-order step 4 ... what
+> `CITIES['bayarea']` touches"). **DECIDED (Bill, 22 Oct): API first, site second.** The parity gate compares
+> every city in both registries, so a declared list "the API scores it, the site shows facts" is added to the
+> parity gates first, held BOTH ways (a city on it must show no score on the site); the backend ships and is
+> verified from the origin alone, and the site crosses the one-way door in a second release. The survey also caught
+> `build_aircraft_bands.py --check` (blocking) red on the new block before any commit: `bayarea` is now in its
+> `DERIVATION_EXEMPT`, its bands derived by `build_bayarea_quiet.py`.
+>
+> **Sky Score for Claude, a LOCAL MCP server: BUILT (Bill's idea, 22 Oct; option 1 of 2).** `mcp-server/sky_score_mcp.py`
+> (official `mcp` SDK 1.23.3, stdio, stdlib HTTP): five read-only tools over the live API (`score_area`,
+> `compare_areas`, `list_regions`, `score_changes`, `environment_at`), the product's wording rules in its
+> instructions, every response's `sources` carried through. Its OWN free-tier key, `SKY_SCORE_MCP_KEY` (minted
+> 22 Oct, written straight into `.env`, never shown), so no gate's allowance is spent. Verified live in memory
+> (TW9 3PZ 4.1, Hounslow `quietlife` 2.7); `tests/test_mcp_server.py` (19, offline, CI pins `mcp==1.23.3`). Cost £0.
+> Setup: `mcp-server/README.md`. **Found on the way:** the API's 404 for an uncovered postcode names the default
+> city ("Borough not currently supported in london" for EX1 1HS); the server says NOT COVERED YET, but the API's
+> own wording wants the same fix. **Option 2, the public connector (Bill's long-term aim), is held by:** the rename;
+> verified signups for per-user keys (SES production access, waiting on DMARC); the ICO fee plus a privacy section
+> for assistant traffic; terms covering answers given through an assistant (legal batch 2); NATS's written OK for
+> any paid use. Engineering (an HTTP MCP Lambda with its own throttle, a reviewed changeset, the `api.` CNAME, the
+> directory review) is about £0-5 a month at early volumes.
+>
 > ## START HERE (2026-10-21)
 >
 > **Bay Area flood: BUILT and decided** (`data/us-bayarea-flood.json`, `build_bayarea_flood.py --check` PASS at
@@ -31,9 +78,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > residents in the 1% zone, as crime (22.27 per 1,000) and road (6.88%) have; without it the Bay Area has no
 > environment score (road alone is under the two-input floor). **The statewide fetch is BUILT** (58 counties
 > derived from the Census PL file, one file per county as it arrives, `--only` for re-runs; `--write-state` refuses
-> until every county is on disk). **Next: push, `gh workflow run fema-nfhl-county-fetch.yml -f scope=california`
-> (up to ~5 h), download each run's artifact to its own `data/fema/california/run-<id>/`, copy its `counties/*`
-> into `data/fema/california/counties/`, `build_bayarea_flood.py --write-state`.** The anchor counts only places
+> until every county is on disk). **MEASURED 21 Oct: California 3.14%** (`data/us-california-flood.json`; over
+> 1,414 of 1,664 places and county remainders, 34.9M of 39.5M residents; pooled would read 3.28%). Runs
+> `39611484507` (55 counties) + `39628601964` (Kings, Santa Cruz, Sierra, after the reader learned to read a
+> zone held as a GeometryCollection, `f6cef61`). On it: 10 Bay Area cities read 10 (no resident in the 1% zone),
+> 7 read 0 (6.28%+). Sutter's Yuba City and Live Oak are undetermined, so left out. The anchor counts only places
 > (and county remainders) FEMA has determined for 95%+ of residents, as a city's share does (code review: pooling
 > every determined resident read the Bay Area at 4.39% against 2.85% for the 41 cities with a share). Then
 > the Lambda wiring (`CITIES['bayarea']`), with the flood scale on the measured anchor.

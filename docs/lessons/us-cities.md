@@ -231,3 +231,59 @@ question resolution; Colma 1,507 counted, base 1,469), so the tolerance is 1% or
   figure is kept as `sfha_pct_all_determined`, for comparison only; `--check` reds an anchor resting on under
   half of California's residents. Ten mutations proven red. Next: push, run `-f scope=california`, download each
   run to its own folder, copy `counties/*` in, `--write-state`.
+- **The anchor, MEASURED 2026-10-21: 3.14%** (`data/us-california-flood.json`), over 1,414 of 1,664 places and
+  county remainders holding 34,928,147 of 39,538,223 residents (88%); every determined resident pooled reads 3.28%,
+  kept for comparison only. Run `39611484507` (78 min) brought 55 counties; Kings, Santa Cruz and Sierra failed on
+  EVERY try with the same reader error, so a re-run alone could never have fixed them: some of their zones are
+  GeometryCollections (a polygon plus a stray line: 4 lines in all). `esri_features()` now makes each polygon in a
+  collection its own feature (pooling the parts into one ring list would read an overlap as OUTSIDE under the
+  even-odd test), drops and counts lines and points (`parts_without_area` in the county manifest), and still
+  refuses a zone that is only a line, or a collection in a collection (four mutations red). Re-run `39628601964`
+  (`-f only=06031,06087,06091`, 4 min) brought all three. **Lesson: read a failure's REASON before re-running;
+  a network failure retries, a reader failure repeats.** Sutter has no county-wide product, and its unincorporated
+  areas' file leaves 68.7% of its residents undetermined (Yuba City and Live Oak have none of their own), so those
+  towns are left out of the anchor by the same 5% rule, never read as safe; FEMA's whole-state file would cover
+  them, at several GB, for two towns. On this anchor the 41 Bay Area cities with a share read 10 at zero (ten
+  cities, no resident in the 1% zone) down to 0 at 6.28% or more (seven: Alameda, San Leandro, Sunnyvale, Redwood
+  City, Menlo Park, Palo Alto, East Palo Alto).
+- **Transport, DECIDED 2026-10-22 (Bill: "rail access, banded").** `scripts/build_bayarea_transport.py` writes
+  `data/us-bayarea-transport.json`: the share of a city's residents (the 2020 block frame) within 800 m, straight
+  line, of a BTS rail, metro or light-rail station, put into the UK's four bands (excellent 50%+, good 25%+,
+  moderate 10%+, poor below) so the Lambda's `TRANSPORT_SCORE` scores both countries with one table. Rejected: a
+  continuous 10 x share (18 cities would score 0 because buses are not counted, harsher than the data supports),
+  and holding transport out (liveability would then have only crime, under the two-input floor, for every city).
+  The share is published ROUNDED DOWN to one place and the band taken from it, so every band reproduces from the
+  file, the offline check holds them, and rounding never lifts a city into a better band (the code review: to
+  nearest, 49.96% would publish 50.0, excellent; no band moved when it changed). **A source gap is withheld, and only where it moves the band:** Capitol Corridor is
+  absent from BTS's layer; with its four stations put back by hand (approximate points, a scratch check, never
+  published) Emeryville went 0.0% -> 50.5%, poor -> excellent, while Berkeley (30.7 -> 34.4), Hayward (10.8 -> 11.0)
+  and Oakland (16.8 -> 17.1) kept their bands. So `SOURCE_GAP` is Emeryville alone, held both ways, and each name in
+  it must appear in the transit file's own `known_gap`. The first test run found the check CRASHING (a TypeError)
+  on a row that lost its reason but kept its empty counts: it now reports it. Lesson: **before withholding for a
+  known gap, measure whether the gap moves anything**; it decided which city, not whether.
+- **The anchor's re-measure is CACHED (2026-10-22).** Once all 58 county files were on disk, `--check` (which
+  preflight's advisory stage runs) re-measured California block by block, 24 minutes (measured 2026-10-22, PASS at 3.14%), on every commit. The
+  cache follows `check_flood_georef.py`'s rules, built to fail toward more checking: the key is the sha256 of every
+  file the re-measure reads (58 county files and their manifests, the PL frame, the county list, the anchor) AND of
+  every script it can run, found by following each `_load('...')` from this one (five today), so a code change
+  re-measures. **The code review caught the first, hand-written list missing `build_bay_area_page.py`**, whose
+  `inside()` classifies every block, and the list would also have missed `fetch_fema_flood.py`, loaded only through
+  the county fetcher: a cache key must be DERIVED from what runs, never listed; only a whole PASS is cached; 7-day expiry (a
+  future timestamp counts as expired); an unreadable cache re-measures; a cached result prints `(cached)` in its own
+  line; `--no-cache` forces. Proven red: the anchor file left out of the key, and the expiry removed.
+- **Quiet bands, 2026-10-22** (`scripts/build_bayarea_quiet.py`, `data/us-bayarea-quiet.json`): the Lambda's own
+  `calc_postcode_quiet` at every resident block (0.2 ms a point, 8 s for the 36,056), weighted by residents, banded
+  by New York's err-loud rule (the quietest band not above the mean). The mean is published ROUNDED DOWN to two
+  places and the band taken from it: rounding down can never lift a mean over a band's edge, where rounding to
+  nearest would (9.996 -> 10.00 -> `low`), so every band reproduces from the file and none is quieter than its
+  estimate. The fit lives in app.py and moves on a refit, so the file carries the US-QUIET-BAYAREA block's
+  fingerprint (line endings aside) and one probe per city, re-scored offline: a refit not re-derived here reds
+  without the Census frame. **After `measure_us_quiet_yardstick.py --write`, re-run `build_bayarea_quiet.py
+  --write` then `build_bayarea_records.py --write`.** The ladder's cost, stated: `low` needs exactly 10, so 11
+  cities at 9.06-9.99 publish 7.5.
+- **The records, 2026-10-22** (`scripts/build_bayarea_records.py`, blocking `--check`): the `BAYAREA-BOROUGHS`
+  block in app.py, joined BY GEOID from the readers' committed files, plus `US_CALIFORNIA_ANCHORS` from the same
+  files. The US measures have their OWN field names (`crimePer1000Us`, `roadNoiseUsSharePct`, `floodSfhaPct`):
+  shared with the UK's, a Bay Area road share of 13.3% would quietly score 8.7 on `road_to_score` instead of 0.3 on
+  the US scale. A missing input carries its reader's reason under `withheld`, and only the three withholdable
+  fields may be missing (tested). Inert until `CITIES['bayarea']` reads it.
