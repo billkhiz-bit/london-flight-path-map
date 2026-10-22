@@ -164,6 +164,8 @@ def _work(raw):
     # The archive is untrusted: a corrupt gzip member (BadGzipFile is an OSError,
     # a truncated one EOFError) counts as one bad trace rather than ending the day,
     # and decompression is capped so a gzip bomb cannot exhaust the machine.
+    if raw is None:  # a member members() refused to read: larger than any real trace
+        return 'bad', None
     try:
         if raw[:2] == b'\x1f\x8b':
             z = zlib.decompressobj(16 + zlib.MAX_WBITS)
@@ -238,6 +240,11 @@ def members(parts):
             for m in tar:
                 name = m.name.replace('\\', '/')
                 if m.isfile() and '/traces/' in f'/{name}' and '/trace_full_' in name:
+                    if m.size > MAX_TRACE_BYTES:
+                        # Never read, so never held or pickled to a worker: the cap in _work covers what a gzip
+                        # member EXPANDS to, and a plain member declaring gigabytes had none (audit 2026-10-22).
+                        yield None
+                        continue
                     yield tar.extractfile(m).read()
     finally:
         stream.close()

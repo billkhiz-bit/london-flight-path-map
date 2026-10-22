@@ -420,5 +420,30 @@ class ExtractFilterTests(unittest.TestCase):
         self.assertIsNone(ax.filter_trace(doc, self.near, self.wide, self.items))
 
 
+class ExtractMemberCapTests(unittest.TestCase):
+    """An oversized trace member is refused UNREAD (the audit of 2026-10-22): the archive is untrusted, and a
+    plain member declaring gigabytes was read whole and pickled to a worker before any cap applied."""
+
+    def test_an_oversized_member_is_counted_bad_without_being_read(self):
+        import io
+        import tarfile
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            part = Path(d) / 'day.tar.aa'
+            with tarfile.open(part, 'w') as tar:
+                for name, body in (('traces/ab/trace_full_small.json', b'{"icao": "ab"}'),
+                                   ('traces/cd/trace_full_big.json', b'x' * 4096)):
+                    info = tarfile.TarInfo(name)
+                    info.size = len(body)
+                    tar.addfile(info, io.BytesIO(body))
+            cap, ax.MAX_TRACE_BYTES = ax.MAX_TRACE_BYTES, 1024
+            try:
+                got = list(ax.members([part]))
+            finally:
+                ax.MAX_TRACE_BYTES = cap
+        self.assertEqual(got, [b'{"icao": "ab"}', None])
+        self.assertEqual(ax._work(None), ('bad', None))
+
+
 if __name__ == '__main__':
     unittest.main()
