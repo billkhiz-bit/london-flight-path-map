@@ -21,6 +21,10 @@
   Their noise, air and flood maps are worked out by models, as How it works already told readers; the API page,
   the API reference and the MCP server's environment tool had called them measured. The environment tool also no
   longer promises a flood value it never returned. No field, value or score changes.
+- **For developers and AI agents: every figure the API returns says where it came from** (live after 29 October).
+  A new `provenance` block names, for each value, the source that answered, how that source made it (modelled,
+  an official statistic, our own estimate...), and for what period; `sourceIndex` gives each source's publisher,
+  dataset and licence. Nothing already in a response changes.
 
 ## 2026-10-22 - How a score is worked out; fixes from the week's audit
 

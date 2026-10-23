@@ -10247,6 +10247,332 @@ def parse_weights(raw):
     return result, None
 
 
+# ---------------------------------------------------------------------------
+# Per-field provenance (2026-10-23; Bill, after reading Mireye's per-field citations: "can and should we do
+# something similar"). `sources` and `sourceBreakdown` stay byte for byte: they are prose for people and a
+# contract integrators already carry through (terms.html). `provenance` adds, per value, WHICH source answered,
+# HOW that source made it, at what resolution and for what period. It is a function of the response already
+# built, so it credits what ANSWERED (the city's own source lines, the tier in quietResolution, the *Source
+# line beside a figure), never configuration: the defect CITY_PROVENANCE was built to end. The periods are held
+# equal to the loaders' own holders by tests/test_provenance.py: read the holder, never retype it.
+# ---------------------------------------------------------------------------
+
+# How a source made its figure. A field says "modelled" or "measured", never both, and an agent can pass the word
+# through as it stands. Only an instrument's reading is "measured": nothing in /v1/score is, today.
+PROVENANCE_METHODS = {
+    'measured': 'read by an instrument at a place (a monitor or a sensor)',
+    'modelled': "an official body's published model output (a noise, air-pollution or flood map)",
+    'statistic': 'an official statistic, compiled from records by its publisher',
+    'register': 'an official register or publication (stations, GP practices, postcodes, flight procedures)',
+    'curated': 'assembled by Sky Score from public sources',
+    'estimated': "Sky Score's own model, where no published figure covers the place",
+    'derived': 'computed by Sky Score from the sources named (a score, a rank, a real-terms trend)',
+    'reference': 'a guideline value, not a figure about this place',
+}
+
+OGL = 'Open Government Licence v3.0'
+# Periods without a holder in this file. Each is held equal to its loader's constant by tests/test_provenance.py.
+PROVENANCE_PERIODS = {
+    'defra-noise': '2021',              # DEFRA Round 4 (check_data_freshness NOISE_ROUND); published 2022
+    'defra-pcm': '2024',                # load_defra_air_quality.PCM_YEAR
+    'ons-crime-c4': 'year ending March 2026',   # refresh_crime_from_ons.EDITION
+    'dfe-ks4': '2023/24',               # build_progress8.VINTAGE
+    'ons-nspl': 'August 2026',          # load_nspl.NSPL_VINTAGE ('2026-08'), written as a month like the rest
+    'uk-aip': 'AIRAC 2026-10-01',       # build_flight_paths.AIRAC
+    'faa-cifp': 'cycle 2610, effective 2026-10-01',  # build_us_flight_paths.RECORD 'cycle' / 'effective'
+}
+NOT_RECORDED = None  # a continuously updated register or a map with no edition: when we last pulled it is not stored
+# Said beside every NOT_RECORDED period, so an agent can tell "not stored yet" from "does not apply".
+_NOT_RECORDED_NOTE = 'updated continuously; the date Sky Score last took its copy is not recorded yet'
+
+PROVENANCE_SOURCES = {
+    'hmlr-hpi': {'publisher': 'HM Land Registry', 'dataset': 'UK House Price Index', 'licence': OGL,
+                 'method': 'statistic', 'resolution': 'local authority', 'period': SNAPSHOT_VINTAGE_LABEL},
+    'ons-cpih': {'publisher': 'Office for National Statistics', 'dataset': 'CPIH 12-month rate, all items (L55O)',
+                 'licence': OGL, 'method': 'statistic', 'resolution': 'United Kingdom', 'period': SNAPSHOT_VINTAGE_LABEL},
+    'defra-noise-road': {'publisher': 'DEFRA', 'dataset': 'Strategic Noise Mapping Round 4, road Lden', 'licence': OGL,
+                         'method': 'modelled', 'resolution': 'read at the postcode', 'period': PROVENANCE_PERIODS['defra-noise'],
+                         'published': '2022', 'caveat': 'maps 2021, a COVID-affected year, so readings err quiet'},
+    'defra-noise-aircraft': {'publisher': 'DEFRA', 'dataset': 'Strategic Noise Mapping Round 4, aircraft Lden',
+                             'licence': OGL, 'method': 'modelled', 'resolution': 'read at the postcode',
+                             'period': PROVENANCE_PERIODS['defra-noise'], 'published': '2022',
+                             'caveat': 'maps 2021, a COVID-affected year, so readings err quiet'},
+    'defra-pcm': {'publisher': 'DEFRA', 'dataset': 'Background pollution maps (PCM), annual mean NO2 and PM2.5',
+                  'licence': OGL, 'method': 'modelled', 'resolution': '1 km grid', 'period': PROVENANCE_PERIODS['defra-pcm']},
+    'ea-rofrs': {'publisher': 'Environment Agency', 'dataset': 'Risk of Flooding from Rivers and Sea', 'licence': OGL,
+                 'method': 'modelled', 'resolution': 'share of the local authority', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'ons-crime-c4': {'publisher': 'Office for National Statistics',
+                     'dataset': 'Crime in England and Wales, Police Force Area tables, Table C4', 'licence': OGL,
+                     'method': 'statistic', 'resolution': 'community safety partnership',
+                     'period': PROVENANCE_PERIODS['ons-crime-c4']},
+    'dfe-ks4': {'publisher': 'Department for Education', 'dataset': 'Key Stage 4 Progress 8', 'licence': OGL,
+                'method': 'statistic', 'resolution': 'local authority', 'period': PROVENANCE_PERIODS['dfe-ks4']},
+    'dft-naptan': {'publisher': 'Department for Transport', 'dataset': 'NaPTAN', 'licence': OGL, 'method': 'register',
+                   'resolution': 'share of the local authority', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'nhs-ods': {'publisher': 'NHS England', 'dataset': 'Organisation Data Service, GP practices', 'licence': OGL,
+                'method': 'register', 'resolution': 'share of the local authority', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'ons-nspl': {'publisher': 'Office for National Statistics', 'dataset': 'National Statistics Postcode Lookup',
+                 'licence': OGL, 'method': 'register', 'resolution': 'postcode', 'period': PROVENANCE_PERIODS['ons-nspl']},
+    'uk-aip': {'publisher': 'NATS', 'dataset': 'UK Aeronautical Information Publication', 'method': 'register',
+               'licence': 'public but not openly licensed; not for navigation', 'resolution': 'flight procedures',
+               'period': PROVENANCE_PERIODS['uk-aip']},
+    'ourairports': {'publisher': 'OurAirports', 'dataset': 'Runway coordinates and geometry',
+                    'licence': 'public domain (CC0)', 'method': 'register', 'resolution': 'runway', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'postcodes-io': {'publisher': 'postcodes.io, from ONS data', 'dataset': 'Postcode lookup (fallback)',
+                     'licence': 'Open Government Licence v3.0 (data); MIT (the service)', 'method': 'register',
+                     'resolution': 'postcode', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'faa-cifp': {'publisher': 'Federal Aviation Administration', 'dataset': 'Coded Instrument Flight Procedures',
+                 'licence': 'not copyrighted; supplied as is, without warranty; not for navigation',
+                 'method': 'register', 'resolution': 'flight procedures', 'period': PROVENANCE_PERIODS['faa-cifp']},
+    'adsb-runway-use': {'publisher': 'Sky Score, from adsb.lol aircraft positions', 'dataset': 'Runway use counted',
+                        'licence': 'ODbL 1.0', 'method': 'derived', 'resolution': 'airport', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'nyc-curated': {'publisher': 'Sky Score', 'dataset': 'New York borough inputs, from public New York City sources',
+                    'method': 'curated', 'resolution': 'borough', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'nypd-compstat': {'publisher': 'NYPD', 'dataset': 'CompStat-derived offence rates per 1,000', 'method': 'statistic',
+                      'resolution': 'borough', 'period': NOT_RECORDED,
+                 'note': _NOT_RECORDED_NOTE},
+    'nyc-faa-estimate': {'publisher': 'Sky Score', 'dataset': 'Aircraft estimate from FAA routes, fitted to Port '
+                         'Authority of New York and New Jersey monitors (January-July 2026)', 'method': 'estimated',
+                         'resolution': 'computed for the place', 'period': 'January-July 2026'},
+    'census-acs': {'publisher': 'US Census Bureau', 'dataset': 'ACS 2020-2024 population by ZCTA',
+                   'licence': 'public domain', 'method': 'statistic', 'resolution': 'ZIP code tabulation area',
+                   'period': '2020-2024'},
+    'census-acs-b25077': {'publisher': 'US Census Bureau', 'dataset': 'American Community Survey 2020-2024, table '
+                          'B25077 (median value of owner-occupied homes)', 'licence': 'public domain',
+                          'method': 'statistic', 'resolution': 'city', 'period': '2020-2024'},
+    'fhfa-hpi': {'publisher': 'Federal Housing Finance Agency', 'dataset': 'House Price Index for counties (annual, '
+                 'all-transactions)', 'licence': 'public domain; no FHFA endorsement is implied', 'method': 'statistic',
+                 'resolution': 'county', 'period': NOT_RECORDED, 'note': _NOT_RECORDED_NOTE},
+    'ca-doj-openjustice': {'publisher': 'California Department of Justice', 'dataset': 'OpenJustice Crimes and '
+                           'Clearances', 'licence': 'public domain', 'method': 'statistic',
+                           'resolution': 'police agency', 'period': '2025'},
+    'bts-transit-stops': {'publisher': 'US Bureau of Transportation Statistics', 'dataset': 'National Transit Map Stops',
+                          'licence': 'CC BY 3.0 US', 'method': 'register', 'resolution': 'share of the residents',
+                          'period': NOT_RECORDED, 'note': _NOT_RECORDED_NOTE},
+    'census-2020-blocks': {'publisher': 'US Census Bureau', 'dataset': '2020 Census block population (P.L. 94-171)',
+                           'licence': 'public domain', 'method': 'statistic', 'resolution': 'census block',
+                           'period': '2020'},
+    'bts-noise-map': {'publisher': 'US Bureau of Transportation Statistics', 'dataset': 'National Transportation '
+                      'Noise Map 2022 (road, 24-hour LAeq)', 'licence': 'US government work', 'method': 'modelled',
+                      'resolution': 'share of the residents', 'period': '2022',
+                      'caveat': 'BTS says it should not be used to evaluate noise levels at individual locations'},
+    'fema-nfhl': {'publisher': 'FEMA', 'dataset': 'National Flood Hazard Layer, Special Flood Hazard Area (1% annual '
+                  'chance)', 'licence': 'public domain', 'method': 'modelled', 'resolution': 'share of the residents',
+                  'period': NOT_RECORDED, 'note': _NOT_RECORDED_NOTE},
+    'bayarea-faa-estimate': {'publisher': 'Sky Score', 'dataset': 'Aircraft estimate from the FAA routes of San '
+                             "Francisco, Oakland and San Jose, fitted to SFO's and San Jose's noise monitors",
+                             'method': 'estimated', 'resolution': 'computed for the place',
+                             'period': 'July 2025-June 2026'},
+    'who-noise-2018': {'publisher': 'World Health Organization', 'dataset': 'Environmental Noise Guidelines for the '
+                       'European Region (2018)', 'method': 'reference', 'period': '2018'},
+    'who-aq-2021': {'publisher': 'World Health Organization', 'dataset': 'Global air quality guidelines (2021)',
+                    'method': 'reference', 'period': '2021'},
+}
+
+# A credit line (in `sources`, or a figure's own *Source line) -> the registry ids it names. Matched from the
+# START of the line, so a line no pattern knows stays unmatched and tests/test_provenance.py names it.
+PROVENANCE_LINE_IDS = (
+    (r'Prices: HM Land Registry', ('hmlr-hpi',)),
+    (r'Prices: curated New York', ('nyc-curated',)),
+    (r'Inflation: ONS CPIH', ('ons-cpih',)),
+    (r'Transport access: DfT NaPTAN', ('dft-naptan',)),
+    (r'Healthcare access: NHS Organisation Data Service', ('nhs-ods',)),
+    (r'Postcode resolution: ONS National Statistics Postcode Lookup', ('ons-nspl',)),
+    (r'Borough metadata: ONS .*Department for Education', ('ons-crime-c4', 'dfe-ks4')),
+    (r'Borough metadata: ONS', ('ons-crime-c4',)),
+    (r'Borough metadata: curated from public New York', ('nyc-curated',)),
+    (r'Crime: NYPD CompStat', ('nypd-compstat',)),
+    (r'Crime: ONS Crime in England and Wales', ('ons-crime-c4',)),
+    (r'Schools: Department for Education, Key Stage 4 Progress 8', ('dfe-ks4',)),
+    (r'Transport: NaPTAN', ('dft-naptan',)),
+    (r'Healthcare: NHS Organisation Data Service', ('nhs-ods',)),
+    (r'Postcode resolution: postcodes\.io', ('postcodes-io',)),
+    (r'Aviation noise context: ESTIMATED from .*published in the UK AIP', ('uk-aip', 'defra-noise-aircraft')),
+    (r'Aviation noise context: ESTIMATED from .*runway \S+ geometry', ('ourairports', 'defra-noise-aircraft')),
+    (r'Flight routes: FAA Coded Instrument Flight Procedures', ('faa-cifp',)),
+    (r'Runway use: counted by Sky Score from aircraft positions', ('adsb-runway-use',)),
+    (r'Aviation noise context: DEFRA', ('defra-noise-aircraft',)),
+    (r'Aviation noise context: ESTIMATED from the FAA routes of JFK', ('nyc-faa-estimate',)),
+    (r'Aviation noise context: ESTIMATED from the FAA routes of San Francisco', ('bayarea-faa-estimate',)),
+    (r'Borough aircraft band: .*Census', ('census-acs',)),
+    (r'Flight routes: UK Aeronautical Information Publication', ('uk-aip',)),
+    (r'Air quality: DEFRA background', ('defra-pcm',)),
+    (r'DEFRA background pollution maps \(PCM\)', ('defra-pcm',)),
+    (r'Road noise: DEFRA', ('defra-noise-road',)),
+    (r'DEFRA Strategic Noise Mapping Round 4, road', ('defra-noise-road',)),
+    (r'DEFRA Strategic Noise Mapping Round 4, aircraft', ('defra-noise-aircraft',)),
+    (r'Flood risk: Environment Agency', ('ea-rofrs',)),
+    (r'Prices: US Census Bureau, American Community Survey', ('census-acs-b25077',)),
+    (r'Price trend: Federal Housing Finance Agency', ('fhfa-hpi',)),
+    (r'Residents: US Census Bureau, 2020 Census block', ('census-2020-blocks',)),
+    (r'Road noise: USDOT Bureau of Transportation Statistics', ('bts-noise-map',)),
+    (r'Flood risk: FEMA National Flood Hazard Layer', ('fema-nfhl',)),
+    (r'Licence note:', ()),
+)
+
+# A figure carried beside its own credit line: that line names exactly the map that answered.
+_OWN_SOURCE_LINE = {
+    'roadNoiseLdenDb': 'roadNoiseSource', 'roadNoiseBelowDb': 'roadNoiseSource',
+    'no2AnnualMeanUgm3': 'airQualitySource', 'pm25AnnualMeanUgm3': 'airQualitySource',
+    'aircraftNoiseLdenDb': 'aircraftNoiseSource',
+}
+# Fields that describe the response rather than the place.
+_DESCRIBES_ITSELF = ('growthBasis', 'environmentSingleInput', 'priceTopCoded')
+
+# Which credit lines feed each component, by the line's own prefix.
+_COMPONENT_LINES = {
+    'afford': ('Prices',),
+    'growth': ('Prices', 'Price trend', 'Inflation'),
+    'live': ('Borough metadata', 'Crime', 'Schools', 'Transport access', 'Transport', 'Healthcare access', 'Healthcare',
+             'Liveability'),
+    'env': ('Air quality', 'Road noise', 'Flood risk'),
+}
+
+
+_LIVEABILITY_INPUTS = (('Progress 8', 'dfe-ks4'), ('Table C4', 'ons-crime-c4'), ('NaPTAN', 'dft-naptan'),
+                       ('NHS Organisation Data Service', 'nhs-ods'), ('OpenJustice', 'ca-doj-openjustice'),
+                       ('National Transit Map', 'bts-transit-stops'))
+
+
+def provenance_line_ids(line):
+    """The registry ids a credit line names; None when no pattern knows the line."""
+    if re.match(r'Liveability \(\d of \d inputs\):', line):
+        return tuple(i for word, i in _LIVEABILITY_INPUTS if word in line) or None
+    for pattern, ids in PROVENANCE_LINE_IDS:
+        if re.match(pattern, line):
+            return ids
+    return None
+
+
+def _ids_for(sources, prefixes):
+    out = []
+    for line in sources:
+        # The name before any '(3 of 4 inputs)': a line's count of inputs moves with the place.
+        if line.split(':', 1)[0].split(' (', 1)[0] in prefixes:
+            out += [i for i in (provenance_line_ids(line) or ()) if i not in out]
+    return out
+
+
+def _from_source(ids):
+    """An entry for a figure that IS one source's figure: its method, resolution and period."""
+    entry = {'sources': list(ids)}
+    if len(ids) == 1:
+        src = PROVENANCE_SOURCES[ids[0]]
+        entry.update({k: src[k] for k in ('method', 'resolution', 'period') if k in src})
+    return entry
+
+
+def _derived(ids, basis=None):
+    entry = {'sources': list(ids), 'method': 'derived'}
+    if basis:
+        entry['basis'] = basis
+    return entry
+
+
+def _quiet(body, sources):
+    tier = (body.get('context') or {}).get('quietResolution')
+    aviation = _ids_for(sources, ('Aviation noise context', 'Flight routes', 'Runway use', 'Borough aircraft band',
+                                  'Residents'))
+    if tier == 'raster':
+        # DEFRA's map read at the postcode, through Sky Score's ramp (METHODOLOGY 4.5).
+        return {**_derived([i for i in aviation if i.startswith('defra-noise')]), 'basis': 'raster'}
+    if tier == 'postcode':
+        estimate = [i for i in aviation if not i.startswith('defra-noise') and i != 'census-acs']
+        entry = {'sources': estimate, 'method': 'estimated', 'basis': 'postcode'}
+        if 'defra-noise-aircraft' in aviation:
+            entry['fittedTo'] = 'defra-noise-aircraft'
+        return entry
+    return _derived(aviation, basis=tier)
+
+
+def build_provenance(body):
+    """({field path: entry}, {source id: registry record}) for a /v1/score or /v1/environment body.
+
+    Values only: a *Source line, a *Resolution, `growthBasis` and the like ARE provenance and get no entry.
+    A value no rule covers gets {'sources': [], 'method': None}: absence said, never filled (the gate fails on it).
+    """
+    sources = [s for s in body.get('sources', []) if isinstance(s, str)]
+    ctx = body.get('context') or body.get('environment') or {}
+    section = 'context' if 'context' in body else 'environment'
+    out = {}
+
+    for comp in (body.get('components') or {}):
+        if comp == 'quiet':
+            out['components.quiet'] = _quiet(body, sources)
+        else:
+            # No basis copied from `coverage` here: its 'measured' means the inputs are PRESENT, and this object
+            # keeps that word for an instrument's reading. `coverage` still says how many inputs answered.
+            out[f'components.{comp}'] = _derived(_ids_for(sources, _COMPONENT_LINES.get(comp, ())))
+
+    if 'score' in body and isinstance(body['score'], (int, float)):
+        # The headline is the weighted sum of the components sent, so it credits all of theirs.
+        out['score'] = _derived(sorted({i for k, e in out.items() if k.startswith('components.')
+                                         for i in e['sources']}))
+
+    prices = _ids_for(sources, ('Prices',))
+    # A trend from its own source where it has one (the Bay Area's FHFA county index), else the price source's.
+    trend = _ids_for(sources, ('Price trend',)) or prices
+    inflation = _ids_for(sources, ('Inflation',))
+    for key in ctx:
+        path = f'{section}.{key}'
+        if key.endswith(('Source', 'Resolution', 'Coverage')) or key in _DESCRIBES_ITSELF:
+            continue
+        own = ctx.get(_OWN_SOURCE_LINE.get(key, ''))
+        if 'WhoGuideline' in key:
+            out[path] = _from_source(['who-noise-2018' if 'Noise' in key else 'who-aq-2021'])
+        elif isinstance(own, str) and provenance_line_ids(own):
+            out[path] = _from_source(provenance_line_ids(own))
+        elif key in ('avgPriceGbp', 'avgPriceUsd', 'avgPriceUsdAtLeast'):
+            out[path] = _from_source(prices)
+        elif key in ('priceTrendPct', 'priceTrendArea'):
+            out[path] = _from_source(trend)
+        elif key == 'inflationPct':
+            out[path] = _from_source(inflation)
+        elif key == 'priceTrendRealPct':
+            out[path] = _derived(trend + inflation)
+        elif key == 'priceRankInCity':
+            out[path] = _derived(prices)
+        elif key == 'growthRankInCity':
+            out[path] = _derived(trend + inflation)
+        elif key in ('noiseImpactBand', 'aircraftQuiet'):
+            out[path] = _derived((out.get('components.quiet') or {}).get('sources')
+                                 or provenance_line_ids(ctx.get('aircraftNoiseSource', '')) or [])
+        else:
+            out[path] = {'sources': [], 'method': None}
+
+    loc = body.get('location') or {}
+    if loc.get('postcode') and loc.get('city') not in ('nyc', 'bayarea', None):
+        resolver = _ids_for(sources, ('Postcode resolution',))
+        for key in ('latitude', 'longitude', 'borough', 'region'):
+            if key in loc:
+                out[f'location.{key}'] = _from_source(resolver)
+
+    used = sorted({i for e in out.values() for i in e.get('sources', []) + [e.get('fittedTo')] if i})
+    index = {i: PROVENANCE_SOURCES[i] for i in used}
+    return out, index
+
+
+def with_provenance(body, sent=None):
+    """`sent` (the body after filter_response; `body` itself when unfiltered) with `provenance` and `sourceIndex`
+    for the values it CARRIES. Built from the FULL body, so the headline score still credits its components and
+    quiet tier when ?include=score drops them; then cut to the fields sent, so nothing describes a field the
+    caller never got."""
+    sent = body if sent is None else sent
+    prov, _ = build_provenance(body)
+    kept = {k: e for k, e in prov.items() if k.split('.', 1)[0] in sent}
+    if kept:
+        used = sorted({i for e in kept.values() for i in e['sources'] + [e.get('fittedTo')] if i})
+        sent['provenance'], sent['sourceIndex'] = kept, {i: PROVENANCE_SOURCES[i] for i in used}
+    return sent
+
+
 RESPONSE_FIELDS = {
     'score',
     'components',
@@ -10268,6 +10594,9 @@ RESPONSE_FIELDS = {
     # filter was quietly breaking that promise. It is also in filter_response's
     # always-kept set: listing it here alone would only make it requestable.
     'coverage',
+    # Built AFTER the filter (with_provenance), so they always describe exactly what was sent.
+    'provenance',
+    'sourceIndex',
 }
 
 
@@ -10733,7 +11062,7 @@ def resolve_query(query):
     # Bay Area response they credited UK bodies with no NOT, the defect test_non_uk_city_never_credits_uk_bodies
     # guards against, unseen because that test did not read this block. Neither is planned for a US city.
     if not uk_shape(city):
-        return filter_response(body, include), 200
+        return with_provenance(body, filter_response(body, include)), 200
     body['plannedComponents'] = {
         'epcDistribution': {
             'status': 'planned',
@@ -10751,7 +11080,7 @@ def resolve_query(query):
             'eta': 'roadmap',
         },
     }
-    return filter_response(body, include), 200
+    return with_provenance(body, filter_response(body, include)), 200
 
 
 def handle_options():
@@ -11163,13 +11492,13 @@ def handle_environment(event):
 
     return response(
         200,
-        {
+        with_provenance({
             'location': {'lat': lat, 'lon': lon, 'postcode': pc},
             'environment': env,
             'notices': notices,
             'apiVersion': API_VERSION,
             'methodologyVersion': METHODOLOGY_VERSION,
-        },
+        }),
     )
 
 
@@ -11457,10 +11786,15 @@ def handle_batch(event, context=None):
     results = []
     success = 0
     error = 0
+    # ONE sourceIndex for the batch (Bill, 2026-10-23): each result keeps its own `provenance`, whose ids all
+    # resolve here, so a 100-place batch does not carry the same source records 100 times to an agent that pays
+    # for every byte it reads.
+    source_index = {}
     for idx, (body, status) in outcomes:
         result = {'queryIndex': idx, 'status': status}
         if status == 200:
             result.update(body)
+            source_index.update(result.pop('sourceIndex', {}))
             success += 1
         else:
             result['error'] = body.get('error', 'Unknown error')
@@ -11494,6 +11828,7 @@ def handle_batch(event, context=None):
             'sources': build_batch_sources(
                 r.get('location', {}).get('city') for r in results
             ),
+            **({'sourceIndex': dict(sorted(source_index.items()))} if source_index else {}),
             'results': results,
         },
     )

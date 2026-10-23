@@ -21,7 +21,7 @@ When something new is learned: add the one-line rule here and the story to the l
 | `map-layers-and-legends.md` | fill layers, legends, `FILL_LAYER_COLOURS`, noise-legend palettes, panel caveat |
 | `neighbourhoods-and-stations.md` | PPD medians, generated neighbourhoods, NaPTAN stations, area labels, "best value" |
 | `in-progress-measurements.md` | AURN monitors, Breathe London sensors, how often planes pass (adsb.lol vs CAA) |
-| `public-surfaces.md` | `/badge`, area pages, free tier, route throttles, signup verification (I17) |
+| `public-surfaces.md` | `/badge`, area pages, free tier, route throttles, signup verification (I17), per-field provenance |
 | `us-cities.md` | `/bay-area/`, Bay Area releases 1-2, the US noise yardstick, New York v5.6-v5.7 |
 | `product-rules.md` | scale direction, branding, why there is no basemap |
 | `quality-gates.md` | preflight stages, responsive / a11y gates, `/aws-debug` history |
@@ -161,6 +161,11 @@ Or just describe what you need, I have full context of this project.
 - **A parity claim is a claim about a holder: read it, never retype it.** The Bay Area's transport bands were
   typed (50/25/10) and called "the UK's" (75/50/25) to Bill; they are now parsed from `build_borough_bands.py`.
   Likewise an anchor counts only what its unit can (the crime anchor: agencies policing residents, 21.39).
+- **Every value's provenance is built from the response that answered** (`with_provenance`, from the full body,
+  then cut to what `?include=` sends; 2026-10-23). A new context field or credit line needs its rule and its
+  registry source (`backend/tests/test_provenance.py` names it); a loader roll moves `PROVENANCE_PERIODS` with it
+  (`tests/test_provenance_periods.py`); a credit-line pattern names its city's OWN airports (the Bay Area once
+  matched New York's); only an instrument's reading is `measured`: DEFRA's and the EA's maps are `modelled`.
 
 ### Frontend
 - **One registry, `CITY_DATA`.** No `if (city === 'x')`; add a registry field to ALL cities

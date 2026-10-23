@@ -239,7 +239,7 @@ async def test_a_coordinate_off_the_globe_is_refused(wire):
 def test_the_instructions_keep_the_wording_rules():
     rules = s.INSTRUCTIONS
     for phrase in ('ESTIMATE', 'how OFTEN', 'POSTCODES', 'never fill the gap', 'sources', 'UK AIP (NATS)',
-                   '"as is"', 'not advice'):
+                   '"as is"', 'not advice', 'provenance', 'call a modelled figure measured'):
         assert phrase in rules, phrase
 
 

@@ -63,6 +63,9 @@ these rules:
   guess or a typical value.
 - End every answer that uses a figure with the response's `sources` (UK routes are credited "UK AIP (NATS)";
   carry the FAA's "as is" line wherever it appears). Do not describe the whole product as "open government data".
+- Each figure's `provenance` says how it was made (`method`: modelled, statistic, estimated...) and for what
+  `period`; `sourceIndex` names the source. Say both as given ("DEFRA's modelled road noise for 2021"), and never
+  call a modelled figure measured.
 - This is information, not advice: not a survey, a valuation or a conveyancing search.
 """
 

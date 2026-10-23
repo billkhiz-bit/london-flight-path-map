@@ -54,6 +54,15 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > mock-ups made for Bill (the link is in NOW.md). **For Bill:** buildings or floor space; where it shows; scale up
 > (London ~70 tiles) or not; the ONS address file's postcode licence if matching each address. `docs/lessons/building-heights.md`.
 >
+> **Per-field provenance: BUILT on branch `provenance-per-field` (23 Oct, Bill: "run it and finish it"), on top of
+> `modelled-not-measured` (DEFRA's maps called modelled, not measured; also not live).** Every value says its source,
+> method and period (`provenance` + `sourceIndex`; batch carries the index once; OpenAPI + MCP instruction updated).
+> **Deploy as its own reviewed SAM changeset AFTER Thursday's FAA (2611) and Bay Area (Part B) ones, then
+> `demo-deploy` for the spec, then `web-deploy` for `/api/`.** Merging onto post-Thursday `what-matters`: FAA 2611
+> moves the FAA record, so move `PROVENANCE_PERIODS['faa-cifp']` in the same merge (`tests/test_provenance_periods.py`
+> reds otherwise), and re-run `backend/tests/test_provenance.py` against the merged Bay Area ZIP routing. Held until
+> a buyer asks: the website showing it, registers stamping their retrieval date, source URLs.
+>
 > ## START HERE (2026-10-22, evening)
 >
 > **The Bay Area is SCORED BY THE API, in source (`CITIES['bayarea']`; NOT deployed).** The 50 cities answer

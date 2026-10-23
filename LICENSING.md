@@ -152,6 +152,7 @@ Third-party code the site serves from its own origin (vendored in `js/vendor/`, 
 |---|---|
 | `/v1/score` response | `sources` array (always returned) + `sourceBreakdown` per-component |
 | `/v1/score/batch` response | Same `sources` array on the wrapper |
+| Per-field provenance (built 2026-10-23, live after 29 Oct) | `provenance` names each value's source, method and period; `sourceIndex` carries each source's publisher, dataset and licence (once per batch). Additive to `sources` |
 | `/epc`, `/sold_prices`, `/transport`, `/nhs` responses | Each has its own `sources` array |
 | Consumer site | Footer link: "Methodology v5.0" → links to the methodology document which lists every source with full attribution + licence |
 | Methodology document (`METHODOLOGY.md`) | Section 11 enumerates every source + licence reference |

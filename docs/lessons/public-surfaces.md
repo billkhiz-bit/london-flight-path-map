@@ -1,4 +1,4 @@
-# Public surfaces: badge, area pages, throttles, signup
+# Public surfaces: badge, area pages, throttles, signup, provenance
 
 > Moved verbatim from `CLAUDE.md` on 2026-10-17 to keep the session-start file small.
 > The /badge SVG and its edge cache, area pages, free tier, route throttles, OPTIONS auth, verification-first signup (I17).
@@ -189,3 +189,36 @@ OPERATIONS.md s3.9 is the runbook, and privacy.html s2a changes in the SAME
 deploy as the flip, not before. **The code is DEPLOYED (2026-09-15, same SAM
 deploy as v5.1): the table exists, the route answers, the flag is off.**
 
+## Per-field provenance (2026-10-23)
+
+**Why.** Bill read Mireye's pitch (US-only, "every returned field carries a source name and a confidence level") and
+asked whether Sky Score should do the same. We already credited sources, but as prose for people: `sources` lines,
+`sourceBreakdown` paragraphs, each dataset's period inside a sentence. No agent could map `no2AnnualMeanUgm3` to
+"DEFRA PCM, 2024, 1 km grid, OGL" without parsing English. Looking also found DEFRA's MODELLED maps called
+"measured" on the developer surfaces (fixed first, `tests/test_modelled_not_measured.py`) and an MCP tool promising
+a flood value `/v1/environment` never returns.
+
+**The design: a function of the response, never of configuration.** `build_provenance(body)` reads what ANSWERED:
+the city's own credit lines (already right per city and tier), `quietResolution`, and the credit line printed beside
+a figure (`roadNoiseSource`). `PROVENANCE_LINE_IDS` matches each line to a registered source (`PROVENANCE_SOURCES`:
+publisher, dataset, licence, method, resolution, period). TW3 4LB's `sources` lists the UK AIP, but the raster
+answered its Quiet Skies, so only DEFRA is credited there. `sources` and `sourceBreakdown` stay byte for byte.
+
+**Three defects found by building it, each now a test proven red.** (1) Built AFTER `filter_response`,
+`?include=score` left the headline crediting nothing (its components were filtered away): built from the full body,
+then cut. (2) The Bay Area's aircraft line ("ESTIMATED from the FAA routes of San Francisco...") matched New York's
+pattern, so Palo Alto would have credited the Port Authority's monitors, and seven of its ten lines matched nothing;
+patterns now name each metro's own airports, and Palo Alto is a fixture (the branch's own output: the Bay Area is
+not live). (3) The first draft copied `coverage.basis: "measured"` (which means PRESENT) into the new object; the
+method vocabulary keeps "measured" for instruments only.
+
+**Not recorded is said, not guessed.** NaPTAN, NHS ODS, the EA flood mosaic, FHFA, FEMA and the curated New York
+inputs have no edition we hold: `period` is null with a `note` saying when we last took a copy is not recorded yet.
+The follow-up (only if a buyer asks): builders stamp their retrieval date. Also left as it was, because renaming
+breaks integrators: `coverage.live.measuredAtLocation` is true for a borough-level composite.
+
+**Cost.** 0.148 ms per response; a UK response grows 5.8 KB to 11.4 KB, which costs an AGENT tokens rather than us
+money, so a batch carries `sourceIndex` once at the top. Bill's view of the money (2026-10-23): provenance sells
+nothing by itself; it removes an objection for councils (bids cite evidence), data marketplaces (lineage
+questionnaires) and agent platforms, and the binding constraint is still the outreach gates. Finish it, extend it
+only when a buyer asks.
