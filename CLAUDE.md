@@ -131,6 +131,10 @@ Or just describe what you need, I have full context of this project.
   `remove_lost_readings.py --apply`.
 - **A data roll is done only when every reader of the file has run** (HANDOVER s0 step 7). Area pages BAKE
   scores: rerun `build_area_pages.py --write` after any vintage roll.
+- **Quarterly crime roll** (first done 2026-10-23): set `EDITION` + `XLSX_FILE` in `refresh_crime_from_ons.py`
+  (copied from the ONS page, never its `current` folder), then `--write-lambda --all`, `--write --all`,
+  `--check --all`, `build_area_pages.py --write`, and re-derive METHODOLOGY s6 (`check_worked_example.py`);
+  `CRIME_EDITION_LABEL` must equal `edition_label()` (tests/test_provenance_periods.py).
 - **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh`; it must move `SNAPSHOT_VINTAGE_LABEL`,
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.

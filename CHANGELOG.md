@@ -2,6 +2,8 @@
 
 ## 2026-10-23 - Who is behind Sky Score; the answer first; a menu on phones
 
+- **Crime figures are now ONS's year to June 2026** (live after 29 October), one quarter newer. Most areas
+  move by a few offences per 1,000 residents; eight overall scores change, each by 0.1.
 - **An About page** (`/about/`): who Sky Score is for, why it was built and by whom, the questions people have
   asked about it at talks, and the talks themselves. Linked from every page's top bar and footer.
 - **The front page opens on an answer**: a street in Kew under Heathrow's arrivals, labelled as an example, so

@@ -1128,8 +1128,11 @@ LAMBDA_FIELDS = (
 NAME_ALIASES = {'Barking': 'Barking and Dagenham'}
 
 
-def write_lambda(results, write):
+def write_lambda(results, write, fields=LAMBDA_FIELDS):
     """Put the derived SCORING fields into the score Lambda's borough dicts.
+
+    `fields` is LAMBDA_FIELDS for this builder; refresh_crime_from_ons.py --write-lambda passes ('crimeRate',)
+    (2026-10-23), so the crime roll writes the Lambda's copy with this same city-scoped writer, not by hand.
 
     WHY THIS EXISTS AND WHY ROAD NOISE STILL DOES NOT. Anything the Lambda
     SCORES has to live in both holders, because the Lambda scores from its own
@@ -1189,7 +1192,7 @@ def write_lambda(results, write):
             # block range computed once goes stale after the first write.
             at = src.find(anchor)
             city_start, city_end = block_extent(src, src.index('{', at))
-            for field in LAMBDA_FIELDS:
+            for field in fields:
                 value = rec.get(field)
                 if value is None:
                     continue

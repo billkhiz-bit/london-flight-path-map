@@ -1401,7 +1401,7 @@ avgPrice:             694210      # HM Land Registry UK HPI, 2026-08 vintage
 trend:                -5.3        # annualised %, same source (nominal)
 trendReal:            -8.3        # v5.1: after CPIH of 3.3% for August 2026 (ONS L55O)
 p8:                   0.49        # DfE Key Stage 4 Progress 8, 2023/24 Revised
-crimeRate:            76.4        # ONS Table C4, offences per 1,000
+crimeRate:            76.6        # ONS Table C4, offences per 1,000 (year ending June 2026)
 transport:            'good'      # NaPTAN, share of postcodes within 800 m
 healthcare:           'excellent' # NHS ODS, GP practices within 500 m
 airQualityWhoRatio:   1.89        # DEFRA PCM 2024, worse of NO2/PM2.5 vs WHO 2021
@@ -1494,13 +1494,13 @@ transport 0.25 / healthcare 0.10:
 
 ```
 schools     p8 0.49          -> 7.45   (§4.4, anchored on the DfE 0.0 average)
-crime       76.4 per 1,000   -> 8.24   (§4.4)
+crime       76.6 per 1,000   -> 8.23   (§4.4)
 transport   'good'           -> 7      (TRANSPORT_SCORE)
 healthcare  'excellent'      -> 10     (HEALTH_SCORE)
 
-live = 7.45 x 0.35 + 8.24 x 0.30 + 7 x 0.25 + 10 x 0.10
-     = 2.6075 + 2.472 + 1.750 + 1.000
-     = 7.8295
+live = 7.45 x 0.35 + 8.23 x 0.30 + 7 x 0.25 + 10 x 0.10
+     = 2.6075 + 2.469 + 1.750 + 1.000
+     = 7.8265
      -> 7.8
 ```
 
@@ -1550,7 +1550,9 @@ is now priced against the country instead of against the other 32 London
 boroughs. The October 2026 air-quality roll gave 0.1 back. (The July 2026 roll moved affordability
 0.4 -> 0.3 and growth 3.6 -> 3.2; the total held at 5.0 because growth carries
 no weight here and 0.027 of affordability did not cross a rounding boundary.
-The August 2026 roll moved growth 3.2 -> 2.6 and the total not at all.)
+The August 2026 roll moved growth 3.2 -> 2.6 and the total not at all. The October 2026 crime roll, ONS
+year ending June 2026, moved Wandsworth's rate 76.4 -> 76.6 and its crime sub-score 8.24 -> 8.23;
+liveability stayed 7.8.)
 
 ### Step 5, Verification against the live API
 
@@ -2377,6 +2379,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-10-23 (no version change)**, **crime rates rolled to ONS year ending June 2026, the first quarterly crime roll.** ONS Table C4 (released 22 October 2026, still on mid-2024 population) moved 91 of the 93 borough rates it publishes for our thirteen UK cities, most by 0-3 offences per 1,000 (Westminster 355.5 -> 342.1, its crime sub-score already 0). Written into BOTH holders by code for the first time: `refresh_crime_from_ons.py --write-lambda --all` (the Lambda's copy, through build_borough_bands' city-scoped writer), then `--write --all` (the site's); `--check --all` and tests/test_borough_data_parity.py agree. Effects: liveability moves on 31 of 97 UK boroughs and the `balanced` score on 8, each by 0.1 (Rotherham 7.9 -> 7.8, City of Bristol 6.8 -> 6.9, Ealing 3.9 -> 3.8); section 6's Wandsworth moves 76.4 -> 76.6 and 8.24 -> 8.23, liveability still 7.8, total still 5.1. The edition every credit line names is now one constant, `CRIME_EDITION_LABEL`, derived like the site's `crimeVintage` from the script's EDITION: the site's label had been typed text and would have said March over June's rates.
 - **2026-10-23 (no version change)**, **every value says where it came from (`provenance`, `sourceIndex`).** (1) *Gap:* provenance was prose for people (`sources`, `sourceBreakdown`), with each dataset's period inside a sentence, so an integrator or an AI agent could not pass a figure's source, method and year through without parsing English. (2) *Fix:* each response gains `provenance`, one entry per value (its `sources`, its `method`: measured, modelled, statistic, register, curated, estimated, derived or reference; and, for a source's own figure, `resolution` and `period`), and `sourceIndex`, the sources used. It is built from what answered (the city's credit lines, the quiet tier, the line beside a figure), from the full response and then cut to the fields sent; a batch carries `sourceIndex` once. Periods are held equal to the loaders' own settings by a test. (3) *Effect:* additive; no existing field, value or score changes, so no version bump.
 - **2026-10-23 (no version change)**, **DEFRA's and the Environment Agency's figures are described as modelled, not measured.** (1) *Defect:* the API page, the OpenAPI descriptions of `liveResolution` / `environmentResolution` and of the raster tier, this file's own sections 4.5 and 7.4-7.4.1 and its worked example (step 3), the README, and the MCP server's `environment_at` tool called DEFRA's strategic noise maps and PCM air values, and the Environment Agency's flood map, "measured"; all three are model outputs (the consumer page `/how-it-works/` already said so), and the codebase keeps "measured air quality" for the AURN and Breathe London sensors. The MCP tool also promised a flood value `/v1/environment` never returns. (2) *Fix:* the descriptions say modelled; `measured` as a VALUE of the resolution fields is kept and defined as present for this place, and `measuredAtLocation` as read at this location, because renaming a field breaks integrators. (3) *Effect:* no field, value or score changes, so no version bump.
 - **2026-10-22 (no version change)**, **monthly vintage roll to August 2026 HPI, all thirteen UK cities, the second roll inside a quarter.** `avgPrice`/`trend` moved to HPI 2026-08 in BOTH holders (80 of 97 prices, 95 of 97 trends), the deflator to ONS CPIH for August (3.3%, from July's 3.1%), and every area page and the worked example on `/how-it-works/` were rebuilt. The quarter key stays `2026-Q3` and the previous snapshot stays May, as at the July roll. Effects: **`balanced` barely moves** - 21 of 97 scores by 0.1 (52 affordability components moved; balanced weights growth at 0.00); **`investor` moves on 75 of 97**, the largest Calderdale 6.9 -> 8.3 and Wolverhampton 7.6 -> 6.5, ordinary monthly HPI noise in small cohorts (ROADMAP item 9). Both of the sterling pool's growth anchors moved: its steepest real-terms fall is now the City of London's -17.3% (Westminster's -23.1% in July; Westminster eased to -17.0%), and its fastest riser Calderdale's +4.4% (Trafford's +6.3% in July), so Calderdale scores the pool's 10.0 and every falling area is scaled against a shallower fall. Nothing about the method moved.

@@ -2,7 +2,7 @@
   "london": {
     "Hounslow": {
       "crime": "medium",
-      "crimeRate": 87.4,
+      "crimeRate": 87.6,
       "schools": "good",
       "schoolNote": "Several good schools including Lampton and Hounslow Heath. Grammar schools nearby in Slough.",
       "flood": "low",
@@ -17,24 +17,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 29.3,
-          "shareOfTotal": 33.5,
+          "ratePer1000": 30.0,
+          "shareOfTotal": 34.3,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 8.9,
-          "shareOfTotal": 10.1,
+          "ratePer1000": 8.8,
+          "shareOfTotal": 10.0,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.9,
-          "shareOfTotal": 10.1,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 8.5,
+          "shareOfTotal": 9.7,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.5,
@@ -56,7 +56,7 @@
     },
     "Hillingdon": {
       "crime": "low",
-      "crimeRate": 91.6,
+      "crimeRate": 92.6,
       "schools": "good",
       "schoolNote": "Good school provision including several Outstanding primaries. Vyners School well-regarded. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -72,23 +72,23 @@
         {
           "offence": "Violence against the person",
           "ratePer1000": 26.5,
-          "shareOfTotal": 28.9,
-          "vsLondonMedian": 1.0
+          "shareOfTotal": 28.6,
+          "vsLondonMedian": 0.9
         },
         {
           "offence": "Vehicle offences",
           "ratePer1000": 10.5,
-          "shareOfTotal": 11.5,
+          "shareOfTotal": 11.4,
           "vsLondonMedian": 1.3
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.8,
-          "shareOfTotal": 9.6,
+          "ratePer1000": 9.4,
+          "shareOfTotal": 10.2,
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.2,
@@ -110,7 +110,7 @@
     },
     "Richmond upon Thames": {
       "crime": "low",
-      "crimeRate": 57.3,
+      "crimeRate": 56.5,
       "schools": "excellent",
       "schoolNote": "Multiple Outstanding primaries. Strong grammar school presence in neighbouring Kingston. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -125,24 +125,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 15.1,
-          "shareOfTotal": 26.3,
-          "vsLondonMedian": 0.5
+          "ratePer1000": 15.7,
+          "shareOfTotal": 27.7,
+          "vsLondonMedian": 0.6
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 7.6,
-          "shareOfTotal": 13.3,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 7.7,
+          "shareOfTotal": 13.6,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Shoplifting",
           "ratePer1000": 5.7,
-          "shareOfTotal": 9.9,
+          "shareOfTotal": 10.1,
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.8,
@@ -164,7 +164,7 @@
     },
     "Ealing": {
       "crime": "medium",
-      "crimeRate": 80.5,
+      "crimeRate": 81.9,
       "schools": "good",
       "schoolNote": "Good schools throughout. Twyford CofE is Outstanding. Ellen Wilkinson school well-regarded. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -179,24 +179,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 26.3,
-          "shareOfTotal": 32.7,
+          "ratePer1000": 26.8,
+          "shareOfTotal": 32.8,
           "vsLondonMedian": 1.0
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 10.3,
-          "shareOfTotal": 12.7,
+          "ratePer1000": 10.5,
+          "shareOfTotal": 12.8,
           "vsLondonMedian": 1.3
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 6.0,
-          "shareOfTotal": 7.5,
+          "ratePer1000": 6.4,
+          "shareOfTotal": 7.8,
           "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.5,
@@ -218,7 +218,7 @@
     },
     "Wandsworth": {
       "crime": "medium",
-      "crimeRate": 76.4,
+      "crimeRate": 76.6,
       "schools": "excellent",
       "schoolNote": "Some of London's best state schools. Graveney, Burntwood, multiple Outstanding primaries. Major draw for families. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
@@ -233,24 +233,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 22.1,
-          "shareOfTotal": 28.9,
+          "ratePer1000": 22.5,
+          "shareOfTotal": 29.4,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 8.1,
-          "shareOfTotal": 10.6,
+          "ratePer1000": 7.9,
+          "shareOfTotal": 10.3,
           "vsLondonMedian": 1.0
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 7.7,
-          "shareOfTotal": 10.0,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 7.8,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.2,
@@ -272,7 +272,7 @@
     },
     "Lambeth": {
       "crime": "high",
-      "crimeRate": 114.4,
+      "crimeRate": 116.5,
       "schools": "good",
       "schoolNote": "Dunraven School Outstanding. Several good primaries in Streatham and Clapham. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -287,24 +287,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 30.2,
+          "ratePer1000": 30.7,
           "shareOfTotal": 26.4,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Theft from the person",
-          "ratePer1000": 14.7,
-          "shareOfTotal": 12.8,
-          "vsLondonMedian": 4.0
+          "ratePer1000": 14.3,
+          "shareOfTotal": 12.3,
+          "vsLondonMedian": 4.2
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 9.5,
-          "shareOfTotal": 8.3,
-          "vsLondonMedian": 1.2
+          "ratePer1000": 10.4,
+          "shareOfTotal": 8.9,
+          "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.9,
@@ -326,7 +326,7 @@
     },
     "Lewisham": {
       "crime": "medium",
-      "crimeRate": 94.2,
+      "crimeRate": 96.8,
       "schools": "good",
       "schoolNote": "Prendergast and Haberdashers' well-regarded. Several Outstanding primaries in Blackheath area. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
@@ -341,24 +341,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 32.2,
-          "shareOfTotal": 34.1,
+          "ratePer1000": 33.1,
+          "shareOfTotal": 34.2,
           "vsLondonMedian": 1.2
         },
         {
-          "offence": "Vehicle offences",
-          "ratePer1000": 8.1,
-          "shareOfTotal": 8.6,
-          "vsLondonMedian": 1.0
+          "offence": "Shoplifting",
+          "ratePer1000": 9.4,
+          "shareOfTotal": 9.7,
+          "vsLondonMedian": 1.1
         },
         {
-          "offence": "Shoplifting",
-          "ratePer1000": 7.6,
-          "shareOfTotal": 8.1,
+          "offence": "Vehicle offences",
+          "ratePer1000": 7.9,
+          "shareOfTotal": 8.2,
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.2,
@@ -380,7 +380,7 @@
     },
     "Greenwich": {
       "crime": "medium",
-      "crimeRate": 90.3,
+      "crimeRate": 90.2,
       "schools": "good",
       "schoolNote": "Thomas Tallis well-regarded. Several Outstanding primaries in Blackheath and Eltham. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -395,24 +395,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 30.2,
-          "shareOfTotal": 33.5,
+          "ratePer1000": 30.8,
+          "shareOfTotal": 34.2,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.9,
-          "shareOfTotal": 9.9,
+          "ratePer1000": 8.8,
+          "shareOfTotal": 9.8,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 7.9,
-          "shareOfTotal": 8.7,
+          "ratePer1000": 8.0,
+          "shareOfTotal": 8.8,
           "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.6,
@@ -434,7 +434,7 @@
     },
     "Tower Hamlets": {
       "crime": "high",
-      "crimeRate": 106.6,
+      "crimeRate": 109.3,
       "schools": "good",
       "schoolNote": "Mulberry Academy Outstanding. Several strong primaries despite deprivation challenges. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -449,24 +449,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 31.3,
-          "shareOfTotal": 29.4,
+          "ratePer1000": 32.0,
+          "shareOfTotal": 29.3,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.9,
-          "shareOfTotal": 8.3,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 9.8,
+          "shareOfTotal": 8.9,
+          "vsLondonMedian": 1.2
         },
         {
-          "offence": "Drug offences",
-          "ratePer1000": 8.1,
-          "shareOfTotal": 7.6,
-          "vsLondonMedian": 1.3
+          "offence": "Theft from the person",
+          "ratePer1000": 8.0,
+          "shareOfTotal": 7.3,
+          "vsLondonMedian": 2.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "high",
       "roadNoiseLdenMedian": 56.6,
@@ -488,7 +488,7 @@
     },
     "Camden": {
       "crime": "high",
-      "crimeRate": 173.3,
+      "crimeRate": 173.5,
       "schools": "excellent",
       "schoolNote": "UCL Academy and strong primary provision. Many private school options.",
       "flood": "low",
@@ -503,24 +503,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 34.3,
-          "shareOfTotal": 19.8,
-          "vsLondonMedian": 1.2
+          "ratePer1000": 35.6,
+          "shareOfTotal": 20.5,
+          "vsLondonMedian": 1.3
         },
         {
           "offence": "Theft from the person",
-          "ratePer1000": 27.8,
-          "shareOfTotal": 16.0,
-          "vsLondonMedian": 7.7
+          "ratePer1000": 27.3,
+          "shareOfTotal": 15.7,
+          "vsLondonMedian": 8.0
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 18.8,
-          "shareOfTotal": 10.8,
-          "vsLondonMedian": 2.4
+          "ratePer1000": 19.2,
+          "shareOfTotal": 11.1,
+          "vsLondonMedian": 2.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "high",
       "roadNoiseLdenMedian": 59.0,
@@ -542,7 +542,7 @@
     },
     "Islington": {
       "crime": "high",
-      "crimeRate": 131.2,
+      "crimeRate": 133.9,
       "schools": "good",
       "schoolNote": "Highbury Grove and City of London Academy well-regarded. Competitive for primary places.",
       "flood": "low",
@@ -557,24 +557,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 32.1,
-          "shareOfTotal": 24.5,
+          "ratePer1000": 33.7,
+          "shareOfTotal": 25.2,
           "vsLondonMedian": 1.2
         },
         {
-          "offence": "Theft from the person",
-          "ratePer1000": 14.3,
-          "shareOfTotal": 10.9,
-          "vsLondonMedian": 3.9
+          "offence": "Shoplifting",
+          "ratePer1000": 16.8,
+          "shareOfTotal": 12.5,
+          "vsLondonMedian": 2.0
         },
         {
-          "offence": "Shoplifting",
-          "ratePer1000": 14.1,
-          "shareOfTotal": 10.7,
-          "vsLondonMedian": 1.8
+          "offence": "Theft from the person",
+          "ratePer1000": 14.2,
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 4.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 56.1,
@@ -596,7 +596,7 @@
     },
     "Hackney": {
       "crime": "high",
-      "crimeRate": 116.5,
+      "crimeRate": 117.5,
       "schools": "good",
       "schoolNote": "Mossbourne Academy Outstanding. Schools have improved significantly in recent years. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -611,24 +611,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 30.0,
+          "ratePer1000": 30.3,
           "shareOfTotal": 25.7,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Theft from the person",
-          "ratePer1000": 15.5,
-          "shareOfTotal": 13.3,
-          "vsLondonMedian": 4.3
+          "ratePer1000": 15.2,
+          "shareOfTotal": 12.9,
+          "vsLondonMedian": 4.5
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.7,
-          "shareOfTotal": 7.4,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 10.2,
+          "shareOfTotal": 8.7,
+          "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 55.2,
@@ -650,7 +650,7 @@
     },
     "Barnet": {
       "crime": "low",
-      "crimeRate": 67.8,
+      "crimeRate": 69.4,
       "schools": "excellent",
       "schoolNote": "Queen Elizabeth's Boys' and Henrietta Barnett are top grammar schools. Strong primary provision.",
       "flood": "low",
@@ -665,24 +665,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 19.4,
-          "shareOfTotal": 28.7,
+          "ratePer1000": 20.4,
+          "shareOfTotal": 29.4,
           "vsLondonMedian": 0.7
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 8.4,
-          "shareOfTotal": 12.3,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 8.7,
+          "shareOfTotal": 12.6,
+          "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 7.4,
-          "shareOfTotal": 10.9,
+          "ratePer1000": 7.8,
+          "shareOfTotal": 11.2,
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.8,
@@ -704,7 +704,7 @@
     },
     "Croydon": {
       "crime": "medium",
-      "crimeRate": 80.4,
+      "crimeRate": 81.6,
       "schools": "good",
       "schoolNote": "Harris Academy Outstanding. Several strong primaries. Selective schools nearby in Sutton. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -719,24 +719,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 27.4,
+          "ratePer1000": 27.8,
           "shareOfTotal": 34.1,
           "vsLondonMedian": 1.0
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 8.1,
-          "shareOfTotal": 10.1,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 8.7,
+          "shareOfTotal": 10.7,
+          "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 7.3,
-          "shareOfTotal": 9.1,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 8.0,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.8,
@@ -758,7 +758,7 @@
     },
     "Bromley": {
       "crime": "low",
-      "crimeRate": 69.1,
+      "crimeRate": 69.8,
       "schools": "excellent",
       "schoolNote": "Grammar school system (Newstead Wood, St Olave's nearby). Strong primary provision throughout.",
       "flood": "low",
@@ -773,24 +773,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 20.1,
-          "shareOfTotal": 29.1,
+          "ratePer1000": 20.4,
+          "shareOfTotal": 29.3,
           "vsLondonMedian": 0.7
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 9.5,
-          "shareOfTotal": 13.7,
+          "ratePer1000": 9.8,
+          "shareOfTotal": 14.0,
           "vsLondonMedian": 1.2
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 7.9,
-          "shareOfTotal": 11.5,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 7.8,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.7,
@@ -812,7 +812,7 @@
     },
     "Newham": {
       "crime": "high",
-      "crimeRate": 104.0,
+      "crimeRate": 106.3,
       "schools": "good",
       "schoolNote": "Brampton Manor sends many students to Oxbridge. Several new academies improving rapidly.",
       "flood": "low",
@@ -827,24 +827,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 28.9,
-          "shareOfTotal": 27.8,
-          "vsLondonMedian": 1.0
-        },
-        {
-          "offence": "Shoplifting",
-          "ratePer1000": 10.8,
-          "shareOfTotal": 10.4,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 29.7,
+          "shareOfTotal": 28.0,
+          "vsLondonMedian": 1.1
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 10.6,
-          "shareOfTotal": 10.2,
+          "ratePer1000": 11.5,
+          "shareOfTotal": 10.8,
+          "vsLondonMedian": 1.4
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 10.5,
+          "shareOfTotal": 9.9,
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "high",
       "roadNoiseLdenMedian": 54.8,
@@ -866,7 +866,7 @@
     },
     "Southwark": {
       "crime": "high",
-      "crimeRate": 120.8,
+      "crimeRate": 122.7,
       "schools": "good",
       "schoolNote": "Harris Academy group has multiple Outstanding academies. Charter School popular. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -881,24 +881,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 28.5,
-          "shareOfTotal": 23.6,
+          "ratePer1000": 29.2,
+          "shareOfTotal": 23.8,
           "vsLondonMedian": 1.0
         },
         {
           "offence": "Theft from the person",
-          "ratePer1000": 20.5,
-          "shareOfTotal": 17.0,
-          "vsLondonMedian": 5.7
+          "ratePer1000": 20.4,
+          "shareOfTotal": 16.6,
+          "vsLondonMedian": 6.0
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.2,
-          "shareOfTotal": 6.8,
+          "ratePer1000": 9.1,
+          "shareOfTotal": 7.4,
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.0,
@@ -920,7 +920,7 @@
     },
     "Hammersmith and Fulham": {
       "crime": "medium",
-      "crimeRate": 107.0,
+      "crimeRate": 106.8,
       "schools": "excellent",
       "schoolNote": "Lady Margaret, Sacred Heart Outstanding. Strong primary provision throughout. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -935,24 +935,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 30.8,
-          "shareOfTotal": 28.8,
+          "ratePer1000": 30.6,
+          "shareOfTotal": 28.6,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 12.4,
-          "shareOfTotal": 11.6,
-          "vsLondonMedian": 1.6
+          "ratePer1000": 14.1,
+          "shareOfTotal": 13.2,
+          "vsLondonMedian": 1.7
         },
         {
-          "offence": "Public order offences",
-          "ratePer1000": 8.2,
-          "shareOfTotal": 7.6,
-          "vsLondonMedian": 1.5
+          "offence": "Vehicle offences",
+          "ratePer1000": 8.3,
+          "shareOfTotal": 7.7,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "high",
       "roadNoiseLdenMedian": 54.9,
@@ -974,7 +974,7 @@
     },
     "Kensington and Chelsea": {
       "crime": "medium",
-      "crimeRate": 145.8,
+      "crimeRate": 142.4,
       "schools": "excellent",
       "schoolNote": "Holland Park School Outstanding. Very high private school density. Excellent state and independent options. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -989,24 +989,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 31.8,
-          "shareOfTotal": 21.8,
-          "vsLondonMedian": 1.2
+          "ratePer1000": 31.3,
+          "shareOfTotal": 22.0,
+          "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 22.4,
-          "shareOfTotal": 15.4,
-          "vsLondonMedian": 2.9
+          "ratePer1000": 22.9,
+          "shareOfTotal": 16.1,
+          "vsLondonMedian": 2.8
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 14.5,
-          "shareOfTotal": 10.0,
-          "vsLondonMedian": 1.8
+          "ratePer1000": 13.9,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 1.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "high",
       "roadNoiseLdenMedian": 56.5,
@@ -1028,7 +1028,7 @@
     },
     "Brent": {
       "crime": "medium",
-      "crimeRate": 89.3,
+      "crimeRate": 91.3,
       "schools": "good",
       "schoolNote": "Michaela Community School gained national attention. Queens Park Community School is Good.",
       "flood": "low",
@@ -1043,24 +1043,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 27.8,
-          "shareOfTotal": 31.1,
+          "ratePer1000": 28.5,
+          "shareOfTotal": 31.2,
           "vsLondonMedian": 1.0
         },
         {
-          "offence": "Drug offences",
-          "ratePer1000": 7.9,
-          "shareOfTotal": 8.8,
-          "vsLondonMedian": 1.3
+          "offence": "Vehicle offences",
+          "ratePer1000": 7.7,
+          "shareOfTotal": 8.5,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 7.6,
-          "shareOfTotal": 8.5,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 7.7,
+          "shareOfTotal": 8.4,
+          "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.1,
@@ -1082,7 +1082,7 @@
     },
     "Haringey": {
       "crime": "medium",
-      "crimeRate": 104.6,
+      "crimeRate": 103.4,
       "schools": "good",
       "schoolNote": "Fortismere and Highgate Wood strong. Good primaries in the west. East continuing to improve.",
       "flood": "low",
@@ -1097,24 +1097,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 29.4,
-          "shareOfTotal": 28.1,
+          "ratePer1000": 30.1,
+          "shareOfTotal": 29.1,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Vehicle offences",
           "ratePer1000": 11.3,
-          "shareOfTotal": 10.8,
+          "shareOfTotal": 10.9,
           "vsLondonMedian": 1.4
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 10.7,
-          "shareOfTotal": 10.2,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 10.8,
+          "shareOfTotal": 10.4,
+          "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.0,
@@ -1136,7 +1136,7 @@
     },
     "Waltham Forest": {
       "crime": "medium",
-      "crimeRate": 80.2,
+      "crimeRate": 80.1,
       "schools": "good",
       "schoolNote": "Holy Family, Walthamstow School for Girls well-regarded. Improving primary provision.",
       "flood": "low",
@@ -1151,24 +1151,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 22.8,
-          "shareOfTotal": 28.4,
+          "ratePer1000": 23.3,
+          "shareOfTotal": 29.1,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Vehicle offences",
           "ratePer1000": 8.5,
           "shareOfTotal": 10.6,
-          "vsLondonMedian": 1.0
+          "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 7.3,
-          "shareOfTotal": 9.1,
+          "ratePer1000": 7.1,
+          "shareOfTotal": 8.9,
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.9,
@@ -1190,7 +1190,7 @@
     },
     "Merton": {
       "crime": "low",
-      "crimeRate": 59.3,
+      "crimeRate": 59.1,
       "schools": "good",
       "schoolNote": "Harris Academy Morden Outstanding. Wimbledon area has excellent primaries. Several private options. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -1205,14 +1205,14 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 19.6,
-          "shareOfTotal": 33.0,
+          "ratePer1000": 20.0,
+          "shareOfTotal": 33.9,
           "vsLondonMedian": 0.7
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 5.8,
-          "shareOfTotal": 9.7,
+          "ratePer1000": 5.9,
+          "shareOfTotal": 10.0,
           "vsLondonMedian": 0.7
         },
         {
@@ -1222,7 +1222,7 @@
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.5,
@@ -1244,7 +1244,7 @@
     },
     "Redbridge": {
       "crime": "medium",
-      "crimeRate": 74.3,
+      "crimeRate": 75.6,
       "schools": "excellent",
       "schoolNote": "Ilford County High is a top grammar school. Several Outstanding primaries. Strong academic culture. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -1259,24 +1259,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 26.1,
-          "shareOfTotal": 35.1,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 26.8,
+          "shareOfTotal": 35.5,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 8.1,
-          "shareOfTotal": 10.9,
+          "ratePer1000": 8.0,
+          "shareOfTotal": 10.6,
           "vsLondonMedian": 1.0
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 6.7,
-          "shareOfTotal": 9.0,
+          "ratePer1000": 7.4,
+          "shareOfTotal": 9.8,
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.3,
@@ -1298,7 +1298,7 @@
     },
     "Enfield": {
       "crime": "medium",
-      "crimeRate": 85.2,
+      "crimeRate": 87.0,
       "schools": "good",
       "schoolNote": "Latymer School is a selective grammar. Several Outstanding primaries. Edmonton improving. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -1313,24 +1313,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 25.9,
-          "shareOfTotal": 30.4,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 26.8,
+          "shareOfTotal": 30.8,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 10.4,
-          "shareOfTotal": 12.2,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 11.0,
+          "shareOfTotal": 12.6,
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 6.5,
-          "shareOfTotal": 7.6,
+          "ratePer1000": 6.7,
+          "shareOfTotal": 7.7,
           "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.2,
@@ -1352,7 +1352,7 @@
     },
     "Kingston upon Thames": {
       "crime": "low",
-      "crimeRate": 66.8,
+      "crimeRate": 67.1,
       "schools": "excellent",
       "schoolNote": "Tiffin Boys' and Tiffin Girls' are top grammar schools. Multiple Outstanding primaries. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "medium",
@@ -1367,24 +1367,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 20.8,
-          "shareOfTotal": 31.2,
+          "ratePer1000": 21.4,
+          "shareOfTotal": 31.9,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Shoplifting",
           "ratePer1000": 8.6,
-          "shareOfTotal": 12.9,
-          "vsLondonMedian": 1.1
+          "shareOfTotal": 12.8,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 5.9,
-          "shareOfTotal": 8.9,
+          "ratePer1000": 5.8,
+          "shareOfTotal": 8.6,
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.5,
@@ -1406,7 +1406,7 @@
     },
     "Sutton": {
       "crime": "low",
-      "crimeRate": 60.3,
+      "crimeRate": 61.3,
       "schools": "excellent",
       "schoolNote": "Sutton Grammar, Nonsuch, Wilson's are top selective schools. Outstanding primaries throughout. Best state schools in London. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -1421,24 +1421,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 21.7,
-          "shareOfTotal": 36.1,
+          "ratePer1000": 22.3,
+          "shareOfTotal": 36.3,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 6.4,
+          "ratePer1000": 6.5,
           "shareOfTotal": 10.6,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 5.4,
+          "ratePer1000": 5.5,
           "shareOfTotal": 9.0,
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.9,
@@ -1460,7 +1460,7 @@
     },
     "Westminster": {
       "crime": "high",
-      "crimeRate": 355.5,
+      "crimeRate": 342.1,
       "schools": "good",
       "schoolNote": "Grey Coat Hospital Outstanding. Very competitive for school places due to small residential population. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -1475,24 +1475,24 @@
       "crimeTop": [
         {
           "offence": "Theft from the person",
-          "ratePer1000": 92.5,
-          "shareOfTotal": 26.0,
-          "vsLondonMedian": 25.5
+          "ratePer1000": 82.0,
+          "shareOfTotal": 24.0,
+          "vsLondonMedian": 24.2
         },
         {
           "offence": "Violence against the person",
           "ratePer1000": 52.9,
-          "shareOfTotal": 14.9,
+          "shareOfTotal": 15.5,
           "vsLondonMedian": 1.9
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 36.9,
-          "shareOfTotal": 10.4,
-          "vsLondonMedian": 4.7
+          "ratePer1000": 39.6,
+          "shareOfTotal": 11.6,
+          "vsLondonMedian": 4.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "high",
       "roadNoiseLdenMedian": 59.7,
@@ -1545,7 +1545,7 @@
     },
     "Barking": {
       "crime": "high",
-      "crimeRate": 84.2,
+      "crimeRate": 84.7,
       "schools": "good",
       "schoolNote": "Sydney Russell Academy improved. Jo Richardson Community School is popular. Some primaries Outstanding. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -1560,24 +1560,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 31.5,
-          "shareOfTotal": 37.4,
+          "ratePer1000": 32.1,
+          "shareOfTotal": 37.9,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 8.5,
-          "shareOfTotal": 10.1,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 8.6,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 1.1
         },
         {
-          "offence": "Drug offences",
-          "ratePer1000": 6.6,
-          "shareOfTotal": 7.9,
-          "vsLondonMedian": 1.1
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 6.0,
+          "shareOfTotal": 7.0,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.0,
@@ -1599,7 +1599,7 @@
     },
     "Havering": {
       "crime": "low",
-      "crimeRate": 68.3,
+      "crimeRate": 68.9,
       "schools": "good",
       "schoolNote": "Several Outstanding primaries. Coopers' Company school well-regarded. Grammar schools nearby in Essex. Any Ofsted grade named here is historic: single-word overall-effectiveness grades were withdrawn in September 2024 and do not feed the score.",
       "flood": "low",
@@ -1614,24 +1614,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 22.4,
-          "shareOfTotal": 32.8,
+          "ratePer1000": 22.8,
+          "shareOfTotal": 33.1,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Shoplifting",
           "ratePer1000": 7.7,
           "shareOfTotal": 11.2,
-          "vsLondonMedian": 1.0
+          "vsLondonMedian": 0.9
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 7.3,
-          "shareOfTotal": 10.7,
+          "ratePer1000": 7.5,
+          "shareOfTotal": 10.9,
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 53.0,
@@ -1653,7 +1653,7 @@
     },
     "Bexley": {
       "crime": "low",
-      "crimeRate": 60.2,
+      "crimeRate": 60.9,
       "schools": "good",
       "schoolNote": "Townley Grammar and Bexley Grammar are selective. Several good primaries across the borough.",
       "flood": "low",
@@ -1668,24 +1668,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 20.5,
-          "shareOfTotal": 34.1,
+          "ratePer1000": 21.5,
+          "shareOfTotal": 35.2,
+          "vsLondonMedian": 0.8
+        },
+        {
+          "offence": "Vehicle offences",
+          "ratePer1000": 6.0,
+          "shareOfTotal": 9.8,
           "vsLondonMedian": 0.7
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 6.2,
-          "shareOfTotal": 10.4,
-          "vsLondonMedian": 1.1
-        },
-        {
-          "offence": "Vehicle offences",
-          "ratePer1000": 6.2,
-          "shareOfTotal": 10.2,
-          "vsLondonMedian": 0.8
+          "ratePer1000": 5.9,
+          "shareOfTotal": 9.7,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.4,
@@ -1707,7 +1707,7 @@
     },
     "Harrow": {
       "crime": "low",
-      "crimeRate": 59.5,
+      "crimeRate": 60.6,
       "schools": "excellent",
       "schoolNote": "Harrow School (private, historic). Nower Hill High School is popular. Several Outstanding primaries.",
       "flood": "low",
@@ -1722,24 +1722,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 18.8,
-          "shareOfTotal": 31.6,
+          "ratePer1000": 19.1,
+          "shareOfTotal": 31.5,
           "vsLondonMedian": 0.7
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 6.2,
-          "shareOfTotal": 10.5,
+          "ratePer1000": 6.5,
+          "shareOfTotal": 10.8,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 5.4,
-          "shareOfTotal": 9.1,
+          "ratePer1000": 5.7,
+          "shareOfTotal": 9.4,
           "vsLondonMedian": 0.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.5,
@@ -1845,8 +1845,8 @@
   "manchester": {
     "Manchester": {
       "p8": 0.07,
-      "crimeRate": 142.7,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 143.0,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.9,
@@ -1871,29 +1871,29 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 51.9,
-          "shareOfTotal": 36.4,
-          "vsLondonMedian": 1.9
+          "ratePer1000": 51.8,
+          "shareOfTotal": 36.2,
+          "vsLondonMedian": 1.8
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 15.8,
-          "shareOfTotal": 11.1,
+          "ratePer1000": 16.1,
+          "shareOfTotal": 11.3,
           "vsLondonMedian": 2.8
         },
         {
           "offence": "Drug offences",
-          "ratePer1000": 11.4,
-          "shareOfTotal": 8.0,
-          "vsLondonMedian": 1.9
+          "ratePer1000": 11.3,
+          "shareOfTotal": 7.9,
+          "vsLondonMedian": 2.0
         }
       ],
       "airQualityCoverage": 100.0
     },
     "Salford": {
       "p8": -0.35,
-      "crimeRate": 105.8,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 105.6,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.5,
@@ -1919,19 +1919,19 @@
         {
           "offence": "Violence against the person",
           "ratePer1000": 42.0,
-          "shareOfTotal": 39.7,
+          "shareOfTotal": 39.8,
           "vsLondonMedian": 1.5
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 10.2,
-          "shareOfTotal": 9.7,
+          "ratePer1000": 10.4,
+          "shareOfTotal": 9.8,
           "vsLondonMedian": 1.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 10.2,
-          "shareOfTotal": 9.6,
+          "ratePer1000": 9.8,
+          "shareOfTotal": 9.3,
           "vsLondonMedian": 1.7
         }
       ],
@@ -1939,8 +1939,8 @@
     },
     "Stockport": {
       "p8": 0.09,
-      "crimeRate": 74.8,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 74.4,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.5,
@@ -1965,20 +1965,20 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 29.2,
-          "shareOfTotal": 39.1,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 28.6,
+          "shareOfTotal": 38.5,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 8.4,
-          "shareOfTotal": 11.2,
-          "vsLondonMedian": 1.5
+          "ratePer1000": 8.1,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 6.6,
-          "shareOfTotal": 8.9,
+          "ratePer1000": 7.1,
+          "shareOfTotal": 9.5,
           "vsLondonMedian": 0.9
         }
       ],
@@ -1986,8 +1986,8 @@
     },
     "Trafford": {
       "p8": 0.35,
-      "crimeRate": 74.9,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 74.1,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.3,
@@ -2012,19 +2012,19 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 27.0,
-          "shareOfTotal": 36.1,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 26.3,
+          "shareOfTotal": 35.5,
+          "vsLondonMedian": 0.9
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.5,
-          "shareOfTotal": 11.4,
+          "ratePer1000": 9.2,
+          "shareOfTotal": 12.4,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 8.0,
+          "ratePer1000": 7.9,
           "shareOfTotal": 10.7,
           "vsLondonMedian": 1.4
         }
@@ -2033,8 +2033,8 @@
     },
     "Tameside": {
       "p8": -0.21,
-      "crimeRate": 96.4,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 96.2,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.6,
@@ -2060,28 +2060,28 @@
         {
           "offence": "Violence against the person",
           "ratePer1000": 41.6,
-          "shareOfTotal": 43.1,
+          "shareOfTotal": 43.3,
           "vsLondonMedian": 1.5
         },
         {
           "offence": "Public order offences",
           "ratePer1000": 10.4,
-          "shareOfTotal": 10.7,
-          "vsLondonMedian": 1.9
+          "shareOfTotal": 10.8,
+          "vsLondonMedian": 1.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 7.8,
-          "shareOfTotal": 8.1,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 8.1,
+          "shareOfTotal": 8.4,
+          "vsLondonMedian": 1.4
         }
       ],
       "airQualityCoverage": 100.0
     },
     "Oldham": {
       "p8": -0.2,
-      "crimeRate": 106.6,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 105.5,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.5,
@@ -2106,20 +2106,20 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 47.6,
-          "shareOfTotal": 44.7,
+          "ratePer1000": 46.8,
+          "shareOfTotal": 44.4,
           "vsLondonMedian": 1.7
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 11.1,
-          "shareOfTotal": 10.4,
-          "vsLondonMedian": 2.0
+          "ratePer1000": 10.8,
+          "shareOfTotal": 10.3,
+          "vsLondonMedian": 1.9
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 8.8,
-          "shareOfTotal": 8.2,
+          "ratePer1000": 8.9,
+          "shareOfTotal": 8.4,
           "vsLondonMedian": 1.5
         }
       ],
@@ -2127,8 +2127,8 @@
     },
     "Rochdale": {
       "p8": -0.3,
-      "crimeRate": 104.6,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 103.3,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.4,
@@ -2153,29 +2153,29 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 44.2,
-          "shareOfTotal": 42.2,
+          "ratePer1000": 43.8,
+          "shareOfTotal": 42.4,
           "vsLondonMedian": 1.6
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 11.2,
-          "shareOfTotal": 10.7,
-          "vsLondonMedian": 2.0
+          "ratePer1000": 10.9,
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 1.9
         },
         {
           "offence": "Criminal damage and arson",
           "ratePer1000": 8.5,
-          "shareOfTotal": 8.2,
-          "vsLondonMedian": 1.5
+          "shareOfTotal": 8.3,
+          "vsLondonMedian": 1.4
         }
       ],
       "airQualityCoverage": 100.0
     },
     "Bury": {
       "p8": -0.09,
-      "crimeRate": 92.1,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 93.8,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.8,
@@ -2200,29 +2200,29 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 39.0,
-          "shareOfTotal": 42.4,
+          "ratePer1000": 39.7,
+          "shareOfTotal": 42.3,
           "vsLondonMedian": 1.4
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 10.1,
+          "ratePer1000": 10.2,
           "shareOfTotal": 10.9,
           "vsLondonMedian": 1.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 7.8,
-          "shareOfTotal": 8.5,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 8.1,
+          "shareOfTotal": 8.7,
+          "vsLondonMedian": 1.4
         }
       ],
       "airQualityCoverage": 100.0
     },
     "Bolton": {
       "p8": 0.05,
-      "crimeRate": 98.0,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 97.4,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.7,
@@ -2247,20 +2247,20 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 42.7,
-          "shareOfTotal": 43.6,
+          "ratePer1000": 42.8,
+          "shareOfTotal": 43.9,
           "vsLondonMedian": 1.5
         },
         {
           "offence": "Public order offences",
           "ratePer1000": 10.3,
-          "shareOfTotal": 10.5,
-          "vsLondonMedian": 1.9
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 1.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 7.6,
-          "shareOfTotal": 7.7,
+          "ratePer1000": 7.8,
+          "shareOfTotal": 8.0,
           "vsLondonMedian": 1.3
         }
       ],
@@ -2268,8 +2268,8 @@
     },
     "Wigan": {
       "p8": -0.32,
-      "crimeRate": 91.0,
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeRate": 90.1,
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "schoolsVintage": "DfE Key Stage 4 Progress 8, 2022/23",
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.8,
@@ -2294,20 +2294,20 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 39.8,
-          "shareOfTotal": 43.7,
+          "ratePer1000": 39.0,
+          "shareOfTotal": 43.3,
           "vsLondonMedian": 1.4
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 9.4,
-          "shareOfTotal": 10.3,
-          "vsLondonMedian": 1.7
+          "ratePer1000": 9.2,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 1.6
         },
         {
           "offence": "Criminal damage and arson",
           "ratePer1000": 9.0,
-          "shareOfTotal": 9.9,
+          "shareOfTotal": 10.0,
           "vsLondonMedian": 1.5
         }
       ],
@@ -2316,7 +2316,7 @@
   },
   "westmidlands": {
     "Birmingham": {
-      "crimeRate": 114.2,
+      "crimeRate": 115.7,
       "p8": 0.06,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.9,
@@ -2341,28 +2341,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 46.2,
-          "shareOfTotal": 40.4,
+          "ratePer1000": 46.5,
+          "shareOfTotal": 40.2,
           "vsLondonMedian": 1.7
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 10.3,
+          "ratePer1000": 10.5,
           "shareOfTotal": 9.0,
           "vsLondonMedian": 1.3
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 10.2,
+          "ratePer1000": 10.3,
           "shareOfTotal": 8.9,
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Coventry": {
-      "crimeRate": 88.4,
+      "crimeRate": 88.7,
       "p8": 0.01,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.3,
@@ -2387,28 +2387,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 34.3,
-          "shareOfTotal": 38.9,
+          "ratePer1000": 34.6,
+          "shareOfTotal": 39.0,
           "vsLondonMedian": 1.2
         },
         {
           "offence": "Shoplifting",
           "ratePer1000": 9.3,
           "shareOfTotal": 10.5,
-          "vsLondonMedian": 1.2
+          "vsLondonMedian": 1.1
         },
         {
-          "offence": "Vehicle offences",
-          "ratePer1000": 7.6,
-          "shareOfTotal": 8.6,
-          "vsLondonMedian": 0.9
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 7.4,
+          "shareOfTotal": 8.3,
+          "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Dudley": {
-      "crimeRate": 74.5,
+      "crimeRate": 74.7,
       "p8": -0.12,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 53.1,
@@ -2434,23 +2434,23 @@
         {
           "offence": "Violence against the person",
           "ratePer1000": 30.6,
-          "shareOfTotal": 41.0,
+          "shareOfTotal": 40.9,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.3,
-          "shareOfTotal": 11.2,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 8.6,
+          "shareOfTotal": 11.5,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 6.9,
-          "shareOfTotal": 9.3,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 6.5,
+          "shareOfTotal": 8.7,
+          "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Sandwell": {
@@ -2479,28 +2479,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 40.7,
+          "ratePer1000": 40.8,
           "shareOfTotal": 42.5,
-          "vsLondonMedian": 1.5
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 9.4,
-          "shareOfTotal": 9.8,
-          "vsLondonMedian": 1.2
+          "ratePer1000": 9.2,
+          "shareOfTotal": 9.6,
+          "vsLondonMedian": 1.1
         },
         {
           "offence": "Vehicle offences",
-          "ratePer1000": 9.0,
-          "shareOfTotal": 9.4,
+          "ratePer1000": 8.8,
+          "shareOfTotal": 9.2,
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Solihull": {
-      "crimeRate": 79.5,
+      "crimeRate": 80.7,
       "p8": -0.06,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.1,
@@ -2525,28 +2525,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 26.1,
+          "ratePer1000": 26.5,
           "shareOfTotal": 32.9,
           "vsLondonMedian": 0.9
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 12.5,
-          "shareOfTotal": 15.7,
+          "ratePer1000": 13.0,
+          "shareOfTotal": 16.1,
           "vsLondonMedian": 1.6
         },
         {
           "offence": "Vehicle offences",
           "ratePer1000": 9.6,
-          "shareOfTotal": 12.0,
+          "shareOfTotal": 11.9,
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Walsall": {
-      "crimeRate": 92.9,
+      "crimeRate": 95.6,
       "p8": -0.22,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.5,
@@ -2571,28 +2571,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 35.6,
-          "shareOfTotal": 38.3,
+          "ratePer1000": 37.0,
+          "shareOfTotal": 38.7,
           "vsLondonMedian": 1.3
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 11.2,
-          "shareOfTotal": 12.1,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 11.1,
+          "shareOfTotal": 11.6,
+          "vsLondonMedian": 1.3
         },
         {
-          "offence": "Criminal damage and arson",
-          "ratePer1000": 9.2,
-          "shareOfTotal": 9.9,
-          "vsLondonMedian": 1.6
+          "offence": "Vehicle offences",
+          "ratePer1000": 9.4,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Wolverhampton": {
-      "crimeRate": 92.0,
+      "crimeRate": 92.4,
       "p8": -0.05,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.7,
@@ -2617,30 +2617,30 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 38.6,
-          "shareOfTotal": 42.0,
+          "ratePer1000": 39.1,
+          "shareOfTotal": 42.3,
           "vsLondonMedian": 1.4
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 11.8,
-          "shareOfTotal": 12.9,
-          "vsLondonMedian": 1.5
+          "ratePer1000": 11.6,
+          "shareOfTotal": 12.6,
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 7.7,
-          "shareOfTotal": 8.4,
+          "ratePer1000": 7.9,
+          "shareOfTotal": 8.5,
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   },
   "westyorkshire": {
     "Bradford": {
-      "crimeRate": 117.0,
+      "crimeRate": 116.0,
       "p8": -0.28,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.2,
@@ -2665,28 +2665,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 51.6,
-          "shareOfTotal": 44.1,
-          "vsLondonMedian": 1.9
-        },
-        {
-          "offence": "Public order offences",
-          "ratePer1000": 10.3,
-          "shareOfTotal": 8.8,
-          "vsLondonMedian": 1.9
+          "ratePer1000": 50.2,
+          "shareOfTotal": 43.3,
+          "vsLondonMedian": 1.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 9.9,
-          "shareOfTotal": 8.4,
+          "ratePer1000": 10.0,
+          "shareOfTotal": 8.6,
           "vsLondonMedian": 1.7
+        },
+        {
+          "offence": "Public order offences",
+          "ratePer1000": 9.9,
+          "shareOfTotal": 8.6,
+          "vsLondonMedian": 1.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Calderdale": {
-      "crimeRate": 103.4,
+      "crimeRate": 102.1,
       "p8": 0.02,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.4,
@@ -2711,28 +2711,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 45.6,
-          "shareOfTotal": 44.1,
-          "vsLondonMedian": 1.7
+          "ratePer1000": 44.3,
+          "shareOfTotal": 43.3,
+          "vsLondonMedian": 1.6
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 10.4,
-          "shareOfTotal": 10.1,
-          "vsLondonMedian": 1.9
+          "ratePer1000": 9.7,
+          "shareOfTotal": 9.5,
+          "vsLondonMedian": 1.7
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 8.6,
-          "shareOfTotal": 8.3,
+          "ratePer1000": 8.8,
+          "shareOfTotal": 8.6,
           "vsLondonMedian": 1.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Kirklees": {
-      "crimeRate": 87.6,
+      "crimeRate": 86.1,
       "p8": 0.07,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.4,
@@ -2757,28 +2757,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 38.8,
-          "shareOfTotal": 44.3,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 37.2,
+          "shareOfTotal": 43.2,
+          "vsLondonMedian": 1.3
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 8.6,
+          "ratePer1000": 8.4,
           "shareOfTotal": 9.8,
           "vsLondonMedian": 1.5
         },
         {
           "offence": "Criminal damage and arson",
           "ratePer1000": 6.9,
-          "shareOfTotal": 7.9,
+          "shareOfTotal": 8.0,
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Leeds": {
-      "crimeRate": 114.6,
+      "crimeRate": 113.1,
       "p8": 0.1,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.2,
@@ -2803,28 +2803,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 44.9,
-          "shareOfTotal": 39.2,
-          "vsLondonMedian": 1.6
+          "ratePer1000": 43.5,
+          "shareOfTotal": 38.5,
+          "vsLondonMedian": 1.5
         },
         {
           "offence": "Shoplifting",
           "ratePer1000": 11.9,
-          "shareOfTotal": 10.4,
-          "vsLondonMedian": 1.5
+          "shareOfTotal": 10.5,
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 9.6,
-          "shareOfTotal": 8.4,
+          "ratePer1000": 9.4,
+          "shareOfTotal": 8.3,
           "vsLondonMedian": 1.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Wakefield": {
-      "crimeRate": 105.8,
+      "crimeRate": 103.1,
       "p8": 0.04,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 53.0,
@@ -2849,30 +2849,30 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 47.7,
-          "shareOfTotal": 45.1,
-          "vsLondonMedian": 1.7
+          "ratePer1000": 45.6,
+          "shareOfTotal": 44.2,
+          "vsLondonMedian": 1.6
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 9.6,
-          "shareOfTotal": 9.1,
-          "vsLondonMedian": 1.7
+          "ratePer1000": 9.1,
+          "shareOfTotal": 8.8,
+          "vsLondonMedian": 1.6
         },
         {
-          "offence": "Shoplifting",
+          "offence": "Criminal damage and arson",
           "ratePer1000": 8.5,
-          "shareOfTotal": 8.0,
-          "vsLondonMedian": 1.1
+          "shareOfTotal": 8.2,
+          "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   },
   "southyorkshire": {
     "Barnsley": {
-      "crimeRate": 95.1,
+      "crimeRate": 94.2,
       "p8": -0.32,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.5,
@@ -2897,28 +2897,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 36.6,
-          "shareOfTotal": 38.5,
+          "ratePer1000": 36.5,
+          "shareOfTotal": 38.8,
           "vsLondonMedian": 1.3
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 10.5,
+          "ratePer1000": 10.4,
           "shareOfTotal": 11.0,
           "vsLondonMedian": 1.8
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 8.6,
-          "shareOfTotal": 9.1,
-          "vsLondonMedian": 1.5
+          "ratePer1000": 8.2,
+          "shareOfTotal": 8.7,
+          "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Doncaster": {
-      "crimeRate": 117.3,
+      "crimeRate": 116.7,
       "p8": 0.0,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.1,
@@ -2943,28 +2943,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 43.5,
-          "shareOfTotal": 37.1,
-          "vsLondonMedian": 1.6
-        },
-        {
-          "offence": "Criminal damage and arson",
-          "ratePer1000": 11.8,
-          "shareOfTotal": 10.1,
-          "vsLondonMedian": 2.0
+          "ratePer1000": 43.2,
+          "shareOfTotal": 37.0,
+          "vsLondonMedian": 1.5
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 10.9,
-          "shareOfTotal": 9.3,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 12.4,
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 1.5
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 11.5,
+          "shareOfTotal": 9.9,
+          "vsLondonMedian": 1.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Rotherham": {
-      "crimeRate": 93.1,
+      "crimeRate": 96.4,
       "p8": -0.18,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.2,
@@ -2989,28 +2989,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 37.1,
-          "shareOfTotal": 39.9,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 38.0,
+          "shareOfTotal": 39.5,
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 9.2,
-          "shareOfTotal": 9.9,
-          "vsLondonMedian": 1.2
+          "ratePer1000": 10.8,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 1.3
         },
         {
-          "offence": "Public order offences",
-          "ratePer1000": 8.4,
-          "shareOfTotal": 9.1,
-          "vsLondonMedian": 1.5
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 8.5,
+          "shareOfTotal": 8.8,
+          "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Sheffield": {
-      "crimeRate": 96.9,
+      "crimeRate": 97.3,
       "p8": -0.16,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.8,
@@ -3035,30 +3035,30 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 34.4,
-          "shareOfTotal": 35.5,
+          "ratePer1000": 34.8,
+          "shareOfTotal": 35.8,
           "vsLondonMedian": 1.2
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 10.5,
-          "shareOfTotal": 10.9,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 11.0,
+          "shareOfTotal": 11.3,
+          "vsLondonMedian": 1.3
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 9.3,
-          "shareOfTotal": 9.6,
+          "ratePer1000": 9.4,
+          "shareOfTotal": 9.7,
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   },
   "merseyside": {
     "Knowsley": {
-      "crimeRate": 81.8,
+      "crimeRate": 81.5,
       "p8": -0.9,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.7,
@@ -3083,15 +3083,15 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 35.4,
-          "shareOfTotal": 43.3,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 35.0,
+          "shareOfTotal": 42.9,
+          "vsLondonMedian": 1.2
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 9.2,
-          "shareOfTotal": 11.2,
-          "vsLondonMedian": 1.6
+          "ratePer1000": 9.0,
+          "shareOfTotal": 11.0,
+          "vsLondonMedian": 1.5
         },
         {
           "offence": "Public order offences",
@@ -3100,11 +3100,11 @@
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Liverpool": {
-      "crimeRate": 124.1,
+      "crimeRate": 123.0,
       "p8": -0.48,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.2,
@@ -3129,28 +3129,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 45.6,
-          "shareOfTotal": 36.8,
-          "vsLondonMedian": 1.7
+          "ratePer1000": 45.4,
+          "shareOfTotal": 36.9,
+          "vsLondonMedian": 1.6
         },
         {
           "offence": "Drug offences",
-          "ratePer1000": 15.4,
-          "shareOfTotal": 12.4,
-          "vsLondonMedian": 2.5
+          "ratePer1000": 15.1,
+          "shareOfTotal": 12.3,
+          "vsLondonMedian": 2.7
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 13.3,
-          "shareOfTotal": 10.7,
-          "vsLondonMedian": 2.4
+          "ratePer1000": 12.7,
+          "shareOfTotal": 10.3,
+          "vsLondonMedian": 2.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "St Helens": {
-      "crimeRate": 86.4,
+      "crimeRate": 85.7,
       "p8": -0.32,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.7,
@@ -3176,27 +3176,27 @@
         {
           "offence": "Violence against the person",
           "ratePer1000": 36.2,
-          "shareOfTotal": 41.9,
+          "shareOfTotal": 42.2,
           "vsLondonMedian": 1.3
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 9.3,
-          "shareOfTotal": 10.8,
-          "vsLondonMedian": 1.7
+          "ratePer1000": 8.7,
+          "shareOfTotal": 10.2,
+          "vsLondonMedian": 1.5
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 8.2,
-          "shareOfTotal": 9.5,
+          "ratePer1000": 8.0,
+          "shareOfTotal": 9.4,
           "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Sefton": {
-      "crimeRate": 75.5,
+      "crimeRate": 75.3,
       "p8": -0.41,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 52.2,
@@ -3221,15 +3221,15 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 32.7,
+          "ratePer1000": 32.6,
           "shareOfTotal": 43.3,
           "vsLondonMedian": 1.2
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 8.9,
-          "shareOfTotal": 11.7,
-          "vsLondonMedian": 1.6
+          "ratePer1000": 8.4,
+          "shareOfTotal": 11.1,
+          "vsLondonMedian": 1.5
         },
         {
           "offence": "Criminal damage and arson",
@@ -3238,11 +3238,11 @@
           "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Wirral": {
-      "crimeRate": 71.1,
+      "crimeRate": 70.2,
       "p8": -0.16,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.1,
@@ -3268,29 +3268,29 @@
         {
           "offence": "Violence against the person",
           "ratePer1000": 30.7,
-          "shareOfTotal": 43.1,
+          "shareOfTotal": 43.7,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 8.4,
-          "shareOfTotal": 11.8,
-          "vsLondonMedian": 1.5
+          "ratePer1000": 8.0,
+          "shareOfTotal": 11.4,
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 7.3,
+          "ratePer1000": 7.2,
           "shareOfTotal": 10.3,
           "vsLondonMedian": 1.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   },
   "tyneandwear": {
     "Gateshead": {
-      "crimeRate": 87.8,
+      "crimeRate": 88.7,
       "p8": -0.14,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.0,
@@ -3315,28 +3315,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 30.6,
-          "shareOfTotal": 34.8,
+          "ratePer1000": 30.1,
+          "shareOfTotal": 33.9,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 11.2,
-          "shareOfTotal": 12.8,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 12.4,
+          "shareOfTotal": 14.0,
+          "vsLondonMedian": 1.5
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 10.1,
-          "shareOfTotal": 11.5,
+          "ratePer1000": 10.3,
+          "shareOfTotal": 11.6,
           "vsLondonMedian": 1.7
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Newcastle upon Tyne": {
-      "crimeRate": 107.4,
+      "crimeRate": 108.8,
       "p8": -0.28,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 54.0,
@@ -3361,28 +3361,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 36.6,
-          "shareOfTotal": 34.1,
+          "ratePer1000": 35.6,
+          "shareOfTotal": 32.7,
           "vsLondonMedian": 1.3
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 14.1,
-          "shareOfTotal": 13.1,
-          "vsLondonMedian": 1.8
+          "ratePer1000": 16.2,
+          "shareOfTotal": 14.9,
+          "vsLondonMedian": 2.0
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 10.3,
+          "ratePer1000": 10.5,
           "shareOfTotal": 9.6,
           "vsLondonMedian": 1.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "North Tyneside": {
-      "crimeRate": 81.8,
+      "crimeRate": 82.0,
       "p8": -0.15,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.9,
@@ -3408,27 +3408,27 @@
         {
           "offence": "Violence against the person",
           "ratePer1000": 28.8,
-          "shareOfTotal": 35.2,
+          "shareOfTotal": 35.1,
           "vsLondonMedian": 1.0
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 12.4,
-          "shareOfTotal": 15.2,
+          "ratePer1000": 13.5,
+          "shareOfTotal": 16.4,
           "vsLondonMedian": 1.6
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 8.9,
-          "shareOfTotal": 10.9,
+          "ratePer1000": 9.0,
+          "shareOfTotal": 11.0,
           "vsLondonMedian": 1.5
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "South Tyneside": {
-      "crimeRate": 96.6,
+      "crimeRate": 95.5,
       "p8": -0.39,
       "roadNoise": "moderate",
       "roadNoiseLdenMedian": 53.6,
@@ -3453,24 +3453,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 37.7,
-          "shareOfTotal": 39.0,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 36.6,
+          "shareOfTotal": 38.3,
+          "vsLondonMedian": 1.3
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 12.7,
-          "shareOfTotal": 13.2,
-          "vsLondonMedian": 1.6
+          "ratePer1000": 13.7,
+          "shareOfTotal": 14.3,
+          "vsLondonMedian": 1.7
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 11.5,
-          "shareOfTotal": 11.9,
-          "vsLondonMedian": 2.0
+          "ratePer1000": 11.4,
+          "shareOfTotal": 12.0,
+          "vsLondonMedian": 1.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Sunderland": {
@@ -3499,30 +3499,30 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 33.5,
-          "shareOfTotal": 35.8,
+          "ratePer1000": 33.2,
+          "shareOfTotal": 35.5,
           "vsLondonMedian": 1.2
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 12.7,
-          "shareOfTotal": 13.6,
+          "ratePer1000": 13.0,
+          "shareOfTotal": 13.9,
           "vsLondonMedian": 1.6
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 11.3,
-          "shareOfTotal": 12.1,
+          "ratePer1000": 11.4,
+          "shareOfTotal": 12.2,
           "vsLondonMedian": 1.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   },
   "bristol": {
     "City of Bristol": {
-      "crimeRate": 131.0,
+      "crimeRate": 127.6,
       "p8": -0.01,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.4,
@@ -3547,28 +3547,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 47.4,
-          "shareOfTotal": 36.2,
+          "ratePer1000": 46.5,
+          "shareOfTotal": 36.4,
           "vsLondonMedian": 1.7
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 15.6,
-          "shareOfTotal": 11.9,
-          "vsLondonMedian": 2.8
+          "ratePer1000": 14.1,
+          "shareOfTotal": 11.1,
+          "vsLondonMedian": 2.5
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 12.8,
-          "shareOfTotal": 9.7,
+          "ratePer1000": 13.0,
+          "shareOfTotal": 10.2,
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Bath and North East Somerset": {
-      "crimeRate": 79.0,
+      "crimeRate": 78.2,
       "p8": 0.16,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.2,
@@ -3593,28 +3593,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 31.5,
-          "shareOfTotal": 39.9,
+          "ratePer1000": 30.3,
+          "shareOfTotal": 38.8,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 10.1,
-          "shareOfTotal": 12.8,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 10.4,
+          "shareOfTotal": 13.2,
+          "vsLondonMedian": 1.2
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 9.2,
-          "shareOfTotal": 11.6,
+          "ratePer1000": 8.8,
+          "shareOfTotal": 11.3,
           "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "North Somerset": {
-      "crimeRate": 81.8,
+      "crimeRate": 79.5,
       "p8": -0.05,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 50.6,
@@ -3639,28 +3639,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 35.2,
-          "shareOfTotal": 43.0,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 34.0,
+          "shareOfTotal": 42.8,
+          "vsLondonMedian": 1.2
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 10.0,
-          "shareOfTotal": 12.2,
-          "vsLondonMedian": 1.8
+          "ratePer1000": 8.8,
+          "shareOfTotal": 11.1,
+          "vsLondonMedian": 1.6
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 6.9,
-          "shareOfTotal": 8.4,
-          "vsLondonMedian": 1.2
+          "ratePer1000": 6.8,
+          "shareOfTotal": 8.5,
+          "vsLondonMedian": 1.1
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "South Gloucestershire": {
-      "crimeRate": 73.8,
+      "crimeRate": 71.8,
       "p8": -0.16,
       "roadNoise": "low",
       "roadNoiseLdenMedian": 51.1,
@@ -3685,30 +3685,30 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 30.0,
-          "shareOfTotal": 40.6,
+          "ratePer1000": 28.9,
+          "shareOfTotal": 40.2,
+          "vsLondonMedian": 1.0
+        },
+        {
+          "offence": "Shoplifting",
+          "ratePer1000": 8.7,
+          "shareOfTotal": 12.1,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 8.3,
-          "shareOfTotal": 11.2,
-          "vsLondonMedian": 1.5
-        },
-        {
-          "offence": "Shoplifting",
-          "ratePer1000": 8.2,
-          "shareOfTotal": 11.1,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 7.8,
+          "shareOfTotal": 10.9,
+          "vsLondonMedian": 1.4
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   },
   "leicester": {
     "Leicester": {
-      "crimeRate": 110.0,
+      "crimeRate": 106.8,
       "p8": 0.1,
       "no2AnnualMeanUgm3": 14.4,
       "pm25AnnualMeanUgm3": 7.9,
@@ -3733,28 +3733,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 40.3,
-          "shareOfTotal": 36.6,
-          "vsLondonMedian": 1.5
+          "ratePer1000": 39.7,
+          "shareOfTotal": 37.1,
+          "vsLondonMedian": 1.4
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 13.0,
-          "shareOfTotal": 11.8,
+          "ratePer1000": 12.9,
+          "shareOfTotal": 12.1,
           "vsLondonMedian": 2.3
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 11.5,
-          "shareOfTotal": 10.5,
-          "vsLondonMedian": 2.0
+          "ratePer1000": 11.4,
+          "shareOfTotal": 10.6,
+          "vsLondonMedian": 1.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Blaby": {
-      "crimeRate": 59.2,
+      "crimeRate": 58.6,
       "no2AnnualMeanUgm3": 10.1,
       "pm25AnnualMeanUgm3": 7.4,
       "airQuality": "good",
@@ -3778,28 +3778,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 21.5,
-          "shareOfTotal": 36.4,
+          "ratePer1000": 21.7,
+          "shareOfTotal": 37.0,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 8.0,
-          "shareOfTotal": 13.5,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 7.3,
+          "shareOfTotal": 12.5,
+          "vsLondonMedian": 0.9
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 5.5,
-          "shareOfTotal": 9.3,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 5.9,
+          "shareOfTotal": 10.0,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Charnwood": {
-      "crimeRate": 67.9,
+      "crimeRate": 67.7,
       "no2AnnualMeanUgm3": 9.9,
       "pm25AnnualMeanUgm3": 7.3,
       "airQuality": "good",
@@ -3823,8 +3823,8 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 24.1,
-          "shareOfTotal": 35.4,
+          "ratePer1000": 24.0,
+          "shareOfTotal": 35.5,
           "vsLondonMedian": 0.9
         },
         {
@@ -3835,16 +3835,16 @@
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 7.7,
-          "shareOfTotal": 11.3,
+          "ratePer1000": 7.8,
+          "shareOfTotal": 11.5,
           "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Harborough": {
-      "crimeRate": 44.4,
+      "crimeRate": 44.3,
       "no2AnnualMeanUgm3": 6.8,
       "pm25AnnualMeanUgm3": 6.8,
       "airQuality": "good",
@@ -3868,28 +3868,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 15.8,
-          "shareOfTotal": 35.5,
+          "ratePer1000": 15.6,
+          "shareOfTotal": 35.2,
           "vsLondonMedian": 0.6
         },
         {
           "offence": "Criminal damage and arson",
           "ratePer1000": 4.8,
-          "shareOfTotal": 10.9,
+          "shareOfTotal": 10.8,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Public order offences",
           "ratePer1000": 4.4,
-          "shareOfTotal": 9.8,
+          "shareOfTotal": 9.9,
           "vsLondonMedian": 0.8
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Hinckley and Bosworth": {
-      "crimeRate": 59.5,
+      "crimeRate": 57.7,
       "no2AnnualMeanUgm3": 8.4,
       "pm25AnnualMeanUgm3": 7.1,
       "airQuality": "good",
@@ -3913,28 +3913,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 23.9,
-          "shareOfTotal": 40.1,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 23.1,
+          "shareOfTotal": 40.0,
+          "vsLondonMedian": 0.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 6.5,
-          "shareOfTotal": 10.9,
+          "ratePer1000": 6.4,
+          "shareOfTotal": 11.0,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 5.6,
-          "shareOfTotal": 9.3,
-          "vsLondonMedian": 1.0
+          "ratePer1000": 5.2,
+          "shareOfTotal": 9.0,
+          "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Melton": {
-      "crimeRate": 56.8,
+      "crimeRate": 56.6,
       "no2AnnualMeanUgm3": 5.8,
       "pm25AnnualMeanUgm3": 6.5,
       "airQuality": "good",
@@ -3958,28 +3958,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 22.2,
-          "shareOfTotal": 39.0,
+          "ratePer1000": 21.2,
+          "shareOfTotal": 37.4,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 6.8,
-          "shareOfTotal": 12.0,
-          "vsLondonMedian": 0.9
+          "ratePer1000": 7.9,
+          "shareOfTotal": 13.9,
+          "vsLondonMedian": 1.0
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 6.3,
-          "shareOfTotal": 11.1,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 6.1,
+          "shareOfTotal": 10.8,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "North West Leicestershire": {
-      "crimeRate": 59.2,
+      "crimeRate": 58.8,
       "no2AnnualMeanUgm3": 7.5,
       "pm25AnnualMeanUgm3": 6.8,
       "airQuality": "good",
@@ -4003,28 +4003,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 23.0,
-          "shareOfTotal": 38.8,
+          "ratePer1000": 22.3,
+          "shareOfTotal": 37.9,
           "vsLondonMedian": 0.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 6.5,
-          "shareOfTotal": 10.9,
+          "ratePer1000": 6.6,
+          "shareOfTotal": 11.2,
           "vsLondonMedian": 1.1
         },
         {
           "offence": "Public order offences",
-          "ratePer1000": 6.1,
-          "shareOfTotal": 10.2,
-          "vsLondonMedian": 1.1
+          "ratePer1000": 5.6,
+          "shareOfTotal": 9.6,
+          "vsLondonMedian": 1.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Oadby and Wigston": {
-      "crimeRate": 53.6,
+      "crimeRate": 52.8,
       "no2AnnualMeanUgm3": 9.8,
       "pm25AnnualMeanUgm3": 7.3,
       "airQuality": "good",
@@ -4048,30 +4048,30 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 21.2,
-          "shareOfTotal": 39.5,
-          "vsLondonMedian": 0.8
-        },
-        {
-          "offence": "Shoplifting",
-          "ratePer1000": 5.5,
-          "shareOfTotal": 10.2,
+          "ratePer1000": 20.9,
+          "shareOfTotal": 39.6,
           "vsLondonMedian": 0.7
         },
         {
           "offence": "Public order offences",
           "ratePer1000": 5.3,
-          "shareOfTotal": 9.8,
+          "shareOfTotal": 10.1,
+          "vsLondonMedian": 0.9
+        },
+        {
+          "offence": "Criminal damage and arson",
+          "ratePer1000": 5.1,
+          "shareOfTotal": 9.7,
           "vsLondonMedian": 0.9
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   },
   "teesside": {
     "Hartlepool": {
-      "crimeRate": 134.2,
+      "crimeRate": 136.7,
       "p8": -0.47,
       "no2AnnualMeanUgm3": 7.3,
       "pm25AnnualMeanUgm3": 5.5,
@@ -4096,28 +4096,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 47.1,
-          "shareOfTotal": 35.1,
+          "ratePer1000": 47.8,
+          "shareOfTotal": 34.9,
           "vsLondonMedian": 1.7
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 23.7,
-          "shareOfTotal": 17.7,
-          "vsLondonMedian": 3.0
+          "ratePer1000": 23.4,
+          "shareOfTotal": 17.1,
+          "vsLondonMedian": 2.8
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 14.8,
-          "shareOfTotal": 11.0,
-          "vsLondonMedian": 2.5
+          "ratePer1000": 15.3,
+          "shareOfTotal": 11.2,
+          "vsLondonMedian": 2.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Middlesbrough": {
-      "crimeRate": 150.0,
+      "crimeRate": 153.7,
       "p8": -0.45,
       "no2AnnualMeanUgm3": 10.7,
       "pm25AnnualMeanUgm3": 6.0,
@@ -4142,28 +4142,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 53.4,
-          "shareOfTotal": 35.6,
+          "ratePer1000": 54.1,
+          "shareOfTotal": 35.2,
           "vsLondonMedian": 1.9
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 19.7,
-          "shareOfTotal": 13.1,
-          "vsLondonMedian": 3.3
+          "ratePer1000": 20.0,
+          "shareOfTotal": 13.0,
+          "vsLondonMedian": 3.4
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 15.8,
-          "shareOfTotal": 10.5,
-          "vsLondonMedian": 2.0
+          "ratePer1000": 18.2,
+          "shareOfTotal": 11.8,
+          "vsLondonMedian": 2.2
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Redcar and Cleveland": {
-      "crimeRate": 108.9,
+      "crimeRate": 109.8,
       "p8": -0.36,
       "no2AnnualMeanUgm3": 7.0,
       "pm25AnnualMeanUgm3": 5.3,
@@ -4188,28 +4188,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 38.2,
-          "shareOfTotal": 35.1,
+          "ratePer1000": 38.6,
+          "shareOfTotal": 35.2,
           "vsLondonMedian": 1.4
         },
         {
           "offence": "Criminal damage and arson",
           "ratePer1000": 15.6,
-          "shareOfTotal": 14.4,
-          "vsLondonMedian": 2.7
+          "shareOfTotal": 14.2,
+          "vsLondonMedian": 2.6
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 13.3,
-          "shareOfTotal": 12.2,
-          "vsLondonMedian": 1.7
+          "ratePer1000": 13.2,
+          "shareOfTotal": 12.0,
+          "vsLondonMedian": 1.6
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Stockton-on-Tees": {
-      "crimeRate": 107.9,
+      "crimeRate": 117.1,
       "p8": -0.19,
       "no2AnnualMeanUgm3": 8.7,
       "pm25AnnualMeanUgm3": 5.8,
@@ -4234,28 +4234,28 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 40.2,
-          "shareOfTotal": 37.3,
+          "ratePer1000": 41.6,
+          "shareOfTotal": 35.6,
           "vsLondonMedian": 1.5
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 14.1,
-          "shareOfTotal": 13.1,
-          "vsLondonMedian": 1.8
+          "ratePer1000": 20.3,
+          "shareOfTotal": 17.3,
+          "vsLondonMedian": 2.4
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 11.2,
-          "shareOfTotal": 10.4,
-          "vsLondonMedian": 1.9
+          "ratePer1000": 11.5,
+          "shareOfTotal": 9.8,
+          "vsLondonMedian": 2.0
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     },
     "Darlington": {
-      "crimeRate": 91.0,
+      "crimeRate": 91.5,
       "p8": -0.32,
       "no2AnnualMeanUgm3": 7.0,
       "pm25AnnualMeanUgm3": 5.5,
@@ -4280,24 +4280,24 @@
       "crimeTop": [
         {
           "offence": "Violence against the person",
-          "ratePer1000": 35.0,
-          "shareOfTotal": 38.5,
-          "vsLondonMedian": 1.3
+          "ratePer1000": 34.4,
+          "shareOfTotal": 37.6,
+          "vsLondonMedian": 1.2
         },
         {
           "offence": "Criminal damage and arson",
-          "ratePer1000": 12.3,
-          "shareOfTotal": 13.6,
+          "ratePer1000": 12.4,
+          "shareOfTotal": 13.5,
           "vsLondonMedian": 2.1
         },
         {
           "offence": "Shoplifting",
-          "ratePer1000": 10.5,
-          "shareOfTotal": 11.6,
-          "vsLondonMedian": 1.4
+          "ratePer1000": 11.1,
+          "shareOfTotal": 12.2,
+          "vsLondonMedian": 1.3
         }
       ],
-      "crimeVintage": "ONS Table C4, year ending March 2026",
+      "crimeVintage": "ONS Table C4, year ending June 2026",
       "airQualityCoverage": 100.0
     }
   }

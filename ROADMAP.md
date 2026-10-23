@@ -63,6 +63,13 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > reds otherwise), and re-run `backend/tests/test_provenance.py` against the merged Bay Area ZIP routing. Held until
 > a buyer asks: the website showing it, registers stamping their retrieval date, source URLs.
 >
+> **Crime roll to ONS year ending June 2026: BUILT on branch `crime-roll-ye-june-2026`, stacked on
+> `provenance-per-field` (23 Oct, not live).** Both holders written by code (`refresh_crime_from_ons.py
+> --write-lambda --all`, new), 102 area pages + open data rebuilt, METHODOLOGY s6 re-derived; 8 balanced scores
+> move by 0.1. Ships in the SAME changeset as provenance after Thursday (Bill executes), then `data-deploy`,
+> `web-deploy`, `area-deploy`, `open-data-deploy`, `home-deploy`; verify with `check_score_sanity.py`,
+> `tests/area-page-freshness.mjs`, `tests/site-api-parity.mjs`.
+>
 > ## START HERE (2026-10-22, evening)
 >
 > **The Bay Area is SCORED BY THE API, in source (`CITIES['bayarea']`; NOT deployed).** The 50 cities answer
