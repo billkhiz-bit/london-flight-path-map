@@ -20,9 +20,11 @@ THE RULE (one airport, one aircraft's day of points, all from adsb_extract.py)
   altitude is within LOW_ABOVE_FT of the field's pressure level that day.
   Pressure altitude is not height: it moves ~27 ft per hPa of QNH, up to
   ~1,000 ft on a deep low. So the field level is MEASURED per airport per day -
-  the median last airborne altitude before a 'ground' report (touchdown) - and
-  falls back to a low percentile of in-zone minima where receivers do not hear
-  the surface. The report says which.
+  the median last airborne altitude before a 'ground' report (touchdown) that
+  ends a descent, ONE VOTE PER AIRCRAFT (parked transponders flipping
+  'ground'/0 ft set Luton's field to 0 on eight June days; field_level()) -
+  and falls back to a low percentile of in-zone minima where receivers do not
+  hear the surface. The report says which.
 - Low points are split into separate LOW RUNS wherever the aircraft climbs back
   above the low band (a touch-and-go circuit is a landing AND a take-off) or is
   unheard for more than RUN_GAP_S.
@@ -107,6 +109,7 @@ Usage:
 """
 
 import argparse
+import bisect
 import calendar
 import csv
 import datetime as dt
@@ -117,7 +120,7 @@ import re
 import statistics
 import sys
 import zoneinfo
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -134,7 +137,10 @@ RUN_GAP_S = 300
 RUNWAY_MATCH_DEG = 30
 TRACK_WINDOW_S = 120
 UNSEEN_BAND_FT = 1200
-MIN_TOUCHDOWNS = 5
+MIN_TOUCHDOWNS = 5  # AIRCRAFT seen touching down (one vote each, field_level()), not touchdown reports
+# A reading this close to a 'ground' report is the surface, not flight: the last airborne reading before a
+# touchdown, or a parked transponder's 0 ft between its 'ground' flips (field_level()).
+NEAR_GROUND_S = 60
 # A landing then a take-off by the same aircraft in this window is a circuit.
 # Measured: 737 touch-and-goes 50-60 s, light aircraft 70-130 s, a turnaround
 # on the stand never under 20 minutes; under 30 s is a low approach, a
@@ -255,23 +261,59 @@ def baro(p):
 
 
 def field_level(traces, ap):
-    """The field's pressure altitude that day, and how it was found."""
+    """The field's pressure altitude that day, and how it was found.
+
+    A TOUCHDOWN ENDS A DESCENT, AND ONE AIRCRAFT IS ONE VOTE (2026-10-22). Parked transponders that alternate
+    'ground' and 0 ft read as touchdowns at 0 ft, one per flip: on 3 June 2026 seven of them at Luton (mostly
+    US-registered, at the business-aviation apron) cast 95,000 such votes beside two real touchdowns heard,
+    the field read 0 ft where it was ~600, the low band sat under the runway, and the day's movements went
+    uncounted (2 to 108 against ~420, on eight June days). So a 'ground' report counts as a touchdown only
+    when the same aircraft was CLIMB_FT above the reading before it within the WINDOW_S before (the test
+    movements() makes of a landing, here needing no field level); each aircraft's touchdowns give one value,
+    their median, so one flying circuits still votes once; and the field is the median over aircraft, with
+    at least MIN_TOUCHDOWNS of them. Where the surface is not heard, the fallback (the p10 of each trace's
+    lowest reading in the zone) leaves out a transponder that reports the ground and never climbs CLIMB_FT
+    above its lowest reading: a parked one is not an aircraft coming or going.
+
+    AN AIRCRAFT THAT LANDS AND THEN SITS FLIPPING (review, 2026-10-23). Its flips follow a real descent, so for
+    WINDOW_S after landing each one passed the descent test as a touchdown at 0 ft, and its own median was 0;
+    and its 0 ft readings, with a real climb in the trace, kept it in the fallback with a minimum of 0. So the
+    window is EMPTIED once a touchdown is accepted (each descent votes once; another needs a fresh climb and
+    descent, as a circuit has), and the fallback skips any reading within NEAR_GROUND_S of a 'ground' report
+    (it costs a real landing its last minute, and the p10 comes from aircraft never heard on the surface)."""
     (clat, clon), zone = ap['centre'], ap['zone_km']
     touchdowns, minima = [], []
     for rec in traces:
         pts = rec['pts']
-        lows = []
+        lows, mine, grounded, top = [], [], False, None
+        recent = deque()  # (time, baro) over the last WINDOW_S, heights falling: recent[0] is the highest
+        on_ground = [p[0] for p in pts if is_ground(p)]  # in time order, as pts are
         for i, p in enumerate(pts):
+            b = baro(p)
+            if b is not None:
+                top = b if top is None else max(top, b)
+                while recent and recent[-1][1] <= b:
+                    recent.pop()
+                recent.append((p[0], b))
+            while recent and recent[0][0] <= p[0] - WINDOW_S:
+                recent.popleft()
+            grounded = grounded or is_ground(p)
             if km_between(p[1], p[2], clat, clon) > zone:
                 continue
-            if is_ground(p) and i and baro(pts[i - 1]) is not None and p[0] - pts[i - 1][0] <= 60:
-                touchdowns.append(baro(pts[i - 1]))
-            elif baro(p) is not None:
-                lows.append(baro(p))
-        if lows:
+            if is_ground(p) and i and baro(pts[i - 1]) is not None and p[0] - pts[i - 1][0] <= NEAR_GROUND_S:
+                if recent and recent[0][1] >= baro(pts[i - 1]) + CLIMB_FT:
+                    mine.append(baro(pts[i - 1]))
+                    recent.clear()
+            elif b is not None:
+                k = bisect.bisect_left(on_ground, p[0] - NEAR_GROUND_S)
+                if not (k < len(on_ground) and on_ground[k] <= p[0] + NEAR_GROUND_S):
+                    lows.append(b)
+        if mine:
+            touchdowns.append(statistics.median(mine))
+        if lows and not (grounded and top < min(lows) + CLIMB_FT):
             minima.append(min(lows))
     if len(touchdowns) >= MIN_TOUCHDOWNS:
-        return statistics.median(touchdowns), f'touchdown median of {len(touchdowns)}'
+        return statistics.median(touchdowns), f'touchdown median of {len(touchdowns)} aircraft'
     if len(minima) >= MIN_TOUCHDOWNS:
         return sorted(minima)[len(minima) // 10], f'p10 of {len(minima)} in-zone minima (no surface reports)'
     return None, 'too few aircraft'

@@ -285,6 +285,81 @@ class FieldLevelTests(unittest.TestCase):
         self.assertEqual(level, -298)
         self.assertIn('touchdown', how)
 
+    @staticmethod
+    def _landings(field, heard_on_the_ground, heard_only_in_the_air):
+        """Landings at a field whose pressure level is `field`: some heard on the runway (a touchdown), the
+        rest heard down to it and never on it (only the low band finds them)."""
+        out = []
+        for k in range(heard_on_the_ground + heard_only_in_the_air):
+            approach, t = Heathrow.approach(Heathrow.thr27r, T0 + k * 1000)
+            for p in approach:
+                p[3] += field
+            rollout = Heathrow.ground(Heathrow.thr27r, t)[0] if k < heard_on_the_ground else []
+            out.append({'pts': approach + rollout})
+        return out
+
+    @staticmethod
+    def _parked(n, flips=300):
+        """`n` parked transponders, each alternating 'ground' and 0 ft every 5 s beside the runway."""
+        lat, lon = offset(*Heathrow.thr27r, Heathrow.brg27, 1.0)
+        return [{'pts': [pt(T0 + 5 * i + k, lat, lon, 'ground' if i % 2 else 0, 0) for i in range(2 * flips)]}
+                for k in range(n)]
+
+    def test_parked_transponders_flipping_ground_and_0_ft_do_not_set_the_field(self):
+        """Luton, 3 June 2026 (found 2026-10-22): seven parked transponders alternated 'ground' and 0 ft all
+        day, each flip read as a touchdown at 0 ft (95,000 of them, against two real touchdowns heard), the
+        median followed them, the field read 0 ft where it was ~600, the low band sat under the runway, and
+        the day's movements went uncounted (2 to 108 against ~420, on eight June days). One vote per aircraft
+        alone still lost that day (seven votes at 0 against two): a touchdown must end a descent."""
+        field = 600  # the field's pressure level on a low-QNH day
+        landings, parked = self._landings(field, mv.MIN_TOUCHDOWNS, 3), self._parked(7)
+        level, how = mv.field_level(landings + parked, Heathrow.ap)
+        self.assertEqual((level, how), (field, f'touchdown median of {mv.MIN_TOUCHDOWNS} aircraft'))
+        moves = [m for rec in landings for m in mv.movements(rec, Heathrow.ap, level)[0]]
+        self.assertEqual([kind for kind, _, _ in moves], ['landing'] * len(landings))
+        self.assertEqual([m for rec in parked for m in mv.movements(rec, Heathrow.ap, level)[0]], [])
+        # An aircraft that really landed, then sat at the stand flipping 'ground' and 0 ft: its flips follow a
+        # real descent, so the descent test lets them through, and only one vote per aircraft holds them to one.
+        approach, t = Heathrow.approach(Heathrow.thr27r, T0 + 50_000)
+        for p in approach:
+            p[3] += field
+        lat, lon = offset(*Heathrow.thr27r, Heathrow.brg27, 1.0)
+        flips = [pt(t + 5 * i, lat, lon, 'ground' if i % 2 else 0, 0) for i in range(240)]
+        level, _ = mv.field_level(landings + [{'pts': approach + flips}], Heathrow.ap)
+        self.assertEqual(level, field)
+        # The surface barely heard (two real touchdowns, as on 3 June): the fallback, the p10 of each trace's
+        # lowest reading, must not take the parked ones' 0 ft either.
+        landings = self._landings(field, 2, 20)
+        level, how = mv.field_level(landings + parked, Heathrow.ap)
+        self.assertEqual(level, field)
+        self.assertIn('p10', how)
+        moves = [m for rec in landings for m in mv.movements(rec, Heathrow.ap, level)[0]]
+        self.assertEqual(len(moves), len(landings))
+
+    def test_an_aircraft_that_lands_then_sits_flipping_votes_its_landing_once(self):
+        """Review, 2026-10-23: an aircraft that really landed and then sat at the stand flipping 'ground' and
+        0 ft kept passing the descent test for WINDOW_S after its landing (its flips follow a real descent), so
+        its own median was 0, and three of them beside two clean touchdowns set the field to 0. With the surface
+        barely heard, its 0 ft readings set the fallback's minimum to 0 the same way."""
+        field = 600
+        lat, lon = offset(*Heathrow.thr27r, Heathrow.brg27, 1.0)
+
+        def lands_then_parks(t0):
+            approach, t = Heathrow.approach(Heathrow.thr27r, t0)
+            for p in approach:
+                p[3] += field
+            rollout, t = Heathrow.ground(Heathrow.thr27r, t)
+            flips = [pt(t + 5 * i, lat, lon, 0 if i % 2 else 'ground', 0) for i in range(240)]
+            return {'pts': approach + rollout + flips}
+
+        parked_after_landing = [lands_then_parks(T0 + 60_000 + k * 2000) for k in range(3)]
+        level, how = mv.field_level(self._landings(field, 2, 0) + parked_after_landing, Heathrow.ap)
+        self.assertEqual((level, how), (field, 'touchdown median of 5 aircraft'))
+        # The surface barely heard: five landings heard only in the air, and one that lands and then parks.
+        level, how = mv.field_level(self._landings(field, 0, 5) + [lands_then_parks(T0 + 60_000)], Heathrow.ap)
+        self.assertEqual(level, field)
+        self.assertIn('p10', how)
+
 
 class PublishFloorTests(unittest.TestCase):
     """coverage_verdict() is the gate on every per-home figure (2026-10-15)."""
