@@ -41,8 +41,10 @@ info:
     borough-name lookup or 5-digit US ZIP auto-detection (~182 residential
     ZIPs covered; ~110 with per-ZIP centroid for finer quiet-score
     resolution), plus the San Francisco Bay Area's 50 cities by city name
-    (`city=bayarea&borough=Palo Alto`; Bay Area ZIPs are not resolved yet,
-    because a ZIP there spans cities). The Bay Area's crime, road-noise and
+    (`city=bayarea&borough=Palo Alto`) or by a ZIP of its four counties,
+    scored as the city where half or more of the ZIP's 2020 residents live,
+    with the shares said in `location.zipResidents` (a ZIP spans cities: 94010
+    is 71% Burlingame, 26% Hillsborough). The Bay Area's crime, road-noise and
     flood inputs are scored on US scales anchored on California's own
     figures, NOT comparable with the UK's; its growth is not scored (the
     price trend is county-wide). GET /v1/regions returns the authoritative
@@ -391,8 +393,12 @@ paths:
           description: |
             Postcode/ZIP to score. UK postcodes (e.g. `SW11 1AA`) resolve
             via postcodes.io to a London borough. US ZIPs (e.g. `10001`,
-            5-digit with optional `+4` suffix) auto-detect to NYC and use
-            a static borough lookup. Spaces in UK postcodes are URL-encoded
+            5-digit with optional `+4` suffix) auto-detect: a New York ZIP to
+            its borough by a static lookup; a ZIP of San Francisco, San Mateo,
+            Santa Clara or Alameda county (e.g. `94301`) to the city where
+            half or more of its 2020 residents live, with the shares in
+            `location.zipResidents` and `coverage.notices`; a Bay Area ZIP
+            with no such city answers 404 with its places and shares. Spaces in UK postcodes are URL-encoded
             (`%20`). Required if `borough` is not provided.
           schema:
             type: string
@@ -553,9 +559,12 @@ paths:
             reported here unless `includeTerminated` is set. A UK postcode in
             no covered city, sent without `city`, answers "Not covered yet"
             with `supportedCities` (since 2026-10-22; it named London before).
-            A ZIP other than New York's answers "ZIP not currently supported",
-            and a New York ZIP sent with another `city` is refused rather than
-            answered as New York.
+            A ZIP in neither New York nor the four Bay Area counties answers
+            "ZIP not currently supported"; a Bay Area ZIP where no city holds
+            half or more of the residents answers 404 with `zipResidents` and
+            a `note` naming its places and shares; and a New York or Bay Area
+            ZIP sent with the other US city is refused rather than answered as
+            either.
           content:
             application/json:
               schema:
@@ -798,7 +807,9 @@ components:
                   type: string
               supportedZipCount:
                 type: integer
-                description: NYC only, number of ZIPs in the static lookup.
+                description: >-
+                  New York and the Bay Area: the ZIPs the city resolves (New York's static lookup; the Bay
+                  Area's ZIPs where half or more of the residents live in one of its cities).
         apiVersion:
           type: string
         methodologyVersion:
@@ -1095,6 +1106,8 @@ components:
           type: number
         region:
           type: string
+        zipResidents:
+          $ref: '#/components/schemas/ZipResidents'
         postcodeStatus:
           type: string
           enum: [terminated]
@@ -1316,10 +1329,50 @@ components:
         note:
           type: string
           description: >-
-            The way round a refusal, where there is one: for a Bay Area ZIP,
-            that its cities are scored by name (`city=bayarea`).
+            The way round a refusal, where there is one: for a Bay Area ZIP no
+            city holds half of, its places and shares, and that its cities are
+            scored by name (`city=bayarea`).
+        zipResidents:
+          $ref: '#/components/schemas/ZipResidents'
         scoredComponents:
           type: array
           items:
             type: string
           description: What this place IS scored on, beside a weights refusal.
+    ZipResidents:
+      type: object
+      description: >-
+        Where a San Francisco Bay Area ZIP's 2020 residents live (US Census:
+        residents by block, joined to ZIP areas). The ZIP is scored as `place`
+        only when `cityMajority` is true: half or more of its residents live in
+        that one of the 50 cities.
+      properties:
+        place:
+          type: string
+          nullable: true
+          description: The city, town or unincorporated community where the most of its residents live.
+        kind:
+          type: string
+          nullable: true
+          enum: [city, town, cdp, null]
+        share:
+          type: number
+          nullable: true
+          description: The fraction of its residents who live in `place`, to two places.
+        others:
+          type: array
+          description: The next places, at 1% or more.
+          items:
+            type: object
+            properties:
+              place:
+                type: string
+              share:
+                type: number
+        cityMajority:
+          type: boolean
+        note:
+          type: string
+          example: "71% of ZIP 94010's 2020 residents live in Burlingame; 26% in Hillsborough. Scored as Burlingame."
+        source:
+          type: string

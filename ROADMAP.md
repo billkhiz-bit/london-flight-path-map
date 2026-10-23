@@ -41,6 +41,13 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > Reports · How it works · About · API · Pricing`, and on phones Full map visible beside Menu. Privacy s2c's wording
 > for counted actions is in legal batch 2 (Bill).
 >
+> **Bay Area ZIPs scored by RESIDENTS: BUILT on branch `bayarea-zip-residents` (23 Oct, not merged, not deployed).**
+> Bill's calls: a ZIP is scored as the city where half or more of its 2020 residents live, the shares said
+> (`location.zipResidents`, `coverage.notices`); otherwise 404 with its places and shares; ONE rule for the site and
+> the API (`scripts/build_bayarea_zips.py` writes both holders; `--check` holds them equal). 147 of 165 ZIPs scored;
+> 94010 Burlingame 71% / Hillsborough 26%. Ships with Part B of the 29 Oct runbook (merge first; data-deploy and
+> web-deploy back to back after the changeset). Census inputs gitignored in `data/census/`.
+>
 > **Audit of 22 Oct CLOSED (23 Oct):** the last three minors fixed: M-5 (user paths, guarded by
 > `tests/test_no_user_paths.py`), M-7 (Staten Island's note, held to the FAA data by `tests/test_staten_island_note.py`),
 > M-9 (the search names Nottingham and Greater Norwich). **FAA 2611 (Thu 29 Oct):** `faa-2611` still merges cleanly onto

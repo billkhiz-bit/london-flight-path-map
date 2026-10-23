@@ -294,7 +294,7 @@ check "Bay Area page == its inputs"    python scripts/build_bay_area_page.py --c
 # are on disk (data/census/, gitignored); always checked against a second
 # source that IS on disk, the city outlines, so a table pairing ZIPs with the
 # wrong cities reds even on a fresh clone. Offline, under a second.
-check "Bay Area ZIPs == Census"        python scripts/build_bayarea_zips.py --check
+check "Bay Area ZIPs == Census, site == API" python scripts/build_bayarea_zips.py --check
 # New York on the front page (2026-10-06): its borough rows are the score engine's, and
 # its noise picture the one the file names. Offline: reads the Lambda and the files only.
 check "New York front page == engine"  python scripts/build_nyc_front.py --check

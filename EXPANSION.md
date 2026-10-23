@@ -495,10 +495,12 @@ ignored without error.
   `us_anchored_to_score` (today only `crimeRate`, the UK ramp); `env_component_scores`
   must read `roadNoiseUsSharePct` and `floodSfhaPct` the same way (today only the UK
   fields). `priceTopCoded` is read nowhere: it must reach the response (decision 3).
-- **ZIP routing:** the Lambda has no Bay Area ZIP table or centroids (only the site's
-  `data/us-bayarea-zips.json`); any non-NYC ZIP 404s "NYC ZIPs only", and a NYC ZIP sent
-  with `city=bayarea` is silently switched to `nyc`. Until a table is generated in, the
-  city is reachable by name only, so `CITY_GEOMETRY['bayarea']` is never reached.
+- **ZIP routing: BUILT 2026-10-23** (branch `bayarea-zip-residents`, merged with Part B of the 29 Oct
+  runbook). `scripts/build_bayarea_zips.py` writes the site's `data/us-bayarea-zips.json` AND the
+  Lambda's `BAYAREA_ZIPS` from 2020 residents by block (Bill: half or more of the residents in one
+  city -> scored as it, the shares said; one rule for both). No coordinate is given, so
+  `CITY_GEOMETRY['bayarea']` is still read only through the city bands. Before it: any non-NYC
+  ZIP 404ed "NYC ZIPs only".
   `score_bulk.py` reads every `supportedNycBoroughs` 404 as "outside NYC".
 - **Provenance:** no `CITY_PROVENANCE['bayarea']`, so `sources` says "Provenance not
   recorded" and `sourceBreakdown` is `{}` (no FAA "as is" line, no adsb.lol credit).

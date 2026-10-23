@@ -14717,14 +14717,16 @@
         return Object.fromEntries(feats.map((f) => [f.properties.name, { ...f.properties, facts: true }]));
       }
 
-      // A ZIP's share of land in the city it is filed under keeps the name
-      // honest: 94301 is Palo Alto, 95014 is 44% Cupertino and mostly empty
-      // hills. The same words as the new front page (js/home-engine.mjs).
+      // A ZIP is named by where its RESIDENTS live (Bill, 2026-10-23;
+      // scripts/build_bayarea_zips.py writes this file and the API's table):
+      // 94301 is Palo Alto, 94010 is 71% Burlingame though its land is mostly
+      // Hillsborough's. It opens a city only at half or more of its residents
+      // (`cityMajority`). The same words as the front page (js/home-engine.mjs).
       function zipShareText(zip) {
-        const pct = Math.round(zip.share * 100);
-        if (zip.share >= 0.9) return `In ${zip.place}.`;
-        if (zip.share >= 0.5) return `Mostly in ${zip.place}: ${pct}% of the ZIP area's land.`;
-        return `${pct}% of the ZIP area's land is in ${zip.place}; the rest is in other cities or in none.`;
+        const where = zip.kind === 'cdp' ? `${zip.place}, an unincorporated community` : zip.place;
+        const rest = (zip.others || []).map(([name, share]) => `${Math.round(share * 100)}% in ${name}`).join('; ');
+        if (zip.share >= 0.9 && !rest) return `In ${where}.`;
+        return `${Math.round(zip.share * 100)}% of its residents live in ${where}${rest ? `; ${rest}` : ''}.`;
       }
 
       // THE TWO TIERS BENEATH A CITY (layer 1, 2026-10-05): San Francisco's 41
@@ -14985,7 +14987,7 @@
         if (!z) return false;
         if (currentCity !== 'bayarea') await switchCity('bayarea');
         const zip = { code, ...z };
-        const data = z.place ? getActiveBoroughData()[z.place] : null;
+        const data = z.cityMajority ? getActiveBoroughData()[z.place] : null;
         let zipArea = null;
         try {
           zipArea = (await loadBayTier('zipAreas')).features.find((f) => f.properties.zip === code) || null;
@@ -14999,13 +15001,13 @@
           showTierOutline(zipArea);
           return true;
         }
-        // In no city the map draws (an unincorporated community, or none at all).
+        // No city holds half of its residents (they live in an unincorporated community, or are split).
         panelSubject = { kind: 'none' };
         setPanelSubject(`ZIP ${code}`);
-        announceResult(`ZIP ${code} is in ${z.county} County, in no city the map draws.`);
+        announceResult(`ZIP ${code} is in ${z.county} County; no city holds half of its residents.`);
         document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
-        <p><strong>ZIP ${escapeHtml(code)}</strong> is in ${escapeHtml(z.county)} County, California. ${escapeHtml(z.place ? zipShareText(zip) : 'It lies in no city.')} The map draws the 50 incorporated cities only.</p>
+        <p><strong>ZIP ${escapeHtml(code)}</strong> is in ${escapeHtml(z.county)} County, California. ${escapeHtml(z.place ? zipShareText(zip) : 'None of its residents live in a city or community the map holds.')} No city holds half of its residents, so it opens no city's figures.</p>
         <p><a href="/bay-area/">The Bay Area page</a> names the unincorporated communities a route passes over.</p>
       </div>`;
         revealSheetIfMobile();
