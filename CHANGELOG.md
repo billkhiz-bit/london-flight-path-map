@@ -1,11 +1,19 @@
 # Changelog
 
-## 2026-10-23 - Who is behind Sky Score
+## 2026-10-23 - Who is behind Sky Score; the answer first; a menu on phones
 
 - **An About page** (`/about/`): who Sky Score is for, why it was built and by whom, the questions people have
   asked about it at talks, and the talks themselves. Linked from every page's top bar and footer.
-- Fixed on the way: the front page's "Search a postcode" link now works while Find areas is open, and the
-  "How it works" page marks itself in the top bar.
+- **The front page opens on an answer**: a street in Kew under Heathrow's arrivals, labelled as an example, so
+  you see what Sky Score tells you before you type your own postcode ("Check yours").
+- **A Menu button on phones**: the top bar's six links had stopped fitting beside the name and wrapped into three
+  rows; on a phone they now open from one Menu button.
+- **Searching "Nottingham" or "Greater Norwich"** now says they are scored through the API but not drawn on the map
+  yet, and names their council areas, which do open; it used to say the place was not found.
+- **Staten Island's note on the full map** now names the Newark departure that crosses its north-west a few
+  kilometres after take-off; it had said the borough was well away from flight paths.
+- Fixed on the way: the front page's "Search a postcode" link now works while Find areas is open; the "How it
+  works" page marks itself in the top bar; "Its figures" in an answer is now a full-size touch target.
 
 ## 2026-10-22 - How a score is worked out; fixes from the week's audit
 

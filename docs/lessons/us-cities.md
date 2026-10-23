@@ -331,3 +331,13 @@ declaring London facts-only). Lessons, each now held by a test:
   city); a UK city cannot hold a ZIP. Found by the pre-commit review, with four more: weights on only unscored
   components (now 400), credits for withheld or below-floor inputs, the top code in a lineage sentence, and the
   404's `note` lost on two paths. The release's contract now has its own offline test file.
+
+**STATEN ISLAND'S NOTE SAYS ONLY WHAT THE DATA HOLDS (2026-10-23, audit 2026-10-22 M-7).** The curated note said
+"Well away from major flight paths. Some Newark departures pass at high altitude." The FAA's PORTT4 departure from
+runway 22 (CIFP: VA 219M to 518 ft; DF BAGGA; TF PORTT), scored since v5.6, crosses the north-west of the borough
+4.2-7.6 km after the runway end (measured point in polygon against `data/nyc-boroughs.json`; BAGGA itself is in
+the borough), and the CIFP codes no altitude after 518 ft, so "high altitude" had no source: the site states a
+height only on a published glide path. The note now names the route and where it crosses in words ("a few
+kilometres after take-off, still climbing"), because a typed number goes stale with the next cycle, and
+`tests/test_staten_island_note.py` holds each claim to the data: PORTT still crosses inside 10 km, and Staten
+Island still has the highest Quiet Skies of the five (7.5 on 23 Oct). Cycle 2611 changes only PORTT's source label.

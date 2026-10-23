@@ -41,6 +41,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > Reports · How it works · About · API · Pricing`, and on phones Full map visible beside Menu. Privacy s2c's wording
 > for counted actions is in legal batch 2 (Bill).
 >
+> **Audit of 22 Oct CLOSED (23 Oct):** the last three minors fixed: M-5 (user paths, guarded by
+> `tests/test_no_user_paths.py`), M-7 (Staten Island's note, held to the FAA data by `tests/test_staten_island_note.py`),
+> M-9 (the search names Nottingham and Greater Norwich). **FAA 2611 (Thu 29 Oct):** `faa-2611` still merges cleanly onto
+> `what-matters` (checked 23 Oct with `git merge-tree`), and 2611 leaves Newark's PORTT route unchanged.
+>
 > ## START HERE (2026-10-22, evening)
 >
 > **The Bay Area is SCORED BY THE API, in source (`CITIES['bayarea']`; NOT deployed).** The 50 cities answer
