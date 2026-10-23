@@ -12,6 +12,29 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-23)
+>
+> **About page LIVE** (`/about/`, `03dba22`): the founder named (Bill's call), who it is for (one list,
+> `scripts/build_who_for.py`, written into the front page too), why it was built, five questions really asked at a
+> talk; linked from every page's bar and footer. Published before the rename's attorney opinion (Bill, 23 Oct); the
+> Deen Developers photo waits for their OK. Verified from the origin: 35 of 37 surfaces (the two held are the Bay
+> Area API spec), all 102 area pages == the live API. **Never `web-deploy-all` before the 29 Oct changeset** (it runs
+> `demo-deploy` and `bay-area-deploy`). Open: `/bay-area/`'s footer has no About link (ships with the Bay Area
+> release). **Luton** (plane counts): the field fault fixed; a review then found one more way to read the field as
+> 0 ft (an aircraft that lands, then sits flipping 'ground'/0 ft): FIXED the same day (the descent window empties
+> once a touchdown is accepted; the fallback skips readings within 60 s of a 'ground' report; both halves proven
+> red), and the 289-day recount re-run on it. Before it, Luton still missed Feb (93.1%) and Jun (94.0%): the same
+> 9 airports pass.
+>
+> **BUILT, NOT DEPLOYED (Bill's calls, 23 Oct, from mock-ups of the live page):** (1) **the phone Menu**: below
+> 680 px every top bar folds its six links behind a Menu POPOVER (no script; `docs/lessons/front-page-and-site.md`),
+> fixing the bar that wrapped into three rows with the name in the middle after this morning's deploy; (2) **answer
+> first, option B**: a plain visit opens on the TW9 3PZ answer, labelled as an example, with "Your postcode" and
+> "Check yours"; never in the address, never counted as engagement. **Then measure** the share of front-page
+> visits that act against the ~6% of 1 Jul-22 Oct for 3-4 weeks before trying option C (the answer as the
+> headline). "Islamic home finance" stays in "Who it is for" (Bill). Deploy: web, home, area, open-data, meta,
+> talks, and the two score-demo pages ALONE (never `demo-deploy` before 29 Oct).
+>
 > ## START HERE (2026-10-22, evening)
 >
 > **The Bay Area is SCORED BY THE API, in source (`CITIES['bayarea']`; NOT deployed).** The 50 cities answer

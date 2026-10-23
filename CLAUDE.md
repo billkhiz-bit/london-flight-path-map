@@ -183,6 +183,10 @@ Or just describe what you need, I have full context of this project.
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **`d3.v7.min.js` sits at the foot of `<body>` with a matching preload**; `defer` is wrong here.
+- **The top bar folds behind a Menu POPOVER below 680 px** (no script: privacy/terms allow none, area pages carry
+  none); every bar is held at 390 and 1366 wide by `tests/front-page.mjs` 16d. A new bar needs the same markup.
+- **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
+  address, never engagement, silent on failure. `stubLiveApi` answers its two lookups; scans wait for it.
 
 ### Gates and verification
 - **Run preflight before every commit**: `sh scripts/preflight.sh` (== `npm run preflight`). Read the EXIT

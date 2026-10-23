@@ -121,6 +121,9 @@
       .skip:focus { top: 12px; }
       form.check button { font: 600 16px var(--font-body); padding: 14px 20px; border: 0; border-radius: 12px; background: var(--orange); color: var(--dark); cursor: pointer; white-space: nowrap; }
       form.check button:hover { background: #ff9440; }
+      /* "Check yours" (answer first, 2026-10-23) leaves the box no room for its hint on the narrowest phones, so there
+         the button says "Check" and the box's "Your postcode" carries the "yours". */
+      @media (max-width: 360px) { form.check button { padding: 14px 16px; } form.check button .yours { display: none; } }
       .try { margin: 10px 0 0; font-size: 13px; color: var(--mid); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
       .try button { font: 500 13px var(--font-mono); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; color: var(--dark); }
       .try button:hover { border-color: var(--dark); }
@@ -140,6 +143,11 @@
       .covers li + li::before { content: " \00B7 "; }
       .covers b { font-weight: 600; color: var(--dark); }
       .panel.has-result .covers { display: none; }
+      /* Answer first (2026-10-23): the example is labelled as one, and the coverage line stays while it is open,
+         so a visitor from a place we do not cover still sees that before typing. */
+      .ans-example { margin: 0 0 4px; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange-ink); }
+      .panel.has-result.is-example .covers { display: block; }
+      .panel.is-example .status:empty { min-height: 0; margin: 0; }
       /* Two tabs (2026-10-14): "Check a postcode" and "Find areas", as a two-button switch of equal
          weight. The first version was an underline with the second tab in grey, and read as a caption:
          Bill asked where the options were. The chosen one is filled, as a chosen city chip is. */
@@ -217,6 +225,12 @@
       .answer .air .air-credit a { color: inherit; }
       .answer .area b { color: var(--dark); font-weight: 600; }
       button.linkish { font: inherit; font-weight: 600; color: var(--orange-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+      /* "Its figures" sits in 13px text, so as a button it was under WCAG 2.2's 24px target (2.5.8). It had always
+         been: the audit first saw it when the answer became what the page opens on (answer first, 2026-10-23). */
+      .answer .area button.linkish { min-height: 24px; }
+      /* Kept whole: on a phone held sideways "How it is worked out" broke across two lines, and a broken link's box
+         spans both, over the button beside it (axe target-size at 844x390). */
+      .answer .area button.linkish, .answer .area a { white-space: nowrap; }
       /* "Count my vote" (2026-10-13): where a visitor the map does not cover wants it next. */
       .want { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
       .want b { color: var(--dark); font-weight: 600; }
@@ -393,13 +407,32 @@
       }
       @media (prefers-reduced-motion: reduce) { .hero.is-intro svg { transition: none; } }
       @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
+         fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
+         pages carry none), and a browser without popovers keeps the plain bar. On a wide screen the closed popover
+         IS the ordinary row of links, so the browser's popover box is undone first. */
+      .menu-btn, .menu-close { display: none; }
+      nav.top-nav[popover] { position: static; inset: auto; width: auto; height: auto; margin: 0; padding: 0; border: 0; overflow: visible; background: none; color: inherit; }
+      @supports selector(:popover-open) {
+        @media (max-width: 680px) {
+          .menu-btn, .menu-close { display: inline-block; font: 600 14px/1.5 'Inter', system-ui, sans-serif; color: inherit; background: none; border: 0; border-radius: 8px; padding: 8px 12px; box-shadow: inset 0 0 0 1.5px currentColor; cursor: pointer; }
+          .menu-btn:focus-visible, .menu-close:focus-visible { outline: 3px solid #d35a12; outline-offset: 2px; }
+          nav.top-nav[popover]:not(:popover-open) { display: none; }
+          nav.top-nav:popover-open { position: fixed; inset: 0 0 auto 0; display: grid; gap: 2px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); background: Canvas; color: CanvasText; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); }
+          nav.top-nav:popover-open .menu-close { justify-self: end; }
+          nav.top-nav:popover-open a { padding: 12px; font-size: 16px; }
+          nav.top-nav::backdrop { background: rgba(0, 0, 0, 0.25); }
+        }
+      }
     </style>
   </head>
   <body data-map-inset='{"left":566,"top":0,"right":0,"bottom":0}'>
     <a class="skip" href="#pc">Skip to the search</a>
     <header class="top">
       <a class="brand" href="/">Sky Score</a>
-      <nav class="top-nav" aria-label="Site">
+      <button type="button" class="menu-btn" popovertarget="site-nav">Menu</button>
+      <nav class="top-nav" id="site-nav" aria-label="Site" popover>
+        <button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button>
         <a class="nav-cta" href="/map/">Full map</a>
         <a href="/reports/">Reports</a>
         <a href="/how-it-works/">How it works</a>
@@ -430,8 +463,8 @@
                it was cut to "Postcode, ZIP o" at 320 wide. The placeholder is now an example. -->
           <label for="pc" class="field-label">Postcode, ZIP or place</label>
           <form class="check" id="check">
-            <input type="text" id="pc" name="pc" placeholder="e.g. TW9 3PZ" autocomplete="postal-code" inputmode="text" />
-            <button type="submit">Check</button>
+            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="postal-code" inputmode="text" />
+            <button type="submit">Check<span class="yours"> yours</span></button>
           </form>
           <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="Camden">Camden</button><button type="button" data-pc="Palo Alto">Palo Alto</button></p>
           <p class="explore"><button type="button" class="linkish" id="explore-map">Or explore the map</button></p>
@@ -441,6 +474,9 @@
           <p class="status" id="status" aria-live="polite"></p>
           <div class="want" id="want-country" aria-live="polite" hidden></div>
           <div class="answer" id="answer">
+            <!-- Answer first (2026-10-23): a plain visit opens on this postcode's answer, and this line says it is an
+                 example. The postcode lives here, beside the words that describe it, so the two cannot disagree. -->
+            <p class="ans-example" id="ans-example" data-pc="TW9 3PZ" hidden>Example: a street in Kew, under Heathrow&rsquo;s arrivals</p>
             <!-- Text from the first answer on; never empty (html-validate), and hidden with the answer until then. -->
             <h2 class="ans-pc" id="ans-title">Your answer</h2>
             <p class="where" id="ans-where"></p>

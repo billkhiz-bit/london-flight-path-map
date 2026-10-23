@@ -61,7 +61,11 @@ const isMapCity = (k) => Object.hasOwn(CITY_NAME, k);
 // (privacy s2c). A way is recorded only once GoatCounter has taken it, and analytics must
 // never break the page (the full map's trackEvent lesson, 2026-08-24).
 const engagedWays = new Set();
+// Whether the visitor has done anything yet, counted or not (an ad blocker stops the count, never this):
+// the example answer gives way to it (search()).
+let acted = false;
 function engaged(way) {
+  acted = true;
   if (engagedWays.has(way)) return;
   try {
     const gc = window.goatcounter;
@@ -346,6 +350,10 @@ const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) 
 async function load() {
   // Read before boot: a deep-linked area or postcode rewrites the address on its way in.
   const wantFind = location.hash === '#find';
+  // A plain visit gets the example answer; a link that asks for a place, or for Find areas, gets that instead.
+  // Campaign tags do not count as asking (Reddit, the best channel, links with them).
+  const asked = new URLSearchParams(location.search);
+  const plain = !wantFind && !['city', 'postcode', 'borough'].some((k) => asked.get(k));
   const [extra, proc, rasters, csv, nycDoc, crossings] = await Promise.all([
     d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
     d3.text(CSV).catch(() => ''),
@@ -366,6 +374,8 @@ async function load() {
   // /#find opens the Find areas tab (the card's link, or a link sent to someone). Not engagement:
   // nobody has done anything yet.
   if (wantFind && !document.querySelector('.tabs[role="tablist"]')?.hidden) setTab('find', { counted: false, keepCard: true });
+  // Not awaited: the page is ready now, and the example arrives when its two lookups do.
+  if (plain) search(byId('ans-example')?.dataset.pc || '', { example: true });
 }
 
 function renderChips() {
@@ -1224,12 +1234,21 @@ form?.addEventListener('submit', (ev) => {
 // every await it stops if a newer one has started - the full map's beginSearch() /
 // isCurrentSearch(), and show()'s own showSeq, one level up.
 let searchSeq = 0;
-async function search(raw) {
+// ANSWER FIRST (Bill, 2026-10-23, option B of the mock-ups): a plain visit opens on one real answer, the
+// postcode in #ans-example, labelled as an example, so the first screen shows what the page does before it
+// asks for a postcode. It is search() itself, so it can never differ from what a visitor typing it would get,
+// but it is not the visitor's: it leaves the address alone, says nothing in the live region, counts as no
+// engagement (the counts sit on the controls), keeps the question if a lookup fails, and gives way to
+// anything the visitor has already done.
+async function search(raw, { example = false } = {}) {
   const text = raw.trim();
   if (!text) return;
   const seq = ++searchSeq;
-  const stale = () => seq !== searchSeq;
-  leaveIntro();
+  const stale = () => seq !== searchSeq || (example && acted);
+  if (!example) leaveIntro();
+  const label = byId('ans-example');
+  if (label) label.hidden = true;
+  answer?.closest('.panel')?.classList.remove('is-example');
   answer?.classList.remove('is-open');
   clearPin();
   hideWant();
@@ -1264,12 +1283,12 @@ async function search(raw) {
 
   const pc = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
   if (/^\d{5}$/.test(pc)) { await searchZip(pc, stale); return; }
-  say('Looking it up...');
+  if (!example) say('Looking it up...');
   closeBorough(false);
   try {
     const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
     if (stale()) return;
-    if (!geo.result) { say('That postcode was not found, and no place on the map has that name.'); wantCountry(); return; }
+    if (!geo.result) { if (!example) { say('That postcode was not found, and no place on the map has that name.'); wantCountry(); } return; }
     const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
     const city = cityOf(district);
     // A postcode no city covers gets no pin: a pin on whichever city is on
@@ -1278,7 +1297,15 @@ async function search(raw) {
     if (stale()) return;
     const env = await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
     if (stale()) return;
-    if (!env.environment) { say(env.error || 'No figures for that spot.'); return; }
+    if (!env.environment) { if (!example) say(env.error || 'No figures for that spot.'); return; }
+    if (example) {
+      // The question makes way only now, with the answer ready: one change on screen, not two.
+      leaveIntro();
+      render(geo.result.postcode, district, city, env.environment, lat, lon);
+      if (label) label.hidden = false;
+      answer?.closest('.panel')?.classList.add('is-example');
+      return;
+    }
     // A success is announced too: the status line is the page's live region,
     // and it went from "Looking it up..." to empty, so a screen-reader user
     // heard nothing when the figures arrived (audit 2026-10-05 M-14).
@@ -1286,8 +1313,8 @@ async function search(raw) {
     render(geo.result.postcode, district, city, env.environment, lat, lon);
     setQuery({ city: city || state.city, postcode: geo.result.postcode });
   } catch {
-    // A stale search's failure is not this one's: say nothing over the newer answer.
-    if (!stale()) say('Could not reach the data just now. Try again in a moment.');
+    // A stale search's failure is not this one's: say nothing over the newer answer. Nor the example's own.
+    if (!stale() && !example) say('Could not reach the data just now. Try again in a moment.');
   }
 }
 // ---- a US ZIP: the Census's ZIP areas for the four Bay Area counties ----

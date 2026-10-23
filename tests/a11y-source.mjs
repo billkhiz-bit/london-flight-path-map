@@ -65,7 +65,14 @@ const PAGES = [
   // home/ (live at /, /reports/ and /reports/street/ since 2026-10-06); this
   // gate serves the repo, where / is still index.html, the full map.
   // renderedWhen, not waitFor: waitFor also waits for the live app's locator inset, which this page lacks.
-  { path: '/home/', name: 'front page', renderedWhen: '#map .boro' },
+  // Since 2026-10-23 a plain visit opens on the example answer (answered by stubLiveApi), which lands after the
+  // map: scanned before it, axe met the page mid-change and flagged a target the settled page passes. So the
+  // scan waits for the page a visitor settles on, the example open.
+  {
+    path: '/home/',
+    name: 'front page',
+    renderedWhenFn: () => document.querySelector('#map .boro') && document.getElementById('ans-example')?.hidden === false,
+  },
   { path: '/home/reports/', name: 'reports' },
   { path: '/home/reports/street/', name: 'free street report' },
   { path: '/how-it-works/', name: 'how it works' },
@@ -719,20 +726,20 @@ if (areaPages.length < AREA_FLOOR) {
   failed++;
 }
 
-// The single-viewport exemption, tested rather than named.
+// The viewports, tested rather than named. These pages were scanned at one width while the generator emitted no
+// width breakpoint (a phone and a desktop then saw the same page); since the phone menu (2026-10-23) it emits
+// one, so the scan takes a width on EACH side of every breakpoint it finds, and fails if one is not straddled.
 const generator = await readFile(join(ROOT, 'scripts', 'build_area_pages.py'), 'utf8');
-const widthBreakpoints = generator.match(/@media[^{]*\b(?:min|max)-width/g) || [];
-if (widthBreakpoints.length) {
-  console.log(
-    `${'area/ (viewport policy)'.padEnd(28)} FAIL the generator now emits ` +
-      `${widthBreakpoints.length} width breakpoint(s), so the one-viewport scan below ` +
-      `no longer covers these pages - add VIEWPORTS back for area/`
-  );
+const breakpoints = [...generator.matchAll(/@media[^{]*\b(?:min|max)-width:\s*(\d+)px/g)].map((m) => Number(m[1]));
+const AREA_VIEWPORTS = breakpoints.length ? [{ width: 1440, height: 900 }, { width: 390, height: 844 }] : [{ width: 1440, height: 900 }];
+const unstraddled = breakpoints.filter((px) => !(AREA_VIEWPORTS.some((v) => v.width <= px) && AREA_VIEWPORTS.some((v) => v.width > px)));
+if (unstraddled.length) {
+  console.log(`${'area/ (viewport policy)'.padEnd(28)} FAIL no scanned width on both sides of ${[...new Set(unstraddled)].join(', ')} px`);
   failed++;
 }
 
-{
-  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+for (const viewport of AREA_VIEWPORTS) {
+  const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   let areaFailed = 0;
   for (const path of areaPages) {
@@ -755,7 +762,7 @@ if (widthBreakpoints.length) {
   }
   console.log(
     `\n${'area/ (every page)'.padEnd(28)} ${areaFailed || areaPages.length < AREA_FLOOR ? 'FAIL' : 'OK  '} ` +
-      `${areaPages.length} pages scanned at 1440x900, ${areaFailed} failing`
+      `${areaPages.length} pages scanned at ${viewport.width}x${viewport.height}, ${areaFailed} failing`
   );
   await context.close();
 }

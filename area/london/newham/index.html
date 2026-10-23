@@ -64,11 +64,28 @@
     :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }
     body { background:#141414; }
   }
+  /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
+     fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
+     pages carry none), and a browser without popovers keeps the plain bar. On a wide screen the closed popover
+     IS the ordinary row of links, so the browser's popover box is undone first. */
+  .menu-btn, .menu-close { display: none; }
+  .site-top .site-nav[popover] { position: static; inset: auto; width: auto; height: auto; margin: 0; padding: 0; border: 0; overflow: visible; background: none; color: inherit; }
+  @supports selector(:popover-open) {
+    @media (max-width: 680px) {
+      .menu-btn, .menu-close { display: inline-block; font: 600 14px/1.5 'Inter', system-ui, sans-serif; color: inherit; background: none; border: 0; border-radius: 8px; padding: 8px 12px; box-shadow: inset 0 0 0 1.5px currentColor; cursor: pointer; }
+      .menu-btn:focus-visible, .menu-close:focus-visible { outline: 3px solid #d35a12; outline-offset: 2px; }
+      .site-top .site-nav[popover]:not(:popover-open) { display: none; }
+      .site-top .site-nav:popover-open { position: fixed; inset: 0 0 auto 0; display: grid; gap: 2px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); background: Canvas; color: CanvasText; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); }
+      .site-top .site-nav:popover-open .menu-close { justify-self: end; }
+      .site-top .site-nav:popover-open a { padding: 12px; font-size: 16px; }
+      .site-top .site-nav::backdrop { background: rgba(0, 0, 0, 0.25); }
+    }
+  }
 </style>
 </head>
 <body>
 <!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
-<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><div class="site-nav"><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/how-it-works/">How it works</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/about/">About</a></div></nav>
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><button type="button" class="menu-btn" popovertarget="site-nav">Menu</button><div class="site-nav" id="site-nav" popover><button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/how-it-works/">How it works</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/about/">About</a></div></nav>
 <div class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; London</nav>
 <main data-city="london" data-borough="Newham">

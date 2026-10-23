@@ -23,8 +23,13 @@ const PAGES = [
   { path: '/bay-area/', name: 'Bay Area flight paths' },
   // The front page (at / since 2026-10-06; trialled at /preview/ from 2026-10-03).
   // Its council areas are controls drawn after the data lands, so the scan waits
-  // for them: scanned at load it would pass on a page with no map in it.
-  { path: '/', name: 'front page', ready: '#map .boro' },
+  // for them: scanned at load it would pass on a page with no map in it. Since
+  // 2026-10-23 a plain visit opens on the example answer, which lands after the
+  // map (stubLiveApi answers it), so where the page carries one the scan waits
+  // for its label too: the page a visitor settles on, never one caught
+  // mid-change. "Where it carries one" because this suite tests the LIVE site,
+  // which gains the example only when it deploys (preflight ran red on that).
+  { path: '/', name: 'front page', ready: '#map .boro', settled: '#ans-example' },
   { path: '/reports/', name: 'reports' },
   { path: '/reports/street/', name: 'free street report' },
   { path: '/how-it-works/', name: 'how it works' },
@@ -53,7 +58,7 @@ const PAGES = [
 ];
 
 test.describe('Accessibility', () => {
-  for (const { path, name, waitFor, ready, disableRules } of PAGES) {
+  for (const { path, name, waitFor, ready, settled, disableRules } of PAGES) {
     test(`WCAG 2.1 AA scan: ${name} (${path})`, async ({ page }) => {
       // status.html probes /v1/score with the PUBLIC demo key on load; without
       // this every e2e run spent real demo quota (found 2026-09-28 - see
@@ -69,6 +74,9 @@ test.describe('Accessibility', () => {
       }
       if (ready) {
         await expect(page.locator(ready).first()).toBeVisible({ timeout: 15_000 });
+      }
+      if (settled && (await page.locator(settled).count()) > 0) {
+        await expect(page.locator(settled)).toBeVisible({ timeout: 15_000 });
       }
 
       let builder = new AxeBuilder({ page }).withTags([

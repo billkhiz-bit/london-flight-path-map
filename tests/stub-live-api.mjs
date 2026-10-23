@@ -74,8 +74,26 @@ const CANNED_SCORE = {
  * end of a run means the interception stopped working - not that the page got
  * quieter.
  */
+// THE FRONT PAGE'S EXAMPLE ANSWER (answer first, 2026-10-23). A plain visit to / looks up TW9 3PZ on
+// postcodes.io and then /v1/environment at its latitude, so without this every gate that audits the front page
+// would reach both services and audit a page that depends on whether they answered. Only those two requests
+// are answered here, with the real shapes front-page.mjs uses (captured 2026-10-03); every other postcode and
+// coordinate goes to the network exactly as before, as this helper's narrowing above asks.
+const EXAMPLE_GEO = { postcode: 'TW9 3PZ', latitude: 51.4713, longitude: -0.2894, admin_district: 'Richmond upon Thames' };
+const EXAMPLE_ENV = { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] };
+const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
+
 export async function stubLiveApi(page) {
   const hits = { count: 0, paths: [] };
+
+  await page.route(
+    (url) => url.hostname === 'api.postcodes.io' && decodeURIComponent(url.pathname).replace(/\s+/g, '').toUpperCase() === '/POSTCODES/TW93PZ',
+    (route) => route.fulfill(json({ status: 200, result: EXAMPLE_GEO }))
+  );
+  await page.route(
+    (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && url.pathname.endsWith('/v1/environment') && url.searchParams.get('lat') === String(EXAMPLE_GEO.latitude),
+    (route) => route.fulfill(json(EXAMPLE_ENV))
+  );
 
   await page.route(
     (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && SPENDS_QUOTA(url.pathname),

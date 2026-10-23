@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-23 - Who is behind Sky Score
+
+- **An About page** (`/about/`): who Sky Score is for, why it was built and by whom, the questions people have
+  asked about it at talks, and the talks themselves. Linked from every page's top bar and footer.
+- Fixed on the way: the front page's "Search a postcode" link now works while Find areas is open, and the
+  "How it works" page marks itself in the top bar.
+
 ## 2026-10-22 - How a score is worked out; fixes from the week's audit
 
 - **House prices are now August 2026's** (HM Land Registry's index; inflation 3.3%, ONS). Most balanced scores do

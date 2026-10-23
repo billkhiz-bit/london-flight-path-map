@@ -162,6 +162,19 @@ const stubOffsite = (route) => {
   return route.abort();
 };
 await context.route(OFFSITE, stubOffsite);
+// ANSWER FIRST (2026-10-23): a plain visit opens on the example answer (#ans-example). Most of this file tests
+// what the page does without it - the question over a faded map, which a visitor still gets whenever the
+// example's lookup fails - so the front page is served with the example pointed at a postcode no stub answers,
+// exactly that failure. Section 1z turns the real example back on and tests it.
+let exampleOn = false;
+const NO_EXAMPLE = 'ZZ0 0ZZ';
+await context.route((url) => url.hostname === '127.0.0.1' && url.pathname === '/', async (route) => {
+  const res = await route.fetch();
+  const body = await res.text();
+  const line = 'data-pc="TW9 3PZ" hidden>Example';
+  if (!exampleOn && !body.includes(line)) ok(false, 'the front page carries its example line as this file expects (update the route above)');
+  return route.fulfill({ response: res, body: exampleOn ? body : body.replace(line, `data-pc="${NO_EXAMPLE}" hidden>Example`) });
+});
 const page = await context.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
@@ -1342,7 +1355,7 @@ ok(
 // off 127.0.0.1, but the demo-key guard (tests/test_demo_key_spenders.py) asks every gate that
 // loads it to answer those calls through the shared stub, and to prove the stub fired.
 const statusStub = await stubLiveApi(page);
-for (const [path, here] of [
+const BAR_PAGES = [
   ['/', null],
   ['/reports/', '/reports/'],
   ['/pricing', '/pricing'],
@@ -1359,7 +1372,8 @@ for (const [path, here] of [
   ['/talks/', null],
   ['/score-demo/api-docs.html', null],
   ['/score-demo/status.html', null],
-]) {
+];
+for (const [path, here] of BAR_PAGES) {
   await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
   await page.mouse.move(0, 0); // no link hovered
   const bar = await page.evaluate(() => {
@@ -1408,6 +1422,54 @@ for (const [path, here] of [
     JSON.stringify(hovered)
   );
 }
+// 16d. THE PHONE MENU (2026-10-23: with How it works and About the six links stopped fitting beside the name,
+// and the bar wrapped into three rows with the name stranded in the middle one; nothing overflowed, so the
+// responsive audit passed it). Below 680 px the links fold behind a Menu button, a popover so it needs no
+// script: the name and Menu share one row, Menu shows every link, and Close and Escape fold them again. At a
+// desktop width there is no Menu button and the links sit in one row with the name. Measured, not flagged.
+const was = page.viewportSize();
+// Every bar the patch reached: 16c's pages, plus the street report and the 404 page, which carry the same bar.
+for (const [path] of [...BAR_PAGES, ['/reports/street/'], ['/404.html']]) {
+  for (const width of [390, 1366]) {
+    await page.setViewportSize({ width, height: 820 });
+    await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+    const look = () => page.evaluate(() => {
+      const shown = (el) => Boolean(el) && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+      const mid = (el) => { const r = el.getBoundingClientRect(); return r.top + r.height / 2; };
+      const brand = document.querySelector('.brand, .site-brand');
+      const btn = document.querySelector('.menu-btn');
+      const links = [...document.querySelectorAll('#site-nav a')];
+      const seen = links.filter(shown);
+      return {
+        menu: shown(btn),
+        menuBesideName: shown(btn) && Math.abs(mid(btn) - mid(brand)) < 6,
+        links: links.length,
+        shown: seen.length,
+        rows: new Set(seen.map((a) => Math.round(mid(a)))).size,
+        linksBesideName: seen.length > 0 && Math.abs(mid(seen[0]) - mid(brand)) < 8,
+      };
+    });
+    const closed = await look();
+    if (width < 680) {
+      // A click that cannot happen (no Menu to press) is a failed check below, never a timeout that ends the run.
+      const tap = (sel) => page.locator(sel).click({ timeout: 3000 }).then(() => true, () => false);
+      const opened = await tap('.menu-btn');
+      const open = await look();
+      const closedByButton = await tap('#site-nav .menu-close');
+      const shut = await look();
+      await tap('.menu-btn');
+      await page.keyboard.press('Escape');
+      const escaped = await look();
+      ok(opened && closedByButton && closed.menu && closed.menuBesideName && closed.shown === 0 && open.links >= 6 && open.shown === open.links && shut.shown === 0 && escaped.shown === 0,
+        `${path}: on a phone the name and Menu share one row, Menu shows all ${open.links} links, and Close and Escape fold them`,
+        JSON.stringify({ closed, open, shut, escaped }));
+    } else {
+      ok(!closed.menu && closed.links >= 6 && closed.shown === closed.links && closed.rows === 1 && closed.linksBesideName,
+        `${path}: at a desktop width there is no Menu button, and every link sits in one row with the name`, JSON.stringify(closed));
+    }
+  }
+}
+await page.setViewportSize(was);
 ok(statusStub.count > 0, 'the status page\'s API probes were answered by the stub, never the live API', `${statusStub.count} stubbed: ${statusStub.paths.slice(0, 3).join(', ')}`);
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass
 // vacuously on a page that has no such button.
@@ -2079,6 +2141,68 @@ const makeReport = async (pc) => {
   ok((await dp.locator('#tab-find').getAttribute('aria-selected')) === 'true' && (await dp.locator('#borough.is-open h2').textContent().catch(() => '')) === 'Camden',
     'find: a shared link to an area on the Find tab opens with that area\'s card', await dp.evaluate(() => location.href));
   await dp.close();
+}
+
+// 1z. ANSWER FIRST (Bill, 2026-10-23, option B of the mock-ups). A plain visit opens on one real answer, labelled
+// as an example: the address stays /, the live region says nothing, no engagement is counted, the box is empty
+// and the coverage line stays. The visitor's own search replaces it; a link that asks for a place or for Find
+// areas gets that instead; a campaign tag is still a plain visit; and a visitor who acts before the example
+// arrives keeps what they did.
+{
+  exampleOn = true;
+  const ep = await context.newPage();
+  await ep.addInitScript(() => {
+    window.__gc = [];
+    window.goatcounter = { count: (v) => window.__gc.push(v.path) };
+  });
+  await ep.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+  ep.on('pageerror', (e) => errors.push(String(e)));
+  const shown = () => ep.waitForFunction(() => !document.getElementById('ans-example')?.hidden, null, { timeout: 10000 }).then(() => true, () => false);
+  const look = () => ep.evaluate(() => ({
+    label: !document.getElementById('ans-example').hidden && document.getElementById('answer').classList.contains('is-open'),
+    title: document.getElementById('ans-title').textContent,
+    address: location.pathname + location.search,
+    status: document.getElementById('status').textContent,
+    covers: getComputedStyle(document.querySelector('.covers')).display !== 'none',
+    intro: document.querySelector('.hero').classList.contains('is-intro'),
+    box: document.getElementById('pc').value,
+    counted: window.__gc.slice(),
+  }));
+
+  await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await shown();
+  const first = await look();
+  ok(first.label && first.title === 'TW9 3PZ' && first.address === '/' && first.status === '' && first.covers && !first.intro && first.box === '' && first.counted.length === 0,
+    'answer first: a plain visit opens on the TW9 3PZ answer, labelled as an example, with the address, the live region, the box and the counts untouched and the coverage line kept',
+    JSON.stringify(first));
+
+  await ep.fill('#pc', 'NW1 7PJ');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'NW1 7PJ', null, { timeout: 10000 }).catch(() => {});
+  const own = await look();
+  ok(own.title === 'NW1 7PJ' && !own.label && own.address.includes('postcode=NW1') && !own.covers,
+    'answer first: the visitor\'s own search replaces the example, and is theirs (in the address, no example label)', JSON.stringify(own));
+
+  for (const [url, why] of [[`${BASE}?city=teesside`, 'a link to a city'], [`${BASE}#find`, 'a link to Find areas'], [`${BASE}?postcode=NW1+7PJ`, 'a link to a postcode']]) {
+    await ep.goto(url, { waitUntil: 'domcontentloaded' });
+    await ep.waitForSelector('#map .boro', { timeout: 20000 });
+    await ep.waitForTimeout(1500);
+    ok(!(await look()).label, `answer first: ${why} gets what it asked for, not the example`, JSON.stringify(await look()));
+  }
+
+  await ep.goto(`${BASE}?utm_source=reddit`, { waitUntil: 'domcontentloaded' });
+  ok(await shown(), 'answer first: a campaign tag is still a plain visit, so it gets the example', JSON.stringify(await look()));
+
+  // The example's lookup held back 1.5 s, and the visitor opens the map first: their action stands.
+  await ep.route((u) => u.hostname === 'api.postcodes.io', async (route) => { await new Promise((r) => setTimeout(r, 1500)); return stubOffsite(route); });
+  await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await ep.waitForSelector('#map .boro', { timeout: 20000 });
+  await ep.locator('#explore-map').click();
+  await ep.waitForTimeout(3000);
+  const yielded = await look();
+  ok(!yielded.label && yielded.counted.includes('event/front-explore'), 'answer first: a visitor who acts before the example arrives keeps what they did', JSON.stringify(yielded));
+  await ep.close();
+  exampleOn = false;
 }
 
 // 19. Every file this run fetched is one a Makefile target uploads. Served through those same rules above, an

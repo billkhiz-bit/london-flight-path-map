@@ -317,3 +317,49 @@ loaded no analytics, so the search entry pages were the unmeasured ones (GoatCou
 the other counting pages carry, which `tests/test_analytics_first_party.py` requires of any page that counts (the
 pages load only their own styles and fonts, so it blocks nothing). The site has NO header CSP (a distribution-wide
 one blanks the prototype), so a page without its own meta policy has none at all.
+
+**The About page (2026-10-23, LIVE).** `/about/` names the founder (Bill's call: a deliberate exception to keeping
+names out of the repo, for this page only), with who it is for, why it was built, five questions really asked at a
+talk, and the talks. Published before the rename's attorney opinion (Bill, 23 Oct); the Deen Developers photo is
+held until they agree (original in `sky-score-drafts\about-photos\`). "Who it is for" is ONE list,
+`scripts/build_who_for.py`, written between WHO-FOR markers into the front page and `/about/` (blocking `--check`).
+Its opening said "beside every postcode" until a review caught the overclaim: "every postcode we cover".
+
+**THE PHONE MENU IS A POPOVER (2026-10-23).** Adding How it works and About made six links, which stop fitting
+beside the name below 620 px (measured on four pages): the bar wrapped into three rows with "Sky Score" stranded in
+the middle one (the front page's `header.top` has no `flex-wrap`, so its links wrapped inside their own box). The
+responsive audit passed it, because nothing overflowed. Below 680 px every bar now folds its links behind a
+`<button popovertarget="site-nav">Menu</button>`; the nav (`.top-nav`, or `.site-nav` in the generated pages) is
+the `popover`, opening as a sheet across the top with its own Close button (`popovertargetaction="hide"`); Escape
+and a tap outside close it too. A POPOVER, NOT SCRIPT, because privacy and terms carry `script-src 'none'` and the
+area pages are gated to carry no script but the analytics tag (`tests/area-pages.mjs`): neither rule was worth
+loosening for a menu. On a wide screen the closed popover IS the ordinary row of links: the UA hides a closed
+popover only by its own `display: none`, which any author rule beats, so each page undoes the UA's popover box
+(position, inset, border, padding, background) and keeps its own `display: flex`. The phone rules sit inside
+`@supports selector(:popover-open)`, so a browser without popovers keeps the plain bar, never a dead button.
+Written into the 13 hand-made bars and `404.html` by one script, and into the generator's three templates;
+`tests/front-page.mjs` 16d holds all 16 bars at 390 and 1366 wide, measured (the name and Menu share one row,
+Menu shows every link, Close and Escape fold them; on a desktop no Menu and one row with the name), proven red on
+a page with the phone rule switched off and one with the desktop undo removed. The area pages now have a width
+breakpoint, so `tests/a11y-source.mjs` scans them on both sides of every breakpoint the generator emits.
+
+**ANSWER FIRST (Bill, 2026-10-23, option B of three mock-ups made on the live page).** Two
+thirds of all views land on the front page and about 6% of those act, and a visitor met a question and an empty
+box. A plain visit now opens on one real answer, `#ans-example`'s postcode (TW9 3PZ, under Heathrow's 27R
+approach), labelled "Example: a street in Kew, under Heathrow's arrivals"; the box says "Your postcode" and the
+button "Check yours" ("Check" at 360 px and under, where "yours" left the box no room for its hint). It is
+`search(pc, { example: true })`, so it can never differ from what typing it gives, but it is not the visitor's: no
+`?postcode=` in the address, nothing said in the live region, no engagement counted (the counts sit on the
+controls), the question kept if a lookup fails (the intro stays until the answer is ready, then one change), the
+coverage line kept, and it gives way to anything the visitor has done first (`acted`, set by `engaged()` before
+the GoatCounter check, so an ad blocker cannot hide it). A link that asks for something (`?city=`, `?postcode=`,
+`?borough=`, `#find`) gets that; campaign tags are still a plain visit. Measure it against the ~6% before the
+next change. TESTS: `tests/front-page.mjs` serves the front page with the example pointed at `ZZ0 0ZZ` (no stub
+answers it: exactly the fallback a visitor gets on a failed lookup), so its intro checks keep testing that state,
+and section 1z turns the real example on (seven checks, proven red with the example off and with `acted`
+ignored). `stubLiveApi` answers ONLY the example's two lookups (postcodes.io for TW9 3PZ, `/v1/environment` at
+its latitude), so the layout, accessibility and font gates audit the page a visitor gets and never reach either
+service. The a11y scans must WAIT for the example: scanned when the map appeared, axe met the page mid-change and
+flagged a target the settled page passes. The answer becoming the first screen also surfaced an old defect: "Its
+figures" was a 13 px inline button under WCAG 2.2's 24 px target, and on a phone held sideways "How it is worked
+out" broke across two lines over it; both fixed (`min-height: 24px`, `white-space: nowrap`).

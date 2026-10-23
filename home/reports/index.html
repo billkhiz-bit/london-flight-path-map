@@ -76,12 +76,31 @@
       p.note { margin: 0; color: var(--mid); max-width: 70ch; font-size: 15px; }
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer a { color: var(--mid); }
+      /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
+         fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
+         pages carry none), and a browser without popovers keeps the plain bar. On a wide screen the closed popover
+         IS the ordinary row of links, so the browser's popover box is undone first. */
+      .menu-btn, .menu-close { display: none; }
+      nav.top-nav[popover] { position: static; inset: auto; width: auto; height: auto; margin: 0; padding: 0; border: 0; overflow: visible; background: none; color: inherit; }
+      @supports selector(:popover-open) {
+        @media (max-width: 680px) {
+          .menu-btn, .menu-close { display: inline-block; font: 600 14px/1.5 'Inter', system-ui, sans-serif; color: inherit; background: none; border: 0; border-radius: 8px; padding: 8px 12px; box-shadow: inset 0 0 0 1.5px currentColor; cursor: pointer; }
+          .menu-btn:focus-visible, .menu-close:focus-visible { outline: 3px solid #d35a12; outline-offset: 2px; }
+          nav.top-nav[popover]:not(:popover-open) { display: none; }
+          nav.top-nav:popover-open { position: fixed; inset: 0 0 auto 0; display: grid; gap: 2px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); background: Canvas; color: CanvasText; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); }
+          nav.top-nav:popover-open .menu-close { justify-self: end; }
+          nav.top-nav:popover-open a { padding: 12px; font-size: 16px; }
+          nav.top-nav::backdrop { background: rgba(0, 0, 0, 0.25); }
+        }
+      }
     </style>
   </head>
   <body>
     <header class="top">
       <a class="brand" href="/">Sky Score</a>
-      <nav class="top-nav" aria-label="Site">
+      <button type="button" class="menu-btn" popovertarget="site-nav">Menu</button>
+      <nav class="top-nav" id="site-nav" aria-label="Site" popover>
+        <button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button>
         <a class="nav-cta" href="/map/">Full map</a>
         <a href="/reports/" aria-current="page">Reports</a>
         <a href="/how-it-works/">How it works</a>
