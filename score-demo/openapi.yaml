@@ -731,10 +731,14 @@ components:
         sourceBreakdown:
           type: object
           description: |
-            Per-component data lineage. Each property describes the source
-            and methodology for that component. The `/v1/score` endpoint
-            does NOT depend on OpenSky Network, aviation noise context is
-            sourced from pre-computed DEFRA borough-aggregate Lden bands.
+            Per-component data lineage, in prose. Each property describes the
+            source and methodology for that component. `quiet` comes from the
+            tier that answered (`context.quietResolution`): DEFRA's aircraft
+            noise map read at the postcode (`raster`), Sky Score's estimate
+            from published flight routes (`postcode`), or a borough-wide band
+            (`borough`). The same lineage per value, machine-readable, is in
+            `provenance`. The `/v1/score` endpoint does NOT depend on the
+            OpenSky Network.
           properties:
             quiet:
               type: string
