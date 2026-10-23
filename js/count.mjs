@@ -185,6 +185,58 @@ document.addEventListener('click', (ev) => {
   }
 });
 
+// THE EMAIL BUTTONS (2026-10-23, Bill: count them before deciding whether a "book a demo" page is worth building).
+// Counted as `email-<page>-<what>`, the what from this ALLOW-LIST of our own fixed subjects and never from the link
+// itself: the full map's correction link puts the visitor's postcode in its subject, so a subject is never sent,
+// only the name it maps to. No subject is `support`, a correction is `correction`, anything unlisted is `other`;
+// front-page.mjs 16e fails if a page a buyer writes from carries a fixed subject this list does not know. A link
+// with its own `data-event` is SKIPPED: /pricing has counted seven of its buttons that way (`pricing-pilot-cta`...)
+// with its own script, and counting them twice would double the very clicks this exists to read.
+const EMAIL_SUBJECTS = {
+  'Area summary': 'area-summary',
+  'Reports for a firm': 'reports-for-a-firm',
+  'Area study for a council': 'council-area-study',
+  '90-day pilot for a council': 'council-pilot',
+  'Annual licence for a council': 'council-licence',
+  'Sky Score 90-day pilot': 'api-pilot',
+  'Sky Score Professional tier': 'api-professional',
+  'Sky Score Enterprise licence': 'api-enterprise',
+  'Sky Score API integration': 'api-integration',
+  'Sky Score API status': 'api-status',
+};
+
+/** A mailto link's counted name ('support', 'correction', an allow-listed name or 'other'); '' for any other link. */
+export function emailName(href) {
+  try {
+    const url = new URL(href);
+    if (url.protocol !== 'mailto:') return '';
+    const subject = (url.searchParams.get('subject') || '').trim();
+    if (!subject) return 'support';
+    if (/^correction\b/i.test(subject)) return 'correction';
+    return EMAIL_SUBJECTS[subject] || 'other';
+  } catch {
+    return '';
+  }
+}
+
+/** The page a click came from: the first part of its path ('/api/' -> 'api', '/pricing' -> 'pricing'), else 'home'. */
+function pageSlug() {
+  const first = (location.pathname.split('/').filter(Boolean)[0] || '').replace(/\.html$/, '');
+  return /^[a-z][a-z-]{0,30}$/.test(first) ? first : 'home';
+}
+
+document.addEventListener('click', (ev) => {
+  try {
+    const a = ev.target instanceof Element ? ev.target.closest('a[href^="mailto:"]:not([data-event])') : null;
+    const what = a ? emailName(a.getAttribute('href')) : '';
+    if (!what) return;
+    const name = `email-${pageSlug()}-${what}`;
+    window.goatcounter?.count?.({ path: `event/${name}`, title: name, event: true });
+  } catch {
+    /* analytics must never break the page */
+  }
+});
+
 // One page view, when the page is visible (a prerendered page counts when it is shown).
 if (document.visibilityState === 'visible' || !('visibilityState' in document)) count();
 else {

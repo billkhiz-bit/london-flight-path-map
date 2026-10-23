@@ -376,6 +376,19 @@ the row, `event/nav-<slug>-menu` from the phone menu, `event/nav-menu` for openi
 `tests/front-page.mjs` 16d on all 11 counting bars at both widths, proven red with the listener off (22 checks);
 the five bars that count nothing (privacy, terms, status, talks, 404: no analytics there) are named in the test.
 
+**THE EMAIL BUTTONS ARE COUNTED, ONCE, AND NEVER WITH A POSTCODE (2026-10-23).** Bill asked about a "book a demo"
+page; the cheap test first was to count the email buttons. Two things nearly went wrong. (1) The obvious name, the
+button's subject, would have sent visitors' POSTCODES: the full map's correction link is
+`?subject=Correction: <postcode or borough>`. So `js/count.mjs` maps subjects through an allow-list
+(`EMAIL_SUBJECTS`) to `email-<page>-<what>`: no subject is `support`, a correction is `correction`, anything else
+`other`. (2) I told Bill the pricing buttons were uncounted after searching count.mjs alone: /pricing has counted
+seven of them since summer through its own `data-event` script, so the new listener skips any link with a
+`data-event`. Held by `tests/front-page.mjs` 16e (every email link on /pricing and /api/ clicked, names in page
+order; its first run showed each pricing button counted twice; the correction check proven red with its rule
+removed). **The readout that answered the demo-page question, 1 Jul - 23 Oct:** /pricing ~37 views, mostly via the
+footer (24); its email buttons clicked ONCE in total (`pricing-pilot-cta`), councils and paid tiers never; one free
+key issued. The constraint is buyers reaching the page, not how they make contact.
+
 **A REGION THE MAP DOES NOT DRAW IS NAMED, NOT "NOT FOUND" (2026-10-23, audit 2026-10-22 M-9).** The coverage
 line lists every region the API scores, and three of them (Nottingham, Greater Norwich, Cardiff) are not drawn
 on the front page's map. Typing "Nottingham" or "Greater Norwich" answered "That postcode was not found, and no

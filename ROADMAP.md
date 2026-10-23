@@ -39,7 +39,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **THE TOP BAR'S ORDER: measure, then decide (~20 Nov, with the answer-first reading).** Bar clicks are now counted
 > (`event/nav-<slug>`, `-menu` from the phone menu). Proposed from best practice, to test against them: `Full map ·
 > Reports · How it works · About · API · Pricing`, and on phones Full map visible beside Menu. Privacy s2c's wording
-> for counted actions is in legal batch 2 (Bill).
+> for counted actions is in legal batch 2 (Bill). **Email buttons counted too** (branch `count-email-buttons`,
+> 23 Oct): read them at the same time. A "book a demo" page waits on them: since 1 July /pricing's email buttons
+> were clicked once in all (`pricing-pilot-cta`); the constraint is buyers reaching the page.
 >
 > **Audit of 22 Oct CLOSED (23 Oct):** the last three minors fixed: M-5 (user paths, guarded by
 > `tests/test_no_user_paths.py`), M-7 (Staten Island's note, held to the FAA data by `tests/test_staten_island_note.py`),

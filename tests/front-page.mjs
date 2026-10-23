@@ -1512,6 +1512,34 @@ ok(JSON.stringify(bareBars.sort()) === JSON.stringify(['/404.html', '/privacy', 
   'the bars that count no clicks are the five pages that load no analytics, and only those', JSON.stringify(bareBars));
 await page.setViewportSize(was);
 ok(statusStub.count > 0, 'the status page\'s API probes were answered by the stub, never the live API', `${statusStub.count} stubbed: ${statusStub.paths.slice(0, 3).join(', ')}`);
+
+// 16e. THE EMAIL BUTTONS ARE COUNTED (2026-10-23, Bill: count them before deciding on a "book a demo" page), by
+// js/count.mjs as `email-<page>-<what>`, the what from an ALLOW-LIST of our own subjects, so the full map's
+// "Correction: <postcode>" can never send a visitor's postcode. Every email link on the two pages a buyer writes
+// from is clicked with its navigation stopped, and the names are caught at goatcounter.count, in page order: a
+// subject the list does not know arrives as `other` and fails here. /pricing's seven `data-event` buttons keep
+// their own names, sent ONCE (the first run of this check sent both names for each, and showed they were counted).
+const EMAIL_WANT = {
+  '/pricing': ['email-pricing-area-summary', 'pricing-firm-reports-cta', 'email-pricing-support',
+    'pricing-council-study-cta', 'pricing-council-pilot-cta', 'pricing-council-licence-cta', 'pricing-pilot-cta',
+    'pricing-professional-cta', 'pricing-enterprise-cta'],
+  '/api/': ['email-api-api-integration'],
+};
+for (const [path, want] of Object.entries(EMAIL_WANT)) {
+  await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.goatcounter?.count === 'function', null, { timeout: 10000 }).catch(() => {});
+  const sent = await page.evaluate(() => {
+    window.__gc = [];
+    window.goatcounter.count = (v) => window.__gc.push(v.path.replace(/^event\//, ''));
+    document.addEventListener('click', (e) => { if (e.target.closest?.('a[href^="mailto:"]')) e.preventDefault(); }, true);
+    for (const a of document.querySelectorAll('a[href^="mailto:"]')) a.click();
+    return window.__gc.slice();
+  });
+  ok(JSON.stringify(sent) === JSON.stringify(want), `${path}: every email button is counted by its own name, in page order`, JSON.stringify(sent));
+}
+const correctionName = await page.evaluate(async () =>
+  (await import('/js/count.mjs')).emailName('mailto:support@skyscore.co.uk?subject=Correction%3A%20SW11%201AA'));
+ok(correctionName === 'correction', "the map's correction email counts as `correction`, never with the postcode it names", correctionName);
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass
 // vacuously on a page that has no such button.
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
