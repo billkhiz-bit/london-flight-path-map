@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About - Sky Score</title>
+    <meta name="description" content="Why Sky Score exists, who it is for, the questions people ask about it, and the person who built it." />
+    <link rel="canonical" href="https://skyscore.co.uk/about/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://skyscore.co.uk/about/" />
+    <meta property="og:title" content="About - Sky Score" />
+    <meta property="og:description" content="A more informed decision when choosing where to live: why Sky Score exists, and who it is for." />
+    <meta property="og:site_name" content="Sky Score" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
+    <!--
+      About, served at /about/ since 2026-10-22 (Bill: "who it's for" and "why I built it" on one page, people
+      first; he chose to be named, with his photos, LinkedIn and GitHub). The audience list sits between WHO-FOR
+      markers and is written by scripts/build_who_for.py, which writes the same list into the front page; edit
+      it there, never here. The questions are real ones, asked by the audience at the AI Tinkerers talk: add a
+      question only when someone has asked it. Wording rules (CLAUDE.md): nothing here says how often planes
+      fly, no prices of ours outside /pricing, one licence per dataset and never one for the product.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <style>
+      :root {
+        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12;
+        --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+        --gutter: clamp(16px, 4vw, 48px);
+        color-scheme: light;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--dark); font-family: var(--font-body); font-size: 17px; line-height: 1.6; }
+      a { color: inherit; text-underline-offset: 3px; }
+      a:hover { color: var(--orange-ink); }
+      :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      img { display: block; max-width: 100%; height: auto; }
+      header.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px var(--gutter); flex-wrap: wrap; }
+      .brand { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-decoration: none; }
+      nav.top-nav { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+      nav.top-nav a { font-size: 14px; font-weight: 500; text-decoration: none; padding: 8px 12px; border-radius: 8px; color: var(--dark); }
+      nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight: 600; }
+      nav.top-nav a:hover { color: var(--dark); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
+      nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }
+      main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
+      h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 5.2vw, 64px); line-height: 1.0; letter-spacing: -0.04em; margin: 0 0 20px; text-wrap: balance; }
+      h1 .ink { color: var(--orange-ink); }
+      p.lead { margin: 0; color: var(--mid); font-size: 19px; max-width: 48ch; }
+      h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.6vw, 32px); letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 16px; }
+      h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(21px, 2.2vw, 26px); letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 6px; }
+      p { margin: 0 0 14px; }
+      section { margin: 0 0 64px; scroll-margin-top: 16px; }
+      figure { margin: 0; }
+      figure img { border-radius: 18px; width: 100%; }
+      figcaption { margin: 8px 2px 0; font-size: 13px; color: var(--mid); }
+
+      /* The opening: the reason, then who is saying it. */
+      .opening { max-width: 940px; margin: 0 0 40px; }
+      .byline { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; font-size: 15px; color: var(--mid); }
+      .byline img { width: 40px; height: 40px; border-radius: 50%; }
+      .byline b { color: var(--dark); font-weight: 600; }
+      .byline a { font-weight: 600; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
+      .byline a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+      /* Who it's for, people first: choosing a home as a dark panel, the professions as a list beside it. */
+      .for-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      @media (min-width: 980px) { .for-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr); align-items: stretch; } }
+      .who-label { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--mid); }
+      .who-home { background: var(--dark); color: #fff; border-radius: 18px; padding: clamp(20px, 3vw, 30px); display: grid; gap: 22px; align-content: space-between; }
+      .who-home p, .who-home p.who-label { color: #d9d7d0; margin: 0; }
+      .who-home p.who-label { margin: 0 0 8px; }
+      .who-home h3 { color: #fff; font-size: clamp(26px, 2.8vw, 34px); }
+      .who-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .who-actions a, ul.links a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; }
+      .who-actions a { box-shadow: inset 0 0 0 1.5px #fff; color: #fff; }
+      .who-actions a.primary { background: #fff; color: var(--dark); }
+      .who-actions a:hover, ul.links a:hover { text-decoration: underline; text-underline-offset: 4px; }
+      .who-actions a:focus-visible { outline-color: #fff; }
+      .who-pro { background: var(--paper); border-radius: 18px; padding: clamp(20px, 3vw, 30px); }
+      ul.who-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+      ul.who-list li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 24px; padding: 14px 2px; border-bottom: 1px solid var(--line); }
+      @media (min-width: 640px) { ul.who-list li { grid-template-columns: minmax(0, 1fr) auto; } ul.who-list span { grid-column: 1; } ul.who-list a { grid-column: 2; grid-row: 1 / span 2; align-self: center; } }
+      ul.who-list b { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+      ul.who-list span { color: var(--mid); font-size: 16px; }
+      ul.who-list a { font-weight: 600; font-size: 15px; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
+      ul.who-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+      /* Why I built it: a letter beside the photo of the map being explained. */
+      .letter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; }
+      @media (min-width: 900px) { .letter { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 56px; } }
+      .letter p { max-width: 60ch; }
+      .signed { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
+      .signed img { width: 52px; height: 52px; border-radius: 50%; }
+      .signed b { display: block; font-family: var(--font-display); font-weight: 600; line-height: 1.2; }
+      .signed span { font-size: 15px; color: var(--mid); }
+
+      /* Real questions, asked out loud at a talk: each answer points at the page that holds the fact. */
+      dl.asked { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      @media (min-width: 760px) { dl.asked { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      dl.asked div { background: var(--paper); border-radius: 16px; padding: 22px 24px; }
+      @media (min-width: 760px) { dl.asked div.lead-q { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 32px; } }
+      dl.asked dt { font-family: var(--font-display); font-weight: 600; font-size: 19px; line-height: 1.3; margin: 0 0 8px; text-wrap: balance; }
+      dl.asked dt::before { content: "\201C"; color: var(--orange-ink); }
+      dl.asked dt::after { content: "\201D"; color: var(--orange-ink); }
+      dl.asked dd { margin: 0; color: var(--mid); font-size: 16px; }
+      p.asked-note { color: var(--mid); font-size: 15px; margin: -6px 0 18px; }
+
+      .talks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      @media (min-width: 760px) { .talks { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: start; } }
+      /* One photo, the talk links beside it. */
+      ul.talk-links { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+      ul.talk-links li { padding: 12px 2px; border-bottom: 1px solid var(--line); font-size: 16px; color: var(--mid); }
+      ul.talk-links a { font-weight: 600; color: var(--dark); }
+
+      /* The close: one band, the three ways to reach a person. */
+      .contact { background: var(--paper); border-radius: 18px; padding: clamp(22px, 3vw, 36px); display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+      .contact h2 { margin: 0; }
+      ul.links { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+      ul.links a { box-shadow: inset 0 0 0 1.5px var(--dark); color: var(--dark); }
+      ul.links a.primary { background: var(--dark); color: #fff; }
+
+      footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+      footer a { color: var(--mid); }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="/">Sky Score</a>
+      <nav class="top-nav" aria-label="Site">
+        <a class="nav-cta" href="/map/">Full map</a>
+        <a href="/reports/">Reports</a>
+        <a href="/how-it-works/">How it works</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/api/">API</a>
+        <a href="/about/" aria-current="page">About</a>
+      </nav>
+    </header>
+    <main>
+      <div class="opening">
+        <h1>A more informed decision when choosing <span class="ink">where to live</span></h1>
+        <p class="lead">That is the whole reason Sky Score exists. A listing shows you the kitchen. It rarely tells you about the aircraft overhead, the road outside, the air or the flood risk, so we put those beside every postcode we cover, from the organisations that measure them, and say plainly where a figure is our own estimate.</p>
+        <p class="byline"><img src="/about/bill-headshot.webp" width="40" height="40" alt="" /><span><b>Bilal Khizar</b>, founder &middot; <a href="#why">Why I built it &darr;</a></span></p>
+      </div>
+
+      <section id="for" aria-labelledby="for-h">
+        <h2 id="for-h">Who it's for</h2>
+        <div class="for-grid">
+          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
+          <div class="who-home">
+            <div>
+              <p class="who-label">Choosing a home</p>
+              <h3>Buying or renting</h3>
+              <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
+            </div>
+            <div class="who-actions">
+              <a class="primary" href="/#check">Search a postcode</a>
+              <a href="/reports/street/">Get a street report</a>
+            </div>
+          </div>
+          <div class="who-pro">
+            <p class="who-label">Working with homes and places</p>
+            <ul class="who-list">
+              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
+              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Residents&#x27; groups</b><span>Start a bid from the official baseline.</span><a href="/area/">Browse council areas &rarr;</a></li>
+              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
+            </ul>
+          </div>
+          <!-- WHO-FOR:END -->
+        </div>
+      </section>
+
+      <section class="letter" id="why" aria-labelledby="why-h">
+        <figure>
+          <picture>
+            <source srcset="/about/talk-ai-tinkerers-speaker.webp" type="image/webp" />
+            <img src="/about/talk-ai-tinkerers-speaker.jpg" width="1600" height="1314" alt="Bilal Khizar speaking into a microphone beside a large screen showing the Sky Score map of London's flight paths." />
+          </picture>
+          <figcaption>Showing the map at AI Tinkerers London, 22 September 2026.</figcaption>
+        </figure>
+        <div>
+          <h2 id="why-h">Why I built it</h2>
+          <p>I went to a property viewing I couldn't afford, and while I was there a plane flew low overhead. The listing hadn't said a word about it.</p>
+          <p>Aircraft noise, road noise, air quality and flood risk are all published by the bodies that measure them, but no property site put them in front of the person deciding where to live. I started Sky Score at an AWS hackathon, honestly for the cloud credits, and kept building it because I wanted it for myself.</p>
+          <p>I don't come from a technical background. I built it with AI, and with a running list of "gotchas", so the same mistake never happens twice.</p>
+          <div class="signed">
+            <img src="/about/bill-headshot.webp" width="52" height="52" alt="" />
+            <div><b>Bilal Khizar</b><span>Founder, Sky Score</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="asked" aria-labelledby="asked-h">
+        <h2 id="asked-h">Questions people have asked</h2>
+        <p class="asked-note">Asked out loud, by the audience at a talk.</p>
+        <dl class="asked">
+          <div class="lead-q">
+            <dt>Does it rank all the places in London, best and worst?</dt>
+            <dd>Yes, and the order depends on what matters to you: a family, a first-time buyer and an investor each get a different ranking. <a href="/map/">Open the full map</a>.</dd>
+          </div>
+          <div>
+            <dt>Can you see how it changes over time?</dt>
+            <dd>House prices update every month. The official aircraft and road noise maps are from 2021, a lockdown year with fewer flights, and the full map says so. <a href="/changes">What changed, and when</a>.</dd>
+          </div>
+          <div>
+            <dt>Could you forecast the noise from a new runway?</dt>
+            <dd>Not yet. Sky Score describes the routes flown today; it doesn't guess at a runway that hasn't been built.</dd>
+          </div>
+          <div>
+            <dt>Is it the land or the building? A flat on a high floor hears a road differently.</dt>
+            <dd>It's the postcode, not the floor: a penthouse and a ground-floor flat at the same postcode get the same road noise and air quality. <a href="/how-it-works/">How a score is worked out</a>.</dd>
+          </div>
+          <div>
+            <dt>What made you build it?</dt>
+            <dd>A plane overhead at a viewing, and a listing that said nothing about it. <a href="#why">The story</a>.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section id="talks" aria-labelledby="talks-h">
+        <h2 id="talks-h">Talks</h2>
+        <div class="talks">
+          <figure>
+            <picture>
+              <source srcset="/about/talk-ai-tinkerers-room.webp" type="image/webp" />
+              <img src="/about/talk-ai-tinkerers-room.jpg" width="2000" height="1125" loading="lazy" alt="A room of seated people, their faces blurred, listening to Bilal Khizar speak at the front beside a large screen." />
+            </picture>
+            <figcaption>AI Tinkerers London, 22 September 2026. Audience faces blurred.</figcaption>
+          </figure>
+          <ul class="talk-links">
+            <li><a href="https://london.aitinkerers.org/talks/rsvp_PqkfcAzQqdQ">AI Tinkerers London, 22 September 2026</a>: the talk page and recording (sign-in needed)</li>
+            <li><a href="/talks/">The handouts from the talks</a>: how Sky Score works, and how its checks work</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="contact" aria-labelledby="contact-h">
+        <h2 id="contact-h">Get in touch</h2>
+        <ul class="links">
+          <li><a class="primary" href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a></li>
+          <li><a href="https://www.linkedin.com/in/bilal-khizar/">LinkedIn</a></li>
+          <li><a href="https://github.com/billkhiz-bit">GitHub</a></li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      <span>All figures from official public data, except Quiet Skies, which says how it was worked out.</span>
+      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/open-data/">Open data</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+    </footer>
+    <script type="module" src="/js/count.mjs"></script>
+  </body>
+</html>

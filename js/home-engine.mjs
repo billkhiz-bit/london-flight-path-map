@@ -1827,6 +1827,17 @@ function bindFit() {
       hero?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
     });
   }
+  // "Search a postcode" in "Who it is for" links /#check (absolute: /about/ carries the same block). Here it must
+  // bring the check tab back, or with Find areas open it scrolls to a hidden panel and does nothing (review 2026-10-23).
+  for (const a of document.querySelectorAll('a[href="/#check"]')) {
+    a.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      setTab('check');
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      hero?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+      byId('pc')?.focus({ preventScroll: true });
+    });
+  }
   tablist.hidden = false;
 }
 

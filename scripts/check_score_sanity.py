@@ -501,7 +501,7 @@ def main():
 
     if pending:
         print(f'RESULT: PASS (INCOMPLETE: {", ".join(pending)} scored by the source, not yet by the live API; '
-              're-run with --require-deployed after the deploy) ({len(rows)} postcodes)')
+              f're-run with --require-deployed after the deploy) ({len(rows)} postcodes)')
         return 0
     print(f'RESULT: PASS ({len(rows)} postcodes)')
     return 0

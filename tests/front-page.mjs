@@ -1347,8 +1347,9 @@ for (const [path, here] of [
   ['/reports/', '/reports/'],
   ['/pricing', '/pricing'],
   ['/api/', '/api/'],
-  ['/open-data/', '/open-data/'],
-  ['/how-it-works/', null],
+  ['/open-data/', null],
+  ['/how-it-works/', '/how-it-works/'],
+  ['/about/', '/about/'],
   ['/area/london/camden/', null],
   // The six that had none until 2026-10-07 (website audit M1). Three are dark pages, so the bar
   // takes the page's colours; the rules checked are the same.
@@ -2062,6 +2063,13 @@ const makeReport = async (pc) => {
   const choices = await dp.locator('#fit-avoid input, #fit-want input').count();
   const fig = (await card.locator('.fig').evaluate((el) => el.firstChild.textContent)).trim();
   ok(choices > 0 && fig === String(choices), 'find: the card\'s figure is the number of choices the tab offers', `${fig} vs ${choices}`);
+  // Review 2026-10-23: "Search a postcode" in "Who it is for" (/#check) scrolled to the hidden check panel and did
+  // nothing while Find areas was open. The Find tab is open here (the card above opened it).
+  await dp.locator('section.who a[href="/#check"]').click();
+  ok((await dp.locator('#tab-check').getAttribute('aria-selected')) === 'true' && await dp.locator('#panel-check').isVisible()
+    && await dp.evaluate(() => document.activeElement?.id === 'pc'),
+  'find: "Search a postcode" in "Who it is for" brings the check tab back, with focus in the postcode box',
+  await dp.evaluate(() => `${document.querySelector('[role="tab"][aria-selected="true"]')?.id}|${document.activeElement?.id}`));
 
   // Review 2026-10-15: an area opened from the list writes ?borough= with #find, and booting from
   // that link closed the card the link was for.

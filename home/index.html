@@ -306,8 +306,31 @@
       section.dev .copy-status { margin: 0; min-height: 1.2em; font-size: 13px; color: #c9c7c0; }
 
       section.who { padding: 40px var(--gutter) 56px; }
-      section.who p { margin: 0; max-width: 80ch; font-size: 17px; color: var(--mid); }
-      section.who p b { color: var(--dark); font-weight: 600; }
+      /* Who it is for (2026-10-22): the list is written by scripts/build_who_for.py, the same words the About page
+         carries; here it is a card for choosing a home, the professions as a list, and the founder strip. */
+      section.who .who-label { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--mid); }
+      .who-home { background: var(--paper); border-radius: 18px; padding: clamp(20px, 3vw, 30px); display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 40px; align-items: end; max-width: 1120px; margin: 0 0 30px; }
+      @media (min-width: 760px) { .who-home { grid-template-columns: minmax(0, 1.4fr) auto; } }
+      .who-home h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.02em; margin: 0 0 6px; }
+      section.who .who-home p { margin: 0; font-size: 17px; color: var(--mid); }
+      section.who .who-home p.who-label { margin: 0 0 8px; font-size: 14px; }
+      .who-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .who-actions a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; box-shadow: inset 0 0 0 1.5px var(--dark); color: var(--dark); }
+      .who-actions a.primary { background: var(--dark); color: #fff; }
+      .who-actions a:hover { text-decoration: underline; text-underline-offset: 4px; }
+      .who-pro { max-width: 1120px; margin: 0 0 30px; }
+      ul.who-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+      ul.who-list li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 28px; padding: 14px 2px; border-bottom: 1px solid var(--line); align-items: baseline; }
+      @media (min-width: 760px) { ul.who-list li { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) 13em; } ul.who-list a { justify-self: end; } }
+      ul.who-list b { font-family: var(--font-display); font-weight: 600; font-size: 17px; color: var(--dark); }
+      ul.who-list span { color: var(--mid); font-size: 16px; }
+      ul.who-list a { font-weight: 600; font-size: 15px; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
+      ul.who-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
+      .founder { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 22px 12px 12px; background: var(--paper); border-radius: 16px; max-width: 1120px; }
+      .founder img { width: 56px; height: 56px; border-radius: 50%; flex: none; }
+      section.who .founder p { margin: 0; font-size: 16px; line-height: 1.45; color: var(--dark); flex: 1 1 260px; }
+      .founder a { font-weight: 600; white-space: nowrap; color: var(--orange-ink); text-decoration: none; }
+      .founder a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer .route-credit { flex-basis: 100%; order: 3; font-size: 12px; }
@@ -379,9 +402,10 @@
       <nav class="top-nav" aria-label="Site">
         <a class="nav-cta" href="/map/">Full map</a>
         <a href="/reports/">Reports</a>
+        <a href="/how-it-works/">How it works</a>
         <a href="/pricing">Pricing</a>
         <a href="/api/">API</a>
-        <a href="/open-data/">Open data</a>
+        <a href="/about/">About</a>
       </nav>
     </header>
 
@@ -529,7 +553,34 @@
 
       <section class="who" aria-labelledby="who">
         <h2 id="who">Who it is for</h2>
-        <p><b>Buying or renting</b>: find the areas that fit your budget, then check a street before a viewing. <b>Buying agents and relocation firms</b>: a sourced answer before the client asks. <b>Residents' groups</b>: start a bid from the official baseline. <b>Islamic home finance</b>: environmental checks with an affordability measure that uses prices only. <b>Conveyancers and surveyors</b>: add aircraft noise to the reports you already produce. <b>Researchers and journalists</b>: one open, documented file.</p>
+        <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
+        <div class="who-home">
+          <div>
+            <p class="who-label">Choosing a home</p>
+            <h3>Buying or renting</h3>
+            <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
+          </div>
+          <div class="who-actions">
+            <a class="primary" href="/#check">Search a postcode</a>
+            <a href="/reports/street/">Get a street report</a>
+          </div>
+        </div>
+        <div class="who-pro">
+          <p class="who-label">Working with homes and places</p>
+          <ul class="who-list">
+            <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
+            <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
+            <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
+            <li><b>Residents&#x27; groups</b><span>Start a bid from the official baseline.</span><a href="/area/">Browse council areas &rarr;</a></li>
+            <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
+          </ul>
+        </div>
+        <!-- WHO-FOR:END -->
+        <div class="founder">
+          <img src="/about/bill-headshot.webp" width="56" height="56" alt="" />
+          <p>Built by Bilal Khizar, so you can make a more informed decision when choosing where to live.</p>
+          <a href="/about/">Our story &rarr;</a>
+        </div>
       </section>
     </main>
 
@@ -538,7 +589,7 @@
       <!-- The routes drawn above are the UK AIP's and the FAA's (2026-10-07). LICENSING.md: credit NATS wherever
            UK routes are shown, and the FAA's CIFP terms ask for its "as is" disclaimer wherever its procedures are. -->
       <span class="route-credit">Flight routes: UK Aeronautical Information Publication (NATS); in the US, the FAA's Coded Instrument Flight Procedures, supplied "as is", without warranty. Not for navigation.</span>
-      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/about/">About</a> &middot; <a href="/open-data/">Open data</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
 
     <script src="/js/vendor/d3.v7.min.js"></script>

@@ -69,6 +69,7 @@ const PAGES = [
   { path: '/home/reports/', name: 'reports' },
   { path: '/home/reports/street/', name: 'free street report' },
   { path: '/how-it-works/', name: 'how it works' },
+  { path: '/about/', name: 'about' },
   { path: '/api/', name: 'API landing' },
   {
     path: '/changes',

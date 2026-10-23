@@ -28,6 +28,7 @@ const PAGES = [
   { path: '/reports/', name: 'reports' },
   { path: '/reports/street/', name: 'free street report' },
   { path: '/how-it-works/', name: 'how it works' },
+  { path: '/about/', name: 'about' },
   { path: '/api/', name: 'API landing' },
   { path: '/changes', name: 'what changed this quarter' },
   { path: '/score-demo/', name: 'score demo' },

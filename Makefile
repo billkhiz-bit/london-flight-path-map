@@ -58,7 +58,7 @@ help:
 	@echo ""
 	@echo "  Web / PWA"
 	@echo "    fonts-deploy        Upload self-hosted fonts/ (runs FIRST in web-deploy-all: sw.js precaches them)"
-	@echo "    web-deploy          Upload js/ modules + the map (index.html, at /map/) + privacy/pricing/changes/terms/api/how-it-works"
+	@echo "    web-deploy          Upload js/ modules + the map (index.html, at /map/) + privacy/pricing/changes/terms/api/how-it-works/about"
 	@echo "    home-deploy         Upload the front page (home/index.html, at /) + /reports/ + the /preview/ redirects"
 	@echo "    data-deploy         Upload data/ boundaries + borough-extra + quiet datasets (run BEFORE pwa-deploy)"
 	@echo "    pwa-deploy          Upload manifest, sw.js, icons (PWA assets)"
@@ -199,6 +199,18 @@ web-deploy:
 		s3://$(S3_BUCKET)/how-it-works/index.html \
 		--content-type "text/html" \
 		--cache-control "no-cache" --region $(AWS_REGION)
+	# about/ added 2026-10-22: who it is for and why it was built, linked from every top bar and footer, so it
+	# ships in web-deploy with its photos, BEFORE home-deploy publishes the front page's founder strip.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp about/index.html \
+		s3://$(S3_BUCKET)/about/index.html \
+		--content-type "text/html" \
+		--cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp about/ s3://$(S3_BUCKET)/about/ --recursive \
+		--exclude "*" --include "*.webp" --content-type "image/webp" \
+		--cache-control "public, max-age=86400" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp about/ s3://$(S3_BUCKET)/about/ --recursive \
+		--exclude "*" --include "*.jpg" --content-type "image/jpeg" \
+		--cache-control "public, max-age=86400" --region $(AWS_REGION)
 	# js/vendor/ likewise had no target, and this one can break the site rather
 	# than merely date it: d3.v7.min.js is in sw.js SHELL_ASSETS and cache.addAll()
 	# is ATOMIC, so if it is missing from the origin the service worker fails to
@@ -219,7 +231,7 @@ web-deploy:
 	# rather than a Makefile-level export because make is not on PATH here
 	# and these recipes are run by pasting them into Git Bash.
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
-		--distribution-id $(CF_DISTRIBUTION) --paths '/map*' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*' '/how-it-works*'
+		--distribution-id $(CF_DISTRIBUTION) --paths '/map*' '/privacy*' '/pricing*' '/changes*' '/terms*' '/js/*' '/api/*' '/how-it-works*' '/about*'
 
 .PHONY: fonts-deploy
 fonts-deploy:

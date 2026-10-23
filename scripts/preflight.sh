@@ -207,7 +207,7 @@ fi
 # same failure mode as a gate that overstates — either way the name stops
 # describing what actually ran.
 check "ESLint (10 targets)"            npm run lint
-check "html-validate (16 pages)"       npm run lint:html
+check "html-validate (17 pages)"       npm run lint:html
 check "ruff (backend/lambdas)"         python -m ruff check backend/lambdas/
 # backend/tests/ was outside every ruff target until 2026-08-04, so the suite
 # that guards the score engine was the one directory nothing linted — it had
@@ -337,6 +337,9 @@ check "Breathe London keeps its rules" python scripts/fetch_breathe_london.py --
 # its UK numbers add up to the page's own "97 council areas in 13 UK city regions".
 check "coverage strip == registry"   python scripts/build_coverage_strip.py --check
 check "how-it-works == the engine"   python scripts/build_how_it_works.py --check
+# The audience list is ONE source written into the front page and /about/ (2026-10-22): a hand edit to
+# either copy is the drift this exists to catch.
+check "who it is for == one list"     python scripts/build_who_for.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
