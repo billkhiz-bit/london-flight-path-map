@@ -109,8 +109,8 @@
 
       .talks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
       @media (min-width: 760px) { .talks { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: start; } }
-      /* One photo, the talk links beside it. */
-      ul.talk-links { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+      /* The Deen Developers photo is theirs, credited in its caption (Bill, 2026-10-23: in, and he tells them). */
+      ul.talk-links { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--line); max-width: 820px; }
       ul.talk-links li { padding: 12px 2px; border-bottom: 1px solid var(--line); font-size: 16px; color: var(--mid); }
       ul.talk-links a { font-weight: 600; color: var(--dark); }
 
@@ -249,11 +249,18 @@
             </picture>
             <figcaption>AI Tinkerers London, 22 September 2026. Audience faces blurred.</figcaption>
           </figure>
-          <ul class="talk-links">
-            <li><a href="https://london.aitinkerers.org/talks/rsvp_PqkfcAzQqdQ">AI Tinkerers London, 22 September 2026</a>: the talk page and recording (sign-in needed)</li>
-            <li><a href="/talks/">The handouts from the talks</a>: how Sky Score works, and how its checks work</li>
-          </ul>
+          <figure>
+            <picture>
+              <source srcset="/about/talk-deen-developers.webp" type="image/webp" />
+              <img src="/about/talk-deen-developers.jpg" width="540" height="638" loading="lazy" alt="Bilal Khizar speaking with a microphone beside a projected Sky Score page." />
+            </picture>
+            <figcaption>Deen Developers, July 2026. Photo: Deen Developers.</figcaption>
+          </figure>
         </div>
+        <ul class="talk-links">
+          <li><a href="https://london.aitinkerers.org/talks/rsvp_PqkfcAzQqdQ">AI Tinkerers London, 22 September 2026</a>: the talk page and recording (sign-in needed)</li>
+          <li><a href="/talks/">The handouts from the talks</a>: how Sky Score works, and how its checks work</li>
+        </ul>
       </section>
 
       <section class="contact" aria-labelledby="contact-h">
