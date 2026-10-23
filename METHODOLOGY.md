@@ -649,7 +649,7 @@ quiet = max(0, min(10, 10 - noise_score))
 
 Before v5.3 the corridors were hand-drawn, and four Heathrow "stack" lines ran from each hold straight to the runway - Ockham and Bovingdon due north-south into two east-west runways - while the departure lines fanned off the runway end where the published routes run straight ahead first. A member of the public pointed this out ("look up the SIDs and arrival charts... nobody turns that early"), and they were right. Gatwick, Luton and Stansted carry no London corridors, as before. **Since v5.4 the nine other UK airports are derived the same way**: every runway end's final approach (Manchester 23L and Cardiff 12 have no ILS, so the 3.0° vertical path angle their RNP approach charts publish), and departures from the SID coding tables where an airport publishes them - Birmingham (eight routes) and Newcastle (three). Manchester, Leeds Bradford, Liverpool, Bristol, East Midlands and Cardiff publish conventional SIDs without coding tables, whose charts cannot be read as coordinates, so their departures are not drawn yet; Teesside publishes no SIDs at all, so none is the true answer there. East Midlands feeds both Leicester and Nottingham. New York's eight corridors are unchanged: the UK AIP does not cover them. Each corridor is a sequence of waypoints at 1 km; the shortest distance to any waypoint is the proxy for distance to the corridor.
 
-**The corridor penalty is fitted, not assumed (v5.3).** The corridor ladder (4/3/2/1 points at under 1/2/4/6 effective km) is scaled by `CORRIDOR_WEIGHT = 0.3`. `scripts/fit_corridor_weight.py` scores every DEFRA-measured postcode in every city with a loaded raster (26,233) through the geometry tier, picks the weight that minimises mean absolute error on a train half split by a hash of the postcode, and reports the other half. At the old full weight the airport term and the corridor term both penalised the same postcodes near every runway, and London's estimate read a mean 1.8 points louder than DEFRA measured. Held-out results:
+**The corridor penalty is fitted, not assumed (v5.3).** The corridor ladder (4/3/2/1 points at under 1/2/4/6 effective km) is scaled by `CORRIDOR_WEIGHT = 0.3`. `scripts/fit_corridor_weight.py` scores every DEFRA-measured postcode in every city with a loaded raster (26,233) through the geometry tier, picks the weight that minimises mean absolute error on a train half split by a hash of the postcode, and reports the other half. At the old full weight the airport term and the corridor term both penalised the same postcodes near every runway, and London's estimate read a mean 1.8 points louder than DEFRA's maps. Held-out results:
 
 | City (test half) | Postcodes | Error at weight 1.0 | Error at 0.3 | Signed bias at 0.3 |
 |---|---|---|---|---|
@@ -667,7 +667,7 @@ Every city with at least 150 test postcodes improves; Tyne and Wear (105) is too
 
 **The airport term is runway-shaped (v5.5, 2026-10-01).** Until v5.5 the airport term laddered the straight-line distance to the airport whatever the direction, as though its noise were a circle. Aircraft noise lies in a strip along the runway, because every arrival and departure flies down that line, and the circle paid for it beside the runway: 3–15 km out, the estimate erred by 1.30 points within 15° of the runway axis and by **3.66 at 30–60°, all of it reading too loud**. Since v5.5 the distance the ladder reads is `sqrt(along² + (4 × side)²)`, where `along` and `side` are the parts of the airport-to-postcode distance along and across the runway axis: unchanged straight down the runway, four times longer directly beside it. Each airport's axis is the mean of its runways' published bearings (UK AIP AD 2.12), generated into both the API and the site by `scripts/build_flight_paths.py`; New York's airports keep a circle. The corridor weight is refitted with it, **0.3 → 0.5**, because the two trade off: a narrower strip removes noise beside the runway, and a heavier corridor term restores some of it under the flight paths.
 
-*How 4 and 0.5 were chosen* (`scripts/fit_airport_shape.py`, re-runnable in about 20 seconds, with an advisory preflight `--check`). Two yardsticks, because one is biased. **On the strip**: the 26,233 DEFRA-measured postcodes and the same train/test split as above. DEFRA maps only the loud strip, so this yardstick alone rewards ever narrower shapes. **Beside it**: DEFRA's aircraft rasters hold no below-floor zeros, so a blank cell inside a raster's box is ground below that raster's lowest band, measured at 40 dB (quiet exactly 10) or 49 dB (quiet at least 7.8, scored as a bound). That adds 164,699 exact and 14,895 bound readings; outside a raster's box nothing is claimed. Each shape's weight is fitted on the train half **under one rule: no city may come to read quieter than DEFRA measured** (its bias may not rise above the circle's own, or above zero, by more than 0.05). The shape kept is the one with the lowest strip and below-floor error together. The rule is applied city by city on purpose. Judged over all cities pooled, k = 6 at weight 0.5 looked best and neutral (bias −0.01), but London is 72% of the strip, and that hid **five cities reading quieter than DEFRA**, West Midlands by 0.66.
+*How 4 and 0.5 were chosen* (`scripts/fit_airport_shape.py`, re-runnable in about 20 seconds, with an advisory preflight `--check`). Two yardsticks, because one is biased. **On the strip**: the 26,233 DEFRA-measured postcodes and the same train/test split as above. DEFRA maps only the loud strip, so this yardstick alone rewards ever narrower shapes. **Beside it**: DEFRA's aircraft rasters hold no below-floor zeros, so a blank cell inside a raster's box is ground below that raster's lowest band, measured at 40 dB (quiet exactly 10) or 49 dB (quiet at least 7.8, scored as a bound). That adds 164,699 exact and 14,895 bound readings; outside a raster's box nothing is claimed. Each shape's weight is fitted on the train half **under one rule: no city may come to read quieter than DEFRA's maps** (its bias may not rise above the circle's own, or above zero, by more than 0.05). The shape kept is the one with the lowest strip and below-floor error together. The rule is applied city by city on purpose. Judged over all cities pooled, k = 6 at weight 0.5 looked best and neutral (bias −0.01), but London is 72% of the strip, and that hid **five cities reading quieter than DEFRA**, West Midlands by 0.66.
 
 | City (test half) | Postcodes | Strip error, circle | **v5.5** | Bias, circle | **v5.5** | Beside the strip, circle | **v5.5** |
 |---|---|---|---|---|---|---|---|
@@ -681,7 +681,7 @@ Every city with at least 150 test postcodes improves; Tyne and Wear (105) is too
 | Nottingham | 212 | 2.041 | **1.159** | −0.80 | −0.30 | – | – |
 | All | 13,115 | 1.431 | **1.141** | −0.30 | −0.38 | 1.226 | **0.770** |
 
-Every city improves, and every city's bias stays negative or becomes negative: Greater Manchester's +0.20, the one city the circle read quieter than DEFRA, is now −0.16. The share of strip readings more than a point quieter than DEFRA falls from 23.3% to 15.8%. Beside-the-strip figures are shown only where a city has 150 or more test readings. **What moves**: on a 1% sample of live postcodes DEFRA did not measure (5,235, every city with an airport), **31% move**, 15.7% up (quieter, beside runways, by up to 5.8 points) and 15.2% down (under corridors, from the heavier weight, by at most 0.8); mean **+0.31**, about +0.10 on the `balanced` headline. Postcodes DEFRA measured are scored from its raster and do not move; borough bands, borough scores and the area pages do not move. **Provisional** for the same reason as the corridor weight: DEFRA Round 4 maps 2021 (§4.6), so both are refitted when a normal-year yardstick lands.
+Every city improves, and every city's bias stays negative or becomes negative: Greater Manchester's +0.20, the one city the circle read quieter than DEFRA, is now −0.16. The share of strip readings more than a point quieter than DEFRA falls from 23.3% to 15.8%. Beside-the-strip figures are shown only where a city has 150 or more test readings. **What moves**: on a 1% sample of live postcodes DEFRA did not measure (5,235, every city with an airport), **31% move**, 15.7% up (quieter, beside runways, by up to 5.8 points) and 15.2% down (under corridors, from the heavier weight, by at most 0.8); mean **+0.31**, about +0.10 on the `balanced` headline. Postcodes DEFRA's maps cover are scored from its raster and do not move; borough bands, borough scores and the area pages do not move. **Provisional** for the same reason as the corridor weight: DEFRA Round 4 maps 2021 (§4.6), so both are refitted when a normal-year yardstick lands.
 
 **New York is fitted to its airports' noise monitors (v5.6, 2026-10-16).** Until v5.6 New York's estimate read eight hand-drawn corridors and treated each airport as Heathrow-sized, and against the Port Authority of New York and New Jersey's permanent noise monitors it read quieter than measured at 15 of 17 JFK monitors, by 2.4 points on average. It is now built the way the Bay Area's is (`scripts/measure_us_quiet_yardstick.py`):
 
@@ -738,7 +738,7 @@ The chosen tier is reported in `context.quietResolution` (`'raster' | 'postcode'
 >
 > **What it corrects, measured against the geometry tier it replaces:** mean
 > absolute difference **2.224 score points**, signed **−2.104**, meaning the
-> geometry estimate reads those postcodes *louder* than DEFRA measured. London
+> geometry estimate reads those postcodes *louder* than DEFRA's map. London
 > already received a correction of the same size (2.070) from its own raster, so
 > before this change the product was ranking London postcodes measured one way
 > against eight cities' measured another. **Caveat that must travel with these
@@ -1418,7 +1418,7 @@ that reading through the ramp in §4.5. It is **not** reproducible from the
 flight-path geometry in this document, and it should not be - the geometry tier
 exists to stand in for the raster where the raster has no coverage. The field
 that tells you which ran is `context.quietResolution`, and `coverage.quiet`
-carries `measuredAtLocation: true` here.
+carries `measuredAtLocation: true` here, meaning READ AT this postcode rather than estimated or averaged: DEFRA's map is itself modelled, not a microphone reading.
 
 > Earlier editions of this section hand-derived `quiet` from distance to
 > airports and got a different number every time the raster's coverage grew.
@@ -1683,7 +1683,7 @@ Heathrow-sized. The clearest consequence was **Stockton-on-Tees published as
 `severe`, the same band as Hounslow**, from an airport handling 173,006
 passengers a year against Heathrow's 83.9 million.
 
-**Each airport's ladder is now scaled by its own measured noise footprint.** The
+**Each airport's ladder is now scaled by its own noise footprint as DEFRA maps it.** The
 scale is the area above **55 dB Lden** in that airport's DEFRA Round 4 surface,
 expressed as an equivalent radius (`sqrt(area/pi)`) and divided by Heathrow's:
 
@@ -1768,9 +1768,9 @@ no coverage, so the better model is whichever reproduces it more closely:
 | AIP corridors, fitted weight (v5.3) | 1.320 | −0.146 |
 | Runway-shaped airport term (v5.5) | **1.032** | **−0.292** |
 
-14,730 postcodes moved closer to the measurement and **20 moved further**. The
+14,730 postcodes moved closer to DEFRA's value and **20 moved further**. The
 signed error stays negative in every row, meaning the model still reads noisier than
-DEFRA measured — the correction moves toward the measurement without crossing to
+DEFRA's maps — the correction moves toward DEFRA's value without crossing to
 the optimistic side.
 
 **London moves at postcode level** as a result: 65% of sampled postcodes, mean
@@ -2377,6 +2377,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-10-23 (no version change)**, **DEFRA's and the Environment Agency's figures are described as modelled, not measured.** (1) *Defect:* the API page, the OpenAPI descriptions of `liveResolution` / `environmentResolution` and of the raster tier, this file's own sections 4.5 and 7.4-7.4.1 and its worked example (step 3), the README, and the MCP server's `environment_at` tool called DEFRA's strategic noise maps and PCM air values, and the Environment Agency's flood map, "measured"; all three are model outputs (the consumer page `/how-it-works/` already said so), and the codebase keeps "measured air quality" for the AURN and Breathe London sensors. The MCP tool also promised a flood value `/v1/environment` never returns. (2) *Fix:* the descriptions say modelled; `measured` as a VALUE of the resolution fields is kept and defined as present for this place, and `measuredAtLocation` as read at this location, because renaming a field breaks integrators. (3) *Effect:* no field, value or score changes, so no version bump.
 - **2026-10-22 (no version change)**, **monthly vintage roll to August 2026 HPI, all thirteen UK cities, the second roll inside a quarter.** `avgPrice`/`trend` moved to HPI 2026-08 in BOTH holders (80 of 97 prices, 95 of 97 trends), the deflator to ONS CPIH for August (3.3%, from July's 3.1%), and every area page and the worked example on `/how-it-works/` were rebuilt. The quarter key stays `2026-Q3` and the previous snapshot stays May, as at the July roll. Effects: **`balanced` barely moves** - 21 of 97 scores by 0.1 (52 affordability components moved; balanced weights growth at 0.00); **`investor` moves on 75 of 97**, the largest Calderdale 6.9 -> 8.3 and Wolverhampton 7.6 -> 6.5, ordinary monthly HPI noise in small cohorts (ROADMAP item 9). Both of the sterling pool's growth anchors moved: its steepest real-terms fall is now the City of London's -17.3% (Westminster's -23.1% in July; Westminster eased to -17.0%), and its fastest riser Calderdale's +4.4% (Trafford's +6.3% in July), so Calderdale scores the pool's 10.0 and every falling area is scaled against a shallower fall. Nothing about the method moved.
 - **2026-10-22 (v5.7, no version change)**, **the San Francisco Bay Area is scored by the API** (section 4.8;
   built, deploying through Bill's reviewed changeset; the site keeps showing facts). (1) *Change:* the 50 cities

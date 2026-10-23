@@ -14,7 +14,7 @@ Tools (all read-only, each one API call or a few):
   compare_areas    /v1/score for two to five places, side by side (one call each: the free plan refuses batch)
   list_regions     /v1/regions, the cities and boroughs covered (no key)
   score_changes    /v1/changes, London's quarter-on-quarter movement (no key)
-  environment_at   /v1/environment, measured air, road noise and flood at a coordinate (no key)
+  environment_at   /v1/environment, DEFRA's modelled air quality and road and aircraft noise at a point (no key)
 
   python mcp-server/sky_score_mcp.py      run over stdio (what Claude does; see mcp-server/README.md)
 """
@@ -281,8 +281,9 @@ def score_changes() -> dict[str, Any]:
 
 @mcp.tool(title='Environment at a point', annotations=READ_ONLY)
 def environment_at(lat: float, lon: float) -> dict[str, Any]:
-    """Measured air quality, road noise and flood readings at a coordinate (UK coverage), with their sources.
-    Measurements only: no score and no weights.
+    """Air quality and road and aircraft noise at a coordinate (UK coverage), with their sources.
+    Every value comes from DEFRA's published maps, which are MODELLED, not sensor readings: say so, and say
+    each map's year from its source line. Values in units only: no score, no weights, and no flood value.
     """
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise ToolError('lat must be -90..90 and lon -180..180')

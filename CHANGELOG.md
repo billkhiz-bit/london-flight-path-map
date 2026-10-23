@@ -17,6 +17,10 @@
   your floor: road noise and traffic pollution can differ on an upper floor.
 - Fixed on the way: the front page's "Search a postcode" link now works while Find areas is open; the "How it
   works" page marks itself in the top bar; "Its figures" in an answer is now a full-size touch target.
+- **For developers and AI agents: DEFRA's and the Environment Agency's figures are called modelled, not measured.**
+  Their noise, air and flood maps are worked out by models, as How it works already told readers; the API page,
+  the API reference and the MCP server's environment tool had called them measured. The environment tool also no
+  longer promises a flood value it never returned. No field, value or score changes.
 
 ## 2026-10-22 - How a score is worked out; fixes from the week's audit
 

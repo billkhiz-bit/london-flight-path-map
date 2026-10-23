@@ -1024,12 +1024,12 @@ components:
         liveResolution:
           type: string
           description: >-
-            Whether the liveability inputs were measured for this borough,
+            Whether the liveability inputs are present for this borough (`measured`),
             and if partial, which are missing and why.
         environmentResolution:
           type: string
           description: >-
-            Whether the three environment inputs were measured. `unavailable`
+            Whether the three environment inputs are present (`measured`: they are DEFRA's and the Environment Agency's published maps, which are themselves MODELLED, so the value means present, not observed by an instrument). `unavailable`
             for New York AND for any city below the two-input floor (Cardiff
             returns `unavailable — 1/3 inputs measured`); `partial` at exactly
             TWO of three. Corrected 2026-09-07: this said `unavailable` was New
@@ -1070,7 +1070,7 @@ components:
             month.
 
             This matters for reproduction: where `raster` answers, `quiet` is a
-            DEFRA measurement at that postcode and is NOT derivable from the
+            value from DEFRA's (modelled) noise map at that postcode and is NOT derivable from the
             flight-path geometry in METHODOLOGY §4.5. Check this field before
             hand-deriving quiet.
 

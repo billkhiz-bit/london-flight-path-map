@@ -54,7 +54,7 @@ Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, qu
 > **scaled per airport by its measured DEFRA 55 dB Lden footprint**, so a small
 > airport no longer scores like a large one (Heathrow 1.000, Manchester 0.589,
 > Teesside 0.190). Validated against the 35,352 London postcodes DEFRA did
-> measure: mean absolute error against the measurement falls from 3.230 to
+> measure: mean absolute error against DEFRA's value falls from 3.230 to
 > 1.879. Liveability now rests on **all four
 > measured inputs** for 79 of 99 boroughs,
 > with `context.liveResolution` reporting that per response and the absent
