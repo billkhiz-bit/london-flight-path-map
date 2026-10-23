@@ -23,17 +23,23 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > release). **Luton** (plane counts): the field fault fixed; a review then found one more way to read the field as
 > 0 ft (an aircraft that lands, then sits flipping 'ground'/0 ft): FIXED the same day (the descent window empties
 > once a touchdown is accepted; the fallback skips readings within 60 s of a 'ground' report; both halves proven
-> red), and the 289-day recount re-run on it. Before it, Luton still missed Feb (93.1%) and Jun (94.0%): the same
-> 9 airports pass.
+> red), and the 289-day recount re-run on it: Luton's June rose from 94.0% to 97.0% of the CAA count (passes), so
+> Luton now fails ONLY February (93.1%), one month short of the year rule; the published 9 are unchanged.
 >
-> **BUILT, NOT DEPLOYED (Bill's calls, 23 Oct, from mock-ups of the live page):** (1) **the phone Menu**: below
+> **LIVE 23 Oct (Bill's calls, from mock-ups of the live page; `3154e19`, verified from the origin):** (1) **the phone Menu**: below
 > 680 px every top bar folds its six links behind a Menu POPOVER (no script; `docs/lessons/front-page-and-site.md`),
 > fixing the bar that wrapped into three rows with the name in the middle after this morning's deploy; (2) **answer
 > first, option B**: a plain visit opens on the TW9 3PZ answer, labelled as an example, with "Your postcode" and
 > "Check yours"; never in the address, never counted as engagement. **Then measure** the share of front-page
 > visits that act against the ~6% of 1 Jul-22 Oct for 3-4 weeks before trying option C (the answer as the
-> headline). "Islamic home finance" stays in "Who it is for" (Bill). Deploy: web, home, area, open-data, meta,
-> talks, and the two score-demo pages ALONE (never `demo-deploy` before 29 Oct).
+> headline). "Islamic home finance" stays in "Who it is for" (Bill). The Deen Developers photo is back on `/about/`
+> (credited; Bill tells them) and audit M-5 is fixed. Deploys stay target by target, the two score-demo pages ALONE
+> (never `demo-deploy` before 29 Oct).
+>
+> **THE TOP BAR'S ORDER: measure, then decide (~20 Nov, with the answer-first reading).** Bar clicks are now counted
+> (`event/nav-<slug>`, `-menu` from the phone menu). Proposed from best practice, to test against them: `Full map ·
+> Reports · How it works · About · API · Pricing`, and on phones Full map visible beside Menu. Privacy s2c's wording
+> for counted actions is in legal batch 2 (Bill).
 >
 > ## START HERE (2026-10-22, evening)
 >

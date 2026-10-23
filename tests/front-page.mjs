@@ -1428,6 +1428,7 @@ for (const [path, here] of BAR_PAGES) {
 // script: the name and Menu share one row, Menu shows every link, and Close and Escape fold them again. At a
 // desktop width there is no Menu button and the links sit in one row with the name. Measured, not flagged.
 const was = page.viewportSize();
+const bareBars = [];
 // Every bar the patch reached: 16c's pages, plus the street report and the 404 page, which carry the same bar.
 for (const [path] of [...BAR_PAGES, ['/reports/street/'], ['/404.html']]) {
   for (const width of [390, 1366]) {
@@ -1467,8 +1468,35 @@ for (const [path] of [...BAR_PAGES, ['/reports/street/'], ['/404.html']]) {
       ok(!closed.menu && closed.links >= 6 && closed.shown === closed.links && closed.rows === 1 && closed.linksBesideName,
         `${path}: at a desktop width there is no Menu button, and every link sits in one row with the name`, JSON.stringify(closed));
     }
+    // THE BAR'S CLICKS ARE COUNTED (2026-10-23, Bill: order the bar by them around 20 Nov), by js/count.mjs on
+    // every page that loads it: `nav-pricing` from the row, `nav-menu` for opening the phone menu, and
+    // `nav-pricing-menu` from it. The calls are caught at window.goatcounter.count and the link is not followed.
+    // Pages that load no analytics (privacy and terms allow no script) are named here, not passed by silence.
+    const counts = await page.evaluate(() => Boolean(document.querySelector('script[src="/js/count.mjs"]')));
+    if (!counts) {
+      if (width < 680) bareBars.push(path);
+      continue;
+    }
+    await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => typeof window.goatcounter?.count === 'function', null, { timeout: 10000 }).catch(() => {});
+    await page.evaluate(() => {
+      window.__gc = [];
+      window.goatcounter.count = (v) => window.__gc.push(v.path);
+      document.addEventListener('click', (e) => { if (e.target.closest?.('#site-nav a')) e.preventDefault(); }, true);
+    });
+    if (width < 680) {
+      await page.locator('.menu-btn').click({ timeout: 3000 }).catch(() => {});
+      await page.locator('#site-nav a[href="/pricing"]').click({ timeout: 3000 }).catch(() => {});
+    } else {
+      await page.locator('#site-nav a[href="/pricing"]').click({ timeout: 3000 }).catch(() => {});
+    }
+    const sent = await page.evaluate(() => window.__gc.slice());
+    const want = width < 680 ? ['event/nav-menu', 'event/nav-pricing-menu'] : ['event/nav-pricing'];
+    ok(JSON.stringify(sent) === JSON.stringify(want), `${path}: at ${width} wide the bar's clicks are counted as ${want.join(' then ')}`, JSON.stringify(sent));
   }
 }
+ok(JSON.stringify(bareBars.sort()) === JSON.stringify(['/404.html', '/privacy', '/score-demo/status.html', '/talks/', '/terms']),
+  'the bars that count no clicks are the five pages that load no analytics, and only those', JSON.stringify(bareBars));
 await page.setViewportSize(was);
 ok(statusStub.count > 0, 'the status page\'s API probes were answered by the stub, never the live API', `${statusStub.count} stubbed: ${statusStub.paths.slice(0, 3).join(', ')}`);
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass

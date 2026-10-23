@@ -363,3 +363,15 @@ service. The a11y scans must WAIT for the example: scanned when the map appeared
 flagged a target the settled page passes. The answer becoming the first screen also surfaced an old defect: "Its
 figures" was a 13 px inline button under WCAG 2.2's 24 px target, and on a phone held sideways "How it is worked
 out" broke across two lines over it; both fixed (`min-height: 24px`, `white-space: nowrap`).
+
+**THE TOP BAR'S CLICKS ARE COUNTED (2026-10-23).** Bill asked what order the bar should take and what visitors
+click. GoatCounter could not say: the bar's links had never been counted (only pages, and footer events on the
+map, `/api/` and `/pricing`). The page views (1 Jul-23 Oct: `/map` 39, `/pricing` 37 of which 24 came from the
+FOOTER link, reports 30, the developer path 29) and best practice (first and last positions get the attention,
+Pricing where people look for it at the right, group by audience) gave a proposal, `Full map · Reports · How it
+works · About · API · Pricing`, but Bill's call was to MEASURE first and reorder around 20 Nov, after the
+answer-first reading, so that neither change muddies the other. `js/count.mjs` now counts every bar click on
+every page that loads it, through one delegated listener (no markup change in any bar): `event/nav-<slug>` from
+the row, `event/nav-<slug>-menu` from the phone menu, `event/nav-menu` for opening it. Held by
+`tests/front-page.mjs` 16d on all 11 counting bars at both widths, proven red with the listener off (22 checks);
+the five bars that count nothing (privacy, terms, status, talks, 404: no analytics there) are named in the test.

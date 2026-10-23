@@ -176,7 +176,8 @@ Or just describe what you need, I have full context of this project.
   only from `HAVE_YOUR_SAY`** (verified live; add an airport only after checking its pages).
 - **Focus rings use `--focus: #d35a12`**, never the brand orange `#f27d26` (fails 3:1).
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
-  Campaign tags are an allow-list (`CAMPAIGN_KEYS`).
+  Campaign tags are an allow-list (`CAMPAIGN_KEYS`). The top bar's clicks are counted there too (`nav-<slug>`, `-menu` from the
+  phone menu): reorder the bar from them, not from a guess (Bill, 2026-10-23: read them ~20 Nov).
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
   worker installing everywhere; `/data/` is network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).

@@ -146,6 +146,45 @@ if (location.hash === '#toggle-goatcounter') {
   }
 }
 
+/** The top bar's name for a link: its path without slashes ('/how-it-works/' -> 'how-it-works'), or '' for home. */
+export function navSlug(href) {
+  try {
+    const slug = new URL(href, 'https://skyscore.co.uk').pathname.replace(/^\/+|\/+$/g, '');
+    return /^[a-z][a-z-]{0,30}$/.test(slug) ? slug : '';
+  } catch {
+    return '';
+  }
+}
+
+// THE TOP BAR'S CLICKS (2026-10-23, Bill: count them, and order the bar by them around 20 Nov). Every page that
+// counts carries the same bar, so one listener here counts all of them: `nav-<where it goes>`, with `-menu` when
+// it was picked from the phone menu (a list is read top to bottom, a row left to right), and `nav-menu` when the
+// menu is opened. Through window.goatcounter.count, the public call, so a test can see it; nothing identifies
+// a person, and the bar's links carry no query to leak.
+document.addEventListener('click', (ev) => {
+  try {
+    const el = ev.target instanceof Element ? ev.target : null;
+    const nav = document.getElementById('site-nav');
+    if (!el || !nav) return;
+    let open = false;
+    try {
+      open = nav.matches(':popover-open'); // throws where popovers are unknown: then there is no menu
+    } catch {
+      open = false;
+    }
+    let name = '';
+    if (el.closest('.menu-btn')) name = open ? '' : 'nav-menu'; // the click that opens it, not the one that shuts it
+    else {
+      const a = el.closest('#site-nav a[href]');
+      const slug = a ? navSlug(a.getAttribute('href')) : '';
+      if (slug) name = `nav-${slug}${open ? '-menu' : ''}`;
+    }
+    if (name) window.goatcounter?.count?.({ path: `event/${name}`, title: name, event: true });
+  } catch {
+    /* analytics must never break the page */
+  }
+});
+
 // One page view, when the page is visible (a prerendered page counts when it is shown).
 if (document.visibilityState === 'visible' || !('visibilityState' in document)) count();
 else {

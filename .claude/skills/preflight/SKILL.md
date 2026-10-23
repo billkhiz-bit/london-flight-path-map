@@ -143,3 +143,14 @@ commit does not go out regardless of what else is green:
   tree with `Get-CimInstance Win32_Process | Where-Object CommandLine -match
   'preflight\.sh'` and end it with `taskkill /T /F /PID <the oldest sh.exe>`,
   then confirm no `tests/*.mjs` node or `chrome-headless-shell` is left.
+- **The e2e stage tests the LIVE site, not the working tree** (2026-10-23). `playwright.config` sets `baseURL` to
+  the CloudFront origin, so a spec that waits for something only the source has (the front page's `#ans-example`,
+  built before its deploy) turns preflight red until the deploy. Make such a wait apply only where the page
+  carries the element (`settled` in `tests/e2e/accessibility.spec.js`); never read that red as a code defect
+  without checking which site it ran against.
+- **A background run wrapped as `sh scripts/preflight.sh > log; echo PREFLIGHT_EXIT=$?` reports exit 0 to the
+  harness whatever happened** (2026-10-23: two "completed (exit code 0)" notifications were `RESULT: FAIL`). Read
+  the echoed `PREFLIGHT_EXIT=` value and the log's `RESULT:` line, never the notification's exit code.
+- **Check a claim against the artefact before it goes into a commit message** (2026-10-23). A message said a photo
+  showed "no faces but Bill's", copied from a memory note; the photo showed two other people. Open the image, diff
+  or data the message describes first: a pushed message cannot be corrected without rewriting history.
