@@ -46,6 +46,14 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > M-9 (the search names Nottingham and Greater Norwich). **FAA 2611 (Thu 29 Oct):** `faa-2611` still merges cleanly onto
 > `what-matters` (checked 23 Oct with `git merge-tree`), and 2611 leaves Newark's PORTT route unchanged.
 >
+> **Building heights from the EA's lidar survey: Hounslow PILOT on branch `lidar-building-heights-pilot` (23 Oct, not
+> live).** `scripts/lidar_building_heights.py` (--fetch, --measure, --validate, --postcodes; data in gitignored
+> `data/lidar/`, 1.6 GB for one borough): 26,535 buildings measured; storeys from the median roof within one of
+> OpenStreetMap for 96% of 842 (99% for 1-2 storeys; towers ~3 low); near each of 4,933 postcodes, two views (most
+> buildings / most floor space) that differ for 12.7%. A context fact beside a street, NEVER scored. Report and
+> mock-ups made for Bill (the link is in NOW.md). **For Bill:** buildings or floor space; where it shows; scale up
+> (London ~70 tiles) or not; the ONS address file's postcode licence if matching each address. `docs/lessons/building-heights.md`.
+>
 > ## START HERE (2026-10-22, evening)
 >
 > **The Bay Area is SCORED BY THE API, in source (`CITIES['bayarea']`; NOT deployed).** The 50 cities answer

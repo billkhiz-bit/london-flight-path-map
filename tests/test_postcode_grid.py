@@ -81,6 +81,8 @@ NOT_A_POSTCODE = {
     'fetch_defra_road_noise.py': "builds each city's fetch bbox from its BOUNDARY vertices",
     'measure_aircraft_footprint.py': 'projects borough BOUNDARY geometry',
     'build_aircraft_rasters.py': 'requests WMS renders by bbox; samples no postcode',
+    'lidar_building_heights.py': ("projects the council's BOUNDARY and OpenStreetMap building centres (a check); "
+                                  "its postcodes come from NSPL's grid reference (adsb_postcode_averages)"),
 }
 PROJECTS = re.compile(r"from_crs\(\s*'EPSG:4326'\s*,\s*('EPSG:27700'|raster|crs)")
 

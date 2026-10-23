@@ -32,6 +32,7 @@ When something new is learned: add the one-line rule here and the story to the l
 | `methodology-history.md` | v5.0-v5.2: national affordability, growth pool, real terms, applied weights, rounding |
 | `audit-history.md` | audit waves, known issues, the website audit, the current audit's must-not-undo list |
 | `submissions-and-store.md` | competitions, events, Claude Startups, App Store / Play |
+| `building-heights.md` | EA lidar, building heights, the Hounslow pilot (context facts, never scored) |
 
 ## Compact Instructions
 
