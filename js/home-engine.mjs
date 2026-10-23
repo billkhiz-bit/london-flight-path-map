@@ -1280,6 +1280,16 @@ async function search(raw, { example = false } = {}) {
     if (!stale()) setQuery({ city: cityKey });
     return;
   }
+  // A region the coverage line lists but this map does not draw: the API scores Nottingham, Greater Norwich and
+  // Cardiff, and "not found" answered the first two right under the line that names them (audit 2026-10-22 M-9).
+  // Its council areas come from the open-data rows, and do open here; "Norwich" alone is a council area already.
+  const region = state.rows.filter((r) => !isMapCity(r.city) && r.city_name && norm(r.city_name) === norm(text));
+  if (region.length) {
+    const areas = region.map((r) => r.borough).sort();
+    const list = areas.length > 1 ? `${areas.slice(0, -1).join(', ')} or ${areas.at(-1)}` : areas[0];
+    say(`${region[0].city_name} is scored by the Sky Score API but not drawn on this map yet. Search one of its council areas (${list}) for its figures, or a postcode there.`);
+    return;
+  }
 
   const pc = text.toUpperCase().replace(/[^A-Z0-9 ]/g, '');
   if (/^\d{5}$/.test(pc)) { await searchZip(pc, stale); return; }
@@ -1303,6 +1313,15 @@ async function search(raw, { example = false } = {}) {
       leaveIntro();
       render(geo.result.postcode, district, city, env.environment, lat, lon);
       if (label) label.hidden = false;
+      // The heading says it too: "Example: TW9 3PZ". render() wrote the bare postcode, and the visitor's own
+      // search writes theirs over it, so the prefix can only ever sit on the example.
+      const heading = byId('ans-title');
+      if (heading) {
+        const ex = document.createElement('span');
+        ex.className = 'ex';
+        ex.textContent = 'Example: ';
+        heading.prepend(ex);
+      }
       answer?.closest('.panel')?.classList.add('is-example');
       return;
     }

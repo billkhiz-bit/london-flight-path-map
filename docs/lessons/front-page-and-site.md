@@ -375,3 +375,24 @@ every page that loads it, through one delegated listener (no markup change in an
 the row, `event/nav-<slug>-menu` from the phone menu, `event/nav-menu` for opening it. Held by
 `tests/front-page.mjs` 16d on all 11 counting bars at both widths, proven red with the listener off (22 checks);
 the five bars that count nothing (privacy, terms, status, talks, 404: no analytics there) are named in the test.
+
+**A REGION THE MAP DOES NOT DRAW IS NAMED, NOT "NOT FOUND" (2026-10-23, audit 2026-10-22 M-9).** The coverage
+line lists every region the API scores, and three of them (Nottingham, Greater Norwich, Cardiff) are not drawn
+on the front page's map. Typing "Nottingham" or "Greater Norwich" answered "That postcode was not found, and no
+place on the map has that name", right under the line naming them ("Cardiff", "Norwich" and "City of
+Nottingham" already opened their council-area cards, being council-area names). `search()` now matches a typed
+name against the open-data rows' `city_name` for a city the map does not draw, and says it is scored by the API
+but not drawn yet, naming its council areas from those rows (never a typed list). Held in `tests/front-page.mjs`
+section 12, proven red.
+
+**THE EXAMPLE SAYS IT IS ONE, IN ITS HEADING (2026-10-23, the same evening).** Bill opened the live page and read it
+as "it automatically shows scores for TW9 3PZ": the small mono capitals above a large "TW9 3PZ" did not register.
+The heading now reads "Example: TW9 3PZ" ("Example:" in `--orange-ink`, a span the example adds after `render()`,
+so a visitor's own search, which rewrites the heading, can never carry it), and the line under it reads "A street
+in Kew, under Heathrow's arrivals. Type your postcode above to see yours." in body text. The owner reading a
+change as a bug is the cheapest usability test there is: run it before measuring anything.
+
+**A test waits for the state it wants (2026-10-23).** The M-9 check first waited for the status to stop saying
+"Looking it up", which a typed NAME never says (it waits on the Bay Area places file instead), so the wait passed at
+once and, under preflight's load, read the empty line before the answer arrived: green alone, red in preflight.
+It now polls for the answer itself (CLAUDE.md: poll for the state you want, never one already true).

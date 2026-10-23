@@ -145,7 +145,8 @@
       .panel.has-result .covers { display: none; }
       /* Answer first (2026-10-23): the example is labelled as one, and the coverage line stays while it is open,
          so a visitor from a place we do not cover still sees that before typing. */
-      .ans-example { margin: 0 0 4px; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange-ink); }
+      .ans-example { margin: 2px 0 6px; font-size: 15px; line-height: 1.45; color: var(--dark); }
+      .ans-pc .ex { color: var(--orange-ink); }
       .panel.has-result.is-example .covers { display: block; }
       .panel.is-example .status:empty { min-height: 0; margin: 0; }
       /* Two tabs (2026-10-14): "Check a postcode" and "Find areas", as a two-button switch of equal
@@ -474,11 +475,13 @@
           <p class="status" id="status" aria-live="polite"></p>
           <div class="want" id="want-country" aria-live="polite" hidden></div>
           <div class="answer" id="answer">
-            <!-- Answer first (2026-10-23): a plain visit opens on this postcode's answer, and this line says it is an
-                 example. The postcode lives here, beside the words that describe it, so the two cannot disagree. -->
-            <p class="ans-example" id="ans-example" data-pc="TW9 3PZ" hidden>Example: a street in Kew, under Heathrow&rsquo;s arrivals</p>
             <!-- Text from the first answer on; never empty (html-validate), and hidden with the answer until then. -->
             <h2 class="ans-pc" id="ans-title">Your answer</h2>
+            <!-- Answer first (2026-10-23): a plain visit opens on this postcode's answer, its heading reads "Example: ..."
+                 and this line says whose street it is and what to do. Made plainer the same day (Bill: a small capitals
+                 label above the postcode read as the page showing him TW9 3PZ's scores). The postcode lives here,
+                 beside the words that describe it, so the two cannot disagree. -->
+            <p class="ans-example" id="ans-example" data-pc="TW9 3PZ" hidden>A street in Kew, under Heathrow&rsquo;s arrivals. Type your postcode above to see yours.</p>
             <p class="where" id="ans-where"></p>
             <div class="rows" id="ans-rows"></div>
             <p class="routes" id="ans-routes"></p>

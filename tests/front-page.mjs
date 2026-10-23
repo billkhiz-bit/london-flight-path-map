@@ -171,9 +171,9 @@ const NO_EXAMPLE = 'ZZ0 0ZZ';
 await context.route((url) => url.hostname === '127.0.0.1' && url.pathname === '/', async (route) => {
   const res = await route.fetch();
   const body = await res.text();
-  const line = 'data-pc="TW9 3PZ" hidden>Example';
+  const line = 'data-pc="TW9 3PZ" hidden>';
   if (!exampleOn && !body.includes(line)) ok(false, 'the front page carries its example line as this file expects (update the route above)');
-  return route.fulfill({ response: res, body: exampleOn ? body : body.replace(line, `data-pc="${NO_EXAMPLE}" hidden>Example`) });
+  return route.fulfill({ response: res, body: exampleOn ? body : body.replace(line, `data-pc="${NO_EXAMPLE}" hidden>`) });
 });
 const page = await context.newPage();
 const errors = [];
@@ -864,6 +864,19 @@ await page.fill('#pc', 'camden');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Camden' && document.querySelectorAll('#map .boro').length === 33, null, { timeout: 10000 });
 ok(true, 'a borough name in another city switches the map and opens its card');
+// Audit 2026-10-22 M-9: the coverage line lists Nottingham and Greater Norwich (the API scores them; this map
+// does not draw them), and the search answered "not found" for both, under the line that had just named them.
+for (const [typed, areas] of [['Nottingham', 'Broxtowe, City of Nottingham, Gedling or Rushcliffe'], ['Greater Norwich', 'Broadland, Norwich or South Norfolk']]) {
+  await page.fill('#pc', typed);
+  await page.press('#pc', 'Enter');
+  // Poll for the answer itself: a name with no digit first waits on the Bay Area places file, and the status
+  // never says "Looking it up" for a name, so waiting for that to clear passed at once and read an empty line
+  // under load (preflight, 2026-10-23).
+  await page.waitForFunction(() => /not drawn on this map yet|not found/.test(document.getElementById('status').textContent), null, { timeout: 15000 }).catch(() => {});
+  const said = await page.locator('#status').textContent();
+  ok(said.includes('not drawn on this map yet') && said.includes(`(${areas})`) && !said.includes('not found'),
+    `a region the coverage line lists but the map does not draw (${typed}) is named as covered, with its council areas (audit M-9)`, said);
+}
 await page.fill('#pc', 'Palo Alto');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelector('#borough h2')?.textContent === 'Palo Alto', null, { timeout: 15000 });
@@ -2200,7 +2213,7 @@ const makeReport = async (pc) => {
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
   const first = await look();
-  ok(first.label && first.title === 'TW9 3PZ' && first.address === '/' && first.status === '' && first.covers && !first.intro && first.box === '' && first.counted.length === 0,
+  ok(first.label && first.title === 'Example: TW9 3PZ' && first.address === '/' && first.status === '' && first.covers && !first.intro && first.box === '' && first.counted.length === 0,
     'answer first: a plain visit opens on the TW9 3PZ answer, labelled as an example, with the address, the live region, the box and the counts untouched and the coverage line kept',
     JSON.stringify(first));
 
