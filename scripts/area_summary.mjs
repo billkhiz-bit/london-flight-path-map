@@ -3,7 +3,7 @@
  *
  *   node scripts/area_summary.mjs --area "Earls Court" \
  *     --point "Earls Court station=SW5 9NJ" --point "Nevern Square=SW5 9TL" \
- *     --out "C:/Users/bilal/OneDrive/Desktop/earls-court-summary.pdf"
+ *     --out ~/OneDrive/Desktop/earls-court-summary.pdf
  *
  * WHY THIS EXISTS (2026-09-29). The community plan in OUTREACH_TARGETS.md
  * offers residents' groups a free one-pager for their area. The first one

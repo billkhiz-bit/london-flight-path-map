@@ -85,7 +85,7 @@ Email sent 2026-05-05 to buildathon@sharedfuturesfoundation.org.uk asking whethe
 - Memory: `project_buildathon_focus.md` (Sky Score memory dir)
 - Memory: `project_api_target_customers.md` (B2B target customer strategy)
 - Memory: `feedback_no_riba_customers.md` (riba constraint)
-- Sister project: Siraj Noor at `C:\Users\bilal\projects\siraj-noor` (QF hackathon entry, deadline 2026-05-20, separate competition, no cross-pollination)
+- Sister project: Siraj Noor at `%USERPROFILE%\projects\siraj-noor` (QF hackathon entry, deadline 2026-05-20, separate competition, no cross-pollination)
 
 ## Decision queue
 

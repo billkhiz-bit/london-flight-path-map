@@ -18,9 +18,9 @@ The Android shipping path is now end-to-end automatable: keystore generated, `bu
 
 | Artefact | Path |
 |---|---|
-| Upload keystore | `C:\Users\bilal\.keystores\sky-score-release.jks` (2.7 KB) |
-| **Keystore credentials (TO DELETE after step 1 below)** | `C:\Users\bilal\.keystores\sky-score-credentials.txt` (724 bytes, plaintext) |
-| Signed AAB (3.6 MB, 9.7 MB uncompressed) | `C:\Users\bilal\OneDrive\Desktop\london-flight-path-map\mobile\android\app\build\outputs\bundle\release\app-release.aab` |
+| Upload keystore | `%USERPROFILE%\.keystores\sky-score-release.jks` (2.7 KB) |
+| **Keystore credentials (TO DELETE after step 1 below)** | `%USERPROFILE%\.keystores\sky-score-credentials.txt` (724 bytes, plaintext) |
+| Signed AAB (3.6 MB, 9.7 MB uncompressed) | `%USERPROFILE%\OneDrive\Desktop\london-flight-path-map\mobile\android\app\build\outputs\bundle\release\app-release.aab` |
 | Phone screenshots (3 × 1080×1920) | `mobile/fastlane/metadata/android/en-GB/images/phoneScreenshots/` |
 | Feature graphic (1024×500) | `mobile/fastlane/metadata/android/en-GB/images/featureGraphic/featureGraphic.png` |
 | Metadata (title, short, full, changelog) | `mobile/fastlane/metadata/android/en-GB/*.txt + changelogs/default.txt` |
@@ -41,13 +41,13 @@ Critical — `sky-score-credentials.txt` is plaintext on disk and contains the 2
 
 ```bash
 # Open in Notepad
-notepad "C:\Users\bilal\.keystores\sky-score-credentials.txt"
+notepad "$USERPROFILE/.keystores/sky-score-credentials.txt"
 
 # Copy the "Store password" line value into your password manager (Bitwarden)
 # with tag "Sky Score Android keystore"
 
 # Then delete:
-rm "C:\Users\bilal\.keystores\sky-score-credentials.txt"
+rm "$USERPROFILE/.keystores/sky-score-credentials.txt"
 ```
 
 This was deliberately left for you to confirm — destructive secret ops need explicit confirmation. Future Claude sessions will see the file and remind you again if you forget.
@@ -72,7 +72,7 @@ Same flow as Noor; you've done this before.
 
 Sky Score app → **Testing → Internal testing → Create new release**.
 
-- Drag-drop `app-release.aab` from the path above (Windows path: `C:\Users\bilal\OneDrive\Desktop\london-flight-path-map\mobile\android\app\build\outputs\bundle\release\app-release.aab`)
+- Drag-drop `app-release.aab` from the path above (Windows path: `%USERPROFILE%\OneDrive\Desktop\london-flight-path-map\mobile\android\app\build\outputs\bundle\release\app-release.aab`)
 - Release name: auto-populated from the build (will say `1.0 (1)` since `versionCode 1` / `versionName "1.0"` per `build.gradle`)
 - Release notes: copy from `mobile/fastlane/metadata/android/en-GB/changelogs/default.txt`
 
@@ -158,7 +158,7 @@ Out-of-repo, in `~/.claude/projects/.../memory/`:
 
 ## 90-day roadmap echo
 
-`C:\Users\bilal\OneDrive\Desktop\90_DAY_ROADMAP.md` → Day 61 (May 16) extended to cover both iOS submission + Android pipeline + cross-app dividend (the env-var-driven signing pattern is reusable for Noor v2 / Siraj / any future Android app from this user account).
+`%USERPROFILE%\OneDrive\Desktop\90_DAY_ROADMAP.md` → Day 61 (May 16) extended to cover both iOS submission + Android pipeline + cross-app dividend (the env-var-driven signing pattern is reusable for Noor v2 / Siraj / any future Android app from this user account).
 
 ## What I deliberately did NOT do
 

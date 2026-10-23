@@ -52,9 +52,9 @@ After rebuild, resume the 8-step Play Console flow in `HANDOFF_2026_05_16_play_s
 Still pending from `HANDOFF_2026_05_16_play_submission.md`. Critical — `~/.keystores/sky-score-credentials.txt` is plaintext on disk and contains the 28-char random password.
 
 ```bash
-notepad "C:\Users\bilal\.keystores\sky-score-credentials.txt"
+notepad "%USERPROFILE%\.keystores\sky-score-credentials.txt"
 # Copy "Store password" line value into Bitwarden with tag "Sky Score Android keystore"
-rm "C:\Users\bilal\.keystores\sky-score-credentials.txt"
+rm "%USERPROFILE%\.keystores\sky-score-credentials.txt"
 ```
 
 Deliberately left for Bill to confirm — destructive secret ops need explicit confirmation, future Claude sessions will keep reminding if forgotten.

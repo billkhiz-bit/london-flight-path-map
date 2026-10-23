@@ -13,7 +13,7 @@ From `OneDrive/Desktop/ai-tinkerers-demo/`:
 1. `7-what-happens-when-you-type-a-postcode.pdf`  - the plain-English tour of every service and why
 2. `5-how-it-works-plain-english.md`               - the fuller version, incl. the eight data inputs
 
-From the repo `C:\Users\bilal\projects\london-flight-path-map\`:
+From the repo `%USERPROFILE%\projects\london-flight-path-map\`:
 3. `backend/template.yaml`        - the SAM blueprint: every Lambda, table, usage plan, throttle, timeout
 4. `backend/iam-policy.json`      - the deploy user's permissions (least privilege, as applied)
 5. `OPERATIONS.md`                - runbooks: deploy, log retention, IAM, data residency, incident notes

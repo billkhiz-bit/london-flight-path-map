@@ -71,7 +71,7 @@ The single most common Play Console rejection is **versionCode not strictly incr
 
 ## 5. Pre-flight (web side)
 
-- [ ] `cd /c/Users/bilal/projects/london-flight-path-map && npx html-validate index.html` clean
+- [ ] `cd ~/projects/london-flight-path-map && npx html-validate index.html` clean
 - [ ] `npm run lint` shows 0 errors (warnings OK)
 - [ ] `cd backend && python -m pytest` passes
 - [ ] If web changes touched API surface, run `node tests/api.test.mjs` against the live API

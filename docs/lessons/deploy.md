@@ -134,7 +134,7 @@ AWS_PROFILE=flightmap aws cloudfront create-invalidation --distribution-id EGSSP
 # Source from .env (gitignored); never paste the token into source files or chat.
 # NOTE (corrected 2026-08-04): this line said `source ../.env`, which does not
 # exist — `.env` is at the repo root, and `../.env` would be
-# `C:\Users\bilal\projects\.env`. Because the whole block is `&&`-chained, the
+# `%USERPROFILE%\projects\.env`. Because the whole block is `&&`-chained, the
 # failed source ABORTED THE ENTIRE DEPLOY rather than falling through, so the
 # documented command could never have worked from the repo root. Verified by
 # running it during the 2026-08-04 signup deploy.

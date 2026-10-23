@@ -62,7 +62,7 @@ Or just describe what you need, I have full context of this project.
 ```
 
 - **Where we left off**: ROADMAP.md's newest "START HERE" block and the newest `project-start-here-*` memory.
-- **Canonical clone is `C:\Users\bilal\projects\london-flight-path-map`.** Never work in the retired
+- **Canonical clone is `%USERPROFILE%\projects\london-flight-path-map`.** Never work in the retired
   OneDrive clone; if a session lands there, move here first.
 - **PUSH** (Bill's ruling, 2026-08-27, superseding an old "keep git local" line): `git fetch` early, surface
   drift, `git pull --rebase` before pushing if diverged.
@@ -73,7 +73,7 @@ Or just describe what you need, I have full context of this project.
   only, never people), `CHANGELOG.md`, `HANDOVER.md`. Update the doc when a task ships or a decision lands.
 - **Echo-work**: after a substantial change, propagate to README, ROADMAP, LICENSING, METHODOLOGY,
   AUDIT_REPORT, memory, `.env.example`, tests, the lesson file, and the deployed surfaces. **Bill's
-  cross-project state is `C:\Users\bilal\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
+  cross-project state is `%USERPROFILE%\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
 - **Weekly audit**: the current one is `AUDIT_REPORT_2026-10-22.md`; suggest `/audit` when it is >7 days old.
@@ -205,13 +205,15 @@ Or just describe what you need, I have full context of this project.
 ### Windows, shell and tools
 - **`export MSYS_NO_PATHCONV=1`** before any AWS command with a `/`-leading argument (CloudFront invalidation
   paths, `/aws/lambda/*`), or Git Bash rewrites it to a Windows path.
+- **No user folder in a tracked file**: write `%USERPROFILE%` (prose, cmd), `~` (Git Bash, unquoted) or
+  `$env:USERPROFILE` (PowerShell); `tests/test_no_user_paths.py` catches any name (audit M-5, 2026-10-23).
 - **`make` is not on PATH**: `python scripts/make.py <target>` runs any Makefile target (`--dry-run` to see it).
 - The AWS CLI emits CRLF; strip `\r` before comparing its output.
 - The Bash tool's cwd persists between calls, env vars do not: keep `source .env` + build + deploy in ONE call.
 - `Start-Process`: pass a script PATH (an `-lc '<cmd>'` string runs only its first word), and prepend
   `C:\Program Files\Git\usr\bin` to `$env:PATH` for `sh` runbooks. Run long loads detached with `python -u`.
 - adsb scripts that open the ARCHIVES (`adsb_fetch.py`, `adsb_extract.py`) run under
-  `C:/Users/bilal/tools/python-3.13.15/python.exe -I` (untrusted input); `adsb_fetch.py --workers 3` while the PC is
+  `~/tools/python-3.13.15/python.exe -I` (untrusted input); `adsb_fetch.py --workers 3` while the PC is
   in use. Stopping it is always safe (an extract is written whole or not at all). Readers of our OWN extracts
   (`adsb_movements.py`, `adsb_overflights.py`) run under the system Python: they need tzdata, numpy and pyproj.
 - Look up D3, AWS SDK and SAM APIs with **context7** before using unfamiliar ones; use **security-guidance**

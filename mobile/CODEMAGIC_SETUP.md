@@ -43,7 +43,7 @@ Sky Score uses a **separate API key from Noor's** to avoid scope conflicts. Gene
 2. Click **Generate API Key** (blue `+`)
 3. Name: `Sky Score Fastlane` (or whatever — it's just for your reference)
 4. Access role: **App Manager**
-5. **Download the `.p8` file IMMEDIATELY** — Apple shows the download button only once. Save it to `C:\Users\bilal\OneDrive\Desktop\SkyScore\Secrets\AuthKey_<KeyID>.p8`
+5. **Download the `.p8` file IMMEDIATELY** — Apple shows the download button only once. Save it to `%USERPROFILE%\OneDrive\Desktop\SkyScore\Secrets\AuthKey_<KeyID>.p8`
 6. Note down the **Key ID** (10 chars, also embedded in the .p8 filename) and **Issuer ID** (UUID at the top of the page)
 
 ### Add the key to Codemagic's Developer Portal pool

@@ -36,7 +36,7 @@ B. DOES NOT SYNC - the repo, the key, the tools
 -----------------------------------------------------------------
 1. THE REPO (the code you show and the tests you run)
    Git is the only sync for repos - never a OneDrive copy.
-     cd /c/Users/bilal/projects
+     cd ~/projects
      git clone https://github.com/billkhiz-bit/london-flight-path-map.git
        (or, if it is already there:  cd london-flight-path-map && git pull)
    [ ] git log --oneline -1   ->  47116b0 or newer
@@ -46,7 +46,7 @@ B. DOES NOT SYNC - the repo, the key, the tools
 2. THE API KEY (.env is gitignored - it will NOT arrive with the clone)
    The demo needs ONE line in a file called .env at the repo root:
      SKY_SCORE_API_KEY=<the CI key>
-   Get the value from the desktop's .env (C:\Users\bilal\projects\
+   Get the value from the desktop's .env (%USERPROFILE%\projects\
    london-flight-path-map\.env) or from Bitwarden if it is stored there.
    Move it by typing it, a USB stick, or a Bitwarden secure note.
    NOT via OneDrive, email, or a chat window - it is a secret.
@@ -91,7 +91,7 @@ C0. THE REAL VERIFICATION - the demo page itself (no terminal)
 -----------------------------------------------------------------
 C. ALSO VERIFY - five commands, in Git Bash (tests + wifi fallback)
 -----------------------------------------------------------------
-  cd /c/Users/bilal/projects/london-flight-path-map
+  cd ~/projects/london-flight-path-map
   git log --oneline -1                                   # 47116b0 or newer
   set -a && source .env && set +a && echo "${SKY_SCORE_API_KEY:0:4}..."   # prints 4 chars, not empty
   (cd backend && python -m pytest -q tests/test_handlers.py -k ChatGroundingTests)   # 10 passed

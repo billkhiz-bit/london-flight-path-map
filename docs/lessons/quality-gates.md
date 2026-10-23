@@ -63,3 +63,9 @@ dissolves when you compute the real one.*
 - Use **code-review** on all changed files before committing
 - Use **frontend-design** when modifying the UI in index.html
 
+**THE E2E SUITE TESTS THE LIVE SITE, NOT THE REPO (2026-10-23).** `playwright.config` sets `baseURL` to the
+CloudFront origin, so `npx playwright test` (preflight's `net_check "Playwright e2e"`) audits production. A spec
+that waits for something only the SOURCE has (the front page's `#ans-example`, built before its deploy) turns
+preflight red until the deploy, and a gate that is red by deploy order teaches people to ignore it. So such a wait
+applies only where the page carries the element (`settled` in `tests/e2e/accessibility.spec.js`): it passes on the
+live page before the deploy and waits for the example after it.

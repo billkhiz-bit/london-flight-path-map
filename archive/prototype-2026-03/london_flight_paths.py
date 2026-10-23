@@ -16,6 +16,7 @@ Re-run to refresh live flight positions.
 import folium
 from folium import plugins
 import json
+import os
 import math
 import urllib.request
 import ssl
@@ -944,7 +945,7 @@ if __name__ == "__main__":
     print("London Flight Path & Property Map v2.0")
     print("=" * 60)
     m = create_map()
-    output = "C:/Users/bilal/OneDrive/Desktop/London Flight Path Map/london_flight_paths.html"
+    output = os.path.join(os.path.expanduser("~"), "OneDrive", "Desktop", "London Flight Path Map", "london_flight_paths.html")
     m.save(output)
     print(f"\nMap saved to: {output}")
     print("Open in your browser to explore!")

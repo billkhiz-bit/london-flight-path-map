@@ -90,7 +90,7 @@ Most users stick with the Android Studio GUI long-term — the wizard is fast en
 
 2. **Set the env vars** (in PowerShell):
    ```powershell
-   $env:SKY_SCORE_KEYSTORE_PATH = "C:\Users\bilal\.keystores\sky-score-release.jks"
+   $env:SKY_SCORE_KEYSTORE_PATH = "$env:USERPROFILE\.keystores\sky-score-release.jks"
    $env:SKY_SCORE_KEYSTORE_PASSWORD = "..."
    $env:SKY_SCORE_KEY_PASSWORD = "..."
    ```

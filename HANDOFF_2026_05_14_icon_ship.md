@@ -60,7 +60,7 @@ Builds 13–16 all shipped with the broken icon. Build 17 is the first that shou
 
 If App Store Connect asks you to upload a 1024×1024 App Store Icon separately (not the in-binary one), use:
 
-- `C:\Users\bilal\OneDrive\Desktop\london-flight-path-map\mobile\assets\logo.png` (it's already 1024×1024 opaque, ready for ASC upload)
+- `%USERPROFILE%\OneDrive\Desktop\london-flight-path-map\mobile\assets\logo.png` (it's already 1024×1024 opaque, ready for ASC upload)
 
 Or rasterise fresh from `mobile/assets/logo.svg` if you want to tweak the design first.
 

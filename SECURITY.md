@@ -126,7 +126,7 @@ For a confirmed security incident affecting customer data or the production API:
 
 - **RTO**: 24 hours from confirmed loss to restored service.
 - **RPO**: 1 hour for customer-facing state (signup table, favourites table). **Met.** DynamoDB Point-in-Time Recovery is enabled on **all four tables** in [`backend/template.yaml`](./backend/template.yaml), not merely planned - this section described it as a pending 1-click console action until 2026-08-03, understating the actual recovery posture.
-- **Source code**: GitHub remote at <https://github.com/billkhiz-bit/london-flight-path-map>; mirrored locally at the canonical `C:\Users\bilal\projects\` clone. Recovery is `git clone` + `sam deploy` (~15 min wall-clock).
+- **Source code**: GitHub remote at <https://github.com/billkhiz-bit/london-flight-path-map>; mirrored locally at the canonical `%USERPROFILE%\projects\` clone. Recovery is `git clone` + `sam deploy` (~15 min wall-clock).
 - **Single-region deployment** (eu-west-2). Multi-region failover available on Enterprise tier when contractually required; not built ahead of demand.
 
 ### Data subject requests (GDPR)

@@ -2,7 +2,7 @@
  * Aircraft-noise report for ONE postcode, as a one-page PDF.
  *
  *   node scripts/address_noise_report.mjs --postcode "TW9 3PZ" --place "Kew" \
- *     --sample --out "C:/Users/bilal/OneDrive/Desktop/aircraft-noise-report.pdf"
+ *     --sample --out ~/OneDrive/Desktop/aircraft-noise-report.pdf
  *
  * WHY THIS EXISTS (2026-10-02). Geovation's advice was to narrow to the
  * flight-path niche and to test paid reports. `area_summary.mjs` is the free

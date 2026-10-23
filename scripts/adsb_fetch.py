@@ -22,7 +22,7 @@ PYTHON: run these two scripts under a current Python, not the project's 3.11. Th
 untrusted tar stream, and the tarfile header-parsing fixes (e.g. CVE-2024-6232) reached 3.11 only
 in source-only releases after 3.11.9, the last with a Windows installer. They use the standard
 library alone, so any current Python will do; on Bill's machine that is an unregistered embeddable
-3.13 (C:/Users/bilal/tools/python-3.13.15/python.exe, checked against python.org's hash,
+3.13 (~/tools/python-3.13.15/python.exe, checked against python.org's hash,
 2026-10-16). The fetcher runs the extractor with the same interpreter.
 
 Usage:

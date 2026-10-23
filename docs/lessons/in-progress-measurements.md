@@ -49,7 +49,7 @@ only, never scored, never ranked; `check_data_freshness.py` reads NEWER 45 days 
 **HOW OFTEN PLANES PASS IS BEING MEASURED, NOT SHOWN (2026-10-15).** Bill: as accurate as possible, time no
 object; the plan and its gates are ROADMAP "IN PROGRESS: how often planes fly". `scripts/adsb_extract.py` streams
 one day of adsb.lol history (ODbL) into `data/adsb/extract/<day>.jsonl.gz` (raw days ~3.7 GB in `data/adsb/raw/`,
-all gitignored; run it with `-I` under a CURRENT Python, the archive is untrusted input: 3.11's tarfile fixes stop at 3.11.9 on Windows, so Bill's machine uses an unregistered 3.13 at `C:/Users/bilal/tools/python-3.13.15/python.exe`, 2026-10-16); `scripts/adsb_movements.py` counts
+all gitignored; run it with `-I` under a CURRENT Python, the archive is untrusted input: 3.11's tarfile fixes stop at 3.11.9 on Windows, so Bill's machine uses an unregistered 3.13 at `~/tools/python-3.13.15/python.exe`, 2026-10-16); `scripts/adsb_movements.py` counts
 landings and take-offs per runway and compares the UK airports with CAA Table 03 (`data/caa/`, gitignored). Two
 traps found on day one, both held by `tests/test_adsb_movements.py` (the first proven red): a silent wait at the
 holding point split one take-off into two (bound each low run's climb by its neighbours), and a circuit's climb is
