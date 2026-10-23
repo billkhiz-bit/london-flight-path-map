@@ -61,8 +61,10 @@
       .byline { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; font-size: 15px; color: var(--mid); }
       .byline img { width: 40px; height: 40px; border-radius: 50%; }
       .byline b { color: var(--dark); font-weight: 600; }
-      .byline a { font-weight: 600; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
-      .byline a:hover { text-decoration: underline; text-underline-offset: 4px; }
+      /* On this page (2026-10-23, Bill: link better to the sections): one row of links, wrapping on a phone. */
+      nav.jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+      nav.jump a { font-size: 15px; font-weight: 600; text-decoration: none; padding: 7px 13px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--dark); }
+      nav.jump a:hover { box-shadow: inset 0 0 0 1.5px var(--dark); text-decoration: underline; text-underline-offset: 4px; }
 
       /* Who it's for, people first: choosing a home as a dark panel, the professions as a list beside it. */
       .for-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
@@ -160,7 +162,14 @@
       <div class="opening">
         <h1>A more informed decision when choosing <span class="ink">where to live</span></h1>
         <p class="lead">That is the whole reason Sky Score exists. A listing shows you the kitchen. It rarely tells you about the aircraft overhead, the road outside, the air or the flood risk, so we put those beside every postcode we cover, from the organisations that measure them, and say plainly where a figure is our own estimate.</p>
-        <p class="byline"><img src="/about/bill-headshot.webp" width="40" height="40" alt="" /><span><b>Bilal Khizar</b>, founder &middot; <a href="#why">Why I built it &darr;</a></span></p>
+        <p class="byline"><img src="/about/bill-headshot.webp" width="40" height="40" alt="" /><span><b>Bilal Khizar</b>, founder</span></p>
+        <nav class="jump" aria-label="On this page">
+          <a href="#for">Who it's for</a>
+          <a href="#why">Why I built it</a>
+          <a href="#asked">Questions people ask</a>
+          <a href="#talks">Talks</a>
+          <a href="#contact">Get in touch</a>
+        </nav>
       </div>
 
       <section id="for" aria-labelledby="for-h">
@@ -202,8 +211,8 @@
         </figure>
         <div>
           <h2 id="why-h">Why I built it</h2>
-          <p>I went to a property viewing I couldn't afford, and while I was there a plane flew low overhead. The listing hadn't said a word about it.</p>
-          <p>Aircraft noise, road noise, air quality and flood risk are all published by the bodies that measure them, but no property site put them in front of the person deciding where to live. I started Sky Score at an AWS hackathon, honestly for the cloud credits, and kept building it because I wanted it for myself.</p>
+          <p>I went to a property viewing, and while I was there a plane flew low overhead. The listing hadn't said a word about it.</p>
+          <p>Aircraft noise, road noise, air quality and flood risk are all published by the bodies that measure them, but no property site put them in front of the person deciding where to live. I started Sky Score at an AWS hackathon, honestly for the cloud credits, and kept building it because it was the tool I wanted when I was looking for a home.</p>
           <p>I don't come from a technical background. I built it with AI, and with a running list of "gotchas", so the same mistake never happens twice.</p>
           <div class="signed">
             <img src="/about/bill-headshot.webp" width="52" height="52" alt="" />
@@ -263,7 +272,7 @@
         </ul>
       </section>
 
-      <section class="contact" aria-labelledby="contact-h">
+      <section class="contact" id="contact" aria-labelledby="contact-h">
         <h2 id="contact-h">Get in touch</h2>
         <ul class="links">
           <li><a class="primary" href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a></li>

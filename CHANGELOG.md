@@ -12,6 +12,9 @@
   yet, and names their council areas, which do open; it used to say the place was not found.
 - **Staten Island's note on the full map** now names the Newark departure that crosses its north-west a few
   kilometres after take-off; it had said the borough was well away from flight paths.
+- **The About page links to each of its sections** from the top, and the front page's "Our story" opens on why it
+  was built. **How it works** now says plainly that the figures are for the postcode near ground level, not for
+  your floor: road noise and traffic pollution can differ on an upper floor.
 - Fixed on the way: the front page's "Search a postcode" link now works while Find areas is open; the "How it
   works" page marks itself in the top bar; "Its figures" in an answer is now a full-size touch target.
 
