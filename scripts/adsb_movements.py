@@ -113,6 +113,7 @@ import bisect
 import calendar
 import csv
 import datetime as dt
+import functools
 import gzip
 import json
 import math
@@ -138,6 +139,21 @@ RUNWAY_MATCH_DEG = 30
 TRACK_WINDOW_S = 120
 UNSEEN_BAND_FT = 1200
 MIN_TOUCHDOWNS = 5  # AIRCRAFT seen touching down (one vote each, field_level()), not touchdown reports
+# The field level THROUGH THE DAY (FieldLevel): at any moment, the median of the FIELD_NEAREST touchdown votes
+# nearest it in time, read off a FIELD_GRID_S grid so movements() stays a lookup per point.
+FIELD_NEAREST = 7
+FIELD_GRID_S = 600
+# THE DAY'S SHAPE FROM THE METARS (2026-10-23, Bill: "yes do it"). Touchdown votes alone cannot see a morning of
+# departures (Luton, 13 and 19 Feb: 300-420 ft low against the METAR-implied field), so where the airport's QNH is
+# cached the field at t is the aircraft's LEVEL plus the METAR SHAPE, (1013.25 - QNH(t)) x FT_PER_HPA: how far the
+# pressure altitude moved. scripts/fetch_metar.py fills the cache; the counter never fetches.
+METAR_DIR = ROOT / 'data' / 'metar'
+METAR_STATION = {  # the counter's airport code -> the station id the Iowa Mesonet archive files it under
+    'LHR': 'EGLL', 'LGW': 'EGKK', 'STN': 'EGSS', 'LTN': 'EGGW', 'LCY': 'EGLC', 'MAN': 'EGCC', 'BHX': 'EGBB',
+    'EMA': 'EGNX', 'LBA': 'EGNM', 'LPL': 'EGGP', 'NCL': 'EGNT', 'BRS': 'EGGD', 'CWL': 'EGFF', 'NWI': 'EGSH',
+    'MME': 'EGNV', 'JFK': 'JFK', 'LGA': 'LGA', 'EWR': 'EWR', 'TEB': 'TEB', 'SFO': 'SFO', 'OAK': 'OAK', 'SJC': 'SJC',
+}
+FT_PER_HPA = 27.3  # pressure-altitude feet per hPa near the ground; the aircraft's level absorbs any constant error
 # A reading this close to a 'ground' report is the surface, not flight: the last airborne reading before a
 # touchdown, or a parked transponder's 0 ft between its 'ground' flips (field_level()).
 NEAR_GROUND_S = 60
@@ -213,7 +229,7 @@ def load_airports(paths=PROCEDURE_FILES):
             lon = sum(t[1] for t, _ in rw.values()) / len(rw)
             reach = max(km_between(lat, lon, t[0], t[1]) for t, _ in rw.values())
             out[code] = {'centre': (lat, lon), 'zone_km': reach + ZONE_PAD_KM, 'runways': rw,
-                         'region': region_of(lon)}
+                         'region': region_of(lon), 'code': code}
     return out
 
 
@@ -260,6 +276,97 @@ def baro(p):
     return p[3] if isinstance(p[3], (int, float)) else None
 
 
+@functools.lru_cache(maxsize=64)
+def _metar_month(station, month):
+    """[(epoch_s, QNH hPa)] from one cached month, in time order; [] when the month is not cached."""
+    path = METAR_DIR / f'{station}-{month}.csv'
+    if not path.exists():
+        return []
+    out = []
+    with open(path, encoding='utf-8') as fh:
+        for r in csv.DictReader(fh):
+            t = dt.datetime.strptime(r['valid'], '%Y-%m-%d %H:%M').replace(tzinfo=dt.UTC).timestamp()
+            out.append((t, float(r['alti']) * 33.8639))  # inches of mercury -> hPa
+    return sorted(out)
+
+
+def metar_qnh(code, day):
+    """[(epoch_s, QNH hPa)] for `code` from six hours before the UTC day to six after, or [] (not cached, no station)."""
+    station = METAR_STATION.get(code)
+    if not station:
+        return []
+    lo = dt.datetime(day.year, day.month, day.day, tzinfo=dt.UTC).timestamp() - 6 * 3600
+    hi = lo + 36 * 3600
+    months = {dt.datetime.fromtimestamp(t, dt.UTC).strftime('%Y-%m') for t in (lo, lo + 18 * 3600, hi)}
+    return [r for m in sorted(months) for r in _metar_month(station, m) if lo <= r[0] <= hi]
+
+
+def _interp(series, t):
+    """Linear between the readings either side of t, clamped at the ends."""
+    i = bisect.bisect_left(series, (t, -math.inf))
+    if i == 0:
+        return series[0][1]
+    if i == len(series):
+        return series[-1][1]
+    (t0, v0), (t1, v1) = series[i - 1], series[i]
+    return v0 + (v1 - v0) * (t - t0) / (t1 - t0) if t1 > t0 else v1
+
+
+class FieldLevel(float):
+    """The day's field level (its value: the median over aircraft, as before) that can also say what it was AT a
+    moment: `at(t)`, the median of the FIELD_NEAREST touchdown votes nearest t, read off a FIELD_GRID_S grid.
+
+    WHY (2026-10-23, Luton's February). Pressure altitude is the field's height read through the day's QNH, and a
+    storm moves QNH by 11-21 hPa within a day (Luton's METARs, 13-19 Feb 2026): 300-570 ft. One value for the day
+    sat near the bottom of that swing on 13, 16 and 19 Feb, so aircraft departing in the hours when the field
+    read high were first heard above the low band and dropped as "unseen": 63 take-offs against 175 landings on
+    the 13th, February 93.1% of the CAA's count while January and March passed. The day's value is unchanged, so
+    every report and stored field still reads the same number; movements() reads `at()`.
+    """
+
+    def __new__(cls, votes, qnh=()):
+        """`votes`: [(epoch_s, field_ft)], one per aircraft (its touchdowns' median time and height). `qnh`:
+        [(epoch_s, hPa)] from metar_qnh(); with two readings or more the day's SHAPE comes from it and only the
+        LEVEL from the votes (the median of each vote less the shape at its time), else the nearest votes."""
+        self = super().__new__(cls, statistics.median(v for _, v in votes))
+        votes = sorted(votes)
+        self.shaped = len(qnh) >= 2
+        self.grid = []
+        if self.shaped:
+            qnh = sorted(qnh)
+
+            def shape(t):
+                return (1013.25 - _interp(qnh, t)) * FT_PER_HPA
+            level = statistics.median(v - shape(t) for t, v in votes)
+            self.start = qnh[0][0]
+            steps = int((qnh[-1][0] - self.start) // FIELD_GRID_S) + 1
+            self.grid = [level + shape(self.start + i * FIELD_GRID_S) for i in range(steps)]
+            return self
+        k = min(FIELD_NEAREST, len(votes))
+        self.start = votes[0][0]
+        steps = int((votes[-1][0] - self.start) // FIELD_GRID_S) + 1
+        for i in range(steps):
+            g = self.start + i * FIELD_GRID_S
+            nearest = sorted(votes, key=lambda v: abs(v[0] - g))[:k]
+            self.grid.append(statistics.median(v for _, v in nearest))
+        return self
+
+    def __reduce__(self):
+        """Pickled as the plain day value. A float subclass is rebuilt by calling the class with the bare number,
+        which would hand __new__ a float for its votes: count_day()'s results cross a process pool, and the first
+        real recount died on exactly that. `at()` is needed only inside the worker that counted the day."""
+        return (float, (float(self),))
+
+    def at(self, t):
+        i = int((t - self.start) // FIELD_GRID_S)
+        return self.grid[min(max(i, 0), len(self.grid) - 1)]
+
+
+def field_at(field, t):
+    """The field level at epoch t: a FieldLevel's `at(t)`, else the one value (the fallback has no times)."""
+    return field.at(t) if isinstance(field, FieldLevel) else field
+
+
 def field_level(traces, ap):
     """The field's pressure altitude that day, and how it was found.
 
@@ -302,18 +409,22 @@ def field_level(traces, ap):
                 continue
             if is_ground(p) and i and baro(pts[i - 1]) is not None and p[0] - pts[i - 1][0] <= NEAR_GROUND_S:
                 if recent and recent[0][1] >= baro(pts[i - 1]) + CLIMB_FT:
-                    mine.append(baro(pts[i - 1]))
+                    mine.append((p[0], baro(pts[i - 1])))
                     recent.clear()
             elif b is not None:
                 k = bisect.bisect_left(on_ground, p[0] - NEAR_GROUND_S)
                 if not (k < len(on_ground) and on_ground[k] <= p[0] + NEAR_GROUND_S):
                     lows.append(b)
         if mine:
-            touchdowns.append(statistics.median(mine))
+            touchdowns.append((statistics.median(t for t, _ in mine), statistics.median(v for _, v in mine)))
         if lows and not (grounded and top < min(lows) + CLIMB_FT):
             minima.append(min(lows))
     if len(touchdowns) >= MIN_TOUCHDOWNS:
-        return statistics.median(touchdowns), f'touchdown median of {len(touchdowns)} aircraft'
+        stamps = sorted(t for t, _ in touchdowns)
+        day = dt.datetime.fromtimestamp(stamps[len(stamps) // 2], dt.UTC).date()
+        field = FieldLevel(touchdowns, metar_qnh(ap.get('code'), day))
+        return field, (f'touchdown median of {len(touchdowns)} aircraft'
+                       + (', shaped by METAR' if field.shaped else ''))
     if len(minima) >= MIN_TOUCHDOWNS:
         return sorted(minima)[len(minima) // 10], f'p10 of {len(minima)} in-zone minima (no surface reports)'
     return None, 'too few aircraft'
@@ -345,10 +456,11 @@ def movements(rec, ap, field):
     the number of zone visits that came within UNSEEN_BAND_FT unheard low."""
     pts = rec['pts']
     (clat, clon), zone = ap['centre'], ap['zone_km']
-    low_cut = field + LOW_ABOVE_FT
+    # The field AT each reading (FieldLevel, 2026-10-23): one value for a stormy day missed take-offs.
+    cut = [field_at(field, p[0]) + LOW_ABOVE_FT for p in pts]
     inzone = [km_between(p[1], p[2], clat, clon) <= zone for p in pts]
-    low = [z and (is_ground(p) or (baro(p) is not None and baro(p) <= low_cut))
-           for p, z in zip(pts, inzone, strict=True)]
+    low = [z and (is_ground(p) or (baro(p) is not None and baro(p) <= c))
+           for p, z, c in zip(pts, inzone, cut, strict=True)]
 
     # Split low points into runs: a new run starts after a gap, or after the
     # aircraft has been seen above the low band (a circuit or a go-around).
@@ -360,7 +472,7 @@ def movements(rec, ap, field):
                 cur = []
             cur.append(i)
             last_t = p[0]
-        elif cur and inzone[i] and baro(p) is not None and baro(p) > low_cut:
+        elif cur and inzone[i] and baro(p) is not None and baro(p) > cut[i]:
             runs.append(cur)
             cur = []
     if cur:
@@ -369,7 +481,6 @@ def movements(rec, ap, field):
     # Higher means CLIMB_FT above the FIELD, not above the run's edge point: a
     # run's last low point can sit LOW_ABOVE_FT up, and measuring from there
     # asked a 1,000 ft circuit for 1,100 ft and missed its take-off.
-    high = field + CLIMB_FT
     out = []
     for k, run in enumerate(runs):
         first, last = pts[run[0]], pts[run[-1]]
@@ -382,11 +493,11 @@ def movements(rec, ap, field):
         until = pts[runs[k + 1][0]][0] if k + 1 < len(runs) else math.inf
         before = [p for p in pts if max(first[0] - WINDOW_S, since) < p[0] < first[0]]
         after = [p for p in pts if last[0] < p[0] <= last[0] + WINDOW_S and p[0] < until]
-        if any(baro(p) is not None and baro(p) >= high for p in before):
+        if any(baro(p) is not None and baro(p) >= field_at(field, first[0]) + CLIMB_FT for p in before):
             approach = [p for p in before if first[0] - p[0] <= TRACK_WINDOW_S
                         and km_between(p[1], p[2], clat, clon) <= zone + 3]
             out.append(('landing', runway_for(approach, ap), first[0]))
-        if any(baro(p) is not None and baro(p) >= high for p in after):
+        if any(baro(p) is not None and baro(p) >= field_at(field, last[0]) + CLIMB_FT for p in after):
             climb = [p for p in after if p[0] - last[0] <= TRACK_WINDOW_S
                      and km_between(p[1], p[2], clat, clon) <= zone + 3]
             out.append(('take-off', runway_for(climb, ap), last[0]))
@@ -394,8 +505,8 @@ def movements(rec, ap, field):
     # Visits that came close but were never heard low: a coverage signal.
     unseen = 0
     if not runs:
-        near = [baro(p) for p, z in zip(pts, inzone, strict=True) if z and baro(p) is not None]
-        if near and min(near) <= field + UNSEEN_BAND_FT:
+        near = [baro(p) - field_at(field, p[0]) for p, z in zip(pts, inzone, strict=True) if z and baro(p) is not None]
+        if near and min(near) <= UNSEEN_BAND_FT:
             unseen = 1
     return out, unseen
 

@@ -223,6 +223,10 @@ Or just describe what you need, I have full context of this project.
   `~/tools/python-3.13.15/python.exe -I` (untrusted input); `adsb_fetch.py --workers 3` while the PC is
   in use. Stopping it is always safe (an extract is written whole or not at all). Readers of our OWN extracts
   (`adsb_movements.py`, `adsb_overflights.py`) run under the system Python: they need tzdata, numpy and pyproj.
+- **The plane counter's field level follows the day's METAR QNH** (`adsb_movements.FieldLevel`, 2026-10-24): cache
+  every month you count with `python scripts/fetch_metar.py <first> <last>` FIRST; an uncached month silently falls
+  back to the aircraft alone and reads stormy mornings low. `data/us-runway-use.json` and the NYC yardsticks are
+  built from this counter: rebuilding them now re-derives published US inputs, so do it as a reviewed change.
 - Look up D3, AWS SDK and SAM APIs with **context7** before using unfamiliar ones; use **security-guidance**
   on Lambda / API Gateway edits and **frontend-design** on UI changes in `index.html`.
 
