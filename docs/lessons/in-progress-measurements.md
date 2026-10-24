@@ -146,3 +146,23 @@ filter removed and left-out days averaged as westerly, because a fixture put the
 tests now vary the count by day and compare the build with `average()` itself; 20 mutations, all red. Kew 309.9 a
 westerly day over January-August; `--every-month` reproduces the 21 Oct readout exactly. ~3.5 min, 1.1 GiB.
 Unpublished; Bill's open calls are in ROADMAP's START HERE (2026-10-22, evening).
+
+**LUTON'S FEBRUARY WAS THE WEATHER, AND THE COUNTER NOW READS IT (2026-10-23/24, branch `luton-field-metar`).** After
+the field-at-0 fixes Luton failed only February (93.1% of the CAA's count). Counting it per day showed WHAT it missed:
+take-offs, not flights (landings/take-offs 1.109 against January's 1.038), almost all on 13, 16 and 19 Feb, with
+unheard visits at 15-31 a day against ~2. Luton's METARs (Iowa Mesonet archive) showed WHY: QNH moved 11-21 hPa within
+those days, 300-570 ft of the field's pressure altitude, and the counter's ONE field value per day sat near the bottom
+of the swing, so aircraft departing in the high hours were first heard above the low band and dropped. (The 15th and
+18th swung as much and lost nothing: their value sat near the top.) **Step 1, the votes through the day**
+(`FieldLevel`, the median of the nearest touchdown votes on a 10-minute grid) recovered the 16th but left February at
+94.9%: Luton's mornings are DEPARTURES, so there were no morning votes to read, and the 13th had six votes in all.
+Compared with the METAR-implied field (elevation + (1013.25 - QNH) x 27.3 ft), the evening matched to tens of feet and
+the morning read 300-420 ft low. **Step 2, the shape from the METARs and the level from the aircraft** (each vote less
+the METAR shape at its time, the median of those, plus the shape at t): Luton January 98.4%, **February 97.0%**, March
+98.1%; the 13th 63 -> 191 take-offs against 192 landings. The day's VALUE is unchanged (FieldLevel is a float), so
+every report and stored field reads the same number; `movements()` reads `at(t)`. **The first real run died
+unpickling it**: a float subclass crossing ProcessPoolExecutor is rebuilt from the bare number, which handed the
+votes argument a float; `__reduce__` now pickles it as the day value (tested). The counter never fetches: an
+uncached month falls back to the aircraft alone. Tests: the morning departure (red with movements() ignoring the
+time), the evening-only day (red without the METARs), the cache read in hPa for the UTC day, fetch_metar fetching a month still running again (a partial month cached as done would stay partial), and fetch_metar refusing
+a web page or an empty station. NOT MERGED until the all-airport check shows no airport worse.

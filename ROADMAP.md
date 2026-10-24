@@ -54,6 +54,14 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > mock-ups made for Bill (the link is in NOW.md). **For Bill:** buildings or floor space; where it shows; scale up
 > (London ~70 tiles) or not; the ONS address file's postcode licence if matching each address. `docs/lessons/building-heights.md`.
 >
+> **Luton's February FIXED on branch `luton-field-metar` (24 Oct, Bill: "yes do it"; not merged).** The plane counter's
+> field level now follows the day's METAR QNH (new `scripts/fetch_metar.py`, Iowa Mesonet archive), its level still
+> from the aircraft: Luton Feb 93.1% -> 97.0% (13 Feb 63 -> 191 take-offs). **Before merging:** the all-airport check
+> (original vs METAR, Jan-Aug) must show no airport worse; then the 289-day recount (`adsb_overflights.py`) and
+> `adsb_postcode_averages.py`'s year rule, where Luton should pass as the tenth airport. Read the archive's terms
+> before any count that used it is published. Rebuilding `data/us-runway-use.json` would now re-derive published
+> US inputs: a reviewed change of its own.
+>
 > ## START HERE (2026-10-22, evening)
 >
 > **The Bay Area is SCORED BY THE API, in source (`CITIES['bayarea']`; NOT deployed).** The 50 cities answer

@@ -520,5 +520,93 @@ class ExtractMemberCapTests(unittest.TestCase):
         self.assertEqual(ax._work(None), ('bad', None))
 
 
+class FieldThroughTheDayTests(unittest.TestCase):
+    """Luton, February 2026 (found 2026-10-23): on storm days QNH moved 11-21 hPa within the day (300-570 ft of the
+    field's pressure altitude, Luton's METARs), one field value for the day sat near the bottom of it on 13, 16 and
+    19 Feb, and departures first heard airborne in the high hours fell above the low band: 63 take-offs against 175
+    landings on the 13th. The field is now read AT each moment from the nearest touchdown votes."""
+
+    # A morning when the field reads 1,200 ft (low QNH) and an afternoon when it reads 700 (the storm gone): more
+    # afternoon votes, so the day's single value is 700.
+    VOTES = [(T0 - 3600 * h, 1200) for h in range(6)] + [(T0 + 3600 * (6 + h), 700) for h in range(9)]
+
+    @staticmethod
+    def departure_heard_airborne(field_then, t=T0):
+        """A take-off first heard 300 ft above the field as it stood THEN, climbing away: never heard on the runway."""
+        pts, _ = Heathrow.climb_out(Heathrow.thr27r, t)
+        for p in pts:
+            p[3] += field_then + 300
+        return pts
+
+    def test_the_day_value_is_unchanged_and_the_field_follows_the_votes(self):
+        field = mv.FieldLevel(self.VOTES)
+        self.assertEqual(float(field), 700)  # the median over aircraft, as every report has always shown
+        self.assertEqual(field.at(T0 - 3 * 3600), 1200)
+        self.assertEqual(field.at(T0 + 10 * 3600), 700)
+
+    def test_a_departure_in_the_high_hours_is_counted(self):
+        pts = self.departure_heard_airborne(1200)
+        moves, _ = mv.movements({'pts': pts}, Heathrow.ap, mv.FieldLevel(self.VOTES))
+        self.assertEqual([kind for kind, _, _ in moves], ['take-off'])
+        # The defect itself: read against the ONE day value it is dropped as unheard, as on 13 February.
+        moves, unseen = mv.movements({'pts': pts}, Heathrow.ap, float(mv.FieldLevel(self.VOTES)))
+        self.assertEqual((moves, unseen), ([], 1))
+
+    def test_the_field_crosses_a_process_pool_as_its_day_value(self):
+        import pickle
+        # What ProcessPoolExecutor does with count_day()'s results: bytes this test made a line earlier, in-process,
+        # never data from outside (the first real recount died here: a float subclass rebuilt from a bare number).
+        field = pickle.loads(pickle.dumps(mv.FieldLevel(self.VOTES)))  # noqa: S301 - our own bytes, see above
+        self.assertIs(type(field), float)
+        self.assertEqual(field, 700)
+
+
+class MetarShapeTests(unittest.TestCase):
+    """The METARs give the day's SHAPE, the aircraft its LEVEL (2026-10-23, Bill: "yes do it"). Luton's mornings are
+    departures, so touchdown votes cannot see them: on 13 Feb all six votes came late, the field read one value and
+    63 take-offs were counted against 192 landings; shaped by Luton's QNH the day counts 191."""
+
+    # QNH rising through a stormy day, 990 hPa at dawn to 1008.3 by evening: the field's pressure altitude falls
+    # (1013.25 - QNH) x 27.3 ft, from 635 ft above its calm-day value to 135 ft above it.
+    QNH = [(T0 - 6 * 3600, 990.0), (T0 + 10 * 3600, 1008.3)]
+    EVENING_VOTES = [(T0 + 10 * 3600 + 60 * k, 700) for k in range(10)]  # every arrival heard came late
+
+    def test_the_morning_field_comes_from_the_shape_and_the_level_from_the_votes(self):
+        field = mv.FieldLevel(self.EVENING_VOTES, self.QNH)
+        self.assertTrue(field.shaped)
+        self.assertEqual(float(field), 700)  # the day value every report shows is unchanged
+        self.assertAlmostEqual(field.at(T0 + 10 * 3600), 700, delta=1)
+        self.assertAlmostEqual(field.at(T0 - 6 * 3600), 700 + (1008.3 - 990.0) * mv.FT_PER_HPA, delta=1)
+
+    def test_a_morning_departure_counts_on_a_day_of_evening_votes(self):
+        morning = (1013.25 - 990.0) * mv.FT_PER_HPA - (1013.25 - 1008.3) * mv.FT_PER_HPA + 700  # ~1200 ft
+        pts = FieldThroughTheDayTests.departure_heard_airborne(morning, t=T0 - 6 * 3600)
+        moves, _ = mv.movements({'pts': pts}, Heathrow.ap, mv.FieldLevel(self.EVENING_VOTES, self.QNH))
+        self.assertEqual([kind for kind, _, _ in moves], ['take-off'])
+        # Without the METARs every vote is an evening one, the field reads 700 all day, and it is lost.
+        moves, unseen = mv.movements({'pts': pts}, Heathrow.ap, mv.FieldLevel(self.EVENING_VOTES))
+        self.assertEqual((moves, unseen), ([], 1))
+
+    def test_the_cache_is_read_in_hpa_for_the_utc_day_and_a_missing_month_is_no_shape(self):
+        import shutil
+        import tempfile
+        from unittest import mock
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            (tmp / 'EGGW-2026-02.csv').write_text(
+                'valid,alti\n2026-02-12 12:50,29.00\n2026-02-13 06:50,29.92\n2026-02-13 18:50,30.10\n'
+                '2026-02-15 06:50,30.20\n', encoding='utf-8')
+            with mock.patch.object(mv, 'METAR_DIR', tmp):
+                mv._metar_month.cache_clear()
+                got = mv.metar_qnh('LTN', dt.date(2026, 2, 13))
+                self.assertEqual([round(h, 1) for _, h in got], [1013.2, 1019.3])  # inHg -> hPa, the 13th +/- 6 h
+                self.assertEqual(mv.metar_qnh('LTN', dt.date(2026, 3, 13)), [])    # month not cached
+                self.assertEqual(mv.metar_qnh('XXX', dt.date(2026, 2, 13)), [])    # no station
+        finally:
+            mv._metar_month.cache_clear()
+            shutil.rmtree(tmp)
+        self.assertFalse(mv.FieldLevel(self.EVENING_VOTES, []).shaped)
+
+
 if __name__ == '__main__':
     unittest.main()
