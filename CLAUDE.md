@@ -107,8 +107,10 @@ Or just describe what you need, I have full context of this project.
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
   are over **postcodes, not addresses**; never say **how often planes pass** except for airports that pass
   `coverage_verdict()`; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
-  `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24: no gate reads /talks/). Say **AI** only as an event's
+  `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
+  **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
+  what a visitor sees; a new exception goes in its allow-lists WITH its reason, never a looser pattern.
 
 ## Rules that bite
 

@@ -90,7 +90,9 @@ jobs:
       # a runner image change cannot quietly take the backend suite down.
       # mcp (2026-10-22): tests/test_mcp_server.py drives the local MCP server in memory; pinned to the
       # version the server was built and tested against, like the action SHAs above.
-      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml mcp==1.23.3
+      # pypdf (2026-10-24): tests/test_public_wording.py reads the published PDFs (talks/, home/reports/) for the
+      # wording rules; pinned to the version it was proven on.
+      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml mcp==1.23.3 pypdf==6.7.0
       # backend/tests — the maintained suite (the same one /preflight runs).
       - run: python -m pytest tests/ -v --tb=short
         working-directory: backend

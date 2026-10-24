@@ -357,6 +357,39 @@ Government Licence" after the 26 Sep move to UK AIP routes. Both fixed; the PDF 
 with pypdf, never a byte search: the text is compressed, so a byte search reported a price still present (chance digits
 in a compressed stream) after the prices were gone, and could equally miss words that are there.
 
+**The wording rules became a gate (2026-10-24, Bill: "yes" to "a check that scans every public page").**
+`tests/test_public_wording.py` (run by "pytest (root)") reads every file the Makefile UPLOADS (its `aws s3 cp
+*.html` and `aws s3 sync <dir>/` commands, continuation lines joined: 126 pages, 103 of them area pages, and the 4
+PDFs under talks/ and home/reports/, read with pypdf, pinned in CI's pip line) plus `js/*.mjs`, and only what a
+visitor sees: text, alt/title/aria-label/placeholder, the description and link-preview tags, and script strings (a
+small scanner, not a regex: template literals are read through their nested `${...}`, and each string has its tags
+stripped and its entities and escapes decoded; URLs dropped). Never comments (the pages' comments quote the rules)
+or the CSP (it names cubitt33.goatcounter.com). It holds: our prices (READ from /pricing, as £ or GBP) and anything
+shaped like a price per month/report/call outside /pricing; a priced JSON-LD offer outside /pricing (any `price`,
+`lowPrice`, `highPrice` at any depth); no figure beside the word licence on ANY page, /pricing included; VAT only as
+"not registered for VAT"; Cubitt33 only on privacy/terms; the old name; AI only from an allow-list of read phrases;
+the whole product as "open government data", "all ..." or "every figure ... OGL"; shares of addresses/homes; "<n>
+planes a day" and "a plane every <n> minutes". It proves itself on every run: `RulesCatchTheirDefectsTests` feeds
+each rule the page SOURCE of its defect through the same reader (`shown_from_source`) and must see it fail (18
+cases), so a rule or the reader loosened later reds (checked by loosening FREQUENCY, LICENCE_FIGURE and the OGL
+allow-list). Proven once on the REAL slip too: the handout as it was before `f13a737` reds the price, OGL and AI
+rules. A review agent asked for what it would MISS found the first version's regex tokeniser dropped every nested
+template literal (already losing real front-page text: home-engine.mjs's "Sky Score out of 10, balanced
+weighting..."), read script strings as raw HTML (`&pound;39 a report`, `<b>41%</b> of homes` passed), looked for a
+licence figure only in the price cells, COUNTED the pending AI mentions (a worse sentence swapped in kept the count)
+and skipped a deleted write-up that S3 still serves; all fixed and each in the self-test. Calibrating found: "all
+items" in ONS's CPIH series name tripped the OGL rule across 100 area pages (the rule stops at a comma or bracket);
+count.mjs's GoatCounter URL tripped Cubitt33 (URLs dropped); /pricing's description lists prices beside "licences"
+(allow-listed with its reason); the Norwich sample PDF's "All Open Government Licence v3.0 except the WHO guidelines"
+is TRUE (it closes its list of DEFRA sources): allow-listed. And run ruff on a new test BEFORE the preflight: the
+first version's `%` format failed "ruff (scripts, tests)" an hour in. Two write-ups are PENDING BILL, pinned to the
+very AI sentences they hold today (`tests/public_wording_ai_pending.json`; re-pin with `python
+tests/test_public_wording.py --write-pending` only after reading each change): "How Sky Score works" still describes
+the API's assistant, which DOES call an AI model (true, and a privacy disclosure: the question goes to Virginia), and
+"The 57 checks" was unlisted but is STILL LIVE: talks-deploy syncs every talks/*.html and *.pdf with no --delete, so
+unlisting a page publishes it again on every talks deploy, and a write-up deleted here FAILS until its S3 copy is
+gone too.
+
 **"What you can hold us to" (2026-10-24, Bill's pick from About-page practice: Plausible, 37signals, Linear state what
 you can hold them to).** Four promises after "Why I built it", then the publishers as TEXT (a logo implies an
 endorsement). Wording held to what is true today: "credited to them", NOT "and when" (per-field periods are only on the
