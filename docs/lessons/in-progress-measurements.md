@@ -166,3 +166,8 @@ votes argument a float; `__reduce__` now pickles it as the day value (tested). T
 uncached month falls back to the aircraft alone. Tests: the morning departure (red with movements() ignoring the
 time), the evening-only day (red without the METARs), the cache read in hPa for the UTC day, fetch_metar fetching a month still running again (a partial month cached as done would stay partial), and fetch_metar refusing
 a web page or an empty station. NOT MERGED until the all-airport check shows no airport worse.
+**RESULT (2026-10-24 evening): the year rule publishes TEN airports, Luton the tenth** (Jan-Aug 98.4, 97.0, 98.1,
+98.1, 99.0, 96.9, 98.2, 98.5%). The recount ran in two parts (223 days, then the 66 still on the old counts, chosen by
+day-file mtime, after Claude Code stopped it for low system memory with Blender at 11.7 GB). Compare a fix's
+outcome by running `adsb_postcode_averages.py --verdicts` on the BACKUP's day files and on the new ones: only Luton's
+outcome changed; the published 9 moved at most 0.2 points, Cardiff and Teesside ~1.3 (both still fail).

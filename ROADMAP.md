@@ -56,10 +56,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 >
 > **Luton's February FIXED on branch `luton-field-metar` (24 Oct, Bill: "yes do it"; not merged).** The plane counter's
 > field level now follows the day's METAR QNH (new `scripts/fetch_metar.py`, Iowa Mesonet archive), its level still
-> from the aircraft: Luton Feb 93.1% -> 97.0% (13 Feb 63 -> 191 take-offs). **Before merging:** the all-airport check
-> (original vs METAR, Jan-Aug) must show no airport worse; then the 289-day recount (`adsb_overflights.py`) and
-> `adsb_postcode_averages.py`'s year rule, where Luton should pass as the tenth airport. Read the archive's terms
-> before any count that used it is published. Rebuilding `data/us-runway-use.json` would now re-derive published
+> from the aircraft: Luton Feb 93.1% -> 97.0% (13 Feb 63 -> 191 take-offs). The all-airport check passed (no airport
+> worse), the 289-day recount is DONE (24 Oct evening: 223 days, then the last 66 after a low-memory stop) and the
+> year rule now PUBLISHES TEN: **Luton passes every month Jan-Aug (96.9-99.0%)**. Before vs after (`--verdicts` on the
+> 24 Oct backup): only Luton's outcome moved; the published 9 moved 0.2 points at most, Cardiff and Teesside ~1.3
+> and still fail. Not merged (Bill's OK). The archive's terms are read (LICENSING.md, 24 Oct): public domain, attribution appreciated, so credit it beside any published count. Rebuilding `data/us-runway-use.json` would now re-derive published
 > US inputs: a reviewed change of its own.
 >
 > ## START HERE (2026-10-22, evening)

@@ -22,8 +22,9 @@ WHICH AIRPORTS: THE PUBLISH RULE (year_rule(), chosen 2026-10-22; Bill: as accur
   An airport that fails is ABSENT from the file, its reason recorded once, never a column of zeros.
 - ONLY DAYS OF MONTHS THE AIRPORT PASSED enter its averages. A month with no CAA figure yet (September 2026)
   or one the day files cannot cover whole (October 2026) cannot be checked, so its days are left out and
-  listed: Luton passed six of the eight months and failed two with no other sign (February 93.2%, June
-  72.7%), so a month nobody has checked is not assumed good. They come in when the CAA publishes the month
+  listed: on 2026-10-22 Luton passed six of the eight months and failed two with no other sign (February
+  93.2%, June 72.7%: both turned out to be faults in our counting, fixed 23-24 Oct), so a month nobody has
+  checked is not assumed good. They come in when the CAA publishes the month
   (rerun this; nothing is recounted).
 - Days are left out exactly as adsb_overflights.average() leaves them out (feed outages by feed_gaps() over
   every stored UK profile; classify_day() None), held together by a test.
@@ -250,9 +251,10 @@ def year_rule(months, min_months=MIN_CHECKED_MONTHS):
       that way, so it stays).
     - Every month, not most: the floor is there so that no figure reads quieter than the sky, and a failed
       month shows that this airport's tracking, or our counting of it, can fall short with no other sign.
-      Luton passed six of eight months and failed February (93.2%) and June (72.7%: a transponder stuck
-      between 'ground' and 0 ft pulled its measured field level to 0 on eight days, and the movements went
-      uncounted); Newcastle, Liverpool and Cardiff each fell short in April or May. A pass in another month is then weaker evidence
+      Luton failed February (93.2%) and June (72.7%: a transponder stuck between 'ground' and 0 ft pulled its
+      measured field level to 0 on eight days, and the movements went uncounted); both failures were OUR
+      counting (that field level, then February's storm-day pressure swings), and once fixed (23-24 Oct) Luton
+      passes every month. Newcastle, Liverpool and Cardiff each fell short in April or May. A pass in another month is then weaker evidence
       at that airport than at one that never failed. Leaving out only the failed months would publish more
       airports on fewer, seasonally lopsided days; that is Bill's call, not a default.
     - At least six: a year's figure should rest on half a year of checked tracking, winter and summer

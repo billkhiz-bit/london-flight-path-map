@@ -249,8 +249,12 @@ often planes fly"). Measured privately; nothing derived from these is published:
   altimeter setting (QNH) from each counted airport's METAR reports, cached in `data/metar/` (gitignored) by
   `scripts/fetch_metar.py` (2026-10-24). Read by `scripts/adsb_movements.py` for the SHAPE of the field level
   through the day; it adds no figure of its own to any count and nothing from it is published. METARs are
-  routine public aviation weather reports. **The archive's own terms of reuse have NOT been read yet: read them
-  before a count that used it is published or sold** (the counts are already gated on ODbL above).
+  routine public aviation weather reports. **Terms READ 2026-10-24** (`mesonet.agron.iastate.edu/disclaimer.php`):
+  the data are "in the public domain" and "may be used freely by anyone for any lawful purpose", "without any
+  warranty of accuracy"; "Attributing the Iowa Environmental Mesonet of Iowa State University would be
+  appreciated". No licence is named and nothing restricts commercial use, so it does not gate publication; credit
+  "airfield pressure from the Iowa Environmental Mesonet (Iowa State University)" beside any published count that
+  used it (the counts stay gated on ODbL above).
 - **Bay Area runway use, `data/us-runway-use.json` (2026-10-16), DERIVED FROM adsb.lol, so ODbL.**
   Landings and take-offs per runway end at SFO, OAK and SJC over July-August 2026 (55 of 62
   days kept), and the lobe shares built from them in the score Lambda's US-QUIET-BAYAREA block.
