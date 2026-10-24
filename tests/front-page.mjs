@@ -1540,6 +1540,22 @@ for (const [path, want] of Object.entries(EMAIL_WANT)) {
 const correctionName = await page.evaluate(async () =>
   (await import('/js/count.mjs')).emailName('mailto:support@skyscore.co.uk?subject=Correction%3A%20SW11%201AA'));
 ok(correctionName === 'correction', "the map's correction email counts as `correction`, never with the postcode it names", correctionName);
+
+// 16f. THE ABOUT PAGE'S FILM AND PROTOTYPE ARE COUNTED (2026-10-24, Bill: learn whether anyone watches), by
+// js/count.mjs as `about-film` / `about-prototype`, from an allow-list of exact destinations. Every link in the
+// page's main is clicked with its navigation stopped and the names caught at goatcounter.count, in page order: the
+// two watched links must count, the support email keeps its own name, and NO other link may count anything.
+await page.goto(`http://127.0.0.1:${PORT}/about/`, { waitUntil: 'domcontentloaded' });
+await page.waitForFunction(() => typeof window.goatcounter?.count === 'function', null, { timeout: 10000 }).catch(() => {});
+const aboutSent = await page.evaluate(() => {
+  window.__gc = [];
+  window.goatcounter.count = (v) => window.__gc.push(v.path.replace(/^event\//, ''));
+  document.addEventListener('click', (e) => { if (e.target.closest?.('a[href]')) e.preventDefault(); }, true);
+  for (const a of document.querySelectorAll('main a[href]')) a.click();
+  return window.__gc.slice();
+});
+ok(JSON.stringify(aboutSent) === JSON.stringify(['about-film', 'about-prototype', 'email-about-support']),
+  '/about/: the film and the prototype are counted, the support email keeps its name, and no other link counts', JSON.stringify(aboutSent));
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass
 // vacuously on a page that has no such button.
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });

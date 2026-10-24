@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>About - Sky Score</title>
-    <meta name="description" content="Why Sky Score exists, who it is for, the questions people ask about it, and the person who built it." />
+    <meta name="description" content="Why Sky Score exists, who it is for, how it grew, the questions people ask about it, and the person who built it." />
     <link rel="canonical" href="https://skyscore.co.uk/about/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://skyscore.co.uk/about/" />
@@ -14,11 +14,21 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
     <!--
       About, served at /about/ since 2026-10-22 (Bill: "who it's for" and "why I built it" on one page, people
-      first; he chose to be named, with his photos, LinkedIn and GitHub). The audience list sits between WHO-FOR
+      first; he chose to be named, with his photos, LinkedIn and GitHub). Since 2026-10-24 the story comes first
+      and "who it's for" sits just above the contact band, as the step after a reader decides to trust us (Bill:
+      on a phone the story had started 2.3 screens down, behind a list the front page already shows). The audience list sits between WHO-FOR
       markers and is written by scripts/build_who_for.py, which writes the same list into the front page; edit
       it there, never here. The questions are real ones, asked by the audience at the AI Tinkerers talk: add a
       question only when someone has asked it. Wording rules (CLAUDE.md): nothing here says how often planes
       fly, no prices of ours outside /pricing, one licence per dataset and never one for the product.
+      Say AI only as an event's name or where AI is NOT used (docs/lessons/front-page-and-site.md, 2026-10-24).
+      "How it grew" (2026-10-24) dates each step by month, from git and CHANGELOG.md, and quotes no count that
+      moves. Its March still is frame 1:26 of Bill's own hackathon export, cropped to the MAP alone: every frame of
+      that film carries the retired product's AI wording, and the site says AI only as an event's name or to say
+      where it is not used (Bill, 2026-10-24: not "AI slop"). The film itself is a plain link to YouTube, because
+      this policy allows no frames and an embed would set YouTube's cookies.
+      The film and the prototype link are counted by js/count.mjs (an allow-list; front-page.mjs 16f). Demos given
+      at events go under "Talks and demos", never on the timeline (Bill, 2026-10-24: product steps only there).
     -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
@@ -26,7 +36,7 @@
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
       :root {
-        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12;
+        --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --rule: #c4c1b8; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12;
         --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
         --gutter: clamp(16px, 4vw, 48px);
         color-scheme: light;
@@ -48,16 +58,19 @@
       h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 5.2vw, 64px); line-height: 1.0; letter-spacing: -0.04em; margin: 0 0 20px; text-wrap: balance; }
       h1 .ink { color: var(--orange-ink); }
       p.lead { margin: 0; color: var(--mid); font-size: 19px; max-width: 48ch; }
-      h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.6vw, 32px); letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 16px; }
+      h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 3vw, 38px); letter-spacing: -0.025em; line-height: 1.12; margin: 0 0 20px; }
       h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(21px, 2.2vw, 26px); letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 6px; }
       p { margin: 0 0 14px; }
-      section { margin: 0 0 64px; scroll-margin-top: 16px; }
+      /* Sections (2026-10-24, Bill: "bunched up, no clear separation"): each opens on a full-width rule with room
+         above and below, so where one ends is seen, not inferred from a gap. The contact band is its own panel. */
+      section { margin: 0 0 clamp(64px, 8vw, 104px); scroll-margin-top: 16px; }
+      main > section:not(.contact) { border-top: 1px solid var(--rule); padding-top: clamp(28px, 3.5vw, 44px); }
       figure { margin: 0; }
       figure img { border-radius: 18px; width: 100%; }
       figcaption { margin: 8px 2px 0; font-size: 13px; color: var(--mid); }
 
       /* The opening: the reason, then who is saying it. */
-      .opening { max-width: 940px; margin: 0 0 40px; }
+      .opening { max-width: 940px; margin: 0 0 clamp(48px, 6vw, 72px); }
       .byline { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; font-size: 15px; color: var(--mid); }
       .byline img { width: 40px; height: 40px; border-radius: 50%; }
       .byline b { color: var(--dark); font-weight: 600; }
@@ -98,6 +111,43 @@
       .signed b { display: block; font-family: var(--font-display); font-weight: 600; line-height: 1.2; }
       .signed span { font-size: 15px; color: var(--mid); }
 
+      /* What you can hold us to (2026-10-24, Bill): four promises a reader can check, each under a dark rule, so it
+         reads as a standard rather than another set of cards; then the publishers, as text (a logo can imply an
+         endorsement). tests/test_about_sources.py holds every named publisher to a live source in LICENSING.md. */
+      ul.promises { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px 32px; }
+      @media (min-width: 640px) { ul.promises { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (min-width: 1080px) { ul.promises { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+      ul.promises li { border-top: 2px solid var(--dark); padding-top: 12px; }
+      ul.promises b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; line-height: 1.25; margin: 0 0 6px; }
+      ul.promises span { color: var(--mid); font-size: 16px; }
+      p.sources { margin: 26px 0 0; max-width: 78ch; font-size: 16px; color: var(--mid); }
+
+      /* How it grew: a real sequence, so the months sit on a dashed rail like a route on the map, with a waypoint
+         at each. The first waypoint is filled: it is where the route starts. */
+      ol.grew { list-style: none; margin: 0; padding: 0; max-width: 900px; }
+      ol.grew > li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 32px; padding: 0 0 30px 34px; }
+      @media (min-width: 720px) { ol.grew > li { grid-template-columns: 9em minmax(0, 1fr); } }
+      ol.grew > li::before { content: ""; position: absolute; left: 6px; top: 13px; bottom: -13px; width: 2px; background: repeating-linear-gradient(to bottom, var(--orange-ink) 0 6px, transparent 6px 12px); }
+      ol.grew > li:last-child::before { display: none; }
+      ol.grew > li::after { content: ""; position: absolute; left: 0; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 2.5px var(--orange-ink); }
+      ol.grew > li:first-child::after { background: var(--orange-ink); }
+      ol.grew time { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--mid); padding-top: 1px; }
+      ol.grew h3 { font-size: clamp(19px, 1.9vw, 22px); margin: 0 0 4px; }
+      ol.grew p { margin: 0; max-width: 60ch; color: var(--mid); }
+      p.grew-more { margin: 4px 0 0 34px; font-size: 16px; color: var(--mid); }
+      /* The hackathon film is a link out, never an embed: a still of our own, and nothing from YouTube loads until
+         someone chooses to watch. */
+      figure.film { margin: 16px 0 0; max-width: 560px; }
+      figure.film a { display: block; text-decoration: none; color: var(--dark); border-radius: 14px; }
+      .film .still { position: relative; display: block; }
+      figure.film img { border-radius: 14px; box-shadow: 0 0 0 1px var(--line); }
+      .film .play { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; }
+      .film .play circle { fill: var(--dark); fill-opacity: 0.86; }
+      .film a:hover .play circle { fill: var(--orange-ink); fill-opacity: 1; }
+      .film-label { display: block; margin: 10px 2px 0; font-weight: 600; font-size: 16px; }
+      .film-label span { font-weight: 400; color: var(--mid); }
+      .film a:hover .film-label { color: var(--orange-ink); text-decoration: underline; text-underline-offset: 4px; }
+
       /* Real questions, asked out loud at a talk: each answer points at the page that holds the fact. */
       dl.asked { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
       @media (min-width: 760px) { dl.asked { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -109,12 +159,16 @@
       dl.asked dd { margin: 0; color: var(--mid); font-size: 16px; }
       p.asked-note { color: var(--mid); font-size: 15px; margin: -6px 0 18px; }
 
-      .talks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
-      @media (min-width: 760px) { .talks { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: start; } }
+      /* The two talk photos share one 16:9 frame and one row (2026-10-24, Bill: smaller), so the portrait Deen
+         Developers photo no longer sets the row's height; its crop keeps the speaker's face (object-position). */
+      .talks { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; max-width: 980px; }
+      @media (min-width: 640px) { .talks { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+      .talks img { aspect-ratio: 16 / 9; object-fit: cover; }
+      .talks img.speaker-top { object-position: 50% 45%; }
       /* The Deen Developers photo is theirs, credited in its caption (Bill, 2026-10-23: in, and he tells them). */
       ul.talk-links { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--line); max-width: 820px; }
       ul.talk-links li { padding: 12px 2px; border-bottom: 1px solid var(--line); font-size: 16px; color: var(--mid); }
-      ul.talk-links a { font-weight: 600; color: var(--dark); }
+      ul.talk-links a, ul.talk-links b { font-weight: 600; color: var(--dark); }
 
       /* The close: one band, the three ways to reach a person. */
       .contact { background: var(--paper); border-radius: 18px; padding: clamp(22px, 3vw, 36px); display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
@@ -164,42 +218,14 @@
         <p class="lead">That is the whole reason Sky Score exists. A listing shows you the kitchen. It rarely tells you about the aircraft overhead, the road outside, the air or the flood risk, so we put those beside every postcode we cover, from the organisations that measure them, and say plainly where a figure is our own estimate.</p>
         <p class="byline"><img src="/about/bill-headshot.webp" width="40" height="40" alt="" /><span><b>Bilal Khizar</b>, founder</span></p>
         <nav class="jump" aria-label="On this page">
-          <a href="#for">Who it's for</a>
           <a href="#why">Why I built it</a>
+          <a href="#grew">How it grew</a>
           <a href="#asked">Questions people ask</a>
-          <a href="#talks">Talks</a>
+          <a href="#talks">Talks and demos</a>
+          <a href="#for">Who it's for</a>
           <a href="#contact">Get in touch</a>
         </nav>
       </div>
-
-      <section id="for" aria-labelledby="for-h">
-        <h2 id="for-h">Who it's for</h2>
-        <div class="for-grid">
-          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
-          <div class="who-home">
-            <div>
-              <p class="who-label">Choosing a home</p>
-              <h3>Buying or renting</h3>
-              <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
-            </div>
-            <div class="who-actions">
-              <a class="primary" href="/#check">Search a postcode</a>
-              <a href="/reports/street/">Get a street report</a>
-            </div>
-          </div>
-          <div class="who-pro">
-            <p class="who-label">Working with homes and places</p>
-            <ul class="who-list">
-              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
-              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Residents&#x27; groups</b><span>Start a bid from the official baseline.</span><a href="/area/">Browse council areas &rarr;</a></li>
-              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
-            </ul>
-          </div>
-          <!-- WHO-FOR:END -->
-        </div>
-      </section>
 
       <section class="letter" id="why" aria-labelledby="why-h">
         <figure>
@@ -212,13 +238,91 @@
         <div>
           <h2 id="why-h">Why I built it</h2>
           <p>I went to a property viewing, and while I was there a plane flew low overhead. The listing hadn't said a word about it.</p>
-          <p>Aircraft noise, road noise, air quality and flood risk are all published by the bodies that measure them, but no property site put them in front of the person deciding where to live. I started Sky Score at an AWS hackathon, honestly for the cloud credits, and kept building it because it was the tool I wanted when I was looking for a home.</p>
-          <p>I don't come from a technical background. I built it with AI, and with a running list of "gotchas", so the same mistake never happens twice.</p>
+          <p>Aircraft noise, road noise, air quality and flood risk are all published by the bodies that measure them, but no property site puts them all in front of the person deciding where to live. I started Sky Score at an AWS hackathon, honestly for the cloud credits, and kept building it because it was the tool I wanted when I was looking for a home.</p>
           <div class="signed">
             <img src="/about/bill-headshot.webp" width="52" height="52" alt="" />
             <div><b>Bilal Khizar</b><span>Founder, Sky Score</span></div>
           </div>
         </div>
+      </section>
+
+      <section id="promises" aria-labelledby="promises-h">
+        <h2 id="promises-h">What you can hold us to</h2>
+        <ul class="promises">
+          <li><b>Every figure has a source.</b><span>Each one comes from the organisation that measured or published it, and is credited to them.</span></li>
+          <li><b>Our own figures say so.</b><span>Where a figure is ours, such as the score itself or the Quiet Skies estimate, it is labelled as ours, and <a href="/how-it-works/">How it works</a> shows the sums.</span></li>
+          <li><b>Nothing is made up.</b><span>Every number traces back to published data, and none is invented by an AI.</span></li>
+          <li><b>No cookies, no account.</b><span>Searching needs no sign-up, and the site sets no cookies.</span></li>
+        </ul>
+        <p class="sources">The figures come from the organisations that publish them, among them <span class="src">DEFRA</span>, the <span class="src">Environment Agency</span>, the <span class="src">ONS</span>, <span class="src">HM Land Registry</span>, the <span class="src">Department for Education</span>, the <span class="src">Department for Transport</span>, the <span class="src">NHS</span>, the <span class="src">UK AIP (NATS)</span> and <span class="src">Breathe London</span>, and in the US the <span class="src">FAA</span>, the <span class="src">US Census Bureau</span>, the <span class="src">Bureau of Transportation Statistics</span>, <span class="src">FEMA</span> and the <span class="src">EPA</span>. <a href="/how-it-works/#credits">Where the data comes from</a>, with each licence.</p>
+      </section>
+
+      <section id="grew" aria-labelledby="grew-h">
+        <h2 id="grew-h">How it grew</h2>
+        <ol class="grew">
+          <li>
+            <time datetime="2026-03">March 2026</time>
+            <div>
+              <h3>The first map</h3>
+              <p>London's flight paths on one map, with New York's beside them. I entered it in an AWS hackathon, where it won a blog-post prize.</p>
+              <figure class="film">
+                <a href="https://youtu.be/xbR9cP4Ad4A">
+                  <span class="still">
+                    <picture>
+                      <source srcset="/about/hackathon-entry-2026-03.webp" type="image/webp" />
+                      <img src="/about/hackathon-entry-2026-03.jpg" width="1280" height="800" loading="lazy" alt="" />
+                    </picture>
+                    <svg class="play" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle cx="32" cy="32" r="32" /><path d="M26 20.5v23L44 32z" fill="#fff" /></svg>
+                  </span>
+                  <span class="film-label">Watch the hackathon entry <span>(3 minutes, on YouTube)</span></span>
+                </a>
+                <figcaption>The first map, from the hackathon entry.</figcaption>
+              </figure>
+            </div>
+          </li>
+          <li>
+            <time datetime="2026-03">March 2026</time>
+            <div>
+              <h3>Sky Score Radar</h3>
+              <p>A prototype of London's airspace in 3D, with simulated flight tracks over the terrain. <a href="/prototype/">Try the prototype</a>.</p>
+            </div>
+          </li>
+          <li>
+            <time datetime="2026-05">May 2026</time>
+            <div>
+              <h3>Data first</h3>
+              <p>Every figure now comes from the organisation that measures it, or is marked as our own estimate. Work began on an API, so businesses can use the same figures.</p>
+            </div>
+          </li>
+          <li>
+            <time datetime="2026-06">June 2026</time>
+            <div>
+              <h3>An iPhone app</h3>
+              <p>On the App Store, with a button that scores the place you are standing.</p>
+            </div>
+          </li>
+          <li>
+            <time datetime="2026">Summer 2026</time>
+            <div>
+              <h3>Beyond London</h3>
+              <p>Nine more English city regions, from Greater Manchester to Teesside.</p>
+            </div>
+          </li>
+          <li>
+            <time datetime="2026-09">September 2026</time>
+            <div>
+              <h3>Flight paths from the official routes</h3>
+              <p>After feedback on Reddit, London's flight paths were redrawn from the routes published in the UK AIP (NATS).</p>
+            </div>
+          </li>
+          <li>
+            <time datetime="2026-10">October 2026</time>
+            <div>
+              <h3>The Bay Area, and the air nearby</h3>
+              <p>Fifty Bay Area cities, shown as facts without a score, and the air measured near a postcode, from Breathe London's sensors and the government's monitors.</p>
+            </div>
+          </li>        </ol>
+        <p class="grew-more">Every change, with its date: <a href="/changes">What changed, and when</a>.</p>
       </section>
 
       <section id="asked" aria-labelledby="asked-h">
@@ -249,7 +353,7 @@
       </section>
 
       <section id="talks" aria-labelledby="talks-h">
-        <h2 id="talks-h">Talks</h2>
+        <h2 id="talks-h">Talks and demos</h2>
         <div class="talks">
           <figure>
             <picture>
@@ -261,15 +365,46 @@
           <figure>
             <picture>
               <source srcset="/about/talk-deen-developers.webp" type="image/webp" />
-              <img src="/about/talk-deen-developers.jpg" width="540" height="638" loading="lazy" alt="Bilal Khizar speaking with a microphone beside a projected Sky Score page." />
+              <img class="speaker-top" src="/about/talk-deen-developers.jpg" width="540" height="638" loading="lazy" alt="Bilal Khizar speaking with a microphone beside a projected Sky Score page." />
             </picture>
             <figcaption>Deen Developers, July 2026. Photo: Deen Developers.</figcaption>
           </figure>
         </div>
         <ul class="talk-links">
+          <li><b>Deen Developers' first Build Night, 30 July 2026</b>: a live demo</li>
           <li><a href="https://london.aitinkerers.org/talks/rsvp_PqkfcAzQqdQ">AI Tinkerers London, 22 September 2026</a>: the talk page and recording (sign-in needed)</li>
-          <li><a href="/talks/">The handouts from the talks</a>: how Sky Score works, and how its checks work</li>
+          <li><b>London Geo Meetup, 14 October 2026</b>: &ldquo;From hackathon to live map&rdquo;, a talk and live demo, online</li>
+          <li><a href="/talks/">The handout from the talks</a>: how Sky Score works, from a postcode to a score</li>
         </ul>
+      </section>
+
+      <section id="for" aria-labelledby="for-h">
+        <h2 id="for-h">Who it's for</h2>
+        <div class="for-grid">
+          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
+          <div class="who-home">
+            <div>
+              <p class="who-label">Choosing a home</p>
+              <h3>Buying or renting</h3>
+              <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
+            </div>
+            <div class="who-actions">
+              <a class="primary" href="/#check">Search a postcode</a>
+              <a href="/reports/street/">Get a street report</a>
+            </div>
+          </div>
+          <div class="who-pro">
+            <p class="who-label">Working with homes and places</p>
+            <ul class="who-list">
+              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
+              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Residents&#x27; groups</b><span>Start a bid from the official baseline.</span><a href="/area/">Browse council areas &rarr;</a></li>
+              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
+            </ul>
+          </div>
+          <!-- WHO-FOR:END -->
+        </div>
       </section>
 
       <section class="contact" id="contact" aria-labelledby="contact-h">

@@ -237,6 +237,32 @@ document.addEventListener('click', (ev) => {
   }
 });
 
+// THE ABOUT PAGE'S FILM AND PROTOTYPE (2026-10-24, Bill: count them, to learn whether anyone watches the hackathon
+// film or tries the 3D prototype before either is used to market anything). Counted as `<page>-<what>`, the what
+// from this ALLOW-LIST of exact destinations, so only these links count and nothing is read from the link itself.
+// front-page.mjs 16f clicks every link on /about/ and fails if any other link counts, or either of these does not.
+const WATCHED_LINKS = {
+  'https://youtu.be/xbR9cP4Ad4A': 'film',
+  '/prototype/': 'prototype',
+};
+
+/** A watched link's counted name ('film', 'prototype'); '' for any other link. */
+export function watchedName(href) {
+  return Object.prototype.hasOwnProperty.call(WATCHED_LINKS, href) ? WATCHED_LINKS[href] : '';
+}
+
+document.addEventListener('click', (ev) => {
+  try {
+    const a = ev.target instanceof Element ? ev.target.closest('a[href]') : null;
+    const what = a ? watchedName(a.getAttribute('href')) : '';
+    if (!what) return;
+    const name = `${pageSlug()}-${what}`;
+    window.goatcounter?.count?.({ path: `event/${name}`, title: name, event: true });
+  } catch {
+    /* analytics must never break the page */
+  }
+});
+
 // One page view, when the page is visible (a prerendered page counts when it is shown).
 if (document.visibilityState === 'visible' || !('visibilityState' in document)) count();
 else {

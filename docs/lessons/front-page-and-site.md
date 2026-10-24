@@ -325,6 +325,58 @@ held until they agree (original in `sky-score-drafts\about-photos\`). "Who it is
 `scripts/build_who_for.py`, written between WHO-FOR markers into the front page and `/about/` (blocking `--check`).
 Its opening said "beside every postcode" until a review caught the overclaim: "every postcode we cover".
 
+**"How it grew" (2026-10-24, Bill: "a timeline, which includes the video").** Six steps on `/about/`, dated by MONTH
+from git and CHANGELOG.md, quoting no count that moves (the coverage sentence and visit figures stay out, so the
+section cannot go stale). The March step links Bill's Amazon Nova hackathon film (youtu.be/xbR9cP4Ad4A, 3:06), which
+shows the retired AI product: its own voiceover says "AI-powered", the never-claim word, so the film is history with
+a caption saying the AI answers came out in May, never a current demo. A LINK, NEVER AN EMBED: the page's policy
+allows no frames, and an embed would set YouTube's cookies before anyone chose to watch (a `privacy.html` change).
+The still is frame 1:13 of Bill's own export (`Downloads\Videos\Sky Score Video Demo.mp4`), cropped to the app (no
+tab strip, taskbar or scrollbar). Do not write "first talk" for September: Deen Developers was July.
+The demos first went on the timeline as small waypoints (ten entries); Bill chose (24 Oct, after GoatCounter showed
+the About page at 3 views to the front page's 105 in October) product steps only on the timeline, demos under
+"Talks and demos", where London Geo Meetup had been missing. Its readers are evaluators (API buyers, organisers,
+journalists, employers), not home buyers. `about-film` / `about-prototype` clicks are counted from an allow-list of
+exact destinations in `js/count.mjs` (`WATCHED_LINKS`); `tests/front-page.mjs` 16f clicks every link in `/about/`'s
+main and holds the names sent to exactly film, prototype and the support email (proven red: film's entry broken ->
+351/352, the film missing). Read them ~20 Nov with the top-bar and email counts.
+
+**AI, said as little as possible (2026-10-24, Bill: "I don't want this to be synonymous with AI slop").** Public text
+says AI only as an event's NAME (AI Tinkerers) or to say where AI is NOT used ("No AI summaries layered on top").
+Never as how the product works or how it was built: the About letter lost "I built it with AI", the timeline says
+"an AWS hackathon" (not "Amazon Nova AI Hackathon"), and the March still was re-cut from frame 1:13 (the "AI INSIGHT
+POWERED BY AMAZON NOVA" panel) to frame 1:26 cropped to the MAP alone, because every full frame of the film carries
+"AI-powered" and "ASK AI". Bill kept the film LINK (his call over a recommendation to drop it: it shows retired
+features and AI-written prices; `about-film` will say whether anyone watches). The talk handout "How Sky Score works"
+lost Part 10 (built with Claude Code; parts renumbered 10-12) and one Part 7 sentence; the companion "The 57 checks,
+and how the coding assistant reaches Amazon" is UNLISTED from /talks/ (its URL still answers; `test_brand_links_home`
+still checks it). The same edit found the handout breaking two standing rules since 22 Sep, unseen because no gate
+reads /talks/: prices (GBP 499, GBP 2,500) outside /pricing, and "the data underneath is all published under the Open
+Government Licence" after the 26 Sep move to UK AIP routes. Both fixed; the PDF regenerated with
+`scripts/render_talks_pdfs.mjs` (it renders EVERY handout: `git restore` the ones you did not change). Check PDF text
+with pypdf, never a byte search: the text is compressed, so a byte search reported a price still present (chance digits
+in a compressed stream) after the prices were gone, and could equally miss words that are there.
+
+**"What you can hold us to" (2026-10-24, Bill's pick from About-page practice: Plausible, 37signals, Linear state what
+you can hold them to).** Four promises after "Why I built it", then the publishers as TEXT (a logo implies an
+endorsement). Wording held to what is true today: "credited to them", NOT "and when" (per-field periods are only on the
+`provenance-per-field` branch); "none is invented by an AI", NOT "never a model's guess" (Quiet Skies and DEFRA's maps
+ARE modelled); "no cookies" is privacy.html s8. The ONS, not the Home Office, for crime, as /how-it-works/#credits says.
+Each name is a `<span class="src">`; `tests/test_about_sources.py` maps each to a LIVE row of LICENSING.md (above
+"Removed sources") and fails on a name it does not know (proven red both ways: OpenSky on the page; FAA mapped to the
+removed OpenSky). Not yet, and never faked: a user's quote (a residents' group, after the Earl's Court correction),
+press, customer logos. Avoided: a team section (solo), visitor counts (small, moving), mission-speak.
+
+**One page, story first (2026-10-24, Bill asked whether it was too much).** Measured: 6.5 desktop screens, 10 phone
+screens; the length was not the fault, the ORDER was: "Who it's for" (1.3 phone screens, the same list the front
+page shows) sat first, so the story began 2.3 phone screens down. Bill's calls: keep ONE page (the readers are
+evaluators who want it in one place; sub-pages add clicks for 3 views a month; no accordions, hidden text goes
+unread); move "Who it's for" to just above "Get in touch" as the step after trust (story now 0.9 phone screens
+down; the WHO-FOR builder finds its markers anywhere); talk photos in one 16:9 row (the portrait Deen Developers
+photo had set the row height; `object-position: 50% 45%` keeps the face). Sections open on a full-width `--rule`
+line with clamp(64-104 px) between them (Bill: "bunched up, no clear separation"). Rule for later: new material
+REPLACES (a quote goes into Questions or Talks), it does not add a section.
+
 **THE PHONE MENU IS A POPOVER (2026-10-23).** Adding How it works and About made six links, which stop fitting
 beside the name below 620 px (measured on four pages): the bar wrapped into three rows with "Sky Score" stranded in
 the middle one (the front page's `header.top` has no `flex-wrap`, so its links wrapped inside their own box). The

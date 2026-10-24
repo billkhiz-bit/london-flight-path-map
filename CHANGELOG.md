@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-24 - What you can hold us to; how it grew; talks and demos
+
+- **"What you can hold us to"** on the About page: every figure has a source; our own figures (the score, the
+  Quiet Skies estimate) say so; nothing is made up, and no number is invented by an AI; no cookies and no account.
+  Under it, the organisations the figures come from, linked to each one's licence on How it works.
+- **The About page tells how Sky Score grew**, month by month from March 2026: the first map and the AWS hackathon
+  entry, with a link to the three-minute film; Sky Score Radar, the 3D prototype you can still try; data first in
+  May; the iPhone app; the city regions beyond London; flight paths redrawn from the UK AIP; the Bay Area and the
+  air measured nearby. The film opens on YouTube only when you choose to watch it: nothing from YouTube loads with
+  the page.
+- **The About page's letter is shorter**, and says no property site puts all four (aircraft, road, air, flood) in
+  front of the person deciding where to live.
+- **"How Sky Score works", the talk handout**, no longer has a part on how it was built, points to the pricing page
+  for prices, and credits each dataset's own licence (the UK flight routes come from the UK AIP, not the Open
+  Government Licence). Its PDF is regenerated. The companion handout on the checks is no longer listed on /talks/.
+- **"Talks and demos"** now lists the live demo at Deen Developers' first Build Night (July) and the London Geo
+  Meetup talk (October) beside AI Tinkerers London.
+- **Clicks on the film and the prototype are counted**, as two named events and nothing about the visitor, to learn
+  whether anyone watches.
+
 ## 2026-10-23 - Who is behind Sky Score; the answer first; a menu on phones
 
 - **An About page** (`/about/`): who Sky Score is for, why it was built and by whom, the questions people have

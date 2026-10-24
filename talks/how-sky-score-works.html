@@ -94,10 +94,9 @@
   <div><b>7</b> The Amazon pieces, and why each is there</div>
   <div><b>8</b> How new data gets in</div>
   <div><b>9</b> The 57 checks</div>
-  <div><b>10</b> How it was built with a coding assistant</div>
-  <div><b>11</b> What it costs, and what it charges</div>
-  <div><b>12</b> Privacy, safety and the phone app</div>
-  <div><b>13</b> How to show it live</div>
+  <div><b>10</b> What it costs, and what it charges</div>
+  <div><b>11</b> Privacy, safety and the phone app</div>
+  <div><b>12</b> How to show it live</div>
   <div><b>&nbsp;</b> Appendix and words used</div>
 </div>
 
@@ -349,7 +348,7 @@
 <div class="why"><h3>IAM <small>the keys and passes</small></h3><dl>
   <dt>What it is</dt><dd>Who is allowed to do what. Every worker, and every person, has a written list of what they may touch.</dd>
   <dt>What we use it for</dt><dd>One "deploy" identity, with one written list, may put new versions in place. Each worker is allowed only what its job needs.</dd>
-  <dt>Why</dt><dd>If something is broken into or goes wrong, the damage is limited to what that one identity was allowed to do. It also means the coding assistant I build with cannot change the live system by accident - going live needs my explicit go-ahead.</dd>
+  <dt>Why</dt><dd>If something is broken into or goes wrong, the damage is limited to what that one identity was allowed to do. It also means nothing can change the live system by accident - going live needs my explicit go-ahead.</dd>
 </dl></div>
 
 <div class="why"><h3>CloudFormation, via "SAM" <small>the blueprint</small></h3><dl>
@@ -413,38 +412,16 @@
 <p><b>A check that has never gone red has not been tested.</b> Before a new check is trusted, the thing it guards is broken on purpose, the check is watched turning red, the break is undone, and the check is watched turning green. Only then does it count.</p>
 <p>That rule exists because twelve checks in this project's history turned out to be green for months while checking nothing. Nobody switched them off. One piped its results into a command that always succeeds, so the whole checklist said PASS while running nothing. One scanned only the home page and only for the most severe faults, so every real fault was invisible. One had a minimum of "at least 17 files" the day after the 18th file was added - so it could no longer notice that one file going missing. Each decision was sensible on its own; together they made a check that could not fail. Asking "what would this check <em>miss</em>?" is how they were found.</p>
 
-<h2 class="part">10 - How it was built with a coding assistant</h2>
-
-<p class="big">Most of the code was written over six months with a coding assistant called Claude Code - an AI that reads and writes the project's files under direction. Here is the working arrangement, because it is different from "the AI wrote it".</p>
-
-<ol class="steps">
-  <li><b>I own the judgement; it owns the typing.</b> What to score, what to throw away, what counts as grounded, which datasets are trustworthy - mine. The code that carries those decisions out - mostly its.</li>
-  <li><b>The check comes first.</b> I describe what must be true when the work is done; the assistant makes it true; the check decides whether it is. If we disagree about whether something works, neither of us settles it - the check does.</li>
-  <li><b>It cannot go live on its own.</b> Putting a new version live needs my explicit go-ahead. On one occasion its own safety layer refused a production deploy, and I ran the step myself.</li>
-  <li><b>It keeps notes between sessions, and the notes must record checks, not facts.</b> "The tests pass" is a fact, and it was false the day it was written. "Prove a check can fail before you trust it" is a check, and it is still true. About eighty such notes exist for this project; the useful ones are all of the second kind.</li>
-</ol>
-
-<div class="callout"><b>What this is and isn't.</b> It is not "vibe coding" - accepting whatever comes out. It is closer to directing a very fast, very literal junior who never gets tired and never remembers yesterday unless you write it down. The 57 checks are what make that safe.</div>
-
-<h2 class="part">11 - What it costs, and what it charges</h2>
+<h2 class="part">10 - What it costs, and what it charges</h2>
 
 <h3>What it costs to run</h3>
 <p>Because nothing is switched on until asked, a quiet month costs very little: file storage is pennies, the workers and the index cards are paid per job and per lookup, and the copies-in-every-city are paid per visit. The one figure worth remembering is the assistant: about <b>25p per thousand questions</b>. For contrast, the five AI features removed in May were costing <b>$80&ndash;115 a month</b> at modest traffic - most of it the bigger model they called.</p>
 
 <h3>What it charges</h3>
-<table class="keep">
-  <thead><tr><th style="width:26%">Who</th><th style="width:22%">Price</th><th>What they get</th></tr></thead>
-  <tbody>
-    <tr><td>People using the website or the phone app</td><td>Free</td><td>Everything on the map and in the panel. No account needed.</td></tr>
-    <tr><td>A business trying the API</td><td>Free tier</td><td>10,000 scores a month with a self-issued pass. No batch requests.</td></tr>
-    <tr><td>Professional</td><td>&pound;499 a month</td><td>A much larger allowance and batch requests (many postcodes in one call).</td></tr>
-    <tr><td>Pilot</td><td>&pound;2,500 for 90 days</td><td>Working alongside a first customer to fit the API to their use.</td></tr>
-    <tr><td>Enterprise</td><td>By agreement</td><td>Bulk scoring of whole portfolios, delivered as files.</td></tr>
-  </tbody>
-</table>
-<p>The data underneath is all published under the Open Government Licence, which allows commercial use as long as the source is credited - which is why every API answer carries its sources, and why the terms require customers to pass them on.</p>
+<p>The website and the phone app are free, with no account. Businesses use the API: a free tier to try it, then paid plans for larger allowances, batch requests and pilots. The plans and their prices are on the pricing page, <a href="https://skyscore.co.uk/pricing">skyscore.co.uk/pricing</a>.</p>
+<p>Each dataset underneath is credited to the body that publishes it, under its own licence: most are published under the Open Government Licence, which allows commercial use as long as the source is credited, and the UK flight routes come from the UK AIP (NATS). That is why every API answer carries its sources, and why the terms require customers to pass them on.</p>
 
-<h2 class="part">12 - Privacy, safety and the phone app</h2>
+<h2 class="part">11 - Privacy, safety and the phone app</h2>
 
 <h3>What leaves your device, and where it goes</h3>
 <ul class="plain">
@@ -465,7 +442,7 @@
 <h3>The phone app</h3>
 <p>It is the same page, three ways. On the web, as-is. As an "installable" website on Android and iPhone (Add to Home Screen), which also works offline once loaded. And as a native iPhone app on the App Store, which wraps the same page and adds one native feature: a "score where I am" button that uses the phone's location. Web changes go live at once; the App Store version needs a new build and Apple's review, so it is refreshed every few weeks rather than every day. An Android version is built but not yet in the Play Store.</p>
 
-<h2 class="part">13 - How to show Part 2b live in 30 seconds</h2>
+<h2 class="part">12 - How to show Part 2b live in 30 seconds</h2>
 <ol class="steps">
   <li>Open skyscore.co.uk in Chrome. Press <b>F12</b>. A panel opens: click <b>Network</b> at the top of it, then the <b>Fetch/XHR</b> button so only data requests are shown. Click the small &#128465; icon to empty the list.</li>
   <li>Type <b>N1 7SX</b> in the search box and press Enter.</li>

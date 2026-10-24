@@ -106,7 +106,9 @@ Or just describe what you need, I have full context of this project.
 - **Wording rules**: never call the whole product "open government data"/OGL (UK routes come from the UK AIP,
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
   are over **postcodes, not addresses**; never say **how often planes pass** except for airports that pass
-  `coverage_verdict()`; prices appear on `/pricing` ONLY, and never a licence figure anywhere public.
+  `coverage_verdict()`; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
+  `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24: no gate reads /talks/). Say **AI** only as an event's
+  name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
 
 ## Rules that bite
 
@@ -180,7 +182,8 @@ Or just describe what you need, I have full context of this project.
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`). The top bar's clicks are counted there too (`nav-<slug>`, `-menu` from the
   phone menu): reorder the bar from them, not from a guess (Bill, 2026-10-23: read them ~20 Nov). Email buttons
   too (`email-<page>-<what>`): the what comes from an ALLOW-LIST of our subjects, never the link (the map's
-  correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once).
+  correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
+  page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
   worker installing everywhere; `/data/` is network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
