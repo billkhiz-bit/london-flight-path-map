@@ -171,3 +171,8 @@ a web page or an empty station. NOT MERGED until the all-airport check shows no 
 day-file mtime, after Claude Code stopped it for low system memory with Blender at 11.7 GB). Compare a fix's
 outcome by running `adsb_postcode_averages.py --verdicts` on the BACKUP's day files and on the new ones: only Luton's
 outcome changed; the published 9 moved at most 0.2 points, Cardiff and Teesside ~1.3 (both still fail).
+The per-postcode averages were then rebuilt with all ten and compared postcode by postcode with the backup's file:
+the nine moved a median 0, at most 0.12 a day at the 99th percentile, and 0.69 at the very most (EMA, where one day
+was reclassified). Compare the AVERAGES as well as the verdicts: a fix that leaves every verdict alone can
+still move what a postcode would be told. Luton is new at up to 1.4 a day over a covered postcode (443 postcodes at 1
+or more on westerly days); most of its traffic passes north of the councils we cover.
