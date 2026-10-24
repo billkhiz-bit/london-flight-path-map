@@ -2,8 +2,10 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-22 - California's flood anchor measured (3.14%) and committed; Bay Area transport
-decided (Bill: rail access, banded) and its reader built; previously 2026-10-21 - Bay Area flood BUILT (no figure where FEMA has not determined the risk: nine Santa
+**Last reviewed:** 2026-10-24 - About page reworked and live; Luton merged (ten airports pass the year rule,
+nothing published); the wording gate; Thursday's merges rehearsed; previously 2026-10-22 - California's flood
+anchor measured (3.14%) and committed; Bay Area transport decided (Bill: rail access, banded) and its reader
+built; previously 2026-10-21 - Bay Area flood BUILT (no figure where FEMA has not determined the risk: nine Santa
 Clara cities withheld, 41 with a share); the year's plane tracks fetched (289 of 291 days; adsb.lol has no 5-6 May);
 previously 2026-10-20 - FEMA's county downloads work (Alameda fetched; San Francisco's product id to find),
 the overflight counter built and its direction rule chosen, sold prices' category, tenure and flat built for the
@@ -12,6 +14,41 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-24)
+>
+> **About page reworked, LIVE** (`f13a737`, Bill: "commit, push, deploy"): the story first; "What you can hold us
+> to" (four promises + the publishers, held to LICENSING.md by `tests/test_about_sources.py`); "How it grew" (March
+> to October, the hackathon film linked under an AI-free still); "Talks and demos"; "Who it's for" above contact.
+> Bill's rule from it: say AI only as an event's name or where AI is NOT used (CLAUDE.md, Wording rules).
+>
+> **Night (Bill: "yes all of the above"), `what-matters` = `5b0247d`, pushed:** (1) `luton-field-metar` MERGED
+> (`3be4b45`): TEN airports pass the year rule, Luton the tenth; the per-postcode averages are rebuilt with all
+> ten; NOTHING is published. How a postcode would be told it is Bill's call, from mock-ups (Kew + five edge cases;
+> option A, by the way the airport flies, recommended: Kew reads 310 on a west day and 4 on an east one); the link
+> is in NOW.md. (2) A WORDING GATE, `tests/test_public_wording.py`: every page and PDF the Makefile uploads, plus
+> js modules, read as a visitor sees them, against every wording rule; it proves itself red on each defect every
+> run (story: `docs/lessons/front-page-and-site.md`). CI's pip line now pins `pypdf==6.7.0`: its first CI run is
+> Thursday's merge to master. (3) `npm audit` 0 (`272a78e`, fast-uri 3.1.9). (4) The API demo's footer credits
+> "OGL v3.0, UK AIP (NATS), FAA", not OGL alone (`ffdcafc`; ships with Part B's `demo-deploy`).
+>
+> **Two questions for Bill, pinned by the gate until he rules:** the checks handout
+> (`talks/how-the-checks-work.*`) is unlisted but STILL LIVE, because `talks-deploy` never deletes: move it to
+> `archive/` and delete its two S3 keys? And "How Sky Score works" still describes the API's assistant, which does
+> call an AI model (true, and a privacy disclosure): keep it, or one line pointing at the privacy policy?
+>
+> **Thursday rehearsed** (Desktop runbook, "UPDATE 24 Oct (night)"): Part A (master + `what-matters` +
+> `faa-2611`) and Part B (+ `bayarea-zip-residents`) merge clean; Part C (+ `crime-roll-ye-june-2026`) conflicts in
+> THIS FILE only, where both sides added a paragraph to the 23 Oct block: keep both. Step 4's preflight on Part A
+> found ONE thing a clean text merge hides: `faa-2611` renames two Oakland routes inside app.py's generated
+> US-QUIET-BAYAREA block, whose sha256 `data/us-bayarea-quiet.json` stores, so the test of that file reds. New
+> step 3b: `python scripts/build_bayarea_quiet.py --write` (proven: only `geometry_sha256` changes, all 50 cities'
+> bands identical), then `--check`.
+>
+> **Hackathon candidates (Bill: build on Sky Score):** AWS CDS Agentic AI, closes Wed 28 Oct: "Ask Sky Score on
+> WhatsApp" (the parked idea below) on Meta's test setup, so nothing is public. Waiting on Bill to paste the rules,
+> which listings disagree on: AWS Partners only, or open? Then, optionally, Nebius x NVIDIA (closes Fri 30 Oct):
+> the same assistant on an NVIDIA open model.
+>
 > ## START HERE (2026-10-23)
 >
 > **About page LIVE** (`/about/`, `03dba22`): the founder named (Bill's call), who it is for (one list,
@@ -2263,6 +2300,12 @@ Bill, using another service's WhatsApp assistant: let people message a postcode 
   chat on the website (same Lambda; no Meta, no phone numbers), then WhatsApp if the website chat is used.
 - **Possible any time, publishes nothing:** a private prototype on Meta's free test number (shown as "Test Number",
   up to five recipients), e.g. for a demo.
+- **Hackathon candidate (2026-10-24, Bill: build on Sky Score):** the AWS CDS Agentic AI hackathon (closes 28 Oct;
+  a $10k Best WhatsApp Solution prize from Meta) requires AWS End User Messaging (WhatsApp counts) for the channel,
+  so the webhook would use AWS End User Messaging Social instead of Meta's Cloud API direct. Meta does not require
+  business verification to start: an unverified business may message 250 people a day (third-party guides; AWS
+  defers to Meta's rules). The account needs a phone number not already on WhatsApp. Blocked on eligibility
+  (AWS Partners only?) until Bill pastes the rules. The blockers above still hold for any PUBLIC launch.
 
 ### Open after the New York noise-layer repoint (2026-10-02)
 
