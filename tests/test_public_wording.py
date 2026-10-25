@@ -271,13 +271,6 @@ def hits(pattern, paths, flags=0, allowed=()):
     return found
 
 
-def sentence_at(text, start, end):
-    """The sentence holding text[start:end]."""
-    a = max(text.rfind('. ', 0, start), text.rfind('? ', 0, start), text.rfind('! ', 0, start))
-    b = min((i for i in (text.find('. ', end), text.find('? ', end), text.find('! ', end)) if i >= 0), default=len(text))
-    return text[a + 2 if a >= 0 else 0:b + 1].strip()
-
-
 # ---- the rules -------------------------------------------------------------------------------------------------
 
 PRICING = 'pricing.html'
@@ -320,18 +313,9 @@ AI_ALLOWED = [
     ('talks/how-sky-score-works.pdf', r'No artificial intelligence is involved anywhere on the website',
      'where AI is not used'),
 ]
-# PENDING BILL (asked 2026-10-24). Two talk write-ups still say how AI is used, and both are served:
-#  - "How Sky Score works" describes the API's assistant, which does call an AI model (backend/lambdas/chat:
-#    Nova 2 Lite through Bedrock, in Virginia). It is true, and it is a privacy disclosure (the question leaves the
-#    UK), so it is not deleted on a wording rule alone.
-#  - "The 57 checks" (about the coding assistant) was unlisted from /talks/ on 24 Oct, but talks-deploy syncs
-#    every talks/*.html and *.pdf with no --delete, so it is still uploaded and still live.
-# Until Bill rules, each is held to the very sentences it has today (AI_PENDING_SENTENCES.json beside this file):
-# a sentence changed, added or reworded for the worse fails. A write-up taken down is still live until its S3
-# copy is deleted too, so a missing local file fails rather than skips.
-AI_PENDING = ('talks/how-sky-score-works.html', 'talks/how-sky-score-works.pdf',
-              'talks/how-the-checks-work.html', 'talks/how-the-checks-work.pdf')
-AI_PENDING_SENTENCES = Path(__file__).with_name('public_wording_ai_pending.json')
+# Bill ruled on 2026-10-25 on the two write-ups once pinned here: "The 57 checks" was archived (repo `archive/`,
+# its two S3 copies deleted), and "How Sky Score works" says only that the assistant's question is processed
+# in the United States, pointing at the privacy policy. Both now meet the rule like every other page.
 
 # The whole product is never "open government data" or all OGL: UK routes are the UK AIP (NATS)'s.
 OGL = r'(?:Open Government Licen[cs]e|\bOGL\b)'
@@ -362,15 +346,6 @@ OLD_BRAND = r'Flight Path Map'
 
 def fmt(found):
     return '\n'.join(f'  {path}: ...{s}...' for path, snippets in sorted(found.items()) for s in snippets)
-
-
-def pending_sentences_now():
-    """{path: sorted sentences naming AI} on each pending write-up, as it reads today."""
-    out = {}
-    for path in AI_PENDING:
-        if (ROOT / path).exists():
-            out[path] = sorted({sentence_at(text, s, e) for s, e, text in matches(AI_WORDS, path, allowed=AI_ALLOWED)})
-    return out
 
 
 class PublishedFilesTests(unittest.TestCase):
@@ -454,19 +429,9 @@ class WordingTests(unittest.TestCase):
         self.assertEqual(found, {}, 'the old name in public text (always "Sky Score"):\n' + fmt(found))
 
     def test_ai_only_as_an_event_or_where_it_is_not_used(self):
-        found = hits(AI_WORDS, [p for p in everything() if p not in AI_PENDING], allowed=AI_ALLOWED)
+        found = hits(AI_WORDS, everything(), allowed=AI_ALLOWED)
         self.assertEqual(found, {}, 'AI named other than as an event or where it is not used; read it, then '
                          'reword it or add it to AI_ALLOWED with its reason:\n' + fmt(found))
-
-    def test_the_pending_write_ups_say_only_what_they_said(self):
-        held = json.loads(AI_PENDING_SENTENCES.read_text(encoding='utf-8'))
-        self.assertEqual(sorted(held), sorted(AI_PENDING), 'AI_PENDING and its sentences file disagree')
-        for path in AI_PENDING:
-            self.assertTrue((ROOT / path).exists(), f'{path} is gone here, but talks-deploy never deletes: remove '
-                            'its S3 copy, then its entries in AI_PENDING and the sentences file')
-        now = pending_sentences_now()
-        for path in AI_PENDING:
-            self.assertEqual(now[path], held[path], f'{path} changed what it says about AI while pending Bill')
 
     def test_the_whole_product_is_never_all_ogl(self):
         found = {}
@@ -511,8 +476,8 @@ class RulesCatchTheirDefectsTests(unittest.TestCase):
          '<h1>AI-powered property insight</h1>'),
         (WordingTests, 'test_ai_only_as_an_event_or_where_it_is_not_used', 'about/index.html',
          '<img alt="Answers from ChatGPT">'),
-        (WordingTests, 'test_the_pending_write_ups_say_only_what_they_said', 'talks/how-the-checks-work.html',
-         '<p>Most of the code was written with Claude Code.</p><p>Claude writes the rest too.</p>'),
+        (WordingTests, 'test_ai_only_as_an_event_or_where_it_is_not_used', 'talks/how-sky-score-works.html',
+         '<p>The assistant runs on Amazon Nova 2 Lite, through Bedrock.</p>'),
         (WordingTests, 'test_the_whole_product_is_never_all_ogl', 'api/index.html',
          '<script>t = \'The data underneath is all published under the <a href="/l">Open Government Licence</a>.\''
          '</script>'),
@@ -541,11 +506,4 @@ class RulesCatchTheirDefectsTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    import sys
-    if sys.argv[1:] == ['--write-pending']:
-        # Re-pin the pending write-ups' AI sentences: only after reading every changed sentence.
-        AI_PENDING_SENTENCES.write_text(json.dumps(pending_sentences_now(), indent=1, ensure_ascii=False) + '\n',
-                                        encoding='utf-8')
-        print('wrote', AI_PENDING_SENTENCES.name)
-    else:
-        unittest.main()
+    unittest.main()

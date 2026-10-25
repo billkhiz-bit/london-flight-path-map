@@ -388,7 +388,7 @@ tests/test_public_wording.py --write-pending` only after reading each change): "
 the API's assistant, which DOES call an AI model (true, and a privacy disclosure: the question goes to Virginia), and
 "The 57 checks" was unlisted but is STILL LIVE: talks-deploy syncs every talks/*.html and *.pdf with no --delete, so
 unlisting a page publishes it again on every talks deploy, and a write-up deleted here FAILS until its S3 copy is
-gone too.
+gone too. **Bill ruled 2026-10-25:** the checks handout was archived (`archive/ai-tinkerers-2026-09-22/`) and its two S3 keys deleted; "How Sky Score works" now says only that the assistant's question is processed by Amazon in Virginia, USA, linking the privacy policy (its Bedrock entry, May history and every other AI-model sentence cut; 19 -> 18 pages). The pending pin, its sentences file and `--write-pending` are gone; a self-test now proves the AI rule reads the handout. Doing it found `privacy.html` never names the US transfer that `SUBPROCESSORS.md` row 18 records: drafted into legal batch 2, not live. An archived write-up goes OUTSIDE `talks/`: `aws s3 sync talks/` recurses, so a `talks/archive/` copy would be republished at a new address.
 
 **"What you can hold us to" (2026-10-24, Bill's pick from About-page practice: Plausible, 37signals, Linear state what
 you can hold them to).** Four promises after "Why I built it", then the publishers as TEXT (a logo implies an

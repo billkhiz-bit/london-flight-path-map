@@ -20,7 +20,6 @@ NO_BRAND = {
     'home/moved/preview/index.html': 'redirect stub for the old /preview/: its only job is the link home',
     'home/moved/preview/reports/index.html': 'redirect stub for the old /preview/reports/',
     'talks/how-sky-score-works.html': 'printed handout: "Sky Score" is in the document title, and a PDF has no site bar',
-    'talks/how-the-checks-work.html': 'printed handout, as above',
 }
 SKIP = ('script', 'style', 'title', 'template', 'noscript')
 VOID = ('area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr')

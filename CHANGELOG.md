@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-25 - The talk handout, shorter and plainer
+
+- **"How Sky Score works", the talk handout**, now covers the API's optional assistant in one line: its question
+  and the score's numbers are processed by Amazon in Virginia, in the United States, the only part of Sky Score
+  outside the UK, with a link to the privacy policy. The longer part on how the assistant was built, and the history
+  of features removed in May, are gone. 18 pages; its PDF is regenerated.
+- **The companion handout on the checks is withdrawn**: no longer published at any address.
+
 ## 2026-10-24 - What you can hold us to; how it grew; talks and demos
 
 - **"What you can hold us to"** on the About page: every figure has a source; our own figures (the score, the
