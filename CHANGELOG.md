@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-26 - See a plane come in, on How it works
+
+- **A picture you can fly**, high on How it works: a slice of London from Westminster to Heathrow, seen from the
+  south, along the line planes follow when they land from the east. Drag the round handle under the plane, or the
+  slider, or press Fly it, to bring one plane in on its 3 degree glide path; behind it each building turns the colour of
+  its yearly average aircraft noise from DEFRA's map (49-51 dB at Battersea, 57-63 dB by Hounslow), and the readout
+  says how high the plane is and what is below. Its credits stay in sight under it. It works by keyboard and with a
+  screen reader, and nothing moves on its own for anyone who has asked for reduced motion.
+- **Links to each part of How it works**, under its opening words, as on the About page.
+
 ## 2026-10-25 - The talk handout, shorter and plainer
 
 - **"How Sky Score works", the talk handout**, now covers the API's optional assistant in one line: its question

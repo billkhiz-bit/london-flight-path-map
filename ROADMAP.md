@@ -2,7 +2,9 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-25 - Bill's rulings (planes overhead by runway direction, heights by floor space, the
+**Last reviewed:** 2026-10-26 - the approach strip LIVE on `/how-it-works/` (Bill's go; five rounds on its controls), the
+page's section links as pills; planes overhead built on branch `planes-overhead` (its work in a git stash while the
+strip shipped); previously 2026-10-25 - Bill's rulings (planes overhead by runway direction, heights by floor space, the
 checks handout archived, the assistant cut to one line in the talk handout); DEFRA's 2025 maps published but
 unreachable; previously 2026-10-24 - About page reworked and live; Luton merged (ten airports pass the year rule,
 nothing published); the wording gate; Thursday's merges rehearsed; previously 2026-10-22 - California's flood
@@ -16,6 +18,19 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-26)
+>
+> **The approach strip is LIVE on `/how-it-works/`** (Bill: "high up, straight after the opening paragraph"; his go to
+> deploy before Thursday, no file shared with Thursday's branches, merges re-checked). From the Blender repo's hand-off,
+> plus what testing found: absolute picture paths, cards kept in the picture and off the plane, valid HTML for the lazy
+> tiles, the Blender preflight's two bugs (Hounslow's colour, flying contour labels), and Bill's five rounds on the
+> controls: Fly it beside the slider, a round handle on the plane's line that is the one thing that drags and stays
+> under the finger, a pull that lands the plane at the window's edge, and London never sliding with the hand.
+> `tests/approach-strip.mjs` (107 checks) is in preflight. Story: `docs/lessons/front-page-and-site.md`. The Blender
+> repo's `strip_page.py` must take these changes before any `strip_v8` (NOW.md's Blender line lists them).
+> **Planes overhead** (branch `planes-overhead`): its uncommitted work is in a GIT STASH (memory: START HERE 26 Oct);
+> the ground recount is done and swapped in; next, the averages with +-100 m ranges, the thresholds, the preview.
+>
 > ## START HERE (2026-10-25)
 >
 > **Bill's rulings (25 Oct):** (1) How often planes pass: option **A, by the way the airport flies** (two figures

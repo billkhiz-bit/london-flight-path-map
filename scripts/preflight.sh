@@ -725,6 +725,11 @@ check "outside coverage is said, not analysed" node tests/outside-coverage.mjs
 # (/ the front page, /map/ the map) and names any file nothing deploys.
 # postcodes.io and /v1/environment are stubbed with real shapes; no network.
 check "front page is a tool, not a picture" node tests/front-page.mjs
+# The approach strip on /how-it-works/ (2026-10-26): the site's first interactive picture outside the map. The
+# page-wide gates read it; only this moves its slider: no sideways scroll at 390 and 1366, the keyboard flies the
+# plane and aria-valuetext follows, reduced motion stills it, tiles load as they come into view, and every picture
+# path is absolute (the page is also served at /how-it-works, no slash, where relative ones 404).
+check "approach strip works, at both widths" node tests/approach-strip.mjs
 # 99 static area pages are the site's only indexable surface; thin or
 # duplicated ones are worse than none (doorway pages), so this asserts
 # CONTENT and that the sitemap agrees in both directions.

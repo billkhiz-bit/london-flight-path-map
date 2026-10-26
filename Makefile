@@ -193,6 +193,19 @@ web-deploy:
 		s3://$(S3_BUCKET)/api/index.html \
 		--content-type "text/html" \
 		--cache-control "no-cache" --region $(AWS_REGION)
+	# The approach strip's pictures (2026-10-26), BEFORE the page that names them. The folder name is the
+	# cache-buster (a new render is strip_v8, never new files under strip_v7), so they cache for a year; each
+	# format gets its type by hand, as the CLI's guess for .avif depends on the machine's mime table.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp how-it-works/img/ \
+		s3://$(S3_BUCKET)/how-it-works/img/ \
+		--recursive --exclude "*" --include "*.avif" \
+		--content-type "image/avif" \
+		--cache-control "public,max-age=31536000,immutable" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp how-it-works/img/ \
+		s3://$(S3_BUCKET)/how-it-works/img/ \
+		--recursive --exclude "*" --include "*.webp" \
+		--content-type "image/webp" \
+		--cache-control "public,max-age=31536000,immutable" --region $(AWS_REGION)
 	# how-it-works/index.html added 2026-10-22: the plain-English method page, linked from the front
 	# page's answer and both footers, so it ships in web-deploy, BEFORE home-deploy publishes the link.
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp how-it-works/index.html \

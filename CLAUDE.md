@@ -191,6 +191,8 @@ Or just describe what you need, I have full context of this project.
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
+- **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,
+  a new render is a new folder (`strip_v8`), and `js/approach.mjs`'s two "EMBED FIXES" must reach `strip_page.py`.
 - **`d3.v7.min.js` sits at the foot of `<body>` with a matching preload**; `defer` is wrong here.
 - **The top bar folds behind a Menu POPOVER below 680 px** (no script: privacy/terms allow none, area pages carry
   none); every bar is held at 390 and 1366 wide by `tests/front-page.mjs` 16d. A new bar needs the same markup.
@@ -235,7 +237,7 @@ Or just describe what you need, I have full context of this project.
 ## Build and deploy (detail: `docs/lessons/deploy.md`)
 
 - **Prefer make targets**: `fonts-deploy`, `data-deploy`, `web-deploy` (index.html -> `map/index.html`,
-  privacy, pricing, changes, terms, `api/`, `js/`), `home-deploy` (front page, `/reports/`), `pwa-deploy`,
+  privacy, pricing, changes, terms, `api/`, `how-it-works/` (+ its `img/`), `about/`, `js/`), `home-deploy` (front page, `/reports/`), `pwa-deploy`,
   `demo-deploy`, `prototype-deploy`, `meta-deploy`, `area-deploy`, `open-data-deploy`, `bay-area-deploy`,
   plus standalone `talks-deploy` and `deeplinks-deploy` (refuses placeholders).
 - **`web-deploy-all` order is load-bearing**: fonts, then data, then web, then home, then pwa. Data before the

@@ -30,7 +30,7 @@ all of them - **count the targets below, do not trust a number in this sentence*
 | Target | Covers |
 |---|---|
 | `fonts-deploy` | **new (2026-08-05)** — self-hosted `fonts/`. **Runs FIRST in `web-deploy-all`, and that ordering is load-bearing**: three font files are in `sw.js` `SHELL_ASSETS` and `cache.addAll()` is atomic, so shipping `sw.js` before the fonts exist at the origin makes the service worker fail to install at all |
-| `web-deploy` | **the full map: `index.html` -> `map/index.html` (since 2026-10-06; it no longer writes the root key)**, privacy, pricing, changes, **terms**, `api/`, `js/` (api-base.js + every `js/*.mjs`) |
+| `web-deploy` | **the full map: `index.html` -> `map/index.html` (since 2026-10-06; it no longer writes the root key)**, privacy, pricing, changes, **terms**, `api/`, `how-it-works/`, `about/`, `js/` (api-base.js + every `js/*.mjs`). **Since 2026-10-26 also `how-it-works/img/`, the approach strip's 54 pictures, uploaded BEFORE the page, typed by hand (`image/avif`, `image/webp`) and cached a year: the folder name (`strip_v7`) is the cache-buster, so a new render is a new folder** |
 | `data-deploy` | `data/*` (gets `borough-extra.json`'s load-bearing `no-cache` right) |
 | `pwa-deploy` | manifest, `sw.js`, icons. **Uploaded BY TYPE since 2026-10-08** (`*.svg` and `*.png` in separate commands): the one `--content-type "image/svg+xml"` for the whole folder would have served the new PNG touch icon as SVG |
 | `demo-deploy` | **new** — all 7 `score-demo/` files incl. the vendored Swagger UI |

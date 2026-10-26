@@ -494,3 +494,87 @@ change as a bug is the cheapest usability test there is: run it before measuring
 "Looking it up", which a typed NAME never says (it waits on the Bay Area places file instead), so the wait passed at
 once and, under preflight's load, read the empty line before the answer arrived: green alone, red in preflight.
 It now polls for the answer itself (CLAUDE.md: poll for the state you want, never one already true).
+
+**THE APPROACH STRIP ON `/how-it-works/` (2026-10-26, Bill: "high up, straight after the opening paragraph"; branch
+`how-it-works-strip`, not live until he says).** Made in the Blender repo (`scripts/strip_page.py`, hand-off in
+OneDrive `SkyScore Hero\renders\strip_v7_site\HANDOFF.md`): a section after `<p class="lead">`, its CSS in the page's
+`<style>` (every rule `.approach`), `js/approach.mjs`, 54 pictures in `how-it-works/img/strip_v7/` uploaded by
+`web-deploy` BEFORE the page, typed by hand (`image/avif` / `image/webp`) and cached a year: the folder name is the
+cache-buster, so a new render is `strip_v8`, never new files under v7. Three things the hand-off did not have, all
+held by `tests/approach-strip.mjs` (a preflight check) and each proven red on the handed-over files: (1) ABSOLUTE
+picture paths: `/how-it-works` (no slash) is served the same page with a 200, where `img/strip_v7/...` resolves to
+`/img/` and 404s; and Chromium loads only the AVIF, so a relative WebP fallback passes any load test (a source check
+holds all 54). (2) A card is kept inside the stage: in the site's 1080 px column the stage is 984 px, not the
+stand-alone page's 1080, so Westminster's card was cut at the left (off-screen entirely on a phone). (3) A card steps
+above the plane ONLY while it would cover it: at Hounslow the plane (~250 m) is lower than the cards (150 m plus
+the card), so "Go to Hounslow" hid the plane, in the stand-alone page too; a first fix lifted every card and pushed
+Westminster's out of the TOP, caught only once the test checked all four edges. Fixes (2) and (3) are marked
+"EMBED FIXES" in `js/approach.mjs` and must go into `strip_page.py`, or `strip_v8` brings both back.
+(4) THE CONTROLS, AS A VIDEO PLAYER (Bill, the same day: "a physical slider", then "slightly off to interact with ...
+the slider symbol on the line ... Fly it on top with the areas? recommend"). Measured first: pressing the knob's centre
+moved it 0 px and it was drawn centred, so "off" was the look, not the geometry: a pale circle with the plane read as a
+badge, sitting IN a thick bar. Now: Fly it in the slider's own grid row (play beside a scrubber; a fixed width, a
+triangle that becomes pause bars by `aria-pressed`, so the slider never shifts as it reads Pause or Fly it again); the
+knob solid teal with the white sideways-drag chevrons on a 12 px line (44 px to grab; inline SVG, CSP `img-src data:`);
+Battersea, Kew and Hounslow under their marks above 560 px; then the Go to buttons, then the readout, so the buttons
+never move as the readout's words change length. Recommended over "Fly it on top with the areas", which would push
+the slider away from the picture it moves and split play from scrubbing. On a phone the left label is just "Heathrow"
+(", runway 27R" wrapped beside Fly it). Still a native range input. Held by the same test (one row, the order, one
+line, 44 px, the names per width, a real drag), each new check proven red. It too must reach `strip_page.py`.
+(5) THE GRAB (Bill: "not obvious and feels clunky"). Measured: dragging the PICTURE moved the land 1:1 with the pointer,
+so a leftward drag (the way the plane flies, the way the knob goes) did nothing at the start, and a full-width drag
+rightwards moved the plane 2.6 km of the 24 km approach (1.0 km on a phone: ~25 swipes to land). Frame times were
+not it (16.7 ms at both widths). Now a drag scrubs like the slider: left brings the plane in, the picture's width is
+the whole approach, so the knob follows the finger; the pointer is `ew-resize` (sideways), not a grabbing hand; the hint
+says "Drag left to bring the plane in". (6) html-validate failed on the 22 lazy tiles (`<img data-src>` with no `src`):
+each now carries a 1x1 transparent GIF `src` until the script swaps the tile in. (7) The page's contents list moved
+from under the strip to straight under the opening words, as the About page's pills (Bill: "links to different
+sections ... like we do for the about page"): the way past the strip comes before it. All held by the same test, each
+proven red. (5) and (6) must reach `strip_page.py` too.
+(8) "TOO FAST", AND THE GRIP (Bill, the same day: "the plane moves too fast when sliding it ... isn't there a slider
+symbol that we can put on the vertical line that's attached to the plane"). A picture drag covering the whole 24 km
+approach was ~25 m a pixel, the land streaming ~10x the finger: now a full-width drag is a THIRD of the approach
+(three swipes land it, any screen). The slider and drags set a target the plane EASES to (~0.2 s; Fly it, the place
+buttons' glide and reduced motion exact), so a flick glides. The knob's symbol now also rides the plane's vertical
+line (`.grip`, `aria-hidden`, `pointer-events: none`: the whole picture drags; the slider is the accessible control),
+halfway to the ground and always just below the plane; pinned to the ground it COVERED the plane on the runway (the
+test caught it at 1366, landed). A sideways nudge on arrival, three times, gone once used or with reduced motion.
+Each proven red. A preflight left running while files change is stale AND shares test ports with a manual run: stop
+it (every `sh.exe ... preflight.sh` root and child; the preview server is a different node process) and run it once,
+at the end. (8) must reach `strip_page.py` too.
+(9) TWO BUGS FROM THE BLENDER SESSION'S PREFLIGHT, relayed by Bill: Hounslow's chip (57-63 dB) was `#ad3050`, "65 dB and
+up", because the chips were picked by rounding each place's loudest figure to the NEAREST 5 dB while the slider and the
+key round DOWN (now `#ed7355`, the 60 band); and `.approach .boing` also matched the SVG contour labels
+(`<g class="lbl boing">`), whose `translate()` its transform replaced, so a label flew 3,373 px to the strip's corner as
+the plane crossed it (now `.approach .readout .boing`). Both checks were written first and failed on the real bugs:
+each card's colour against the page's OWN key for its range's top rounded down, and the label's position measured
+against the TRACK (the camera follows the plane, so screen positions move anyway). Also mine: the grip covered the start
+of a height mark's label ("250 m" read "50 m"); the mark under it now hides, held by a check, proven red.
+(10) ONE DRAG MUST BE ABLE TO LAND IT (Bill: "I have to drag to the end of the page and still don't reach the end"). A
+third of the route per picture width could never land the plane in one drag. Now `pull()`: from where you grab to the
+WINDOW's edge is the rest of the route that way, slow near the grab (8 m a pixel) and faster the further you pull, on a
+cubic (squared ramped up too early on a phone, where ~200 px hold all 24 km: a 60 px drag moved 2.9 km). Checks: 60 px
+moves under 6% of the route; a drag to the left edge lands it; one to the right edge returns it (proven red on the
+third-per-width drag). `APPROACH_STRIP_PORT` runs the test beside a preflight that holds 8946.
+(11) THE FEEL, TUNED (Bill: "moves a bit more while dragging, not too much but an ideal level"): the share of the route
+for the share u of the reach to the window's edge is `0.45u + 0.55u^2`, the same on every screen: a tenth of the reach
+~5%, halfway ~36% (the cubic was ~15-22% halfway, slow then a lurch; an even spread, 50%, was the "too fast" one). The
+test holds a tenth under 8% and halfway at 25-45%, proven red on both of the old curves.
+(12) THE HANDLE IS THE POINT OF CONTACT (Bill: "the slider object on the vertical line is the main point of contact for
+sliding"). Only the handle drags now (the picture does not: a phone scrolls over it); it has a grab cursor, a 64 px
+target round its 40 px knob, and grows a little on hover and while held. While held it stays UNDER THE FINGER: the camera
+is placed so the plane is drawn where the finger is (`anchor`), the land scrolling beneath at `pull()`'s rate, and on
+release the plane eases back to the middle (`ANCHOR_S`). Checks: under the finger within 6 px (3.9 px at the strip's east
+end, where the view is held for the first pixels), back in the middle once let go, a drag elsewhere moves nothing, the
+cursor and the wide target; proven red with the plane kept in the middle and with drags starting anywhere. Two test
+hygiene lessons: read a "before" only once the plane is still (a first run read it mid-ease while a preflight competed
+for the machine), and the hint and the lede must say what drags ("Drag the round handle under the plane").
+(13) LONDON MUST NEVER SLIDE WITH THE HAND (Bill: dragging back to the start "moves the London landscape with it").
+Two causes, both from keeping the handle under the finger: the held plane still EASED towards its target, so for a
+moment the view moved the land to keep the lagging plane under the finger; and near the start little route was left for
+a lot of screen, so the plane moved through London slower than the finger moved over it. Now a held drag is exact (the
+slider keeps its glide), `pull()` never gives less than the ground under the finger (`mpp / k` metres a pixel), and at
+the start or the runway the handle stops and London with it. Checks sample the track's position all along drags from
+Kew both ways and from Battersea back to the start (the case Bill hit: Kew alone never needed the floor, so a test of
+Kew alone passed WITHOUT it), plus the end stop; each fix proven red on its own. Waiting for "still" before grabbing
+matters here too: easing 24 km takes ~2 s, and a handle grabbed mid-ease rightly snaps to the end.
