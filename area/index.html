@@ -24,8 +24,25 @@
   ul { margin:0; padding-left:18px; }
   li { margin:2px 0; }
   .sub { color:var(--mid); font-size:14px; }
+  /* THE COMPARISON TABLES (2026-10-25). A reader in Poland opened 24 London area pages one at a time from
+     this index, going back to it 22 times, because it listed names only. Each city's areas now sit in one
+     table, the same figures each area's own page publishes. No script (these pages carry none), so no
+     sorting: a narrow screen scrolls the table sideways inside its own box, the area's name held at the left. */
+  /* position:relative makes the box the containing block of the visually hidden caption inside it; without
+     it the absolutely placed caption escapes the scroll box and widened a 390 px page by 262 px. */
+  .tw { overflow-x:auto; position:relative; margin:8px 0 4px; }
+  .tw:focus-visible { outline:3px solid #d35a12; outline-offset:2px; }
+  table.compare { border-collapse:collapse; width:100%; min-width:640px; font-size:14px; font-variant-numeric:tabular-nums; }
+  table.compare th, table.compare td { padding:7px 8px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }
+  table.compare thead th { font-size:12px; font-weight:600; color:var(--mid); vertical-align:bottom; white-space:normal; }
+  table.compare th[scope="row"], table.compare thead th:first-child { text-align:left; position:sticky; left:0; background:var(--page); }
+  table.compare th[scope="row"] { font-weight:500; white-space:normal; min-width:8em; }
+  table.compare td.score { font-weight:700; }
+  .visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  .key { color:var(--mid); font-size:12px; margin:4px 0 0; }
+  :root { --page:#fff; }
   @media (prefers-color-scheme: dark) {
-    :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --orange:#fb923c; }
+    :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --orange:#fb923c; --page:#141414; }
     body { background:#141414; }
   }
   /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
@@ -66,152 +83,252 @@
 <main>
 <h1>Every area we cover</h1>
 <p class="sub">97 council areas in 13 UK city regions, plus New York City's 5 boroughs. Each page carries the published measurements behind that area's score.</p>
+<p class="sub">Each city's areas side by side: the Sky Score and its five parts are out of 10, and 10 is best. A dash means that area's page publishes no figure for it.</p>
 <p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
 <p class="sub">In the United States: <a href="/bay-area/">flight paths over 50 San Francisco Bay Area cities</a>.</p>
 <h2>Bristol</h2>
-<ul>
-<li><a href="/area/bristol/bath-and-north-east-somerset/">Bath and North East Somerset</a></li>
-<li><a href="/area/bristol/city-of-bristol/">City of Bristol</a></li>
-<li><a href="/area/bristol/north-somerset/">North Somerset</a></li>
-<li><a href="/area/bristol/south-gloucestershire/">South Gloucestershire</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Bristol: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Bristol: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/bristol/bath-and-north-east-somerset/">Bath and North East Somerset</a></th><td class="score">5.2</td><td>5.0</td><td>3.9</td><td>3.6</td><td>5.4</td><td>8.0</td><td>£406,084</td></tr>
+<tr><th scope="row"><a href="/area/bristol/city-of-bristol/">City of Bristol</a></th><td class="score">6.8</td><td>10.0</td><td>4.8</td><td>4.3</td><td>4.5</td><td>8.1</td><td>£353,596</td></tr>
+<tr><th scope="row"><a href="/area/bristol/north-somerset/">North Somerset</a></th><td class="score">5.0</td><td>3.0</td><td>5.5</td><td>5.3</td><td>4.9</td><td>8.6</td><td>£314,307</td></tr>
+<tr><th scope="row"><a href="/area/bristol/south-gloucestershire/">South Gloucestershire</a></th><td class="score">7.1</td><td>10.0</td><td>5.1</td><td>4.4</td><td>4.9</td><td>8.4</td><td>£335,572</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>Cardiff</h2>
-<ul>
-<li><a href="/area/cardiff/caerphilly/">Caerphilly</a></li>
-<li><a href="/area/cardiff/cardiff/">Cardiff</a></li>
-<li><a href="/area/cardiff/newport/">Newport</a></li>
-<li><a href="/area/cardiff/vale-of-glamorgan/">Vale of Glamorgan</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Cardiff: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Cardiff: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/cardiff/caerphilly/">Caerphilly</a></th><td class="score">8.2</td><td>10.0</td><td>8.5</td><td>6.3</td><td>5.7</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td>£198,545</td></tr>
+<tr><th scope="row"><a href="/area/cardiff/cardiff/">Cardiff</a></th><td class="score">7.5</td><td>10.0</td><td>6.5</td><td>4.7</td><td>5.4</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td>£272,252</td></tr>
+<tr><th scope="row"><a href="/area/cardiff/newport/">Newport</a></th><td class="score">7.5</td><td>10.0</td><td>7.7</td><td>4.0</td><td>4.2</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td>£225,702</td></tr>
+<tr><th scope="row"><a href="/area/cardiff/vale-of-glamorgan/">Vale of Glamorgan</a></th><td class="score">5.7</td><td>5.0</td><td>5.8</td><td>5.0</td><td>6.4</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td>£300,358</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>Greater Manchester</h2>
-<ul>
-<li><a href="/area/manchester/bolton/">Bolton</a></li>
-<li><a href="/area/manchester/bury/">Bury</a></li>
-<li><a href="/area/manchester/manchester/">Manchester</a></li>
-<li><a href="/area/manchester/oldham/">Oldham</a></li>
-<li><a href="/area/manchester/rochdale/">Rochdale</a></li>
-<li><a href="/area/manchester/salford/">Salford</a></li>
-<li><a href="/area/manchester/stockport/">Stockport</a></li>
-<li><a href="/area/manchester/tameside/">Tameside</a></li>
-<li><a href="/area/manchester/trafford/">Trafford</a></li>
-<li><a href="/area/manchester/wigan/">Wigan</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Greater Manchester: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Greater Manchester: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/manchester/bolton/">Bolton</a></th><td class="score">7.8</td><td>10.0</td><td>8.4</td><td>6.7</td><td>4.8</td><td>7.4</td><td>£204,379</td></tr>
+<tr><th scope="row"><a href="/area/manchester/bury/">Bury</a></th><td class="score">7.6</td><td>10.0</td><td>7.2</td><td>4.9</td><td>5.2</td><td>7.2</td><td>£243,107</td></tr>
+<tr><th scope="row"><a href="/area/manchester/manchester/">Manchester</a></th><td class="score">5.9</td><td>5.0</td><td>6.9</td><td>4.7</td><td>5.5</td><td>6.9</td><td>£256,760</td></tr>
+<tr><th scope="row"><a href="/area/manchester/oldham/">Oldham</a></th><td class="score">7.6</td><td>10.0</td><td>8.0</td><td>6.5</td><td>4.7</td><td>7.3</td><td>£217,171</td></tr>
+<tr><th scope="row"><a href="/area/manchester/rochdale/">Rochdale</a></th><td class="score">7.6</td><td>10.0</td><td>8.1</td><td>5.0</td><td>4.5</td><td>7.3</td><td>£211,022</td></tr>
+<tr><th scope="row"><a href="/area/manchester/salford/">Salford</a></th><td class="score">7.5</td><td>10.0</td><td>7.8</td><td>3.6</td><td>4.4</td><td>6.9</td><td>£223,323</td></tr>
+<tr><th scope="row"><a href="/area/manchester/stockport/">Stockport</a></th><td class="score">5.1</td><td>3.0</td><td>5.4</td><td>5.7</td><td>5.8</td><td>7.6</td><td>£319,016</td></tr>
+<tr><th scope="row"><a href="/area/manchester/tameside/">Tameside</a></th><td class="score">7.7</td><td>10.0</td><td>8.1</td><td>4.5</td><td>4.9</td><td>7.2</td><td>£213,026</td></tr>
+<tr><th scope="row"><a href="/area/manchester/trafford/">Trafford</a></th><td class="score">5.6</td><td>5.0</td><td>4.1</td><td>8.4</td><td>7.0</td><td>7.5</td><td>£393,897</td></tr>
+<tr><th scope="row"><a href="/area/manchester/wigan/">Wigan</a></th><td class="score">7.8</td><td>10.0</td><td>8.7</td><td>4.9</td><td>4.3</td><td>7.6</td><td>£194,551</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>Greater Norwich</h2>
-<ul>
-<li><a href="/area/norwich/broadland/">Broadland</a></li>
-<li><a href="/area/norwich/norwich/">Norwich</a></li>
-<li><a href="/area/norwich/south-norfolk/">South Norfolk</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Greater Norwich: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Greater Norwich: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/norwich/broadland/">Broadland</a></th><td class="score">5.2</td><td>3.0</td><td>5.6</td><td>4.9</td><td>6.0</td><td>8.2</td><td>£313,407</td></tr>
+<tr><th scope="row"><a href="/area/norwich/norwich/">Norwich</a></th><td class="score">6.0</td><td>5.0</td><td>7.7</td><td>3.5</td><td>4.6</td><td>7.5</td><td>£227,535</td></tr>
+<tr><th scope="row"><a href="/area/norwich/south-norfolk/">South Norfolk</a></th><td class="score">7.5</td><td>10.0</td><td>5.7</td><td>4.0</td><td>6.0</td><td>8.1</td><td>£307,735</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>Leicester</h2>
-<ul>
-<li><a href="/area/leicester/blaby/">Blaby</a></li>
-<li><a href="/area/leicester/charnwood/">Charnwood</a></li>
-<li><a href="/area/leicester/harborough/">Harborough</a></li>
-<li><a href="/area/leicester/hinckley-and-bosworth/">Hinckley and Bosworth</a></li>
-<li><a href="/area/leicester/leicester/">Leicester</a></li>
-<li><a href="/area/leicester/melton/">Melton</a></li>
-<li><a href="/area/leicester/north-west-leicestershire/">North West Leicestershire</a></li>
-<li><a href="/area/leicester/oadby-and-wigston/">Oadby and Wigston</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Leicester: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Leicester: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/leicester/blaby/">Blaby</a></th><td class="score">7.4</td><td>10.0</td><td>6.0</td><td>5.1</td><td>5.7</td><td>7.8</td><td>£293,412</td></tr>
+<tr><th scope="row"><a href="/area/leicester/charnwood/">Charnwood</a></th><td class="score">6.7</td><td>7.5</td><td>6.5</td><td>4.2</td><td>5.4</td><td>7.8</td><td>£270,351</td></tr>
+<tr><th scope="row"><a href="/area/leicester/harborough/">Harborough</a></th><td class="score">7.3</td><td>10.0</td><td>5.0</td><td>6.8</td><td>6.0</td><td>8.3</td><td>£341,706</td></tr>
+<tr><th scope="row"><a href="/area/leicester/hinckley-and-bosworth/">Hinckley and Bosworth</a></th><td class="score">7.7</td><td>10.0</td><td>6.8</td><td>4.0</td><td>5.7</td><td>8.1</td><td>£258,960</td></tr>
+<tr><th scope="row"><a href="/area/leicester/leicester/">Leicester</a></th><td class="score">7.7</td><td>10.0</td><td>7.7</td><td>3.7</td><td>4.9</td><td>7.6</td><td>£227,322</td></tr>
+<tr><th scope="row"><a href="/area/leicester/melton/">Melton</a></th><td class="score">7.5</td><td>10.0</td><td>6.1</td><td>5.9</td><td>5.8</td><td>8.0</td><td>£286,469</td></tr>
+<tr><th scope="row"><a href="/area/leicester/north-west-leicestershire/">North West Leicestershire</a></th><td class="score">6.0</td><td>5.0</td><td>6.2</td><td>4.6</td><td>5.7</td><td>8.1</td><td>£282,397</td></tr>
+<tr><th scope="row"><a href="/area/leicester/oadby-and-wigston/">Oadby and Wigston</a></th><td class="score">7.8</td><td>10.0</td><td>6.8</td><td>3.7</td><td>5.9</td><td>8.3</td><td>£257,504</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>London</h2>
-<ul>
-<li><a href="/area/london/barking-and-dagenham/">Barking and Dagenham</a></li>
-<li><a href="/area/london/barnet/">Barnet</a></li>
-<li><a href="/area/london/bexley/">Bexley</a></li>
-<li><a href="/area/london/brent/">Brent</a></li>
-<li><a href="/area/london/bromley/">Bromley</a></li>
-<li><a href="/area/london/camden/">Camden</a></li>
-<li><a href="/area/london/city-of-london/">City of London</a></li>
-<li><a href="/area/london/croydon/">Croydon</a></li>
-<li><a href="/area/london/ealing/">Ealing</a></li>
-<li><a href="/area/london/enfield/">Enfield</a></li>
-<li><a href="/area/london/greenwich/">Greenwich</a></li>
-<li><a href="/area/london/hackney/">Hackney</a></li>
-<li><a href="/area/london/hammersmith-and-fulham/">Hammersmith and Fulham</a></li>
-<li><a href="/area/london/haringey/">Haringey</a></li>
-<li><a href="/area/london/harrow/">Harrow</a></li>
-<li><a href="/area/london/havering/">Havering</a></li>
-<li><a href="/area/london/hillingdon/">Hillingdon</a></li>
-<li><a href="/area/london/hounslow/">Hounslow</a></li>
-<li><a href="/area/london/islington/">Islington</a></li>
-<li><a href="/area/london/kensington-and-chelsea/">Kensington and Chelsea</a></li>
-<li><a href="/area/london/kingston-upon-thames/">Kingston upon Thames</a></li>
-<li><a href="/area/london/lambeth/">Lambeth</a></li>
-<li><a href="/area/london/lewisham/">Lewisham</a></li>
-<li><a href="/area/london/merton/">Merton</a></li>
-<li><a href="/area/london/newham/">Newham</a></li>
-<li><a href="/area/london/redbridge/">Redbridge</a></li>
-<li><a href="/area/london/richmond-upon-thames/">Richmond upon Thames</a></li>
-<li><a href="/area/london/southwark/">Southwark</a></li>
-<li><a href="/area/london/sutton/">Sutton</a></li>
-<li><a href="/area/london/tower-hamlets/">Tower Hamlets</a></li>
-<li><a href="/area/london/waltham-forest/">Waltham Forest</a></li>
-<li><a href="/area/london/wandsworth/">Wandsworth</a></li>
-<li><a href="/area/london/westminster/">Westminster</a></li>
-</ul>
+<div class="tw" role="region" aria-label="London: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">London: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/london/barking-and-dagenham/">Barking and Dagenham</a></th><td class="score">7.1</td><td>10.0</td><td>4.5</td><td>6.6</td><td>6.5</td><td>6.4</td><td>£369,881</td></tr>
+<tr><th scope="row"><a href="/area/london/barnet/">Barnet</a></th><td class="score">5.9</td><td>7.5</td><td>1.4</td><td>2.8</td><td>7.9</td><td>6.8</td><td>£592,892</td></tr>
+<tr><th scope="row"><a href="/area/london/bexley/">Bexley</a></th><td class="score">6.9</td><td>10.0</td><td>3.7</td><td>4.6</td><td>6.2</td><td>7.0</td><td>£414,833</td></tr>
+<tr><th scope="row"><a href="/area/london/brent/">Brent</a></th><td class="score">6.0</td><td>7.5</td><td>1.8</td><td>4.0</td><td>8.2</td><td>6.4</td><td>£555,687</td></tr>
+<tr><th scope="row"><a href="/area/london/bromley/">Bromley</a></th><td class="score">6.6</td><td>10.0</td><td>2.2</td><td>3.9</td><td>6.6</td><td>7.2</td><td>£520,253</td></tr>
+<tr><th scope="row"><a href="/area/london/camden/">Camden</a></th><td class="score">5.4</td><td>10.0</td><td>0.0</td><td>1.1</td><td>5.5</td><td>4.9</td><td>£798,486</td></tr>
+<tr><th scope="row"><a href="/area/london/city-of-london/">City of London</a></th><td class="score">4.2</td><td>7.5</td><td>0.1</td><td>0.0</td><td>4.8</td><td>3.3</td><td>£726,633</td></tr>
+<tr><th scope="row"><a href="/area/london/croydon/">Croydon</a></th><td class="score">5.4</td><td>5.0</td><td>4.0</td><td>3.7</td><td>6.5</td><td>7.0</td><td>£396,718</td></tr>
+<tr><th scope="row"><a href="/area/london/ealing/">Ealing</a></th><td class="score">3.9</td><td>1.5</td><td>1.4</td><td>4.6</td><td>7.6</td><td>6.8</td><td>£589,875</td></tr>
+<tr><th scope="row"><a href="/area/london/enfield/">Enfield</a></th><td class="score">6.6</td><td>10.0</td><td>2.8</td><td>4.3</td><td>6.4</td><td>6.6</td><td>£474,855</td></tr>
+<tr><th scope="row"><a href="/area/london/greenwich/">Greenwich</a></th><td class="score">5.1</td><td>5.0</td><td>3.0</td><td>3.5</td><td>6.4</td><td>6.6</td><td>£462,589</td></tr>
+<tr><th scope="row"><a href="/area/london/hackney/">Hackney</a></th><td class="score">6.4</td><td>10.0</td><td>1.1</td><td>3.6</td><td>7.8</td><td>5.6</td><td>£619,408</td></tr>
+<tr><th scope="row"><a href="/area/london/hammersmith-and-fulham/">Hammersmith and Fulham</a></th><td class="score">4.0</td><td>3.0</td><td>0.0</td><td>2.7</td><td>8.0</td><td>6.0</td><td>£754,825</td></tr>
+<tr><th scope="row"><a href="/area/london/haringey/">Haringey</a></th><td class="score">6.2</td><td>10.0</td><td>1.0</td><td>3.7</td><td>6.6</td><td>6.7</td><td>£633,221</td></tr>
+<tr><th scope="row"><a href="/area/london/harrow/">Harrow</a></th><td class="score">6.9</td><td>10.0</td><td>2.1</td><td>3.4</td><td>7.8</td><td>7.3</td><td>£532,173</td></tr>
+<tr><th scope="row"><a href="/area/london/havering/">Havering</a></th><td class="score">6.7</td><td>10.0</td><td>3.3</td><td>4.4</td><td>6.0</td><td>7.3</td><td>£444,572</td></tr>
+<tr><th scope="row"><a href="/area/london/hillingdon/">Hillingdon</a></th><td class="score">3.3</td><td>0.0</td><td>2.7</td><td>4.1</td><td>5.7</td><td>7.1</td><td>£482,137</td></tr>
+<tr><th scope="row"><a href="/area/london/hounslow/">Hounslow</a></th><td class="score">3.4</td><td>0.0</td><td>2.1</td><td>3.7</td><td>7.2</td><td>6.5</td><td>£528,051</td></tr>
+<tr><th scope="row"><a href="/area/london/islington/">Islington</a></th><td class="score">6.0</td><td>10.0</td><td>0.7</td><td>1.7</td><td>6.9</td><td>5.4</td><td>£654,286</td></tr>
+<tr><th scope="row"><a href="/area/london/kensington-and-chelsea/">Kensington and Chelsea</a></th><td class="score">4.2</td><td>5.0</td><td>0.0</td><td>0.2</td><td>6.9</td><td>5.3</td><td>£1,204,072</td></tr>
+<tr><th scope="row"><a href="/area/london/kingston-upon-thames/">Kingston upon Thames</a></th><td class="score">5.8</td><td>7.5</td><td>1.3</td><td>6.7</td><td>8.0</td><td>6.0</td><td>£597,587</td></tr>
+<tr><th scope="row"><a href="/area/london/lambeth/">Lambeth</a></th><td class="score">4.9</td><td>5.0</td><td>2.0</td><td>2.3</td><td>7.0</td><td>6.4</td><td>£540,198</td></tr>
+<tr><th scope="row"><a href="/area/london/lewisham/">Lewisham</a></th><td class="score">6.0</td><td>7.5</td><td>2.7</td><td>3.6</td><td>7.2</td><td>6.6</td><td>£486,416</td></tr>
+<tr><th scope="row"><a href="/area/london/merton/">Merton</a></th><td class="score">6.0</td><td>7.5</td><td>1.1</td><td>4.1</td><td>8.8</td><td>6.7</td><td>£623,791</td></tr>
+<tr><th scope="row"><a href="/area/london/newham/">Newham</a></th><td class="score">4.9</td><td>3.0</td><td>4.2</td><td>2.8</td><td>7.4</td><td>6.1</td><td>£388,045</td></tr>
+<tr><th scope="row"><a href="/area/london/redbridge/">Redbridge</a></th><td class="score">6.9</td><td>10.0</td><td>2.7</td><td>3.3</td><td>7.6</td><td>6.4</td><td>£484,378</td></tr>
+<tr><th scope="row"><a href="/area/london/richmond-upon-thames/">Richmond upon Thames</a></th><td class="score">3.5</td><td>1.5</td><td>0.0</td><td>4.1</td><td>7.8</td><td>6.7</td><td>£813,931</td></tr>
+<tr><th scope="row"><a href="/area/london/southwark/">Southwark</a></th><td class="score">5.6</td><td>7.5</td><td>1.7</td><td>3.5</td><td>6.9</td><td>6.1</td><td>£569,160</td></tr>
+<tr><th scope="row"><a href="/area/london/sutton/">Sutton</a></th><td class="score">7.1</td><td>10.0</td><td>3.1</td><td>4.5</td><td>7.5</td><td>7.3</td><td>£458,954</td></tr>
+<tr><th scope="row"><a href="/area/london/tower-hamlets/">Tower Hamlets</a></th><td class="score">6.0</td><td>7.5</td><td>3.2</td><td>0.3</td><td>7.3</td><td>5.1</td><td>£447,796</td></tr>
+<tr><th scope="row"><a href="/area/london/waltham-forest/">Waltham Forest</a></th><td class="score">6.4</td><td>10.0</td><td>2.1</td><td>4.3</td><td>6.4</td><td>6.5</td><td>£532,212</td></tr>
+<tr><th scope="row"><a href="/area/london/wandsworth/">Wandsworth</a></th><td class="score">4.7</td><td>5.0</td><td>0.3</td><td>2.6</td><td>7.8</td><td>6.2</td><td>£694,210</td></tr>
+<tr><th scope="row"><a href="/area/london/westminster/">Westminster</a></th><td class="score">3.8</td><td>5.0</td><td>0.0</td><td>0.1</td><td>6.1</td><td>4.2</td><td>£887,206</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>Merseyside</h2>
-<ul>
-<li><a href="/area/merseyside/knowsley/">Knowsley</a></li>
-<li><a href="/area/merseyside/liverpool/">Liverpool</a></li>
-<li><a href="/area/merseyside/sefton/">Sefton</a></li>
-<li><a href="/area/merseyside/st-helens/">St Helens</a></li>
-<li><a href="/area/merseyside/wirral/">Wirral</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Merseyside: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Merseyside: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/merseyside/knowsley/">Knowsley</a></th><td class="score">7.7</td><td>10.0</td><td>8.8</td><td>4.5</td><td>3.9</td><td>7.8</td><td>£191,550</td></tr>
+<tr><th scope="row"><a href="/area/merseyside/liverpool/">Liverpool</a></th><td class="score">6.2</td><td>5.0</td><td>8.9</td><td>6.6</td><td>4.1</td><td>7.6</td><td>£188,427</td></tr>
+<tr><th scope="row"><a href="/area/merseyside/sefton/">Sefton</a></th><td class="score">7.8</td><td>10.0</td><td>7.8</td><td>4.6</td><td>4.9</td><td>8.2</td><td>£221,105</td></tr>
+<tr><th scope="row"><a href="/area/merseyside/st-helens/">St Helens</a></th><td class="score">8.0</td><td>10.0</td><td>9.0</td><td>6.9</td><td>4.9</td><td>7.8</td><td>£186,445</td></tr>
+<tr><th scope="row"><a href="/area/merseyside/wirral/">Wirral</a></th><td class="score">7.9</td><td>10.0</td><td>7.8</td><td>7.7</td><td>5.4</td><td>7.9</td><td>£221,849</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>New York City</h2>
-<ul>
-<li><a href="/area/nyc/bronx/">Bronx</a></li>
-<li><a href="/area/nyc/brooklyn/">Brooklyn</a></li>
-<li><a href="/area/nyc/manhattan/">Manhattan</a></li>
-<li><a href="/area/nyc/queens/">Queens</a></li>
-<li><a href="/area/nyc/staten-island/">Staten Island</a></li>
-</ul>
+<div class="tw" role="region" aria-label="New York City: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">New York City: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/nyc/bronx/">Bronx</a></th><td class="score">7.0</td><td>5.0</td><td>10.0</td><td>10.0</td><td>6.4</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td></tr>
+<tr><th scope="row"><a href="/area/nyc/brooklyn/">Brooklyn</a></th><td class="score">4.6</td><td>3.0</td><td>3.1</td><td>8.5</td><td>8.0</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td></tr>
+<tr><th scope="row"><a href="/area/nyc/manhattan/">Manhattan</a></th><td class="score">4.6</td><td>5.0</td><td>0.0</td><td>6.8</td><td>8.8</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td></tr>
+<tr><th scope="row"><a href="/area/nyc/queens/">Queens</a></th><td class="score">4.4</td><td>0.0</td><td>6.5</td><td>9.1</td><td>7.7</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td></tr>
+<tr><th scope="row"><a href="/area/nyc/staten-island/">Staten Island</a></th><td class="score">7.1</td><td>7.5</td><td>7.7</td><td>7.7</td><td>6.0</td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td><td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="key">Affordability and growth are scored among New York City's own areas: not comparable with UK scores.</p>
+
 <h2>Nottingham</h2>
-<ul>
-<li><a href="/area/nottingham/broxtowe/">Broxtowe</a></li>
-<li><a href="/area/nottingham/city-of-nottingham/">City of Nottingham</a></li>
-<li><a href="/area/nottingham/gedling/">Gedling</a></li>
-<li><a href="/area/nottingham/rushcliffe/">Rushcliffe</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Nottingham: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Nottingham: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/nottingham/broxtowe/">Broxtowe</a></th><td class="score">6.5</td><td>7.5</td><td>7.0</td><td>2.9</td><td>4.0</td><td>7.9</td><td>£251,231</td></tr>
+<tr><th scope="row"><a href="/area/nottingham/city-of-nottingham/">City of Nottingham</a></th><td class="score">7.8</td><td>10.0</td><td>8.9</td><td>3.6</td><td>4.5</td><td>7.0</td><td>£189,547</td></tr>
+<tr><th scope="row"><a href="/area/nottingham/gedling/">Gedling</a></th><td class="score">6.9</td><td>10.0</td><td>7.2</td><td>4.7</td><td>2.6</td><td>7.8</td><td>£245,028</td></tr>
+<tr><th scope="row"><a href="/area/nottingham/rushcliffe/">Rushcliffe</a></th><td class="score">4.9</td><td>5.0</td><td>5.2</td><td>3.8</td><td>2.6</td><td>8.3</td><td>£329,528</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>South Yorkshire</h2>
-<ul>
-<li><a href="/area/southyorkshire/barnsley/">Barnsley</a></li>
-<li><a href="/area/southyorkshire/doncaster/">Doncaster</a></li>
-<li><a href="/area/southyorkshire/rotherham/">Rotherham</a></li>
-<li><a href="/area/southyorkshire/sheffield/">Sheffield</a></li>
-</ul>
+<div class="tw" role="region" aria-label="South Yorkshire: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">South Yorkshire: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/southyorkshire/barnsley/">Barnsley</a></th><td class="score">8.0</td><td>10.0</td><td>9.4</td><td>4.6</td><td>4.2</td><td>7.7</td><td>£173,053</td></tr>
+<tr><th scope="row"><a href="/area/southyorkshire/doncaster/">Doncaster</a></th><td class="score">7.8</td><td>10.0</td><td>9.5</td><td>5.6</td><td>4.3</td><td>6.4</td><td>£172,305</td></tr>
+<tr><th scope="row"><a href="/area/southyorkshire/rotherham/">Rotherham</a></th><td class="score">7.9</td><td>10.0</td><td>8.8</td><td>4.3</td><td>4.5</td><td>7.6</td><td>£191,496</td></tr>
+<tr><th scope="row"><a href="/area/southyorkshire/sheffield/">Sheffield</a></th><td class="score">7.8</td><td>10.0</td><td>7.9</td><td>4.2</td><td>5.2</td><td>7.5</td><td>£217,603</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>Teesside</h2>
-<ul>
-<li><a href="/area/teesside/darlington/">Darlington</a></li>
-<li><a href="/area/teesside/hartlepool/">Hartlepool</a></li>
-<li><a href="/area/teesside/middlesbrough/">Middlesbrough</a></li>
-<li><a href="/area/teesside/redcar-and-cleveland/">Redcar and Cleveland</a></li>
-<li><a href="/area/teesside/stockton-on-tees/">Stockton-on-Tees</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Teesside: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Teesside: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/teesside/darlington/">Darlington</a></th><td class="score">6.5</td><td>5.0</td><td>10.0</td><td>4.6</td><td>4.8</td><td>6.8</td><td>£159,988</td></tr>
+<tr><th scope="row"><a href="/area/teesside/hartlepool/">Hartlepool</a></th><td class="score">7.9</td><td>10.0</td><td>10.0</td><td>6.6</td><td>3.1</td><td>8.1</td><td>£136,894</td></tr>
+<tr><th scope="row"><a href="/area/teesside/middlesbrough/">Middlesbrough</a></th><td class="score">7.8</td><td>10.0</td><td>10.0</td><td>5.5</td><td>2.9</td><td>7.7</td><td>£142,868</td></tr>
+<tr><th scope="row"><a href="/area/teesside/redcar-and-cleveland/">Redcar and Cleveland</a></th><td class="score">8.1</td><td>10.0</td><td>10.0</td><td>3.2</td><td>3.8</td><td>8.1</td><td>£146,259</td></tr>
+<tr><th scope="row"><a href="/area/teesside/stockton-on-tees/">Stockton-on-Tees</a></th><td class="score">6.4</td><td>5.0</td><td>9.5</td><td>4.9</td><td>4.2</td><td>7.8</td><td>£172,698</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>Tyne and Wear</h2>
-<ul>
-<li><a href="/area/tyneandwear/gateshead/">Gateshead</a></li>
-<li><a href="/area/tyneandwear/newcastle-upon-tyne/">Newcastle upon Tyne</a></li>
-<li><a href="/area/tyneandwear/north-tyneside/">North Tyneside</a></li>
-<li><a href="/area/tyneandwear/south-tyneside/">South Tyneside</a></li>
-<li><a href="/area/tyneandwear/sunderland/">Sunderland</a></li>
-</ul>
+<div class="tw" role="region" aria-label="Tyne and Wear: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">Tyne and Wear: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/tyneandwear/gateshead/">Gateshead</a></th><td class="score">8.2</td><td>10.0</td><td>10.0</td><td>6.3</td><td>4.6</td><td>7.4</td><td>£155,550</td></tr>
+<tr><th scope="row"><a href="/area/tyneandwear/newcastle-upon-tyne/">Newcastle upon Tyne</a></th><td class="score">5.4</td><td>3.0</td><td>8.1</td><td>7.7</td><td>4.5</td><td>7.5</td><td>£211,255</td></tr>
+<tr><th scope="row"><a href="/area/tyneandwear/north-tyneside/">North Tyneside</a></th><td class="score">6.3</td><td>5.0</td><td>8.3</td><td>5.5</td><td>5.3</td><td>7.6</td><td>£205,744</td></tr>
+<tr><th scope="row"><a href="/area/tyneandwear/south-tyneside/">South Tyneside</a></th><td class="score">8.2</td><td>10.0</td><td>9.9</td><td>4.8</td><td>4.5</td><td>7.7</td><td>£160,518</td></tr>
+<tr><th scope="row"><a href="/area/tyneandwear/sunderland/">Sunderland</a></th><td class="score">8.1</td><td>10.0</td><td>10.0</td><td>6.5</td><td>4.2</td><td>7.7</td><td>£147,763</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>West Midlands</h2>
-<ul>
-<li><a href="/area/westmidlands/birmingham/">Birmingham</a></li>
-<li><a href="/area/westmidlands/coventry/">Coventry</a></li>
-<li><a href="/area/westmidlands/dudley/">Dudley</a></li>
-<li><a href="/area/westmidlands/sandwell/">Sandwell</a></li>
-<li><a href="/area/westmidlands/solihull/">Solihull</a></li>
-<li><a href="/area/westmidlands/walsall/">Walsall</a></li>
-<li><a href="/area/westmidlands/wolverhampton/">Wolverhampton</a></li>
-</ul>
+<div class="tw" role="region" aria-label="West Midlands: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">West Midlands: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/westmidlands/birmingham/">Birmingham</a></th><td class="score">5.4</td><td>3.0</td><td>7.4</td><td>4.5</td><td>5.3</td><td>7.3</td><td>£234,867</td></tr>
+<tr><th scope="row"><a href="/area/westmidlands/coventry/">Coventry</a></th><td class="score">7.7</td><td>10.0</td><td>7.7</td><td>5.6</td><td>5.2</td><td>7.4</td><td>£227,679</td></tr>
+<tr><th scope="row"><a href="/area/westmidlands/dudley/">Dudley</a></th><td class="score">7.6</td><td>10.0</td><td>7.5</td><td>5.1</td><td>5.0</td><td>7.5</td><td>£233,819</td></tr>
+<tr><th scope="row"><a href="/area/westmidlands/sandwell/">Sandwell</a></th><td class="score">7.8</td><td>10.0</td><td>8.3</td><td>4.1</td><td>5.3</td><td>6.9</td><td>£207,065</td></tr>
+<tr><th scope="row"><a href="/area/westmidlands/solihull/">Solihull</a></th><td class="score">4.8</td><td>3.0</td><td>5.2</td><td>4.1</td><td>5.0</td><td>7.8</td><td>£332,022</td></tr>
+<tr><th scope="row"><a href="/area/westmidlands/walsall/">Walsall</a></th><td class="score">7.5</td><td>10.0</td><td>8.0</td><td>4.8</td><td>4.4</td><td>7.0</td><td>£216,878</td></tr>
+<tr><th scope="row"><a href="/area/westmidlands/wolverhampton/">Wolverhampton</a></th><td class="score">7.7</td><td>10.0</td><td>8.0</td><td>4.8</td><td>4.7</td><td>7.7</td><td>£215,801</td></tr>
+</tbody>
+</table>
+</div>
+
 <h2>West Yorkshire</h2>
-<ul>
-<li><a href="/area/westyorkshire/bradford/">Bradford</a></li>
-<li><a href="/area/westyorkshire/calderdale/">Calderdale</a></li>
-<li><a href="/area/westyorkshire/kirklees/">Kirklees</a></li>
-<li><a href="/area/westyorkshire/leeds/">Leeds</a></li>
-<li><a href="/area/westyorkshire/wakefield/">Wakefield</a></li>
-</ul>
+<div class="tw" role="region" aria-label="West Yorkshire: areas compared" tabindex="0">
+<table class="compare">
+<caption class="visually-hidden">West Yorkshire: each area's Sky Score, its five parts and its average price</caption>
+<thead><tr><th scope="col">Area</th><th scope="col">Sky Score</th><th scope="col">Quiet skies</th><th scope="col">Affordability</th><th scope="col">Growth</th><th scope="col">Liveability</th><th scope="col">Environment</th><th scope="col">Average price</th></tr></thead>
+<tbody>
+<tr><th scope="row"><a href="/area/westyorkshire/bradford/">Bradford</a></th><td class="score">7.8</td><td>10.0</td><td>9.0</td><td>4.7</td><td>4.3</td><td>7.4</td><td>£185,297</td></tr>
+<tr><th scope="row"><a href="/area/westyorkshire/calderdale/">Calderdale</a></th><td class="score">7.7</td><td>10.0</td><td>8.6</td><td>10.0</td><td>4.6</td><td>6.7</td><td>£197,651</td></tr>
+<tr><th scope="row"><a href="/area/westyorkshire/kirklees/">Kirklees</a></th><td class="score">7.8</td><td>10.0</td><td>8.2</td><td>6.9</td><td>5.0</td><td>7.3</td><td>£208,427</td></tr>
+<tr><th scope="row"><a href="/area/westyorkshire/leeds/">Leeds</a></th><td class="score">5.8</td><td>5.0</td><td>7.1</td><td>4.7</td><td>4.5</td><td>7.4</td><td>£246,385</td></tr>
+<tr><th scope="row"><a href="/area/westyorkshire/wakefield/">Wakefield</a></th><td class="score">7.9</td><td>10.0</td><td>8.5</td><td>4.9</td><td>5.1</td><td>7.4</td><td>£199,347</td></tr>
+</tbody>
+</table>
+</div>
+
 <p class="sub" style="margin-top:32px;"><a href="/map/">Back to the map</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/terms">Terms</a></p>
 </main>
 </div>

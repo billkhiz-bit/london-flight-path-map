@@ -56,6 +56,21 @@ pages carry **no `<script>` tag but the first-party analytics one** (since 2026-
 first counted: `tests/area-pages.mjs` allows exactly that tag, once) - the map is client-side, so a crawler
 previously got a shell, and every fact stays in the served HTML.
 
+- **The `/area/` index compares each city's areas in one table (2026-10-25, branch `area-compare`).** A reader
+  in Poland opened 24 London area pages one at a time from the index, going back to it 22 times, because it
+  listed names only (GoatCounter, 24-25 Oct). Each city now has a table: Sky Score, its five parts and the
+  average price, read from the facts each page publishes (`compare_cell`), never recomputed; a figure a page
+  does not publish is a dash with "none published" for a screen reader. No script, so no sorting. The index
+  now BAKES scores too, so `--check` compares it with what `--write` would write (proven red on the names-only
+  index). Two layout traps found on the way: a visually hidden `<caption>` is absolutely placed, so inside an
+  `overflow-x:auto` box that is not `position:relative` it escapes and widened a 390 px page by 262 px; and
+  seven columns need the headings to wrap to fit the 720 px column. `tests/test_area_index_table.py` holds a
+  renamed label (a whole column of dashes), absence as a dash, and New York's not-comparable note.
+- **`--write` on Windows dates EVERY page today in the sitemap** unless you stage first: it rewrites the pages
+  with LF over the CRLF checkout, `git status` then lists all of them as modified though `git diff` shows
+  nothing, and `last_changed()` reads `git status`. Run `git add area/` (the unchanged pages stage as no
+  change), then `--write` again: only pages whose content changed are dated today (found 2026-10-25).
+
 - **They BAKE their scores**, so a data vintage silently puts them out of step
   with `/v1/score`. `tests/area-page-freshness.mjs` is blocking and compares all
   99 against the live API in **ONE batch request** (1 CI quota unit, not 99 -

@@ -29,7 +29,9 @@ AFTER A DATA VINTAGE ROLL, RERUN THIS
 -------------------------------------
 The pages bake their scores, so a vintage roll silently puts 99 static pages out
 of step with /v1/score. `tests/area-page-freshness.mjs` is a blocking gate that
-compares the two and will go red until the pages are regenerated and redeployed:
+compares the two and will go red until the pages are regenerated and redeployed.
+The /area/ index bakes the same scores in its comparison tables (2026-10-25), so
+`--check` also fails while the index on disk differs from what --write would write:
 
     python scripts/build_area_pages.py --write
     make area-deploy meta-deploy
@@ -614,8 +616,25 @@ INDEX = """<!doctype html>
   ul {{ margin:0; padding-left:18px; }}
   li {{ margin:2px 0; }}
   .sub {{ color:var(--mid); font-size:14px; }}
+  /* THE COMPARISON TABLES (2026-10-25). A reader in Poland opened 24 London area pages one at a time from
+     this index, going back to it 22 times, because it listed names only. Each city's areas now sit in one
+     table, the same figures each area's own page publishes. No script (these pages carry none), so no
+     sorting: a narrow screen scrolls the table sideways inside its own box, the area's name held at the left. */
+  /* position:relative makes the box the containing block of the visually hidden caption inside it; without
+     it the absolutely placed caption escapes the scroll box and widened a 390 px page by 262 px. */
+  .tw {{ overflow-x:auto; position:relative; margin:8px 0 4px; }}
+  .tw:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
+  table.compare {{ border-collapse:collapse; width:100%; min-width:640px; font-size:14px; font-variant-numeric:tabular-nums; }}
+  table.compare th, table.compare td {{ padding:7px 8px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap; }}
+  table.compare thead th {{ font-size:12px; font-weight:600; color:var(--mid); vertical-align:bottom; white-space:normal; }}
+  table.compare th[scope="row"], table.compare thead th:first-child {{ text-align:left; position:sticky; left:0; background:var(--page); }}
+  table.compare th[scope="row"] {{ font-weight:500; white-space:normal; min-width:8em; }}
+  table.compare td.score {{ font-weight:700; }}
+  .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }}
+  .key {{ color:var(--mid); font-size:12px; margin:4px 0 0; }}
+  :root {{ --page:#fff; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --orange:#fb923c; }}
+    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --orange:#fb923c; --page:#141414; }}
     body {{ background:#141414; }}
   }}
   /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
@@ -656,6 +675,7 @@ INDEX = """<!doctype html>
 <main>
 <h1>Every area we cover</h1>
 <p class="sub">{coverage}. Each page carries the published measurements behind that area's score.</p>
+<p class="sub">Each city's areas side by side: the Sky Score and its five parts are out of 10, and 10 is best. A dash means that area's page publishes no figure for it.</p>
 <p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
 <p class="sub">In the United States: <a href="/bay-area/">flight paths over 50 San Francisco Bay Area cities</a>.</p>
 {body}
@@ -666,6 +686,62 @@ INDEX = """<!doctype html>
 </body>
 </html>
 """
+
+
+# The columns, in the order each area's own page lists them; read from that page's facts, never recomputed.
+COMPARE_COLUMNS = ('Sky Score', 'Quiet skies', 'Affordability', 'Growth', 'Liveability', 'Environment',
+                   'Average price')
+NONE_PUBLISHED = '<td><span aria-hidden="true">&ndash;</span><span class="visually-hidden">none published</span></td>'
+
+
+def compare_cell(label, facts):
+    """One cell: the figure that area's page publishes under `label`, or a dash that says it publishes none."""
+    value = next((f['value'] for f in facts if f['label'] == label), None)
+    if value is None:
+        return NONE_PUBLISHED
+    value = str(value).removesuffix(' / 10')
+    return f'<td class="score">{e(value)}</td>' if label == 'Sky Score' else f'<td>{e(value)}</td>'
+
+
+def compare_table(city, entries) -> str:
+    """One city's areas in one table: the figures their own pages publish, alphabetical."""
+    label = CITY_LABEL.get(city, city.title())
+    head = ''.join(f'<th scope="col">{e(c)}</th>' for c in COMPARE_COLUMNS)
+    rows = '\n'.join(
+        f'<tr><th scope="row"><a href="/area/{p}/">{e(d["borough"])}</a></th>'
+        + ''.join(compare_cell(c, d['facts']) for c in COMPARE_COLUMNS) + '</tr>'
+        for p, d in sorted(entries, key=lambda x: x[1]['borough'])
+    )
+    # Affordability and growth are scored within a currency pool: the US pages say so row by row, and the table
+    # says it once, so nobody sets a New York figure beside a UK one.
+    note = ('' if app.CITIES[city].get('country') == 'United Kingdom' else
+            f'<p class="key">Affordability and growth are scored among {e(label)}\'s own areas: not comparable '
+            'with UK scores.</p>\n')
+    return (
+        f'<div class="tw" role="region" aria-label="{e(label)}: areas compared" tabindex="0">\n'
+        f'<table class="compare">\n<caption class="visually-hidden">{e(label)}: each area\'s Sky Score, its five '
+        f'parts and its average price</caption>\n<thead><tr><th scope="col">Area</th>{head}</tr></thead>\n'
+        f'<tbody>\n{rows}\n</tbody>\n</table>\n</div>\n{note}'
+    )
+
+
+def render_index(pages) -> str:
+    """The /area/ index: one comparison table per city. Used by --write and by --check, so they cannot differ."""
+    by_city: dict[str, list] = {}
+    for path, data in pages:
+        by_city.setdefault(data['city'], []).append((path, data))
+    body = [f'<h2>{e(CITY_LABEL.get(city, city.title()))}</h2>\n' + compare_table(city, by_city[city])
+            for city in sorted(by_city, key=lambda c: CITY_LABEL.get(c, c))]
+    # ONE COVERAGE SENTENCE (2026-10-12). This index said "102 boroughs across 14 city
+    # regions" while the front page, /api/, /reports/ and /open-data/ said 97 council areas in
+    # 13: both true, one counting New York's boroughs in with the UK's, and read side by side
+    # as two claims. Counted per country from the pages themselves, never typed.
+    uk = [c for c in by_city if app.CITIES[c].get('country') == 'United Kingdom']
+    abroad = [c for c in by_city if c not in uk]
+    uk_n = sum(len(by_city[c]) for c in uk)
+    us = ' and '.join(f"{CITY_LABEL.get(c, c.title())}'s {len(by_city[c])} boroughs" for c in sorted(abroad))
+    coverage = f'{uk_n} council areas in {len(uk)} UK city regions' + (f', plus {us}' if us else '')
+    return INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body))
 
 
 def main() -> int:
@@ -717,6 +793,11 @@ def main() -> int:
         if sync_open_data(write=False):
             print('FAIL: open-data/ is stale against /v1/score - run --write')
             return 1
+        # CRLF-blind: a Windows checkout rewrites line endings, and that is not staleness.
+        on_disk = (OUT / 'index.html').read_text(encoding='utf-8').replace('\r\n', '\n')
+        if on_disk != render_index(pages):
+            print('FAIL: area/index.html is stale (its comparison tables bake scores) - run --write')
+            return 1
         print('OK')
         return 0
 
@@ -725,27 +806,7 @@ def main() -> int:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(render(data), encoding='utf-8', newline='\n')
 
-    by_city: dict[str, list] = {}
-    for path, data in pages:
-        by_city.setdefault(data['city'], []).append((path, data['borough']))
-    body = []
-    for city in sorted(by_city, key=lambda c: CITY_LABEL.get(c, c)):
-        items = '\n'.join(
-            f'<li><a href="/area/{p}/">{e(b)}</a></li>' for p, b in sorted(by_city[city], key=lambda x: x[1])
-        )
-        body.append(f'<h2>{e(CITY_LABEL.get(city, city.title()))}</h2>\n<ul>\n{items}\n</ul>')
-    # ONE COVERAGE SENTENCE (2026-10-12). This index said "102 boroughs across 14 city
-    # regions" while the front page, /api/, /reports/ and /open-data/ said 97 council areas in
-    # 13: both true, one counting New York's boroughs in with the UK's, and read side by side
-    # as two claims. Counted per country from the pages themselves, never typed.
-    uk = [c for c in by_city if app.CITIES[c].get('country') == 'United Kingdom']
-    abroad = [c for c in by_city if c not in uk]
-    uk_n = sum(len(by_city[c]) for c in uk)
-    us = ' and '.join(f"{CITY_LABEL.get(c, c.title())}'s {len(by_city[c])} boroughs" for c in sorted(abroad))
-    coverage = f'{uk_n} council areas in {len(uk)} UK city regions' + (f', plus {us}' if us else '')
-    (OUT / 'index.html').write_text(
-        INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body)),
-        encoding='utf-8', newline='\n')
+    (OUT / 'index.html').write_text(render_index(pages), encoding='utf-8', newline='\n')
 
     sync_scorecards(pages, write=True)
     sync_open_data(write=True)

@@ -134,7 +134,8 @@ Or just describe what you need, I have full context of this project.
   re-projection; BT postcodes are Irish Grid. Loaders UPSERT, so a re-placing needs
   `remove_lost_readings.py --apply`.
 - **A data roll is done only when every reader of the file has run** (HANDOVER s0 step 7). Area pages BAKE
-  scores: rerun `build_area_pages.py --write` after any vintage roll.
+  scores (the `/area/` index's tables too): rerun `build_area_pages.py --write` after any vintage roll; on Windows
+  `git add area/` and run it again, or the sitemap dates every page today.
 - **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh`; it must move `SNAPSHOT_VINTAGE_LABEL`,
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.
