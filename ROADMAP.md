@@ -2196,6 +2196,20 @@ Geovation advised (2026-10-02) and the question residents actually ask ("one pla
    EASA's ANP noise data, which is **by request, not a download** (request drafted,
    OUTREACH_LOG 2026-10-15). Validate against the CAA's published Heathrow N65 contour
    AREAS (ERCD 2501's tables, so no GIS files are needed).
+   **Groundwork done 2026-10-27.** EASA's legacy tables (v2.3, 2020) are a free download:
+   build with them, never publish from them (the terms allow contours for an average
+   fleet, forbid per-type figures and passing the data on, and say nothing about
+   publishing RESULTS, so Bill's request decides that). Newer targets: ERCD 2601
+   (Heathrow 2025, an ANNUAL average 16-hour day, not summer) and Gatwick's ERCD 2602.
+   **THE PUBLISH RULE, agreed by Bill 2026-10-27, to be a gate in code from the start
+   (like `coverage_verdict()`):** Heathrow N65 areas at >50 / >100 / >200 events within
+   **-10% to +15%** of ERCD 2601 at EACH level (reading quieter gets the tighter side);
+   >500 within +-30%; population inside the >50 contour within +-20% (a right-sized
+   contour in the wrong place fails); Gatwick -10% to +15% at every level; LIKE FOR LIKE
+   (2025 tracks for the CAA's exact period: Heathrow's areas moved up to 14% between
+   2024 and 2025 on their own); decided on EASA's FULL database (on v2.3, stand-in
+   aircraft carry ~48% of Heathrow's movements and their errors can cancel). Any miss:
+   nothing published. First: check adsb.lol holds 2025 tracks before a ~14 h fetch.
 
 **Gates, none of which blocks measuring:** (a) **ODbL is share-alike**: once a count
 derived from the tracks is PUBLISHED it must be offered under ODbL, credited "aircraft
