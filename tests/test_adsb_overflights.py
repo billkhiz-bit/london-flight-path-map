@@ -6,7 +6,10 @@ airport table, one rule at a time: the cone's radius at both of CAP 1498's angle
 however many steps cover a cell, nothing at or above 7,000 ft, the barometric fallback lifted by the
 day's measured offset, the 100 m walk finding a cell between two far-apart points, and the averaging
 step leaving out an outage day and asking classify_day() for each day's direction, whose rule (80% of
-movements on one direction's runway ends, else 'mixed') is held on its own.
+movements on one direction's runway ends, else 'mixed') is held on its own. The ground (2026-10-26): the
+cone stands on the ground under the aircraft, the ceiling stays above sea level, a height under the ground
+never counts, a missing ground grid refuses to count, and the averaging step refuses day files counted two
+ways. The tests pass their own ground (FLAT: sea level); the real grid is a gitignored download.
 Offline only.
 """
 import importlib.util
@@ -39,6 +42,11 @@ E0, N0 = 519150.0, 176750.0  # a cell centre by Kew, under Heathrow's 27R approa
 _TO_LL = pyproj.Transformer.from_crs('EPSG:27700', 'EPSG:4326', always_xy=True)
 OFFSET_FT = 400.0  # Heathrow's (GPS above sea level) minus barometric on the test day
 MAN_OFFSET_FT = 200.0  # Manchester's: QNH differs across the country, so its offset does too
+FLAT = ao.Ground(lambda x, y: np.zeros(len(x)), 'sea level everywhere (test)')
+
+
+def plateau(metres):
+    return ao.Ground(lambda x, y: np.full(len(x), float(metres)), f'{metres} m everywhere (test)')
 
 
 def pt(t, e, n, baro, geom):
@@ -75,8 +83,8 @@ def eastbound(t0, northing, msl_ft=None, baro=None, e_from=E0 - 3000, e_to=E0 + 
     return out
 
 
-def count(*traces):
-    cells, _ = ao.count_traces([*calibration(), *traces], AIRPORTS, {})
+def count(*traces, ground=FLAT):
+    cells, _ = ao.count_traces([*calibration(), *traces], AIRPORTS, {}, ground=ground)
     return cells
 
 
@@ -95,7 +103,7 @@ def test_the_cone_radius_at_both_angles():
 def _steps(xs, ys, h_m, passes=None):
     n = len(xs)
     return {'x': np.asarray(xs, float), 'y': np.asarray(ys, float), 'h_ft': np.full(n, h_m / ao.FT_M),
-            't': np.arange(n, dtype=float), 'trace': np.zeros(n, np.int32),
+            'agl_ft': np.full(n, h_m / ao.FT_M), 't': np.arange(n, dtype=float), 'trace': np.zeros(n, np.int32),
             'pass': np.asarray(passes if passes is not None else [0] * n)}
 
 
@@ -181,7 +189,7 @@ def test_a_segment_across_a_long_silence_is_not_walked():
 
 
 def test_the_day_offset_is_measured_per_airport():
-    _, meta = ao.count_traces(calibration(), AIRPORTS, {})
+    _, meta = ao.count_traces(calibration(), AIRPORTS, {}, ground=FLAT)
     got = meta['heights']['airports']
     assert got['LHR']['offset_ft'] == pytest.approx(OFFSET_FT, abs=0.5)
     assert got['MAN']['offset_ft'] == pytest.approx(MAN_OFFSET_FT, abs=0.5)
@@ -214,7 +222,8 @@ def test_a_low_barometric_aircraft_takes_the_offset_at_its_own_height():
     cal = [{'icao': f'c{band}', 'pts': [pt(10_000 + 10 * k, 490_000, 170_000 + 50 * k, band,
                                             gps(band + 100 + 0.05 * band)) for k in range(n)]}
            for band in range(500, 9000, 1000)]
-    cells, meta = ao.count_traces([*cal, {'icao': 'b', 'pts': eastbound(50_000, N0 + 220, baro=600)}], AIRPORTS, {})
+    cells, meta = ao.count_traces([*cal, {'icao': 'b', 'pts': eastbound(50_000, N0 + 220, baro=600)}], AIRPORTS, {},
+                                  ground=FLAT)
     assert meta['heights']['airports']['LHR']['per_1000_ft'] == pytest.approx(50, abs=0.5)
     assert at(cells) == 0
 
@@ -296,7 +305,7 @@ def test_runs_survive_the_packed_columns():
 # ---------------------------------------------------------------- averaging
 
 
-def _day_file(tmp_path, day, n_lhr, outage=False):
+def _day_file(tmp_path, day, n_lhr, outage=False, definition=None):
     """A day file with LHR traffic in one cell (n_lhr overflights) and the feed profile of a whole day,
     or of one that lost its first five hours."""
     feed = [100] * (86400 // mv.FEED_BIN_S)
@@ -304,6 +313,8 @@ def _day_file(tmp_path, day, n_lhr, outage=False):
         feed[:30] = [0] * 30
     meta = {'day': day, 'codes': CODES + [ao.OTHER], 'feed': {'uk': feed, 'us': feed},
             'movements': {c: {'landing': {}, 'take-off': {}} for c in CODES}}
+    if definition is not None:
+        meta['definition'] = definition
     i, j = int(E0 // ao.CELL_M), int(N0 // ao.CELL_M)
     cells = {a: (np.array([[j, i, i, n_lhr]], np.int32), np.array([[CODES.index('LHR'), j, i, i, n_lhr]], np.int32))
              for a in ao.ANGLES}
@@ -427,3 +438,70 @@ def test_a_day_classed_none_is_left_out_of_every_direction(tmp_path):
     g = [tuple(x) for x in res['groups']].index(('LHR', 'westerly'))
     assert ao.lookup(res['runs'][48.5], E0, N0, g) == pytest.approx(10)
     assert any(u.startswith('2026-08-03 LHR') for u in res['unclassified'])
+
+
+# ---------------------------------------------------------------- the ground (2026-10-26)
+
+
+def test_the_cone_stands_on_the_ground():
+    # 1,000 ft above sea level, 250 m beside the cell: over sea-level ground the aircraft is 305 m up, a 270 m
+    # cone at 48.5 degrees, and the cell counts; over ground 100 m up it is 205 m above it, a 181 m cone, and
+    # the cell does not. Drawn from sea level (before 2026-10-26) it counted on both.
+    pts = eastbound(50_000, N0 + 250, msl_ft=1000)
+    assert at(count({'icao': 'a', 'pts': pts})) == 1
+    assert at(count({'icao': 'a', 'pts': pts}, ground=plateau(100))) == 0
+
+
+def test_the_ground_is_the_aircrafts_not_the_cells():
+    # The chosen approximation, held so it is never changed by accident: a 100 m bank under the cell's row
+    # alone does not narrow the cone of an aircraft over sea-level ground 250 m away (build_ground_grid.py
+    # says why: judging every cell on its own ground multiplies the work by the cells a cone covers).
+    bank = ao.Ground(lambda x, y: np.where(np.abs(np.asarray(y) - N0) < 50, 100.0, 0.0), 'a bank (test)')
+    assert at(count({'icao': 'a', 'pts': eastbound(50_000, N0 + 250, msl_ft=1000)}, ground=bank)) == 1
+
+
+def test_the_ceiling_stays_above_sea_level_on_high_ground():
+    # CAP 1498's 7,000 ft is an ALTITUDE. 300 m up, 7,100 ft above sea level is 6,116 ft above the ground and
+    # still never counts; 6,900 ft above sea level still does.
+    hill = plateau(300)
+    assert at(count({'icao': 'h', 'pts': eastbound(50_000, N0, msl_ft=7100)}, ground=hill)) == 0
+    assert at(count({'icao': 'g', 'pts': eastbound(50_000, N0, msl_ft=6900)}, ground=hill)) == 1
+
+
+def test_a_height_under_the_ground_never_counts():
+    # 200 ft above sea level passes over the cell (a 54 m cone); over ground 100 m (328 ft) up it is a bad
+    # height or a hillside taxiway, never an overflight.
+    pts = eastbound(50_000, N0, msl_ft=200)
+    assert at(count({'icao': 'l', 'pts': pts})) == 1
+    assert at(count({'icao': 'l', 'pts': pts}, ground=plateau(100))) == 0
+    # The count above would read 0 anyway (a negative height draws an empty cone), so hold what keeping such
+    # steps WOULD change: they fill the gap between two passes. 400 s under the ground between two low
+    # stretches must leave two passes, as 400 s unheard does (PASS_GAP_S 300).
+    t = np.array([0, 10, 20, 200, 400, 410], float)
+    agl = np.array([1000, 1000, -50, -50, -50, 1000], float)
+    kept = ao.passes({'x': np.zeros(6), 'y': np.zeros(6), 'h_ft': agl + 300, 'agl_ft': agl, 't': t,
+                      'trace': np.zeros(6, np.int32)})
+    assert list(kept['t']) == [0, 10, 410] and list(kept['pass']) == [0, 0, 1]
+
+
+def test_the_ground_grid_is_read_by_row_and_column_and_its_absence_refuses(tmp_path):
+    with pytest.raises(SystemExit, match='build_ground_grid'):
+        ao.load_ground(tmp_path / 'gb-ground-100m.npy')
+    grid = tmp_path / 'gb-ground-100m.npy'
+    np.save(grid, np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], np.int16))  # row j is northing j * 100
+    grid.with_suffix('.json').write_text('{"release": "20260602"}', encoding='utf-8')
+    ground = ao.load_ground(grid)
+    # (150, 250) is column 1 of row 2; (250, 50) column 2 of row 0; off the grid is the sea.
+    assert list(ground.at([150, 250, 5000], [250, 50, 50])) == [8, 3, 0]
+    assert '20260602' in ground.label and 'under the aircraft' in ground.label
+
+
+def test_the_average_refuses_day_files_counted_two_ways(tmp_path):
+    sea, terrain = {'ground': 'sea level'}, {'ground': 'OS Terrain 50 (20260602) under the aircraft'}
+    files = [_day_file(tmp_path, '2026-08-01', 10, definition=sea),
+             _day_file(tmp_path, '2026-08-02', 10, definition=terrain)]
+    westerly = lambda code, movements, runways: 'westerly'  # noqa: E731
+    with pytest.raises(SystemExit, match='different definitions'):
+        ao.average(files, classify=westerly)
+    files[0] = _day_file(tmp_path, '2026-08-01', 10, definition=terrain)
+    assert len(ao.average(files, classify=westerly)['kept']) == 2

@@ -220,6 +220,9 @@ data/*
 !data/leicester-boroughs.json
 !data/teesside-boroughs.json
 !data/norwich-boroughs.json
+# Planes overhead (2026-10-26): the ~2,500 district files in data/planes/ stay ignored (tens of MB, rebuilt
+# each month from a file 21 GB of tracks made); their manifest is tracked, so what is deployed can be checked.
+!data/planes-manifest.json
 .defra_load_checkpoint
 # Trailing * is load-bearing since the loader gained --geotiff: checkpoints are
 # now namespaced per raster (.defra_load_checkpoint_defra_lden_2022_manchester),

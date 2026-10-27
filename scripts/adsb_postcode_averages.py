@@ -59,12 +59,14 @@ WHAT THE FILE HOLDS (data/adsb/postcode-averages.npz, written .partial then rena
   days [A, 3]: the days behind each airport's average of each kind
   total [P, A, 3, 2]: passes summed over those days (whole counts, exact)
   mean [P, A, 3, 2]: total / days, float32; NaN where days is 0
+  mean_lo, mean_hi [P, A, 3, 2]: the least and the most `mean` among the postcode's cell and the eight around
+    it (+-100 m): where they differ widely the postcode sits on a cone's edge, and one figure would mislead
   context_all_traffic_unpublishable [P, 2], context_days: UNPUBLISHABLE context (see above): all passes over
     the cell a day, every kept day of the checked months, no direction split
   meta (JSON): the definition, every monthly verdict, the rule, what was left out and why, the licence
 
-LIMITS (those of the counter, stated so a figure is read correctly): heights are above sea level, not the
-ground (high airfields count high); a cell counts a pass once however often it returns within it; mixed days
+LIMITS (those of the counter, stated so a figure is read correctly): the cone stands on the ground under the
+aircraft, not under the cell (since 2026-10-26; before, on sea level, and high ground counted high); a cell counts a pass once however often it returns within it; mixed days
 are their own class, not split by hour; the year is the months checked, not a calendar year.
 
 Usage (the system Python under -I: it reads NSPL and the CAA tables, both downloads, and needs numpy,
@@ -112,6 +114,7 @@ postcode_grid = _load('postcode_grid')
 
 CLASSES = ('westerly', 'easterly', 'mixed')  # classify_day()'s labels; None leaves a day out
 MIN_CHECKED_MONTHS = 6  # year_rule(): half a year of checked tracking, winter and summer timetables both
+NEIGHBOURHOOD = tuple((dj, di) for dj in (-1, 0, 1) for di in (-1, 0, 1))  # a postcode's cell and the 8 around it
 # Days adsb.lol's archive does not hold, so no day file can exist. Each is treated as an outage day (left out,
 # the official figure scaled to the rest, as report() treats a day whose feed failed); any OTHER missing day
 # leaves its month unchecked, because a file that was never made must not pass as an outage. Measured on
@@ -159,6 +162,7 @@ def read_metas(day_files):
         metas[dt.date.fromisoformat(meta['day'])] = (meta, Path(path))
     if len(metas) != len(day_files):
         raise SystemExit('the same day appears twice among the day files')
+    ao.one_definition(m for m, _ in metas.values())  # a recount stopped halfway must not be averaged
     return metas
 
 
@@ -435,26 +439,43 @@ def build(day_files, official_by_month, postcodes, every_month=False, progress=N
     north = np.array([p[4] for p in postcodes], dtype=float)
     gridind = np.array([p[5] for p in postcodes], dtype=np.int8)
     cj, ci = (north // ao.CELL_M).astype(np.int64), (east // ao.CELL_M).astype(np.int64)
-    if len(cj) and (cj.min() < 0 or cj.max() >= ao.NROWS or ci.min() < 0 or ci.max() >= ao.NCOLS):
-        raise SystemExit('a postcode lies off the British National Grid the day files use')
-    cell_key, cell_of = np.unique(cj * ao.NCOLS + ci, return_inverse=True)
+    # One cell in from every edge, so the eight cells around each postcode (below) are on the grid too: an edge
+    # cell's neighbour would key into the next row, or wrap to the array's end (2026-10-27 review).
+    if len(cj) and (cj.min() < 1 or cj.max() >= ao.NROWS - 1 or ci.min() < 1 or ci.max() >= ao.NCOLS - 1):
+        raise SystemExit('a postcode or a cell around it lies off the British National Grid the day files use')
+    # Every postcode's cell AND THE EIGHT AROUND IT (2026-10-26): near a runway the cone is ~100 m wide, so a
+    # postcode on its edge reads all-or-nothing (Hounslow TW3 3QL: 339 a day in its cell's neighbour, 7 in its
+    # own), and a postcode can sit up to 71 m from its cell's centre. mean_lo / mean_hi carry the spread within
+    # +-100 m, so the page can give a range where one figure would be a coin toss (Bill, 2026-10-26).
+    ring = np.stack([(cj + dj) * ao.NCOLS + (ci + di) for dj, di in NEIGHBOURHOOD], axis=1)
+    cell_key, ring_of = np.unique(ring.ravel(), return_inverse=True)
+    ring_of = ring_of.reshape(ring.shape)
+    cell_of = ring_of[:, NEIGHBOURHOOD.index((0, 0))]
     checked = sorted(p for p in official_by_month if p not in unchecked)
     totals, days, context, context_days = accumulate(metas, plan, publish, cell_key // ao.NCOLS, cell_key % ao.NCOLS,
                                                      every_month, progress, set(checked))
 
     if totals.max(initial=0) > np.iinfo(np.int32).max:
         raise SystemExit('a summed count over 2**31: not a real count')
-    # [angle, class, cell, airport] -> [postcode, airport, class, angle]
-    total = totals.transpose(2, 3, 1, 0)[cell_of].astype(np.int32)
+    # [angle, class, cell, airport] -> [cell, airport, class, angle], then per postcode
+    per_cell = totals.transpose(2, 3, 1, 0).astype(np.int32)
+    total = per_cell[cell_of]
+    lo, hi = total.copy(), total.copy()
+    for k in range(len(NEIGHBOURHOOD)):  # one neighbour at a time: all nine at once is ~2.5 GB
+        around = per_cell[ring_of[:, k]]
+        np.minimum(lo, around, out=lo)
+        np.maximum(hi, around, out=hi)
     with np.errstate(invalid='ignore', divide='ignore'):
-        mean = (total / days[None, :, :, None]).astype(np.float32)
-    mean[:, days == 0, :] = np.nan  # no day of this kind: not measured, never 0
+        mean, mean_lo, mean_hi = ((t / days[None, :, :, None]).astype(np.float32) for t in (total, lo, hi))
+    for m in (mean, mean_lo, mean_hi):
+        m[:, days == 0, :] = np.nan  # no day of this kind: not measured, never 0
     # [angle, cell] -> [postcode, angle]; NaN, never 0, when no day was read
     every = (context.T[cell_of] / context_days if context_days else np.full((len(pc), len(ao.ANGLES)), np.nan))
     in_months = {f'{d:%Y%m}' for d in metas}
     meta = {
         'definition': 'CAA CAP 1498 overflights (above 48.5 and 60 degrees, under 7,000 ft) per 100 m BNG cell, '
                       'averaged per day of each kind; a postcode reads the cell holding its ONS grid reference',
+        'counted_as': ao.one_definition(m for m, _ in metas.values()),
         'zero_and_nan': {'0': 'measured zero: the airport is published, its days of this kind were counted, and none '
                               'of its traffic passed over the cell at this angle',
                          'NaN': 'not measured: the airport had no kept day of this kind (days is 0)',
@@ -489,14 +510,17 @@ def build(day_files, official_by_month, postcodes, every_month=False, progress=N
             'meaning': "NSPL gridind: 1 the building nearest the postcode's mean (best); 3 within 50 m; 5 imputed by "
                        'ONS; 6 the postcode sector mean (5 and 6 can sit hundreds of metres out, scripts/load_nspl.py); '
                        '9 (no position) left out'},
-        'cells': int(len(cell_key)),
+        'cells': int(len(np.unique(cell_of))),
+        'cells_read': int(len(cell_key)),
+        'neighbourhood': 'mean_lo / mean_hi: the least and most of the postcode\'s cell and the eight around it '
+                         '(+-100 m), per airport, kind of day and angle',
         'generator': 'scripts/adsb_postcode_averages.py',
         'licence': 'derived from adsb.lol (ODbL 1.0) and CAA Table 03; unpublished',
     }
     return {
         'postcode': pc, 'lad': lad, 'city': city, 'easting': east, 'northing': north, 'gridind': gridind,
         'airports': np.array(pub, dtype='<U5'), 'classes': np.array(CLASSES), 'angles': np.array(ao.ANGLES),
-        'days': days.astype(np.int32), 'total': total, 'mean': mean,
+        'days': days.astype(np.int32), 'total': total, 'mean': mean, 'mean_lo': mean_lo, 'mean_hi': mean_hi,
         'context_all_traffic_unpublishable': every.astype(np.float32), 'context_days': np.int32(context_days),
     }, meta
 

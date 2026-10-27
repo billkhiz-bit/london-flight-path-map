@@ -106,7 +106,8 @@ Or just describe what you need, I have full context of this project.
 - **Wording rules**: never call the whole product "open government data"/OGL (UK routes come from the UK AIP,
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
   are over **postcodes, not addresses**; never say **how often planes pass** except for airports that pass
-  `coverage_verdict()`; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
+  `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26),
+  a range on a cone's edge, never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
   **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
@@ -231,6 +232,9 @@ Or just describe what you need, I have full context of this project.
   every month you count with `python scripts/fetch_metar.py <first> <last>` FIRST; an uncached month silently falls
   back to the aircraft alone and reads stormy mornings low. `data/us-runway-use.json` and the NYC yardsticks are
   built from this counter: rebuilding them now re-derives published US inputs, so do it as a reviewed change.
+- **The overflight cone stands on the ground under the aircraft** (OS Terrain 50, 2026-10-26): run
+  `python -I scripts/build_ground_grid.py` before counting (a missing grid refuses, never sea level); the 7,000 ft
+  ceiling stays above SEA level. Day files name their ground, and averaging refuses a mix: recount into a NEW folder.
 - Look up D3, AWS SDK and SAM APIs with **context7** before using unfamiliar ones; use **security-guidance**
   on Lambda / API Gateway edits and **frontend-design** on UI changes in `index.html`.
 

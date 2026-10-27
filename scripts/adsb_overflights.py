@@ -21,6 +21,12 @@ HOW (the design a prototype on two days settled, 2026-10-19; sky-score-drafts/ov
   plus that DAY's measured median (GPS above sea level minus barometric), per airport, because pressure
   altitude is not height (it read ~350 ft low near London City on a high-pressure day). Readsb's GPS
   height is above the WGS84 ellipsoid; the geoid sits 45-52 m above it across the UK airports (GEOID_M).
+- GROUND (2026-10-26): the cone is drawn from the height above the GROUND UNDER THE AIRCRAFT (OS Terrain 50
+  on this grid: scripts/build_ground_grid.py, which says why under the aircraft and not under each cell),
+  never above sea level, which drew every cone too wide on high ground (a median 77-116 m in Manchester,
+  West Yorkshire and the West Midlands). The 7,000 ft ceiling stays a height above SEA LEVEL: CAP 1498's
+  word is "altitude". Each day file names the ground it was counted on, and the averaging steps refuse a
+  mix (one_definition()).
 - STEPS: each segment between two airborne track points under SEGMENT_GAP_S apart is walked in STEP_M
   steps (25 m steps gave the prototype identical counts), height interpolated along it.
 - ONE PASS, ONE OVERFLIGHT: an aircraft's low flying is split into PASSES wherever it stops contributing
@@ -46,9 +52,10 @@ WHAT A DAY FILE HOLDS, AND WHAT IT DOES NOT DECIDE
   westerly or easterly runway ends, else 'mixed'; chosen 2026-10-20), so the rule can change with no recount.
 
 LIMITS, stated so a figure is read correctly
-- GROUND ELEVATION is ignored: the height used is above sea level, not above the observer, so on high
-  ground the cone is drawn too wide and the count errs HIGH (London's 5-50 m changes the 48.5 degree
-  radius by under 45 m; Leeds Bradford's runway is ~200 m up, where it matters).
+- THE GROUND IS THE AIRCRAFT'S, not the cell's: where the ground under a cell differs from the ground
+  under the aircraft, its cone is 0.885 x that difference too wide or too narrow at 48.5 degrees. Measured
+  at the postcodes under planes (2026-10-26), a median 3-14 m of difference at 500 m and 8-33 m at 2 km, in
+  either direction, so it cancels over many passes; before, the whole height of the ground, in one.
 - An aircraft that stays low and returns over the same cell within one pass (circuits, orbits) counts
   once for that pass; the prototype counted each return more than five minutes apart.
 - UK only: the grid is the British National Grid. The US needs its own grid (and US extracts are read
@@ -138,6 +145,57 @@ _TO_BNG = pyproj.Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True)
 def cone_radius_m(height_m, angle):
     """How far from the point below it an aircraft at `height_m` is still above `angle` degrees."""
     return np.asarray(height_m, dtype=float) / math.tan(math.radians(angle))
+
+
+GROUND_GRID = ROOT / 'data' / 'terrain50' / 'gb-ground-100m.npy'
+_GROUND = None
+
+
+class Ground:
+    """The ground's height above sea level in metres at BNG points: `height(x, y)` on arrays, and the label
+    every day file records as its definition's 'ground'."""
+
+    def __init__(self, height, label):
+        self.height, self.label = height, label
+
+    def at(self, x, y):
+        return np.asarray(self.height(np.asarray(x, float), np.asarray(y, float)), float)
+
+
+def load_ground(path=GROUND_GRID):
+    """OS Terrain 50 on this grid, read once (memory-mapped). Missing is an ERROR, never sea level: a count
+    from sea level is the one this replaced, and its day files must not pass as counted on the ground."""
+    global _GROUND
+    if path == GROUND_GRID and _GROUND is not None:
+        return _GROUND
+    if not path.exists():
+        raise SystemExit(f'{path} is missing: python -I scripts/build_ground_grid.py')
+    grid = np.load(path, mmap_mode='r')
+    release = json.loads(path.with_suffix('.json').read_text(encoding='utf-8'))['release']
+
+    def height(x, y):
+        j, i = np.floor(y / CELL_M).astype(np.int64), np.floor(x / CELL_M).astype(np.int64)
+        inside = (j >= 0) & (j < grid.shape[0]) & (i >= 0) & (i < grid.shape[1])
+        out = np.zeros(len(x))  # off the grid is open sea: sea level
+        out[inside] = grid[j[inside], i[inside]]
+        return out
+
+    loaded = Ground(height, f'OS Terrain 50 ({release}) under the aircraft, 100 m cell mean')
+    if path == GROUND_GRID:
+        _GROUND = loaded
+    return loaded
+
+
+def one_definition(metas):
+    """The definition every day file was counted under. Refuses a MIX: a recount stopped halfway leaves
+    files counted two ways, and averaging them would publish neither (2026-10-26, when the ground came in)."""
+    days = defaultdict(list)
+    for meta in metas:
+        days[json.dumps(meta.get('definition'), sort_keys=True)].append(meta['day'])
+    if len(days) > 1:
+        kinds = '; '.join(f'{len(d)} day(s) such as {min(d)} counted as {k}' for k, d in days.items())
+        raise SystemExit(f'the day files were counted under different definitions, so recount them: {kinds}')
+    return json.loads(next(iter(days))) if days else None
 
 
 def uk_airports():
@@ -263,9 +321,10 @@ def walk(pts, x, y, msl):
 
 
 def passes(steps):
-    """Keep the steps under the ceiling and number their passes: a new pass where the trace changes or
-    the aircraft has not contributed for over PASS_GAP_S."""
-    keep = (steps['h_ft'] < CEILING_FT) & (steps['h_ft'] > 0)
+    """Keep the steps under the ceiling (above sea level) and above the ground (`agl_ft`, the ground under
+    the step), and number their passes: a new pass where the trace changes or the aircraft has not
+    contributed for over PASS_GAP_S."""
+    keep = (steps['h_ft'] < CEILING_FT) & (steps['agl_ft'] > 0)
     out = {k: v[keep] for k, v in steps.items()}
     tr, t = out['trace'], out['t']
     new = np.ones(len(t), bool)
@@ -365,7 +424,7 @@ def count_cells(steps, airport, ncodes):
             cuts.append(int(b))
     cuts.append(len(steps['pass']))
     for angle in ANGLES:
-        r_all = cone_radius_m(steps['h_ft'] * FT_M, angle)
+        r_all = cone_radius_m(steps['agl_ft'] * FT_M, angle)  # above the ground, never sea level
         tot, per = [[], [], [], []], [[], [], [], []]
         for a, b in zip(cuts[:-1], cuts[1:], strict=True):
             s, j, i_lo, i_hi = cone_rows(steps['x'][a:b], steps['y'][a:b], r_all[a:b])
@@ -393,7 +452,7 @@ def lookup(runs, easting, northing, group=None):
 
 def observe(steps, easting, northing, angle):
     """Passes whose cone holds the exact point (not its cell's centre): the validation reading."""
-    r = cone_radius_m(steps['h_ft'] * FT_M, angle)
+    r = cone_radius_m(steps['agl_ft'] * FT_M, angle)
     inside = (steps['x'] - easting) ** 2 + (steps['y'] - northing) ** 2 < r ** 2
     return len(np.unique(steps['pass'][inside]))
 
@@ -441,24 +500,29 @@ def hourly(by_trace, day, codes, circuits=frozenset()):
     return out
 
 
-def count_traces(traces, airports, by_trace, observers=()):
+def count_traces(traces, airports, by_trace, observers=(), ground=None):
     """The cell counts and their meta for one day's UK traces (each trace's points all in the UK)."""
-    return count_points(flatten(traces), airports, by_trace, observers)
+    return count_points(flatten(traces), airports, by_trace, observers, ground)
 
 
-def count_points(pts, airports, by_trace, observers=()):
-    """count_traces() on points already flatten()ed, so a caller can free the traces first."""
+def count_points(pts, airports, by_trace, observers=(), ground=None):
+    """count_traces() on points already flatten()ed, so a caller can free the traces first. `ground` is a
+    Ground; None reads OS Terrain 50 (load_ground()), and only tests pass their own."""
+    ground = ground or load_ground()
     codes = sorted(airports)
     centres = {c: _TO_BNG.transform(airports[c]['centre'][1], airports[c]['centre'][0]) for c in codes}
     x, y = _TO_BNG.transform(pts['lon'], pts['lat'])
     x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
     near = nearest_airport(x, y, codes, centres)
     msl, heights = msl_heights(pts, near, codes)
-    steps = passes(walk(pts, x, y, msl))
+    walked = walk(pts, x, y, msl)
+    walked['agl_ft'] = walked['h_ft'] - ground.at(walked['x'], walked['y']) / FT_M
+    steps = passes(walked)
     airport = attribute(steps, by_trace, codes)
     cells = count_cells(steps, airport, len(codes))
     seen = {f'{e},{n}': {str(a): observe(steps, e, n, a) for a in ANGLES} for e, n in observers}
     meta = {
+        'ground': ground.label,
         'codes': codes + [OTHER], 'heights': heights, 'geoid_m': {c: GEOID_M[c] for c in codes},
         'points': int(len(msl)), 'steps': int(len(steps['t'])), 'passes': int(steps['pass'][-1] + 1) if len(
             steps['pass']) else 0, 'observed': seen,
@@ -502,7 +566,8 @@ def count_day(extract_path, observers=()):
         'feed': feed, 'movements': hourly(by_trace, day, sorted(airports), circuits), 'fields': fields,
         'definition': {'source': 'CAA CAP 1498 (Feb 2017)', 'angles_deg': list(ANGLES), 'ceiling_ft': CEILING_FT,
                        'cell_m': CELL_M, 'step_m': STEP_M, 'pass_gap_s': PASS_GAP_S,
-                       'segment_gap_s': SEGMENT_GAP_S, 'counts_at': 'cell centre', 'ground': 'sea level'},
+                       'segment_gap_s': SEGMENT_GAP_S, 'counts_at': 'cell centre', 'ground': meta.pop('ground'),
+                       'ceiling_above': 'sea level'},
         'generator': 'scripts/adsb_overflights.py', 'licence': 'derived from adsb.lol (ODbL 1.0); unpublished',
     })
     return cells, meta
@@ -675,6 +740,7 @@ def average(day_files, classify=None, batch_days=BATCH_DAYS):
         metas[dt.date.fromisoformat(meta['day'])] = (meta, path)
     if len(metas) != len(day_files):
         raise SystemExit('the same day appears twice among the day files')
+    one_definition(m for m, _ in metas.values())
     gaps = mv.feed_gaps({d: m['feed']['uk'] for d, (m, _) in metas.items()}, 'uk')
     kept = sorted(d for d in metas if not gaps[d])
     bearings = {code: {des: brg for des, (_, brg) in ap['runways'].items()} for code, ap in uk_airports().items()}

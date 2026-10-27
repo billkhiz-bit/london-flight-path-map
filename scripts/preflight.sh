@@ -110,6 +110,9 @@ check() {
   else
     printf 'FAIL\n'
     FAILED="$FAILED|$name"
+    # The check's own FAIL lines first, then its last 25: a long check's failing line can sit above the last 25
+    # (2026-10-26: "WCAG source scan" printed FAIL over a tail of nothing but OKs, so the page that failed was lost).
+    printf '%s\n' "$out" | grep -E '(^|[^A-Za-z])FAIL([^A-Za-z]|$)' | head -10 | sed 's/^/    ! /'
     printf '%s\n' "$out" | tail -25 | sed 's/^/      /'
   fi
 }

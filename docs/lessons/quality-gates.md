@@ -69,3 +69,19 @@ that waits for something only the SOURCE has (the front page's `#ans-example`, b
 preflight red until the deploy, and a gate that is red by deploy order teaches people to ignore it. So such a wait
 applies only where the page carries the element (`settled` in `tests/e2e/accessibility.spec.js`): it passes on the
 live page before the deploy and waits for the example after it.
+
+## A failing check's own FAIL line must be shown (2026-10-26)
+
+Preflight printed only the LAST 25 lines of a failing check. `WCAG source scan` (`tests/a11y-source.mjs`, ~70
+lines) failed inside the planes-overhead preflight with a tail of nothing but OKs: the failing page sat in the desktop
+or phone pass, above the tail, and was lost. Four runs of the scan alone then passed (137 s each). The one clue was
+the live-API stub count: 4 lookups intercepted, where every passing run counts 6 (the front page's example makes 2 per
+viewport), so in one pass the front page's example never ran and the scan's 30 s wait (`renderedWhenFn`) failed it.
+The planes block cannot cause that: `render()` shows the answer first and fills `#ans-planes` unawaited. Unexplained,
+so recorded as a flake RATE (1 in 5 at the time), not a pass. `check()` now prints the check's own FAIL lines first
+(`    ! ...`), then the tail, so the next one names its page; proven on a stand-in whose FAIL line sat 40 lines up.
+
+Same run: `tests/approach-strip.mjs` asserted "all 8 section links are pills" and went red when How it works gained
+a ninth section (planes overhead). A count of 8 would also have PASSED a ninth section added without its link (a
+missing pill keeps the count at 8). It now asserts the SET: one pill for every `section[id]` after the strip, in page
+order; proven red by removing the planes pill.

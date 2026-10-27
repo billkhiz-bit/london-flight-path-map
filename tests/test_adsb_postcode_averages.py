@@ -50,7 +50,7 @@ def _hours(n):
 
 
 def _day_file(tmp_path, day, lhr_runway='27L', lhr_moves=100, mme_moves=50, lhr_passes=7, outage=False,
-              lhr_circuits=0, no_field=()):
+              lhr_circuits=0, no_field=(), definition=None):
     """One synthetic day file: LHR lands `lhr_moves` on one runway end (`lhr_circuits` of them circuits) and
     puts `lhr_passes` overflights on CELL; Teesside lands `mme_moves` and puts 3 there, OTHER traffic 11, so the
     cell's all-traffic count is lhr_passes + 14. An airport in `no_field` had no field level that day."""
@@ -68,6 +68,8 @@ def _day_file(tmp_path, day, lhr_runway='27L', lhr_moves=100, mme_moves=50, lhr_
         movements[code] = {'landing': {}, 'take-off': {}, 'circuits': {'landing': {}, 'take-off': {}}}
     meta = {'day': day, 'codes': CODES + [ao.OTHER], 'feed': {'uk': feed, 'us': feed}, 'movements': movements,
             'fields': fields}
+    if definition is not None:
+        meta['definition'] = definition
     j, i = CELL
     rows = [[CODES.index('LHR'), j, i, i, lhr_passes], [CODES.index('MME'), j, i, i, 3], [len(CODES), j, i, i, 11]]
     by_airport = np.array(rows, np.int32)
@@ -226,6 +228,15 @@ def test_a_name_too_long_for_its_column_is_refused_not_cut(tmp_path):
         pa.build(_february(tmp_path), {'202602': {'LHR': 2800}}, _postcodes(city='x' * 17), min_months=1)
 
 
+def test_a_postcode_whose_cells_around_would_leave_the_grid_is_refused(tmp_path):
+    # 2026-10-27 review: only the postcode's own cell was checked, so a ring cell past the grid's edge keyed into
+    # the next row (~819 km away) or wrapped to the array's end. No real postcode is within 70 cells of an edge;
+    # this holds it so.
+    on_the_edge = [('TW9 3PZ', 'E09000027', 'london', 50.0, N0 - 21, 1)]  # easting 50 m: column 0
+    with pytest.raises(SystemExit, match='off the British National Grid'):
+        pa.build(_february(tmp_path), {'202602': {'LHR': 2800}}, on_the_edge, min_months=1)
+
+
 # ---------------------------------------------------------------- reading the runs at a cell
 
 
@@ -269,3 +280,31 @@ def test_postcodes_are_live_british_and_at_ons_grid_reference(tmp_path):
     two.write_text(NSPL_HEADER.replace('ctry27cd', 'lad26cd') + '\n' + rows[0] + '\n', encoding='utf-8')
     with pytest.raises(SystemExit):
         pa.covered_postcodes({'E09000027': ('london', 'x')}, two)  # two LAD columns: stop, never guess
+
+
+def test_day_files_counted_two_ways_are_refused(tmp_path):
+    # 2026-10-26: the ground came into the counter, so a recount stopped halfway leaves files counted on sea
+    # level beside files counted on the ground. Averaged together they would be neither; read_metas refuses.
+    sea, terrain = {'ground': 'sea level'}, {'ground': 'OS Terrain 50 (20260602) under the aircraft'}
+    files = [_day_file(tmp_path, '2026-02-01', definition=sea), _day_file(tmp_path, '2026-02-02', definition=terrain)]
+    with pytest.raises(SystemExit, match='different definitions'):
+        pa.read_metas(files)
+    files[0] = _day_file(tmp_path, '2026-02-01', definition=terrain)
+    assert len(pa.read_metas(files)) == 2
+
+
+def test_the_cells_around_a_postcode_give_its_range(tmp_path):
+    # 2026-10-26: on a cone's edge one cell reads all-or-nothing, so each postcode carries the least and most of
+    # its cell and the eight around it. The traffic is on CELL alone: a postcode in CELL reads 7 with a range of
+    # 0 to 7, one in the next cell east reads 0 with a range of 0 to 7, and one two cells away 0 to 0.
+    files = _february(tmp_path)
+    beside = ('TW9 3PY', 'E09000027', 'london', E0 + 100, N0, 1)
+    apart = ('TW9 3PX', 'E09000027', 'london', E0 + 200, N0, 1)
+    arrays, meta = pa.build(files, {'202602': {'LHR': 2800, 'MME': 9000}}, [*_postcodes(), beside, apart],
+                            min_months=1)
+    mean, lo, hi = (arrays[k][:, 0, W, 0].tolist() for k in ('mean', 'mean_lo', 'mean_hi'))
+    assert mean == pytest.approx([7, 0, 0, 0])
+    assert lo == pytest.approx([0, 0, 0, 0])
+    assert hi == pytest.approx([7, 0, 7, 0])
+    assert np.isnan(arrays['mean_lo'][:, 0, [E, M], :]).all() and np.isnan(arrays['mean_hi'][:, 0, [E, M], :]).all()
+    assert meta['cells'] == 4 and meta['cells_read'] > meta['cells']

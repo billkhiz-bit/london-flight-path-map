@@ -15,6 +15,7 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
+import { districtOf, planesModel, planesNodes } from '/js/planes.mjs';
 import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
@@ -1415,6 +1416,27 @@ let airSeq = 0;
 const loadSensors = () => (sensorsLoad ??= d3.json('/data/breathe-london-sensors.json').catch(() => null));
 const loadMonitors = () => (monitorsLoad ??= d3.json('/data/aurn-sites.json').catch(() => null));
 
+// Planes overhead (2026-10-26): one file per postcode district (scripts/build_planes_overhead.py), fetched only
+// when airports.json lists the district, so a postcode outside the covered councils costs no request and no 404.
+// Each file is fetched once and kept; any failure hides the block, never a guess. A FAILED fetch is not kept
+// (2026-10-27 review): one blip on a phone held null for the session and hid the block from every later search,
+// so it is retried on the next search, as bayAreaPlace() does.
+let planesInfoLoad = null;
+const planesFiles = new Map();
+let planesSeq = 0;
+const loadPlanesInfo = () => (planesInfoLoad ??= d3.json('/data/planes/airports.json')
+  .catch(() => { planesInfoLoad = null; return null; }));
+async function loadPlanes(postcode) {
+  const info = await loadPlanesInfo();
+  const district = districtOf(postcode);
+  if (!info?.districts?.includes(district)) return [null, info];
+  if (!planesFiles.has(district)) {
+    planesFiles.set(district, d3.json(`/data/planes/${district}.json`)
+      .catch(() => { planesFiles.delete(district); return null; }));
+  }
+  return [await planesFiles.get(district), info];
+}
+
 function render(postcode, district, city, e, lat, lon) {
   const title = byId('ans-title'), where = byId('ans-where');
   if (title) title.textContent = postcode;
@@ -1451,6 +1473,29 @@ function render(postcode, district, city, e, lat, lon) {
   }
   const rowsEl = byId('ans-rows');
   if (rowsEl) rowsEl.innerHTML = rows.join('');
+  const planes = byId('ans-planes');
+  if (planes) {
+    planes.hidden = true;
+    planes.replaceChildren();
+    // As for the station and the air: a later search owns the block. Not tied to the map's cities: the files
+    // cover every council the score covers (Nottingham's are under East Midlands' flights), and say who is in.
+    const seq = ++planesSeq;
+    loadPlanes(postcode).then(([file, info]) => {
+      if (seq !== planesSeq) return;
+      const model = planesModel(file, info, postcode);
+      if (!model) return;
+      planes.append(...planesNodes(model));
+      planes.hidden = false;
+    }).catch((err) => {
+      // A file the model cannot read (a field missing after a part-deployed roll) hides the block, as a failed
+      // fetch does, but is said in the console so the page tests still see it: hidden here, never silent there.
+      // An earlier search's failure must not clear a later one's block.
+      console.error('Planes overhead hidden: its files could not be read.', err);
+      if (seq !== planesSeq) return;
+      planes.hidden = true;
+      planes.replaceChildren();
+    });
+  }
 
   const routes = byId('ans-routes');
   if (routes) routes.textContent = city && state.proc ? routesText(state.proc, lat, lon) : '';

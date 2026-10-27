@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-10-26 (evening) - Planes overhead, for every postcode we cover
+
+- **How many planes pass overhead**, in the answer for a postcode: on an average day of each kind, January to
+  August 2026, from each of ten airports whose tracking matches the CAA's own monthly totals (Heathrow, Gatwick,
+  London City, Luton, Stansted, Manchester, Birmingham, East Midlands, Bristol and Leeds Bradford). Three figures for
+  each airport, because planes land and take off into the wind: on days it flies west, on days it flies east, and
+  on days it uses both. Kew, under Heathrow's arrivals, gets about 310 on a day Heathrow flies west and about 4 on a
+  day it flies east.
+- **Overhead** means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA's definition of
+  an overflight, counted from community flight tracking (adsb.lol) and measured from the ground under each plane.
+- **On the edge of a flight path**, where a few metres decide whether a plane counts as overhead, the answer gives the
+  fewest and the most within 100 metres instead of one figure. Where flying we cannot count (airfields, helicopters,
+  airports whose tracking does not match official figures) is a large part of what passes over, the answer says so.
+- **How it is counted**, and what it leaves out, is a new section of How it works. The counts are open data under the
+  Open Database License (ODbL).
+
 ## 2026-10-26 - See a plane come in, on How it works
 
 - **A picture you can fly**, high on How it works: a slice of London from Westminster to Heathrow, seen from the

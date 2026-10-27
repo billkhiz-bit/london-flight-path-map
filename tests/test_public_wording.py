@@ -333,8 +333,11 @@ OGL_ALLOWED = [
 # Shares are of postcodes (or US residents), never of addresses or homes.
 ADDRESS_SHARE = r'\d+(?:\.\d+)?\s?%\s+of\s+(?:the\s+|its\s+|their\s+)?(?:addresses|homes|properties|households|houses)\b'
 
-# How often planes pass is said only for airports that pass coverage_verdict(); none is published yet. When the
-# per-postcode averages go on a page, this rule learns that page and its airports.
+# How often planes pass is said only for airports that pass coverage_verdict(). Since 2026-10-26 (branch
+# planes-overhead) it is said in ONE place: js/planes.mjs writes the front page's "Planes overhead" block from
+# data/planes/*.json, whose airports can only be the year rule's passers (scripts/build_planes_overhead.py refuses
+# any other; tests/test_build_planes_overhead.py and tests/planes-model.mjs hold both ends). Its strings carry no
+# figure, so these patterns still hold every page: a figure typed into a page or a module stays a defect.
 FREQUENCY = [
     (r'\b\d+(?:\.\d+)?\s+(?:planes|flights|aircraft|movements|overflights|arrivals|departures)'
      r'\s+(?:a|per|an|each)\s+(?:day|hour|week|month|year)\b'),

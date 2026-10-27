@@ -341,6 +341,7 @@
           <li><a href="#example">A score, taken apart</a></li>
           <li><a href="#scores">The five scores</a></li>
           <li><a href="#data">Official data, and our own work</a></li>
+          <li><a href="#planes-overhead">How the planes are counted</a></li>
           <li><a href="#overall">The overall score</a></li>
           <li><a href="#limits">What it can't tell you</a></li>
           <li><a href="#credits">Where the data comes from</a></li>
@@ -482,7 +483,7 @@ enders\strip_v7_site\HANDOFF.md); its
 
       <section id="data" aria-labelledby="data-h">
         <h2 id="data-h">Official data, and our own work</h2>
-        <p class="read">Almost every number comes straight from a public body's own published data. Quiet Skies is the exception: we work it out, and every answer says how.</p>
+        <p class="read">Almost every number comes straight from a public body's own published data. Quiet Skies and planes overhead are the exceptions: we work them out, and every answer says how.</p>
         <div class="two">
           <div class="est">
             <h3>Our own work: Quiet Skies</h3>
@@ -494,6 +495,19 @@ enders\strip_v7_site\HANDOFF.md); its
           </div>
         </div>
         <p class="read quiet">Some official data is itself a model, not a reading at your door. DEFRA's air quality and noise maps and the Environment Agency's flood map are worked out by those bodies from measurements and computer models.</p>
+      </section>
+
+      <section id="planes-overhead" aria-labelledby="planes-overhead-h">
+        <h2 id="planes-overhead-h">How the planes are counted</h2>
+        <p class="read">The answer for a postcode says how many planes pass overhead on an average day, in three figures: on days the airport flies west, on days it flies east, and on days it uses both. Planes land and take off into the wind, so the weather decides which way an airport flies, and in many places that decides the day: under Heathrow's arrivals in Kew, hundreds on a day it flies west and a handful on a day it flies east. One average of the two would be true on no day at all.</p>
+        <ul class="plain read">
+          <li><b>Overhead</b> means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft: the Civil Aviation Authority's definition of an overflight (CAP 1498). How high a plane is counts from the ground beneath it, not from sea level.</li>
+          <li><b>The planes</b> are the positions aircraft broadcast as they fly, gathered by a community of volunteer receivers (adsb.lol). We count every day since January 2026.</li>
+          <li><b>Checked every month.</b> For each airport, the take-offs and landings we count must come within 5% of the CAA's own monthly figure. An airport that misses in any month is not shown at all, rather than shown with a gap.</li>
+          <li><b>Which way.</b> A day counts as one way when 80% of the airport's flights used that way; any other day counts as both ways.</li>
+          <li><b>Where.</b> Each postcode is read where the Office for National Statistics places it, on a grid of 100 metre squares. On the edge of a flight path, a few metres decide whether a plane counts as overhead, so where the squares around a postcode differ widely, the answer gives the fewest and the most within 100 metres.</li>
+        </ul>
+        <p class="read quiet">What the count leaves out: aircraft that do not broadcast their position (some small and military aircraft), and flying from airfields, heliports and airports we cannot check against official figures. Where that flying is a large part of what passes over, the answer says so, because few planes from the airports we count does not mean a quiet sky. It counts planes, not noise: how loud each one is depends on its size and height.</p>
       </section>
 
       <section id="overall" aria-labelledby="overall-h">
@@ -523,7 +537,7 @@ enders\strip_v7_site\HANDOFF.md); its
       <section id="limits" aria-labelledby="limits-h">
         <h2 id="limits-h">What it can't tell you</h2>
         <ul class="plain read">
-          <li>How often planes fly over. The flight routes show where aircraft fly, not how many of them do.</li>
+          <li>How often planes fly over, away from the airports we count. There, the flight routes show where aircraft fly, not how many of them do.</li>
           <li>Anything about one particular home, such as its condition or its value.</li>
           <li>Which floor a home is on. The figures are for the postcode near ground level. Road noise and traffic pollution can be quite different on an upper floor; aircraft noise changes little from floor to floor.</li>
           <li>Whether a place is right for you. It is information to help you look, not advice.</li>
@@ -544,6 +558,7 @@ enders\strip_v7_site\HANDOFF.md); its
           <li><b>Flood risk:</b> Environment Agency, Risk of Flooding from Rivers and Sea. Open Government Licence v3.0.</li>
           <li><b>Postcodes:</b> Office for National Statistics, National Statistics Postcode Lookup, under the Open Government Licence v3.0. Contains OS data &copy; Crown copyright and database right; Royal Mail data &copy; Royal Mail copyright and database right; National Statistics data &copy; Crown copyright and database right.</li>
           <li><b>Flight routes:</b> UK Aeronautical Information Publication (NATS), drawn by Sky Score for the aircraft noise estimate. Public, but not openly licensed, and not for navigation.</li>
+          <li><b>Planes overhead:</b> aircraft positions from adsb.lol, under the Open Database License (ODbL) 1.0, so the counts we make from them are under the ODbL too. Weather at each airport from the Iowa Environmental Mesonet (Iowa State University). Ground heights from OS Terrain 50: Contains OS data &copy; Crown copyright and database right, Open Government Licence v3.0. Checked against the Civil Aviation Authority's monthly airport figures.</li>
         </ul>
         <p class="read quiet">Each licence covers its own dataset, not Sky Score as a whole.</p>
       </section>

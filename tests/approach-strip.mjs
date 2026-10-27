@@ -5,7 +5,8 @@
 // under a plane as a range input moves, loading its tiles as they come into view. The page-wide gates (wording,
 // a11y source scan, the upload check) read the page; none of them moves the slider. This does:
 //   - the page never scrolls sideways at 390 or 1366 wide (the track is 10,320 px wide inside its stage);
-//   - the links to the page's sections sit under the opening words, before the strip, as pills;
+//   - the links to the page's sections sit under the opening words, before the strip, as pills: one for every
+//     section after the strip, in page order (a SET, not a count: a ninth section broke a count of 8, 2026-10-26);
 //   - the slider moves the plane, and says where it is to a screen reader (aria-valuetext changes with it);
 //   - "Go to Hounslow" puts the plane over Hounslow, from the keyboard;
 //   - reduced motion: the section is .still, and nothing animates;
@@ -70,13 +71,17 @@ for (const [w, h, motion] of [[1366, 900, 'no-preference'], [390, 844, 'no-prefe
       afterNav: lead?.nextElementSibling?.nextElementSibling === sec,
       pills: [...document.querySelectorAll('nav.contents a')].map((a) => [a.getAttribute('href'), !!document.getElementById(a.getAttribute('href').slice(1)),
         getComputedStyle(a).borderRadius !== '0px']),
+      // Every section but the strip itself, which comes straight after the pills and needs none.
+      sections: [...document.querySelectorAll('section[id]:not(.approach)')].map((s) => `#${s.id}`),
       still: sec?.classList.contains('still'),
     };
   });
   ok(layout.overflow <= 0, `${tag}: the page does not scroll sideways`, `${layout.overflow}px too wide`);
   ok(layout.navAfterLead && layout.afterNav, `${tag}: the opening paragraph, then the links to the page's sections, then the strip`);
-  ok(layout.pills.length === 8 && layout.pills.every(([, there, pill]) => there && pill),
-    `${tag}: all 8 section links are pills, each to a section on the page`, JSON.stringify(layout.pills));
+  const linked = layout.pills.map(([href]) => href);
+  ok(linked.length > 0 && linked.join() === layout.sections.join() && layout.pills.every(([, there, pill]) => there && pill),
+    `${tag}: a pill for every section after the strip, in page order (${linked.length}), each to a section on the page`,
+    JSON.stringify({ linked, sections: layout.sections, pills: layout.pills }));
   ok(layout.still === (motion === 'reduce'), `${tag}: reduced motion ${motion === 'reduce' ? 'stills' : 'does not still'} the strip`);
   // Counted on arrival, before the plane is moved: flown end to end, every tile rightly comes into view.
   const onArrival = tiles.size;

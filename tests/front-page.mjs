@@ -109,6 +109,7 @@ const quietAndClear = (r) => r.quiet !== '' && Number(r.quiet) >= 10 && crossesO
 const GEO = {
   TW93PZ: { postcode: 'TW9 3PZ', latitude: 51.4713, longitude: -0.2894, admin_district: 'Richmond upon Thames' },
   NW17PJ: { postcode: 'NW1 7PJ', latitude: 51.539, longitude: -0.1426, admin_district: 'Camden' },
+  TW33QL: { postcode: 'TW3 3QL', latitude: 51.462735, longitude: -0.372535, admin_district: 'Hounslow' },
   EX11HS: { postcode: 'EX1 1HS', latitude: 50.722209, longitude: -3.530574, admin_district: 'Exeter' },
   M225RX: { postcode: 'M22 5RX', latitude: 53.3677, longitude: -2.2644, admin_district: 'Manchester' },
   // CONSTRUCTED, not a real postcode: a point 5 km out on Gatwick 26L's extended centreline,
@@ -123,6 +124,8 @@ const ENV = {
   '51.539': { environment: { roadNoiseLdenDb: 74.7, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 23.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.5, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 9.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   '50.722209': { environment: { no2AnnualMeanUgm3: 8.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 5.6, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 10.0, aircraftQuietCoverage: 'outside' }, notices: [] },
   '51.16029': { environment: { no2AnnualMeanUgm3: 9.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 6.0, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 6.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
+  // Captured 2026-10-27 (section 1z's planes retry).
+  '51.462735': { environment: { roadNoiseLdenDb: 54.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 19.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.9, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 61.8, aircraftQuiet: 0.7, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
   '53.3677': { environment: { roadNoiseLdenDb: 60.2, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 14.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 7.2, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 64.0, aircraftQuiet: 2.0, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
 };
 
@@ -2242,6 +2245,9 @@ const makeReport = async (pc) => {
   });
   await ep.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
   ep.on('pageerror', (e) => errors.push(String(e)));
+  // The planes block hides itself when its files cannot be read, and says so in the console: a fault there is
+  // still a failure here (home-engine.mjs, 2026-10-27 review).
+  ep.on('console', (m) => { if (m.type() === 'error' && m.text().startsWith('Planes overhead hidden')) errors.push(m.text()); });
   const shown = () => ep.waitForFunction(() => !document.getElementById('ans-example')?.hidden, null, { timeout: 10000 }).then(() => true, () => false);
   const look = () => ep.evaluate(() => ({
     label: !document.getElementById('ans-example').hidden && document.getElementById('answer').classList.contains('is-open'),
@@ -2254,12 +2260,64 @@ const makeReport = async (pc) => {
     counted: window.__gc.slice(),
   }));
 
+  // PLANES OVERHEAD (2026-10-26): the district files are a gitignored build (scripts/build_planes_overhead.py),
+  // so they are stubbed here in their written shape: TW9 is listed and holds Kew; NW1 is not listed, so a
+  // search there must fetch no file and show no block.
+  const planesAsked = [];
+  const PLANES = {
+    'airports.json': {
+      classes: ['westerly', 'easterly', 'mixed'], districts: ['TW3', 'TW9'], bar_full: 400,
+      definition: 'Overhead means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA\'s definition of an overflight (CAP 1498).',
+      direction_rule: 'A day counts as one way when 80% of its flights used that way.',
+      airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } },
+      credits: ['Flight tracks: adsb.lol (ODbL 1.0)'],
+    },
+    'TW9.json': { district: 'TW9', postcodes: { 'TW9 3PZ': { LHR: [310, 4, 168] } }, none: [], approx: [], other: [] },
+    'TW3.json': { district: 'TW3', postcodes: { 'TW3 3QL': { LHR: [[7, 339], 0, 3] } }, none: [], approx: [], other: [] },
+  };
+  const planesFailOnce = new Set(['TW3.json']);
+  await ep.route('**/data/planes/*.json', (route) => {
+    const name = new URL(route.request().url()).pathname.split('/').pop();
+    planesAsked.push(name);
+    if (planesFailOnce.delete(name)) return route.fulfill({ status: 503, body: 'try again' });
+    return PLANES[name]
+      ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PLANES[name]) })
+      : route.fulfill({ status: 404, body: 'not found' });
+  });
+  const planesBlock = () => ep.evaluate(() => {
+    const b = document.getElementById('ans-planes');
+    return { hidden: b.hidden, head: b.querySelector('h3')?.textContent, rows: [...b.querySelectorAll('.row')].map((r) => r.textContent),
+      link: b.querySelector('.planes-how a')?.getAttribute('href'), barsHidden: [...b.querySelectorAll('.bar')].every((x) => x.getAttribute('aria-hidden') === 'true') };
+  });
+
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
   const first = await look();
   ok(first.label && first.title === 'Example: TW9 3PZ' && first.address === '/' && first.status === '' && first.covers && !first.intro && first.box === '' && first.counted.length === 0,
     'answer first: a plain visit opens on the TW9 3PZ answer, labelled as an example, with the address, the live region, the box and the counts untouched and the coverage line kept',
     JSON.stringify(first));
+  await ep.waitForFunction(() => !document.getElementById('ans-planes').hidden, null, { timeout: 5000 }).catch(() => {});
+  const kew = await planesBlock();
+  ok(!kew.hidden && kew.head === 'Planes overhead'
+    && JSON.stringify(kew.rows) === JSON.stringify(['Flying west56% of days310 a day', 'Both ways15% of days168 a day', 'Flying east29% of days4 a day'])
+    && kew.link === '/how-it-works/#planes-overhead' && kew.barsHidden,
+    'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, bars hidden from screen readers', JSON.stringify(kew));
+  // ...and no figure is cut off on a phone, the longest kinds included: a range on a cone's edge and "under 1" (the
+  // preview of 26 Oct showed "1 to 316 a" and "under 1 a d" in the 84 px column phones give the rows above).
+  await ep.setViewportSize({ width: 390, height: 844 });
+  const clipped = await ep.evaluate(async () => {
+    const { planesModel, planesNodes } = await import('/js/planes.mjs');
+    const info = { classes: ['westerly', 'easterly', 'mixed'], bar_full: 400, definition: 'd', direction_rule: 'r', credits: [],
+      airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } } };
+    const file = { postcodes: { 'TW3 3QL': { LHR: [[1, 316], '<1', ['<1', 191]] } }, none: [], approx: [], other: [] };
+    const box = document.getElementById('ans-planes'), card = document.getElementById('answer').getBoundingClientRect();
+    box.replaceChildren(...planesNodes(planesModel(file, info, 'TW3 3QL', { LHR: 'Heathrow' })));
+    box.hidden = false;
+    return [...box.querySelectorAll('.row .val')].filter((v) => v.scrollWidth > v.clientWidth + 1 || v.getBoundingClientRect().right > card.right + 1)
+      .map((v) => v.textContent);
+  });
+  ok(clipped.length === 0, 'planes overhead: no figure is cut off on a phone, "1 to 316 a day" and "under 1 to 191 a day" included', clipped.join(' | '));
+  await ep.setViewportSize({ width: 1366, height: 820 });
 
   await ep.fill('#pc', 'NW1 7PJ');
   await ep.press('#pc', 'Enter');
@@ -2267,6 +2325,25 @@ const makeReport = async (pc) => {
   const own = await look();
   ok(own.title === 'NW1 7PJ' && !own.label && own.address.includes('postcode=NW1') && !own.covers,
     'answer first: the visitor\'s own search replaces the example, and is theirs (in the address, no example label)', JSON.stringify(own));
+  await ep.waitForTimeout(500);
+  const nw1 = await planesBlock();
+  ok(nw1.hidden && !planesAsked.includes('NW1.json'),
+    'planes overhead: a district airports.json does not list fetches no file and shows no block (never a guess)', JSON.stringify({ nw1, planesAsked }));
+
+  // A FAILED fetch is retried on the next search, never kept (2026-10-27 review): one blip used to hide the block
+  // for the rest of the visit. TW3's file answers 503 once: hidden, then the same search again fetches and shows it.
+  await ep.fill('#pc', 'TW3 3QL');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'TW3 3QL', null, { timeout: 10000 }).catch(() => {});
+  await ep.waitForTimeout(500);
+  const blip = { ...(await planesBlock()), seen: await look() };
+  await ep.fill('#pc', 'TW3 3QL');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForFunction(() => !document.getElementById('ans-planes').hidden, null, { timeout: 10000 }).catch(() => {});
+  const retried = await planesBlock();
+  ok(blip.seen.title === 'TW3 3QL' && blip.hidden && !retried.hidden && retried.rows.length === 3
+    && planesAsked.filter((n) => n === 'TW3.json').length === 2,
+    'planes overhead: a district file that fails once is fetched again on the next search, not kept as nothing', JSON.stringify({ blip, retried, planesAsked }));
 
   for (const [url, why] of [[`${BASE}?city=teesside`, 'a link to a city'], [`${BASE}#find`, 'a link to Find areas'], [`${BASE}?postcode=NW1+7PJ`, 'a link to a postcode']]) {
     await ep.goto(url, { waitUntil: 'domcontentloaded' });

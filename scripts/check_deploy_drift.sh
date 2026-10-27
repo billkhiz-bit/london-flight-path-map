@@ -283,11 +283,60 @@ fi
 printf '  area: %d of %d area pages match the live origin\n' \
   "$((AREA_TOTAL - AREA_DRIFTED))" "$AREA_TOTAL"
 
+# PLANES OVERHEAD (2026-10-27, a review of the go-live). data/planes/ is a
+# gitignored build (~990 files, rebuilt monthly from 21 GB of tracks), shipped
+# by its own `planes-deploy`, which web-deploy-all does not run: a full deploy
+# could ship js/planes.mjs over last month's files, or none, and no pass here
+# saw it. The TRACKED data/planes-manifest.json says what the build wrote
+# (bytes + md5), so this pass reads THAT, not data/planes/, and works on a
+# machine without the build. airports.json (the index every answer reads) plus
+# an even sample of 24 district files: all ~990 would cost a request each.
+PLANES_LIST=$(mktemp)
+PLANES_BODY=$(mktemp)
+python - > "$PLANES_LIST" <<'EOF'
+import json
+m = json.load(open('data/planes-manifest.json', encoding='utf-8'))
+names = sorted(n for n in m if n != 'airports.json')
+for n in ['airports.json'] + names[::max(1, len(names) // 24)][:24]:
+    print(n, m[n]['md5'])
+EOF
+PLANES_CHECKED=0
+PLANES_DRIFTED=0
+while read -r name want; do
+  [ -z "$name" ] && continue
+  if ! curl -fsS "$BASE/data/planes/$name" -o "$PLANES_BODY" 2>/dev/null; then
+    printf '  UNREACHABLE      data/planes/%s\n' "$name"
+    PLANES_DRIFTED=$((PLANES_DRIFTED + 1))
+    continue
+  fi
+  PLANES_CHECKED=$((PLANES_CHECKED + 1))
+  got=$(md5sum < "$PLANES_BODY" | cut -d' ' -f1)
+  if [ "$got" != "$want" ]; then
+    printf '  DRIFT            data/planes/%s\n' "$name"
+    PLANES_DRIFTED=$((PLANES_DRIFTED + 1))
+  fi
+done < "$PLANES_LIST"
+PLANES_LISTED=$(grep -c . "$PLANES_LIST" 2>/dev/null || true)
+rm -f "$PLANES_LIST" "$PLANES_BODY"
+# A floor, as everywhere here: an unreadable manifest must not pass as agreement.
+if [ "${PLANES_LISTED:-0}" -lt 25 ]; then
+  printf 'FAIL: listed only %s planes files from data/planes-manifest.json, expected 25\n' "${PLANES_LISTED:-0}"
+  printf '  (airports.json and 24 districts). The manifest is missing or unreadable.\n'
+  exit 1
+fi
+printf '  planes: %d of %d sampled files match data/planes-manifest.json at the live origin\n' \
+  "$((PLANES_LISTED - PLANES_DRIFTED))" "$PLANES_LISTED"
+
 DATA_FAILED=0
 if [ "$DATA_DRIFTED" -gt 0 ] || [ "$AREA_DRIFTED" -gt 0 ]; then
   printf '  %d data file(s) and %d area page(s) differ from the live origin.\n' \
     "$DATA_DRIFTED" "$AREA_DRIFTED"
   printf '  Run `make data-deploy` and/or re-upload area/ , then invalidate.\n'
+  DATA_FAILED=1
+fi
+if [ "$PLANES_DRIFTED" -gt 0 ]; then
+  printf '  %d planes file(s) differ from data/planes-manifest.json. Run\n' "$PLANES_DRIFTED"
+  printf '  `python scripts/make.py planes-deploy` (it refuses unless --check passes).\n'
   DATA_FAILED=1
 fi
 

@@ -69,6 +69,7 @@ help:
 	@echo "    area-deploy         Sync the 99 borough pages + area/index.html (rebuild them first)"
 	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
 	@echo "    open-data-deploy    Upload open-data/ (borough CSV + its page; rebuild with the area pages)"
+	@echo "    planes-deploy       Sync data/planes/ (planes overhead per district; --check first, gitignored build)"
 	@echo "    bay-area-deploy     Upload bay-area/ (the Bay Area flight-path page + its noise picture)"
 	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta + open data + bay area"
 	@echo ""
@@ -666,6 +667,26 @@ open-data-deploy:
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/open-data/*'
+
+.PHONY: planes-deploy
+planes-deploy:
+	# Planes overhead (2026-10-26): one file per postcode district plus
+	# airports.json, read by the front page's answer (js/planes.mjs). Built by
+	# scripts/build_planes_overhead.py --write into data/planes/, which is
+	# GITIGNORED (tens of MB, rebuilt each month from a gitignored file 21 GB of
+	# tracks made); its manifest, data/planes-manifest.json, is tracked. So this
+	# target refuses to upload unless --check says the files on disk are what the
+	# averages build, and the manifest with them. ODbL (adsb.lol): the credits
+	# ride in airports.json and on the page. The front page hides the block when
+	# a file is missing, so the order against home-deploy only decides when it shows.
+	python scripts/build_planes_overhead.py --check
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync data/planes/ \
+		s3://$(S3_BUCKET)/data/planes/ \
+		--content-type "application/json" --cache-control "no-cache" \
+		--delete --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/data/planes/*'
 
 .PHONY: bay-area-deploy
 bay-area-deploy:

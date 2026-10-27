@@ -3,8 +3,9 @@
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
 **Last reviewed:** 2026-10-26 - the approach strip LIVE on `/how-it-works/` (Bill's go; five rounds on its controls), the
-page's section links as pills; planes overhead built on branch `planes-overhead` (its work in a git stash while the
-strip shipped); previously 2026-10-25 - Bill's rulings (planes overhead by runway direction, heights by floor space, the
+page's section links as pills; planes overhead BUILT on branch `planes-overhead` (Bill: static files, front page
+first, site-only), the cone now on the ground (OS Terrain 50), two independent checks passed, ranges on a cone's
+edge (Bill's call); previously 2026-10-25 - Bill's rulings (planes overhead by runway direction, heights by floor space, the
 checks handout archived, the assistant cut to one line in the talk handout); DEFRA's 2025 maps published but
 unreachable; previously 2026-10-24 - About page reworked and live; Luton merged (ten airports pass the year rule,
 nothing published); the wording gate; Thursday's merges rehearsed; previously 2026-10-22 - California's flood
@@ -28,8 +29,20 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > under the finger, a pull that lands the plane at the window's edge, and London never sliding with the hand.
 > `tests/approach-strip.mjs` (107 checks) is in preflight. Story: `docs/lessons/front-page-and-site.md`. The Blender
 > repo's `strip_page.py` must take these changes before any `strip_v8` (NOW.md's Blender line lists them).
-> **Planes overhead** (branch `planes-overhead`): its uncommitted work is in a GIT STASH (memory: START HERE 26 Oct);
-> the ground recount is done and swapped in; next, the averages with +-100 m ranges, the thresholds, the preview.
+>
+> **Planes overhead, LIVE 26 Oct (evening; Bill: "go live now", after the preview of 12 real answers).** Bill's calls: static per-district files on the
+> site, the front page's answer first, site-only (an ODbL download beside `/open-data/` after a few weeks live); a
+> RANGE on a cone's edge (Hounslow TW3 3QL read 339 then 7 for 21 m of ground). Asked "is this accurate": the cone
+> now stands on the ground under the aircraft (OS Terrain 50; it had been drawn from sea level, too wide on every
+> hill), and two independent checks PASSED: Heathrow's own monthly westerly share (within 3 points in 8 of 9
+> months) and the centreline check (overflights 6 km out = landings on that runway, 0.994-1.033 at every
+> well-separated runway end of all ten airports). Story: `docs/lessons/in-progress-measurements.md`. NEXT: the
+> 289-day recount on the ground is DONE and swapped in (26 Oct), so: rebuild the averages
+> (now with +-100 m ranges), set `edge()` and `other_traffic()` from the counts each rule gives, build the files,
+> rerun the centreline check, then a preview for Bill with real postcodes: ALL DONE (ranges on 4% of postcodes, the
+> other-flying warning on 34,239; centreline 0.992-1.033 on all 289 days). Shipped before Thursday at his word, after
+> `git merge-tree` showed Thursday unchanged (A, B clean; C the same one ROADMAP hunk). Next: the search pages
+> built on it (Desktop `marketing-plan-2026-10-26.md`), September's CAA figures when published.
 >
 > ## START HERE (2026-10-25)
 >

@@ -176,3 +176,86 @@ the nine moved a median 0, at most 0.12 a day at the 99th percentile, and 0.69 a
 was reclassified). Compare the AVERAGES as well as the verdicts: a fix that leaves every verdict alone can
 still move what a postcode would be told. Luton is new at up to 1.4 a day over a covered postcode (443 postcodes at 1
 or more on westerly days); most of its traffic passes north of the councils we cover.
+
+**IS IT ACCURATE? THE GROUND, THE EDGE, AND TWO INDEPENDENT CHECKS (2026-10-26, branch `planes-overhead`).** Bill
+ruled the three serving calls ("go with yours": static per-district files on the site, the front page's answer
+first, site-only with an ODbL download later) and asked "is this accurate". Answer given: the flights SEEN were
+proven (97-99% of the CAA's count every month at the ten), WHICH pass overhead was not checked by anyone else, and
+one bias was known. Four things followed.
+(1) **The ground.** The cone was drawn from the height above SEA LEVEL, so on high ground it was always too wide.
+Measured with OS Terrain 50 (OGL, free from the OS Downloads API, no key) at the postcodes with a plane a day or
+more on westerly days: ground median 26 m in London, 87-131 m in Manchester, West Yorkshire and the West
+Midlands, so cones a median 77-116 m too wide there. Judging each 100 m cell on its own ground is exact but
+~1,000x the work; the ground UNDER THE AIRCRAFT leaves 0.885 x the change in ground across the cone, measured
+at those postcodes as a median 3-14 m at 500 m and 8-33 m at 2 km, in either direction, so it cancels over
+passes. `scripts/build_ground_grid.py` writes `data/terrain50/gb-ground-100m.npy` (int16, Ben Nevis reads
+1,343 m: the orientation check; 0.99965 correlation with an independent 50 m sample at every postcode); the
+counter's `agl_ft` draws the cone, the 7,000 ft ceiling stays ABOVE SEA LEVEL (CAP 1498 says "altitude"), a
+missing grid refuses (`load_ground()`), and `one_definition()` makes `average()` and `read_metas()` refuse day
+files counted two ways, because a recount stopped halfway would otherwise be averaged silently. Recount into a
+NEW folder (`data/adsb/overflights-ground/`, no `--force`, so it resumes), then swap. One day (14 Oct): Kew 296
+unchanged (under the centreline); London -1.7%, Manchester -8.3%, West Midlands -13.7%, South Yorkshire -17.6%.
+A test that could not fail: "a height under the ground never counts" stayed green with the filter removed,
+because a negative cone is empty anyway; what the filter really does is split passes across an underground
+stretch, so the test now asserts `passes()` on that.
+(2) **The knife edge** (a product question, ruled by Bill: show a range). Near a runway arrivals are 300-600 ft
+up and the 48.5 degree cone ~100 m wide, so a postcode ~95 m off the centreline is in or out for EVERY arrival:
+Hounslow TW3 3QL read 339 and then 7 on 14 Oct for 21 m of ground. ~800 postcodes halved that day, all on cone
+edges along approaches; the old count had the same edge ~20 m further out, and a postcode sits up to 71 m from
+its cell's centre anyway. `adsb_postcode_averages.py` now also reads the eight cells around each postcode
+(`mean_lo` / `mean_hi`, +-100 m), and the builder gives `[least, most]` where `edge()` says the spread is wide.
+(3) **Heathrow's own direction record**: its monthly "% of time on westerly operations" for 2026 (heathrow.com,
+noise > data > operational data) against our share of movements on westerly runway ends: within 3 points in 8
+of 9 months, September 92.0 v 92; May +6.8 (the 5-6 May archive gap); ours ~2 points more westerly on average
+(movements against time: quiet night hours count as time).
+(4) **The centreline check, the independent test of the counting**: a point 6 km out on each runway's extended
+centreline, that airport's overflights on days it flew that way over the landings on that runway end. Two
+codes (landings from airfield behaviour, overflights from cone sweeps km away): 0.994-1.033 at every
+well-separated runway end of all ten airports (Heathrow's four 0.997-1.005). The odd rows are geometry, not
+counting: Gatwick's standby runway ~200 m from the main one (x28), Stansted's one runway split "22"/"22C" in the
+table (summed 1.002), Manchester's 05L/05R ~390 m apart (cones overlap). It validates the counting, not the
+cone's edge, which is definitional: that is what the ranges are for. Not comparable: Luton's SAIP AD6
+airspace-change appendix (CAP 1498 contours, 2018, arrivals only, CACI population, mostly outside our councils).
+**The serving side**: `scripts/build_planes_overhead.py` (district files gitignored, `data/planes-manifest.json`
+tracked; `airports.json` lists the districts, so an uncovered postcode costs no request and no console 404),
+`js/planes.mjs` (pure `planesModel()` tested in Node by `tests/planes-model.mjs`, `planesNodes()` with
+textContent only), `#ans-planes` in the front page's answer, `planes-deploy` (refuses unless `--check` passes),
+`/how-it-works/#planes-overhead`. Every rule proven red on its defect (rounding by Python's ties-to-even, a
+missing kind of day written 0, an unpublished airport let through, the uncounted traffic's figure written, a
+never-measured postcode told something, the district guard).
+**Double-checked on 95-127 recounted days (Bill: "is our data still accurate", 2026-10-26).** (a) Everything in a day
+file but the cells is IDENTICAL to the sea-level count (movements, feed, field levels, height offsets, traces), so
+the CAA monthly verdicts and the Heathrow direction check stand unchanged. (b) Passes over covered postcodes fell
+at every airport, in step with the ground (LHR -2.0%, LCY -2.3%, BRS -5.1%, MAN -7.9%, BHX -13.1%). (c) A RISE, which a
+narrower cone cannot make, at ~11,000 postcode-cell-days (+2 typically, +58 at Fulham SW6 4JH under the 27R/27L
+approach): traced pass by pass, matched by time, every extra pass was a single step at the cone's edge over ground
+BELOW SEA LEVEL under the aircraft (Terrain 50 reads the tidal Thames -2 m, the Severn estuary -4 m), which widens
+the cone 1.8-3.5 m. That is the documented two-way residual of "the ground under the aircraft", not a bug; it shows
+only where a square sits on a cone's edge, which the ranges cover. Not worth a recount to clamp water to 0 m. A
+first tally wrongly blamed "splits": an airframe landing several times a day has several passes, so match extra
+passes by TIME, never by their order in a trace. (d) The centreline check on the recounted days: 0.992-1.031 at
+every well-separated runway end, as before.
+**LIVE, 2026-10-26 (evening; Bill: "go live now" after the preview, claude.ai/artifact/TueRqSvmPrkjxmsrcDD3S8).**
+Averages rebuilt on the ground counts (London -1.9% median, West Midlands -9.2%, South Yorkshire -15.4%; Kew 310 and
+Hackney 20 unchanged; Hounslow TW3 3QL 310 -> 15, range 1-316). Thresholds MEASURED (scratch `measure_rules.py`): a range
+at gap 10 / ratio 2 on 17,103 postcodes (4.0% of the 431,678 with a figure; London 6.4%); the other-flying flag at 5 a
+day and 50% on 34,239, mostly round the airports that failed the check. 988 district files (15.4 MB). The preview found
+figures cut off on phones ("1 to 316 a": the 84 px column phones give the rows above) and "(c)" for "©"; the planes
+rows' figure column now sizes to its text, held by a front-page check at 390 px. Thursday re-checked with
+`git stash create` + `git merge-tree` (no branch touched): unchanged. Ship order: `planes-deploy`, `web-deploy`,
+`home-deploy` (the block is silent while a file is missing, so the order only decides when it shows).
+**THE GO-LIVE REVIEW, 2026-10-27** (`/code-review`, 10 findings; 8 fixed, each held by a check proven red first):
+a FAILED fetch of airports.json or a district file was kept as null, so one blip on a phone hid the block for the
+whole visit: now retried on the next search (front-page check, TW3's file answering 503 once). A district file
+older than airports.json could list only an airport since dropped, and drew a heading over no rows (read as a
+measurement): now null. A model fault was an unhandled rejection; it now hides the block and logs
+"Planes overhead hidden", which the front-page test counts as a failure. A range from a measured zero said "0 to
+12 a day" (11 of 29,766 ranges): now "up to 12 a day". The definition typed 48.5 and 7,000 beside the constants:
+now DERIVED, and How it works' 48.5 degrees / 7,000 ft / 80% / within 5% are held to the constants by a test.
+`adsb_postcode_averages` checked a postcode's own cell but not the 8 around it (an edge cell's neighbour keys into
+the next row): now one cell in from every edge (no real postcode is within 70 cells). `build_ground_grid` built
+from a zip short of tiles, reading missing land as sea level: now refuses fewer than the 2,858 of the GB set.
+`check_deploy_drift.sh` could not see `data/planes/` at all: it now byte-checks airports.json and 24 sampled
+districts against the TRACKED manifest at the origin (red before the first deploy, as it should be). NOT changed,
+with reasons: a late planes fetch from an earlier search fills only a CLOSED answer (render() is the only thing
+that opens it, and clears the block first); "% of days" rounds each kind on its own, so three can sum to 99 or 101.
