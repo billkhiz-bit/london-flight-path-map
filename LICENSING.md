@@ -29,9 +29,13 @@ only, verified 2026-07-23).
 >    passthrough** for the `/nhs` nearby-facilities panel. Nothing is
 >    stored, so there is no database of ours for the term to attach to.~~
 >    **NO LONGER TRUE, corrected 2026-08-12.** `backend/lambdas/nhs/london_healthcare.json`
->    is a **stored 3,224-element OSM extract (458 KB) bundled inside the
->    deployed Lambda** and read on the hot path (`nhs/app.py:112`), built by
->    `scripts/fetch_london_healthcare.py`. The re-open trigger below ("if OSM
+>    was a **stored 3,224-element OSM extract (458 KB) bundled inside the
+>    deployed Lambda** and read on the hot path, built by
+>    `scripts/fetch_london_healthcare.py`. **Since 2026-10-27 it is
+>    `nhs/healthcare.json`: 10,992 named services in all 13 UK areas we score
+>    (1.5 MB), built by `scripts/fetch_healthcare.py`**, the same kind of stored
+>    extract over a wider area, so everything below applies to it unchanged
+>    (every answer credits "Healthcare locations: OpenStreetMap contributors (ODbL)", as before). The re-open trigger below ("if OSM
 >    output is ever cached, stored") fired when that snapshot landed and was
 >    not actioned. **This is a stored extract of an ODbL database**, so the
 >    share-alike question is live and needs an actual answer rather than the
