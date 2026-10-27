@@ -869,8 +869,23 @@ other two.
   filter @message like /\[SIGNUP_ORPHAN_KEY\]/
   ```
   Alarm: `> 0` over 1 hour.
-- API Gateway access logs disabled (cost reasons); enable via the APIGW
-  console if investigating an abuse case.
+- `[5XX] <status> <error>` on every response a Lambda RETURNS with a 5xx
+  (2026-10-27; `backend/tests/test_5xx_logged.py` holds all ten builders to
+  it). Why: in October 1.1% of API requests (1,229 of 113,067) answered 5xx
+  while the Lambdas recorded one error, because handlers catch their failures
+  and return the 5xx themselves (epc's 502/504 for an upstream failure), and
+  API Gateway cannot say which route. Which Lambda, and why:
+  ```
+  filter @message like /\[5XX\]/
+  | parse @message /\[5XX\] (?<status>\d+) (?<why>.*)/
+  | stats count(*) by @log, status, why
+  ```
+  API Gateway's `5XXError` beyond these lines is the gateway's own (throttled
+  invocations, malformed proxy responses).
+- API Gateway access logs disabled (cost reasons). Enabling them needs more than
+  the stage setting: the ACCOUNT has no CloudWatch role for API Gateway
+  (`aws apigateway get-account` -> `cloudwatchRoleArn: null`, 2026-10-27), and
+  `flightmap-dev` cannot create one: console work, if an abuse case needs it.
 - Billing alarm: see `AWS_BILLING_ALARM_SETUP.md`. **NOT CREATED as of
   2026-09-08** — verified absent in `us-east-1`, the only region billing
   metrics publish to. See §3.4.

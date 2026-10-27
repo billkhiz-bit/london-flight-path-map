@@ -1,6 +1,12 @@
 # Changelog
 
-## 2026-10-26 (evening) - Planes overhead, for every postcode we cover
+## 2026-10-27 - Behind the scenes: every server error says where it came from
+
+- Each part of the API now records a line whenever it answers with a server error, so the 1% of requests that
+  failed in October (mostly an upstream service we ask on a visitor's behalf being unavailable) can be traced to
+  their source. Nothing a visitor typed is recorded with it.
+
+## 2026-10-27 - Planes overhead, for every postcode we cover
 
 - **How many planes pass overhead**, in the answer for a postcode: on an average day of each kind, January to
   August 2026, from each of ten airports whose tracking matches the CAA's own monthly totals (Heathrow, Gatwick,

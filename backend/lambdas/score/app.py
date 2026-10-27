@@ -11254,6 +11254,10 @@ BADGE_ECHO_MAX = 10
 
 
 def _svg_response(svg, status=200, cache_seconds=86400):
+    if status >= 500:
+        # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
+        # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
+        logger.warning('[5XX] %s badge', status)
     return {
         'statusCode': status,
         'headers': {
@@ -11561,6 +11565,10 @@ def cors_headers():
 
 def response(status, body, headers=None):
     """JSON response. `headers` adds to (and may override) the defaults."""
+    if status >= 500:
+        # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
+        # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
+        logger.warning('[5XX] %s %s', status, str(body.get('error', '') if isinstance(body, dict) else '')[:200])
     return {
         'statusCode': status,
         'headers': {
