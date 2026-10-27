@@ -30,7 +30,7 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > `tests/approach-strip.mjs` (107 checks) is in preflight. Story: `docs/lessons/front-page-and-site.md`. The Blender
 > repo's `strip_page.py` must take these changes before any `strip_v8` (NOW.md's Blender line lists them).
 >
-> **Planes overhead, LIVE 26 Oct (evening; Bill: "go live now", after the preview of 12 real answers).** Bill's calls: static per-district files on the
+> **Planes overhead, LIVE 27 Oct (`5d760c1`; Bill's "go live now" was 26 Oct evening, after the preview of 12 real answers; the deploy waited for a clean preflight).** Bill's calls: static per-district files on the
 > site, the front page's answer first, site-only (an ODbL download beside `/open-data/` after a few weeks live); a
 > RANGE on a cone's edge (Hounslow TW3 3QL read 339 then 7 for 21 m of ground). Asked "is this accurate": the cone
 > now stands on the ground under the aircraft (OS Terrain 50; it had been drawn from sea level, too wide on every

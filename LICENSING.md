@@ -245,8 +245,8 @@ often planes fly"). Measured privately; nothing derived from these is published:
   count derived from it is published, that count is a Derivative Database and must be
   offered under ODbL, credited "aircraft positions via adsb.lol (ODbL)". Commercial use is
   allowed. **Bill accepted the share-alike on 2026-10-15**: the counts will be published
-  under ODbL once they pass the per-airport floor (ROADMAP). **LIVE 2026-10-26 (evening, Bill's "go live
-  now" after the preview):** the front page's
+  under ODbL once they pass the per-airport floor (ROADMAP). **LIVE 2026-10-27 (Bill's "go live
+  now", 26 Oct evening, after the preview):** the front page's
   "Planes overhead" block reads `data/planes/*.json` (`scripts/build_planes_overhead.py`), whose
   `airports.json` carries the credits and names the ODbL; `/how-it-works/` credits adsb.lol, the
   Mesonet and OS Terrain 50 and says the counts are ODbL. Site-only first (Bill, 2026-10-26); the

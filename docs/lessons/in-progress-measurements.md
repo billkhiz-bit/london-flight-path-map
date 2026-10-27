@@ -235,7 +235,7 @@ only where a square sits on a cone's edge, which the ranges cover. Not worth a r
 first tally wrongly blamed "splits": an airframe landing several times a day has several passes, so match extra
 passes by TIME, never by their order in a trace. (d) The centreline check on the recounted days: 0.992-1.031 at
 every well-separated runway end, as before.
-**LIVE, 2026-10-26 (evening; Bill: "go live now" after the preview, claude.ai/artifact/TueRqSvmPrkjxmsrcDD3S8).**
+**LIVE, 2026-10-27 (`5d760c1`; Bill: "go live now" 26 Oct evening, after the preview, claude.ai/artifact/TueRqSvmPrkjxmsrcDD3S8; the deploy waited for a clean preflight).**
 Averages rebuilt on the ground counts (London -1.9% median, West Midlands -9.2%, South Yorkshire -15.4%; Kew 310 and
 Hackney 20 unchanged; Hounslow TW3 3QL 310 -> 15, range 1-316). Thresholds MEASURED (scratch `measure_rules.py`): a range
 at gap 10 / ratio 2 on 17,103 postcodes (4.0% of the 431,678 with a figure; London 6.4%); the other-flying flag at 5 a
