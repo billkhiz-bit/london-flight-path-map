@@ -293,7 +293,10 @@ printf '  area: %d of %d area pages match the live origin\n' \
 # an even sample of 24 district files: all ~990 would cost a request each.
 PLANES_LIST=$(mktemp)
 PLANES_BODY=$(mktemp)
-python - > "$PLANES_LIST" <<'EOF'
+# tr: Python on Windows ends each printed line "\r\n", and `read` keeps the \r, so
+# every md5 compared unequal (seen on the first deploy, 2026-10-27, as 25 DRIFTs
+# over files byte-identical to the manifest).
+python - <<'EOF' | tr -d '\r' > "$PLANES_LIST"
 import json
 m = json.load(open('data/planes-manifest.json', encoding='utf-8'))
 names = sorted(n for n in m if n != 'airports.json')
