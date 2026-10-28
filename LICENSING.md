@@ -251,6 +251,10 @@ often planes fly"). Measured privately; nothing derived from these is published:
   `airports.json` carries the credits and names the ODbL; `/how-it-works/` credits adsb.lol, the
   Mesonet and OS Terrain 50 and says the counts are ODbL. Site-only first (Bill, 2026-10-26); the
   ODbL offer of the derived database as a download beside `/open-data/` follows after a few weeks live.
+  **District pages (built 2026-10-28, not live):** `scripts/build_planes_pages.py` writes `/planes-overhead/<district>/`
+  from the same files, each page a **Produced Work** of that database carrying the same credits and naming the ODbL.
+  The pages are gitignored (this repo is public, and they publish no figure the front page does not), so the GitHub
+  repo never holds them; the ODbL download remains the derived-database offer.
 - **OS Terrain 50** (Ordnance Survey, ASCII grid, release 2026-06-02), **OGL v3.0**, free from the OS
   Downloads API with no key; zip in `data/terrain50/download/` (gitignored). `scripts/build_ground_grid.py`
   makes the 100 m ground grid the overflight counter stands its cones on (2026-10-26: heights above the

@@ -741,6 +741,11 @@ check "area pages carry real data"    node tests/area-pages.mjs
 # index.html equal a fresh build. It was run by nothing (audit 2026-10-05
 # M-8) while the Makefile said it "reds while either is stale". Offline, fast.
 check "area builder == its outputs"   python scripts/build_area_pages.py --check
+# The planes district pages (2026-10-28) bake how often planes pass, which the wording gate lets only the
+# planes files say: this holds every page (and the manifest dating the sitemap) byte-equal to a fresh build
+# from those files, so a figure typed into one goes red. Its inputs are gitignored, so a clone without the
+# tracks prints INCONCLUSIVE, never PASS. Offline, ~8 s (it reads NSPL).
+check "planes pages == their builder" python scripts/build_planes_pages.py --check
 # The area pages BAKE their scores at build time - that is what makes them
 # indexable without JS, and what lets them go stale when a data vintage
 # lands. No other gate can see it: `area pages carry real data` checks
