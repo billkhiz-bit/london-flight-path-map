@@ -297,5 +297,9 @@ site bar's 680 px breakpoint shrinks the table (12.5 px, 6/3 px padding): all 46
 `tests/a11y-source.mjs` scans a sample DERIVED from the pages (the first carrying each feature, the biggest, the
 widest row) at 1440 and 390 and measures the sideways scroll at 390, proven red by removing the phone rule.
 
-NOT YET: the deploy-drift pass for these pages (it would read red until the first deploy), links from the area
-pages, and Search Console (Bill's). Ships after Thursday's three changesets and Bill's review of the preview.
+DEPLOY-DRIFT PASS (28 Oct, later): `check_deploy_drift.sh` reads the TRACKED manifest, fetches the index and 24
+evenly sampled pages and compares md5s, and compares the live `sitemap-planes.xml`'s URL set with the manifest's
+pages. Red before the first deploy, as the planes-file pass was. Proven: live 25 UNREACHABLE; a local copy 25 of 25,
+gap 0; an edited index DRIFT; a dropped sitemap URL "gap 1". Thursday's runbook carries it as an OPTIONAL Part D
+(merge rehearsed on A, B and C: clean). NOT YET: links from the area pages (after Thursday: Part C regenerates
+them), and Search Console (Bill's). Ships after Thursday's three changesets and Bill's review of the preview.

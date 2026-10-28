@@ -330,6 +330,62 @@ fi
 printf '  planes: %d of %d sampled files match data/planes-manifest.json at the live origin\n' \
   "$((PLANES_LISTED - PLANES_DRIFTED))" "$PLANES_LISTED"
 
+# PLANES OVERHEAD BY DISTRICT (2026-10-28). planes-overhead/ is gitignored too
+# (~465 pages built from data/planes/ by scripts/build_planes_pages.py), shipped
+# by its own `planes-pages-deploy`. Same shape as the pass above: the TRACKED
+# data/planes-pages-manifest.json says what the build wrote, so this reads THAT,
+# and works without the build. The index plus an even sample of 24 district
+# pages, and the live sitemap-planes.xml must list exactly the manifest's pages
+# (its dates come from the manifest, so its URL set is what can drift unseen).
+PAGES_LIST=$(mktemp)
+PAGES_BODY=$(mktemp)
+python - <<'EOF' | tr -d '\r' > "$PAGES_LIST"
+import json
+m = json.load(open('data/planes-pages-manifest.json', encoding='utf-8'))
+pages = sorted(p for p in m if p != 'planes-overhead/index.html')
+for p in ['planes-overhead/index.html'] + pages[::max(1, len(pages) // 24)][:24]:
+    print(p.removesuffix('index.html'), m[p]['md5'])
+EOF
+PAGES_DRIFTED=0
+while read -r path want; do
+  [ -z "$path" ] && continue
+  if ! curl -fsS "$BASE/$path" -o "$PAGES_BODY" 2>/dev/null; then
+    printf '  UNREACHABLE      %s\n' "$path"
+    PAGES_DRIFTED=$((PAGES_DRIFTED + 1))
+    continue
+  fi
+  got=$(md5sum < "$PAGES_BODY" | cut -d' ' -f1)
+  if [ "$got" != "$want" ]; then
+    printf '  DRIFT            %s\n' "$path"
+    PAGES_DRIFTED=$((PAGES_DRIFTED + 1))
+  fi
+done < "$PAGES_LIST"
+PAGES_LISTED=$(grep -c . "$PAGES_LIST" 2>/dev/null || true)
+if curl -fsS "$BASE/sitemap-planes.xml" -o "$PAGES_BODY" 2>/dev/null; then
+  SITEMAP_GAP=$(python - "$PAGES_BODY" <<'EOF' | tr -d '\r'
+import json, re, sys
+m = json.load(open('data/planes-pages-manifest.json', encoding='utf-8'))
+want = {'/' + p.removesuffix('index.html') for p in m}
+have = {re.sub(r'^https?://[^/]+', '', u) for u in re.findall(r'<loc>([^<]+)</loc>', open(sys.argv[1], encoding='utf-8').read())}
+print(len(want ^ have))
+EOF
+)
+else
+  SITEMAP_GAP=unreachable
+fi
+rm -f "$PAGES_LIST" "$PAGES_BODY"
+if [ "${PAGES_LISTED:-0}" -lt 25 ]; then
+  printf 'FAIL: listed only %s planes pages from data/planes-pages-manifest.json, expected 25\n' "${PAGES_LISTED:-0}"
+  printf '  (the index and 24 districts). The manifest is missing or unreadable.\n'
+  exit 1
+fi
+printf '  planes pages: %d of %d sampled pages match data/planes-pages-manifest.json at the live origin; sitemap gap %s\n' \
+  "$((PAGES_LISTED - PAGES_DRIFTED))" "$PAGES_LISTED" "$SITEMAP_GAP"
+if [ "$SITEMAP_GAP" != "0" ]; then
+  printf '  DRIFT            sitemap-planes.xml (%s URL(s) differ from the manifest)\n' "$SITEMAP_GAP"
+  PAGES_DRIFTED=$((PAGES_DRIFTED + 1))
+fi
+
 DATA_FAILED=0
 if [ "$DATA_DRIFTED" -gt 0 ] || [ "$AREA_DRIFTED" -gt 0 ]; then
   printf '  %d data file(s) and %d area page(s) differ from the live origin.\n' \
@@ -340,6 +396,11 @@ fi
 if [ "$PLANES_DRIFTED" -gt 0 ]; then
   printf '  %d planes file(s) differ from data/planes-manifest.json. Run\n' "$PLANES_DRIFTED"
   printf '  `python scripts/make.py planes-deploy` (it refuses unless --check passes).\n'
+  DATA_FAILED=1
+fi
+if [ "$PAGES_DRIFTED" -gt 0 ]; then
+  printf '  %d planes page check(s) differ from data/planes-pages-manifest.json. Run\n' "$PAGES_DRIFTED"
+  printf '  `python scripts/make.py planes-pages-deploy` (it refuses unless --check --strict passes).\n'
   DATA_FAILED=1
 fi
 
