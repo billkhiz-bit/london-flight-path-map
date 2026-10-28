@@ -33,6 +33,7 @@ When something new is learned: add the one-line rule here and the story to the l
 | `audit-history.md` | audit waves, known issues, the website audit, the current audit's must-not-undo list |
 | `submissions-and-store.md` | competitions, events, Claude Startups, App Store / Play |
 | `building-heights.md` | EA lidar, building heights, the Hounslow pilot (context facts, never scored) |
+| `n65.md` | N65 (planes louder than 65 dB): the publish gate, the Doc 29 arithmetic, `data/n65/` (EASA's tables never in the repo) |
 
 ## Compact Instructions
 
@@ -139,6 +140,9 @@ Or just describe what you need, I have full context of this project.
 - **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh`; it must move `SNAPSHOT_VINTAGE_LABEL`,
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.
+- **N65 publishes nothing until `scripts/n65_gate.py` passes on EASA's FULL database** (Bill, 2026-10-27: the
+  CAA's Heathrow and Gatwick contours, like for like). EASA's noise tables live only in gitignored `data/n65/`:
+  never in the repo, never a per-type figure anywhere (their terms).
 - **National anchors are per POOL** (`pool_of(city)` / site `poolOf`: a city's `pool`, else its currency;
   one per US metro: decision 2 of 2026-10-16, built 2026-10-18): never pool USD with GBP, nor the Bay Area
   with New York. The site needs `BACKEND_ONLY_PRICES` /
