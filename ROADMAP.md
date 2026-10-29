@@ -1588,11 +1588,23 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       Linked from both footers of the main site ("Bay Area") and from `/area/`.
 - [ ] Post it where Bay Area residents are (Bill's to do). Never say "how often
       planes fly over": the page says where the routes are, not their traffic.
-- [ ] Each new FAA cycle (28 days; **next is 2611, effective 2026-10-29**):
+- [ ] **Cycle 2611 (effective 2026-10-29) is BUILT on branch `faa-2611` (18 Oct), NOT deployed**: only Oakland
+      changed (SIDs CNDEL5->6, HUSSH2->3, KATFH3->4, NUEVO8->9 and others, 155 -> 127 records; runway 28L's
+      record); San Leandro loses SALAD5 and SKYL1 overhead; SFO, SJC and New York's four unchanged, so no New
+      York score moves (816 of 816 byte-identical). The Bay Area quiet FIT is unchanged (weight 1.25, SFO 0.85,
+      OAK 0.85, SJC 0.5) but its generated block embeds the routes, so it was rewritten (inert: the Bay Area is
+      not scored yet). The FAA renamed `Not_In_CIFP.xlsx` to `Not_In_CIFP_2611.xlsx`, which crashed the builder:
+      now found by pattern; and a test pinned to Oakland's SLNT3 (withdrawn in 2611 with QUAKE2, SALAD5, SKYL1)
+      now holds its RULE instead. **On the 29th:** merge `faa-2611`, then `bay-area-deploy`, `web-deploy`,
+      `data-deploy` and the backend through a reviewed changeset (the Lambda's block changed), all Bill's, then
+      verify from the origin.
+- [ ] Each new FAA cycle (28 days; **2612 is effective 2026-11-26**):
       `build_us_flight_paths.py --fetch`, then `--write` on
       `build_bay_area_page.py`, `build_bayarea_map_data.py` and
       `build_bayarea_areas.py` (all three read the record, and all three
-      `--check`s are blocking), re-render `share.png` (`node
+      `--check`s are blocking), AND `measure_us_quiet_yardstick.py --write --region bayarea` (its block embeds
+      the routes; a `--check` WITHOUT `--region` checks New York only, which hid this on 18 Oct) and
+      `build_nyc_front.py --write` (`us-nyc-routes.json` records the cycle), re-render `share.png` (`node
       scripts/render_bay_area_share.mjs`) if a line moved, then deploy
       `bay-area-deploy`, `web-deploy` (the BAYAREA-MAP block) and
       `data-deploy`. The legend's cycle number is GENERATED since 2026-10-06

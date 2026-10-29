@@ -5083,7 +5083,7 @@ FLIGHT_PATHS_BAYAREA = [
         ],
     },
     {
-        'name': 'OAK departure via CNDEL5',
+        'name': 'OAK departure via CNDEL6',
         'airport': 'OAK',
         'kind': 'departure',
         'runway': '30',
@@ -5124,7 +5124,7 @@ FLIGHT_PATHS_BAYAREA = [
         ],
     },
     {
-        'name': 'OAK departure via HUSSH2',
+        'name': 'OAK departure via HUSSH3',
         'airport': 'OAK',
         'kind': 'departure',
         'runway': '30',
