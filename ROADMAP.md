@@ -2363,6 +2363,26 @@ then lives (the same `index.html` runs in the native app, about twenty gates
 and 103 area-page links assume the map at `/`); build under "Sky Score" or
 after the rename. Audiences on every version follow the Constraints above.
 
+### Parked idea: Breathe London readings in the Chrome extension (raised by Bill, 2026-10-29)
+
+Checked on the laptop before the Deen Developers demo: the extension's two air rows ("Nitrogen dioxide", "Fine
+particles (PM2.5)", `extension/content/panel.js:779-780`) are DEFRA PCM only, the modelled 2024 annual mean on a
+1 km grid, read from `/v1/environment` (`backend/lambdas/score/app.py:9263-9296`). Breathe London reaches the
+website only (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`); nothing in `extension/` or the
+environment route reads it. **For later, not before a demo.**
+
+- **Shape:** a "measured nearby" row UNDER the modelled ones, never in place of them, so a listing shows the model
+  and, in London, the nearest real sensor. Same behaviour as the site: 5 km, never "none nearby", a stale sensor
+  file hidden, the exact OGL attribution linked. Display only, never scored (rule 1 of "Breathe London is
+  London-only" above).
+- **Route, to decide:** (a) a London-only `/v1/environment` field, absent elsewhere and documented so (rule 3),
+  which needs a reviewed SAM changeset and gives API callers the same reading; or (b) the extension fetches
+  `data/breathe-london-sensors.json` and reuses the site's `nearestSensor` logic, with no backend change but a
+  second copy of that logic (against "one pair of functions") and a manifest host permission. (a) is the
+  recommendation: one holder, and the extension stays a thin reader of `/v1/environment`.
+- **Also consider AURN** (`nearestMonitor`) in the same row, so cities outside London get an official monitor
+  rather than nothing.
+
 ### Parked idea: ask Sky Score on WhatsApp (raised by Bill, 2026-10-21)
 
 Bill, using another service's WhatsApp assistant: let people message a postcode and get the answer on WhatsApp.
