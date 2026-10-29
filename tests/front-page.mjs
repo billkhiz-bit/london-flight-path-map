@@ -932,9 +932,12 @@ const underPin = await page.locator('#map .pin').evaluate((c) => {
 ok((await page.locator('#map .pin').count()) === 1 && underPin.startsWith('Palo Alto'), 'the ZIP\'s pin is drawn, inside the city the ZIP is said to be in', underPin);
 ok(await page.evaluate(() => location.search) === '?city=bayarea&postcode=94301', 'URL carries ?city=bayarea&postcode=<ZIP>');
 await searchZip('95014', 'Cupertino');
-ok(/^44% of the ZIP area's land is in Cupertino/.test(await zipFact('ZIP 95014')), 'a ZIP that is mostly hills says how much of it is in the city, not that it is the city', await zipFact('ZIP 95014'));
+ok(/^96% of its residents live in Cupertino; 3% in San Jose\./.test(await zipFact('ZIP 95014')), 'a ZIP that is mostly hills is named by its residents (96% Cupertino), not its land (44%), with the share said', await zipFact('ZIP 95014'));
+// 94010, the case that set the rule (2026-10-23): its land is mostly Hillsborough's, 71% of its residents live in Burlingame.
+await searchZip('94010', 'Burlingame');
+ok(/^71% of its residents live in Burlingame; 26% in Hillsborough\./.test(await zipFact('ZIP 94010')), 'a ZIP opens the city where most of its residents live, and names the next one with its share', await zipFact('ZIP 94010'));
 await searchZip('94305', 'ZIP 94305');
-ok(/^Mostly in Stanford: 51%/.test(await zipFact('ZIP 94305')), 'a ZIP in a community the map does not draw gets its own card and names the community', await zipFact('ZIP 94305'));
+ok(/^In Stanford, an unincorporated community\./.test(await zipFact('ZIP 94305')), 'a ZIP in a community the map does not draw gets its own card and names the community', await zipFact('ZIP 94305'));
 await searchZip('94074', 'ZIP 94074');
 ok(/^In no city\./.test(await zipFact('ZIP 94074')) && /San Mateo County/.test(await page.locator('#borough .where').textContent()), 'a ZIP in no city says so and names its county');
 // A ZIP outside the four counties: a sentence, and nothing else moves (no pin, no card, the city stays).

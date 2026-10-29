@@ -161,6 +161,8 @@ Or just describe what you need, I have full context of this project.
   a tile as a reading (BTS's road cache stops at 12 though it lists 24). US shares (crime, road, flood) are
   not on the UK scales: each takes a US scale, LINEAR on its California anchor (`us_anchored_to_score`: 10 at
   zero, 5.0 at the anchor, 0 at double; Bill, 2026-10-18; `docs/lessons/us-cities.md`).
+- **A Bay Area ZIP is scored as the city holding HALF OR MORE of its 2020 residents**, shares said (Bill, 2026-10-23);
+  `build_bayarea_zips.py` writes the site's file AND the Lambda's `BAYAREA_ZIPS`, `--check` holds them equal.
 - **Pooled figures hide per-city optimism**: any fit must hold per city (no city may read quieter than its
   yardstick).
 - **A parity claim is a claim about a holder: read it, never retype it.** The Bay Area's transport bands were

@@ -30,20 +30,21 @@ def offset(lat, lon, bearing_deg, km):
 
 
 class BayAreaGeometryTests(unittest.TestCase):
-    def test_the_bay_area_is_served_by_city_name_only(self):
-        # Release 2 wired 'bayarea' into CITIES (2026-10-22), reached by NAME: the
-        # Lambda holds no Bay Area ZIP table, so no request carries a Bay Area
-        # coordinate and calc_postcode_quiet is read only through the city bands
-        # build_bayarea_quiet.py derives. When ZIPs are routed, this is changed on
-        # purpose, not discovered.
+    def test_the_bay_area_is_scored_by_city_whether_asked_by_name_or_zip(self):
+        # Release 2 wired 'bayarea' into CITIES (2026-10-22), reached by NAME, so no request carried a Bay Area
+        # coordinate and calc_postcode_quiet was read only through the city bands build_bayarea_quiet.py derives.
+        # ZIPs are routed since 2026-10-23 (changed on purpose, as this test asked): a ZIP is resolved to the city
+        # where half or more of its residents live, WITHOUT a coordinate, so it still scores at the city's level.
         self.assertIn('bayarea', app.CITY_GEOMETRY)
         self.assertIn('bayarea', app.CITIES)
-        body, status = app.resolve_query({'borough': 'Palo Alto', 'city': 'bayarea'})
+        by_name, status = app.resolve_query({'borough': 'Palo Alto', 'city': 'bayarea'})
         self.assertEqual(status, 200)
-        self.assertEqual(body['context']['quietResolution'], 'borough')
-        body, status = app.resolve_query({'postcode': '94301'})
-        self.assertEqual(status, 404)
-        self.assertIn('city=bayarea', body['note'])
+        self.assertEqual(by_name['context']['quietResolution'], 'borough')
+        by_zip, status = app.resolve_query({'postcode': '94301'})
+        self.assertEqual(status, 200)
+        self.assertEqual(by_zip['context']['quietResolution'], 'borough')
+        self.assertNotIn('latitude', by_zip['location'])
+        self.assertEqual(by_zip['score'], by_name['score'])
 
     def test_no_uk_city_carries_the_us_fields(self):
         # calc_postcode_quiet reads each US field only when present, so this is

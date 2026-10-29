@@ -341,3 +341,20 @@ height only on a published glide path. The note now names the route and where it
 kilometres after take-off, still climbing"), because a typed number goes stale with the next cycle, and
 `tests/test_staten_island_note.py` holds each claim to the data: PORTT still crosses inside 10 km, and Staten
 Island still has the highest Quiet Skies of the five (7.5 on 23 Oct). Cycle 2611 changes only PORTT's source label.
+
+**BAY AREA ZIPS ARE NAMED BY RESIDENTS, AND SCORED AT A MAJORITY (2026-10-23, Bill; branch `bayarea-zip-residents`).**
+The land rule (the city with most of a ZIP's land) sent 94010 to Hillsborough and called 95014 "44% Cupertino"; 7
+cities held no ZIP's majority, so the API took names only. Now each ZIP's 2020 residents are counted by place:
+every California block's population and Census place (PL 94-171, `bayarea_blocks.pl_blocks()`), joined to its ZIP
+area by the 2020 ZCTA-to-block relationship file (1.06 GB national, STREAMED to California's rows: 14 Bay Area ZIPs
+reach into Contra Costa, San Joaquin, Marin, San Benito, Santa Cruz or Monterey, and a four-county file would have
+undercounted them). Measured: 126 ZIPs at 90%+ in one city, 12 at 75-90, 10 at 50-75, 24 under half (mostly
+unincorporated, e.g. 94546 98% Castro Valley). Bill's calls: half or more in one of the 50 -> scored as it, the
+shares said (`location.zipResidents` and `coverage.notices`, which survives `?include=`); otherwise 404 with places
+and shares; ONE rule for the site and the API, so `scripts/build_bayarea_zips.py` writes both the site's JSON and
+the Lambda's `BAYAREA_ZIPS` between markers, and `--check` fails if either is hand-edited (proven red). The ZIP
+carries NO coordinate, so it scores exactly as its city does by name. The rule reads the EXACT ratio (0.496 prints
+as 50% but is not half). The outline cross-check now asks the right question: a wrong pairing puts a ZIP's centre
+in ANOTHER city (once: 94304, Stanford Research Park, in Los Altos Hills); a centre in open country is a hill ZIP's
+land centroid (11 of 126), not an error. Ships with Part B of the 29 Oct runbook (data-deploy and web-deploy back to
+back: new code on the old file would open no city).

@@ -2383,8 +2383,13 @@ CITIES = {
         'pool': 'bayarea',
         'name': 'San Francisco Bay Area',
         'country': 'United States',
-        'postcodeFormat': 'none yet: query a Bay Area city by name (borough=Palo Alto); ZIPs are not resolved',
-        'postcodeResolver': lambda: 'none (by city name only)',
+        # A ZIP is scored as the city where half or more of its 2020 residents live, and says the shares (Bill,
+        # 2026-10-23); a ZIP with no such city answers 404 with them. Cities are also asked by name.
+        'postcodeFormat': ('5-digit US ZIP of San Francisco, San Mateo, Santa Clara or Alameda county (e.g. 94301), '
+                           'scored as the city where half or more of its 2020 residents live; or a city by name '
+                           '(borough=Palo Alto)'),
+        'postcodeResolver': lambda: 'static ZIP table: 2020 Census residents by block (scripts/build_bayarea_zips.py)',
+        'extra': lambda: {'supportedZipCount': sum(1 for v in BAYAREA_ZIPS.values() if v[3])},
         # The anchors its US fields are scored against (validate_us_fields): California's, measured.
         'usAnchors': US_CALIFORNIA_ANCHORS,
         # Bill, 2026-10-22 (the code review): FHFA's trend is COUNTY-wide, so the 50 cities hold four values,
@@ -2720,6 +2725,204 @@ _NYC_ZIPS_BY_BOROUGH = {
     ],
 }
 NYC_ZIP_TO_BOROUGH = {zip5: borough for borough, zips in _NYC_ZIPS_BY_BOROUGH.items() for zip5 in zips}
+
+# The Bay Area's ZIPs: each ZIP area's largest place by 2020 residents, with its share (Bill, 2026-10-23: scored as
+# a city at half or more, the shares said). Generated with data/us-bayarea-zips.json by ONE builder, so the site
+# and the API name the same city for a ZIP; scripts/build_bayarea_zips.py --check holds the two equal.
+# BAYAREA-ZIPS:BEGIN (scripts/build_bayarea_zips.py --write; never edit by hand)
+# Bill, 2026-10-23: a ZIP is scored as a city when half or more of its 2020 residents live in it;
+# the shares are said in the response. Derived from the 2020 Census blocks; data/us-bayarea-zips.json.
+BAYAREA_ZIPS = {
+    '94002': ('Belmont', 'city', 0.99, True, ()),
+    '94005': ('Brisbane', 'city', 1.0, True, ()),
+    '94010': ('Burlingame', 'city', 0.71, True, (('Hillsborough', 0.26),)),
+    '94014': ('Daly City', 'city', 0.94, True, (('Colma', 0.03),)),
+    '94015': ('Daly City', 'city', 0.93, True, (('Broadmoor', 0.07),)),
+    '94018': ('El Granada', 'cdp', 1.0, False, ()),
+    '94019': ('Half Moon Bay', 'city', 0.76, True, (('El Granada', 0.13), ('Moss Beach', 0.01))),
+    '94020': ('La Honda', 'cdp', 0.56, False, ()),
+    '94021': ('Loma Mar', 'cdp', 0.78, False, ()),
+    '94022': ('Los Altos', 'city', 0.67, True, (('Los Altos Hills', 0.32),)),
+    '94024': ('Los Altos', 'city', 0.76, True, (('Loyola', 0.15), ('Los Altos Hills', 0.07))),
+    '94025': ('Menlo Park', 'city', 0.8, True, (('West Menlo Park', 0.09), ('North Fair Oaks', 0.08))),
+    '94027': ('Atherton', 'town', 0.99, True, ()),
+    '94028': ('Portola Valley', 'town', 0.65, True, (('Ladera', 0.23),)),
+    '94030': ('Millbrae', 'city', 1.0, True, ()),
+    '94037': ('Montara', 'cdp', 1.0, False, ()),
+    '94038': ('Moss Beach', 'cdp', 0.98, False, (('Montara', 0.01),)),
+    '94040': ('Mountain View', 'city', 1.0, True, ()),
+    '94041': ('Mountain View', 'city', 1.0, True, ()),
+    '94043': ('Mountain View', 'city', 0.97, True, ()),
+    '94044': ('Pacifica', 'city', 1.0, True, ()),
+    '94060': ('Pescadero', 'cdp', 0.39, False, ()),
+    '94061': ('Redwood City', 'city', 0.91, True, ()),
+    '94062': ('Redwood City', 'city', 0.5, True, (('Woodside', 0.2), ('Emerald Lake Hills', 0.17))),
+    '94063': ('Redwood City', 'city', 0.7, True, (('North Fair Oaks', 0.29),)),
+    '94065': ('Redwood City', 'city', 1.0, True, ()),
+    '94066': ('San Bruno', 'city', 0.99, True, ()),
+    '94070': ('San Carlos', 'city', 0.97, True, ()),
+    '94074': (None, None, None, False, ()),
+    '94080': ('South San Francisco', 'city', 0.99, True, ()),
+    '94085': ('Sunnyvale', 'city', 1.0, True, ()),
+    '94086': ('Sunnyvale', 'city', 1.0, True, ()),
+    '94087': ('Sunnyvale', 'city', 1.0, True, ()),
+    '94089': ('Sunnyvale', 'city', 1.0, True, ()),
+    '94102': ('San Francisco', 'city', 1.0, True, ()),
+    '94103': ('San Francisco', 'city', 1.0, True, ()),
+    '94104': ('San Francisco', 'city', 1.0, True, ()),
+    '94105': ('San Francisco', 'city', 1.0, True, ()),
+    '94107': ('San Francisco', 'city', 1.0, True, ()),
+    '94108': ('San Francisco', 'city', 1.0, True, ()),
+    '94109': ('San Francisco', 'city', 1.0, True, ()),
+    '94110': ('San Francisco', 'city', 1.0, True, ()),
+    '94111': ('San Francisco', 'city', 1.0, True, ()),
+    '94112': ('San Francisco', 'city', 1.0, True, ()),
+    '94114': ('San Francisco', 'city', 1.0, True, ()),
+    '94115': ('San Francisco', 'city', 1.0, True, ()),
+    '94116': ('San Francisco', 'city', 1.0, True, ()),
+    '94117': ('San Francisco', 'city', 1.0, True, ()),
+    '94118': ('San Francisco', 'city', 1.0, True, ()),
+    '94121': ('San Francisco', 'city', 1.0, True, ()),
+    '94122': ('San Francisco', 'city', 1.0, True, ()),
+    '94123': ('San Francisco', 'city', 1.0, True, ()),
+    '94124': ('San Francisco', 'city', 1.0, True, ()),
+    '94127': ('San Francisco', 'city', 1.0, True, ()),
+    '94128': ('South San Francisco', 'city', 1.0, True, ()),
+    '94129': ('San Francisco', 'city', 1.0, True, ()),
+    '94130': ('San Francisco', 'city', 1.0, True, ()),
+    '94131': ('San Francisco', 'city', 1.0, True, ()),
+    '94132': ('San Francisco', 'city', 1.0, True, ()),
+    '94133': ('San Francisco', 'city', 1.0, True, ()),
+    '94134': ('San Francisco', 'city', 1.0, True, ()),
+    '94158': ('San Francisco', 'city', 1.0, True, ()),
+    '94188': ('San Francisco', 'city', 1.0, True, ()),
+    '94301': ('Palo Alto', 'city', 1.0, True, ()),
+    '94303': ('East Palo Alto', 'city', 0.62, True, (('Palo Alto', 0.38),)),
+    '94304': ('Palo Alto', 'city', 0.93, True, (('Stanford', 0.05), ('Los Altos Hills', 0.01))),
+    '94305': ('Stanford', 'cdp', 1.0, False, ()),
+    '94306': ('Palo Alto', 'city', 1.0, True, ()),
+    '94401': ('San Mateo', 'city', 1.0, True, ()),
+    '94402': ('San Mateo', 'city', 0.84, True, (('Highlands', 0.09), ('Baywood Park', 0.07))),
+    '94403': ('San Mateo', 'city', 1.0, True, ()),
+    '94404': ('Foster City', 'city', 0.91, True, (('San Mateo', 0.09),)),
+    '94501': ('Alameda', 'city', 1.0, True, ()),
+    '94502': ('Alameda', 'city', 1.0, True, ()),
+    '94536': ('Fremont', 'city', 1.0, True, ()),
+    '94538': ('Fremont', 'city', 1.0, True, ()),
+    '94539': ('Fremont', 'city', 1.0, True, ()),
+    '94541': ('Hayward', 'city', 0.48, False, (('Cherryland', 0.22), ('Fairview', 0.15))),
+    '94542': ('Hayward', 'city', 0.94, True, (('Fairview', 0.06),)),
+    '94544': ('Hayward', 'city', 1.0, True, ()),
+    '94545': ('Hayward', 'city', 1.0, True, ()),
+    '94546': ('Castro Valley', 'cdp', 0.98, False, (('Hayward', 0.02),)),
+    '94550': ('Livermore', 'city', 0.97, True, ()),
+    '94551': ('Livermore', 'city', 0.98, True, ()),
+    '94552': ('Castro Valley', 'cdp', 0.95, False, ()),
+    '94555': ('Fremont', 'city', 1.0, True, ()),
+    '94560': ('Newark', 'city', 1.0, True, ()),
+    '94566': ('Pleasanton', 'city', 0.98, True, ()),
+    '94568': ('Dublin', 'city', 1.0, True, ()),
+    '94577': ('San Leandro', 'city', 1.0, True, ()),
+    '94578': ('San Leandro', 'city', 0.5, False, (('Ashland', 0.34), ('Castro Valley', 0.17))),
+    '94579': ('San Leandro', 'city', 1.0, True, ()),
+    '94580': ('San Lorenzo', 'cdp', 0.73, False, (('Ashland', 0.26), ('Cherryland', 0.01))),
+    '94586': ('Sunol', 'cdp', 0.96, False, ()),
+    '94587': ('Union City', 'city', 1.0, True, ()),
+    '94588': ('Pleasanton', 'city', 0.99, True, ()),
+    '94601': ('Oakland', 'city', 1.0, True, ()),
+    '94602': ('Oakland', 'city', 1.0, True, ()),
+    '94603': ('Oakland', 'city', 1.0, True, ()),
+    '94605': ('Oakland', 'city', 1.0, True, ()),
+    '94606': ('Oakland', 'city', 1.0, True, ()),
+    '94607': ('Oakland', 'city', 1.0, True, ()),
+    '94608': ('Oakland', 'city', 0.61, True, (('Emeryville', 0.39),)),
+    '94609': ('Oakland', 'city', 1.0, True, ()),
+    '94610': ('Oakland', 'city', 0.92, True, (('Piedmont', 0.08),)),
+    '94611': ('Oakland', 'city', 0.79, True, (('Piedmont', 0.21),)),
+    '94612': ('Oakland', 'city', 1.0, True, ()),
+    '94613': ('Oakland', 'city', 1.0, True, ()),
+    '94618': ('Oakland', 'city', 0.99, True, (('Piedmont', 0.01),)),
+    '94619': ('Oakland', 'city', 1.0, True, ()),
+    '94621': ('Oakland', 'city', 1.0, True, ()),
+    '94702': ('Berkeley', 'city', 1.0, True, ()),
+    '94703': ('Berkeley', 'city', 1.0, True, ()),
+    '94704': ('Berkeley', 'city', 1.0, True, ()),
+    '94705': ('Berkeley', 'city', 0.84, True, (('Oakland', 0.16),)),
+    '94706': ('Albany', 'city', 0.94, True, (('Berkeley', 0.06),)),
+    '94707': ('Berkeley', 'city', 0.73, True, (('Albany', 0.03),)),
+    '94709': ('Berkeley', 'city', 1.0, True, ()),
+    '94710': ('Berkeley', 'city', 0.99, True, (('Albany', 0.01),)),
+    '94720': ('Berkeley', 'city', 1.0, True, ()),
+    '95002': ('San Jose', 'city', 1.0, True, ()),
+    '95008': ('Campbell', 'city', 0.85, True, (('San Jose', 0.15),)),
+    '95013': ('San Jose', 'city', 0.44, False, ()),
+    '95014': ('Cupertino', 'city', 0.96, True, (('San Jose', 0.03),)),
+    '95020': ('Gilroy', 'city', 0.87, True, (('San Martin', 0.02),)),
+    '95030': ('Los Gatos', 'town', 0.63, True, (('Monte Sereno', 0.26), ('Saratoga', 0.01))),
+    '95032': ('Los Gatos', 'town', 0.89, True, (('Campbell', 0.03), ('San Jose', 0.01))),
+    '95035': ('Milpitas', 'city', 1.0, True, ()),
+    '95037': ('Morgan Hill', 'city', 0.86, True, ()),
+    '95046': ('San Martin', 'cdp', 0.93, False, ()),
+    '95050': ('Santa Clara', 'city', 0.99, True, (('San Jose', 0.01),)),
+    '95051': ('Santa Clara', 'city', 1.0, True, ()),
+    '95053': ('Santa Clara', 'city', 1.0, True, ()),
+    '95054': ('Santa Clara', 'city', 1.0, True, ()),
+    '95070': ('Saratoga', 'city', 0.96, True, (('San Jose', 0.03),)),
+    '95110': ('San Jose', 'city', 1.0, True, ()),
+    '95111': ('San Jose', 'city', 1.0, True, ()),
+    '95112': ('San Jose', 'city', 1.0, True, ()),
+    '95113': ('San Jose', 'city', 1.0, True, ()),
+    '95116': ('San Jose', 'city', 1.0, True, ()),
+    '95117': ('San Jose', 'city', 1.0, True, ()),
+    '95118': ('San Jose', 'city', 1.0, True, ()),
+    '95119': ('San Jose', 'city', 1.0, True, ()),
+    '95120': ('San Jose', 'city', 0.95, True, ()),
+    '95121': ('San Jose', 'city', 1.0, True, ()),
+    '95122': ('San Jose', 'city', 1.0, True, ()),
+    '95123': ('San Jose', 'city', 1.0, True, ()),
+    '95124': ('San Jose', 'city', 0.93, True, (('Cambrian Park', 0.07),)),
+    '95125': ('San Jose', 'city', 0.99, True, (('Campbell', 0.01),)),
+    '95126': ('San Jose', 'city', 1.0, True, ()),
+    '95127': ('San Jose', 'city', 0.69, True, (('Alum Rock', 0.19), ('East Foothills', 0.11))),
+    '95128': ('San Jose', 'city', 0.8, True, (('Burbank', 0.14), ('Campbell', 0.03))),
+    '95129': ('San Jose', 'city', 1.0, True, ()),
+    '95130': ('San Jose', 'city', 1.0, True, ()),
+    '95131': ('San Jose', 'city', 1.0, True, ()),
+    '95132': ('San Jose', 'city', 0.99, True, ()),
+    '95133': ('San Jose', 'city', 1.0, True, ()),
+    '95134': ('San Jose', 'city', 1.0, True, ()),
+    '95135': ('San Jose', 'city', 0.99, True, ()),
+    '95136': ('San Jose', 'city', 1.0, True, ()),
+    '95138': ('San Jose', 'city', 0.99, True, ()),
+    '95139': ('San Jose', 'city', 1.0, True, ()),
+    '95140': (None, None, None, False, ()),
+    '95148': ('San Jose', 'city', 0.98, True, ()),
+    '95391': (None, None, None, False, ()),
+}
+# BAYAREA-ZIPS:END
+
+
+def bayarea_zip_record(zip5):
+    """A Bay Area ZIP's residents as the response says them: its largest place, the share, the next places, whether
+    it is scored as a city, and one plain sentence. Raises KeyError for a ZIP the table does not hold."""
+    place, kind, share, majority, others = BAYAREA_ZIPS[zip5]
+    if place is None:
+        note = f'No city or community Sky Score holds has residents in ZIP {zip5} (2020 Census).'
+    else:
+        where = place if kind in ('city', 'town') else f'{place}, an unincorporated community'
+        rest = ''.join(f'; {round(s * 100)}% in {name}' for name, s in others)
+        note = f'{round(share * 100)}% of ZIP {zip5}\'s 2020 residents live in {where}{rest}.'
+        if majority:
+            note += f' Scored as {place}.'
+    return {
+        'place': place,
+        'kind': kind,
+        'share': share,
+        'others': [{'place': name, 'share': s} for name, s in others],
+        'cityMajority': majority,
+        'note': note,
+        'source': 'US Census Bureau 2020: residents by block (PL 94-171) joined to ZIP areas (ZCTA-to-block file)',
+    }
 
 US_ZIP_PATTERN = re.compile(r'^\d{5}(-\d{4})?$')
 
@@ -4541,8 +4744,9 @@ FLIGHT_PATHS_TEESSIDE = [
 # The San Francisco Bay Area's aircraft geometry: its airports, the final approaches
 # and departures of the runways actually flown, and the values fitted against SFO's
 # and San Jose's noise monitors. scripts/measure_us_quiet_yardstick.py --check holds it
-# to the monitors. CITIES['bayarea'] is reached by city name only (no ZIP table yet), so
-# calc_postcode_quiet reads it only through the city bands build_bayarea_quiet.py derives.
+# to the monitors. CITIES['bayarea'] is reached by city name, or by a ZIP resolved to its residents' city
+# (BAYAREA_ZIPS, no coordinates), so calc_postcode_quiet reads it only through the city bands
+# build_bayarea_quiet.py derives.
 # US-QUIET-BAYAREA:START (generated by scripts/measure_us_quiet_yardstick.py --write; do not hand-edit)
 AIRPORTS_BAYAREA = [
     {'code': 'SFO', 'name': 'San Francisco', 'lat': 37.618806, 'lon': -122.375417},
@@ -10468,6 +10672,13 @@ def resolve_query(query):
         if US_ZIP_PATTERN.match(postcode):
             zip5 = postcode[:5]
             named_city = parse_str_param(query.get('city')).lower()
+            if zip5 in BAYAREA_ZIPS and named_city and named_city != 'bayarea' and not uk_shape(named_city):
+                # The same rule the other way: a Bay Area ZIP asked of New York is refused, never answered as
+                # either city in silence.
+                return {
+                    'error': f'ZIP {zip5} is a San Francisco Bay Area ZIP, not in {CITIES[named_city]["name"]}.',
+                    'note': 'Send it without city, or with city=bayarea.',
+                }, 404
             if zip5 in NYC_ZIP_TO_BOROUGH and named_city and named_city != 'nyc' and not uk_shape(named_city):
                 # A New York ZIP asked of another US city was answered as New York in silence, so a caller asking
                 # the Bay Area about 10001 got a New York score under a request naming the Bay Area. A UK city
@@ -10493,19 +10704,37 @@ def resolve_query(query):
                 if centroid:
                     location_meta['latitude'] = centroid[0]
                     location_meta['longitude'] = centroid[1]
+            elif zip5 in BAYAREA_ZIPS:
+                # A BAY AREA ZIP IS SCORED AS THE CITY WHERE HALF OR MORE OF ITS RESIDENTS LIVE (Bill, 2026-10-23),
+                # and says so: a ZIP is not a city, so the response carries the share and the next places
+                # (location.zipResidents, and the same sentence in coverage.notices). Under half, or a majority in
+                # an unincorporated community, names no city: 404 with the places and shares, and the city-name
+                # route. One table with the site's (scripts/build_bayarea_zips.py), so the two name the same city.
+                zip_record = bayarea_zip_record(zip5)
+                if not zip_record['cityMajority']:
+                    return {
+                        'error': f'ZIP {zip5} has no city where half or more of its residents live, so it is not scored.',
+                        'note': (f'{zip_record["note"]} Bay Area cities are scored by name: '
+                                 'borough=<city>&city=bayarea, the 50 cities listed by /v1/regions.'),
+                        'zipResidents': zip_record,
+                    }, 404
+                city = 'bayarea'
+                borough = zip_record['place']
+                location_meta = {
+                    'city': 'bayarea',
+                    'postcode': postcode,
+                    'borough': borough,
+                    'region': 'San Francisco Bay Area',
+                    'zipResidents': zip_record,
+                }
             else:
-                # `supportedNycBoroughs` stays: scripts/score_bulk.py reads it as "outside New York". The Bay Area
-                # is named because its ZIPs land here too: no ZIP table is held for it, and a ZIP there spans
-                # cities. The site's table (data/us-bayarea-zips.json) gives each ZIP to the city with most of
-                # its LAND, so 94010 goes to Hillsborough and 7 of the 50 cities hold no ZIP's majority
-                # (measured 2026-10-22). A score needs the residents' city, so the honest answer is the city
-                # name, not a guessed city.
+                # `supportedNycBoroughs` stays: scripts/score_bulk.py reads it as "outside New York".
                 return {
                     'error': f'ZIP not currently supported: {postcode}',
                     'note': (
-                        'Sky Score resolves New York City ZIPs only at present (Manhattan, Brooklyn, Queens, '
-                        'Bronx, Staten Island). San Francisco Bay Area cities are scored by name: '
-                        'borough=<city>&city=bayarea, the 50 cities listed by /v1/regions.'
+                        'Sky Score resolves New York City ZIPs and the ZIPs of the four San Francisco Bay Area '
+                        'counties it covers (San Francisco, San Mateo, Santa Clara, Alameda). Bay Area cities are '
+                        'also scored by name: borough=<city>&city=bayarea, the 50 cities listed by /v1/regions.'
                     ),
                     'supportedNycBoroughs': sorted(NYC_BOROUGHS.keys()),
                 }, 404
@@ -10601,8 +10830,8 @@ def resolve_query(query):
             # NOT COVERED YET (2026-10-22, found by the MCP server's first live test). A postcode in no covered
             # city fell through to the DEFAULT city and answered "Borough not currently supported in london."
             # for EX1 1HS, naming a city the caller never asked about, with London's boroughs as the list. Only
-            # a NYC ZIP or a UK postcode reaches here (any other ZIP returned above), and a NYC ZIP always
-            # resolves, so this is a UK postcode outside every city derive_city knows.
+            # a NYC or Bay Area ZIP or a UK postcode reaches here (any other ZIP returned above), and those ZIPs
+            # always resolve to a held borough, so this is a UK postcode outside every city derive_city knows.
             return {
                 'error': f'Not covered yet: {location_meta.get("postcode") or postcode} is outside every city Sky Score scores.',
                 'attemptedBorough': location_meta.get('borough'),
@@ -10732,6 +10961,10 @@ def resolve_query(query):
     # UK cities only (code review, 2026-10-22): both entries are UK datasets (MHCLG, ONS), so in a New York or
     # Bay Area response they credited UK bodies with no NOT, the defect test_non_uk_city_never_credits_uk_bodies
     # guards against, unseen because that test did not read this block. Neither is planned for a US city.
+    # A ZIP scored as a city says so where every caller sees it: `coverage` survives ?include=, `location` may not.
+    zip_note = (location_meta.get('zipResidents') or {}).get('note')
+    if zip_note and isinstance(body.get('coverage'), dict):
+        body['coverage'] = {**body['coverage'], 'notices': [*body['coverage'].get('notices', []), zip_note]}
     if not uk_shape(city):
         return filter_response(body, include), 200
     body['plannedComponents'] = {

@@ -1088,9 +1088,15 @@ only through `resolve_query`.
 ### 4.8 The San Francisco Bay Area (release 2, built 2026-10-22: scored by the API; the site shows facts)
 
 The Bay Area's 50 incorporated cities and towns (San Francisco, San Mateo, Santa Clara and Alameda counties) are
-scored by `/v1/score` under `city=bayarea`, asked by city NAME (`borough=Palo Alto`). Bay Area ZIPs are not
-resolved yet: a ZIP there spans cities, and the only ZIP table held gives each ZIP to the city with most of its
-LAND, which sends Burlingame's 94010 to Hillsborough and leaves 7 of the 50 cities with no ZIP of their own. The
+scored by `/v1/score` under `city=bayarea`, asked by city NAME (`borough=Palo Alto`) or by a ZIP of the four
+counties. A ZIP spans cities, so it is scored as the city where HALF OR MORE of its 2020 residents live, and the
+response says the shares (`location.zipResidents`, and the same sentence in `coverage.notices`): 94010 is 71%
+Burlingame, 26% Hillsborough. A ZIP with no such city (a split, or a majority in an unincorporated community such
+as Castro Valley) is not scored and answers 404 with its places and shares. Residents, not land: the land rule sent
+94010 to Hillsborough and named 95014 "44% Cupertino" where 96% of its people live (Bill, 2026-10-23). The ZIP
+chooses the city and adds no precision: it scores exactly as the city does by name. One table serves the site and
+the API (`scripts/build_bayarea_zips.py`, from the 2020 Census's residents by block joined to ZIP areas: 147 of 165
+ZIPs are scored as a city, and 7 small cities hold no ZIP's majority). The
 consumer site keeps showing the Bay Area as facts with no score until its own release (Bill, 2026-10-22: "API
 first, site second"; `SITE_FACTS_ONLY_CITIES`, held both ways by the parity gates).
 
