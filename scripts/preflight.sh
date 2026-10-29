@@ -350,7 +350,7 @@ check "who it is for == one list"     python scripts/build_who_for.py --check
 # so wiring it in without the per-city floor would have gated nothing.
 #
 # Same data-dependency shape as the HPI stage above: needs only
-# data/ons_pfa_tables.xlsx, which load_table() fetches once from ONS and
+# data/ons_pfa_tables_<EDITION>.xlsx, which load_table() fetches once from ONS and
 # caches. Measured 2026-08-24: 1.7s for all eleven cities with the workbook
 # cached. Proven able to fail per city: a renamed London borough key floors
 # london while the other ten still compare, and the run exits 1.

@@ -12,8 +12,11 @@ HOW. It probes DEFRA's own datastore for the files a roll would load,
 serve up to the current one. A year counts only when BOTH exist. A one-byte
 ranged request is enough to know a file exists without downloading 8 MB.
 
-TWO WAYS TO GO WRONG, BOTH GUARDED:
+THREE WAYS TO GO WRONG, ALL GUARDED:
   - a network failure must not read as "up to date", so it is INCONCLUSIVE;
+  - a 200 is not the file (2026-10-23): DEFRA's site in maintenance answered EVERY URL, 2025 and 2026 included,
+    with 200 and a "Website Maintenance" HTML page, and this probe reported PCM 2026 as published. A real file
+    answers the one-byte range with 206; a web page in its place is a reason to say INCONCLUSIVE, never a year;
   - if DEFRA renames its files, every newer year 404s and the served year
     looks current forever. So the SERVED year's own files are probed too, and
     if they no longer resolve the probe is not trusted: INCONCLUSIVE, naming
@@ -45,11 +48,21 @@ def files_for(year):
     return [f'{DATASTORE}mapno2{year}.csv', f'{DATASTORE}mappm25{year}g.csv']
 
 
+def is_web_page(content_type, first_byte):
+    """True when what came back is an HTML page, not the CSV asked for (a maintenance or error page)."""
+    return 'html' in (content_type or '').lower() or first_byte.lstrip()[:1] == b'<'
+
+
 def exists(url):
-    """True on 200/206, False on 404; raises on anything else (network, 5xx)."""
+    """True when the FILE answers (200/206 with a non-HTML body), False on 404; raises on anything else (network,
+    5xx, and a web page standing in for the file), which the callers report as INCONCLUSIVE."""
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20) as r:
-            return r.status in (200, 206)
+            if r.status not in (200, 206):
+                return False
+            if is_web_page(r.headers.get('Content-Type'), r.read(1)):
+                raise urllib.error.URLError(f'{url} answered with a web page, not the file (DEFRA maintenance?)')
+            return True
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
             return False
@@ -73,7 +86,7 @@ def main():
     try:
         latest = latest_published(served, datetime.date.today().year)
     except (OSError, urllib.error.URLError) as exc:
-        print(f'INCONCLUSIVE: could not reach DEFRA\'s datastore ({exc})')
+        print(f'INCONCLUSIVE: could not read DEFRA\'s datastore ({exc})')
         return 0
     if latest is None:
         print(f'INCONCLUSIVE: the files for the year we serve ({served}) no longer resolve at '

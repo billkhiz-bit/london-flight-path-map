@@ -39,6 +39,7 @@
  *
  *   node tests/area-page-freshness.mjs
  */
+import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -122,11 +123,20 @@ console.log(`\nArea page freshness\n===================\n`);
 // many there should be. A literal here would be right today and wrong on the
 // day a city lands - which is exactly when a stale area/ directory matters
 // most. /v1/regions needs no API key.
+//
+// Less a facts-only city's boroughs (2026-10-29): the API scores the Bay Area and
+// the site shows its FACTS (app.SITE_FACTS_ONLY_CITIES, Bill 2026-10-22), so
+// build_area_pages.py writes it no page. The list is read from its one holder,
+// the Lambda, never retyped. Until Bay Area release 2 went live the API served
+// no such city, and the day it did this floor read 102 pages against 152
+// boroughs and hid the staleness check behind it.
+const FACTS_ONLY = new Set(JSON.parse(execFileSync('python', ['-c',
+  "import json, sys; sys.path.insert(0, 'backend/lambdas/score'); import app; print(json.dumps(sorted(app.SITE_FACTS_ONLY_CITIES)))",
+], { encoding: 'utf-8', cwd: ROOT })));
 const regions = await fetch(`${API}/v1/regions`).then((r) => r.json());
-const expected = (regions.regions || regions.cities || []).reduce(
-  (n, c) => n + (c.boroughs?.length ?? c.boroughCount ?? 0),
-  0,
-);
+const expected = (regions.regions || regions.cities || [])
+  .filter((c) => !FACTS_ONLY.has(c.id))
+  .reduce((n, c) => n + (c.boroughs?.length ?? c.boroughCount ?? 0), 0);
 if (!expected) {
   console.error('FAIL: /v1/regions returned no borough count, so there is no');
   console.error('      expectation to compare against. Not a pass - the floor');
@@ -141,7 +151,7 @@ if (pages.length !== expected) {
   console.error('      survives for a borough the API no longer serves.');
   process.exit(1);
 }
-console.log(`  ${pages.length} pages to check (matches ${expected} boroughs on /v1/regions), in ${Math.ceil(pages.length / CHUNK)} batch request(s)\n`);
+console.log(`  ${pages.length} pages to check (matches ${expected} boroughs on /v1/regions, less facts-only ${[...FACTS_ONLY].join(', ') || 'none'}), in ${Math.ceil(pages.length / CHUNK)} batch request(s)\n`);
 
 // --- what the API says today ------------------------------------------------
 const live = new Map();

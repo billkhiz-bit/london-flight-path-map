@@ -56,6 +56,8 @@
 
 ## 2026-10-23 - Who is behind Sky Score; the answer first; a menu on phones
 
+- **Crime figures are now ONS's year to June 2026** (live after 29 October), one quarter newer. Most areas
+  move by a few offences per 1,000 residents; eight overall scores change, each by 0.1.
 - **An About page** (`/about/`): who Sky Score is for, why it was built and by whom, the questions people have
   asked about it at talks, and the talks themselves. Linked from every page's top bar and footer.
 - **The front page opens on an answer**: a street in Kew under Heathrow's arrivals, labelled as an example, so
@@ -71,6 +73,14 @@
   your floor: road noise and traffic pollution can differ on an upper floor.
 - Fixed on the way: the front page's "Search a postcode" link now works while Find areas is open; the "How it
   works" page marks itself in the top bar; "Its figures" in an answer is now a full-size touch target.
+- **For developers and AI agents: DEFRA's and the Environment Agency's figures are called modelled, not measured.**
+  Their noise, air and flood maps are worked out by models, as How it works already told readers; the API page,
+  the API reference and the MCP server's environment tool had called them measured. The environment tool also no
+  longer promises a flood value it never returned. No field, value or score changes.
+- **For developers and AI agents: every figure the API returns says where it came from** (live after 29 October).
+  A new `provenance` block names, for each value, the source that answered, how that source made it (modelled,
+  an official statistic, our own estimate...), and for what period; `sourceIndex` gives each source's publisher,
+  dataset and licence. Nothing already in a response changes.
 
 ## 2026-10-22 - How a score is worked out; fixes from the week's audit
 

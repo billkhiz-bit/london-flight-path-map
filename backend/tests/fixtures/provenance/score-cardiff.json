@@ -1,0 +1,100 @@
+{
+ "score": 7.5,
+ "weights": {
+  "quiet": 0.372093,
+  "afford": 0.313953,
+  "growth": 0.0,
+  "live": 0.313953
+ },
+ "components": {
+  "quiet": 10.0,
+  "afford": 6.5,
+  "growth": 4.7,
+  "live": 5.4
+ },
+ "context": {
+  "avgPriceGbp": 272252,
+  "priceTrendPct": 2.1,
+  "priceTrendRealPct": -1.2,
+  "inflationPct": 3.3,
+  "growthBasis": "real",
+  "priceRankInCity": {
+   "rank": 3,
+   "of": 4
+  },
+  "growthRankInCity": {
+   "rank": 3,
+   "of": 4
+  },
+  "noiseImpactBand": "low",
+  "quietResolution": "postcode",
+  "liveResolution": "partial \u2014 3/4 inputs measured; the absent inputs are not estimated, their weight is redistributed across the measured ones",
+  "environmentResolution": "unavailable \u2014 1/3 inputs measured, too few to publish; the component is omitted and its weight redistributed",
+  "environmentSingleInput": true,
+  "no2AnnualMeanUgm3": 16.3,
+  "no2WhoGuidelineUgm3": 10,
+  "pm25AnnualMeanUgm3": 6.0,
+  "pm25WhoGuidelineUgm3": 5,
+  "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid"
+ },
+ "coverage": {
+  "quiet": {
+   "basis": "postcode",
+   "measuredAtLocation": false
+  },
+  "live": {
+   "basis": "partial \u2014 3/4 inputs measured; the absent inputs are not estimated, their weight is redistributed across the measured ones",
+   "measuredAtLocation": false
+  },
+  "env": {
+   "basis": "unavailable \u2014 1/3 inputs measured, too few to publish; the component is omitted and its weight redistributed",
+   "measuredAtLocation": false
+  },
+  "notices": [
+   "Aircraft noise here is estimated from distance to this area's airport and flight-path geometry, not measured. DEFRA publishes no noise contours for that airport, so no measured value exists for any postcode in this area.",
+   "Environment inputs are unavailable for this area, so that component is omitted from the score and its weight is redistributed across the components that were measured. It is not a placeholder value, and the score is not directly comparable with a fully-measured borough."
+  ]
+ },
+ "location": {
+  "city": "cardiff",
+  "postcode": "CF10 1EP",
+  "borough": "Cardiff",
+  "longitude": -3.179217,
+  "latitude": 51.475764,
+  "region": null
+ },
+ "persona": "balanced",
+ "methodologyVersion": "5.7",
+ "methodologyUrl": "https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md",
+ "apiVersion": "1.0",
+ "generatedAt": "2026-10-23T20:20:43.233313+00:00",
+ "sources": [
+  "Prices: HM Land Registry UK House Price Index, August 2026 vintage, Open Government Licence v3.0",
+  "Aviation noise context: ESTIMATED from Cardiff Airport (CWL) runway 12/30 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the threshold DEFRA maps at all; NOT a DEFRA sample at this address",
+  "Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0",
+  "Liveability (3 of 4 inputs): ONS Crime in England and Wales, Table C4; NaPTAN rail, metro and tram access within 800 m; NHS Organisation Data Service GP practices within 500 m. Any absent input has its weight redistributed, not defaulted",
+  "Air quality: DEFRA background pollution maps (PCM), Open Government Licence v3.0",
+  "Inflation: ONS CPIH 12-month rate, all items (series L55O, dataset MM23), August 2026, Open Government Licence v3.0",
+  "Postcode resolution: ONS National Statistics Postcode Lookup (Open Government Licence v3.0), with postcodes.io (Open Government Licence v3.0) as fallback",
+  "Flight routes: UK Aeronautical Information Publication (NATS), derived by Sky Score for the aircraft noise estimate; public but not openly licensed, and not for navigation"
+ ],
+ "sourceBreakdown": {
+  "quiet": "PROVISIONAL ESTIMATE derived from Cardiff Airport (CWL) runway 12/30 alignment and its extended approach centreline. NOT a DEFRA sample: DEFRA's Round 4 mapping does not cover Cardiff Airport at all - it is below the traffic threshold the Environmental Noise Directive maps at - so no raster exists to sample and the ladder is floored at the smallest published footprint, exactly as the sources line says.  So the dB Lden thresholds in METHODOLOGY section 3 are not evidenced here. The distance ladder is calibrated on Heathrow, which is several times this airport's size, so the bands reach further than it really does and are PESSIMISTIC rather than optimistic. Corridor waypoints are on a common 1 km interval across all cities, so corridor distances are comparable. Indicative only. The geometry estimate's flight routes and runway alignments (CWL) are derived by Sky Score from the UK Aeronautical Information Publication (NATS), and are not for navigation.",
+  "afford": "HM Land Registry UK House Price Index, August 2026 vintage, Open Government Licence v3.0. Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile of borough medians across ALL 97 boroughs in the sterling pool (GBP 159,100 to GBP 732,271), not against this city cohort. Affordability is therefore comparable BETWEEN cities: a cheaper borough always scores higher than a dearer one, which within-city min-max did not deliver - it inverted 1,619 of the 4,371 cross-city borough pairs. context.priceRankInCity carries the within-city standing that scaling used to imply.",
+  "live": "3 of 4 inputs measured. ONS Crime in England and Wales, Table C4; NaPTAN rail, metro and tram access within 800 m; NHS Organisation Data Service GP practices within 500 m. Absent inputs have their weight redistributed across the measured ones rather than being defaulted to a mid value, and context.liveResolution reports the count per response.",
+  "env": "Not scored for this city: Air quality (0.45) is the only input available, below the two-input floor the component requires, so environment is omitted from the score rather than published on one reading.",
+  "growth": "HM Land Registry UK House Price Index, August 2026 vintage, 12-month price trend deflated by ONS CPIH (3.3% for August 2026) - REAL-terms growth since methodology v5.1, so a flat score of 5.0 means prices held their value against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct the figure scored. Methodology v5.2 scales each tail against the real-terms fastest riser and steepest faller across ALL 97 boroughs in the sterling pool, not this city cohort - a city-sized cohort put one borough per city on each rail every month by construction. Growth is therefore comparable BETWEEN cities; context.growthRankInCity carries the within-city standing. No previous vintage exists for this city, so ?compare=previous declines rather than reporting zero change."
+ },
+ "plannedComponents": {
+  "epcDistribution": {
+   "status": "planned",
+   "source": "MHCLG Get Energy Performance Data (currently in /epc; planned in /v1/score)",
+   "eta": "roadmap"
+  },
+  "crimeBreakdown": {
+   "status": "planned",
+   "source": "ONS Table C4 offence groups per CSP (on the consumer site today; planned for this API, OGL v3.0)",
+   "eta": "roadmap"
+  }
+ }
+}

@@ -1,0 +1,95 @@
+{
+ "score": 3.4,
+ "weights": {
+  "quiet": 0.32,
+  "afford": 0.27,
+  "growth": 0.0,
+  "live": 0.27,
+  "env": 0.14
+ },
+ "components": {
+  "quiet": 0.0,
+  "afford": 2.1,
+  "growth": 3.7,
+  "live": 7.2,
+  "env": 6.5
+ },
+ "context": {
+  "avgPriceGbp": 528051,
+  "priceTrendPct": -1.5,
+  "priceTrendRealPct": -4.6,
+  "inflationPct": 3.3,
+  "growthBasis": "real",
+  "priceRankInCity": {
+   "rank": 14,
+   "of": 33
+  },
+  "growthRankInCity": {
+   "rank": 15,
+   "of": 33
+  },
+  "noiseImpactBand": "severe",
+  "quietResolution": "borough",
+  "liveResolution": "measured",
+  "environmentResolution": "measured",
+  "environmentSingleInput": false
+ },
+ "coverage": {
+  "quiet": {
+   "basis": "borough",
+   "measuredAtLocation": false
+  },
+  "live": {
+   "basis": "measured",
+   "measuredAtLocation": true
+  },
+  "env": {
+   "basis": "measured",
+   "measuredAtLocation": true
+  },
+  "notices": [
+   "Aircraft noise here is a borough-wide average, not a figure for this address. Expect real variation of 10-15 dB within a borough."
+  ]
+ },
+ "location": {
+  "city": "london",
+  "borough": "Hounslow"
+ },
+ "persona": "balanced",
+ "methodologyVersion": "5.7",
+ "methodologyUrl": "https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md",
+ "apiVersion": "1.0",
+ "generatedAt": "2026-10-23T20:20:42.813805+00:00",
+ "sources": [
+  "Transport access: DfT NaPTAN, Open Government Licence v3.0",
+  "Healthcare access: NHS Organisation Data Service, Open Government Licence v3.0",
+  "Postcode resolution: postcodes.io (Open Government Licence v3.0)",
+  "Borough metadata: ONS (Crime in England and Wales, Police Force Area data tables, Table C4) and Department for Education (Key Stage 4 Progress 8), Open Government Licence v3.0",
+  "Aviation noise context: DEFRA strategic noise mapping, Open Government Licence v3.0",
+  "Prices: HM Land Registry UK House Price Index, August 2026 vintage, Open Government Licence v3.0",
+  "Air quality: DEFRA background pollution maps (PCM), Open Government Licence v3.0",
+  "Road noise: DEFRA Strategic Noise Mapping Round 4 road Lden, Open Government Licence v3.0",
+  "Flood risk: Environment Agency Risk of Flooding from Rivers and Sea, Open Government Licence v3.0",
+  "Inflation: ONS CPIH 12-month rate, all items (series L55O, dataset MM23), August 2026, Open Government Licence v3.0",
+  "Flight routes: UK Aeronautical Information Publication (NATS), derived by Sky Score for the aircraft noise estimate; public but not openly licensed, and not for navigation"
+ ],
+ "sourceBreakdown": {
+  "quiet": "DEFRA Strategic Noise Mapping (Round 4, 2022). Resolution chain: v3.1 direct raster sample at postcode centroid (when populated) \u2192 v3.0 Haversine to airports + flight-path geometry \u2192 v2.x borough-aggregate Lden band. The chosen resolution is reported in context.quietResolution. The geometry estimate's flight routes and runway alignments (LCY, LGW, LHR, LTN, STN) are derived by Sky Score from the UK Aeronautical Information Publication (NATS), and are not for navigation.",
+  "afford": "HM Land Registry UK House Price Index, August 2026 vintage, Open Government Licence v3.0. Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile of borough medians across ALL 97 boroughs in the sterling pool (GBP 159,100 to GBP 732,271), not against this city cohort. Affordability is therefore comparable BETWEEN cities: a cheaper borough always scores higher than a dearer one, which within-city min-max did not deliver - it inverted 1,619 of the 4,371 cross-city borough pairs. context.priceRankInCity carries the within-city standing that scaling used to imply.",
+  "live": "Composite weighted (schools 35% + crime 30% + transport 25% + healthcare 10%). Schools: DfE Key Stage 4 Progress 8, 2023/24 Revised, local-authority level (rolled 2026-08-27 from 2022/23). The measure IS suspended for the 2024/25 and 2025/26 cohorts, whose KS2 baseline was lost to the 2020/2021 test cancellations, so 2023/24 is the last edition until 2026/27 publishes. Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Table C4, offences per 1,000 residents on mid-2024 population. Transport: NaPTAN, share of postcodes within 800 m of a rail, metro or tram node (v3.6, 2026-08-11). Healthcare: NHS Organisation Data Service, GP practices within 500 m (v3.7). Methodologically aligned with English Indices of Deprivation domains.",
+  "env": "Air quality (0.45), Road noise (0.35), Flood risk (0.20). Weights are re-normalised over the inputs a borough actually has; a borough below the two-input floor omits the component entirely.",
+  "growth": "HM Land Registry UK House Price Index, August 2026 vintage, 12-month price trend deflated by ONS CPIH (3.3% for August 2026) - REAL-terms growth since methodology v5.1, so a flat score of 5.0 means prices held their value against inflation. context.priceTrendPct is the cash trend, context.priceTrendRealPct the figure scored. Methodology v5.2 scales each tail against the real-terms fastest riser and steepest faller across ALL 97 boroughs in the sterling pool, not this city cohort - a city-sized cohort put one borough per city on each rail every month by construction. Growth is therefore comparable BETWEEN cities; context.growthRankInCity carries the within-city standing. A previous vintage exists, so ?compare=previous reports real movement."
+ },
+ "plannedComponents": {
+  "epcDistribution": {
+   "status": "planned",
+   "source": "MHCLG Get Energy Performance Data (currently in /epc; planned in /v1/score)",
+   "eta": "roadmap"
+  },
+  "crimeBreakdown": {
+   "status": "planned",
+   "source": "ONS Table C4 offence groups per CSP (on the consumer site today; planned for this API, OGL v3.0)",
+   "eta": "roadmap"
+  }
+ }
+}

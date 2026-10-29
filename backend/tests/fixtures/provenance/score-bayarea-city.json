@@ -1,0 +1,77 @@
+{
+ "score": 4.4,
+ "weights": {
+  "quiet": 0.32,
+  "afford": 0.27,
+  "live": 0.27,
+  "env": 0.14
+ },
+ "components": {
+  "quiet": 10.0,
+  "afford": 0.0,
+  "live": 2.5,
+  "env": 3.9
+ },
+ "context": {
+  "avgPriceUsdAtLeast": 2000000,
+  "priceTopCoded": true,
+  "priceTrendPct": -0.63,
+  "growthBasis": "not scored",
+  "priceTrendArea": "Santa Clara County, FHFA's annual change (no city series is published)",
+  "priceRankInCity": {
+   "rank": 35,
+   "of": 50
+  },
+  "noiseImpactBand": "low",
+  "quietResolution": "borough",
+  "liveResolution": "partial \u2014 2/4 inputs measured; the absent inputs are not estimated, their weight is redistributed across the measured ones",
+  "environmentResolution": "partial \u2014 2/3 inputs measured; the absent input is not estimated, its weight is redistributed across the measured ones. Not comparable with a fully-measured borough for ranking",
+  "environmentSingleInput": false
+ },
+ "coverage": {
+  "quiet": {
+   "basis": "borough",
+   "measuredAtLocation": false
+  },
+  "live": {
+   "basis": "partial \u2014 2/4 inputs measured; the absent inputs are not estimated, their weight is redistributed across the measured ones",
+   "measuredAtLocation": false
+  },
+  "env": {
+   "basis": "partial \u2014 2/3 inputs measured; the absent input is not estimated, its weight is redistributed across the measured ones. Not comparable with a fully-measured borough for ranking",
+   "measuredAtLocation": false
+  },
+  "notices": [
+   "Aircraft noise here is a borough-wide average, not a figure for this address. Expect real variation of 10-15 dB within a borough.",
+   "Growth is not scored here: FHFA's price trend is county-wide, so the Bay Area's 50 cities hold only four values, and scaled against each other they read as extremes they do not have; context.priceTrendPct reports the county's change as a fact."
+  ]
+ },
+ "location": {
+  "city": "bayarea",
+  "borough": "Palo Alto"
+ },
+ "persona": "balanced",
+ "methodologyVersion": "5.7",
+ "methodologyUrl": "https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md",
+ "apiVersion": "1.0",
+ "generatedAt": "2026-10-29T14:39:22.727261+00:00",
+ "sources": [
+  "Prices: US Census Bureau, American Community Survey 2020-2024 5-year estimates, table B25077 (median value of owner-occupied homes, USD), public domain",
+  "Price trend: Federal Housing Finance Agency, House Price Index for counties (annual, all-transactions), public domain; no FHFA endorsement is implied",
+  "Liveability (2 of 4 inputs): California DOJ OpenJustice Crimes and Clearances 2025, violent and property crimes per 1,000 residents (US Census Bureau Vintage 2025 estimates), public domain, on a US scale anchored on California's own rate over the agencies that police residents, 21.39; US Department of Transportation, Bureau of Transportation Statistics, National Transit Map Stops: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (CC BY 3.0 US; buses and ferries not counted). Any absent input has its weight redistributed, not defaulted",
+  "Residents: US Census Bureau, 2020 Census block population (P.L. 94-171), public domain; the frame every Bay Area share and the city aircraft band is taken over",
+  "Aviation noise context: ESTIMATED from the FAA routes of San Francisco, Oakland and San Jose airports, fitted to SFO's 29 noise monitors (DataSF, PDDL 1.0) and San Jose airport's 13 (its quarterly noise report to Caltrans), July 2025-June 2026; NOT a measurement at this address",
+  "Licence note: Open Government Licence v3.0 covers UK Crown copyright and does NOT apply to any data in this response",
+  "Road noise: USDOT Bureau of Transportation Statistics, National Transportation Noise Map 2022 (road, 24-hour LAeq), a US government work; BTS says it should not be used to evaluate noise levels at individual locations",
+  "Flood risk: FEMA National Flood Hazard Layer, Special Flood Hazard Area (1% annual chance), public domain",
+  "Flight routes: FAA Coded Instrument Flight Procedures, derived by Sky Score for the aircraft noise estimate; supplied \"as is\", without warranty, and not for navigation",
+  "Runway use: counted by Sky Score from aircraft positions via adsb.lol (ODbL 1.0), 2026-07-01 to 2026-08-31; the counts are offered under the ODbL"
+ ],
+ "sourceBreakdown": {
+  "quiet": "ESTIMATED from the FAA's coded routes of San Francisco (SFO), Oakland (OAK) and San Jose (SJC): the runway directions flown, counted from aircraft positions, with each airport's size and the route weight fitted to SFO's 29 noise monitors (their aircraft-only ANEEM CNEL) and San Jose's 13 (CNEL), July 2025-June 2026, so that the estimate reads louder than the monitors at every airport on average. NOT DEFRA and not a measurement at this address: no published Lden survey covers the Bay Area. A city query reads a band derived from the same estimate at every 2020 Census resident block, averaged over the city's residents and published at the band at or below that average, so it never reads quieter. The chosen resolution is reported in context.quietResolution.",
+  "afford": "US Census Bureau, American Community Survey 2020-2024 5-year estimates, table B25077: the median VALUE of owner-occupied homes as their owners estimate it, in USD, not sale prices; public domain. Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile of the Bay Area pool (USD 888,375 to USD 2,000,000 or more, the Census top code). Stated plainly: that pool is the 50 Bay Area cities alone, because each US metro is its own pool - so this is a within-Bay-Area scale, and it is NOT comparable with the sterling scores, which are anchored on a 97-borough national pool, nor with the New York pool. Prices in different pools are not pooled. 16 of the 50 carry the Census top code, \"USD 2,000,000 or more\", and are scored on that floor: it is the pool's 95th percentile, so they score 0.0, the least affordable end, whatever their true price, and context.priceTopCoded says which.",
+  "live": "2 of 4 inputs measured. California DOJ OpenJustice Crimes and Clearances 2025, violent and property crimes per 1,000 residents (US Census Bureau Vintage 2025 estimates), public domain, on a US scale anchored on California's own rate over the agencies that police residents, 21.39; US Department of Transportation, Bureau of Transportation Statistics, National Transit Map Stops: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (CC BY 3.0 US; buses and ferries not counted). Absent inputs have their weight redistributed across the measured ones rather than being defaulted to a mid value, and context.liveResolution reports the count per response. Schools and healthcare are not held for the Bay Area, so liveability is crime and transport, and a city missing either is below the two-input floor.",
+  "env": "Road noise (0.35), Flood risk (0.20). Weights are re-normalised over the inputs a borough actually has; a borough below the two-input floor omits the component entirely. Air quality is not held for the Bay Area. Road noise and flood are shares of residents at 2020 Census blocks, on US scales anchored on California's own shares (road 6.88%, flood 3.14%): 10 at none, 5.0 at California's figure, 0 at double; NOT comparable with the UK's DEFRA and Environment Agency scales.",
+  "growth": "NOT scored for this city: FHFA's price trend is county-wide, so the Bay Area's 50 cities hold only four values, and scaled against each other they read as extremes they do not have; context.priceTrendPct reports the county's change as a fact. The trend is Federal Housing Finance Agency House Price Index for counties (annual, all-transactions, 2025; a series FHFA calls developmental), each city taking its county's change, nominal. Growth's weight is redistributed across the components that are scored, as for any component that cannot be published. No previous vintage exists for this city, so ?compare=previous declines rather than reporting zero change."
+ }
+}
