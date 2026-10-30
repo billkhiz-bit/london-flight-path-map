@@ -233,7 +233,7 @@
           </nav>
         </div>
         <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 2026-09-28 · Effective: 2026-05-09</p>
+        <p class="updated">Last updated: 2026-10-30 · Effective: 2026-05-09</p>
       </header>
 
       <main>
@@ -241,7 +241,8 @@
       <div class="tldr">
         <p><strong>TL;DR</strong></p>
         <p>Browsing and scoring collect no personal data and need no account. If you SAVE a place, your browser generates a random device token so your own saved list comes back to you - it identifies a device, not a person, and it is never used for tracking or advertising. See &sect;2e.</p>
-        <p>The one exception: if you request a free API key, we store the email address you give us to issue and manage that key.</p>
+        <p>The exceptions are all optional, and &sect;2a lists every one. For example, if you request a free API key, we store the email address you give us to issue and manage that key.</p>
+        <p>Booking a demo (for businesses) happens on Calendly, a US company, which receives the name, email address and answer you enter there. See &sect;2a.</p>
         <p>We don't sell anything to anyone.</p>
         <p>Your location stays on your device unless you tap "Score where I am" - then it's used once to find your postcode and discarded.</p>
         <p>Anonymous analytics (no cookies, no profiles) tell us roughly how many people use the app.</p>
@@ -296,6 +297,25 @@
         or shared for marketing, and is kept for as long as the key remains active.
         Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> to delete it; we revoke the key and remove the
         record within 30 days.
+      </p>
+      <!-- Added 2026-10-29 with the Book a demo buttons (js/count.mjs DEMO_BOOKING_URL). The booking form's one
+           question is Bill's choice of 2026-10-30: "What would you like to get out of the call? Add a postcode or two
+           and I'll show you those places, not an example." If the question changes, this text changes with it. -->
+      <p>
+        <strong>Booking a demo (optional, for businesses; added 30 October 2026):</strong> the "Book a demo" links on
+        <a href="/pricing">the pricing page</a>, <a href="/api/">the API page</a> and the developer demo page open a booking
+        page run by Calendly, a scheduling service based in the United States, under its own privacy notice. Opening it
+        takes you to Calendly's own site, which receives what any website you visit does (your IP address and browser
+        details, and its own cookies, under its own notices) and is told that you came from skyscore.co.uk, but not which
+        page or anything you searched. If you book, Calendly collects the name and email address you enter, your answer to
+        its one question (what you would like from the call, and any postcodes you add) and the email address of anyone you
+        add as a guest, and passes them to us; the
+        invitation reaches our Google calendar and the call is held on Google Meet. We use them only to arrange the call and
+        to prepare for it (we look up your postcodes beforehand). Lawful basis: steps taken at your request before entering
+        into a contract (UK GDPR Article 6(1)(b)). It is never sold, never shared beyond the services named here, and never
+        used for marketing anything else. We keep a booking for up to 12 months after the call, so we can follow up on
+        anything agreed, then delete it. Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> and we
+        delete it from Calendly and our calendar sooner, within 30 days.
       </p>
 
       <h3>2b. Data the app uses temporarily, on your device only</h3>
@@ -462,14 +482,21 @@
               <td>Your IP address and the map area you are viewing</td>
               <td>US</td>
             </tr>
+            <!-- Added 2026-10-29 with the Book a demo buttons; SUBPROCESSORS.md row 19 is the same entry. -->
+            <tr>
+              <td>Calendly, with Google Calendar and Google Meet</td>
+              <td>Demo bookings and the call itself, only if you book one (&sect;2a)</td>
+              <td>The name, email address and booking answer you enter</td>
+              <td>US</td>
+            </tr>
           </tbody>
         </table>
       </div>
       <p>
         Everything in the "transient" rows above is passed straight through to answer your search and is never
         stored by Sky Score. The rows marked US or Germany are the ones worth noting if you need UK-only
-        processing: the healthcare lookup goes to a server in Germany, and your browser loads fonts and the
-        New York map layers from US-hosted services. We correct this table when the code changes, and on
+        processing: the healthcare lookup goes to a server in Germany, your browser loads fonts and the
+        New York map layers from US-hosted services, and a demo booking is held by Calendly in the US. We correct this table when the code changes, and on
         2026-08-04 we corrected it because it had been incomplete rather than because the code had changed.
       </p>
       <p>
@@ -502,7 +529,7 @@
       <h2>6. Your rights (UK GDPR)</h2>
       <p>Even though we hold very little data about you, your UK GDPR rights apply. You can:</p>
       <ul>
-        <li>Ask what data we hold about you. For most visitors this is nothing; if you have saved a place it is that list and its device token (&sect;2e), and if you requested an API key it is your email address</li>
+        <li>Ask what data we hold about you. For most visitors this is nothing; if you have saved a place it is that list and its device token (&sect;2e), if you requested an API key it is your email address, and if you booked a demo it is that booking (&sect;2a)</li>
         <li>Ask us to delete any data we do hold (we'll do it within 30 days)</li>
         <li>Withdraw consent to anything we're processing under consent (uninstalling the app revokes location consent)</li>
         <li>Lodge a complaint with the Information Commissioner's Office: <a href="https://ico.org.uk">ico.org.uk</a></li>

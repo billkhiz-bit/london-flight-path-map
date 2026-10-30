@@ -474,6 +474,46 @@ removed). **The readout that answered the demo-page question, 1 Jul - 23 Oct:** 
 footer (24); its email buttons clicked ONCE in total (`pricing-pilot-cta`), councils and paid tiers never; one free
 key issued. The constraint is buyers reaching the page, not how they make contact.
 
+**BOOK A DEMO: ONE HOLDER, THREE PAGES, NO DEPLOY ON A PLACEHOLDER (2026-10-29, branch `book-a-demo`).** After
+Deen Developers, Bill chose a Calendly booking page (Desktop `calendly-and-demo-plan-2026-10-29.md`) and asked where
+the button should go. The readout, 1 Jul - 29 Oct: /pricing 38 views (24 from the full map's footer), the live demo
+14 (7 runs, 1 key), the API reference 9, **/api/ 6**; since 23 Oct /pricing 1 and /api/ 0. Bill's placement: the bar
+of /pricing and /api/ ONLY (filled, last; the site-wide bar waits on the ~20 Nov click read), a line on each page
+(the one a phone sees: its bar is behind Menu), and a line beside the live demo's response, where a visitor who has
+just run the API reads next. (1) **One holder:** `js/count.mjs` `DEMO_BOOKING_URL`; every page's copy must read it
+and only the declared pages may carry one (`tests/test_demo_booking_link.py`, which also caught my own link to
+Calendly's privacy notice: every Calendly link on the site is the booking link). (2) **Counted by destination** like
+`WATCHED_LINKS`: `book-demo-<page>-<bar|bar-menu|page>`; the booking links carry no `data-event`, so /pricing's own
+script never counts them a second time. Building it found that `navSlug()` never checked the HOST: a bar link to
+`calendly.com/<slug>` would have been counted as `nav-<slug>`; it now returns '' off this site. (3) **The seventh
+link did not fit:** measured, the bar needs 689 px beside the name and fits only from ~750 px, so from the Menu's
+680 px line to ~750 the links dropped onto a row of their own. 16d checks only 390 and 1366, so it would have passed.
+Below 760 px each link's sides go from 12 to 7 px on these two pages (the open menu's own padding outranks it);
+16g measures 681 and 760. (4) **The link did not exist yet**, so it is `https://calendly.com/SET-ME/sky-score-demo`
+and `make booking-link-check`, run first by web-deploy, demo-deploy and web-deploy-all, refuses while any file holds
+it (proven red on the placeholder itself). (5) **Privacy:** s2a (a new data type: name, email, four booking answers
+incl. postcodes), s4's table (Calendly with Google Calendar and Meet, US), the TL;DR, s6, the "Last updated" date and
+a dated notice on /changes (s10's promise; the test holds the date to the newest notice), SUBPROCESSORS.md row 19.
+The transfer mechanism is an open item for legal batch 2, not asserted. **When the link arrives:** replace the
+placeholder in count.mjs and the three pages (the test lists any copy missed), move the three dates to the go-live day
+(privacy's "Last updated", s2a's "added 29 October 2026", the /changes notice), add the CHANGELOG entry (it records
+what is live, so it was not written on the branch), preflight, then web-deploy and demo-deploy.
+**LIVE 2026-10-30** with `calendly.com/bilalkhizar-skyscore/30min`. (6) **The privacy text lists what the form ASKS,
+so it moves with the form:** the draft named four questions, but whether Calendly's free plan allows custom questions
+was disputed, and Bill then chose one open question ("What would you like to get out of the call? Add a postcode or
+two and I'll show you those places, not an example."), so s2a, s4, /changes and row 19 now say "its one question". A
+change to the question in Calendly is a privacy change. (7) **Calendly's Notetaker and AI features stay OFF:** its
+onboarding offers a bot that joins "all meetings" on the connected calendar (legal calls included) and AI email
+handling; both would process data the privacy text does not cover. (8) The slug names the product, so it changes at
+the rename; Calendly is not known to redirect an old slug. The site's side is SIX copies in four files (the holder, two
+on /pricing, two on /api/, one on /score-demo/): pages without a script still need a working href, so the copies stay
+and `tests/test_demo_booking_link.py` lists any one missed. (9) **The 2026-10-30 review before go-live** found the
+privacy text overclaiming ("told only that you came from skyscore.co.uk": a visit also sends the IP address, browser
+details and Calendly's cookies), no retention period (now up to 12 months after the call), the TL;DR's "one
+exception" contradicted by the booking line under it, Calendly's default "Add guests" collecting other people's
+addresses (named in s2a; Bill may switch guests off), and `booking-link-check` passing when grep could not read a file
+(exit 2 read as "no placeholder"; it now reads the status whole, proven on good / placeholder / missing).
+
 **A REGION THE MAP DOES NOT DRAW IS NAMED, NOT "NOT FOUND" (2026-10-23, audit 2026-10-22 M-9).** The coverage
 line lists every region the API scores, and three of them (Nottingham, Greater Norwich, Cardiff) are not drawn
 on the front page's map. Typing "Nottingham" or "Greater Norwich" answered "That postcode was not found, and no

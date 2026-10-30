@@ -101,8 +101,26 @@ help:
 # Web / PWA deploy
 # ---------------------------------------------------------------------------
 
+# THE BOOK A DEMO LINK (2026-10-29). js/count.mjs DEMO_BOOKING_URL holds it and every page that carries it must
+# read the same (tests/test_demo_booking_link.py). It was a placeholder until Bill's Calendly page existed (live
+# 2026-10-30), and a placeholder on a live page is a button that goes nowhere, so web-deploy and demo-deploy (which
+# upload the three pages and js/) run this first and refuse one. web-deploy-all runs it before anything uploads.
+# grep's exit status is read whole (2026-10-30 review): 0 = a placeholder found, 1 = none, anything else = a file it
+# could not read (moved or renamed), which must refuse too, never pass as "no placeholder".
+.PHONY: booking-link-check
+booking-link-check:
+	@rc=0; grep -l "calendly.com/SET-ME" js/count.mjs pricing.html api/index.html score-demo/index.html || rc=$$?; \
+	if [ $$rc -eq 0 ]; then \
+		echo "FAIL: the Book a demo link is still the placeholder in the files above."; \
+		echo "Put the Calendly link in js/count.mjs DEMO_BOOKING_URL and in each page, then run the tests."; \
+		exit 1; \
+	elif [ $$rc -ne 1 ]; then \
+		echo "FAIL: booking-link-check could not read every file it checks (grep exit $$rc): has one moved?"; \
+		exit 1; \
+	fi
+
 .PHONY: web-deploy
-web-deploy:
+web-deploy: booking-link-check
 	# js/api-base.js is the shared API base URL (window.API_BASE) that
 	# index.html and both score-demo pages load. It had no make target until
 	# 2026-07-25 — editable but never actually deployed, which matters most
@@ -547,7 +565,7 @@ deeplinks-deploy:
 # The vendored Swagger files below are left bare on purpose: they change
 # only on a deliberate vendor refresh, and that is the moment to give the
 # filename a version, as js/vendor/d3.v7.min.js has.
-demo-deploy:
+demo-deploy: booking-link-check
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp score-demo/index.html \
 		s3://$(S3_BUCKET)/score-demo/index.html \
 		--content-type "text/html" \
@@ -777,7 +795,7 @@ talks-deploy:
 # that this target covered 4 of the 15 publicly-served surfaces while being
 # named "all", which is the shape of every gate failure in this repo: green
 # because of what it was not looking at.
-web-deploy-all: fonts-deploy data-deploy web-deploy home-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy open-data-deploy bay-area-deploy
+web-deploy-all: booking-link-check fonts-deploy data-deploy web-deploy home-deploy pwa-deploy demo-deploy prototype-deploy area-deploy meta-deploy open-data-deploy bay-area-deploy
 	@echo "Web + front page + data + PWA + demo + prototype + area + meta + open data + Bay Area deployed. Skip deeplinks-deploy until placeholders are filled."
 
 # ---------------------------------------------------------------------------

@@ -69,11 +69,20 @@
      underline (the rule below) still wins on its own link. */
   nav.top-nav a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
   nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: #d35a12; text-decoration-thickness: 3px; text-underline-offset: 7px; }
+  /* Book a demo (Bill, 2026-10-29): the one FILLED item in the bar, last in the row, on /pricing and /api/ only (the
+     site-wide bar waits on the ~20 Nov click read). The fill is its resting look; hover underlines it like every other
+     link and never changes the fill (Bill, 2026-10-06). The link is js/count.mjs's DEMO_BOOKING_URL. */
+  nav.top-nav a.nav-book { background: var(--dark); color: #fff; font-weight: 600; }
+  /* Seven links need 689 px beside the name (measured 2026-10-29) and fit from ~750 px, so from the Menu's 680 px line
+     to 760 px they dropped onto a row of their own. Here each link's sides go from 12 to 7 px; the open phone menu's
+     own padding outranks this rule. front-page.mjs 16g measures the row at 681 and 760. */
+  @media (max-width: 760px) { nav.top-nav a { padding-left: 7px; padding-right: 7px; } }
 
   /* Wider than the reports page's 1080px: the platform ladder is four cards side by side. */
   main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
   h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 12px; }
   p.lead { margin: 0 0 22px; color: var(--mid); font-size: 18px; max-width: 60ch; }
+  p.book { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: -6px 0 28px; color: var(--mid); }
 
   /* Jump links: three buyers, three sections. */
   .jump { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 44px; padding: 0; list-style: none; }
@@ -151,12 +160,16 @@
     <a href="/pricing" aria-current="page">Pricing</a>
     <a href="/api/">API</a>
     <a href="/about/">About</a>
+    <a class="nav-book" href="https://calendly.com/bilalkhizar-skyscore/30min">Book a demo</a>
   </nav>
 </header>
 
 <main>
   <h1>Pricing</h1>
   <p class="lead">Looking up your own street is free, on the map and as a report on screen. Councils, platforms and firms pay for the figures they use in their work, and the prices are published here.</p>
+  <!-- The in-page Book a demo: the bar folds behind Menu on a phone, so this is the one a phone sees first. Outlined,
+       the page's one button look (16b), so it never reads as a card "to pick". -->
+  <p class="book">Not sure which fits? We will go through your own postcodes with you. <a class="go quiet" href="https://calendly.com/bilalkhizar-skyscore/30min">Book a 30-minute demo</a></p>
 
   <nav aria-label="On this page">
     <ul class="jump">

@@ -1562,6 +1562,119 @@ const aboutSent = await page.evaluate(() => {
 });
 ok(JSON.stringify(aboutSent) === JSON.stringify(['about-film', 'about-prototype', 'email-about-support']),
   '/about/: the film and the prototype are counted, the support email keeps its name, and no other link counts', JSON.stringify(aboutSent));
+
+// 16g. BOOK A DEMO (Bill, 2026-10-29: in the bar of /pricing and /api/ only, FILLED and LAST; a line on each page,
+// and one beside the live demo's response). Every copy of the link is count.mjs's DEMO_BOOKING_URL
+// (tests/test_demo_booking_link.py); here, the DOM. The bar's button is the last link and its one filled item; hover
+// underlines it and leaves the fill; no other bar carries it; the seven links stay in one row beside the name from
+// the Menu's 680 px line up (681 and 760 wide sit either side of the tighter padding that made them fit: they had
+// dropped onto a row of their own up to ~750 px); the page line shows on a phone, whose bar is behind Menu; and every
+// booking link counts ONCE, as book-demo-<page>-<bar|bar-menu|page>, with no nav-* beside it.
+await page.setViewportSize({ width: 1366, height: 820 });
+await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentloaded' });
+const BOOK = await page.evaluate(async () => (await import('/js/count.mjs')).DEMO_BOOKING_URL);
+const barsWithBooking = [];
+for (const [path] of [...BAR_PAGES, ['/reports/street/'], ['/404.html']]) {
+  await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+  const has = await page.evaluate((url) => Boolean(document.querySelector(`#site-nav a.nav-book, #site-nav a[href="${url}"]`)), BOOK);
+  if (has) barsWithBooking.push(path);
+}
+ok(JSON.stringify(barsWithBooking.sort()) === JSON.stringify(['/api/', '/pricing']),
+  'Book a demo is in the bar of /pricing and /api/ and no other page', JSON.stringify(barsWithBooking));
+// A booking page with a one-part path (calendly.com/<slug>) read as a bar slug before navSlug checked the host.
+// Read on /pricing: the loop above ends on the 404 page, whose policy allows no script, so an import() there fails.
+await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentloaded' });
+const offSite = await page.evaluate(async () => {
+  const { navSlug } = await import('/js/count.mjs');
+  return [navSlug('https://calendly.com/bilal-khizar'), navSlug('https://calendly.com/pricing'), navSlug('/pricing'), navSlug('https://skyscore.co.uk/api/')];
+});
+ok(JSON.stringify(offSite) === JSON.stringify(['', '', 'pricing', 'api']),
+  'the bar counts only links on this site: an off-site link is never named nav-<its path>', JSON.stringify(offSite));
+const BOOK_WANT = {
+  '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
+  '/api/': ['book-demo-api-bar', 'book-demo-api-page'],
+  '/score-demo/index.html': ['book-demo-score-demo-page'],
+};
+for (const [path, want] of Object.entries(BOOK_WANT)) {
+  const inBar = want.some((w) => w.endsWith('-bar'));
+  await page.setViewportSize({ width: 1366, height: 820 });
+  await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+  if (inBar) {
+    await page.mouse.move(0, 0);
+    const look = await page.evaluate((url) => {
+      const links = [...document.querySelectorAll('#site-nav a')];
+      const last = links[links.length - 1];
+      const cs = (el) => getComputedStyle(el);
+      return {
+        lastIsBook: Boolean(last) && last.classList.contains('nav-book') && last.getAttribute('href') === url,
+        text: last?.textContent.trim(),
+        fill: last && cs(last).backgroundColor,
+        ink: last && cs(last).color,
+        line: last && cs(last).textDecorationLine,
+        otherFills: links.slice(0, -1).filter((a) => cs(a).backgroundColor !== 'rgba(0, 0, 0, 0)').length,
+      };
+    }, BOOK);
+    const book = page.locator('#site-nav a.nav-book');
+    await book.hover();
+    const hovered = await book.evaluate((a) => ({ fill: getComputedStyle(a).backgroundColor, line: getComputedStyle(a).textDecorationLine }));
+    await page.mouse.move(0, 0);
+    ok(look.lastIsBook && look.text === 'Book a demo' && look.fill === 'rgb(20, 20, 20)' && look.ink === 'rgb(255, 255, 255)' &&
+        !look.line.includes('underline') && look.otherFills === 0 && hovered.fill === look.fill && hovered.line.includes('underline'),
+      `${path}: Book a demo is the bar's last link and its one filled item, and hovering underlines it without changing the fill`,
+      JSON.stringify({ look, hovered }));
+    const rows = [];
+    for (const width of [681, 760]) {
+      await page.setViewportSize({ width, height: 820 });
+      await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'load' });
+      await page.evaluate(() => document.fonts.ready);
+      rows.push(await page.evaluate((w) => {
+        const mid = (el) => { const r = el.getBoundingClientRect(); return Math.round(r.top + r.height / 2); };
+        const seen = [...document.querySelectorAll('#site-nav a')].filter((a) => a.getClientRects().length > 0);
+        const brand = document.querySelector('.brand');
+        return { width: w, shown: seen.length, rows: new Set(seen.map(mid)).size, besideName: seen.length > 0 && Math.abs(mid(seen[0]) - mid(brand)) < 8 };
+      }, width));
+    }
+    ok(rows.every((r) => r.shown === 7 && r.rows === 1 && r.besideName),
+      `${path}: just above the Menu's line, the seven links sit in one row beside the name`, JSON.stringify(rows));
+  }
+  // Counted: every booking link clicked in page order with its navigation stopped, the names caught at goatcounter.count.
+  await page.setViewportSize({ width: 1366, height: 820 });
+  await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.goatcounter?.count === 'function', null, { timeout: 10000 }).catch(() => {});
+  const sent = await page.evaluate((url) => {
+    window.__gc = [];
+    window.goatcounter.count = (v) => window.__gc.push(v.path.replace(/^event\//, ''));
+    document.addEventListener('click', (e) => { if (e.target.closest?.('a[href]')) e.preventDefault(); }, true);
+    for (const a of document.querySelectorAll(`a[href="${url}"]`)) a.click();
+    return window.__gc.slice();
+  }, BOOK);
+  ok(JSON.stringify(sent) === JSON.stringify(want), `${path}: every Book a demo link counts once, by where it sits`, JSON.stringify(sent));
+  // A phone: the page's own line is on screen without opening anything, and the bar's button, picked from the
+  // menu, counts as bar-menu after the menu's own nav-menu.
+  await page.setViewportSize({ width: 390, height: 820 });
+  await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof window.goatcounter?.count === 'function', null, { timeout: 10000 }).catch(() => {});
+  const pageLine = await page.evaluate((url) => {
+    const a = [...document.querySelectorAll(`a[href="${url}"]`)].find((x) => !x.closest('#site-nav'));
+    return Boolean(a) && a.getClientRects().length > 0 && getComputedStyle(a).visibility !== 'hidden';
+  }, BOOK);
+  let menuSent = [];
+  if (inBar) {
+    await page.evaluate(() => {
+      window.__gc = [];
+      window.goatcounter.count = (v) => window.__gc.push(v.path.replace(/^event\//, ''));
+      document.addEventListener('click', (e) => { if (e.target.closest?.('#site-nav a')) e.preventDefault(); }, true);
+    });
+    await page.locator('.menu-btn').click({ timeout: 3000 }).catch(() => {});
+    await page.locator('#site-nav a.nav-book').click({ timeout: 3000 }).catch(() => {});
+    menuSent = await page.evaluate(() => window.__gc.slice());
+  }
+  const menuWant = inBar ? ['nav-menu', want[0].replace(/-bar$/, '-bar-menu')] : [];
+  ok(pageLine && JSON.stringify(menuSent) === JSON.stringify(menuWant),
+    `${path}: on a phone the page's Book a demo line is on screen${inBar ? ', and the menu\'s counts as bar-menu' : ''}`,
+    JSON.stringify({ pageLine, menuSent }));
+}
+await page.setViewportSize(was);
 // Back to the front page: section 17's first check ("the Streets button is hidden") would pass
 // vacuously on a page that has no such button.
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });

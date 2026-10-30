@@ -146,10 +146,14 @@ if (location.hash === '#toggle-goatcounter') {
   }
 }
 
-/** The top bar's name for a link: its path without slashes ('/how-it-works/' -> 'how-it-works'), or '' for home. */
+/** The top bar's name for a link: its path without slashes ('/how-it-works/' -> 'how-it-works'), or '' for home.
+ *  '' too for a link off this site (2026-10-29): the bar's Book a demo goes to Calendly, and a booking page named
+ *  `calendly.com/<slug>` would otherwise have been counted as `nav-<slug>`. It is counted below, by its destination. */
 export function navSlug(href) {
   try {
-    const slug = new URL(href, 'https://skyscore.co.uk').pathname.replace(/^\/+|\/+$/g, '');
+    const url = new URL(href, 'https://skyscore.co.uk');
+    if (url.hostname !== 'skyscore.co.uk') return '';
+    const slug = url.pathname.replace(/^\/+|\/+$/g, '');
     return /^[a-z][a-z-]{0,30}$/.test(slug) ? slug : '';
   } catch {
     return '';
@@ -257,6 +261,37 @@ document.addEventListener('click', (ev) => {
     const what = a ? watchedName(a.getAttribute('href')) : '';
     if (!what) return;
     const name = `${pageSlug()}-${what}`;
+    window.goatcounter?.count?.({ path: `event/${name}`, title: name, event: true });
+  } catch {
+    /* analytics must never break the page */
+  }
+});
+
+// THE BOOK A DEMO BUTTON (2026-10-29, Bill: on /pricing, /api/ and /score-demo/ only; the site-wide bar waits on the
+// ~20 Nov read of the bar's clicks). DEMO_BOOKING_URL is the ONE holder of the booking link: every page's link must
+// read exactly this (tests/test_demo_booking_link.py), and while it is the placeholder `make booking-link-check`, which
+// web-deploy and demo-deploy run first, refuses to deploy. Counted by that exact destination, like WATCHED_LINKS, as
+// `book-demo-<page>-<where>`: `bar` from the top bar's row, `bar-menu` from the phone menu, `page` from the page's own
+// line, so the read says which placement earned the booking. The pages' own listeners count `data-event` links only,
+// and the booking links carry none, so each click is counted once (front-page.mjs 16g clicks every one).
+export const DEMO_BOOKING_URL = 'https://calendly.com/bilalkhizar-skyscore/30min';
+
+/** Where a booking link sits: 'bar', 'bar-menu' (the phone menu, open) or 'page'. */
+function bookingPlace(a) {
+  const nav = a.closest('#site-nav');
+  if (!nav) return 'page';
+  try {
+    return nav.matches(':popover-open') ? 'bar-menu' : 'bar';
+  } catch {
+    return 'bar'; // popovers unknown: the plain bar, which has no menu
+  }
+}
+
+document.addEventListener('click', (ev) => {
+  try {
+    const a = ev.target instanceof Element ? ev.target.closest('a[href]') : null;
+    if (!a || a.getAttribute('href') !== DEMO_BOOKING_URL) return;
+    const name = `book-demo-${pageSlug()}-${bookingPlace(a)}`;
     window.goatcounter?.count?.({ path: `event/${name}`, title: name, event: true });
   } catch {
     /* analytics must never break the page */

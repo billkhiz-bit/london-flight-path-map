@@ -34,6 +34,14 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > docs commits waiting in `data/pending-docs-2026-10-28/`; then `nhs-all-cities` (with `log-5xx`) as one
 > changeset. Merging it: ROADMAP conflicts at the top (its 28 Oct block and "Last reviewed"): keep both, this
 > block first. `faa-2611` and the `rehearse-*` branches stay until Bill says delete.
+> **Book a demo LIVE 30 Oct** (built 29 Oct night on `book-a-demo`; Bill's go): in the bar of `/pricing` and `/api/`
+> (filled, last), a line on each and one beside `/score-demo/`'s response, counted `book-demo-<page>-<where>`. The
+> link is `js/count.mjs` `DEMO_BOOKING_URL` = Bill's Calendly page (`calendly.com/bilalkhizar-skyscore/30min`; its
+> slug names the product, so it changes at the rename: one holder, the test lists any copy missed). ONE booking
+> question (Bill's option A: what they want from the call + a postcode or two), so privacy s2a/s4, the `/changes`
+> notice and SUBPROCESSORS row 19 say "its one question"; the transfer mechanism stays open in legal batch 2
+> (Calendly's DPA claims the DPF UK Extension). Read the `book-demo-*` counts with the bar's at ~20 Nov; the
+> site-wide bar is decided then. FAQ from the Deen Developers Q&A: not started.
 >
 > ## START HERE (2026-10-26)
 >
