@@ -199,8 +199,9 @@ Or just describe what you need, I have full context of this project.
   correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
   page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.
 - **The Book a demo link has ONE holder, `js/count.mjs` `DEMO_BOOKING_URL`** (2026-10-29): only `/pricing`, `/api/`
-  (bar + page) and `/score-demo/` carry it (`tests/test_demo_booking_link.py`), counted by destination as
-  `book-demo-<page>-<bar|bar-menu|page>`; `make booking-link-check` refuses deploys while it is the placeholder.
+  (bar + page), `/score-demo/` and the front page's three business spots (never its bar; Bill, 2026-10-30) carry it
+  (`tests/test_demo_booking_link.py`), counted by destination as `book-demo-<page>-<bar|bar-menu|page|spot>` (a spot
+  from `data-book-place`); `make booking-link-check` refuses web/demo/home deploys while it is a placeholder.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
   worker installing everywhere; `/data/` is network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).

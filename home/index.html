@@ -356,6 +356,9 @@
       ul.who-list span { color: var(--mid); font-size: 16px; }
       ul.who-list a { font-weight: 600; font-size: 15px; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
       ul.who-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
+      /* The line under the list (2026-10-30): pulled up into the list's own bottom margin, so it reads as the list's foot. */
+      .who-book { max-width: 1120px; margin: -14px 0 30px; color: var(--mid); font-size: 16px; }
+      .who-book a { font-weight: 600; color: var(--orange-ink); white-space: nowrap; }
       .founder { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 22px 12px 12px; background: var(--paper); border-radius: 16px; max-width: 1120px; }
       .founder img { width: 56px; height: 56px; border-radius: 50%; flex: none; }
       section.who .founder p { margin: 0; font-size: 16px; line-height: 1.45; color: var(--dark); flex: 1 1 260px; }
@@ -574,7 +577,7 @@
             <h3>Data for your business</h3>
             <p>The same figures through an API, in your own system, or as one open file of every UK council area, free for non-commercial use, to rank and compare.</p>
             <div class="fig">10,000<small>lookups a month on the free tier</small></div>
-            <div class="go-row"><a class="go quiet" href="/api/">Read the docs</a><a class="also" href="/pricing">Pricing</a></div>
+            <div class="go-row"><a class="go quiet" href="/api/">Read the docs</a><a class="also" href="/pricing">Pricing</a><a class="also" href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="card">Book a demo</a></div>
           </article>
         </div>
       </section>
@@ -588,7 +591,7 @@
         <div class="dev-copy">
           <h2 id="dev">For developers: the same figures, one request away</h2>
           <p>Send a postcode and get back the score, its five components and the source of every figure, as JSON. The noise and air figures at any point need no key at all.</p>
-          <p class="go-row"><a class="go" href="/api/">Get a key and read the docs</a><a class="also" href="/score-demo/api-docs.html">Full API reference</a></p>
+          <p class="go-row"><a class="go" href="/api/">Get a key and read the docs</a><a class="also" href="/score-demo/api-docs.html">Full API reference</a><a class="also" href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="dev">Book a demo</a></p>
         </div>
         <div class="dev-code">
           <p class="dev-label">The score for a postcode (with a free key)</p>
@@ -631,6 +634,9 @@
           </ul>
         </div>
         <!-- WHO-FOR:END -->
+        <!-- Book a demo (Bill, 2026-10-30: the front page's business spots, not its bar). Outside WHO-FOR on purpose:
+             that block is also written into /about/, and the link belongs to this page only. -->
+        <p class="who-book">Not sure which fits? We will go through your own postcodes with you. <a href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="who">Book a 30-minute demo</a></p>
         <div class="founder">
           <img src="/about/bill-headshot.webp" width="56" height="56" alt="" />
           <p>Built by Bilal Khizar, so you can make a more informed decision when choosing where to live.</p>

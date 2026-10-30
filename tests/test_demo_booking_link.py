@@ -28,6 +28,10 @@ DECLARED = {
     'pricing.html': 2,  # the top bar, and the line under the opening (the one a phone sees: its bar is a Menu)
     'api/index.html': 2,  # the top bar, and "Get started" step 5
     'score-demo/index.html': 1,  # beside the live demo's response, where a visitor who just ran the API reads next
+    # Bill, 2026-10-30: the front page's three business spots, never its bar (the bar's own filled button is Full map,
+    # and the ~6% read runs to ~20 Nov): the "Data for your business" card, the For developers panel, and the line
+    # under "Who it is for" (outside WHO-FOR, which is also written into /about/). Counted as card, dev and who.
+    'home/index.html': 3,
 }
 CALENDLY_HREF = re.compile(r'''href=["'](https?://(?:[\w-]+\.)*calendly\.com\b[^"']*)["']''', re.I)
 HOLDER = re.compile(r"^export const DEMO_BOOKING_URL = '([^']+)';", re.M)
@@ -78,7 +82,7 @@ class DemoBookingLinkTests(unittest.TestCase):
         self.assertIn('exit 1', recipe)
         # grep exits 2 when it cannot read a file: that must refuse too, never pass as "no placeholder" (2026-10-30).
         self.assertIn('-ne 1', recipe, 'booking-link-check must refuse when grep cannot read a file (exit 2)')
-        for target in ('web-deploy', 'demo-deploy'):
+        for target in ('web-deploy', 'demo-deploy', 'home-deploy'):
             line = re.search(rf'^{target}:(.*)$', text, re.M)
             self.assertIsNotNone(line, f'no {target} target')
             self.assertIn('booking-link-check', line.group(1).split(), f'{target} no longer runs booking-link-check first')
@@ -110,7 +114,7 @@ class DemoBookingLinkTests(unittest.TestCase):
             self.assertNotEqual(start, -1, f'{page}: the Book a demo rules are gone from its bar CSS')
             self.assertNotEqual(end, -1, f'{page}: the 760 px rule is gone from its bar CSS')
             return text[start:end + len(end_marker)]
-        bar_pages = [p for p in DECLARED if p != 'score-demo/index.html']
+        bar_pages = [p for p in DECLARED if p not in ('score-demo/index.html', 'home/index.html')]  # page lines only
         self.assertEqual(sorted(bar_pages), ['api/index.html', 'pricing.html'])
         self.assertEqual(rules('pricing.html'), rules('api/index.html'),
                          'the Book a demo CSS differs between /pricing and /api/: change both or neither')

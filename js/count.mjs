@@ -279,10 +279,15 @@ document.addEventListener('click', (ev) => {
 // and the booking links carry none, so each click is counted once (front-page.mjs 16g clicks every one).
 export const DEMO_BOOKING_URL = 'https://calendly.com/bilalkhizar-skyscore/30min';
 
-/** Where a booking link sits: 'bar', 'bar-menu' (the phone menu, open) or 'page'. */
+/** Where a booking link sits: 'bar', 'bar-menu' (the phone menu, open), the spot a page with several names on the
+ *  link (`data-book-place`: the front page's card, dev and who, 2026-10-30, so the read says which one earned it), or
+ *  'page'. A spot is a short lower-case word, never free text. */
 function bookingPlace(a) {
   const nav = a.closest('#site-nav');
-  if (!nav) return 'page';
+  if (!nav) {
+    const spot = a.getAttribute('data-book-place') || '';
+    return /^[a-z]{2,12}$/.test(spot) ? spot : 'page';
+  }
   try {
     return nav.matches(':popover-open') ? 'bar-menu' : 'bar';
   } catch {

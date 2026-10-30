@@ -41,7 +41,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > question (Bill's option A: what they want from the call + a postcode or two), so privacy s2a/s4, the `/changes`
 > notice and SUBPROCESSORS row 19 say "its one question"; the transfer mechanism stays open in legal batch 2
 > (Calendly's DPA claims the DPF UK Extension). Read the `book-demo-*` counts with the bar's at ~20 Nov; the
-> site-wide bar is decided then. FAQ from the Deen Developers Q&A: not started.
+> site-wide bar is decided then. FAQ from the Deen Developers Q&A: not started. **The front page joined the same
+> afternoon** (Bill: its business spots, never its bar, which already fills Full map and is mid-way through the ~6%
+> read): the "Data for your business" card, the For developers panel and a line under "Who it is for", counted
+> `book-demo-home-card|dev|who`.
 >
 > ## START HERE (2026-10-26)
 >

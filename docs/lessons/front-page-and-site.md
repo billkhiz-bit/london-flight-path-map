@@ -517,7 +517,15 @@ smaller points, fixed the same afternoon: `navSlug()` took only `skyscore.co.uk`
 so an absolute www or CloudFront link in a bar would have dropped out of the ~20 Nov read (now `OWN_HOSTS`; 16g
 proven red on the old function); and the button's two CSS rules live in both bars, now held equal by
 `test_both_bars_style_the_button_with_the_same_rules` (proven red on a font-weight change). The test invite's
-organiser was `bilalkhizar@skyscore.co.uk`, so bookers never see the founder's personal address.
+organiser was `bilalkhizar@skyscore.co.uk`, so bookers never see the founder's personal address. (10) **The front
+page, the same afternoon (Bill: "business spots", not the bar):** the bar's one filled item there is already Full
+map, and a new bar button mid-way through the ~6% engagement read (23 Oct to ~20 Nov) would change what is being
+measured. So three page links: the "Data for your business" card, the For developers panel, and a line under "Who it
+is for", placed OUTSIDE the WHO-FOR block because `build_who_for.py` also writes it into /about/. Three links on one
+page would all have read `book-demo-home-page`, so a link may name its spot (`data-book-place`, a short lower-case
+word, else 'page'): `book-demo-home-card|dev|who`. The privacy text now says "the Book a demo links on this site (on
+the pricing page and the API page, for example)", so a new placement no longer needs a privacy edit; the declared
+page list in the test is where a placement is decided.
 
 **A REGION THE MAP DOES NOT DRAW IS NAMED, NOT "NOT FOUND" (2026-10-23, audit 2026-10-22 M-9).** The coverage
 line lists every region the API scores, and three of them (Nottingham, Greater Norwich, Cardiff) are not drawn

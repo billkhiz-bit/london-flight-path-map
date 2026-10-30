@@ -103,13 +103,14 @@ help:
 
 # THE BOOK A DEMO LINK (2026-10-29). js/count.mjs DEMO_BOOKING_URL holds it and every page that carries it must
 # read the same (tests/test_demo_booking_link.py). It was a placeholder until Bill's Calendly page existed (live
-# 2026-10-30), and a placeholder on a live page is a button that goes nowhere, so web-deploy and demo-deploy (which
-# upload the three pages and js/) run this first and refuse one. web-deploy-all runs it before anything uploads.
+# 2026-10-30), and a placeholder on a live page is a button that goes nowhere, so web-deploy, demo-deploy and
+# home-deploy (which upload the four pages and js/; the front page joined 2026-10-30) run this first and refuse one.
+# web-deploy-all runs it before anything uploads.
 # grep's exit status is read whole (2026-10-30 review): 0 = a placeholder found, 1 = none, anything else = a file it
 # could not read (moved or renamed), which must refuse too, never pass as "no placeholder".
 .PHONY: booking-link-check
 booking-link-check:
-	@rc=0; grep -l "calendly.com/SET-ME" js/count.mjs pricing.html api/index.html score-demo/index.html || rc=$$?; \
+	@rc=0; grep -l "calendly.com/SET-ME" js/count.mjs pricing.html api/index.html score-demo/index.html home/index.html || rc=$$?; \
 	if [ $$rc -eq 0 ]; then \
 		echo "FAIL: the Book a demo link is still the placeholder in the files above."; \
 		echo "Put the Calendly link in js/count.mjs DEMO_BOOKING_URL and in each page, then run the tests."; \
@@ -733,7 +734,7 @@ bay-area-deploy:
 		--paths '/bay-area/*'
 
 .PHONY: home-deploy
-home-deploy:
+home-deploy: booking-link-check
 	# THE FRONT PAGE (2026-10-06): home/index.html at the ROOT key, the reports
 	# pages at /reports/, the free street report at /reports/street/, and two
 	# small pages at /preview/ and /preview/reports/ that send anyone holding
