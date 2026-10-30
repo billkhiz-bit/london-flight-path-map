@@ -1586,10 +1586,12 @@ ok(JSON.stringify(barsWithBooking.sort()) === JSON.stringify(['/api/', '/pricing
 await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentloaded' });
 const offSite = await page.evaluate(async () => {
   const { navSlug } = await import('/js/count.mjs');
-  return [navSlug('https://calendly.com/bilal-khizar'), navSlug('https://calendly.com/pricing'), navSlug('/pricing'), navSlug('https://skyscore.co.uk/api/')];
+  return [navSlug('https://calendly.com/bilal-khizar'), navSlug('https://calendly.com/pricing'), navSlug('/pricing'), navSlug('https://skyscore.co.uk/api/'),
+    navSlug('https://www.skyscore.co.uk/about/'), navSlug('https://d1oe4ftwutjpf.cloudfront.net/how-it-works/'), navSlug('https://skyscore.co.uk.evil.example/api/')];
 });
-ok(JSON.stringify(offSite) === JSON.stringify(['', '', 'pricing', 'api']),
-  'the bar counts only links on this site: an off-site link is never named nav-<its path>', JSON.stringify(offSite));
+// Every host that serves the site counts as this site (www answers 200; 2026-10-30 review), and a look-alike does not.
+ok(JSON.stringify(offSite) === JSON.stringify(['', '', 'pricing', 'api', 'about', 'how-it-works', '']),
+  'the bar counts only links on this site, on any host that serves it: an off-site link is never named nav-<its path>', JSON.stringify(offSite));
 const BOOK_WANT = {
   '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
   '/api/': ['book-demo-api-bar', 'book-demo-api-page'],

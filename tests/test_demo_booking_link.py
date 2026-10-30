@@ -98,6 +98,23 @@ class DemoBookingLinkTests(unittest.TestCase):
         self.assertEqual(updated, max(dates),
                          "privacy.html's Last updated is not the newest Policy notice on /changes (privacy s10)")
 
+    def test_both_bars_style_the_button_with_the_same_rules(self):
+        # /pricing and /api/ carry their bar's CSS inline, as every page does, so the button's two rules (the fill,
+        # and the 760 px squeeze measured for seven links) exist twice. Held equal here so a change to one cannot
+        # leave the other behind (2026-10-30 review; front-page.mjs 16g measures the result at 681 and 760 px).
+        def rules(page):
+            text = (ROOT / page).read_text(encoding='utf-8').replace('\r\n', '\n')
+            start = text.find('/* Book a demo (Bill, 2026-10-29)')
+            end_marker = 'nav.top-nav a { padding-left: 7px; padding-right: 7px; } }'
+            end = text.find(end_marker, max(start, 0))
+            self.assertNotEqual(start, -1, f'{page}: the Book a demo rules are gone from its bar CSS')
+            self.assertNotEqual(end, -1, f'{page}: the 760 px rule is gone from its bar CSS')
+            return text[start:end + len(end_marker)]
+        bar_pages = [p for p in DECLARED if p != 'score-demo/index.html']
+        self.assertEqual(sorted(bar_pages), ['api/index.html', 'pricing.html'])
+        self.assertEqual(rules('pricing.html'), rules('api/index.html'),
+                         'the Book a demo CSS differs between /pricing and /api/: change both or neither')
+
 
 if __name__ == '__main__':
     unittest.main()

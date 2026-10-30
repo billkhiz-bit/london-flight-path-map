@@ -512,7 +512,12 @@ privacy text overclaiming ("told only that you came from skyscore.co.uk": a visi
 details and Calendly's cookies), no retention period (now up to 12 months after the call), the TL;DR's "one
 exception" contradicted by the booking line under it, Calendly's default "Add guests" collecting other people's
 addresses (named in s2a; Bill may switch guests off), and `booking-link-check` passing when grep could not read a file
-(exit 2 read as "no placeholder"; it now reads the status whole, proven on good / placeholder / missing).
+(exit 2 read as "no placeholder"; it now reads the status whole, proven on good / placeholder / missing). Its two
+smaller points, fixed the same afternoon: `navSlug()` took only `skyscore.co.uk` as this site, but www answers 200,
+so an absolute www or CloudFront link in a bar would have dropped out of the ~20 Nov read (now `OWN_HOSTS`; 16g
+proven red on the old function); and the button's two CSS rules live in both bars, now held equal by
+`test_both_bars_style_the_button_with_the_same_rules` (proven red on a font-weight change). The test invite's
+organiser was `bilalkhizar@skyscore.co.uk`, so bookers never see the founder's personal address.
 
 **A REGION THE MAP DOES NOT DRAW IS NAMED, NOT "NOT FOUND" (2026-10-23, audit 2026-10-22 M-9).** The coverage
 line lists every region the API scores, and three of them (Nottingham, Greater Norwich, Cardiff) are not drawn

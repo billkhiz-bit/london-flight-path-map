@@ -148,11 +148,14 @@ if (location.hash === '#toggle-goatcounter') {
 
 /** The top bar's name for a link: its path without slashes ('/how-it-works/' -> 'how-it-works'), or '' for home.
  *  '' too for a link off this site (2026-10-29): the bar's Book a demo goes to Calendly, and a booking page named
- *  `calendly.com/<slug>` would otherwise have been counted as `nav-<slug>`. It is counted below, by its destination. */
+ *  `calendly.com/<slug>` would otherwise have been counted as `nav-<slug>`. It is counted below, by its destination.
+ *  "This site" is every host that serves it (2026-10-30 review): www answers too, so an absolute www or CloudFront
+ *  link in a bar is still ours and must not drop out of the ~20 Nov read. */
+const OWN_HOSTS = new Set(['skyscore.co.uk', 'www.skyscore.co.uk', 'd1oe4ftwutjpf.cloudfront.net']);
 export function navSlug(href) {
   try {
     const url = new URL(href, 'https://skyscore.co.uk');
-    if (url.hostname !== 'skyscore.co.uk') return '';
+    if (!OWN_HOSTS.has(url.hostname)) return '';
     const slug = url.pathname.replace(/^\/+|\/+$/g, '');
     return /^[a-z][a-z-]{0,30}$/.test(slug) ? slug : '';
   } catch {
