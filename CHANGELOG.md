@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-29 - The Bay Area in the API; every figure says where it came from; newer crime figures
+
+- **The API now scores the San Francisco Bay Area's 50 cities**, asked by name (`city=bayarea&borough=Palo Alto`)
+  or by ZIP. A ZIP is scored as the city where half or more of its 2020 residents live, and the answer says the
+  shares ("71% of ZIP 94010's 2020 residents live in Burlingame; 26% in Hillsborough"); a ZIP with no such city is
+  not scored. The site keeps showing the Bay Area as facts, with no score, until its own release.
+- **The provenance and crime changes of 23 October are live**: every figure the API returns names its source,
+  method and period, and crime is on ONS's year to June 2026 (eight scores moved, each by 0.1).
+- **The FAA's routes for 29 October (cycle 2611).** Only Oakland's changed: three procedures re-issued under new
+  numbers (CNDEL6, HUSSH3, KATFH4) and four withdrawn (SALAD5, SKYL1, SLNT3, QUAKE2). No score moved.
+
 ## 2026-10-26 (evening) - Planes overhead, for every postcode we cover
 
 - **How many planes pass overhead**, in the answer for a postcode: on an average day of each kind, January to
@@ -56,7 +67,7 @@
 
 ## 2026-10-23 - Who is behind Sky Score; the answer first; a menu on phones
 
-- **Crime figures are now ONS's year to June 2026** (live after 29 October), one quarter newer. Most areas
+- **Crime figures are now ONS's year to June 2026** (live 29 October), one quarter newer. Most areas
   move by a few offences per 1,000 residents; eight overall scores change, each by 0.1.
 - **An About page** (`/about/`): who Sky Score is for, why it was built and by whom, the questions people have
   asked about it at talks, and the talks themselves. Linked from every page's top bar and footer.
@@ -77,7 +88,7 @@
   Their noise, air and flood maps are worked out by models, as How it works already told readers; the API page,
   the API reference and the MCP server's environment tool had called them measured. The environment tool also no
   longer promises a flood value it never returned. No field, value or score changes.
-- **For developers and AI agents: every figure the API returns says where it came from** (live after 29 October).
+- **For developers and AI agents: every figure the API returns says where it came from** (live 29 October).
   A new `provenance` block names, for each value, the source that answered, how that source made it (modelled,
   an official statistic, our own estimate...), and for what period; `sourceIndex` gives each source's publisher,
   dataset and licence. Nothing already in a response changes.

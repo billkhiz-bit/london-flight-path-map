@@ -85,8 +85,8 @@ Or just describe what you need, I have full context of this project.
   `/v1/score` API is the product. Pivoted May 2026 from "AI-powered" to data-first.
 - **THE public coverage sentence, the only one to quote**: "97 council areas in 13 UK city regions, plus New
   York's 5 boroughs and 50 Bay Area cities (facts only)".
-- **Surfaces**: `/v1/score` serves 14 cities LIVE, and 15 in source: the Bay Area's 50 cities, BY NAME only
-  (`city=bayarea`), built 2026-10-22 and live once Bill's changeset deploys; the site keeps their facts
+- **Surfaces**: `/v1/score` serves 15 cities LIVE, the 15th the Bay Area's 50 cities (live 2026-10-29), by name
+  (`city=bayarea`) or by ZIP (scored as the city where half or more of its residents live); the site keeps their facts
   (`SITE_FACTS_ONLY_CITIES`, held both ways by both parity gates). The site SCORES 11 (London 33, NYC 5, Greater Manchester 10,
   West Midlands 7, West Yorkshire 5, South Yorkshire 4, Merseyside 5, Tyne and Wear 5, Bristol 4, Leicester 8,
   Teesside 5 = 91 boroughs) and shows the **Bay Area's 50 cities as facts with no score**. API-only, declared

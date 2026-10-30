@@ -19,6 +19,22 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-29)
+>
+> **Deploy day DONE: Parts A-C of Desktop `deploy-runbook-2026-10-29.md` LIVE, each verified from the origin.**
+> A: FAA cycle 2611 (`fabc93a`, 13:27 UTC; only Oakland changed, no score moved; step 3b's one fingerprint line).
+> B: the Bay Area's 50 cities in the API, by name or by ZIP where half or more of its residents live (`0782185`,
+> Bill's changeset 14:35; 94010 -> Burlingame 71%, checked on the API and in a browser on the front page).
+> C: per-field provenance + ONS crime year ending June 2026 (`0fb8962`, Bill's changeset 15:19, the site
+> deployed by 15:20; area pages 102 OK, site == API, drift 39/39). Final preflight PASS, pushed, CI green.
+> **Found on the day:** the area-page gate's floor counted the Bay Area once B was live and hid the staleness
+> check (fixed in `0fb8962`: `docs/lessons/public-surfaces.md`); `check_data_freshness.py`'s FAA row takes the
+> OLDEST cycle the FAA page lists, so on a changeover day it cannot see us a cycle behind (small fix, not done).
+> **Next:** Part D (district pages) on Bill's yes to the preview; Part E (2025 track fetch, PC awake); the two
+> docs commits waiting in `data/pending-docs-2026-10-28/`; then `nhs-all-cities` (with `log-5xx`) as one
+> changeset. Merging it: ROADMAP conflicts at the top (its 28 Oct block and "Last reviewed"): keep both, this
+> block first. `faa-2611` and the `rehearse-*` branches stay until Bill says delete.
+>
 > ## START HERE (2026-10-26)
 >
 > **The approach strip is LIVE on `/how-it-works/`** (Bill: "high up, straight after the opening paragraph"; his go to

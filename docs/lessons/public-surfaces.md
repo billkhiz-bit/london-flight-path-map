@@ -61,6 +61,14 @@ previously got a shell, and every fact stays in the served HTML.
   99 against the live API in **ONE batch request** (1 CI quota unit, not 99 -
   a blocking gate that spends a consumable is how `score sanity` once blocked
   every commit in this repo). **Rerun the builder after any vintage roll.**
+- **Its floor counts the API's boroughs LESS the facts-only cities (2026-10-29).** The floor (pages ==
+  boroughs on `/v1/regions`) summed every city, which was right until the API served a city the site does
+  not page: the hour Bay Area release 2 went live it read "102 area pages, but /v1/score serves 152
+  boroughs", and because the floor runs BEFORE the comparison it hid the eight pages the crime roll had made
+  stale. It now reads `app.SITE_FACTS_ONLY_CITIES` (the list `build_area_pages.py` skips) through python,
+  never retyped. Proven both ways on the day: before Part C's backend it showed exactly the 8 predicted
+  stale pages (Rotherham, Ealing, ...); after it, all 102 OK. Lesson: an early floor can mask the real check
+  behind it, so when a floor fails, ask whether the comparison under it ran at all.
 - **A page's identity is `<main data-city data-borough>`, not its map link
   (2026-09-30).** Every page linked "Open <borough> on the Sky Score map" to
   `/?city=<key>`, and `bootFromQuery()` IGNORES a city `CITY_DATA` lacks, so the

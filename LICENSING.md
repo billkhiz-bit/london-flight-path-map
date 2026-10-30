@@ -153,7 +153,7 @@ Third-party code the site serves from its own origin (vendored in `js/vendor/`, 
 |---|---|
 | `/v1/score` response | `sources` array (always returned) + `sourceBreakdown` per-component |
 | `/v1/score/batch` response | Same `sources` array on the wrapper |
-| Per-field provenance (built 2026-10-23, live after 29 Oct) | `provenance` names each value's source, method and period; `sourceIndex` carries each source's publisher, dataset and licence (once per batch). Additive to `sources` |
+| Per-field provenance (built 2026-10-23, live 2026-10-29) | `provenance` names each value's source, method and period; `sourceIndex` carries each source's publisher, dataset and licence (once per batch). Additive to `sources` |
 | `/epc`, `/sold_prices`, `/transport`, `/nhs` responses | Each has its own `sources` array |
 | Consumer site | Footer link: "Methodology v5.0" → links to the methodology document which lists every source with full attribution + licence |
 | Methodology document (`METHODOLOGY.md`) | Section 11 enumerates every source + licence reference |
@@ -271,7 +271,7 @@ often planes fly"). Measured privately; nothing derived from these is published:
   Landings and take-offs per runway end at SFO, OAK and SJC over July-August 2026 (55 of 62
   days kept), and the lobe shares built from them in the score Lambda's US-QUIET-BAYAREA block.
   They WEIGHT the Bay Area's aircraft estimate, which the API scores from release 2 (built 2026-10-22;
-  serving once Bill's changeset deploys), and every Bay Area response's `sources` carries the credit and
+  serving since 2026-10-29), and every Bay Area response's `sources` carries the credit and
   the period. **PUBLISHED 2026-10-16 (`17d7ef1`, pushed to the public repo on Bill's "push")**,
   after it was held back for his decision: his 15 Oct acceptance covered counts that pass the
   per-airport floor, which a US airport cannot (no official monthly figure to test against), and
