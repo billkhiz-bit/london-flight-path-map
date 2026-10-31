@@ -358,3 +358,12 @@ as 50% but is not half). The outline cross-check now asks the right question: a 
 in ANOTHER city (once: 94304, Stanford Research Park, in Los Altos Hills); a centre in open country is a hill ZIP's
 land centroid (11 of 126), not an error. Ships with Part B of the 29 Oct runbook (data-deploy and web-deploy back to
 back: new code on the old file would open no city).
+
+## The FAA freshness row reads the cycle IN EFFECT (2026-10-31, audit M-1)
+
+`check_data_freshness.py` compared what we serve with the FAA download page's FIRST listed zip (`stamps[0]`). Near a
+changeover the page lists the outgoing and the incoming cycle, so on the day a new cycle took effect the oldest listed
+was still ours and the row read `current`: it could not go red on the one day it matters. Found 29 Oct, fixed 31 Oct:
+the newest listed cycle whose date has arrived (the earliest listed when only future cycles are), a published next
+cycle said in the note so the roll can be prepared, and the hint no longer says the file "feeds no published route"
+(the map and the front page draw `/data/us-flight-procedures.json`). Proven red on a two-cycle page dated 26 Nov.

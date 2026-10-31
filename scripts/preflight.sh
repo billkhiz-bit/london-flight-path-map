@@ -210,7 +210,12 @@ fi
 # same failure mode as a gate that overstates — either way the name stops
 # describing what actually ran.
 check "ESLint (10 targets)"            npm run lint
-check "html-validate (17 pages)"       npm run lint:html
+# 2026-10-31 (audit M-6): talks/ (2), open-data/, bay-area/ and every area page were uploaded by their deploy
+# targets but validated by nothing; lint:html now names them (area/ as a folder, proven red on a planted page).
+check "html-validate (21 pages + area/)" npm run lint:html
+# The planes district pages are generated and gitignored, so lint:html cannot name them; this validates them on
+# the clone that builds them. A clone without them prints INCONCLUSIVE, never PASS.
+check "html-validate (planes pages)"   sh -c 'if [ -d planes-overhead ]; then npx html-validate planes-overhead; else echo "INCONCLUSIVE: planes-overhead/ is not built on this clone"; fi'
 check "ruff (backend/lambdas)"         python -m ruff check backend/lambdas/
 # backend/tests/ was outside every ruff target until 2026-08-04, so the suite
 # that guards the score engine was the one directory nothing linted — it had

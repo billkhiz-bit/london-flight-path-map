@@ -103,3 +103,21 @@ def test_a_faa_outage_is_inconclusive_and_a_page_with_no_zip_is_broken(monkeypat
     link = 'https://aeronav.faa.gov/Upload_313-d/cifp/CIFP_991231.zip'
     monkeypatch.setattr(fresh, 'fetch_text', lambda url: f'<a href="{link}">')
     assert fresh.cifp()[1:3] == ('2099-12-31', 'NEWER')
+
+
+def test_faa_reads_the_cycle_in_effect_today_not_the_oldest_listed(monkeypatch, tmp_path):
+    # Near a changeover the FAA page lists the outgoing AND the incoming cycle. Reading the oldest listed (audit
+    # 2026-10-31, M-1) kept the row "current" on the very day the new cycle took effect, the one day it matters.
+    links = ''.join(f'<a href="https://aeronav.faa.gov/Upload_313-d/cifp/CIFP_{s}.zip">' for s in ('261126', '261029'))
+    monkeypatch.setattr(fresh, 'fetch_text', lambda url: links)
+    record = tmp_path / 'us-flight-procedures.json'
+    record.write_text('{"effective": "2026-10-29"}', encoding='utf-8')
+    monkeypatch.setattr(fresh.build_us_flight_paths, 'RECORD', record)
+
+    monkeypatch.setattr(fresh, 'TODAY', datetime.date(2026, 11, 25))
+    served, latest, status, note = fresh.cifp()
+    assert (latest, status) == ('2026-10-29', 'current')
+    assert '2026-11-26' in note  # the published next cycle is said, so the roll can be prepared
+
+    monkeypatch.setattr(fresh, 'TODAY', datetime.date(2026, 11, 26))
+    assert fresh.cifp()[1:3] == ('2026-11-26', 'NEWER')
