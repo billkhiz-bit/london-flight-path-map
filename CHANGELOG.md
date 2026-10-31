@@ -3,7 +3,7 @@
 ## 2026-10-30 - Book a demo
 
 - **Businesses can book a 30-minute demo call**, from the pricing page, the API page, beside the live API demo's
-  answer, and from the front page's sections for businesses and developers. We go through your own postcodes with you. Bookings are taken on Calendly, a US scheduling service: the
+  answer, and from the front page, under "Who it is for". We go through your own postcodes with you. Bookings are taken on Calendly, a US scheduling service: the
   privacy policy (sections 2a and 4) says what it receives, and the dated notice is on the changes page.
 
 ## 2026-10-29 - The Bay Area in the API; every figure says where it came from; newer crime figures

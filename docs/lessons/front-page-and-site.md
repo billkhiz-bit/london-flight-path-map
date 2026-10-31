@@ -505,9 +505,9 @@ two and I'll show you those places, not an example."), so s2a, s4, /changes and 
 change to the question in Calendly is a privacy change. (7) **Calendly's Notetaker and AI features stay OFF:** its
 onboarding offers a bot that joins "all meetings" on the connected calendar (legal calls included) and AI email
 handling; both would process data the privacy text does not cover. (8) The slug names the product, so it changes at
-the rename; Calendly is not known to redirect an old slug. The site's side is SIX copies in four files (the holder, two
-on /pricing, two on /api/, one on /score-demo/): pages without a script still need a working href, so the copies stay
-and `tests/test_demo_booking_link.py` lists any one missed. (9) **The 2026-10-30 review before go-live** found the
+the rename; Calendly is not known to redirect an old slug. The site's side is SEVEN copies in five files (the holder, two
+on /pricing, two on /api/, one on /score-demo/, one on the front page since (10)): pages without a script still need
+a working href, so the copies stay and `tests/test_demo_booking_link.py` lists any one missed. (9) **The 2026-10-30 review before go-live** found the
 privacy text overclaiming ("told only that you came from skyscore.co.uk": a visit also sends the IP address, browser
 details and Calendly's cookies), no retention period (now up to 12 months after the call), the TL;DR's "one
 exception" contradicted by the booking line under it, Calendly's default "Add guests" collecting other people's
@@ -525,7 +525,12 @@ is for", placed OUTSIDE the WHO-FOR block because `build_who_for.py` also writes
 page would all have read `book-demo-home-page`, so a link may name its spot (`data-book-place`, a short lower-case
 word, else 'page'): `book-demo-home-card|dev|who`. The privacy text now says "the Book a demo links on this site (on
 the pricing page and the API page, for example)", so a new placement no longer needs a privacy edit; the declared
-page list in the test is where a placement is decided.
+page list in the test is where a placement is decided. **Then cut to ONE within the hour** (Bill asked "is the
+homepage too busy?"): measured live, the page is 3.1 screens on desktop but 7.3 on a phone (390 px), mostly the
+example answer's fine print, and it already offered search 3 times, the API 5 and pricing 3; card 4 had grown to
+three actions. Three spots could not be compared anyway at this traffic (/pricing's email buttons: one click since
+July). Kept: the line under the professions list, the only spot saying what the call gives. `data-book-place` stays
+(`book-demo-home-who`). Measure a page's length and repeats BEFORE adding to it, not after.
 
 **A REGION THE MAP DOES NOT DRAW IS NAMED, NOT "NOT FOUND" (2026-10-23, audit 2026-10-22 M-9).** The coverage
 line lists every region the API scores, and three of them (Nottingham, Greater Norwich, Cardiff) are not drawn

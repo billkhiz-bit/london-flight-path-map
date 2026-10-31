@@ -43,8 +43,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > (Calendly's DPA claims the DPF UK Extension). Read the `book-demo-*` counts with the bar's at ~20 Nov; the
 > site-wide bar is decided then. FAQ from the Deen Developers Q&A: not started. **The front page joined the same
 > afternoon** (Bill: its business spots, never its bar, which already fills Full map and is mid-way through the ~6%
-> read): the "Data for your business" card, the For developers panel and a line under "Who it is for", counted
-> `book-demo-home-card|dev|who`.
+> read): three spots for an hour, then cut to ONE line under "Who it is for" (Bill's "yes": the page repeats its
+> actions; 7.3 screens on a phone, most of it the example's fine print), counted `book-demo-home-who`. Candidates for
+> the ~20 Nov review, NOT before (they change what the ~6% read measures): the example's detail behind "Show the
+> details" on phones, and dropping the "Buying or renting" box, which repeats cards 1 and 3.
 >
 > ## START HERE (2026-10-26)
 >

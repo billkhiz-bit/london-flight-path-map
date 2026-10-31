@@ -1596,8 +1596,8 @@ const BOOK_WANT = {
   '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
   '/api/': ['book-demo-api-bar', 'book-demo-api-page'],
   '/score-demo/index.html': ['book-demo-score-demo-page'],
-  // The front page (Bill, 2026-10-30): its three business spots, in page order, each named by its data-book-place.
-  '/': ['book-demo-home-card', 'book-demo-home-dev', 'book-demo-home-who'],
+  // The front page (Bill, 2026-10-30): one line under "Who it is for", named by its data-book-place.
+  '/': ['book-demo-home-who'],
 };
 for (const [path, want] of Object.entries(BOOK_WANT)) {
   const inBar = want.some((w) => w.endsWith('-bar'));
