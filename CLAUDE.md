@@ -151,7 +151,8 @@ Or just describe what you need, I have full context of this project.
   CAA's Heathrow and Gatwick contours, like for like). EASA's noise tables live only in gitignored `data/n65/` (v2.3)
   and OUTSIDE the repo (`%USERPROFILE%\data\easa-anp-v9`, the 14 newer aircraft EASA sent 29 Oct): never in the repo,
   never a per-type figure anywhere (their terms). Aircraft types resolve by `scripts/n65_types.py` (own data, then the
-  engine from the registration, then the louder candidate by level); the engine source is still Bill's to pick.
+  engine from the registration (the FAA register; the CAA's G-INFO only with its written consent), then the
+  airline-and-type table `data/n65/airline-engines.csv`, then the louder candidate by level; a blank is unknown).
 - **National anchors are per POOL** (`pool_of(city)` / site `poolOf`: a city's `pool`, else its currency;
   one per US metro: decision 2 of 2026-10-16, built 2026-10-18): never pool USD with GBP, nor the Bay Area
   with New York. The site needs `BACKEND_ONLY_PRICES` /

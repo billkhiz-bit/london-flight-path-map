@@ -56,7 +56,8 @@ class Resolution:
     candidates: int
 
 
-HOW = ('own', 'proxy', 'by-registration', 'louder-variant', 'no-candidate', 'not-in-database', 'type-unknown')
+HOW = ('own', 'proxy', 'by-registration', 'by-operator', 'louder-variant', 'no-candidate', 'not-in-database',
+       'type-unknown')
 
 
 def _clean(v) -> str:
@@ -92,6 +93,8 @@ ENGINE_MAKERS = (
     ('IAE|PW', r'\bIAE\b|V2500|\bPW\d|\bPW\b|PRATT|JT8D|JT9D'),
     ('RR', r'ROLLS|\bRR\b|TRENT|RB211|\bBR7\d\d|TAY\b|SPEY'),
     ('GE', r'GENERAL ELECTRIC|\bGE\b|\bGE\d|GENX|\bCF6|\bCF34|GE90'),
+    # The A380's GP7200 is Engine Alliance's (a GE and Pratt & Whitney venture): its own maker, never GE or PW.
+    ('EA', r'ENGINE ALLIANCE|\bGP7\d'),
 )
 
 
@@ -154,9 +157,12 @@ def reference_level(anp: dict, candidate: Candidate, op: str) -> float | None:
 
 
 def resolve(icao: str, registration: str, op: str, candidates: dict[str, list[Candidate]], anp: dict,
-            registry: dict[str, str] | None = None) -> Resolution:
+            registry: dict[str, str] | None = None, operator: str = '',
+            operator_engines: dict[tuple[str, str], str] | None = None) -> Resolution:
     """Choose the ANP aircraft for one movement. `candidates` is by ICAO code (index_candidates()); `registry` maps a
-    registration to its engine text, and may be empty."""
+    registration to its engine text; `operator_engines` maps (airline ICAO code, aircraft ICAO type) to the engine that
+    airline flies on that type (Bill, 31 Oct: an airline-and-type table where no register says). Both may be empty.
+    The registration is asked first, the airline second, and "louder" only when neither knows."""
     icao = _clean(icao).upper()
     if not icao:
         return Resolution('', op, None, 'type-unknown', 0)
@@ -166,22 +172,49 @@ def resolve(icao: str, registration: str, op: str, candidates: dict[str, list[Ca
     usable = [c for c in rows if c.anp_id in anp['aircraft']]
     if not usable:
         return Resolution(icao, op, None, 'not-in-database', len(rows))
-    engine = (registry or {}).get(_clean(registration).upper(), '')
-    if engine:
-        fitting = [c for c in usable if c.engine_match and re.search(c.engine_match, engine, re.I)]
-        if fitting:
-            reps = _collapse(fitting)
-            if len(reps) == 1:
-                return Resolution(icao, op, reps[0], 'by-registration', len(rows))
-            usable = reps
     reps = _collapse(usable)
-    if len(reps) == 1:
+    if len(reps) == 1:  # one aircraft whatever the engine: no register is asked, so none is credited
         c = reps[0]
         return Resolution(icao, op, c, 'own' if c.source == 'own' else 'proxy', len(rows))
+    known_engines = (((registry or {}).get(_clean(registration).upper(), ''), 'by-registration'),
+                     ((operator_engines or {}).get((_clean(operator).upper(), icao), ''), 'by-operator'))
+    for engine, label in known_engines:
+        if not engine:
+            continue
+        narrowed = _narrow_by_engine(usable, engine)
+        if narrowed is None:
+            continue  # an engine no row names: the next source, or "louder"
+        if len(narrowed) == 1:
+            return Resolution(icao, op, narrowed[0], label, len(rows))
+        reps = narrowed
+        break
     known = [(lv, c) for lv, c in ((reference_level(anp, c, op), c) for c in reps) if lv is not None]
     if not known:
         return Resolution(icao, op, None, 'not-in-database', len(rows))
     return Resolution(icao, op, max(known, key=lambda t: t[0])[1], 'louder-variant', len(rows))
+
+
+def _narrow_by_engine(usable: list[Candidate], engine: str) -> list[Candidate] | None:
+    """The rows that can describe an aircraft with this engine: those whose engine condition matches it; failing
+    that, those with no engine condition (they stand for the engines the specific rows do not name, e.g. EASA's proxy
+    for the Trent 787-9 beside v9's own GEnx data). None when no row fits the engine at all."""
+    specific = [c for c in usable if c.engine_match and re.search(c.engine_match, engine, re.I)]
+    if specific:
+        return _collapse(specific)
+    any_engine = [c for c in usable if not c.engine_match]
+    return _collapse(any_engine) if any_engine else None
+
+
+def read_operator_engines(path: Path) -> dict[tuple[str, str], str]:
+    """The airline-and-type table: CSV with airline (ICAO 3-letter code), icao_type, engine (and, for people, the
+    source it came from). A row with no engine is skipped, never read as "any"."""
+    out = {}
+    with open(path, encoding='utf-8-sig', newline='') as fh:
+        for r in csv.DictReader(fh):
+            airline, icao, engine = _clean(r.get('airline')).upper(), _clean(r.get('icao_type')).upper(), _clean(r.get('engine'))
+            if airline and icao and engine:
+                out[(airline, icao)] = engine
+    return out
 
 
 def _collapse(cands: list[Candidate]) -> list[Candidate]:

@@ -73,6 +73,9 @@ def test_one_proxy_is_used_with_its_label(anp):
     idx = t.index_candidates([_cand('ZZ01', 'PROXY-A', dep=-1.0)])
     r = t.resolve('zz01', 'G-ABCD', 'D', idx, anp)
     assert (r.how, r.candidate.anp_id) == ('proxy', 'PROXY-A')
+    # A register that knows the engine changes nothing here, so it is not credited (the shares would overstate it).
+    r = t.resolve('ZZ01', 'N1', 'D', idx, anp, {'N1': 'GE GENX-1B'}, 'ZZA', {('ZZA', 'ZZ01'): 'CFM LEAP-1A'})
+    assert (r.how, r.candidate.anp_id) == ('proxy', 'PROXY-A')
 
 
 def test_own_data_for_any_engine_beats_every_proxy_even_a_louder_one(anp):
@@ -150,6 +153,11 @@ def test_engine_makers_read_from_easas_variant_text():
     assert re.search(t.ENGINE_MAKERS[1][1], 'PW1127G-JM', re.I)
     assert re.search(t.ENGINE_MAKERS[1][1], 'IAE V2527-A5', re.I)
     assert not re.search(t.ENGINE_MAKERS[0][1], 'PW1127G-JM', re.I)
+    # The A380's GP7200 is Engine Alliance's: named as such, and never read as GE or Pratt & Whitney.
+    makers = dict(t.ENGINE_MAKERS)
+    assert t.engine_match_from_variant('A380 GP7270 engines') == makers['EA']
+    assert not re.search(makers['GE'], 'ENGINE ALLIANCE GP7270', re.I)
+    assert not re.search(makers['IAE|PW'], 'ENGINE ALLIANCE GP7270', re.I)
 
 
 def test_phase0_substitution_csv_reads_as_proxies_with_engine_conditions(tmp_path):
@@ -176,3 +184,37 @@ def test_a_hand_kept_own_row_names_its_engine_maker_and_groups_with_easas_proxy(
     # Same engine group: the own row replaces EASA's louder proxy (OLD-D, 90 dB) without "louder" being asked.
     r = t.resolve('ZZ07', '', 'D', t.index_candidates(t.read_candidates(subs), own_rows), anp)
     assert (r.how, r.candidate.anp_id) == ('own', 'OWN-C')
+
+
+def test_a_known_engine_no_specific_row_names_takes_the_any_engine_row(anp):
+    # Own data for one engine (GE) beside EASA's proxy with no engine condition, which stands for the other engines.
+    # The own GE row is the LOUDER at 1,000 ft (OLD-D 90 against PROXY-A 84), so "louder" would wrongly pick it for an
+    # aircraft known to have the other engine.
+    own_ge = t.Candidate('ZZ09', 'OLD-D', 0.0, 0.0, t.ENGINE_MAKERS[3][1], 'own')
+    idx = t.index_candidates([own_ge, _cand('ZZ09', 'PROXY-A')])
+    r = t.resolve('ZZ09', 'G-RRRR', 'D', idx, anp, {'G-RRRR': 'ROLLS-ROYCE TRENT 1000'})
+    assert (r.how, r.candidate.anp_id) == ('by-registration', 'PROXY-A')
+    r = t.resolve('ZZ09', 'N12345', 'D', idx, anp, {'N12345': 'GE GENX-1B74/75'})
+    assert (r.how, r.candidate.anp_id) == ('by-registration', 'OLD-D')
+    assert t.resolve('ZZ09', 'G-NONE', 'D', idx, anp).how == 'louder-variant'
+
+
+def test_the_airline_table_answers_when_no_register_does_and_the_register_wins(anp, tmp_path):
+    own_ge = t.Candidate('ZZ09', 'OLD-D', 0.0, 0.0, t.ENGINE_MAKERS[3][1], 'own')
+    idx = t.index_candidates([own_ge, _cand('ZZ09', 'PROXY-A')])
+    table = tmp_path / 'airlines.csv'
+    table.write_text('airline,icao_type,engine,source\n'
+                     'ZZA,ZZ09,Rolls-Royce Trent 1000,made-up\n'
+                     'ZZB,ZZ09,,made-up row with no engine\n', encoding='utf-8')
+    ops = t.read_operator_engines(table)
+    assert ops == {('ZZA', 'ZZ09'): 'Rolls-Royce Trent 1000'}  # a blank engine is skipped, never "any"
+    r = t.resolve('ZZ09', 'G-ABCD', 'D', idx, anp, {}, 'zza', ops)
+    assert (r.how, r.candidate.anp_id) == ('by-operator', 'PROXY-A')
+    # The registration says GE: it is asked first and wins over the airline's usual engine.
+    r = t.resolve('ZZ09', 'N12345', 'D', idx, anp, {'N12345': 'GE GENX-1B74/75'}, 'ZZA', ops)
+    assert (r.how, r.candidate.anp_id) == ('by-registration', 'OLD-D')
+    # An airline the table does not list, or the same airline on another type: "louder", said as such.
+    assert t.resolve('ZZ09', 'G-ABCD', 'D', idx, anp, {}, 'ZZB', ops).how == 'louder-variant'
+    assert t.resolve('ZZ03', 'G-ABCD', 'D', t.index_candidates([_cand('ZZ03', 'PROXY-A', engine=t.ENGINE_MAKERS[0][1]),
+                                                                 _cand('ZZ03', 'PROXY-B', engine=t.ENGINE_MAKERS[1][1])]),
+                     anp, {}, 'ZZA', ops).how == 'louder-variant'

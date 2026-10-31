@@ -21,6 +21,7 @@ import csv
 import gzip
 import json
 import math
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -56,6 +57,17 @@ def read_registry(path: Path | None) -> dict[str, str]:
         return {r['registration'].strip().upper(): r['engine'].strip() for r in csv.DictReader(fh) if r.get('engine')}
 
 
+CALLSIGN_AIRLINE = re.compile(r'([A-Z]{3})\d')
+
+
+def airline_of(rec: dict) -> str:
+    """The airline's ICAO code from the trace's most frequent callsign ('BAW123A' -> 'BAW'); '' for a callsign that
+    is a registration or missing. Points carry the callsign as their last field."""
+    calls = Counter(p[-1].strip() for p in rec.get('pts', []) if isinstance(p[-1], str) and p[-1].strip())
+    m = CALLSIGN_AIRLINE.match(calls.most_common(1)[0][0]) if calls else None
+    return m.group(1) if m else ''
+
+
 def outside_repo(path: Path) -> bool:
     try:
         path.resolve().relative_to(REPO.resolve())
@@ -71,6 +83,7 @@ def main(argv=None) -> int:
     ap_.add_argument('--anp', type=Path, action='append', required=True, help='ANP release dir; later ones win')
     ap_.add_argument('--candidates', type=Path, action='append', required=True)
     ap_.add_argument('--registry', type=Path)
+    ap_.add_argument('--operator-engines', type=Path, help='airline-and-type engine table (n65_types)')
     ap_.add_argument('--per-type-out', type=Path)
     a = ap_.parse_args(argv)
     if a.per_type_out and not outside_repo(a.per_type_out):
@@ -80,6 +93,7 @@ def main(argv=None) -> int:
     anp = nt.load_anp(*a.anp)
     cands = nt.index_candidates(*(nt.read_candidates(p) for p in a.candidates))
     registry = read_registry(a.registry)
+    operator_engines = nt.read_operator_engines(a.operator_engines) if a.operator_engines else {}
     airport = am.load_airports()[a.airport]
     traces = near_traces(a.extract, airport)
     field, how_field = am.field_level(traces, airport)
@@ -88,26 +102,28 @@ def main(argv=None) -> int:
     total = 0
     for rec in traces:
         moves, _ = am.movements(rec, airport, field)
+        airline = airline_of(rec)
         for kind, _rw, _ts in moves:
             op = OP_OF_KIND.get(kind)
             if not op:
                 continue
-            r = nt.resolve(rec.get('t') or '', rec.get('r') or '', op, cands, anp, registry)
+            r = nt.resolve(rec.get('t') or '', rec.get('r') or '', op, cands, anp, registry, airline, operator_engines)
             total += 1
             by_how[r.how] += 1
-            by_type[(r.icao or '?', op, r.how, r.candidate.anp_id if r.candidate else '')] += 1
+            by_type[(r.icao or '?', op, r.how, r.candidate.anp_id if r.candidate else '', airline)] += 1
 
     print(f'{a.airport} {a.extract.name}: field {field} ({how_field}); {len(traces)} traces near; {total} movements')
-    print(f'ANP releases: {", ".join(p.name for p in a.anp)}; registry entries: {len(registry)}')
+    print(f'ANP releases: {", ".join(p.name for p in a.anp)}; registry entries: {len(registry)}; '
+          f'airline-and-type rows: {len(operator_engines)}')
     for how in nt.HOW:
         n = by_how.get(how, 0)
         print(f'  {how:<16} {n:>5}  {100 * n / total if total else 0:5.1f}%')
     if a.per_type_out:
         with open(a.per_type_out, 'w', encoding='utf-8', newline='') as fh:
             w = csv.writer(fh)
-            w.writerow(['icao', 'op', 'how', 'anp_id', 'movements'])
-            for (icao, op, how, anp_id), n in by_type.most_common():
-                w.writerow([icao, op, how, anp_id, n])
+            w.writerow(['icao', 'op', 'how', 'anp_id', 'airline', 'movements'])
+            for (icao, op, how, anp_id, airline), n in by_type.most_common():
+                w.writerow([icao, op, how, anp_id, airline, n])
         print(f'per-type rows: {a.per_type_out}')
     return 0
 
