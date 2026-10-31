@@ -115,8 +115,8 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > by one from `/area/`, came back for Hackney and Tower Hamlets, and never opened the map or searched. `/area/`
 > listed names only. A comparison table per city was built on branch `area-compare` and MERGED 31 Oct (Bill: "do
 > the area compare tables"), rebuilt on today's data (crime roll included; no area page changed, only the index and
-> the sitemap's dates). To go live: `area-deploy`, then `meta-deploy` (Bill's: the session's classifier refuses
-> deploys).
+> the sitemap's dates). LIVE 31 Oct 21:45 (Bill ran `area-deploy` and `meta-deploy`): 14 city tables on `/area/`,
+> drift PASS in full. Read `/area` engagement with the rest at ~20 Nov.
 
 > ## START HERE (2026-10-24)
 >
