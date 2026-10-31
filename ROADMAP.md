@@ -21,11 +21,12 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-10-31)
 >
-> **The planes overhead district pages are MERGED, not yet live** (`40acdad`, Bill's yes to the preview; preflight
-> PASS on the merge; pushed). The deploy (runbook Part D step 2: `planes-pages-deploy`, THEN `meta-deploy`) was
-> refused by the session's auto-mode classifier as a production deploy, so it waits for Bill to run it or allow it.
-> Until it runs, live `robots.txt` stays without the second Sitemap line, as it should: never `meta-deploy` first.
-> After it: Part D step 3's live checks, then Bill submits `sitemap-planes.xml` in Search Console.
+> **The planes overhead district pages are LIVE** (merge `40acdad`; the session's auto-mode classifier refused the
+> deploy, so Bill ran `planes-pages-deploy` then `meta-deploy`, 19:30 UTC). Verified: 465 pages and a 465-URL
+> `sitemap-planes.xml`, robots.txt names both sitemaps, drift 25 of 25 + gap 0, and in a browser at 390 and 1366 px
+> (TW9 1 66 / 69 / 25; the postcode box opens TW9 3PZ's 310 / 168). Next: Bill adds `sitemap-planes.xml` in Search
+> Console; links from the area pages. The drift check's first post-deploy run read a FALSE 0 of 25 (an exported
+> `MSYS_NO_PATHCONV=1` sent `curl -o /tmp/x` to `C:\tmp\x`); the script now unsets it.
 > **Also 31 Oct:** the front page's booking links cut to one (`8f63ab5`, live, 13/13); the weekly audit
 > (`AUDIT_REPORT_2026-10-31.md`: 0 critical, 0 important, 6 minor); its M-1 (the FAA row read the OLDEST listed cycle,
 > so it could not go red on a changeover day; proven red, fixed) and M-6 (html-validate now covers talks/,

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-31 - Planes overhead, a page per postcode district
+
+- **464 postcode districts near the ten airports we count now have their own page** at
+  `/planes-overhead/<district>/`, with how many planes pass over each sector's postcodes on a day the airport flies
+  west, both ways, or east, in bands (100 or more a day, 10 to 99, under 10), and a box to check one postcode. An
+  index at `/planes-overhead/` lists them, and they have their own sitemap. Counted from community flight tracking,
+  January to August 2026, checked against the CAA's monthly totals.
+
 ## 2026-10-30 - Book a demo
 
 - **Businesses can book a 30-minute demo call**, from the pricing page, the API page, beside the live API demo's
