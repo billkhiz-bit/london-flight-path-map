@@ -707,6 +707,30 @@ planes-deploy:
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/data/planes/*'
 
+.PHONY: planes-pages-deploy
+planes-pages-deploy:
+	# Planes overhead by district (2026-10-28): one static page per postcode
+	# district at /planes-overhead/<district>/, their index, and their own
+	# sitemap-planes.xml, all written by scripts/build_planes_pages.py from
+	# data/planes/. Like planes-deploy it uploads only what --check proves equal
+	# to a fresh build (--strict: a missing input FAILS here, where preflight
+	# reads INCONCLUSIVE), because the pages are GITIGNORED (this repo is public)
+	# and only their manifest is tracked. Run it AFTER planes-deploy, so a page
+	# never shows figures the front page's answer does not give, and BEFORE
+	# meta-deploy, so robots.txt never names a sitemap that is not there.
+	# max-age 3600 and the invalidation, as area-deploy (which once lacked it).
+	python scripts/build_planes_pages.py --check --strict
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync planes-overhead/ \
+		s3://$(S3_BUCKET)/planes-overhead/ \
+		--content-type "text/html" --cache-control "public,max-age=3600" \
+		--delete --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp sitemap-planes.xml \
+		s3://$(S3_BUCKET)/sitemap-planes.xml \
+		--content-type "application/xml" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/planes-overhead/*' '/sitemap-planes.xml'
+
 .PHONY: bay-area-deploy
 bay-area-deploy:
 	# The San Francisco Bay Area flight-path page (2026-10-02) and the BTS

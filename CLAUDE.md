@@ -106,8 +106,10 @@ Or just describe what you need, I have full context of this project.
 - **Wording rules**: never call the whole product "open government data"/OGL (UK routes come from the UK AIP,
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
   are over **postcodes, not addresses**; never say **how often planes pass** except for airports that pass
-  `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26),
-  a range on a cone's edge, never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
+  `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26)
+  or the district pages `build_planes_pages.py` BUILDS from the same files (`/planes-overhead/`, 2026-10-28: a cell
+  counts postcodes in bands, never a middle figure; its `--check` holds every page), a range on a cone's edge,
+  never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
   **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
@@ -258,7 +260,8 @@ Or just describe what you need, I have full context of this project.
 - **Prefer make targets**: `fonts-deploy`, `data-deploy`, `web-deploy` (index.html -> `map/index.html`,
   privacy, pricing, changes, terms, `api/`, `how-it-works/` (+ its `img/`), `about/`, `js/`), `home-deploy` (front page, `/reports/`), `pwa-deploy`,
   `demo-deploy`, `prototype-deploy`, `meta-deploy`, `area-deploy`, `open-data-deploy`, `bay-area-deploy`,
-  plus standalone `talks-deploy` and `deeplinks-deploy` (refuses placeholders).
+  plus standalone `talks-deploy` and `deeplinks-deploy` (refuses placeholders), and `planes-pages-deploy` (after
+  `planes-deploy`, before `meta-deploy`; refuses unless `build_planes_pages.py --check --strict` passes).
 - **`web-deploy-all` order is load-bearing**: fonts, then data, then web, then home, then pwa. Data before the
   page; web before home; fonts before `sw.js`.
 - Pages go to `<name>/index.html` keys (the CloudFront function rewrites extensionless paths).

@@ -223,6 +223,12 @@ data/*
 # Planes overhead (2026-10-26): the ~2,500 district files in data/planes/ stay ignored (tens of MB, rebuilt
 # each month from a file 21 GB of tracks made); their manifest is tracked, so what is deployed can be checked.
 !data/planes-manifest.json
+# Planes overhead by district (2026-10-28): the ~460 pages scripts/build_planes_pages.py writes from those
+# files stay ignored too, so pushing this public repo never publishes them ahead of the site; their
+# manifest is tracked (md5 = S3 ETag, and the day each page last changed, which dates the sitemap).
+!data/planes-pages-manifest.json
+/planes-overhead/
+/sitemap-planes.xml
 .defra_load_checkpoint
 # Trailing * is load-bearing since the loader gained --geotiff: checkpoints are
 # now namespaced per raster (.defra_load_checkpoint_defra_lden_2022_manchester),

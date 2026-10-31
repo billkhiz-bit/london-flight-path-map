@@ -259,3 +259,47 @@ from a zip short of tiles, reading missing land as sea level: now refuses fewer 
 districts against the TRACKED manifest at the origin (red before the first deploy, as it should be). NOT changed,
 with reasons: a late planes fetch from an earlier search fills only a CLOSED answer (render() is the only thing
 that opens it, and clears the block first); "% of days" rounds each kind on its own, so three can sum to 99 or 101.
+
+### THE DISTRICT PAGES (2026-10-28, built, not live)
+
+Step 1 of the marketing plan: `/planes-overhead/<district>/`, one static page per postcode district, from
+`scripts/build_planes_pages.py`, because robots.txt keeps crawlers out of `/data/` and the front page tells one
+postcode at a time from a script, so search saw none of planes overhead. Bill's rulings, 28 Oct: figures BUILT INTO
+the page (as area pages bake scores); a page only where some postcode is shown 10+ a day (PAGE_FROM); the address
+`/planes-overhead/tw9/`; and, of three ways to read a sector, **bands** (option C): a cell counts the sector's
+postcodes "at 100+ / at 10 to 99 / on an edge / under 10". A MIDDLE FIGURE WAS REFUSED for the reason he refused
+averaging west and east days: near an approach a sector is two places (TW9 1 on a west day: 66 at ~317, 25 under 10,
+69 on the edge between), so its median (317) is true of none of the quiet ones. Least-to-most ("1 to 317") read the
+same in every sector, which on 464 pages is the doorway shape. An edge postcode counts in a band when both its ends
+fall in it; "on an edge" only when they straddle. The busiest figure sits on the line above each table (bands alone
+read SE10's 89-153 and Kew's 317 alike).
+
+Measured exclusions beyond Bill's rule (522 districts reach 10 a day): 37 mostly outside the covered councils (CM13:
+1 of its 702 live postcodes is in Havering; COVERED_FROM 0.5 of NSPL's live postcodes), 20 mostly large users
+(SE1P, N1P, W1A: PO boxes, positioned at a sorting office; LARGE_UNDER 0.5), 1 under MIN_POSTCODES: **464 pages**.
+A postcode not listed under an airport is UNLISTED = '<1' (every postcode is measured under every airport: NaN only
+when an airport had no days of a kind, and all ten have all three). Labels and airport names are PARSED from
+`js/planes.mjs` KINDS and `js/flight_geometry.mjs` AIRPORT_NAME; `per_day()`/`period()` are held equal to the
+module's by running it in Node (`tests/test_build_planes_pages.py`).
+
+Gitignored (pages and `sitemap-planes.xml`), like `data/planes/`: pushing the public repo must not publish every
+district's figures ahead of Bill's review and the site. TRACKED `data/planes-pages-manifest.json` (bytes, md5 = S3
+ETag, and `changed`, the day each page's bytes last changed) dates the sitemap, since git cannot date an ignored
+file. `--check` (preflight, blocking) holds pages, manifest and sitemap byte-equal to a fresh build and prints
+INCONCLUSIVE where the inputs are absent; `planes-pages-deploy` passes `--strict` so a deploy never reads that as OK.
+The wording gate reads all 465 pages (they sit in the Makefile's sync list) and passes them on its own patterns: no
+cell writes "N planes a day". Proven red: a typed "About 317 planes a day" in TW9 trips both the wording gate and
+`--check`; eight builder mutations each turn their own test red.
+
+PHONES: the first band cells wrapped mid-phrase ("at 10 to / 99") and every table then scrolled 40-76 px sideways at
+390 px (axe also counts a scrolling table as a keyboard fault). Each band is now its own unbroken line, and the
+site bar's 680 px breakpoint shrinks the table (12.5 px, 6/3 px padding): all 464 pages measured at 390 px, 0 scroll.
+`tests/a11y-source.mjs` scans a sample DERIVED from the pages (the first carrying each feature, the biggest, the
+widest row) at 1440 and 390 and measures the sideways scroll at 390, proven red by removing the phone rule.
+
+DEPLOY-DRIFT PASS (28 Oct, later): `check_deploy_drift.sh` reads the TRACKED manifest, fetches the index and 24
+evenly sampled pages and compares md5s, and compares the live `sitemap-planes.xml`'s URL set with the manifest's
+pages. Red before the first deploy, as the planes-file pass was. Proven: live 25 UNREACHABLE; a local copy 25 of 25,
+gap 0; an edited index DRIFT; a dropped sitemap URL "gap 1". Thursday's runbook carries it as an OPTIONAL Part D
+(merge rehearsed on A, B and C: clean). NOT YET: links from the area pages (after Thursday: Part C regenerates
+them), and Search Console (Bill's). Ships after Thursday's three changesets and Bill's review of the preview.
