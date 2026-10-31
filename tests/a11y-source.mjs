@@ -767,6 +767,93 @@ for (const viewport of AREA_VIEWPORTS) {
   await context.close();
 }
 
+// PLANES PAGES (2026-10-28): one per postcode district, ~460, written by scripts/build_planes_pages.py. All of them
+// at two widths would add minutes for one template, so the scan takes the index and, DERIVED from the pages
+// themselves, the first page carrying each thing a page can carry (a second airport's table, the edge note, the
+// estimated-position note, the uncounted-flying warning, an airport given one line) plus the biggest. The folder is
+// gitignored (built from the gitignored tracks), so a clone without it reports INCONCLUSIVE, never a clean scan.
+async function planesPagePaths() {
+  const base = join(ROOT, 'planes-overhead');
+  let dirs;
+  try {
+    dirs = await readdir(base, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  const pages = [];
+  for (const d of dirs) {
+    if (d.isDirectory()) pages.push({ path: `/planes-overhead/${d.name}/`, html: await readFile(join(base, d.name, 'index.html'), 'utf8') });
+  }
+  pages.sort((a, b) => a.path.localeCompare(b.path));
+  const FEATURES = [
+    ['two airport tables', (h) => (h.match(/<h2 id="[a-z]{3}">From /g) || []).length >= 2],
+    ['the edge note', (h) => h.includes('On an edge:')],
+    ['estimated positions', (h) => h.includes('a position ONS estimates')],
+    ['uncounted flying', (h) => h.includes('other flying passes too')],
+    ['an airport in one line', (h) => h.includes('Also counted here:')],
+  ];
+  const chosen = new Map();
+  const absent = [];
+  for (const [what, has] of FEATURES) {
+    const hit = pages.find((p) => has(p.html));
+    if (hit) chosen.set(hit.path, [...(chosen.get(hit.path) || []), what]);
+    else absent.push(what);
+  }
+  if (pages.length) {
+    const biggest = pages.reduce((a, b) => (b.html.length > a.html.length ? b : a));
+    chosen.set(biggest.path, [...(chosen.get(biggest.path) || []), 'the biggest page']);
+    // The row with the most text is the one most likely to push a phone's table sideways (BR1, 28 Oct).
+    const rowText = (h) => Math.max(0, ...[...h.matchAll(/<tr>(.*?)<\/tr>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').length));
+    const widest = pages.reduce((a, b) => (rowText(b.html) > rowText(a.html) ? b : a));
+    chosen.set(widest.path, [...(chosen.get(widest.path) || []), 'the widest table row']);
+  }
+  return { paths: ['/planes-overhead/', ...chosen.keys()], chosen, absent, total: pages.length };
+}
+
+const planes = await planesPagePaths();
+if (!planes || planes.total === 0) {
+  console.log(`INCONCLUSIVE: planes-overhead/ is not built here (gitignored): python scripts/build_planes_pages.py --write`);
+} else {
+  for (const [path, why] of planes.chosen) console.log(`${'planes sample'.padEnd(28)} ${path} (${why.join(', ')})`);
+  if (planes.absent.length) console.log(`${'planes sample'.padEnd(28)} on no page this build: ${planes.absent.join(', ')}`);
+  for (const viewport of AREA_VIEWPORTS) {
+    const context = await browser.newContext({ viewport });
+    const page = await context.newPage();
+    let planesFailed = 0;
+    for (const path of planes.paths) {
+      try {
+        await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
+        const v = failing(await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze());
+        if (v.length) {
+          planesFailed++;
+          failed++;
+          console.log(`${path.padEnd(44)} FAIL ${v.length} blocking`);
+          for (const item of v.slice(0, 4)) console.log(`    [${item.impact.toUpperCase()}] ${item.id}: ${item.help}`);
+        }
+        // On a phone the four columns must fit without a sideways scroll (measured, not assumed: 2026-10-28 found
+        // every table 40-76 px too wide before the phone rule in build_planes_pages.py).
+        if (viewport.width <= 680) {
+          const sideways = await page.evaluate(() => Math.max(document.documentElement.scrollWidth - innerWidth,
+            ...[...document.querySelectorAll('.tw')].map((t) => t.scrollWidth - t.clientWidth)));
+          if (sideways > 0) {
+            planesFailed++;
+            failed++;
+            console.log(`${path.padEnd(44)} FAIL scrolls ${sideways} px sideways at ${viewport.width} px`);
+          }
+        }
+      } catch (e) {
+        console.log(`${path.padEnd(44)} ERROR ${e.message.split('\n')[0]}`);
+        failed++;
+      }
+    }
+    console.log(
+      `${'planes-overhead/ (sample)'.padEnd(28)} ${planesFailed ? 'FAIL' : 'OK  '} ${planes.paths.length} of ` +
+        `${planes.total + 1} pages scanned at ${viewport.width}x${viewport.height}, ${planesFailed} failing`
+    );
+    await context.close();
+  }
+}
+
 await browser.close();
 server.close();
 // The stub cannot tell you it was never used, so ask it. Every viewport loads

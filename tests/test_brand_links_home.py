@@ -14,7 +14,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 PATTERNS = ('*.html', 'home/**/*.html', 'api/**/*.html', 'open-data/**/*.html', 'talks/*.html',
-            'bay-area/*.html', 'score-demo/*.html', 'area/**/index.html', 'how-it-works/*.html', 'about/*.html')
+            'bay-area/*.html', 'score-demo/*.html', 'area/**/index.html', 'how-it-works/*.html', 'about/*.html',
+            'planes-overhead/**/index.html')  # gitignored, built by scripts/build_planes_pages.py (2026-10-28)
 # Pages with no site brand, and why. A page here that DOES link its first "Sky Score" home must leave.
 NO_BRAND = {
     'home/moved/preview/index.html': 'redirect stub for the old /preview/: its only job is the link home',

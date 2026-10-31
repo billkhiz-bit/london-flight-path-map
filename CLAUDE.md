@@ -21,7 +21,7 @@ When something new is learned: add the one-line rule here and the story to the l
 | `map-layers-and-legends.md` | fill layers, legends, `FILL_LAYER_COLOURS`, noise-legend palettes, panel caveat |
 | `neighbourhoods-and-stations.md` | PPD medians, generated neighbourhoods, NaPTAN stations, area labels, "best value" |
 | `in-progress-measurements.md` | AURN monitors, Breathe London sensors, how often planes pass (adsb.lol vs CAA) |
-| `public-surfaces.md` | `/badge`, area pages, free tier, route throttles, signup verification (I17) |
+| `public-surfaces.md` | `/badge`, area pages, free tier, route throttles, signup verification (I17), per-field provenance |
 | `us-cities.md` | `/bay-area/`, Bay Area releases 1-2, the US noise yardstick, New York v5.6-v5.7 |
 | `product-rules.md` | scale direction, branding, why there is no basemap |
 | `quality-gates.md` | preflight stages, responsive / a11y gates, `/aws-debug` history |
@@ -78,7 +78,7 @@ Or just describe what you need, I have full context of this project.
   cross-project state is `%USERPROFILE%\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
-- **Weekly audit**: the current one is `AUDIT_REPORT_2026-10-22.md`; suggest `/audit` when it is >7 days old.
+- **Weekly audit**: the current one is `AUDIT_REPORT_2026-10-31.md`; suggest `/audit` when it is >7 days old.
 
 ## The product, in facts safe to repeat
 
@@ -86,8 +86,8 @@ Or just describe what you need, I have full context of this project.
   `/v1/score` API is the product. Pivoted May 2026 from "AI-powered" to data-first.
 - **THE public coverage sentence, the only one to quote**: "97 council areas in 13 UK city regions, plus New
   York's 5 boroughs and 50 Bay Area cities (facts only)".
-- **Surfaces**: `/v1/score` serves 14 cities LIVE, and 15 in source: the Bay Area's 50 cities, BY NAME only
-  (`city=bayarea`), built 2026-10-22 and live once Bill's changeset deploys; the site keeps their facts
+- **Surfaces**: `/v1/score` serves 15 cities LIVE, the 15th the Bay Area's 50 cities (live 2026-10-29), by name
+  (`city=bayarea`) or by ZIP (scored as the city where half or more of its residents live); the site keeps their facts
   (`SITE_FACTS_ONLY_CITIES`, held both ways by both parity gates). The site SCORES 11 (London 33, NYC 5, Greater Manchester 10,
   West Midlands 7, West Yorkshire 5, South Yorkshire 4, Merseyside 5, Tyne and Wear 5, Bristol 4, Leicester 8,
   Teesside 5 = 91 boroughs) and shows the **Bay Area's 50 cities as facts with no score**. API-only, declared
@@ -107,8 +107,10 @@ Or just describe what you need, I have full context of this project.
 - **Wording rules**: never call the whole product "open government data"/OGL (UK routes come from the UK AIP,
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
   are over **postcodes, not addresses**; never say **how often planes pass** except for airports that pass
-  `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26),
-  a range on a cone's edge, never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
+  `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26)
+  or the district pages `build_planes_pages.py` BUILDS from the same files (`/planes-overhead/`, 2026-10-28: a cell
+  counts postcodes in bands, never a middle figure; its `--check` holds every page), a range on a cone's edge,
+  never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
   **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
@@ -136,7 +138,12 @@ Or just describe what you need, I have full context of this project.
   re-projection; BT postcodes are Irish Grid. Loaders UPSERT, so a re-placing needs
   `remove_lost_readings.py --apply`.
 - **A data roll is done only when every reader of the file has run** (HANDOVER s0 step 7). Area pages BAKE
-  scores: rerun `build_area_pages.py --write` after any vintage roll.
+  scores (the `/area/` index's tables too): rerun `build_area_pages.py --write` after any vintage roll; on Windows
+  `git add area/` and run it again, or the sitemap dates every page today.
+- **Quarterly crime roll** (first done 2026-10-23): set `EDITION` + `XLSX_FILE` in `refresh_crime_from_ons.py`
+  (copied from the ONS page, never its `current` folder), then `--write-lambda --all`, `--write --all`,
+  `--check --all`, `build_area_pages.py --write`, and re-derive METHODOLOGY s6 (`check_worked_example.py`);
+  `CRIME_EDITION_LABEL` must equal `edition_label()` (tests/test_provenance_periods.py).
 - **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh`; it must move `SNAPSHOT_VINTAGE_LABEL`,
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.
@@ -165,11 +172,18 @@ Or just describe what you need, I have full context of this project.
   a tile as a reading (BTS's road cache stops at 12 though it lists 24). US shares (crime, road, flood) are
   not on the UK scales: each takes a US scale, LINEAR on its California anchor (`us_anchored_to_score`: 10 at
   zero, 5.0 at the anchor, 0 at double; Bill, 2026-10-18; `docs/lessons/us-cities.md`).
+- **A Bay Area ZIP is scored as the city holding HALF OR MORE of its 2020 residents**, shares said (Bill, 2026-10-23);
+  `build_bayarea_zips.py` writes the site's file AND the Lambda's `BAYAREA_ZIPS`, `--check` holds them equal.
 - **Pooled figures hide per-city optimism**: any fit must hold per city (no city may read quieter than its
   yardstick).
 - **A parity claim is a claim about a holder: read it, never retype it.** The Bay Area's transport bands were
   typed (50/25/10) and called "the UK's" (75/50/25) to Bill; they are now parsed from `build_borough_bands.py`.
   Likewise an anchor counts only what its unit can (the crime anchor: agencies policing residents, 21.39).
+- **Every value's provenance is built from the response that answered** (`with_provenance`, from the full body,
+  then cut to what `?include=` sends; 2026-10-23). A new context field or credit line needs its rule and its
+  registry source (`backend/tests/test_provenance.py` names it); a loader roll moves `PROVENANCE_PERIODS` with it
+  (`tests/test_provenance_periods.py`); a credit-line pattern names its city's OWN airports (the Bay Area once
+  matched New York's); only an instrument's reading is `measured`: DEFRA's and the EA's maps are `modelled`.
 
 ### Frontend
 - **One registry, `CITY_DATA`.** No `if (city === 'x')`; add a registry field to ALL cities
@@ -191,6 +205,10 @@ Or just describe what you need, I have full context of this project.
   too (`email-<page>-<what>`): the what comes from an ALLOW-LIST of our subjects, never the link (the map's
   correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
   page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.
+- **The Book a demo link has ONE holder, `js/count.mjs` `DEMO_BOOKING_URL`** (2026-10-29): only `/pricing`, `/api/`
+  (bar + page), `/score-demo/` and ONE line on the front page under "Who it is for" (never its bar; Bill, 2026-10-30) carry it
+  (`tests/test_demo_booking_link.py`), counted by destination as `book-demo-<page>-<bar|bar-menu|page|spot>` (a spot
+  from `data-book-place`); `make booking-link-check` refuses web/demo/home deploys while it is a placeholder.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
   worker installing everywhere; `/data/` is network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
@@ -209,6 +227,9 @@ Or just describe what you need, I have full context of this project.
   CODE; never pipe it (`| tail` is always 0). `INCONCLUSIVE` and `PASS (INCOMPLETE ...)` are not PASS.
   Change what blocks in `scripts/preflight.sh`, not in the skill.
 - **Count `check` / `advise` / `net_check` call sites in `scripts/preflight.sh`**; never trust a count in prose.
+- **A keyed request spends its key's quota on ANY route, open ones too.** `tests/stub-live-api.mjs` answers
+  `/v1/score` and sends every other API request on WITHOUT the demo key (2026-10-31: ~13 keyed `/v1/regions` calls per
+  preflight had been most of the public demo key's October use; `docs/lessons/quality-gates.md`).
 - **Prove every new gate red on the defect itself** before trusting it green. Assert SETS, not counts.
 - **Measure the DOM, not the flag that should change it**; poll for the state you want, never one already true;
   reach edge states on purpose (a state reached by chance is not gated).
@@ -220,7 +241,9 @@ Or just describe what you need, I have full context of this project.
 
 ### Windows, shell and tools
 - **`export MSYS_NO_PATHCONV=1`** before any AWS command with a `/`-leading argument (CloudFront invalidation
-  paths, `/aws/lambda/*`), or Git Bash rewrites it to a Windows path.
+  paths, `/aws/lambda/*`), or Git Bash rewrites it to a Windows path. It ALSO stops `/tmp/...` reaching Windows
+  programs translated (`curl.exe -o /tmp/x` writes `C:\tmp\x`): a script that hands temp paths to curl or python
+  must `unset MSYS_NO_PATHCONV`, as `check_deploy_drift.sh` now does (2026-10-31: a false "0 of 25" after a deploy).
 - **No user folder in a tracked file**: write `%USERPROFILE%` (prose, cmd), `~` (Git Bash, unquoted) or
   `$env:USERPROFILE` (PowerShell); `tests/test_no_user_paths.py` catches any name (audit M-5, 2026-10-23).
 - **`make` is not on PATH**: `python scripts/make.py <target>` runs any Makefile target (`--dry-run` to see it).
@@ -247,7 +270,8 @@ Or just describe what you need, I have full context of this project.
 - **Prefer make targets**: `fonts-deploy`, `data-deploy`, `web-deploy` (index.html -> `map/index.html`,
   privacy, pricing, changes, terms, `api/`, `how-it-works/` (+ its `img/`), `about/`, `js/`), `home-deploy` (front page, `/reports/`), `pwa-deploy`,
   `demo-deploy`, `prototype-deploy`, `meta-deploy`, `area-deploy`, `open-data-deploy`, `bay-area-deploy`,
-  plus standalone `talks-deploy` and `deeplinks-deploy` (refuses placeholders).
+  plus standalone `talks-deploy` and `deeplinks-deploy` (refuses placeholders), and `planes-pages-deploy` (after
+  `planes-deploy`, before `meta-deploy`; refuses unless `build_planes_pages.py --check --strict` passes).
 - **`web-deploy-all` order is load-bearing**: fonts, then data, then web, then home, then pwa. Data before the
   page; web before home; fonts before `sw.js`.
 - Pages go to `<name>/index.html` keys (the CloudFront function rewrites extensionless paths).

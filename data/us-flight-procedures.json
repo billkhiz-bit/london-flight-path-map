@@ -1,7 +1,7 @@
 {
- "cycle": "2610",
- "effective": "2026-10-01",
- "created": "09-SEP-2026",
+ "cycle": "2611",
+ "effective": "2026-10-29",
+ "created": "07-OCT-2026",
  "publisher": "FAA Coded Instrument Flight Procedures (CIFP), a work of the US government",
  "generator": "scripts/build_us_flight_paths.py --fetch",
  "airports": {
@@ -105,7 +105,7 @@
      "runways": [
       "10L"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID CIITY3 transition RW10L: VA 104M to 520 ft; DF ORYAN; TF SAHEY; TF CIITY",
+     "source": "FAA CIFP cycle 2611, KSFO SID CIITY3 transition RW10L: VA 104M to 520 ft; DF ORYAN; TF SAHEY; TF CIITY",
      "waypoints": [
       [
        37.604922,
@@ -133,7 +133,7 @@
      "runways": [
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID CIITY3 transition RW10R: VA 104M to 520 ft; DF URRSA; TF SAHEY; TF CIITY",
+     "source": "FAA CIFP cycle 2611, KSFO SID CIITY3 transition RW10R: VA 104M to 520 ft; DF URRSA; TF SAHEY; TF CIITY",
      "waypoints": [
       [
        37.603111,
@@ -162,7 +162,7 @@
       "19L",
       "19R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID CIITY3 transition RW19B: VA 194M to 520 ft; DF CIITY",
+     "source": "FAA CIFP cycle 2611, KSFO SID CIITY3 transition RW19B: VA 194M to 520 ft; DF CIITY",
      "waypoints": [
       [
        37.533117,
@@ -181,7 +181,7 @@
       "01L",
       "01R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW01B: CA 14M to 413 ft; FM SFO",
+     "source": "FAA CIFP cycle 2611, KSFO SID GAPP7 transition RW01B: CA 14M to 413 ft; FM SFO",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -193,7 +193,7 @@
       "10L",
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW10B: CF BARTN; TF OSI; FM OSI",
+     "source": "FAA CIFP cycle 2611, KSFO SID GAPP7 transition RW10B: CF BARTN; TF OSI; FM OSI",
      "waypoints": [
       [
        37.548436,
@@ -217,7 +217,7 @@
       "19L",
       "19R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW19B: CA 194M to 413 ft; CF BARTN; TF OSI; FM OSI",
+     "source": "FAA CIFP cycle 2611, KSFO SID GAPP7 transition RW19B: CA 194M to 413 ft; CF BARTN; TF OSI; FM OSI",
      "waypoints": [
       [
        37.548436,
@@ -241,7 +241,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID GAPP7 transition RW28B: CF NORMM; FM NORMM",
+     "source": "FAA CIFP cycle 2611, KSFO SID GAPP7 transition RW28B: CF NORMM; FM NORMM",
      "waypoints": [
       [
        37.720208,
@@ -260,7 +260,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID GNNRR3 transition RW28B: VA 284M to 513 ft; DF GNNRR",
+     "source": "FAA CIFP cycle 2611, KSFO SID GNNRR3 transition RW28B: VA 284M to 513 ft; DF GNNRR",
      "waypoints": [
       [
        37.674744,
@@ -279,7 +279,7 @@
       "10L",
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID MOLEN9 transition RW10B: CF SIPLY; VI 233M; CF STINS; TF MOLEN",
+     "source": "FAA CIFP cycle 2611, KSFO SID MOLEN9 transition RW10B: CF SIPLY; VI 233M; CF STINS; TF MOLEN",
      "waypoints": [
       [
        37.585333,
@@ -308,7 +308,7 @@
       "19L",
       "19R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID MOLEN9 transition RW19B: CA 194M to 413 ft; VI 53M; CF SIPLY; VI 233M; CF STINS; TF MOLEN",
+     "source": "FAA CIFP cycle 2611, KSFO SID MOLEN9 transition RW19B: CA 194M to 413 ft; VI 53M; CF SIPLY; VI 233M; CF STINS; TF MOLEN",
      "waypoints": [
       [
        37.585333,
@@ -337,7 +337,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID MOLEN9 transition RW28B: CF WESLA; CF MOLEN",
+     "source": "FAA CIFP cycle 2611, KSFO SID MOLEN9 transition RW28B: CF WESLA; CF MOLEN",
      "waypoints": [
       [
        37.664372,
@@ -361,7 +361,7 @@
       "01L",
       "01R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID NIITE4 transition RW01B: VA 14M to 520 ft; DF MDBAY; TF HUSSH; TF NIITE",
+     "source": "FAA CIFP cycle 2611, KSFO SID NIITE4 transition RW01B: VA 14M to 520 ft; DF MDBAY; TF HUSSH; TF NIITE",
      "waypoints": [
       [
        37.684775,
@@ -390,7 +390,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID NIITE4 transition RW28B: VA 284M to 520 ft; DF GALOO; TF NIITE",
+     "source": "FAA CIFP cycle 2611, KSFO SID NIITE4 transition RW28B: VA 284M to 520 ft; DF GALOO; TF NIITE",
      "waypoints": [
       [
        37.731147,
@@ -413,7 +413,7 @@
      "runways": [
       "10L"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID SAHEY4 transition RW10L: VA 104M to 520 ft; DF ORYAN; TF SAHEY",
+     "source": "FAA CIFP cycle 2611, KSFO SID SAHEY4 transition RW10L: VA 104M to 520 ft; DF ORYAN; TF SAHEY",
      "waypoints": [
       [
        37.604922,
@@ -436,7 +436,7 @@
      "runways": [
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID SAHEY4 transition RW10R: VA 104M to 520 ft; DF URRSA; TF SAHEY",
+     "source": "FAA CIFP cycle 2611, KSFO SID SAHEY4 transition RW10R: VA 104M to 520 ft; DF URRSA; TF SAHEY",
      "waypoints": [
       [
        37.603111,
@@ -460,7 +460,7 @@
       "19L",
       "19R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID SAHEY4 transition RW19B: VA 194M to 520 ft; DF SAHEY",
+     "source": "FAA CIFP cycle 2611, KSFO SID SAHEY4 transition RW19B: VA 194M to 520 ft; DF SAHEY",
      "waypoints": [
       [
        37.56845,
@@ -479,7 +479,7 @@
       "01L",
       "01R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID SEGUL1 transition RW01B: VA 14M to 513 ft; DF SEPDY; DF WAMMY; TF SEGUL",
+     "source": "FAA CIFP cycle 2611, KSFO SID SEGUL1 transition RW01B: VA 14M to 513 ft; DF SEPDY; DF WAMMY; TF SEGUL",
      "waypoints": [
       [
        37.682064,
@@ -508,7 +508,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID SEGUL1 transition RW28B: VA 284M to 513 ft; DF SENZY; DF WAMMY; TF SEGUL",
+     "source": "FAA CIFP cycle 2611, KSFO SID SEGUL1 transition RW28B: VA 284M to 513 ft; DF SENZY; DF WAMMY; TF SEGUL",
      "waypoints": [
       [
        37.6665,
@@ -537,7 +537,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID SNTNA2 transition RW28B: VA 284M to 520 ft; DF KYNNG; TF KRLOS; TF SNTNA",
+     "source": "FAA CIFP cycle 2611, KSFO SID SNTNA2 transition RW28B: VA 284M to 520 ft; DF KYNNG; TF KRLOS; TF SNTNA",
      "waypoints": [
       [
        37.6826,
@@ -566,7 +566,7 @@
       "01L",
       "01R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID SSTIK5 transition RW01B: VA 14M to 520 ft; DF SSTIK; DF PORTE",
+     "source": "FAA CIFP cycle 2611, KSFO SID SSTIK5 transition RW01B: VA 14M to 520 ft; DF SSTIK; DF PORTE",
      "waypoints": [
       [
        37.678344,
@@ -590,7 +590,7 @@
       "01L",
       "01R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID TRUKN2 transition RW01B: VA 14M to 520 ft; DF TYDYE; TF TRUKN",
+     "source": "FAA CIFP cycle 2611, KSFO SID TRUKN2 transition RW01B: VA 14M to 520 ft; DF TYDYE; TF TRUKN",
      "waypoints": [
       [
        37.689319,
@@ -614,7 +614,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID TRUKN2 transition RW28B: VA 284M to 520 ft; DF TRUKN",
+     "source": "FAA CIFP cycle 2611, KSFO SID TRUKN2 transition RW28B: VA 284M to 520 ft; DF TRUKN",
      "waypoints": [
       [
        37.717558,
@@ -633,7 +633,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO SID WESLA5 transition RW28B: VA 284M to 520 ft; DF WESLA; DF PORTE",
+     "source": "FAA CIFP cycle 2611, KSFO SID WESLA5 transition RW28B: VA 284M to 520 ft; DF WESLA; DF PORTE",
      "waypoints": [
       [
        37.664372,
@@ -659,7 +659,7 @@
       "10L",
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR ALWYS3 transition RW10B: IF DYAMD; TF LAANE; TF ALWYS; IF ALWYS; TF HEFLY; TF ARRTU; TF ADDMM; TF COGGR; TF BERKS; FM BERKS",
+     "source": "FAA CIFP cycle 2611, KSFO STAR ALWYS3 transition RW10B: IF DYAMD; TF LAANE; TF ALWYS; IF ALWYS; TF HEFLY; TF ARRTU; TF ADDMM; TF COGGR; TF BERKS; FM BERKS",
      "waypoints": [
       [
        37.699161,
@@ -744,7 +744,7 @@
       "19L",
       "19R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR ALWYS3 transition RW19B: IF DYAMD; TF LAANE; TF ALWYS; IF ALWYS; TF HEFLY; TF ARRTU; TF ADDMM; TF COGGR; TF BERKS; FM BERKS",
+     "source": "FAA CIFP cycle 2611, KSFO STAR ALWYS3 transition RW19B: IF DYAMD; TF LAANE; TF ALWYS; IF ALWYS; TF HEFLY; TF ARRTU; TF ADDMM; TF COGGR; TF BERKS; FM BERKS",
      "waypoints": [
       [
        37.699161,
@@ -828,7 +828,7 @@
      "runways": [
       "01R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR BDEGA4 transition RW01R: IF LOZIT; TF BDEGA; IF BDEGA; TF CORKK; TF BRIXX; FM BRIXX",
+     "source": "FAA CIFP cycle 2611, KSFO STAR BDEGA4 transition RW01R: IF LOZIT; TF BDEGA; IF BDEGA; TF CORKK; TF BRIXX; FM BRIXX",
      "waypoints": [
       [
        37.899325,
@@ -880,7 +880,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR BDEGA4 transition RW28B: IF LOZIT; TF BDEGA; IF BDEGA; TF CORKK; TF BRIXX; FM BRIXX",
+     "source": "FAA CIFP cycle 2611, KSFO STAR BDEGA4 transition RW28B: IF LOZIT; TF BDEGA; IF BDEGA; TF CORKK; TF BRIXX; FM BRIXX",
      "waypoints": [
       [
        37.899325,
@@ -931,7 +931,7 @@
      "runways": [
       "28L"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR BSR3 transition RW28L: IF MENLO; VM KSFO",
+     "source": "FAA CIFP cycle 2611, KSFO STAR BSR3 transition RW28L: IF MENLO; VM KSFO",
      "waypoints": [
       [
        37.463686,
@@ -952,7 +952,7 @@
      "runways": [
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR BSR3 transition RW28R: IF MENLO; VM KSFO",
+     "source": "FAA CIFP cycle 2611, KSFO STAR BSR3 transition RW28R: IF MENLO; VM KSFO",
      "waypoints": [
       [
        37.463686,
@@ -974,7 +974,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR DYAMD5 transition RW28B: IF DYAMD; TF LAANE; TF ALWYS; IF ALWYS; TF FLOWZ; TF CEDES; TF FRELY; TF ARCHI",
+     "source": "FAA CIFP cycle 2611, KSFO STAR DYAMD5 transition RW28B: IF DYAMD; TF LAANE; TF ALWYS; IF ALWYS; TF FLOWZ; TF CEDES; TF FRELY; TF ARCHI",
      "waypoints": [
       [
        37.699161,
@@ -1056,7 +1056,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR MOD9 transition ALL: IF MOD; TF LEEFF; TF GROAN; TF CEDES; TF ARCHI; TF MEHTA",
+     "source": "FAA CIFP cycle 2611, KSFO STAR MOD9 transition ALL: IF MOD; TF LEEFF; TF GROAN; TF CEDES; TF ARCHI; TF MEHTA",
      "waypoints": [
       [
        37.627375,
@@ -1114,7 +1114,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR PIRAT3 transition ALL: IF PIRAT; TF BRINY; TF ARGGG; FM ARGGG",
+     "source": "FAA CIFP cycle 2611, KSFO STAR PIRAT3 transition ALL: IF PIRAT; TF BRINY; TF ARGGG; FM ARGGG",
      "waypoints": [
       [
        37.25765,
@@ -1160,7 +1160,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR PYE3 transition ALL: IF PYE; TF STINS; TF HADLY; TF OSI",
+     "source": "FAA CIFP cycle 2611, KSFO STAR PYE3 transition ALL: IF PYE; TF STINS; TF HADLY; TF OSI",
      "waypoints": [
       [
        38.079756,
@@ -1206,7 +1206,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR RISTI1 transition ALL: IF RISTI; TF CEDES; VM KSFO",
+     "source": "FAA CIFP cycle 2611, KSFO STAR RISTI1 transition ALL: IF RISTI; TF CEDES; VM KSFO",
      "waypoints": [
       [
        37.608125,
@@ -1237,7 +1237,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR SERFR4 transition RW28B: IF SERFR; TF NRRLI; TF WWAVS; TF EPICK; TF FOLET; TF EDDYY",
+     "source": "FAA CIFP cycle 2611, KSFO STAR SERFR4 transition RW28B: IF SERFR; TF NRRLI; TF WWAVS; TF EPICK; TF FOLET; TF EDDYY",
      "waypoints": [
       [
        36.068306,
@@ -1310,7 +1310,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR STINS4 transition ALL: IF PYE; TF STINS; TF SFO",
+     "source": "FAA CIFP cycle 2611, KSFO STAR STINS4 transition ALL: IF PYE; TF STINS; TF SFO",
      "waypoints": [
       [
        38.079756,
@@ -1344,7 +1344,7 @@
       "10L",
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR STLER4 transition RW10B: IF LOZIT; TF STLER; IF STLER; TF PDROW; FM PDROW",
+     "source": "FAA CIFP cycle 2611, KSFO STAR STLER4 transition RW10B: IF LOZIT; TF STLER; IF STLER; TF PDROW; FM PDROW",
      "waypoints": [
       [
        37.899325,
@@ -1387,7 +1387,7 @@
       "19L",
       "19R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR STLER4 transition RW19B: IF LOZIT; TF STLER; IF STLER; TF WESLA; TF MVRKK; FM MVRKK",
+     "source": "FAA CIFP cycle 2611, KSFO STAR STLER4 transition RW19B: IF LOZIT; TF STLER; IF STLER; TF WESLA; TF MVRKK; FM MVRKK",
      "waypoints": [
       [
        37.899325,
@@ -1436,7 +1436,7 @@
       "10L",
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR WWAVS2 transition RW10B: IF SERFR; TF NRRLI; TF WWAVS; IF WWAVS; TF WPOUT; TF PLLAR; FM PLLAR",
+     "source": "FAA CIFP cycle 2611, KSFO STAR WWAVS2 transition RW10B: IF SERFR; TF NRRLI; TF WWAVS; IF WWAVS; TF WPOUT; TF PLLAR; FM PLLAR",
      "waypoints": [
       [
        36.068306,
@@ -1494,7 +1494,7 @@
       "19L",
       "19R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR WWAVS2 transition RW19B: IF SERFR; TF NRRLI; TF WWAVS; IF WWAVS; TF WPOUT; TF THEEZ; TF WESLA; TF MVRKK; FM MVRKK",
+     "source": "FAA CIFP cycle 2611, KSFO STAR WWAVS2 transition RW19B: IF SERFR; TF NRRLI; TF WWAVS; IF WWAVS; TF WPOUT; TF THEEZ; TF WESLA; TF MVRKK; FM MVRKK",
      "waypoints": [
       [
        36.068306,
@@ -1570,7 +1570,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KSFO STAR YOSEM3 transition RW28B: IF YOSEM; TF SNORA; TF ZOMER; IF ZOMER; TF FRIGG; TF SOOIE; TF FAITH",
+     "source": "FAA CIFP cycle 2611, KSFO STAR YOSEM3 transition RW28B: IF YOSEM; TF SNORA; TF ZOMER; IF ZOMER; TF FRIGG; TF SOOIE; TF FAITH",
      "waypoints": [
       [
        37.762742,
@@ -1633,7 +1633,7 @@
      "approach": "H10RZ",
      "runway": "10R",
      "transition": "STINS",
-     "source": "FAA CIFP cycle 2610, KSFO approach H10RZ transition STINS: IF STINS; TF DOTNE",
+     "source": "FAA CIFP cycle 2611, KSFO approach H10RZ transition STINS: IF STINS; TF DOTNE",
      "waypoints": [
       [
        37.823678,
@@ -1661,7 +1661,7 @@
      "approach": "H28RY",
      "runway": "28R",
      "transition": "ARCHI",
-     "source": "FAA CIFP cycle 2610, KSFO approach H28RY transition ARCHI: IF ARCHI; TF WIBNI; TF GUTTS",
+     "source": "FAA CIFP cycle 2611, KSFO approach H28RY transition ARCHI: IF ARCHI; TF WIBNI; TF GUTTS",
      "waypoints": [
       [
        37.490797,
@@ -1701,7 +1701,7 @@
      "approach": "H28RY",
      "runway": "28R",
      "transition": "EDDYY",
-     "source": "FAA CIFP cycle 2610, KSFO approach H28RY transition EDDYY: IF EDDYY; TF SIDBY; TF GUTTS",
+     "source": "FAA CIFP cycle 2611, KSFO approach H28RY transition EDDYY: IF EDDYY; TF SIDBY; TF GUTTS",
      "waypoints": [
       [
        37.374903,
@@ -1741,7 +1741,7 @@
      "approach": "H28RY",
      "runway": "28R",
      "transition": "SIDBY",
-     "source": "FAA CIFP cycle 2610, KSFO approach H28RY transition SIDBY: IF SIDBY; TF GUTTS",
+     "source": "FAA CIFP cycle 2611, KSFO approach H28RY transition SIDBY: IF SIDBY; TF GUTTS",
      "waypoints": [
       [
        37.450711,
@@ -1769,7 +1769,7 @@
      "approach": "I19L",
      "runway": "19L",
      "transition": "UPEND",
-     "source": "FAA CIFP cycle 2610, KSFO approach I19L transition UPEND: IF UPEND; CF BERKS",
+     "source": "FAA CIFP cycle 2611, KSFO approach I19L transition UPEND: IF UPEND; CF BERKS",
      "waypoints": [
       [
        38.031983,
@@ -1797,7 +1797,7 @@
      "approach": "I28L",
      "runway": "28L",
      "transition": "ARCHI",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28L transition ARCHI: IF ARCHI; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28L transition ARCHI: IF ARCHI; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
      "waypoints": [
       [
        37.490797,
@@ -1855,7 +1855,7 @@
      "approach": "I28L",
      "runway": "28L",
      "transition": "EDDYY",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28L transition EDDYY: IF EDDYY; TF SIDBY; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28L transition EDDYY: IF EDDYY; TF SIDBY; TF HEMAN",
      "waypoints": [
       [
        37.374903,
@@ -1895,7 +1895,7 @@
      "approach": "I28L",
      "runway": "28L",
      "transition": "FAITH",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28L transition FAITH: IF FAITH; TF DIVEC; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28L transition FAITH: IF FAITH; TF DIVEC; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
      "waypoints": [
       [
        37.401217,
@@ -1959,7 +1959,7 @@
      "approach": "I28L",
      "runway": "28L",
      "transition": "SIDBY",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28L transition SIDBY: IF SIDBY; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28L transition SIDBY: IF SIDBY; TF HEMAN",
      "waypoints": [
       [
        37.450711,
@@ -1987,7 +1987,7 @@
      "approach": "I28R",
      "runway": "28R",
      "transition": "ARCHI",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28R transition ARCHI: IF ARCHI; TF ZILED; TF GIRRR; TF DUMBA; CF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28R transition ARCHI: IF ARCHI; TF ZILED; TF GIRRR; TF DUMBA; CF CEPIN",
      "waypoints": [
       [
        37.490797,
@@ -2045,7 +2045,7 @@
      "approach": "I28R",
      "runway": "28R",
      "transition": "DUMBA",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28R transition DUMBA: IF DUMBA; CF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28R transition DUMBA: IF DUMBA; CF CEPIN",
      "waypoints": [
       [
        37.503517,
@@ -2073,7 +2073,7 @@
      "approach": "I28R",
      "runway": "28R",
      "transition": "EDDYY",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28R transition EDDYY: IF EDDYY; TF SIDBY; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28R transition EDDYY: IF EDDYY; TF SIDBY; TF CEPIN",
      "waypoints": [
       [
        37.374903,
@@ -2113,7 +2113,7 @@
      "approach": "I28R",
      "runway": "28R",
      "transition": "SIDBY",
-     "source": "FAA CIFP cycle 2610, KSFO approach I28R transition SIDBY: IF SIDBY; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach I28R transition SIDBY: IF SIDBY; TF CEPIN",
      "waypoints": [
       [
        37.450711,
@@ -2141,7 +2141,7 @@
      "approach": "L19L",
      "runway": "19L",
      "transition": "UPEND",
-     "source": "FAA CIFP cycle 2610, KSFO approach L19L transition UPEND: IF UPEND; CF BERKS",
+     "source": "FAA CIFP cycle 2611, KSFO approach L19L transition UPEND: IF UPEND; CF BERKS",
      "waypoints": [
       [
        38.031983,
@@ -2169,7 +2169,7 @@
      "approach": "L28L",
      "runway": "28L",
      "transition": "ARCHI",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28L transition ARCHI: IF ARCHI; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28L transition ARCHI: IF ARCHI; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
      "waypoints": [
       [
        37.490797,
@@ -2227,7 +2227,7 @@
      "approach": "L28L",
      "runway": "28L",
      "transition": "EDDYY",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28L transition EDDYY: IF EDDYY; TF SIDBY; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28L transition EDDYY: IF EDDYY; TF SIDBY; TF HEMAN",
      "waypoints": [
       [
        37.374903,
@@ -2267,7 +2267,7 @@
      "approach": "L28L",
      "runway": "28L",
      "transition": "FAITH",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28L transition FAITH: IF FAITH; TF DIVEC; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28L transition FAITH: IF FAITH; TF DIVEC; TF PONKE; TF WETOR; TF ROKME; CF HEMAN",
      "waypoints": [
       [
        37.401217,
@@ -2331,7 +2331,7 @@
      "approach": "L28L",
      "runway": "28L",
      "transition": "SIDBY",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28L transition SIDBY: IF SIDBY; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28L transition SIDBY: IF SIDBY; TF HEMAN",
      "waypoints": [
       [
        37.450711,
@@ -2359,7 +2359,7 @@
      "approach": "L28R",
      "runway": "28R",
      "transition": "ARCHI",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28R transition ARCHI: IF ARCHI; TF ZILED; TF GIRRR; TF DUMBA; CF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28R transition ARCHI: IF ARCHI; TF ZILED; TF GIRRR; TF DUMBA; CF CEPIN",
      "waypoints": [
       [
        37.490797,
@@ -2417,7 +2417,7 @@
      "approach": "L28R",
      "runway": "28R",
      "transition": "DUMBA",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28R transition DUMBA: IF DUMBA; CF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28R transition DUMBA: IF DUMBA; CF CEPIN",
      "waypoints": [
       [
        37.503517,
@@ -2445,7 +2445,7 @@
      "approach": "L28R",
      "runway": "28R",
      "transition": "EDDYY",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28R transition EDDYY: IF EDDYY; TF SIDBY; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28R transition EDDYY: IF EDDYY; TF SIDBY; TF CEPIN",
      "waypoints": [
       [
        37.374903,
@@ -2485,7 +2485,7 @@
      "approach": "L28R",
      "runway": "28R",
      "transition": "SIDBY",
-     "source": "FAA CIFP cycle 2610, KSFO approach L28R transition SIDBY: IF SIDBY; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach L28R transition SIDBY: IF SIDBY; TF CEPIN",
      "waypoints": [
       [
        37.450711,
@@ -2513,7 +2513,7 @@
      "approach": "R10L",
      "runway": "10L",
      "transition": "STINS",
-     "source": "FAA CIFP cycle 2610, KSFO approach R10L transition STINS: IF STINS; TF ILUDY",
+     "source": "FAA CIFP cycle 2611, KSFO approach R10L transition STINS: IF STINS; TF ILUDY",
      "waypoints": [
       [
        37.823678,
@@ -2541,7 +2541,7 @@
      "approach": "R10RY",
      "runway": "10R",
      "transition": "STINS",
-     "source": "FAA CIFP cycle 2610, KSFO approach R10RY transition STINS: IF STINS; TF DOTNE",
+     "source": "FAA CIFP cycle 2611, KSFO approach R10RY transition STINS: IF STINS; TF DOTNE",
      "waypoints": [
       [
        37.823678,
@@ -2569,7 +2569,7 @@
      "approach": "R19L",
      "runway": "19L",
      "transition": "UPEND",
-     "source": "FAA CIFP cycle 2610, KSFO approach R19L transition UPEND: IF UPEND; TF BERKS",
+     "source": "FAA CIFP cycle 2611, KSFO approach R19L transition UPEND: IF UPEND; TF BERKS",
      "waypoints": [
       [
        38.031983,
@@ -2597,7 +2597,7 @@
      "approach": "R19RY",
      "runway": "19R",
      "transition": "UPEND",
-     "source": "FAA CIFP cycle 2610, KSFO approach R19RY transition UPEND: IF UPEND; TF HITOD",
+     "source": "FAA CIFP cycle 2611, KSFO approach R19RY transition UPEND: IF UPEND; TF HITOD",
      "waypoints": [
       [
        38.031983,
@@ -2625,7 +2625,7 @@
      "approach": "R19RZ",
      "runway": "19R",
      "transition": "UPEND",
-     "source": "FAA CIFP cycle 2610, KSFO approach R19RZ transition UPEND: IF UPEND; TF HITOD",
+     "source": "FAA CIFP cycle 2611, KSFO approach R19RZ transition UPEND: IF UPEND; TF HITOD",
      "waypoints": [
       [
        38.031983,
@@ -2653,7 +2653,7 @@
      "approach": "R28L",
      "runway": "28L",
      "transition": "ARCHI",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28L transition ARCHI: IF ARCHI; TF PONKE; TF WETOR; TF ROKME; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28L transition ARCHI: IF ARCHI; TF PONKE; TF WETOR; TF ROKME; TF HEMAN",
      "waypoints": [
       [
        37.490797,
@@ -2711,7 +2711,7 @@
      "approach": "R28L",
      "runway": "28L",
      "transition": "EDDYY",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28L transition EDDYY: IF EDDYY; TF SIDBY; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28L transition EDDYY: IF EDDYY; TF SIDBY; TF HEMAN",
      "waypoints": [
       [
        37.374903,
@@ -2751,7 +2751,7 @@
      "approach": "R28L",
      "runway": "28L",
      "transition": "FAITH",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28L transition FAITH: IF FAITH; TF DIVEC; TF PONKE; TF WETOR; TF ROKME; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28L transition FAITH: IF FAITH; TF DIVEC; TF PONKE; TF WETOR; TF ROKME; TF HEMAN",
      "waypoints": [
       [
        37.401217,
@@ -2815,7 +2815,7 @@
      "approach": "R28L",
      "runway": "28L",
      "transition": "SIDBY",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28L transition SIDBY: IF SIDBY; TF HEMAN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28L transition SIDBY: IF SIDBY; TF HEMAN",
      "waypoints": [
       [
        37.450711,
@@ -2843,7 +2843,7 @@
      "approach": "R28RZ",
      "runway": "28R",
      "transition": "ARCHI",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28RZ transition ARCHI: IF ARCHI; TF ZILED; TF GIRRR; TF DUMBA; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28RZ transition ARCHI: IF ARCHI; TF ZILED; TF GIRRR; TF DUMBA; TF CEPIN",
      "waypoints": [
       [
        37.490797,
@@ -2901,7 +2901,7 @@
      "approach": "R28RZ",
      "runway": "28R",
      "transition": "DUMBA",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28RZ transition DUMBA: IF DUMBA; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28RZ transition DUMBA: IF DUMBA; TF CEPIN",
      "waypoints": [
       [
        37.503517,
@@ -2929,7 +2929,7 @@
      "approach": "R28RZ",
      "runway": "28R",
      "transition": "EDDYY",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28RZ transition EDDYY: IF EDDYY; TF SIDBY; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28RZ transition EDDYY: IF EDDYY; TF SIDBY; TF CEPIN",
      "waypoints": [
       [
        37.374903,
@@ -2969,7 +2969,7 @@
      "approach": "R28RZ",
      "runway": "28R",
      "transition": "SIDBY",
-     "source": "FAA CIFP cycle 2610, KSFO approach R28RZ transition SIDBY: IF SIDBY; TF CEPIN",
+     "source": "FAA CIFP cycle 2611, KSFO approach R28RZ transition SIDBY: IF SIDBY; TF CEPIN",
      "waypoints": [
       [
        37.450711,
@@ -3093,13 +3093,13 @@
    },
    "departures": [
     {
-     "name": "CNDEL5",
+     "name": "CNDEL6",
      "runway": "28",
      "runways": [
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID CNDEL5 transition RW28B: VA 278M to 520 ft; DF LEJAY; TF CNDEL; DF PORTE",
+     "source": "FAA CIFP cycle 2611, KOAK SID CNDEL6 transition RW28B: VA 278M to 520 ft; DF LEJAY; TF CNDEL; DF PORTE",
      "waypoints": [
       [
        37.761703,
@@ -3122,12 +3122,12 @@
      "vectored": false
     },
     {
-     "name": "CNDEL5",
+     "name": "CNDEL6",
      "runway": "30",
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID CNDEL5 transition RW30: VA 296M to 520 ft; DF LEJAY; TF CNDEL; DF PORTE",
+     "source": "FAA CIFP cycle 2611, KOAK SID CNDEL6 transition RW30: VA 296M to 520 ft; DF LEJAY; TF CNDEL; DF PORTE",
      "waypoints": [
       [
        37.761703,
@@ -3156,7 +3156,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID COAST9 transition RW28B: VD 278M to 2000 ft; VM 278M; CF SEGUL; IF SEGUL; TF CYPRS; TF MCKEY",
+     "source": "FAA CIFP cycle 2611, KOAK SID COAST9 transition RW28B: VD 278M to 2000 ft; VM 278M; CF SEGUL; IF SEGUL; TF CYPRS; TF MCKEY",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -3167,18 +3167,18 @@
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID COAST9 transition RW30: VD 296M to 2000 ft; VM 296M; CF SEGUL; IF SEGUL; TF CYPRS; TF MCKEY",
+     "source": "FAA CIFP cycle 2611, KOAK SID COAST9 transition RW30: VD 296M to 2000 ft; VM 296M; CF SEGUL; IF SEGUL; TF CYPRS; TF MCKEY",
      "waypoints": [],
      "fixes": [],
      "vectored": true
     },
     {
-     "name": "HUSSH2",
+     "name": "HUSSH3",
      "runway": "30",
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID HUSSH2 transition RW30: VA 296M to 520 ft; DF HUSSH; TF NIITE",
+     "source": "FAA CIFP cycle 2611, KOAK SID HUSSH3 transition RW30: VA 296M to 520 ft; DF HUSSH; TF NIITE",
      "waypoints": [
       [
        37.7495,
@@ -3196,13 +3196,13 @@
      "vectored": false
     },
     {
-     "name": "KATFH3",
+     "name": "KATFH4",
      "runway": "10",
      "runways": [
       "10L",
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID KATFH3 transition RW10B: VA 98M to 520 ft; DF ROWLY; TF VYYDA; TF KATFH",
+     "source": "FAA CIFP cycle 2611, KOAK SID KATFH4 transition RW10B: VA 98M to 520 ft; DF ROWLY; TF VYYDA; TF KATFH",
      "waypoints": [
       [
        37.599964,
@@ -3225,12 +3225,12 @@
      "vectored": false
     },
     {
-     "name": "KATFH3",
+     "name": "KATFH4",
      "runway": "12",
      "runways": [
       "12"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID KATFH3 transition RW12: VA 116M to 520 ft; DF ROWLY; TF VYYDA; TF KATFH",
+     "source": "FAA CIFP cycle 2611, KOAK SID KATFH4 transition RW12: VA 116M to 520 ft; DF ROWLY; TF VYYDA; TF KATFH",
      "waypoints": [
       [
        37.599964,
@@ -3253,214 +3253,70 @@
      "vectored": false
     },
     {
-     "name": "NUEVO8",
+     "name": "NUEVO9",
      "runway": "28",
      "runways": [
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID NUEVO8 transition RW28B: VD 278M to 2000 ft; VM 278M; CF SAPLY; IF SAPLY; TF EUGEN",
+     "source": "FAA CIFP cycle 2611, KOAK SID NUEVO9 transition RW28B: VD 278M to 2000 ft; VM 278M; IF SAPLY; TF EUGEN",
      "waypoints": [],
      "fixes": [],
      "vectored": true
     },
     {
-     "name": "NUEVO8",
+     "name": "NUEVO9",
      "runway": "30",
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID NUEVO8 transition RW30: VD 296M to 2000 ft; VM 296M; CF SAPLY; IF SAPLY; TF EUGEN",
+     "source": "FAA CIFP cycle 2611, KOAK SID NUEVO9 transition RW30: VD 296M to 2000 ft; VM 296M; IF SAPLY; TF EUGEN",
      "waypoints": [],
      "fixes": [],
      "vectored": true
     },
     {
-     "name": "OAK6",
+     "name": "OAK7",
      "runway": "10",
      "runways": [
       "10L",
       "10R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW10B: VM 98M",
+     "source": "FAA CIFP cycle 2611, KOAK SID OAK7 transition RW10B: VM 98M",
      "waypoints": [],
      "fixes": [],
      "vectored": true
     },
     {
-     "name": "OAK6",
+     "name": "OAK7",
      "runway": "12",
      "runways": [
       "12"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW12: VM 116M",
+     "source": "FAA CIFP cycle 2611, KOAK SID OAK7 transition RW12: VM 116M",
      "waypoints": [],
      "fixes": [],
      "vectored": true
     },
     {
-     "name": "OAK6",
+     "name": "OAK7",
      "runway": "28",
      "runways": [
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW28B: VD 278M to 2000 ft; VM 278M",
+     "source": "FAA CIFP cycle 2611, KOAK SID OAK7 transition RW28B: VD 278M to 2000 ft; VM 278M",
      "waypoints": [],
      "fixes": [],
      "vectored": true
     },
     {
-     "name": "OAK6",
+     "name": "OAK7",
      "runway": "30",
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID OAK6 transition RW30: VD 290M to 2000 ft; VM 290M",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "QUAKE2",
-     "runway": "10",
-     "runways": [
-      "10L",
-      "10R"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW10B: VA 98M to 409 ft; VM 270M",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "QUAKE2",
-     "runway": "12",
-     "runways": [
-      "12"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW12: VA 116M to 409 ft; VM 270M",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "QUAKE2",
-     "runway": "28",
-     "runways": [
-      "28L",
-      "28R"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW28B: VD 278M to 2000 ft; VM 278M",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "QUAKE2",
-     "runway": "30",
-     "runways": [
-      "30"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID QUAKE2 transition RW30: VD 296M to 2000 ft; VM 296M",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "SALAD5",
-     "runway": "28",
-     "runways": [
-      "28L",
-      "28R"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SALAD5 transition RW28B: VA 278M to 409 ft; VI 97M; CF SALAD",
-     "waypoints": [
-      [
-       37.773867,
-       -121.960189
-      ]
-     ],
-     "fixes": [
-      "SALAD"
-     ],
-     "vectored": false
-    },
-    {
-     "name": "SKYL1",
-     "runway": "10",
-     "runways": [
-      "10L",
-      "10R"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW10B: VA 98M to 409 ft; CF SIXDY; CF SIWBI; TF SIZXO; TF WAGES",
-     "waypoints": [
-      [
-       37.647,
-       -122.146067
-      ],
-      [
-       37.504858,
-       -122.076106
-      ],
-      [
-       37.357311,
-       -121.978219
-      ],
-      [
-       36.991033,
-       -121.737061
-      ]
-     ],
-     "fixes": [
-      "SIXDY",
-      "SIWBI",
-      "SIZXO",
-      "WAGES"
-     ],
-     "vectored": false
-    },
-    {
-     "name": "SKYL1",
-     "runway": "12",
-     "runways": [
-      "12"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW12: VM 116M",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "SKYL1",
-     "runway": "28",
-     "runways": [
-      "28L",
-      "28R"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW28B: VD 278M to 2000 ft; VM 278M; CF PORTE; TF OSI; TF WAGES",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "SKYL1",
-     "runway": "30",
-     "runways": [
-      "30"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SKYL1 transition RW30: VD 296M to 2000 ft; VM 296M",
-     "waypoints": [],
-     "fixes": [],
-     "vectored": true
-    },
-    {
-     "name": "SLNT3",
-     "runway": "30",
-     "runways": [
-      "30"
-     ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SLNT3 transition RW30: IF REBAS",
+     "source": "FAA CIFP cycle 2611, KOAK SID OAK7 transition RW30: VD 290M to 2000 ft; VM 290M",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -3472,7 +3328,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SUNNE1 transition RW28B: VA 278M to 409 ft; VM 120M; DF SUNNE",
+     "source": "FAA CIFP cycle 2611, KOAK SID SUNNE1 transition RW28B: VA 278M to 409 ft; VM 120M; DF SUNNE",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -3483,7 +3339,7 @@
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK SID SUNNE1 transition RW30: VA 296M to 409 ft; VM 120M; DF SUNNE",
+     "source": "FAA CIFP cycle 2611, KOAK SID SUNNE1 transition RW30: VA 296M to 409 ft; VM 120M; DF SUNNE",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -3496,7 +3352,7 @@
      "runways": [
       "12"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR AANET1 transition RW12: IF WNDSR; TF AANET; IF AANET; TF RAIDR",
+     "source": "FAA CIFP cycle 2611, KOAK STAR AANET1 transition RW12: IF WNDSR; TF AANET; IF AANET; TF RAIDR",
      "waypoints": [
       [
        38.681808,
@@ -3538,7 +3394,7 @@
      "runways": [
       "12"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR EMZOH4 transition RW12: IF EMZOH; TF MYJAW; TF SKIZM; IF SKIZM; TF EMAAA; TF WNDML; TF FOOTO; TF KEENR; TF LOHGN; TF WHYEE; TF HIRMO; FM HIRMO",
+     "source": "FAA CIFP cycle 2611, KOAK STAR EMZOH4 transition RW12: IF EMZOH; TF MYJAW; TF SKIZM; IF SKIZM; TF EMAAA; TF WNDML; TF FOOTO; TF KEENR; TF LOHGN; TF WHYEE; TF HIRMO; FM HIRMO",
      "waypoints": [
       [
        36.535553,
@@ -3644,7 +3500,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR EMZOH4 transition RW28B: IF EMZOH; TF MYJAW; TF SKIZM; IF SKIZM; TF MYRIB; TF MYHIP; TF MYNEE; TF MYSHN",
+     "source": "FAA CIFP cycle 2611, KOAK STAR EMZOH4 transition RW28B: IF EMZOH; TF MYJAW; TF SKIZM; IF SKIZM; TF MYRIB; TF MYHIP; TF MYNEE; TF MYSHN",
      "waypoints": [
       [
        36.535553,
@@ -3719,7 +3575,7 @@
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR EMZOH4 transition RW30: IF EMZOH; TF MYJAW; TF SKIZM; IF SKIZM; TF MYRIB; TF MYHIP; TF MYNEE; TF MYSHN",
+     "source": "FAA CIFP cycle 2611, KOAK STAR EMZOH4 transition RW30: IF EMZOH; TF MYJAW; TF SKIZM; IF SKIZM; TF MYRIB; TF MYHIP; TF MYNEE; TF MYSHN",
      "waypoints": [
       [
        36.535553,
@@ -3794,7 +3650,7 @@
      "runways": [
       "12"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR OAKES3 transition RW12: IF OAKES; TF GRUDG; TF BANND; IF BANND; TF SULRR; TF KEENR; TF LOHGN; TF WHYEE; TF HIRMO; FM HIRMO",
+     "source": "FAA CIFP cycle 2611, KOAK STAR OAKES3 transition RW12: IF OAKES; TF GRUDG; TF BANND; IF BANND; TF SULRR; TF KEENR; TF LOHGN; TF WHYEE; TF HIRMO; FM HIRMO",
      "waypoints": [
       [
        37.881369,
@@ -3882,7 +3738,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR OAKES3 transition RW28B: IF OAKES; TF GRUDG; TF BANND; IF BANND; TF TOOOL; TF FFIST",
+     "source": "FAA CIFP cycle 2611, KOAK STAR OAKES3 transition RW28B: IF OAKES; TF GRUDG; TF BANND; IF BANND; TF TOOOL; TF FFIST",
      "waypoints": [
       [
        37.881369,
@@ -3939,7 +3795,7 @@
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR OAKES3 transition RW30: IF OAKES; TF GRUDG; TF BANND; IF BANND; TF TOOOL; TF FFIST",
+     "source": "FAA CIFP cycle 2611, KOAK STAR OAKES3 transition RW30: IF OAKES; TF GRUDG; TF BANND; IF BANND; TF TOOOL; TF FFIST",
      "waypoints": [
       [
        37.881369,
@@ -4003,7 +3859,7 @@
       "30",
       "33"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR PIRAT3 transition ALL: IF PIRAT; TF BRINY; TF ARGGG; FM ARGGG",
+     "source": "FAA CIFP cycle 2611, KOAK STAR PIRAT3 transition ALL: IF PIRAT; TF BRINY; TF ARGGG; FM ARGGG",
      "waypoints": [
       [
        37.25765,
@@ -4049,7 +3905,7 @@
       "30",
       "33"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR PXN6 transition ALL: IF PXN; TF KARNN; TF BORED; TF BUSHY; TF SUNOL",
+     "source": "FAA CIFP cycle 2611, KOAK STAR PXN6 transition ALL: IF PXN; TF KARNN; TF BORED; TF BUSHY; TF SUNOL",
      "waypoints": [
       [
        36.715458,
@@ -4095,7 +3951,7 @@
       "28L",
       "28R"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR WNDSR2 transition RW28B: IF WNDSR; TF WEBRR; TF BOYYS; TF HOPTA; IF HOPTA; TF AAAME; FM AAAME",
+     "source": "FAA CIFP cycle 2611, KOAK STAR WNDSR2 transition RW28B: IF WNDSR; TF WEBRR; TF BOYYS; TF HOPTA; IF HOPTA; TF AAAME; FM AAAME",
      "waypoints": [
       [
        38.681808,
@@ -4155,7 +4011,7 @@
      "runways": [
       "30"
      ],
-     "source": "FAA CIFP cycle 2610, KOAK STAR WNDSR2 transition RW30: IF WNDSR; TF WEBRR; TF BOYYS; TF HOPTA; IF HOPTA; TF ALLXX; TF CRSEN; FM CRSEN",
+     "source": "FAA CIFP cycle 2611, KOAK STAR WNDSR2 transition RW30: IF WNDSR; TF WEBRR; TF BOYYS; TF HOPTA; IF HOPTA; TF ALLXX; TF CRSEN; FM CRSEN",
      "waypoints": [
       [
        38.681808,
@@ -4221,7 +4077,7 @@
      "approach": "H12-Z",
      "runway": "12",
      "transition": "HIRMO",
-     "source": "FAA CIFP cycle 2610, KOAK approach H12-Z transition HIRMO: IF HIRMO; TF FREEM; RF JENAY; TF BEEEJ; TF MNNTY; RF PLAZA",
+     "source": "FAA CIFP cycle 2611, KOAK approach H12-Z transition HIRMO: IF HIRMO; TF FREEM; RF JENAY; TF BEEEJ; TF MNNTY; RF PLAZA",
      "waypoints": [
       [
        37.92765,
@@ -4288,7 +4144,7 @@
      "approach": "H12-Z",
      "runway": "12",
      "transition": "NRTHM",
-     "source": "FAA CIFP cycle 2610, KOAK approach H12-Z transition NRTHM: IF NRTHM; TF ALCAT; TF SHNGL; TF PLAZA",
+     "source": "FAA CIFP cycle 2611, KOAK approach H12-Z transition NRTHM: IF NRTHM; TF ALCAT; TF SHNGL; TF PLAZA",
      "waypoints": [
       [
        37.912106,
@@ -4337,7 +4193,7 @@
      "approach": "H28LZ",
      "runway": "28L",
      "transition": "BBUBB",
-     "source": "FAA CIFP cycle 2610, KOAK approach H28LZ transition BBUBB: IF BBUBB; TF JUPAP",
+     "source": "FAA CIFP cycle 2611, KOAK approach H28LZ transition BBUBB: IF BBUBB; TF JUPAP",
      "waypoints": [
       [
        37.670717,
@@ -4368,7 +4224,7 @@
      "approach": "H28LZ",
      "runway": "28L",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach H28LZ transition FFIST: IF FFIST; TF JUPAP",
+     "source": "FAA CIFP cycle 2611, KOAK approach H28LZ transition FFIST: IF FFIST; TF JUPAP",
      "waypoints": [
       [
        37.615667,
@@ -4399,7 +4255,7 @@
      "approach": "H28LZ",
      "runway": "28L",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach H28LZ transition MYSHN: IF MYSHN; TF CYMBL; TF JUPAP",
+     "source": "FAA CIFP cycle 2611, KOAK approach H28LZ transition MYSHN: IF MYSHN; TF CYMBL; TF JUPAP",
      "waypoints": [
       [
        37.531517,
@@ -4439,7 +4295,7 @@
      "approach": "H28RZ",
      "runway": "28R",
      "transition": "BBUBB",
-     "source": "FAA CIFP cycle 2610, KOAK approach H28RZ transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; TF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H28RZ transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; TF GROVE",
      "waypoints": [
       [
        37.670717,
@@ -4488,7 +4344,7 @@
      "approach": "H28RZ",
      "runway": "28R",
      "transition": "CYMBL",
-     "source": "FAA CIFP cycle 2610, KOAK approach H28RZ transition CYMBL: IF CYMBL; TF NAGVY; TF SKYLN; TF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H28RZ transition CYMBL: IF CYMBL; TF NAGVY; TF SKYLN; TF GROVE",
      "waypoints": [
       [
        37.570881,
@@ -4537,7 +4393,7 @@
      "approach": "H28RZ",
      "runway": "28R",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach H28RZ transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; TF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H28RZ transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; TF GROVE",
      "waypoints": [
       [
        37.615667,
@@ -4586,7 +4442,7 @@
      "approach": "H28RZ",
      "runway": "28R",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach H28RZ transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; TF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H28RZ transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; TF GROVE",
      "waypoints": [
       [
        37.531517,
@@ -4644,7 +4500,7 @@
      "approach": "H30-Z",
      "runway": "30",
      "transition": "ALLXX",
-     "source": "FAA CIFP cycle 2610, KOAK approach H30-Z transition ALLXX: IF ALLXX; TF CRSEN; RF HEPMO; RF MITOE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H30-Z transition ALLXX: IF ALLXX; TF CRSEN; RF HEPMO; RF MITOE",
      "waypoints": [
       [
        37.729606,
@@ -4693,7 +4549,7 @@
      "approach": "H30-Z",
      "runway": "30",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach H30-Z transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF HEPMO; RF MITOE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H30-Z transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF HEPMO; RF MITOE",
      "waypoints": [
       [
        37.615667,
@@ -4751,7 +4607,7 @@
      "approach": "H30-Z",
      "runway": "30",
      "transition": "FRNNY",
-     "source": "FAA CIFP cycle 2610, KOAK approach H30-Z transition FRNNY: IF FRNNY; TF WUVON; TF MITOE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H30-Z transition FRNNY: IF FRNNY; TF WUVON; TF MITOE",
      "waypoints": [
       [
        37.557786,
@@ -4791,7 +4647,7 @@
      "approach": "H30-Z",
      "runway": "30",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach H30-Z transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON; TF MITOE",
+     "source": "FAA CIFP cycle 2611, KOAK approach H30-Z transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON; TF MITOE",
      "waypoints": [
       [
        37.531517,
@@ -4849,7 +4705,7 @@
      "approach": "I12",
      "runway": "12",
      "transition": "RAIDR",
-     "source": "FAA CIFP cycle 2610, KOAK approach I12 transition RAIDR: IF RAIDR; TF ALCAT",
+     "source": "FAA CIFP cycle 2611, KOAK approach I12 transition RAIDR: IF RAIDR; TF ALCAT",
      "waypoints": [
       [
        38.0325,
@@ -4880,7 +4736,7 @@
      "approach": "I28R",
      "runway": "28R",
      "transition": "BBUBB",
-     "source": "FAA CIFP cycle 2610, KOAK approach I28R transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; CF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach I28R transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; CF GROVE",
      "waypoints": [
       [
        37.670717,
@@ -4929,7 +4785,7 @@
      "approach": "I28R",
      "runway": "28R",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach I28R transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; CF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach I28R transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; CF GROVE",
      "waypoints": [
       [
        37.615667,
@@ -4978,7 +4834,7 @@
      "approach": "I28R",
      "runway": "28R",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach I28R transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; CF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach I28R transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; CF GROVE",
      "waypoints": [
       [
        37.531517,
@@ -5036,7 +4892,7 @@
      "approach": "I30",
      "runway": "30",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach I30 transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF ZOLUM; TF WUVON",
+     "source": "FAA CIFP cycle 2611, KOAK approach I30 transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF ZOLUM; TF WUVON",
      "waypoints": [
       [
        37.615667,
@@ -5094,7 +4950,7 @@
      "approach": "I30",
      "runway": "30",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach I30 transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON",
+     "source": "FAA CIFP cycle 2611, KOAK approach I30 transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON",
      "waypoints": [
       [
        37.531517,
@@ -5143,7 +4999,7 @@
      "approach": "L12",
      "runway": "12",
      "transition": "RAIDR",
-     "source": "FAA CIFP cycle 2610, KOAK approach L12 transition RAIDR: IF RAIDR; TF ALCAT",
+     "source": "FAA CIFP cycle 2611, KOAK approach L12 transition RAIDR: IF RAIDR; TF ALCAT",
      "waypoints": [
       [
        38.0325,
@@ -5174,7 +5030,7 @@
      "approach": "L28R",
      "runway": "28R",
      "transition": "BBUBB",
-     "source": "FAA CIFP cycle 2610, KOAK approach L28R transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; CF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach L28R transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; CF GROVE",
      "waypoints": [
       [
        37.670717,
@@ -5223,7 +5079,7 @@
      "approach": "L28R",
      "runway": "28R",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach L28R transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; CF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach L28R transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; CF GROVE",
      "waypoints": [
       [
        37.615667,
@@ -5272,7 +5128,7 @@
      "approach": "L28R",
      "runway": "28R",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach L28R transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; CF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach L28R transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; CF GROVE",
      "waypoints": [
       [
        37.531517,
@@ -5330,7 +5186,7 @@
      "approach": "L30",
      "runway": "30",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach L30 transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF ZOLUM; TF WUVON",
+     "source": "FAA CIFP cycle 2611, KOAK approach L30 transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF ZOLUM; TF WUVON",
      "waypoints": [
       [
        37.615667,
@@ -5388,7 +5244,7 @@
      "approach": "L30",
      "runway": "30",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach L30 transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON",
+     "source": "FAA CIFP cycle 2611, KOAK approach L30 transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON",
      "waypoints": [
       [
        37.531517,
@@ -5437,7 +5293,7 @@
      "approach": "R10L",
      "runway": "10L",
      "transition": "MICRA",
-     "source": "FAA CIFP cycle 2610, KOAK approach R10L transition MICRA: IF MICRA; TF COMMO; TF DATTS",
+     "source": "FAA CIFP cycle 2611, KOAK approach R10L transition MICRA: IF MICRA; TF COMMO; TF DATTS",
      "waypoints": [
       [
        37.957358,
@@ -5474,7 +5330,7 @@
      "approach": "R10R",
      "runway": "10R",
      "transition": "MICRA",
-     "source": "FAA CIFP cycle 2610, KOAK approach R10R transition MICRA: IF MICRA; TF COMMO; TF DATTS",
+     "source": "FAA CIFP cycle 2611, KOAK approach R10R transition MICRA: IF MICRA; TF COMMO; TF DATTS",
      "waypoints": [
       [
        37.957358,
@@ -5511,7 +5367,7 @@
      "approach": "R12-Y",
      "runway": "12",
      "transition": "RAIDR",
-     "source": "FAA CIFP cycle 2610, KOAK approach R12-Y transition RAIDR: IF RAIDR; TF ALCAT",
+     "source": "FAA CIFP cycle 2611, KOAK approach R12-Y transition RAIDR: IF RAIDR; TF ALCAT",
      "waypoints": [
       [
        38.0325,
@@ -5539,7 +5395,7 @@
      "approach": "R28LY",
      "runway": "28L",
      "transition": "BBUBB",
-     "source": "FAA CIFP cycle 2610, KOAK approach R28LY transition BBUBB: IF BBUBB; TF JUPAP",
+     "source": "FAA CIFP cycle 2611, KOAK approach R28LY transition BBUBB: IF BBUBB; TF JUPAP",
      "waypoints": [
       [
        37.670717,
@@ -5570,7 +5426,7 @@
      "approach": "R28LY",
      "runway": "28L",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach R28LY transition FFIST: IF FFIST; TF JUPAP",
+     "source": "FAA CIFP cycle 2611, KOAK approach R28LY transition FFIST: IF FFIST; TF JUPAP",
      "waypoints": [
       [
        37.615667,
@@ -5601,7 +5457,7 @@
      "approach": "R28LY",
      "runway": "28L",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach R28LY transition MYSHN: IF MYSHN; TF CYMBL; TF JUPAP",
+     "source": "FAA CIFP cycle 2611, KOAK approach R28LY transition MYSHN: IF MYSHN; TF CYMBL; TF JUPAP",
      "waypoints": [
       [
        37.531517,
@@ -5641,7 +5497,7 @@
      "approach": "R28RY",
      "runway": "28R",
      "transition": "BBUBB",
-     "source": "FAA CIFP cycle 2610, KOAK approach R28RY transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; TF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach R28RY transition BBUBB: IF BBUBB; TF NAGVY; TF SKYLN; TF GROVE",
      "waypoints": [
       [
        37.670717,
@@ -5690,7 +5546,7 @@
      "approach": "R28RY",
      "runway": "28R",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach R28RY transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; TF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach R28RY transition FFIST: IF FFIST; TF NAGVY; TF SKYLN; TF GROVE",
      "waypoints": [
       [
        37.615667,
@@ -5739,7 +5595,7 @@
      "approach": "R28RY",
      "runway": "28R",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach R28RY transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; TF GROVE",
+     "source": "FAA CIFP cycle 2611, KOAK approach R28RY transition MYSHN: IF MYSHN; TF CYMBL; TF NAGVY; TF SKYLN; TF GROVE",
      "waypoints": [
       [
        37.531517,
@@ -5797,7 +5653,7 @@
      "approach": "R30-Y",
      "runway": "30",
      "transition": "FFIST",
-     "source": "FAA CIFP cycle 2610, KOAK approach R30-Y transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF ZOLUM; TF WUVON",
+     "source": "FAA CIFP cycle 2611, KOAK approach R30-Y transition FFIST: IF FFIST; TF PRFCT; TF PARBB; TF ZOLUM; TF WUVON",
      "waypoints": [
       [
        37.615667,
@@ -5855,7 +5711,7 @@
      "approach": "R30-Y",
      "runway": "30",
      "transition": "MYSHN",
-     "source": "FAA CIFP cycle 2610, KOAK approach R30-Y transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON",
+     "source": "FAA CIFP cycle 2611, KOAK approach R30-Y transition MYSHN: IF MYSHN; TF MYCAF; TF FRNNY; TF WUVON",
      "waypoints": [
       [
        37.531517,
@@ -5904,7 +5760,7 @@
      "approach": "S10R",
      "runway": "10R",
      "transition": "MICRA",
-     "source": "FAA CIFP cycle 2610, KOAK approach S10R transition MICRA: IF MICRA; TF COMMO",
+     "source": "FAA CIFP cycle 2611, KOAK approach S10R transition MICRA: IF MICRA; TF COMMO",
      "waypoints": [
       [
        37.957358,
@@ -5930,7 +5786,8 @@
     }
    ],
    "procedures_not_coded": [
-    "NIMI6"
+    "NIMI7",
+    "QUAKE3"
    ]
   },
   "SJC": {
@@ -5994,7 +5851,7 @@
       "12L",
       "12R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID ALMDN4 transition RW12B: VA 126M to 570 ft; DF NEVSE; TF KIELY; TF ALMDN",
+     "source": "FAA CIFP cycle 2611, KSJC SID ALMDN4 transition RW12B: VA 126M to 570 ft; DF NEVSE; TF KIELY; TF ALMDN",
      "waypoints": [
       [
        37.291683,
@@ -6023,7 +5880,7 @@
       "12L",
       "12R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID BMRNG4 transition RW12B: VA 126M to 570 ft; VM 126M; DF GRRIF; IF GRRIF; TF BMRNG",
+     "source": "FAA CIFP cycle 2611, KSJC SID BMRNG4 transition RW12B: VA 126M to 570 ft; VM 126M; DF GRRIF; IF GRRIF; TF BMRNG",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -6034,7 +5891,7 @@
      "runways": [
       "30L"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID LOUPE1 transition RW30L: VA 306M to 562 ft; DF STCLR; DF LOUPE; FM LOUPE; IF SJC; TF BMRNG",
+     "source": "FAA CIFP cycle 2611, KSJC SID LOUPE1 transition RW30L: VA 306M to 562 ft; DF STCLR; DF LOUPE; FM LOUPE; IF SJC; TF BMRNG",
      "waypoints": [
       [
        37.398072,
@@ -6057,7 +5914,7 @@
      "runways": [
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID LOUPE1 transition RW30R: VA 306M to 562 ft; DF MLPTS; DF LOUPE; FM LOUPE; IF SJC; TF BMRNG",
+     "source": "FAA CIFP cycle 2611, KSJC SID LOUPE1 transition RW30R: VA 306M to 562 ft; DF MLPTS; DF LOUPE; FM LOUPE; IF SJC; TF BMRNG",
      "waypoints": [
       [
        37.399211,
@@ -6081,7 +5938,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID SJC3 transition RW30B: IF MOONY",
+     "source": "FAA CIFP cycle 2611, KSJC SID SJC3 transition RW30B: IF MOONY",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -6092,7 +5949,7 @@
      "runways": [
       "30L"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID SPTNS1 transition RW30L: VA 306M to 570 ft; DF STCLR; DF SPTNS; TF TECKY",
+     "source": "FAA CIFP cycle 2611, KSJC SID SPTNS1 transition RW30L: VA 306M to 570 ft; DF STCLR; DF SPTNS; TF TECKY",
      "waypoints": [
       [
        37.398072,
@@ -6120,7 +5977,7 @@
      "runways": [
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID SPTNS1 transition RW30R: VA 306M to 570 ft; DF MLPTS; DF SPTNS; TF TECKY",
+     "source": "FAA CIFP cycle 2611, KSJC SID SPTNS1 transition RW30R: VA 306M to 570 ft; DF MLPTS; DF SPTNS; TF TECKY",
      "waypoints": [
       [
        37.399211,
@@ -6149,7 +6006,7 @@
       "12L",
       "12R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID SUNOL1 transition RW12B: VI 126M; FA OAK; VM 303M; CF SUNOL",
+     "source": "FAA CIFP cycle 2611, KSJC SID SUNOL1 transition RW12B: VI 126M; FA OAK; VM 303M; CF SUNOL",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -6161,7 +6018,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID SUNOL1 transition RW30B: VD 306M; VI 43M; CF SUNOL",
+     "source": "FAA CIFP cycle 2611, KSJC SID SUNOL1 transition RW30B: VD 306M; VI 43M; CF SUNOL",
      "waypoints": [
       [
        37.605531,
@@ -6180,7 +6037,7 @@
       "12L",
       "12R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC SID TECKY4 transition RW12B: VA 126M to 570 ft; DF NEVSE; TF TECKY",
+     "source": "FAA CIFP cycle 2611, KSJC SID TECKY4 transition RW12B: VA 126M to 570 ft; DF NEVSE; TF TECKY",
      "waypoints": [
       [
        37.291683,
@@ -6205,7 +6062,7 @@
      "runways": [
       "12R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR BRINY2 transition RW12R: IF PYE; TF FATHM; TF BRINY; TF OSI",
+     "source": "FAA CIFP cycle 2611, KSJC STAR BRINY2 transition RW12R: IF PYE; TF FATHM; TF BRINY; TF OSI",
      "waypoints": [
       [
        38.079756,
@@ -6247,7 +6104,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR BRIXX4 transition ALL: IF BRIXX; TF LUYTA; FM LUYTA",
+     "source": "FAA CIFP cycle 2611, KSJC STAR BRIXX4 transition ALL: IF BRIXX; TF LUYTA; FM LUYTA",
      "waypoints": [
       [
        37.617844,
@@ -6283,7 +6140,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR FRLON2 transition ALL: IF FRLON; TF STLER; TF MNTNA; TF MISSS; TF PPEGS; FM PPEGS",
+     "source": "FAA CIFP cycle 2611, KSJC STAR FRLON2 transition ALL: IF FRLON; TF STLER; TF MNTNA; TF MISSS; TF PPEGS; FM PPEGS",
      "waypoints": [
       [
        37.862875,
@@ -6343,7 +6200,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR PYE3 transition ALL: IF PYE; TF STINS; TF HADLY; TF OSI",
+     "source": "FAA CIFP cycle 2611, KSJC STAR PYE3 transition ALL: IF PYE; TF STINS; TF HADLY; TF OSI",
      "waypoints": [
       [
        38.079756,
@@ -6383,7 +6240,7 @@
       "12L",
       "12R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR RAZRR5 transition RW12B: IF STUBL; TF RAZRR; TF OUCHH; TF NIKKT; IF NIKKT; TF GOTEE; TF SHIKK; TF TRCOT; TF GGUGL; TF GAARY; TF EDMND; TF JESEN; TF HITIR; FM HITIR",
+     "source": "FAA CIFP cycle 2611, KSJC STAR RAZRR5 transition RW12B: IF STUBL; TF RAZRR; TF OUCHH; TF NIKKT; IF NIKKT; TF GOTEE; TF SHIKK; TF TRCOT; TF GGUGL; TF GAARY; TF EDMND; TF JESEN; TF HITIR; FM HITIR",
      "waypoints": [
       [
        37.22775,
@@ -6504,7 +6361,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR RAZRR5 transition RW30B: IF STUBL; TF RAZRR; TF OUCHH; TF NIKKT; IF NIKKT; TF SEKKO; TF SCOPR; TF KLIDE",
+     "source": "FAA CIFP cycle 2611, KSJC STAR RAZRR5 transition RW30B: IF STUBL; TF RAZRR; TF OUCHH; TF NIKKT; IF NIKKT; TF SEKKO; TF SCOPR; TF KLIDE",
      "waypoints": [
       [
        37.22775,
@@ -6585,7 +6442,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR RISTI1 transition ALL: IF RISTI; TF CEDES; VM KSJC",
+     "source": "FAA CIFP cycle 2611, KSJC STAR RISTI1 transition ALL: IF RISTI; TF CEDES; VM KSJC",
      "waypoints": [
       [
        37.608125,
@@ -6618,7 +6475,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR ROBIE5 transition ALL: IF ROBIE; TF GOALI; TF SNS; TF GILRO",
+     "source": "FAA CIFP cycle 2611, KSJC STAR ROBIE5 transition ALL: IF ROBIE; TF GOALI; TF SNS; TF GILRO",
      "waypoints": [
       [
        35.981472,
@@ -6658,7 +6515,7 @@
       "12L",
       "12R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR SILCN6 transition RW12B: IF SILCN; TF VLLEY; IF VLLEY; TF BAXBE; TF APLLE; TF GGUGL; TF GAARY; TF EDMND; TF JESEN; TF HITIR; FM HITIR",
+     "source": "FAA CIFP cycle 2611, KSJC STAR SILCN6 transition RW12B: IF SILCN; TF VLLEY; IF VLLEY; TF BAXBE; TF APLLE; TF GGUGL; TF GAARY; TF EDMND; TF JESEN; TF HITIR; FM HITIR",
      "waypoints": [
       [
        36.353644,
@@ -6755,7 +6612,7 @@
       "30L",
       "30R"
      ],
-     "source": "FAA CIFP cycle 2610, KSJC STAR SILCN6 transition RW30B: IF SILCN; TF VLLEY; IF VLLEY; TF GUUYY; TF WLSSN; TF GSTEE; TF KLIDE",
+     "source": "FAA CIFP cycle 2611, KSJC STAR SILCN6 transition RW30B: IF SILCN; TF VLLEY; IF VLLEY; TF GUUYY; TF WLSSN; TF GSTEE; TF KLIDE",
      "waypoints": [
       [
        36.353644,
@@ -6824,7 +6681,7 @@
      "approach": "H12LZ",
      "runway": "12L",
      "transition": "ARTAQ",
-     "source": "FAA CIFP cycle 2610, KSJC approach H12LZ transition ARTAQ: IF ARTAQ; TF OMSEE; TF HINIR",
+     "source": "FAA CIFP cycle 2611, KSJC approach H12LZ transition ARTAQ: IF ARTAQ; TF OMSEE; TF HINIR",
      "waypoints": [
       [
        37.463344,
@@ -6861,7 +6718,7 @@
      "approach": "H12LZ",
      "runway": "12L",
      "transition": "HITIR",
-     "source": "FAA CIFP cycle 2610, KSJC approach H12LZ transition HITIR: IF HITIR; TF ZORSA; RF NIBUY; RF HINIR",
+     "source": "FAA CIFP cycle 2611, KSJC approach H12LZ transition HITIR: IF HITIR; TF ZORSA; RF NIBUY; RF HINIR",
      "waypoints": [
       [
        37.323567,
@@ -6910,7 +6767,7 @@
      "approach": "H12LZ",
      "runway": "12L",
      "transition": "WADVA",
-     "source": "FAA CIFP cycle 2610, KSJC approach H12LZ transition WADVA: IF WADVA; TF RERAE; TF NIBUY; RF HINIR",
+     "source": "FAA CIFP cycle 2611, KSJC approach H12LZ transition WADVA: IF WADVA; TF RERAE; TF NIBUY; RF HINIR",
      "waypoints": [
       [
        37.395011,
@@ -6959,7 +6816,7 @@
      "approach": "H12RZ",
      "runway": "12R",
      "transition": "ARTAQ",
-     "source": "FAA CIFP cycle 2610, KSJC approach H12RZ transition ARTAQ: IF ARTAQ; TF SUNNE; TF FOXAG",
+     "source": "FAA CIFP cycle 2611, KSJC approach H12RZ transition ARTAQ: IF ARTAQ; TF SUNNE; TF FOXAG",
      "waypoints": [
       [
        37.463344,
@@ -6996,7 +6853,7 @@
      "approach": "H12RZ",
      "runway": "12R",
      "transition": "HITIR",
-     "source": "FAA CIFP cycle 2610, KSJC approach H12RZ transition HITIR: IF HITIR; TF ZORSA; RF PUAKO; RF FOXAG",
+     "source": "FAA CIFP cycle 2611, KSJC approach H12RZ transition HITIR: IF HITIR; TF ZORSA; RF PUAKO; RF FOXAG",
      "waypoints": [
       [
        37.323567,
@@ -7045,7 +6902,7 @@
      "approach": "H12RZ",
      "runway": "12R",
      "transition": "WADVA",
-     "source": "FAA CIFP cycle 2610, KSJC approach H12RZ transition WADVA: IF WADVA; TF RERAE; TF PUAKO; RF FOXAG",
+     "source": "FAA CIFP cycle 2611, KSJC approach H12RZ transition WADVA: IF WADVA; TF RERAE; TF PUAKO; RF FOXAG",
      "waypoints": [
       [
        37.395011,
@@ -7094,7 +6951,7 @@
      "approach": "H30LZ",
      "runway": "30L",
      "transition": "BORED",
-     "source": "FAA CIFP cycle 2610, KSJC approach H30LZ transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP; TF HOSBO; TF WOXAR",
+     "source": "FAA CIFP cycle 2611, KSJC approach H30LZ transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP; TF HOSBO; TF WOXAR",
      "waypoints": [
       [
        37.309489,
@@ -7161,7 +7018,7 @@
      "approach": "H30LZ",
      "runway": "30L",
      "transition": "JILNA",
-     "source": "FAA CIFP cycle 2610, KSJC approach H30LZ transition JILNA: IF JILNA; TF YADUT; RF HEPAP; TF FODPA; TF JEGSA; RF WOXAR",
+     "source": "FAA CIFP cycle 2611, KSJC approach H30LZ transition JILNA: IF JILNA; TF YADUT; RF HEPAP; TF FODPA; TF JEGSA; RF WOXAR",
      "waypoints": [
       [
        37.231922,
@@ -7228,7 +7085,7 @@
      "approach": "H30LZ",
      "runway": "30L",
      "transition": "KLIDE",
-     "source": "FAA CIFP cycle 2610, KSJC approach H30LZ transition KLIDE: IF KLIDE; TF ZULUP; TF HOSBO; TF WOXAR",
+     "source": "FAA CIFP cycle 2611, KSJC approach H30LZ transition KLIDE: IF KLIDE; TF ZULUP; TF HOSBO; TF WOXAR",
      "waypoints": [
       [
        37.164175,
@@ -7277,7 +7134,7 @@
      "approach": "H30RZ",
      "runway": "30R",
      "transition": "BORED",
-     "source": "FAA CIFP cycle 2610, KSJC approach H30RZ transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP; TF KIRVE; TF TUZGY",
+     "source": "FAA CIFP cycle 2611, KSJC approach H30RZ transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP; TF KIRVE; TF TUZGY",
      "waypoints": [
       [
        37.309489,
@@ -7344,7 +7201,7 @@
      "approach": "H30RZ",
      "runway": "30R",
      "transition": "JILNA",
-     "source": "FAA CIFP cycle 2610, KSJC approach H30RZ transition JILNA: IF JILNA; TF YADUT; RF HEPAP; TF FODPA; TF SIBAE; RF TUZGY",
+     "source": "FAA CIFP cycle 2611, KSJC approach H30RZ transition JILNA: IF JILNA; TF YADUT; RF HEPAP; TF FODPA; TF SIBAE; RF TUZGY",
      "waypoints": [
       [
        37.231922,
@@ -7411,7 +7268,7 @@
      "approach": "H30RZ",
      "runway": "30R",
      "transition": "KLIDE",
-     "source": "FAA CIFP cycle 2610, KSJC approach H30RZ transition KLIDE: IF KLIDE; TF ZULUP; TF KIRVE; TF TUZGY",
+     "source": "FAA CIFP cycle 2611, KSJC approach H30RZ transition KLIDE: IF KLIDE; TF ZULUP; TF KIRVE; TF TUZGY",
      "waypoints": [
       [
        37.164175,
@@ -7460,7 +7317,7 @@
      "approach": "I12R",
      "runway": "12R",
      "transition": "HITIR",
-     "source": "FAA CIFP cycle 2610, KSJC approach I12R transition HITIR: IF HITIR; TF ZUCKR; TF METTA; TF NTFLX; TF SNDAR; TF HOOLU",
+     "source": "FAA CIFP cycle 2611, KSJC approach I12R transition HITIR: IF HITIR; TF ZUCKR; TF METTA; TF NTFLX; TF SNDAR; TF HOOLU",
      "waypoints": [
       [
        37.323567,
@@ -7527,7 +7384,7 @@
      "approach": "I30L",
      "runway": "30L",
      "transition": "BORED",
-     "source": "FAA CIFP cycle 2610, KSJC approach I30L transition BORED: IF BORED; TF SWIGS; TF KLIDE; CF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach I30L transition BORED: IF BORED; TF SWIGS; TF KLIDE; CF ZULUP",
      "waypoints": [
       [
        37.309489,
@@ -7573,7 +7430,7 @@
      "approach": "I30L",
      "runway": "30L",
      "transition": "KLIDE",
-     "source": "FAA CIFP cycle 2610, KSJC approach I30L transition KLIDE: IF KLIDE; CF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach I30L transition KLIDE: IF KLIDE; CF ZULUP",
      "waypoints": [
       [
        37.164175,
@@ -7604,7 +7461,7 @@
      "approach": "L12R",
      "runway": "12R",
      "transition": "HITIR",
-     "source": "FAA CIFP cycle 2610, KSJC approach L12R transition HITIR: IF HITIR; TF ZUCKR; TF METTA; TF NTFLX; TF SNDAR; TF HOOLU",
+     "source": "FAA CIFP cycle 2611, KSJC approach L12R transition HITIR: IF HITIR; TF ZUCKR; TF METTA; TF NTFLX; TF SNDAR; TF HOOLU",
      "waypoints": [
       [
        37.323567,
@@ -7671,7 +7528,7 @@
      "approach": "L30L",
      "runway": "30L",
      "transition": "BORED",
-     "source": "FAA CIFP cycle 2610, KSJC approach L30L transition BORED: IF BORED; TF SWIGS; TF KLIDE; CF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach L30L transition BORED: IF BORED; TF SWIGS; TF KLIDE; CF ZULUP",
      "waypoints": [
       [
        37.309489,
@@ -7717,7 +7574,7 @@
      "approach": "L30L",
      "runway": "30L",
      "transition": "KLIDE",
-     "source": "FAA CIFP cycle 2610, KSJC approach L30L transition KLIDE: IF KLIDE; CF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach L30L transition KLIDE: IF KLIDE; CF ZULUP",
      "waypoints": [
       [
        37.164175,
@@ -7748,7 +7605,7 @@
      "approach": "R30LY",
      "runway": "30L",
      "transition": "BORED",
-     "source": "FAA CIFP cycle 2610, KSJC approach R30LY transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach R30LY transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP",
      "waypoints": [
       [
        37.309489,
@@ -7794,7 +7651,7 @@
      "approach": "R30LY",
      "runway": "30L",
      "transition": "KLIDE",
-     "source": "FAA CIFP cycle 2610, KSJC approach R30LY transition KLIDE: IF KLIDE; TF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach R30LY transition KLIDE: IF KLIDE; TF ZULUP",
      "waypoints": [
       [
        37.164175,
@@ -7825,7 +7682,7 @@
      "approach": "R30RY",
      "runway": "30R",
      "transition": "BORED",
-     "source": "FAA CIFP cycle 2610, KSJC approach R30RY transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach R30RY transition BORED: IF BORED; TF SWIGS; TF KLIDE; TF ZULUP",
      "waypoints": [
       [
        37.309489,
@@ -7871,7 +7728,7 @@
      "approach": "R30RY",
      "runway": "30R",
      "transition": "KLIDE",
-     "source": "FAA CIFP cycle 2610, KSJC approach R30RY transition KLIDE: IF KLIDE; TF ZULUP",
+     "source": "FAA CIFP cycle 2611, KSJC approach R30RY transition KLIDE: IF KLIDE; TF ZULUP",
      "waypoints": [
       [
        37.164175,
@@ -8001,7 +7858,7 @@
      "runways": [
       "04L"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK SID DEEZZ6 transition RW04L: VA 44M to 520 ft; DF PONAE; VM 99M; IF DEEZZ; TF HEERO",
+     "source": "FAA CIFP cycle 2611, KJFK SID DEEZZ6 transition RW04L: VA 44M to 520 ft; DF PONAE; VM 99M; IF DEEZZ; TF HEERO",
      "waypoints": [
       [
        40.672214,
@@ -8019,7 +7876,7 @@
      "runways": [
       "04R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK SID DEEZZ6 transition RW04R: VA 44M to 520 ft; VM 99M; IF DEEZZ; TF HEERO",
+     "source": "FAA CIFP cycle 2611, KJFK SID DEEZZ6 transition RW04R: VA 44M to 520 ft; VM 99M; IF DEEZZ; TF HEERO",
      "waypoints": [],
      "fixes": [],
      "vectored": true
@@ -8031,7 +7888,7 @@
       "31L",
       "31R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK SID DEEZZ6 transition RW31B: VA 314M to 520 ft; DF SKORR; TF CESID; TF YNKEE; FM YNKEE; IF DEEZZ; TF HEERO",
+     "source": "FAA CIFP cycle 2611, KJFK SID DEEZZ6 transition RW31B: VA 314M to 520 ft; DF SKORR; TF CESID; TF YNKEE; FM YNKEE; IF DEEZZ; TF HEERO",
      "waypoints": [
       [
        40.596392,
@@ -8060,7 +7917,7 @@
       "31L",
       "31R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK SID SKORR6 transition RW31B: VA 314M to 520 ft; DF SKORR",
+     "source": "FAA CIFP cycle 2611, KJFK SID SKORR6 transition RW31B: VA 314M to 520 ft; DF SKORR",
      "waypoints": [
       [
        40.596392,
@@ -8087,7 +7944,7 @@
       "31L",
       "31R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK STAR CAMRN5 transition ALL: IF SIE; TF BOTON; TF HOGGS; TF PANZE; TF KARRS; TF CAMRN",
+     "source": "FAA CIFP cycle 2611, KJFK STAR CAMRN5 transition ALL: IF SIE; TF BOTON; TF HOGGS; TF PANZE; TF KARRS; TF CAMRN",
      "waypoints": [
       [
        39.095508,
@@ -8139,7 +7996,7 @@
       "04L",
       "04R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK STAR PARCH4 transition RW04B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF JFK; VM KJFK",
+     "source": "FAA CIFP cycle 2611, KJFK STAR PARCH4 transition RW04B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF JFK; VM KJFK",
      "waypoints": [
       [
        41.099228,
@@ -8179,7 +8036,7 @@
       "13L",
       "13R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK STAR PARCH4 transition RW13B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF JFK; VM KJFK",
+     "source": "FAA CIFP cycle 2611, KJFK STAR PARCH4 transition RW13B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF JFK; VM KJFK",
      "waypoints": [
       [
        41.099228,
@@ -8219,7 +8076,7 @@
       "22L",
       "22R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK STAR PARCH4 transition RW22B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF CRAIL; FM CRAIL",
+     "source": "FAA CIFP cycle 2611, KJFK STAR PARCH4 transition RW22B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF CRAIL; FM CRAIL",
      "waypoints": [
       [
        41.099228,
@@ -8259,7 +8116,7 @@
       "31L",
       "31R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK STAR PARCH4 transition RW31B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF JFK; VM KJFK",
+     "source": "FAA CIFP cycle 2611, KJFK STAR PARCH4 transition RW31B: IF PARCH; TF CCC; TF ROBER; IF ROBER; TF JFK; VM KJFK",
      "waypoints": [
       [
        41.099228,
@@ -8305,7 +8162,7 @@
       "31L",
       "31R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK STAR PAWLN1 transition ALL: IF PAWLN; TF DEEDE; TF LOVES; TF EEGOR; TF BELTT; TF DPK; FM DPK",
+     "source": "FAA CIFP cycle 2611, KJFK STAR PAWLN1 transition ALL: IF PAWLN; TF DEEDE; TF LOVES; TF EEGOR; TF BELTT; TF DPK; FM DPK",
      "waypoints": [
       [
        41.769864,
@@ -8363,7 +8220,7 @@
       "31L",
       "31R"
      ],
-     "source": "FAA CIFP cycle 2610, KJFK STAR PUCKY1 transition ALL: IF PUCKY; TF VADDR; FM VADDR",
+     "source": "FAA CIFP cycle 2611, KJFK STAR PUCKY1 transition ALL: IF PUCKY; TF VADDR; FM VADDR",
      "waypoints": [
       [
        40.906739,
@@ -8390,7 +8247,7 @@
      "approach": "I13L",
      "runway": "13L",
      "transition": "BUZON",
-     "source": "FAA CIFP cycle 2610, KJFK approach I13L transition BUZON: IF BUZON; TF TELEX",
+     "source": "FAA CIFP cycle 2611, KJFK approach I13L transition BUZON: IF BUZON; TF TELEX",
      "waypoints": [
       [
        40.715094,
@@ -8421,7 +8278,7 @@
      "approach": "I13L",
      "runway": "13L",
      "transition": "COVIR",
-     "source": "FAA CIFP cycle 2610, KJFK approach I13L transition COVIR: IF COVIR; TF KMCHI; TF BUZON; TF TELEX",
+     "source": "FAA CIFP cycle 2611, KJFK approach I13L transition COVIR: IF COVIR; TF KMCHI; TF BUZON; TF TELEX",
      "waypoints": [
       [
        40.446289,
@@ -8467,7 +8324,7 @@
      "approach": "I13L",
      "runway": "13L",
      "transition": "KMCHI",
-     "source": "FAA CIFP cycle 2610, KJFK approach I13L transition KMCHI: IF KMCHI; TF BUZON; TF TELEX",
+     "source": "FAA CIFP cycle 2611, KJFK approach I13L transition KMCHI: IF KMCHI; TF BUZON; TF TELEX",
      "waypoints": [
       [
        40.625322,
@@ -8504,7 +8361,7 @@
      "approach": "I22L",
      "runway": "22L",
      "transition": "CIMBL",
-     "source": "FAA CIFP cycle 2610, KJFK approach I22L transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
+     "source": "FAA CIFP cycle 2611, KJFK approach I22L transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
      "waypoints": [
       [
        40.753125,
@@ -8586,7 +8443,7 @@
      "approach": "I22L",
      "runway": "22L",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach I22L transition DPK: FC DPK; CF ROSLY",
+     "source": "FAA CIFP cycle 2611, KJFK approach I22L transition DPK: FC DPK; CF ROSLY",
      "waypoints": [
       [
        40.797214,
@@ -8608,7 +8465,7 @@
      "approach": "I22L",
      "runway": "22L",
      "transition": "NRTON",
-     "source": "FAA CIFP cycle 2610, KJFK approach I22L transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
+     "source": "FAA CIFP cycle 2611, KJFK approach I22L transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
      "waypoints": [
       [
        40.142983,
@@ -8672,7 +8529,7 @@
      "approach": "I22R",
      "runway": "22R",
      "transition": "CIMBL",
-     "source": "FAA CIFP cycle 2610, KJFK approach I22R transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
+     "source": "FAA CIFP cycle 2611, KJFK approach I22R transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
      "waypoints": [
       [
        40.753125,
@@ -8754,7 +8611,7 @@
      "approach": "I22R",
      "runway": "22R",
      "transition": "NRTON",
-     "source": "FAA CIFP cycle 2610, KJFK approach I22R transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
+     "source": "FAA CIFP cycle 2611, KJFK approach I22R transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
      "waypoints": [
       [
        40.142983,
@@ -8818,7 +8675,7 @@
      "approach": "I31L",
      "runway": "31L",
      "transition": "CHANT",
-     "source": "FAA CIFP cycle 2610, KJFK approach I31L transition CHANT: FC CHANT; CF ZACHS",
+     "source": "FAA CIFP cycle 2611, KJFK approach I31L transition CHANT: FC CHANT; CF ZACHS",
      "waypoints": [
       [
        40.528803,
@@ -8840,7 +8697,7 @@
      "approach": "I31L",
      "runway": "31L",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach I31L transition DPK: FC DPK; CF ZACHS",
+     "source": "FAA CIFP cycle 2611, KJFK approach I31L transition DPK: FC DPK; CF ZACHS",
      "waypoints": [
       [
        40.528803,
@@ -8862,7 +8719,7 @@
      "approach": "L13L",
      "runway": "13L",
      "transition": "BUZON",
-     "source": "FAA CIFP cycle 2610, KJFK approach L13L transition BUZON: IF BUZON; TF TELEX",
+     "source": "FAA CIFP cycle 2611, KJFK approach L13L transition BUZON: IF BUZON; TF TELEX",
      "waypoints": [
       [
        40.715094,
@@ -8893,7 +8750,7 @@
      "approach": "L13L",
      "runway": "13L",
      "transition": "COVIR",
-     "source": "FAA CIFP cycle 2610, KJFK approach L13L transition COVIR: IF COVIR; TF KMCHI; TF BUZON; TF TELEX",
+     "source": "FAA CIFP cycle 2611, KJFK approach L13L transition COVIR: IF COVIR; TF KMCHI; TF BUZON; TF TELEX",
      "waypoints": [
       [
        40.446289,
@@ -8939,7 +8796,7 @@
      "approach": "L13L",
      "runway": "13L",
      "transition": "KMCHI",
-     "source": "FAA CIFP cycle 2610, KJFK approach L13L transition KMCHI: IF KMCHI; TF BUZON; TF TELEX",
+     "source": "FAA CIFP cycle 2611, KJFK approach L13L transition KMCHI: IF KMCHI; TF BUZON; TF TELEX",
      "waypoints": [
       [
        40.625322,
@@ -8976,7 +8833,7 @@
      "approach": "L22L",
      "runway": "22L",
      "transition": "CIMBL",
-     "source": "FAA CIFP cycle 2610, KJFK approach L22L transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
+     "source": "FAA CIFP cycle 2611, KJFK approach L22L transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
      "waypoints": [
       [
        40.753125,
@@ -9058,7 +8915,7 @@
      "approach": "L22L",
      "runway": "22L",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach L22L transition DPK: FC DPK; CF ROSLY",
+     "source": "FAA CIFP cycle 2611, KJFK approach L22L transition DPK: FC DPK; CF ROSLY",
      "waypoints": [
       [
        40.797214,
@@ -9080,7 +8937,7 @@
      "approach": "L22L",
      "runway": "22L",
      "transition": "NRTON",
-     "source": "FAA CIFP cycle 2610, KJFK approach L22L transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
+     "source": "FAA CIFP cycle 2611, KJFK approach L22L transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF ROSLY",
      "waypoints": [
       [
        40.142983,
@@ -9144,7 +9001,7 @@
      "approach": "L22R",
      "runway": "22R",
      "transition": "CIMBL",
-     "source": "FAA CIFP cycle 2610, KJFK approach L22R transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
+     "source": "FAA CIFP cycle 2611, KJFK approach L22R transition CIMBL: IF CIMBL; TF HAIRR; TF CEEGL; TF TAPPR; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
      "waypoints": [
       [
        40.753125,
@@ -9226,7 +9083,7 @@
      "approach": "L22R",
      "runway": "22R",
      "transition": "NRTON",
-     "source": "FAA CIFP cycle 2610, KJFK approach L22R transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
+     "source": "FAA CIFP cycle 2611, KJFK approach L22R transition NRTON: IF NRTON; TF SAJUL; TF DETGY; TF HAUPT; TF LEFER; TF CORVT",
      "waypoints": [
       [
        40.142983,
@@ -9290,7 +9147,7 @@
      "approach": "L31L",
      "runway": "31L",
      "transition": "CHANT",
-     "source": "FAA CIFP cycle 2610, KJFK approach L31L transition CHANT: FC CHANT; CF ZACHS",
+     "source": "FAA CIFP cycle 2611, KJFK approach L31L transition CHANT: FC CHANT; CF ZACHS",
      "waypoints": [
       [
        40.528803,
@@ -9312,7 +9169,7 @@
      "approach": "L31L",
      "runway": "31L",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach L31L transition DPK: FC DPK; CF ZACHS",
+     "source": "FAA CIFP cycle 2611, KJFK approach L31L transition DPK: FC DPK; CF ZACHS",
      "waypoints": [
       [
        40.528803,
@@ -9334,7 +9191,7 @@
      "approach": "R22LX",
      "runway": "22L",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach R22LX transition DPK: IF DPK; TF CAPIT",
+     "source": "FAA CIFP cycle 2611, KJFK approach R22LX transition DPK: IF DPK; TF CAPIT",
      "waypoints": [
       [
        40.791767,
@@ -9362,7 +9219,7 @@
      "approach": "R22LX",
      "runway": "22L",
      "transition": "WIKOL",
-     "source": "FAA CIFP cycle 2610, KJFK approach R22LX transition WIKOL: IF WIKOL; TF GIGPE; TF CAPIT",
+     "source": "FAA CIFP cycle 2611, KJFK approach R22LX transition WIKOL: IF WIKOL; TF GIGPE; TF CAPIT",
      "waypoints": [
       [
        40.873361,
@@ -9399,7 +9256,7 @@
      "approach": "R22LY",
      "runway": "22L",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach R22LY transition DPK: IF DPK; TF NAYIK",
+     "source": "FAA CIFP cycle 2611, KJFK approach R22LY transition DPK: IF DPK; TF NAYIK",
      "waypoints": [
       [
        40.791767,
@@ -9427,7 +9284,7 @@
      "approach": "R22R",
      "runway": "22R",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach R22R transition DPK: IF DPK; TF RIVRA",
+     "source": "FAA CIFP cycle 2611, KJFK approach R22R transition DPK: IF DPK; TF RIVRA",
      "waypoints": [
       [
        40.791767,
@@ -9455,7 +9312,7 @@
      "approach": "R31L",
      "runway": "31L",
      "transition": "CHANT",
-     "source": "FAA CIFP cycle 2610, KJFK approach R31L transition CHANT: IF CHANT; TF RISSY; TF ZACHS",
+     "source": "FAA CIFP cycle 2611, KJFK approach R31L transition CHANT: IF CHANT; TF RISSY; TF ZACHS",
      "waypoints": [
       [
        40.316192,
@@ -9492,7 +9349,7 @@
      "approach": "R31L",
      "runway": "31L",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach R31L transition DPK: IF DPK; TF SESKE; TF ZACHS",
+     "source": "FAA CIFP cycle 2611, KJFK approach R31L transition DPK: IF DPK; TF SESKE; TF ZACHS",
      "waypoints": [
       [
        40.791767,
@@ -9529,7 +9386,7 @@
      "approach": "R31R",
      "runway": "31R",
      "transition": "CAMRN",
-     "source": "FAA CIFP cycle 2610, KJFK approach R31R transition CAMRN: IF CAMRN; TF VIDIO; TF CATOD",
+     "source": "FAA CIFP cycle 2611, KJFK approach R31R transition CAMRN: IF CAMRN; TF VIDIO; TF CATOD",
      "waypoints": [
       [
        40.017303,
@@ -9566,7 +9423,7 @@
      "approach": "R31R",
      "runway": "31R",
      "transition": "DPK",
-     "source": "FAA CIFP cycle 2610, KJFK approach R31R transition DPK: IF DPK; TF PZULU; TF CATOD",
+     "source": "FAA CIFP cycle 2611, KJFK approach R31R transition DPK: IF DPK; TF PZULU; TF CATOD",
      "waypoints": [
       [
        40.791767,
@@ -9664,7 +9521,7 @@
      "runways": [
       "13"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA SID GLDMN8 transition RW13: VI 134M; CF KIWIE; TF VOBOZ; TF GLDMN; FM GLDMN",
+     "source": "FAA CIFP cycle 2611, KLGA SID GLDMN8 transition RW13: VI 134M; CF KIWIE; TF VOBOZ; TF GLDMN; FM GLDMN",
      "waypoints": [
       [
        40.712783,
@@ -9692,7 +9549,7 @@
      "runways": [
       "22"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA SID HOPEA3 transition RW22: VI 224M; CF HOPEA; TF CRI; TF ASALT; FM ASALT",
+     "source": "FAA CIFP cycle 2611, KLGA SID HOPEA3 transition RW22: VI 224M; CF HOPEA; TF CRI; TF ASALT; FM ASALT",
      "waypoints": [
       [
        40.690481,
@@ -9720,7 +9577,7 @@
      "runways": [
       "22"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA SID JUTES4 transition RW22: VA 224M to 540 ft; DF JUTES; TF TNNIS; VM 45M",
+     "source": "FAA CIFP cycle 2611, KLGA SID JUTES4 transition RW22: VA 224M to 540 ft; DF JUTES; TF TNNIS; VM 45M",
      "waypoints": [
       [
        40.800083,
@@ -9743,7 +9600,7 @@
      "runways": [
       "13"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA SID NTHNS6 transition RW13: VI 134M; CF KIWIE; TF NTHNS; TF CNRSE; TF ASALT; FM ASALT",
+     "source": "FAA CIFP cycle 2611, KLGA SID NTHNS6 transition RW13: VI 134M; CF KIWIE; TF NTHNS; TF CNRSE; TF ASALT; FM ASALT",
      "waypoints": [
       [
        40.712783,
@@ -9776,7 +9633,7 @@
      "runways": [
       "13"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA SID TNNIS6 transition RW13: VI 134M; CF JUTES; TF TNNIS; FM TNNIS",
+     "source": "FAA CIFP cycle 2611, KLGA SID TNNIS6 transition RW13: VI 134M; CF JUTES; TF TNNIS; FM TNNIS",
      "waypoints": [
       [
        40.800083,
@@ -9804,7 +9661,7 @@
       "22",
       "31"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA STAR APPLE3 transition ALL: IF RUUTH; TF WNDYL; TF BRAND; TF KORRY; TF DEPDY; TF TYKES; TF MINKS; TF JERZY; TF RENUE; TF APPLE; TF PROUD; FM PROUD",
+     "source": "FAA CIFP cycle 2611, KLGA STAR APPLE3 transition ALL: IF RUUTH; TF WNDYL; TF BRAND; TF KORRY; TF DEPDY; TF TYKES; TF MINKS; TF JERZY; TF RENUE; TF APPLE; TF PROUD; FM PROUD",
      "waypoints": [
       [
        39.850344,
@@ -9891,7 +9748,7 @@
       "22",
       "31"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA STAR MIP4 transition ALL: IF MIP; TF MARRC; TF BILEY; TF VIBES; TF FJC; TF LIZZI; TF BEUTY; TF HARLM; TF DREMS; TF APPLE; TF PROUD",
+     "source": "FAA CIFP cycle 2611, KLGA STAR MIP4 transition ALL: IF MIP; TF MARRC; TF BILEY; TF VIBES; TF FJC; TF LIZZI; TF BEUTY; TF HARLM; TF DREMS; TF APPLE; TF PROUD",
      "waypoints": [
       [
        41.023392,
@@ -9975,7 +9832,7 @@
       "22",
       "31"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA STAR NOBBI1 transition ALL: IF CASSH; TF NOBBI; TF BIZEX; TF RYMES; TF HAARP; TF CRALY; FM CRALY",
+     "source": "FAA CIFP cycle 2611, KLGA STAR NOBBI1 transition ALL: IF CASSH; TF NOBBI; TF BIZEX; TF RYMES; TF HAARP; TF CRALY; FM CRALY",
      "waypoints": [
       [
        41.593933,
@@ -10029,7 +9886,7 @@
       "22",
       "31"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA STAR PROUD2 transition ALL: IF ENO; TF SKIPY; TF BESSI; TF EDJER; TF DAVYS; TF HOLEY; TF BRAND; TF KORRY; TF DEPDY; TF TYKES; TF MINKS; TF JERZY; TF RENUE; TF APPLE; TF PROUD; FM PROUD",
+     "source": "FAA CIFP cycle 2611, KLGA STAR PROUD2 transition ALL: IF ENO; TF SKIPY; TF BESSI; TF EDJER; TF DAVYS; TF HOLEY; TF BRAND; TF KORRY; TF DEPDY; TF TYKES; TF MINKS; TF JERZY; TF RENUE; TF APPLE; TF PROUD; FM PROUD",
      "waypoints": [
       [
        39.231647,
@@ -10158,7 +10015,7 @@
       "22",
       "31"
      ],
-     "source": "FAA CIFP cycle 2610, KLGA STAR VADDR1 transition ALL: IF BASYE; TF HAARP; TF CRALY; TF VADDR; FM VADDR",
+     "source": "FAA CIFP cycle 2611, KLGA STAR VADDR1 transition ALL: IF BASYE; TF HAARP; TF CRALY; TF VADDR; FM VADDR",
      "waypoints": [
       [
        41.343722,
@@ -10197,7 +10054,7 @@
      "approach": "H22-Z",
      "runway": "22",
      "transition": "HAARP",
-     "source": "FAA CIFP cycle 2610, KLGA approach H22-Z transition HAARP: IF HAARP; TF CASLE",
+     "source": "FAA CIFP cycle 2611, KLGA approach H22-Z transition HAARP: IF HAARP; TF CASLE",
      "waypoints": [
       [
        41.116353,
@@ -10225,7 +10082,7 @@
      "approach": "I04",
      "runway": "04",
      "transition": "GGREG",
-     "source": "FAA CIFP cycle 2610, KLGA approach I04 transition GGREG: IF GGREG; TF ZARID; TF VADDR; TF JACIE; TF NECOL; TF VARAZ; TF BENNG",
+     "source": "FAA CIFP cycle 2611, KLGA approach I04 transition GGREG: IF GGREG; TF ZARID; TF VADDR; TF JACIE; TF NECOL; TF VARAZ; TF BENNG",
      "waypoints": [
       [
        40.872892,
@@ -10298,7 +10155,7 @@
      "approach": "I04",
      "runway": "04",
      "transition": "VARAZ",
-     "source": "FAA CIFP cycle 2610, KLGA approach I04 transition VARAZ: IF VARAZ; TF BENNG",
+     "source": "FAA CIFP cycle 2611, KLGA approach I04 transition VARAZ: IF VARAZ; TF BENNG",
      "waypoints": [
       [
        40.519244,
@@ -10326,7 +10183,7 @@
      "approach": "L04",
      "runway": "04",
      "transition": "GGREG",
-     "source": "FAA CIFP cycle 2610, KLGA approach L04 transition GGREG: IF GGREG; TF ZARID; TF VADDR; TF JACIE; TF NECOL; TF VARAZ; TF BENNG",
+     "source": "FAA CIFP cycle 2611, KLGA approach L04 transition GGREG: IF GGREG; TF ZARID; TF VADDR; TF JACIE; TF NECOL; TF VARAZ; TF BENNG",
      "waypoints": [
       [
        40.872892,
@@ -10399,7 +10256,7 @@
      "approach": "L04",
      "runway": "04",
      "transition": "VARAZ",
-     "source": "FAA CIFP cycle 2610, KLGA approach L04 transition VARAZ: IF VARAZ; TF BENNG",
+     "source": "FAA CIFP cycle 2611, KLGA approach L04 transition VARAZ: IF VARAZ; TF BENNG",
      "waypoints": [
       [
        40.519244,
@@ -10427,7 +10284,7 @@
      "approach": "R04-Y",
      "runway": "04",
      "transition": "GGREG",
-     "source": "FAA CIFP cycle 2610, KLGA approach R04-Y transition GGREG: IF GGREG; TF ZARID; TF VADDR; TF JACIE; TF NECOL; TF VARAZ; TF BENNG",
+     "source": "FAA CIFP cycle 2611, KLGA approach R04-Y transition GGREG: IF GGREG; TF ZARID; TF VADDR; TF JACIE; TF NECOL; TF VARAZ; TF BENNG",
      "waypoints": [
       [
        40.872892,
@@ -10500,7 +10357,7 @@
      "approach": "R04-Y",
      "runway": "04",
      "transition": "VARAZ",
-     "source": "FAA CIFP cycle 2610, KLGA approach R04-Y transition VARAZ: IF VARAZ; TF BENNG",
+     "source": "FAA CIFP cycle 2611, KLGA approach R04-Y transition VARAZ: IF VARAZ; TF BENNG",
      "waypoints": [
       [
        40.519244,
@@ -10528,7 +10385,7 @@
      "approach": "R13-Z",
      "runway": "13",
      "transition": "CHNZO",
-     "source": "FAA CIFP cycle 2610, KLGA approach R13-Z transition CHNZO: IF CHNZO; TF RABBY",
+     "source": "FAA CIFP cycle 2611, KLGA approach R13-Z transition CHNZO: IF CHNZO; TF RABBY",
      "waypoints": [
       [
        40.898439,
@@ -10556,7 +10413,7 @@
      "approach": "R13-Z",
      "runway": "13",
      "transition": "MOISE",
-     "source": "FAA CIFP cycle 2610, KLGA approach R13-Z transition MOISE: IF MOISE; TF DHALP; TF CHNZO; TF RABBY",
+     "source": "FAA CIFP cycle 2611, KLGA approach R13-Z transition MOISE: IF MOISE; TF DHALP; TF CHNZO; TF RABBY",
      "waypoints": [
       [
        41.061544,
@@ -10602,7 +10459,7 @@
      "approach": "R22-X",
      "runway": "22",
      "transition": "DONYB",
-     "source": "FAA CIFP cycle 2610, KLGA approach R22-X transition DONYB: IF DONYB; TF DANPS",
+     "source": "FAA CIFP cycle 2611, KLGA approach R22-X transition DONYB: IF DONYB; TF DANPS",
      "waypoints": [
       [
        40.939356,
@@ -10630,7 +10487,7 @@
      "approach": "R22-X",
      "runway": "22",
      "transition": "EYROD",
-     "source": "FAA CIFP cycle 2610, KLGA approach R22-X transition EYROD: IF EYROD; TF DANPS",
+     "source": "FAA CIFP cycle 2611, KLGA approach R22-X transition EYROD: IF EYROD; TF DANPS",
      "waypoints": [
       [
        40.826106,
@@ -10658,7 +10515,7 @@
      "approach": "R22-X",
      "runway": "22",
      "transition": "JOTRE",
-     "source": "FAA CIFP cycle 2610, KLGA approach R22-X transition JOTRE: IF JOTRE; TF DANPS",
+     "source": "FAA CIFP cycle 2611, KLGA approach R22-X transition JOTRE: IF JOTRE; TF DANPS",
      "waypoints": [
       [
        40.936478,
@@ -10686,7 +10543,7 @@
      "approach": "R31-Y",
      "runway": "31",
      "transition": "BIPKE",
-     "source": "FAA CIFP cycle 2610, KLGA approach R31-Y transition BIPKE: IF BIPKE; TF GEMKE",
+     "source": "FAA CIFP cycle 2611, KLGA approach R31-Y transition BIPKE: IF BIPKE; TF GEMKE",
      "waypoints": [
       [
        40.827222,
@@ -10714,7 +10571,7 @@
      "approach": "R31-Y",
      "runway": "31",
      "transition": "DRIES",
-     "source": "FAA CIFP cycle 2610, KLGA approach R31-Y transition DRIES: IF DRIES; TF WASBO; TF JABAD; TF BIPKE; TF GEMKE",
+     "source": "FAA CIFP cycle 2611, KLGA approach R31-Y transition DRIES: IF DRIES; TF WASBO; TF JABAD; TF BIPKE; TF GEMKE",
      "waypoints": [
       [
        40.863572,
@@ -10769,7 +10626,7 @@
      "approach": "R31-Y",
      "runway": "31",
      "transition": "FEDEM",
-     "source": "FAA CIFP cycle 2610, KLGA approach R31-Y transition FEDEM: IF FEDEM; TF DRIES; TF WASBO; TF JABAD; TF BIPKE; TF GEMKE",
+     "source": "FAA CIFP cycle 2611, KLGA approach R31-Y transition FEDEM: IF FEDEM; TF DRIES; TF WASBO; TF JABAD; TF BIPKE; TF GEMKE",
      "waypoints": [
       [
        40.734444,
@@ -10833,7 +10690,7 @@
      "approach": "R31-Y",
      "runway": "31",
      "transition": "JABAD",
-     "source": "FAA CIFP cycle 2610, KLGA approach R31-Y transition JABAD: IF JABAD; TF BIPKE; TF GEMKE",
+     "source": "FAA CIFP cycle 2611, KLGA approach R31-Y transition JABAD: IF JABAD; TF BIPKE; TF GEMKE",
      "waypoints": [
       [
        40.891667,
@@ -10870,7 +10727,7 @@
      "approach": "R31-Y",
      "runway": "31",
      "transition": "WASBO",
-     "source": "FAA CIFP cycle 2610, KLGA approach R31-Y transition WASBO: IF WASBO; TF JABAD; TF BIPKE; TF GEMKE",
+     "source": "FAA CIFP cycle 2611, KLGA approach R31-Y transition WASBO: IF WASBO; TF JABAD; TF BIPKE; TF GEMKE",
      "waypoints": [
       [
        40.969767,
@@ -10998,7 +10855,7 @@
       "22L",
       "22R"
      ],
-     "source": "FAA CIFP cycle 2610, KEWR SID PORTT4 transition RW22B: VA 219M to 518 ft; DF BAGGA; TF PORTT",
+     "source": "FAA CIFP cycle 2611, KEWR SID PORTT4 transition RW22B: VA 219M to 518 ft; DF BAGGA; TF PORTT",
      "waypoints": [
       [
        40.6218,
@@ -11028,7 +10885,7 @@
       "22R",
       "29"
      ],
-     "source": "FAA CIFP cycle 2610, KEWR STAR BRAND1 transition ALL: IF RUUTH; TF WNDYL; TF BRAND; TF KORRY; TF WATJA; FM WATJA",
+     "source": "FAA CIFP cycle 2611, KEWR STAR BRAND1 transition ALL: IF RUUTH; TF WNDYL; TF BRAND; TF KORRY; TF WATJA; FM WATJA",
      "waypoints": [
       [
        39.850344,
@@ -11081,7 +10938,7 @@
       "22R",
       "29"
      ],
-     "source": "FAA CIFP cycle 2610, KEWR STAR FLOSI4 transition ALL: IF FLOSI; TF CRANK; TF SHAFF; TF SAX; TF PHLBO; TF HOKIR; VM KEWR",
+     "source": "FAA CIFP cycle 2611, KEWR STAR FLOSI4 transition ALL: IF FLOSI; TF CRANK; TF SHAFF; TF SAX; TF PHLBO; TF HOKIR; VM KEWR",
      "waypoints": [
       [
        41.543528,
@@ -11137,7 +10994,7 @@
       "22R",
       "29"
      ],
-     "source": "FAA CIFP cycle 2610, KEWR STAR FQM3 transition ALL: IF FQM; TF MEGSS; TF HAYED; TF RACKI; TF PENNS; TF SWEET; VM KEWR",
+     "source": "FAA CIFP cycle 2611, KEWR STAR FQM3 transition ALL: IF FQM; TF MEGSS; TF HAYED; TF RACKI; TF PENNS; TF SWEET; VM KEWR",
      "waypoints": [
       [
        41.338558,
@@ -11193,7 +11050,7 @@
       "22R",
       "29"
      ],
-     "source": "FAA CIFP cycle 2610, KEWR STAR PENNS2 transition ALL: IF PENNS; TF SWEET",
+     "source": "FAA CIFP cycle 2611, KEWR STAR PENNS2 transition ALL: IF PENNS; TF SWEET",
      "waypoints": [
       [
        40.880636,
@@ -11225,7 +11082,7 @@
       "22R",
       "29"
      ],
-     "source": "FAA CIFP cycle 2610, KEWR STAR PHLBO4 transition ALL: IF DQO; TF STEFE; TF SOMTO; TF ARD; TF DYLIN; TF MERSR; TF METRO; TF MARRT; TF PHLBO; FM PHLBO",
+     "source": "FAA CIFP cycle 2611, KEWR STAR PHLBO4 transition ALL: IF DQO; TF STEFE; TF SOMTO; TF ARD; TF DYLIN; TF MERSR; TF METRO; TF MARRT; TF PHLBO; FM PHLBO",
      "waypoints": [
       [
        39.678142,
@@ -11311,7 +11168,7 @@
       "22R",
       "29"
      ],
-     "source": "FAA CIFP cycle 2610, KEWR STAR SHAFF7 transition ALL: IF FLOSI; TF CRANK; TF SHAFF; TF SAX",
+     "source": "FAA CIFP cycle 2611, KEWR STAR SHAFF7 transition ALL: IF FLOSI; TF CRANK; TF SHAFF; TF SAX",
      "waypoints": [
       [
        41.543528,
@@ -11350,7 +11207,7 @@
      "approach": "H04RZ",
      "runway": "04R",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach H04RZ transition KILMA: IF KILMA; TF ISACE",
+     "source": "FAA CIFP cycle 2611, KEWR approach H04RZ transition KILMA: IF KILMA; TF ISACE",
      "waypoints": [
       [
        40.486028,
@@ -11381,7 +11238,7 @@
      "approach": "H29-Z",
      "runway": "29",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach H29-Z transition KILMA: IF KILMA; TF GRITY; TF COWWE",
+     "source": "FAA CIFP cycle 2611, KEWR approach H29-Z transition KILMA: IF KILMA; TF GRITY; TF COWWE",
      "waypoints": [
       [
        40.486028,
@@ -11418,7 +11275,7 @@
      "approach": "I04LZ",
      "runway": "04L",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach I04LZ transition KILMA: IF KILMA; TF EMBAY",
+     "source": "FAA CIFP cycle 2611, KEWR approach I04LZ transition KILMA: IF KILMA; TF EMBAY",
      "waypoints": [
       [
        40.486028,
@@ -11446,7 +11303,7 @@
      "approach": "I04R",
      "runway": "04R",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach I04R transition KILMA: FC KILMA; CF GRITY",
+     "source": "FAA CIFP cycle 2611, KEWR approach I04R transition KILMA: FC KILMA; CF GRITY",
      "waypoints": [
       [
        40.515589,
@@ -11468,7 +11325,7 @@
      "approach": "I22L",
      "runway": "22L",
      "transition": "PATRN",
-     "source": "FAA CIFP cycle 2610, KEWR approach I22L transition PATRN: IF PATRN; TF IZEKO",
+     "source": "FAA CIFP cycle 2611, KEWR approach I22L transition PATRN: IF PATRN; TF IZEKO",
      "waypoints": [
       [
        40.941222,
@@ -11496,7 +11353,7 @@
      "approach": "I22R",
      "runway": "22R",
      "transition": "PATRN",
-     "source": "FAA CIFP cycle 2610, KEWR approach I22R transition PATRN: IF PATRN; TF AGNSS",
+     "source": "FAA CIFP cycle 2611, KEWR approach I22R transition PATRN: IF PATRN; TF AGNSS",
      "waypoints": [
       [
        40.941222,
@@ -11524,7 +11381,7 @@
      "approach": "L04LZ",
      "runway": "04L",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach L04LZ transition KILMA: IF KILMA; TF EMBAY",
+     "source": "FAA CIFP cycle 2611, KEWR approach L04LZ transition KILMA: IF KILMA; TF EMBAY",
      "waypoints": [
       [
        40.486028,
@@ -11552,7 +11409,7 @@
      "approach": "L04R",
      "runway": "04R",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach L04R transition KILMA: FC KILMA; CF GRITY",
+     "source": "FAA CIFP cycle 2611, KEWR approach L04R transition KILMA: FC KILMA; CF GRITY",
      "waypoints": [
       [
        40.515589,
@@ -11574,7 +11431,7 @@
      "approach": "L22L",
      "runway": "22L",
      "transition": "PATRN",
-     "source": "FAA CIFP cycle 2610, KEWR approach L22L transition PATRN: IF PATRN; TF IZEKO",
+     "source": "FAA CIFP cycle 2611, KEWR approach L22L transition PATRN: IF PATRN; TF IZEKO",
      "waypoints": [
       [
        40.941222,
@@ -11602,7 +11459,7 @@
      "approach": "L22R",
      "runway": "22R",
      "transition": "PATRN",
-     "source": "FAA CIFP cycle 2610, KEWR approach L22R transition PATRN: IF PATRN; TF AGNSS",
+     "source": "FAA CIFP cycle 2611, KEWR approach L22R transition PATRN: IF PATRN; TF AGNSS",
      "waypoints": [
       [
        40.941222,
@@ -11630,7 +11487,7 @@
      "approach": "R04L",
      "runway": "04L",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach R04L transition KILMA: IF KILMA; TF TOCUB",
+     "source": "FAA CIFP cycle 2611, KEWR approach R04L transition KILMA: IF KILMA; TF TOCUB",
      "waypoints": [
       [
        40.486028,
@@ -11658,7 +11515,7 @@
      "approach": "R04RY",
      "runway": "04R",
      "transition": "KILMA",
-     "source": "FAA CIFP cycle 2610, KEWR approach R04RY transition KILMA: IF KILMA; TF ISACE",
+     "source": "FAA CIFP cycle 2611, KEWR approach R04RY transition KILMA: IF KILMA; TF ISACE",
      "waypoints": [
       [
        40.486028,
@@ -11686,7 +11543,7 @@
      "approach": "R22LZ",
      "runway": "22L",
      "transition": "PATRN",
-     "source": "FAA CIFP cycle 2610, KEWR approach R22LZ transition PATRN: IF PATRN; TF IZEKO",
+     "source": "FAA CIFP cycle 2611, KEWR approach R22LZ transition PATRN: IF PATRN; TF IZEKO",
      "waypoints": [
       [
        40.941222,
@@ -11714,7 +11571,7 @@
      "approach": "R22R",
      "runway": "22R",
      "transition": "PATRN",
-     "source": "FAA CIFP cycle 2610, KEWR approach R22R transition PATRN: IF PATRN; TF AGNSS",
+     "source": "FAA CIFP cycle 2611, KEWR approach R22R transition PATRN: IF PATRN; TF AGNSS",
      "waypoints": [
       [
        40.941222,
@@ -11742,7 +11599,7 @@
      "approach": "R29-X",
      "runway": "29",
      "transition": "FLIKR",
-     "source": "FAA CIFP cycle 2610, KEWR approach R29-X transition FLIKR: IF FLIKR; TF HNTTR; TF ZIAAA; TF PIJAY; TF UJODY",
+     "source": "FAA CIFP cycle 2611, KEWR approach R29-X transition FLIKR: IF FLIKR; TF HNTTR; TF ZIAAA; TF PIJAY; TF UJODY",
      "waypoints": [
       [
        40.380031,
@@ -11797,7 +11654,7 @@
      "approach": "R29-X",
      "runway": "29",
      "transition": "PIJAY",
-     "source": "FAA CIFP cycle 2610, KEWR approach R29-X transition PIJAY: IF PIJAY; TF UJODY",
+     "source": "FAA CIFP cycle 2611, KEWR approach R29-X transition PIJAY: IF PIJAY; TF UJODY",
      "waypoints": [
       [
        40.565597,
@@ -11825,7 +11682,7 @@
      "approach": "R29-X",
      "runway": "29",
      "transition": "ZIAAA",
-     "source": "FAA CIFP cycle 2610, KEWR approach R29-X transition ZIAAA: IF ZIAAA; TF PIJAY; TF UJODY",
+     "source": "FAA CIFP cycle 2611, KEWR approach R29-X transition ZIAAA: IF ZIAAA; TF PIJAY; TF UJODY",
      "waypoints": [
       [
        40.510236,
@@ -11925,7 +11782,7 @@
      "runways": [
       "24"
      ],
-     "source": "FAA CIFP cycle 2610, KTEB SID WENTZ1 transition RW24: VA 240M to 520 ft; DF DAVIM; TF WENTZ; TF RUUDY; FM RUUDY",
+     "source": "FAA CIFP cycle 2611, KTEB SID WENTZ1 transition RW24: VA 240M to 520 ft; DF DAVIM; TF WENTZ; TF RUUDY; FM RUUDY",
      "waypoints": [
       [
        40.828969,
@@ -11958,7 +11815,7 @@
       "19",
       "24"
      ],
-     "source": "FAA CIFP cycle 2610, KTEB STAR JAIKE4 transition ALL: IF JAIKE; TF ILENE; TF WACKI; TF MAZIE; TF REGLE; TF SBJ; FM SBJ",
+     "source": "FAA CIFP cycle 2611, KTEB STAR JAIKE4 transition ALL: IF JAIKE; TF ILENE; TF WACKI; TF MAZIE; TF REGLE; TF SBJ; FM SBJ",
      "waypoints": [
       [
        39.787433,
@@ -12024,7 +11881,7 @@
       "19",
       "24"
      ],
-     "source": "FAA CIFP cycle 2610, KTEB STAR LVZ5 transition ALL: IF LVZ; TF HARTY; TF MUGZY; TF STW",
+     "source": "FAA CIFP cycle 2611, KTEB STAR LVZ5 transition ALL: IF LVZ; TF HARTY; TF MUGZY; TF STW",
      "waypoints": [
       [
        41.2728,
@@ -12066,7 +11923,7 @@
       "19",
       "24"
      ],
-     "source": "FAA CIFP cycle 2610, KTEB STAR MAZIE3 transition ALL: IF MAZIE; TF REGLE; TF GNNZO; FM GNNZO",
+     "source": "FAA CIFP cycle 2611, KTEB STAR MAZIE3 transition ALL: IF MAZIE; TF REGLE; TF GNNZO; FM GNNZO",
      "waypoints": [
       [
        40.322097,
@@ -12102,7 +11959,7 @@
      "approach": "H06-Z",
      "runway": "06",
      "transition": "COATE",
-     "source": "FAA CIFP cycle 2610, KTEB approach H06-Z transition COATE: IF COATE; TF ELIZE; TF GUZTI",
+     "source": "FAA CIFP cycle 2611, KTEB approach H06-Z transition COATE: IF COATE; TF ELIZE; TF GUZTI",
      "waypoints": [
       [
        41.136228,
@@ -12139,7 +11996,7 @@
      "approach": "H06-Z",
      "runway": "06",
      "transition": "SBJ",
-     "source": "FAA CIFP cycle 2610, KTEB approach H06-Z transition SBJ: IF SBJ; TF GUZTI",
+     "source": "FAA CIFP cycle 2611, KTEB approach H06-Z transition SBJ: IF SBJ; TF GUZTI",
      "waypoints": [
       [
        40.583044,
@@ -12167,7 +12024,7 @@
      "approach": "H06-Z",
      "runway": "06",
      "transition": "STW",
-     "source": "FAA CIFP cycle 2610, KTEB approach H06-Z transition STW: IF STW; TF ELIZE; TF GUZTI",
+     "source": "FAA CIFP cycle 2611, KTEB approach H06-Z transition STW: IF STW; TF ELIZE; TF GUZTI",
      "waypoints": [
       [
        40.995819,
@@ -12204,7 +12061,7 @@
      "approach": "H19-Z",
      "runway": "19",
      "transition": "COATE",
-     "source": "FAA CIFP cycle 2610, KTEB approach H19-Z transition COATE: IF COATE; TF LELME; TF COMOK; TF HOOTH",
+     "source": "FAA CIFP cycle 2611, KTEB approach H19-Z transition COATE: IF COATE; TF LELME; TF COMOK; TF HOOTH",
      "waypoints": [
       [
        41.136228,
@@ -12250,7 +12107,7 @@
      "approach": "H19-Z",
      "runway": "19",
      "transition": "SBJ",
-     "source": "FAA CIFP cycle 2610, KTEB approach H19-Z transition SBJ: IF SBJ; TF SHOTT; TF LELME; TF COMOK; TF HOOTH",
+     "source": "FAA CIFP cycle 2611, KTEB approach H19-Z transition SBJ: IF SBJ; TF SHOTT; TF LELME; TF COMOK; TF HOOTH",
      "waypoints": [
       [
        40.583044,
@@ -12305,7 +12162,7 @@
      "approach": "H19-Z",
      "runway": "19",
      "transition": "STW",
-     "source": "FAA CIFP cycle 2610, KTEB approach H19-Z transition STW: IF STW; TF LELME; TF COMOK; TF HOOTH",
+     "source": "FAA CIFP cycle 2611, KTEB approach H19-Z transition STW: IF STW; TF LELME; TF COMOK; TF HOOTH",
      "waypoints": [
       [
        40.995819,
@@ -12351,7 +12208,7 @@
      "approach": "I06-Z",
      "runway": "06",
      "transition": "ALIDA",
-     "source": "FAA CIFP cycle 2610, KTEB approach I06-Z transition ALIDA: IF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach I06-Z transition ALIDA: IF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        40.799614,
@@ -12388,7 +12245,7 @@
      "approach": "I06-Z",
      "runway": "06",
      "transition": "COATE",
-     "source": "FAA CIFP cycle 2610, KTEB approach I06-Z transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach I06-Z transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        41.136228,
@@ -12443,7 +12300,7 @@
      "approach": "I06-Z",
      "runway": "06",
      "transition": "MALCN",
-     "source": "FAA CIFP cycle 2610, KTEB approach I06-Z transition MALCN: IF MALCN; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach I06-Z transition MALCN: IF MALCN; TF VINGS",
      "waypoints": [
       [
        40.638944,
@@ -12471,7 +12328,7 @@
      "approach": "I06-Z",
      "runway": "06",
      "transition": "SBJ",
-     "source": "FAA CIFP cycle 2610, KTEB approach I06-Z transition SBJ: IF SBJ; TF MALCN; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach I06-Z transition SBJ: IF SBJ; TF MALCN; TF VINGS",
      "waypoints": [
       [
        40.583044,
@@ -12508,7 +12365,7 @@
      "approach": "I06-Z",
      "runway": "06",
      "transition": "STW",
-     "source": "FAA CIFP cycle 2610, KTEB approach I06-Z transition STW: IF STW; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach I06-Z transition STW: IF STW; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        40.995819,
@@ -12563,7 +12420,7 @@
      "approach": "I19",
      "runway": "19",
      "transition": "STRAD",
-     "source": "FAA CIFP cycle 2610, KTEB approach I19 transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF UNVIL",
+     "source": "FAA CIFP cycle 2611, KTEB approach I19 transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF UNVIL",
      "waypoints": [
       [
        41.180553,
@@ -12609,7 +12466,7 @@
      "approach": "L06-Z",
      "runway": "06",
      "transition": "ALIDA",
-     "source": "FAA CIFP cycle 2610, KTEB approach L06-Z transition ALIDA: IF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach L06-Z transition ALIDA: IF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        40.799614,
@@ -12646,7 +12503,7 @@
      "approach": "L06-Z",
      "runway": "06",
      "transition": "COATE",
-     "source": "FAA CIFP cycle 2610, KTEB approach L06-Z transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach L06-Z transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        41.136228,
@@ -12701,7 +12558,7 @@
      "approach": "L06-Z",
      "runway": "06",
      "transition": "MALCN",
-     "source": "FAA CIFP cycle 2610, KTEB approach L06-Z transition MALCN: IF MALCN; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach L06-Z transition MALCN: IF MALCN; TF VINGS",
      "waypoints": [
       [
        40.638944,
@@ -12729,7 +12586,7 @@
      "approach": "L06-Z",
      "runway": "06",
      "transition": "SBJ",
-     "source": "FAA CIFP cycle 2610, KTEB approach L06-Z transition SBJ: IF SBJ; TF MALCN; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach L06-Z transition SBJ: IF SBJ; TF MALCN; TF VINGS",
      "waypoints": [
       [
        40.583044,
@@ -12766,7 +12623,7 @@
      "approach": "L06-Z",
      "runway": "06",
      "transition": "STW",
-     "source": "FAA CIFP cycle 2610, KTEB approach L06-Z transition STW: IF STW; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach L06-Z transition STW: IF STW; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        40.995819,
@@ -12821,7 +12678,7 @@
      "approach": "L19",
      "runway": "19",
      "transition": "STRAD",
-     "source": "FAA CIFP cycle 2610, KTEB approach L19 transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF UNVIL",
+     "source": "FAA CIFP cycle 2611, KTEB approach L19 transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF UNVIL",
      "waypoints": [
       [
        41.180553,
@@ -12867,7 +12724,7 @@
      "approach": "R06-X",
      "runway": "06",
      "transition": "COATE",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-X transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF FRNKI",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-X transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF FRNKI",
      "waypoints": [
       [
        41.136228,
@@ -12913,7 +12770,7 @@
      "approach": "R06-X",
      "runway": "06",
      "transition": "SBJ",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-X transition SBJ: IF SBJ; TF JERSE; TF FRNKI",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-X transition SBJ: IF SBJ; TF JERSE; TF FRNKI",
      "waypoints": [
       [
        40.583044,
@@ -12950,7 +12807,7 @@
      "approach": "R06-X",
      "runway": "06",
      "transition": "STW",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-X transition STW: IF STW; TF ELIZE; TF ALIDA; TF FRNKI",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-X transition STW: IF STW; TF ELIZE; TF ALIDA; TF FRNKI",
      "waypoints": [
       [
        40.995819,
@@ -12996,7 +12853,7 @@
      "approach": "R06-Y",
      "runway": "06",
      "transition": "ALIDA",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-Y transition ALIDA: IF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-Y transition ALIDA: IF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        40.799614,
@@ -13033,7 +12890,7 @@
      "approach": "R06-Y",
      "runway": "06",
      "transition": "COATE",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-Y transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-Y transition COATE: IF COATE; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        41.136228,
@@ -13088,7 +12945,7 @@
      "approach": "R06-Y",
      "runway": "06",
      "transition": "MALCN",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-Y transition MALCN: IF MALCN; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-Y transition MALCN: IF MALCN; TF VINGS",
      "waypoints": [
       [
        40.638944,
@@ -13116,7 +12973,7 @@
      "approach": "R06-Y",
      "runway": "06",
      "transition": "SBJ",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-Y transition SBJ: IF SBJ; TF MALCN; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-Y transition SBJ: IF SBJ; TF MALCN; TF VINGS",
      "waypoints": [
       [
        40.583044,
@@ -13153,7 +13010,7 @@
      "approach": "R06-Y",
      "runway": "06",
      "transition": "STW",
-     "source": "FAA CIFP cycle 2610, KTEB approach R06-Y transition STW: IF STW; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
+     "source": "FAA CIFP cycle 2611, KTEB approach R06-Y transition STW: IF STW; TF ELIZE; TF ALIDA; TF WAWAH; TF VINGS",
      "waypoints": [
       [
        40.995819,
@@ -13208,7 +13065,7 @@
      "approach": "R19-X",
      "runway": "19",
      "transition": "CUROK",
-     "source": "FAA CIFP cycle 2610, KTEB approach R19-X transition CUROK: IF CUROK; TF WHOLN; TF MOOGZ",
+     "source": "FAA CIFP cycle 2611, KTEB approach R19-X transition CUROK: IF CUROK; TF WHOLN; TF MOOGZ",
      "waypoints": [
       [
        41.110914,
@@ -13245,7 +13102,7 @@
      "approach": "R19-Y",
      "runway": "19",
      "transition": "STRAD",
-     "source": "FAA CIFP cycle 2610, KTEB approach R19-Y transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF UNVIL",
+     "source": "FAA CIFP cycle 2611, KTEB approach R19-Y transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF UNVIL",
      "waypoints": [
       [
        41.180553,
@@ -13291,7 +13148,7 @@
      "approach": "R24",
      "runway": "24",
      "transition": "STRAD",
-     "source": "FAA CIFP cycle 2610, KTEB approach R24 transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF WHEZY; TF SHREW",
+     "source": "FAA CIFP cycle 2611, KTEB approach R24 transition STRAD: IF STRAD; TF SKUBY; TF NIPIE; TF WHEZY; TF SHREW",
      "waypoints": [
       [
        41.180553,

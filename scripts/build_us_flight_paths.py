@@ -79,6 +79,14 @@ PAGE = 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/cif
 ZIP_URL = re.compile(r'https://aeronav\.faa\.gov/Upload_313-d/cifp/CIFP_(\d{6})\.zip')
 MEMBER = 'FAACIFP18'
 NOT_CODED = 'Not_In_CIFP.xlsx'
+# Cycle 2611 (effective 2026-10-29) renamed it Not_In_CIFP_2611.xlsx: found by pattern, exactly one per zip.
+NOT_CODED_NAME = re.compile(r'^Not_In_CIFP(_\d{4})?\.xlsx$')
+
+
+def not_coded_member(names):
+    """The zip's one Not_In_CIFP list, or None when there is not exactly one."""
+    found = [n for n in names if NOT_CODED_NAME.match(n)]
+    return found[0] if len(found) == 1 else None
 UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36'}
 WIDTH = 132
 
@@ -574,7 +582,10 @@ def not_coded_of(zip_path, icaos):
     import openpyxl  # imported here so --check on a clone with no zip, and the tests, need no spreadsheet library
 
     with zipfile.ZipFile(zip_path) as z:
-        book = openpyxl.load_workbook(io.BytesIO(z.read(NOT_CODED)), read_only=True)
+        member = not_coded_member(z.namelist())
+        if member is None:
+            raise SystemExit(f'{zip_path}: not exactly one {NOT_CODED_NAME.pattern} in {z.namelist()}')
+        book = openpyxl.load_workbook(io.BytesIO(z.read(member)), read_only=True)
     return not_coded_from_rows([list(sheet.iter_rows(values_only=True)) for sheet in book.worksheets], icaos)
 
 
@@ -698,7 +709,8 @@ def complete_zip(path):
     if not zipfile.is_zipfile(path):
         return False
     with zipfile.ZipFile(path) as z:
-        return {MEMBER, NOT_CODED} <= set(z.namelist()) and z.testzip() is None
+        names = z.namelist()
+        return MEMBER in names and not_coded_member(names) is not None and z.testzip() is None
 
 
 def from_zip(zip_path):

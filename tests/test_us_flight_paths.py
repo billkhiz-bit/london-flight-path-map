@@ -371,6 +371,21 @@ def test_a_download_cut_short_is_not_a_complete_zip(tmp_path):
     assert not us.complete_zip(other)
 
 
+def test_the_not_coded_list_is_found_by_pattern_and_only_one_is_accepted(tmp_path):
+    # Cycle 2611 renamed Not_In_CIFP.xlsx to Not_In_CIFP_2611.xlsx; a hard-coded name crashed the build
+    import zipfile
+
+    assert us.not_coded_member(['FAACIFP18', 'Not_In_CIFP_2611.xlsx']) == 'Not_In_CIFP_2611.xlsx'
+    assert us.not_coded_member(['FAACIFP18', 'Not_In_CIFP.xlsx']) == 'Not_In_CIFP.xlsx'
+    assert us.not_coded_member(['FAACIFP18', 'Not_In_CIFP.xlsx', 'Not_In_CIFP_2611.xlsx']) is None
+    assert us.not_coded_member(['FAACIFP18', 'Not_In_CIFP_2611.pdf']) is None
+    renamed = tmp_path / 'renamed.zip'
+    with zipfile.ZipFile(renamed, 'w') as z:
+        z.writestr(us.MEMBER, 'HDR01')
+        z.writestr('Not_In_CIFP_2611.xlsx', 'x')
+    assert us.complete_zip(renamed)
+
+
 # ---- the parser fails loudly ----------------------------------------------
 
 
@@ -505,11 +520,17 @@ def test_the_checked_in_record_passes_its_own_check():
 
 def test_the_checked_in_record_says_what_the_real_file_says():
     import json
+    import re
 
     airports = json.loads((REPO_ROOT / 'data' / 'us-flight-procedures.json').read_text(encoding='utf-8'))['airports']
-    # Oakland's SLNT3 is one common-route record keyed RW30. It was recorded as leaving all eight runways.
-    slnt = [d for d in airports['OAK']['departures'] if d['name'] == 'SLNT3']
-    assert [(d['runway'], d['runways']) for d in slnt] == [('30', ['30'])]
+    # Oakland's SLNT3, one common-route record keyed RW30, was once recorded as leaving all eight runways.
+    # Held as a RULE, not by its name: the FAA withdrew SLNT3 in cycle 2611 (effective 2026-10-29) and a test
+    # pinned to it went red on a correct record. A departure keyed to one runway number lists only runways of
+    # that number ('19' covers 19L and 19R); 59 such in cycle 2611 and 69 in 2610, none breaking it.
+    keyed = [(ap, d) for ap, a in airports.items() for d in a['departures'] if re.fullmatch(r'\d\d[LRC]?', d['runway'])]
+    assert keyed
+    assert not [(ap, d['name'], d['runway'], d['runways']) for ap, d in keyed
+                if not d['runways'] or not all(r.startswith(d['runway']) for r in d['runways'])]
     # No departure claims every runway: none of these seven airports has a SID without a runway key.
     assert not [d['name'] for ap in airports.values() for d in ap['departures'] if d['runway'] == 'ALL']
     # Kennedy 13R and Teterboro 01 have a published approach the file does not code.

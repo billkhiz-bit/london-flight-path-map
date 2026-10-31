@@ -223,10 +223,18 @@ def cifp():
     stamps = sorted(set(build_us_flight_paths.ZIP_URL.findall(fetch_text(build_us_flight_paths.PAGE))))
     if not stamps:
         return served, '?', 'BROKEN', 'the FAA download page loaded but links no CIFP zip'
-    # The page lists the cycle in effect and, near a changeover, the next one.
-    current = f'20{stamps[0][:2]}-{stamps[0][2:4]}-{stamps[0][4:]}'
-    return (served, current, 'NEWER' if current > served else 'current',
-            'every 28 days; build_us_flight_paths.py --fetch and --check (feeds no published route yet)')
+    # The page lists the cycle in effect and, near a changeover, the next one. The row compares with the cycle IN
+    # EFFECT TODAY: the newest listed whose date has arrived. Taking the oldest listed (until 2026-10-31, audit M-1)
+    # read "current" on the very day a new cycle took effect. A page listing only future cycles falls back to the
+    # earliest of them.
+    effective = [f'20{s[:2]}-{s[2:4]}-{s[4:]}' for s in stamps]
+    arrived = [d for d in effective if d <= TODAY.isoformat()]
+    current = arrived[-1] if arrived else effective[0]
+    upcoming = [d for d in effective if d > current]
+    note = 'every 28 days; build_us_flight_paths.py --fetch and --check (drawn on the map and the front page)'
+    if upcoming:
+        note += f'; next cycle {upcoming[0]} is published'
+    return served, current, 'NEWER' if current > served else 'current', note
 
 
 def ppd():

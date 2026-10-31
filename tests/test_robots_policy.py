@@ -84,6 +84,8 @@ class RobotsPolicyTests(unittest.TestCase):
 
     def test_the_sitemap_is_declared(self):
         self.assertIn('Sitemap: https://skyscore.co.uk/sitemap.xml', self.text)
+        # The planes district pages keep their own (scripts/build_planes_pages.py, 2026-10-28): one writer per file.
+        self.assertIn('Sitemap: https://skyscore.co.uk/sitemap-planes.xml', self.text)
 
 
 if __name__ == '__main__':

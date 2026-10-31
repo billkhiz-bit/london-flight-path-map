@@ -166,7 +166,10 @@ def test_web_deploy_all_ships_fonts_first():
     # installing for every city (CLAUDE.md, Build & Deploy).
     _, targets = mk.parse((REPO_ROOT / 'Makefile').read_text(encoding='utf-8'))
     order = mk.plan('web-deploy-all', targets)
-    assert order[0] == 'fonts-deploy'
+    # booking-link-check (2026-10-29) runs before everything and uploads nothing: it only refuses a placeholder
+    # booking link (tests/test_demo_booking_link.py). The first target that UPLOADS must still be the fonts.
+    uploads = [t for t in order if t != 'booking-link-check']
+    assert uploads[0] == 'fonts-deploy'
     assert order.index('data-deploy') < order.index('pwa-deploy')
 
 

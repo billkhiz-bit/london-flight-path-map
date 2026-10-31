@@ -341,3 +341,29 @@ height only on a published glide path. The note now names the route and where it
 kilometres after take-off, still climbing"), because a typed number goes stale with the next cycle, and
 `tests/test_staten_island_note.py` holds each claim to the data: PORTT still crosses inside 10 km, and Staten
 Island still has the highest Quiet Skies of the five (7.5 on 23 Oct). Cycle 2611 changes only PORTT's source label.
+
+**BAY AREA ZIPS ARE NAMED BY RESIDENTS, AND SCORED AT A MAJORITY (2026-10-23, Bill; branch `bayarea-zip-residents`).**
+The land rule (the city with most of a ZIP's land) sent 94010 to Hillsborough and called 95014 "44% Cupertino"; 7
+cities held no ZIP's majority, so the API took names only. Now each ZIP's 2020 residents are counted by place:
+every California block's population and Census place (PL 94-171, `bayarea_blocks.pl_blocks()`), joined to its ZIP
+area by the 2020 ZCTA-to-block relationship file (1.06 GB national, STREAMED to California's rows: 14 Bay Area ZIPs
+reach into Contra Costa, San Joaquin, Marin, San Benito, Santa Cruz or Monterey, and a four-county file would have
+undercounted them). Measured: 126 ZIPs at 90%+ in one city, 12 at 75-90, 10 at 50-75, 24 under half (mostly
+unincorporated, e.g. 94546 98% Castro Valley). Bill's calls: half or more in one of the 50 -> scored as it, the
+shares said (`location.zipResidents` and `coverage.notices`, which survives `?include=`); otherwise 404 with places
+and shares; ONE rule for the site and the API, so `scripts/build_bayarea_zips.py` writes both the site's JSON and
+the Lambda's `BAYAREA_ZIPS` between markers, and `--check` fails if either is hand-edited (proven red). The ZIP
+carries NO coordinate, so it scores exactly as its city does by name. The rule reads the EXACT ratio (0.496 prints
+as 50% but is not half). The outline cross-check now asks the right question: a wrong pairing puts a ZIP's centre
+in ANOTHER city (once: 94304, Stanford Research Park, in Los Altos Hills); a centre in open country is a hill ZIP's
+land centroid (11 of 126), not an error. Ships with Part B of the 29 Oct runbook (data-deploy and web-deploy back to
+back: new code on the old file would open no city).
+
+## The FAA freshness row reads the cycle IN EFFECT (2026-10-31, audit M-1)
+
+`check_data_freshness.py` compared what we serve with the FAA download page's FIRST listed zip (`stamps[0]`). Near a
+changeover the page lists the outgoing and the incoming cycle, so on the day a new cycle took effect the oldest listed
+was still ours and the row read `current`: it could not go red on the one day it matters. Found 29 Oct, fixed 31 Oct:
+the newest listed cycle whose date has arrived (the earliest listed when only future cycles are), a published next
+cycle said in the note so the roll can be prepared, and the hint no longer says the file "feeds no published route"
+(the map and the front page draw `/data/us-flight-procedures.json`). Proven red on a two-cycle page dated 26 Nov.

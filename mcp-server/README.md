@@ -15,7 +15,7 @@ Claude is told to cite (`INSTRUCTIONS` in `sky_score_mcp.py` holds the product's
 | `compare_areas` | `/v1/score` for two to five places, one call each | yes |
 | `list_regions` | `/v1/regions`: the cities and boroughs covered | no |
 | `score_changes` | `/v1/changes`: London's quarter-on-quarter movement | no |
-| `environment_at` | `/v1/environment`: measured air, road noise and flood at a coordinate | no |
+| `environment_at` | `/v1/environment`: DEFRA's modelled air quality and road and aircraft noise at a coordinate (no flood value) | no |
 
 All five are read-only. A place Sky Score does not cover is said to be NOT COVERED YET, never scored.
 

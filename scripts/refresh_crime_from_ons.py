@@ -63,7 +63,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-EDITION = 'yearendingmarch2026'
+EDITION = 'yearendingjune2026'
 # COPIED from the dataset page, never built from EDITION (2026-10-01). ONS names
 # each edition's file differently - pfatablesyemarch2026, pfatablesyedec2025,
 # policeforceareatablesyesep25, policeforceareatablesyejune25final - so the
@@ -72,13 +72,17 @@ EDITION = 'yearendingmarch2026'
 # cache, and a fresh clone could not fetch the workbook at all. On a roll,
 # take the new href from
 # https://www.ons.gov.uk/peoplepopulationandcommunity/crimeandjustice/datasets/policeforceareadatatables
-# (scripts/check_data_freshness.py lists it, and fails if this one stops resolving).
-XLSX_FILE = 'pfatablesyemarch2026.xlsx'
+# (scripts/check_data_freshness.py lists it, and fails if this one stops resolving). The page links the newest
+# edition under a `current` folder too; never copy that one: it moves at every release (and 404s at this path).
+XLSX_FILE = 'pfatablesyejune2026.xlsx'
 XLSX_URL = (
     'https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/crimeandjustice/'
     f'datasets/policeforceareadatatables/{EDITION}/{XLSX_FILE}'
 )
-CACHE = Path('data/ons_pfa_tables.xlsx')
+# One cached workbook PER EDITION (2026-10-23, the first quarterly roll): with a single file, a branch on June
+# and a branch on March fought over one cache, and the cover-sheet check below failed the blocking gate on every
+# switch. The reason keying was reverted in August (the URL was built and 404'd) went on 2026-10-01 with XLSX_FILE.
+CACHE = Path(f'data/ons_pfa_tables_{EDITION}.xlsx')
 EXTRA = Path('data/borough-extra.json')
 
 TOTAL_COL = 'Total recorded crime  (excluding fraud)'
@@ -317,12 +321,12 @@ def load_table(city='london'):
     # had never fetched. Proven by bumping EDITION to yearendingjune2026: PASS,
     # exit 0, no network.
     #
-    # Keying the cache filename on EDITION was tried first and REVERTED: it
-    # forces a re-download, and the ONS URL 404'd then (fixed 2026-10-01 - it was
-    # BUILT from EDITION; see XLSX_FILE), so a working blocking
-    # gate would go red for a reason that has nothing to do with the data. This
-    # asks the artefact what it is instead, which needs no network and cannot be
-    # satisfied by a stale file.
+    # Keying the cache filename on EDITION was tried first and REVERTED in August:
+    # it forces a re-download, and the ONS URL 404'd then (it was BUILT from
+    # EDITION; see XLSX_FILE), so a working blocking gate would have gone red for
+    # a reason that had nothing to do with the data. With the URL copied since
+    # 2026-10-01 it is keyed again (2026-10-23, see CACHE). This check stays: it
+    # asks the artefact what it is, which no file name can promise.
     want = EDITION[len('yearending'):]           # e.g. 'march2026'
     cover = str(wb['Cover_sheet'].cell(row=1, column=1).value or '')
     seen = re.sub(r'[^a-z0-9]', '', cover.lower())
@@ -403,14 +407,30 @@ def london_offence_medians():
     return _LONDON_MEDIANS
 
 
-def compare_city(city, write=False):
+def edition_label(edition=EDITION):
+    """'yearendingjune2026' -> 'year ending June 2026': the words the site's `crimeVintage`, the Lambda's credit
+    lines (CRIME_EDITION_LABEL, held equal by tests/test_provenance_periods.py) and the API's provenance print.
+
+    DERIVED, never typed (2026-10-23, the first quarterly roll): the site's label was the literal
+    'ONS Table C4, year ending March 2026', so rolling EDITION alone would have printed March over June's rates.
+    """
+    mo = re.fullmatch(r'yearending([a-z]+)(\d{4})', edition)
+    if not mo:
+        raise SystemExit(f'EDITION {edition!r} is not ONS\'s yearending<month><year> folder name')
+    return f'year ending {mo.group(1).capitalize()} {mo.group(2)}'
+
+
+def compare_city(city, write=False, against_lambda=False):
     """Compare one city's published rates against ONS Table C4.
 
     Returns (drift, compared, unaccounted): the boroughs whose rate differs
     from ONS, the number actually compared, and the boroughs the pass never
     reached. The caller owns the floor on `compared` - see main(). With
     write=True the city's block in borough-extra.json is rewritten: its rate,
-    its top-three offence breakdown and its vintage.
+    its top-three offence breakdown and its vintage. With against_lambda=True
+    the comparison reads the score Lambda's copy for EVERY city, London too:
+    --write-lambda needs that, because after --write London's site copy is
+    already new and would show no drift against a Lambda still holding the old rates.
     """
     ons = load_table(city)
 
@@ -430,7 +450,7 @@ def compare_city(city, write=False):
                 f'--write: {city} has no borough-extra.json block (backend-only city); '
                 'nothing to write to. Use --check for it.')
         london = data[city]
-    elif city != 'london':
+    elif city != 'london' or against_lambda:
         data, london = None, lambda_rates(city)
     else:
         data = json.loads(EXTRA.read_text(encoding='utf-8'))
@@ -457,7 +477,9 @@ def compare_city(city, write=False):
     # adrift.
     seen = set()
     for canonical, rec in ons.items():
-        key = SITE_ALIAS.get(canonical, canonical)
+        # The SITE's spelling only when the site's copy is the one compared: the Lambda keys Barking and Dagenham
+        # by its full name, and aliasing it there skipped it (2026-10-23).
+        key = canonical if against_lambda else SITE_ALIAS.get(canonical, canonical)
         if key not in london:
             continue
         seen.add(key)
@@ -491,7 +513,7 @@ def compare_city(city, write=False):
                  'vsLondonMedian': round(v / medians[c], 1) if medians.get(c) else None}
                 for c, v in parts[:3]
             ]
-            london[key]['crimeVintage'] = 'ONS Table C4, year ending March 2026'
+            london[key]['crimeVintage'] = f'ONS Table C4, {edition_label()}'
 
     print(f'\n  city: {city}')
     # Compare each ONS row AFTER aliasing, against the repo's keys.
@@ -549,6 +571,12 @@ def main():
     ap.add_argument('--write', action='store_true', help='update data/borough-extra.json')
     ap.add_argument('--check', action='store_true', help='report drift, exit 1 if any')
     ap.add_argument(
+        '--write-lambda',
+        action='store_true',
+        help="write ONS's rates into the score Lambda's own copy (CITIES in backend/lambdas/score/app.py), "
+             'compared against that copy for every city, London too; run it BEFORE --write',
+    )
+    ap.add_argument(
         '--city',
         default='london',
         choices=sorted(CITY_PFA),
@@ -585,6 +613,30 @@ def main():
     # from CITY_PFA was silently dropped from --all, so no floor in this file
     # could see it.
     _assert_every_city_is_accounted_for()
+
+    # THE LAMBDA'S COPY, written by code (2026-10-23, the first quarterly roll). Until then --write updated the
+    # site's holder and printed "mirror it" for the Lambda's: a hundred rates across thirteen cities to retype by
+    # hand, three of them (Cardiff, Nottingham, Norwich) with no other holder at all. The writer is
+    # build_borough_bands.write_lambda, already scoped to each city's own dict; tests/test_borough_data_parity.py
+    # and this script's --check --all (which reads the Lambda for every city but London) are the proof after.
+    if args.write_lambda:
+        import build_borough_bands  # noqa: PLC0415 - only the Lambda writer needs it
+
+        results, unreached = {}, []
+        for city in (sorted(CITY_PFA) if args.all else [args.city]):
+            drift, _compared, unaccounted = compare_city(city, against_lambda=True)
+            results[city] = {k: {'crimeRate': new} for k, _cur, new in drift}
+            unreached += [f'{city}/{b}' for b in unaccounted]
+        # The same per-borough floor --check has, BEFORE anything is written. On the first run it was missing and
+        # London's comparison looked for the SITE's spelling ('Barking') in the Lambda ('Barking and Dagenham'),
+        # skipped it, wrote the other 89 and left Barking on last quarter's rate; the parity test caught it.
+        if unreached:
+            raise SystemExit(f'--write-lambda: these Lambda boroughs were never compared, so nothing is written: '
+                             f'{", ".join(unreached)}')
+        changed = build_borough_bands.write_lambda(results, write=True, fields=('crimeRate',))
+        print(f'--write-lambda: {changed} crime rate(s) written into the score Lambda; '
+              'now --write --all, then --check --all must report no drift')
+        return 0
 
     cities = sorted(CITY_PFA) if args.all else [args.city]
     if args.write and args.all:

@@ -1,0 +1,93 @@
+{
+ "score": 6.1,
+ "weights": {
+  "quiet": 0.372093,
+  "afford": 0.313953,
+  "growth": 0.0,
+  "live": 0.313953
+ },
+ "components": {
+  "quiet": 9.0,
+  "afford": 0.0,
+  "growth": 6.8,
+  "live": 8.8
+ },
+ "context": {
+  "avgPriceUsd": 1200000,
+  "priceTrendPct": 2.0,
+  "growthBasis": "nominal",
+  "priceRankInCity": {
+   "rank": 5,
+   "of": 5
+  },
+  "growthRankInCity": {
+   "rank": 5,
+   "of": 5
+  },
+  "noiseImpactBand": "moderate",
+  "quietResolution": "postcode",
+  "liveResolution": "measured",
+  "environmentResolution": "unavailable \u2014 0/3 inputs measured, too few to publish; the component is omitted and its weight redistributed",
+  "environmentSingleInput": false
+ },
+ "coverage": {
+  "quiet": {
+   "basis": "postcode",
+   "measuredAtLocation": false
+  },
+  "live": {
+   "basis": "measured",
+   "measuredAtLocation": true
+  },
+  "env": {
+   "basis": "unavailable \u2014 0/3 inputs measured, too few to publish; the component is omitted and its weight redistributed",
+   "measuredAtLocation": false
+  },
+  "notices": [
+   "Aircraft noise here is estimated from the FAA routes of JFK, LaGuardia, Newark and Teterboro, fitted to the airports' noise monitors, not measured at this address. No published Lden survey covers New York.",
+   "Environment inputs are unavailable for this area, so that component is omitted from the score and its weight is redistributed across the components that were measured. It is not a placeholder value, and the score is not directly comparable with a fully-measured borough."
+  ]
+ },
+ "location": {
+  "city": "nyc",
+  "postcode": "10001",
+  "borough": "Manhattan",
+  "region": "New York City",
+  "latitude": 40.7542,
+  "longitude": -74.0005
+ },
+ "persona": "balanced",
+ "methodologyVersion": "5.7",
+ "methodologyUrl": "https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md",
+ "apiVersion": "1.0",
+ "generatedAt": "2026-10-23T20:20:43.479651+00:00",
+ "sources": [
+  "Borough metadata: curated from public New York City sources",
+  "Crime: NYPD CompStat-derived offence rates per 1,000, against New York City population denominators",
+  "Prices: curated New York borough median sale prices, in USD",
+  "Aviation noise context: ESTIMATED from the FAA routes of JFK, LaGuardia, Newark and Teterboro, fitted to the Port Authority of New York and New Jersey noise-monitor readings for January-July 2026; NOT a measurement at this address",
+  "Borough aircraft band: the same estimate averaged over residents by 2020 ZIP Code Tabulation Area, weighted by US Census Bureau ACS 2020-2024 population (public domain)",
+  "Licence note: Open Government Licence v3.0 covers UK Crown copyright and does NOT apply to any data in this response",
+  "Flight routes: FAA Coded Instrument Flight Procedures, derived by Sky Score for the aircraft noise estimate; supplied \"as is\", without warranty, and not for navigation",
+  "Runway use: counted by Sky Score from aircraft positions via adsb.lol (ODbL 1.0), 2026-01-01 to 2026-07-30; the counts are offered under the ODbL"
+ ],
+ "sourceBreakdown": {
+  "quiet": "ESTIMATED from the FAA's coded routes of JFK, LaGuardia, Newark and Teterboro: the runway directions flown at least 10% of the time (counted from aircraft positions), with each airport's size and the route weight fitted to the Port Authority of New York and New Jersey's noise-monitor readings for January-July 2026, so that at every airport the estimate reads louder than its monitors on average. Runway use is counted over the monitors' own months (every third day, January-July 2026), and each flown direction counts as a runway strip for 15 km out from the airport, the coded routes beyond. NOT DEFRA and not a measurement at this address: no published Lden survey covers New York, so the dB thresholds in METHODOLOGY section 3 are not directly applicable. A borough query reads a band derived from the same estimate, averaged over the borough's residents. The chosen resolution is reported in context.quietResolution.",
+  "afford": "Curated New York borough median sale prices (USD). NOT HM Land Registry, which holds England and Wales only. Methodology v5.0 scores this on a LOG scale against the 5th-95th percentile of the USD pool (USD 446,000 to USD 1,130,000). Stated plainly: that pool is New York's 5 boroughs, because New York is the only city Sky Score covers outside the United Kingdom - so this is a within-New-York scale, and it is NOT comparable with the sterling scores, which are anchored on a 97-borough national pool. Prices in different currencies are not pooled.",
+  "live": "NYPD CompStat-derived crime rates with New York population denominators, plus curated school / transport / healthcare tiers. NOT ONS, Home Office, DfE, TfL or NHS \u2014 none has a New York remit. Cross-city comparison against UK boroughs should be approached with caution: different collection methodologies.",
+  "env": "NOT scored for this city. DEFRA and the Environment Agency publish for the UK only, so no environment input is available here.",
+  "growth": "Curated New York borough annualised price trend, NOMINAL. NOT HM Land Registry HPI, and not deflated: no US inflation series is held, and dividing dollars by a UK index would be a number nobody measured. context.growthBasis says so. Cohort-relative among the 5 New York boroughs - the USD pool is exactly them. A previous vintage exists, so ?compare=previous reports real movement."
+ },
+ "plannedComponents": {
+  "epcDistribution": {
+   "status": "planned",
+   "source": "MHCLG Get Energy Performance Data (currently in /epc; planned in /v1/score)",
+   "eta": "roadmap"
+  },
+  "crimeBreakdown": {
+   "status": "planned",
+   "source": "ONS Table C4 offence groups per CSP (on the consumer site today; planned for this API, OGL v3.0)",
+   "eta": "roadmap"
+  }
+ }
+}

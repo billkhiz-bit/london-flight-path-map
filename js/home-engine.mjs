@@ -1145,14 +1145,15 @@ function airfieldFactHtml(lat, lon, from) {
   const text = a ? `${a.name} (${a.ident}), ${km(a.dist)} to the ${a.dir} of ${from}` : `none within ${AIRPORT_SCOPE_KM} km`;
   return `<div><dt>Nearest airfield</dt><dd>${esc(text)} <small>any size, FAA records</small></dd></div>`;
 }
-// A ZIP is a Census ZIP area, and its share of land in the city is what keeps
-// the city's name honest: 94301 is Palo Alto, 95014 is 44% Cupertino and
-// mostly empty hills. The words follow the share (scripts/build_bayarea_zips.py).
+// A ZIP is a Census ZIP area, named by where its RESIDENTS live (Bill, 2026-10-23; scripts/build_bayarea_zips.py
+// writes this file and the API's table, so the two name the same city): 94301 is Palo Alto, 94010 is 71%
+// Burlingame though its land is mostly Hillsborough's. It opens a city only when half or more of its residents
+// live there (`cityMajority`), and the words always say the share. The same words as the full map's (index.html).
 function zipShareText(zip) {
-  const pct = Math.round(zip.share * 100);
-  if (zip.share >= 0.9) return `In ${zip.place}.`;
-  if (zip.share >= 0.5) return `Mostly in ${zip.place}: ${pct}% of the ZIP area's land.`;
-  return `${pct}% of the ZIP area's land is in ${zip.place}; the rest is in other cities or in none.`;
+  const where = zip.kind === 'cdp' ? `${zip.place}, an unincorporated community` : zip.place;
+  const rest = (zip.others || []).map(([name, share]) => `${Math.round(share * 100)}% in ${name}`).join('; ');
+  if (zip.share >= 0.9 && !rest) return `In ${where}.`;
+  return `${Math.round(zip.share * 100)}% of its residents live in ${where}${rest ? `; ${rest}` : ''}.`;
 }
 function zipFactsHtml(zip) {
   return `<div><dt>ZIP ${esc(zip.code)}</dt><dd>${esc(zip.place ? zipShareText(zip) : 'In no city.')} <small>US Census, 2020</small></dd></div>
@@ -1365,8 +1366,8 @@ async function searchZip(code, stale) {
   const pin = { lat: zip.lat, lon: zip.lon };
   if (state.city !== 'bayarea') await show('bayarea', pin); else draw(pin);
   if (stale()) return;
-  if (zip.place && selectBorough(zip.place, { scroll: true, zip })) return;
-  // No city holds any of it (or the city is one the map does not draw): the ZIP's own card.
+  if (zip.cityMajority && selectBorough(zip.place, { scroll: true, zip })) return;
+  // No city holds half of its residents (or they live in a community the map does not draw): the ZIP's own card.
   state.selected = null;
   byId('answer')?.classList.remove('is-open');
   openCard(zipCardHtml(zip));

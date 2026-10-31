@@ -1,4 +1,4 @@
-# Public surfaces: badge, area pages, throttles, signup
+# Public surfaces: badge, area pages, throttles, signup, provenance
 
 > Moved verbatim from `CLAUDE.md` on 2026-10-17 to keep the session-start file small.
 > The /badge SVG and its edge cache, area pages, free tier, route throttles, OPTIONS auth, verification-first signup (I17).
@@ -56,11 +56,34 @@ pages carry **no `<script>` tag but the first-party analytics one** (since 2026-
 first counted: `tests/area-pages.mjs` allows exactly that tag, once) - the map is client-side, so a crawler
 previously got a shell, and every fact stays in the served HTML.
 
+- **The `/area/` index compares each city's areas in one table (2026-10-25, branch `area-compare`).** A reader
+  in Poland opened 24 London area pages one at a time from the index, going back to it 22 times, because it
+  listed names only (GoatCounter, 24-25 Oct). Each city now has a table: Sky Score, its five parts and the
+  average price, read from the facts each page publishes (`compare_cell`), never recomputed; a figure a page
+  does not publish is a dash with "none published" for a screen reader. No script, so no sorting. The index
+  now BAKES scores too, so `--check` compares it with what `--write` would write (proven red on the names-only
+  index). Two layout traps found on the way: a visually hidden `<caption>` is absolutely placed, so inside an
+  `overflow-x:auto` box that is not `position:relative` it escapes and widened a 390 px page by 262 px; and
+  seven columns need the headings to wrap to fit the 720 px column. `tests/test_area_index_table.py` holds a
+  renamed label (a whole column of dashes), absence as a dash, and New York's not-comparable note.
+- **`--write` on Windows dates EVERY page today in the sitemap** unless you stage first: it rewrites the pages
+  with LF over the CRLF checkout, `git status` then lists all of them as modified though `git diff` shows
+  nothing, and `last_changed()` reads `git status`. Run `git add area/` (the unchanged pages stage as no
+  change), then `--write` again: only pages whose content changed are dated today (found 2026-10-25).
+
 - **They BAKE their scores**, so a data vintage silently puts them out of step
   with `/v1/score`. `tests/area-page-freshness.mjs` is blocking and compares all
   99 against the live API in **ONE batch request** (1 CI quota unit, not 99 -
   a blocking gate that spends a consumable is how `score sanity` once blocked
   every commit in this repo). **Rerun the builder after any vintage roll.**
+- **Its floor counts the API's boroughs LESS the facts-only cities (2026-10-29).** The floor (pages ==
+  boroughs on `/v1/regions`) summed every city, which was right until the API served a city the site does
+  not page: the hour Bay Area release 2 went live it read "102 area pages, but /v1/score serves 152
+  boroughs", and because the floor runs BEFORE the comparison it hid the eight pages the crime roll had made
+  stale. It now reads `app.SITE_FACTS_ONLY_CITIES` (the list `build_area_pages.py` skips) through python,
+  never retyped. Proven both ways on the day: before Part C's backend it showed exactly the 8 predicted
+  stale pages (Rotherham, Ealing, ...); after it, all 102 OK. Lesson: an early floor can mask the real check
+  behind it, so when a floor fails, ask whether the comparison under it ran at all.
 - **A page's identity is `<main data-city data-borough>`, not its map link
   (2026-09-30).** Every page linked "Open <borough> on the Sky Score map" to
   `/?city=<key>`, and `bootFromQuery()` IGNORES a city `CITY_DATA` lacks, so the
@@ -189,3 +212,36 @@ OPERATIONS.md s3.9 is the runbook, and privacy.html s2a changes in the SAME
 deploy as the flip, not before. **The code is DEPLOYED (2026-09-15, same SAM
 deploy as v5.1): the table exists, the route answers, the flag is off.**
 
+## Per-field provenance (2026-10-23)
+
+**Why.** Bill read Mireye's pitch (US-only, "every returned field carries a source name and a confidence level") and
+asked whether Sky Score should do the same. We already credited sources, but as prose for people: `sources` lines,
+`sourceBreakdown` paragraphs, each dataset's period inside a sentence. No agent could map `no2AnnualMeanUgm3` to
+"DEFRA PCM, 2024, 1 km grid, OGL" without parsing English. Looking also found DEFRA's MODELLED maps called
+"measured" on the developer surfaces (fixed first, `tests/test_modelled_not_measured.py`) and an MCP tool promising
+a flood value `/v1/environment` never returns.
+
+**The design: a function of the response, never of configuration.** `build_provenance(body)` reads what ANSWERED:
+the city's own credit lines (already right per city and tier), `quietResolution`, and the credit line printed beside
+a figure (`roadNoiseSource`). `PROVENANCE_LINE_IDS` matches each line to a registered source (`PROVENANCE_SOURCES`:
+publisher, dataset, licence, method, resolution, period). TW3 4LB's `sources` lists the UK AIP, but the raster
+answered its Quiet Skies, so only DEFRA is credited there. `sources` and `sourceBreakdown` stay byte for byte.
+
+**Three defects found by building it, each now a test proven red.** (1) Built AFTER `filter_response`,
+`?include=score` left the headline crediting nothing (its components were filtered away): built from the full body,
+then cut. (2) The Bay Area's aircraft line ("ESTIMATED from the FAA routes of San Francisco...") matched New York's
+pattern, so Palo Alto would have credited the Port Authority's monitors, and seven of its ten lines matched nothing;
+patterns now name each metro's own airports, and Palo Alto is a fixture (the branch's own output: the Bay Area is
+not live). (3) The first draft copied `coverage.basis: "measured"` (which means PRESENT) into the new object; the
+method vocabulary keeps "measured" for instruments only.
+
+**Not recorded is said, not guessed.** NaPTAN, NHS ODS, the EA flood mosaic, FHFA, FEMA and the curated New York
+inputs have no edition we hold: `period` is null with a `note` saying when we last took a copy is not recorded yet.
+The follow-up (only if a buyer asks): builders stamp their retrieval date. Also left as it was, because renaming
+breaks integrators: `coverage.live.measuredAtLocation` is true for a borough-level composite.
+
+**Cost.** 0.148 ms per response; a UK response grows 5.8 KB to 11.4 KB, which costs an AGENT tokens rather than us
+money, so a batch carries `sourceIndex` once at the top. Bill's view of the money (2026-10-23): provenance sells
+nothing by itself; it removes an objection for councils (bids cite evidence), data marketplaces (lineage
+questionnaires) and agent platforms, and the binding constraint is still the outreach gates. Finish it, extend it
+only when a buyer asks.

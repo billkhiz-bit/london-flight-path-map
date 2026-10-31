@@ -51,6 +51,15 @@ const API_HOSTS = ['execute-api.eu-west-2.amazonaws.com'];
 // the narrowest thing that solves the problem.
 const SPENDS_QUOTA = (pathname) => pathname.includes('/v1/score');
 
+// A KEY ON ANY OTHER ROUTE SPENDS IT TOO (2026-10-31, audit M-2). The premise above, that only /v1/score spends the
+// demo quota, was wrong: status.html sends X-Api-Key on its /v1/regions probe as well, and API Gateway counts a keyed
+// request against the key's usage plan whatever the route. Every preflight spent ~13 calls of the PUBLIC demo key
+// that way (bursts of 8 and 5 in the score Lambda's [API_REQUEST] log at each run's browser stages; 1,600 of the key's
+// 1,724 calls in the 14 days to 31 Oct were /v1/regions, against 124 real lookups). Those routes still reach the
+// network, for the reasons above, but WITHOUT the key: they are open, so the answer is the same and nothing is spent.
+const strippedOfKey = (headers) => Object.fromEntries(Object.entries(headers).filter(([h]) => h.toLowerCase() !== 'x-api-key'));
+const carriesKey = (headers) => Object.keys(headers).some((h) => h.toLowerCase() === 'x-api-key');
+
 // Shaped like a real /v1/score response, because status.html parses the body
 // of `captureBody` endpoints to render its two version rows. A bare `{}` would
 // leave those rows empty and change the audited DOM, which is the thing this
@@ -84,7 +93,20 @@ const EXAMPLE_ENV = { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelin
 const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
 
 export async function stubLiveApi(page) {
-  const hits = { count: 0, paths: [] };
+  const hits = { count: 0, paths: [], keyStripped: 0 };
+
+  // Registered FIRST, so it runs LAST (Playwright tries the newest route first): the handlers below answer their own
+  // requests, and anything they pass on with fallback() arrives here. Every other request to the API host goes to
+  // the network as before, minus the demo key.
+  await page.route(
+    (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && !SPENDS_QUOTA(url.pathname),
+    async (route) => {
+      const headers = route.request().headers();
+      if (!carriesKey(headers)) return route.fallback();
+      hits.keyStripped += 1;
+      return route.fallback({ headers: strippedOfKey(headers) });
+    }
+  );
 
   await page.route(
     (url) => url.hostname === 'api.postcodes.io' && decodeURIComponent(url.pathname).replace(/\s+/g, '').toUpperCase() === '/POSTCODES/TW93PZ',
@@ -122,7 +144,7 @@ export async function stubLiveApi(page) {
  */
 export function assertStubFired(hits, label) {
   if (hits.count > 0) {
-    console.log(`  live-API stub: ${hits.count} request(s) intercepted, 0 spent`);
+    console.log(`  live-API stub: ${hits.count} request(s) intercepted, ${hits.keyStripped || 0} sent on without the key, 0 spent`);
     return true;
   }
   console.error(

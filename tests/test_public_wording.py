@@ -338,6 +338,12 @@ ADDRESS_SHARE = r'\d+(?:\.\d+)?\s?%\s+of\s+(?:the\s+|its\s+|their\s+)?(?:address
 # data/planes/*.json, whose airports can only be the year rule's passers (scripts/build_planes_overhead.py refuses
 # any other; tests/test_build_planes_overhead.py and tests/planes-model.mjs hold both ends). Its strings carry no
 # figure, so these patterns still hold every page: a figure typed into a page or a module stays a defect.
+# The SECOND writer (Bill, 2026-10-28): the district pages under planes-overhead/, BUILT with their figures in them
+# so a search engine reads them, by scripts/build_planes_pages.py from the same files and nothing else. They pass
+# these patterns because they never write "N planes a day" (a cell counts postcodes: "66 at 100+"), and they are
+# held by the builder's --check, a blocking preflight stage: every page byte-equal to a fresh build, so a figure
+# typed into one goes red there. Should their wording ever trip a pattern, the allowance names that folder and
+# this reason, never a looser pattern.
 FREQUENCY = [
     (r'\b\d+(?:\.\d+)?\s+(?:planes|flights|aircraft|movements|overflights|arrivals|departures)'
      r'\s+(?:a|per|an|each)\s+(?:day|hour|week|month|year)\b'),

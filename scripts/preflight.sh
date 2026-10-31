@@ -210,7 +210,12 @@ fi
 # same failure mode as a gate that overstates — either way the name stops
 # describing what actually ran.
 check "ESLint (10 targets)"            npm run lint
-check "html-validate (17 pages)"       npm run lint:html
+# 2026-10-31 (audit M-6): talks/ (2), open-data/, bay-area/ and every area page were uploaded by their deploy
+# targets but validated by nothing; lint:html now names them (area/ as a folder, proven red on a planted page).
+check "html-validate (21 pages + area/)" npm run lint:html
+# The planes district pages are generated and gitignored, so lint:html cannot name them; this validates them on
+# the clone that builds them. A clone without them prints INCONCLUSIVE, never PASS.
+check "html-validate (planes pages)"   sh -c 'if [ -d planes-overhead ]; then npx html-validate planes-overhead; else echo "INCONCLUSIVE: planes-overhead/ is not built on this clone"; fi'
 check "ruff (backend/lambdas)"         python -m ruff check backend/lambdas/
 # backend/tests/ was outside every ruff target until 2026-08-04, so the suite
 # that guards the score engine was the one directory nothing linted — it had
@@ -297,7 +302,7 @@ check "Bay Area page == its inputs"    python scripts/build_bay_area_page.py --c
 # are on disk (data/census/, gitignored); always checked against a second
 # source that IS on disk, the city outlines, so a table pairing ZIPs with the
 # wrong cities reds even on a fresh clone. Offline, under a second.
-check "Bay Area ZIPs == Census"        python scripts/build_bayarea_zips.py --check
+check "Bay Area ZIPs == Census, site == API" python scripts/build_bayarea_zips.py --check
 # New York on the front page (2026-10-06): its borough rows are the score engine's, and
 # its noise picture the one the file names. Offline: reads the Lambda and the files only.
 check "New York front page == engine"  python scripts/build_nyc_front.py --check
@@ -350,7 +355,7 @@ check "who it is for == one list"     python scripts/build_who_for.py --check
 # so wiring it in without the per-city floor would have gated nothing.
 #
 # Same data-dependency shape as the HPI stage above: needs only
-# data/ons_pfa_tables.xlsx, which load_table() fetches once from ONS and
+# data/ons_pfa_tables_<EDITION>.xlsx, which load_table() fetches once from ONS and
 # caches. Measured 2026-08-24: 1.7s for all eleven cities with the workbook
 # cached. Proven able to fail per city: a renamed London borough key floors
 # london while the other ten still compare, and the run exits 1.
@@ -741,6 +746,11 @@ check "area pages carry real data"    node tests/area-pages.mjs
 # index.html equal a fresh build. It was run by nothing (audit 2026-10-05
 # M-8) while the Makefile said it "reds while either is stale". Offline, fast.
 check "area builder == its outputs"   python scripts/build_area_pages.py --check
+# The planes district pages (2026-10-28) bake how often planes pass, which the wording gate lets only the
+# planes files say: this holds every page (and the manifest dating the sitemap) byte-equal to a fresh build
+# from those files, so a figure typed into one goes red. Its inputs are gitignored, so a clone without the
+# tracks prints INCONCLUSIVE, never PASS. Offline, ~8 s (it reads NSPL).
+check "planes pages == their builder" python scripts/build_planes_pages.py --check
 # The area pages BAKE their scores at build time - that is what makes them
 # indexable without JS, and what lets them go stale when a data vintage
 # lands. No other gate can see it: `area pages carry real data` checks

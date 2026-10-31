@@ -19,6 +19,53 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-31)
+>
+> **The planes overhead district pages are LIVE** (merge `40acdad`; the session's auto-mode classifier refused the
+> deploy, so Bill ran `planes-pages-deploy` then `meta-deploy`, 19:30 UTC). Verified: 465 pages and a 465-URL
+> `sitemap-planes.xml`, robots.txt names both sitemaps, drift 25 of 25 + gap 0, and in a browser at 390 and 1366 px
+> (TW9 1 66 / 69 / 25; the postcode box opens TW9 3PZ's 310 / 168). Next: Bill adds `sitemap-planes.xml` in Search
+> Console; links from the area pages. The drift check's first post-deploy run read a FALSE 0 of 25 (an exported
+> `MSYS_NO_PATHCONV=1` sent `curl -o /tmp/x` to `C:\tmp\x`); the script now unsets it.
+> **Also 31 Oct:** the front page's booking links cut to one (`8f63ab5`, live, 13/13); the weekly audit
+> (`AUDIT_REPORT_2026-10-31.md`: 0 critical, 0 important, 6 minor); its M-1 (the FAA row read the OLDEST listed cycle,
+> so it could not go red on a changeover day; proven red, fixed) and M-6 (html-validate now covers talks/,
+> open-data/, bay-area/, every area page, and the planes pages in their own stage) fixed. M-2 (the public demo key
+> used 3,467 of 5,000 calls in October) was OUR PREFLIGHT: ~13 keyed `/v1/regions` calls per run through
+> `tests/stub-live-api.mjs`, now sent on without the key; real use ~9 lookups a day. Also: Heathrow's page confirms
+> 27 Oct-22 Dec, and a free site already counts flights per address (OUTREACH_TARGETS: never say "only"). `nhs-all-cities` (with `log-5xx`) re-rehearsed on today's master: code merges clean, three PROSE
+> conflicts (CHANGELOG, ROADMAP, `docs/lessons/in-progress-measurements.md`): keep both sides. It ships as one
+> reviewed changeset, merged at deploy time so master's backend keeps matching what is live.
+>
+> ## START HERE (2026-10-29)
+>
+> **Deploy day DONE: Parts A-C of Desktop `deploy-runbook-2026-10-29.md` LIVE, each verified from the origin.**
+> A: FAA cycle 2611 (`fabc93a`, 13:27 UTC; only Oakland changed, no score moved; step 3b's one fingerprint line).
+> B: the Bay Area's 50 cities in the API, by name or by ZIP where half or more of its residents live (`0782185`,
+> Bill's changeset 14:35; 94010 -> Burlingame 71%, checked on the API and in a browser on the front page).
+> C: per-field provenance + ONS crime year ending June 2026 (`0fb8962`, Bill's changeset 15:19, the site
+> deployed by 15:20; area pages 102 OK, site == API, drift 39/39). Final preflight PASS, pushed, CI green.
+> **Found on the day:** the area-page gate's floor counted the Bay Area once B was live and hid the staleness
+> check (fixed in `0fb8962`: `docs/lessons/public-surfaces.md`); `check_data_freshness.py`'s FAA row takes the
+> OLDEST cycle the FAA page lists, so on a changeover day it cannot see us a cycle behind (small fix, not done).
+> **Next:** Part D (district pages) on Bill's yes to the preview; Part E (2025 track fetch, PC awake); the two
+> docs commits waiting in `data/pending-docs-2026-10-28/`; then `nhs-all-cities` (with `log-5xx`) as one
+> changeset. Merging it: ROADMAP conflicts at the top (its 28 Oct block and "Last reviewed"): keep both, this
+> block first. `faa-2611` and the `rehearse-*` branches stay until Bill says delete.
+> **Book a demo LIVE 30 Oct** (built 29 Oct night on `book-a-demo`; Bill's go): in the bar of `/pricing` and `/api/`
+> (filled, last), a line on each and one beside `/score-demo/`'s response, counted `book-demo-<page>-<where>`. The
+> link is `js/count.mjs` `DEMO_BOOKING_URL` = Bill's Calendly page (`calendly.com/bilalkhizar-skyscore/30min`; its
+> slug names the product, so it changes at the rename: one holder, the test lists any copy missed). ONE booking
+> question (Bill's option A: what they want from the call + a postcode or two), so privacy s2a/s4, the `/changes`
+> notice and SUBPROCESSORS row 19 say "its one question"; the transfer mechanism stays open in legal batch 2
+> (Calendly's DPA claims the DPF UK Extension). Read the `book-demo-*` counts with the bar's at ~20 Nov; the
+> site-wide bar is decided then. FAQ from the Deen Developers Q&A: not started. **The front page joined the same
+> afternoon** (Bill: its business spots, never its bar, which already fills Full map and is mid-way through the ~6%
+> read): three spots for an hour, then cut to ONE line under "Who it is for" (Bill's "yes": the page repeats its
+> actions; 7.3 screens on a phone, most of it the example's fine print), counted `book-demo-home-who`. Candidates for
+> the ~20 Nov review, NOT before (they change what the ~6% read measures): the example's detail behind "Show the
+> details" on phones, and dropping the "Buying or renting" box, which repeats cards 1 and 3.
+>
 > ## START HERE (2026-10-26)
 >
 > **The approach strip is LIVE on `/how-it-works/`** (Bill: "high up, straight after the opening paragraph"; his go to
@@ -66,7 +113,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 >
 > **Area pages read in depth:** on 24-25 Oct a reader in Poland (Android phone) opened 24 London borough pages one
 > by one from `/area/`, came back for Hackney and Tower Hamlets, and never opened the map or searched. `/area/`
-> lists names only; a comparison table there (generated by `build_area_pages.py`) was offered, not yet chosen.
+> listed names only. A comparison table per city was built on branch `area-compare` and MERGED 31 Oct (Bill: "do
+> the area compare tables"), rebuilt on today's data (crime roll included; no area page changed, only the index and
+> the sitemap's dates). To go live: `area-deploy`, then `meta-deploy` (Bill's: the session's classifier refuses
+> deploys).
 
 > ## START HERE (2026-10-24)
 >
@@ -131,6 +181,13 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > 23 Oct): read them at the same time. A "book a demo" page waits on them: since 1 July /pricing's email buttons
 > were clicked once in all (`pricing-pilot-cta`); the constraint is buyers reaching the page.
 >
+> **Bay Area ZIPs scored by RESIDENTS: BUILT on branch `bayarea-zip-residents` (23 Oct, not merged, not deployed).**
+> Bill's calls: a ZIP is scored as the city where half or more of its 2020 residents live, the shares said
+> (`location.zipResidents`, `coverage.notices`); otherwise 404 with its places and shares; ONE rule for the site and
+> the API (`scripts/build_bayarea_zips.py` writes both holders; `--check` holds them equal). 147 of 165 ZIPs scored;
+> 94010 Burlingame 71% / Hillsborough 26%. Ships with Part B of the 29 Oct runbook (merge first; data-deploy and
+> web-deploy back to back after the changeset). Census inputs gitignored in `data/census/`.
+>
 > **Audit of 22 Oct CLOSED (23 Oct):** the last three minors fixed: M-5 (user paths, guarded by
 > `tests/test_no_user_paths.py`), M-7 (Staten Island's note, held to the FAA data by `tests/test_staten_island_note.py`),
 > M-9 (the search names Nottingham and Greater Norwich). **FAA 2611 (Thu 29 Oct):** `faa-2611` still merges cleanly onto
@@ -157,6 +214,22 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > postcodes at 1 or more on westerly days (most of its traffic is north of the councils we cover). Nothing is
 > published: showing these is a page of its own, for Bill. The archive's terms are read (LICENSING.md, 24 Oct): public domain, attribution appreciated, so credit it beside any published count. Rebuilding `data/us-runway-use.json` would now re-derive published
 > US inputs: a reviewed change of its own.
+>
+> **Per-field provenance: BUILT on branch `provenance-per-field` (23 Oct, Bill: "run it and finish it"), on top of
+> `modelled-not-measured` (DEFRA's maps called modelled, not measured; also not live).** Every value says its source,
+> method and period (`provenance` + `sourceIndex`; batch carries the index once; OpenAPI + MCP instruction updated).
+> **Deploy as its own reviewed SAM changeset AFTER Thursday's FAA (2611) and Bay Area (Part B) ones, then
+> `demo-deploy` for the spec, then `web-deploy` for `/api/`.** Merging onto post-Thursday `what-matters`: FAA 2611
+> moves the FAA record, so move `PROVENANCE_PERIODS['faa-cifp']` in the same merge (`tests/test_provenance_periods.py`
+> reds otherwise), and re-run `backend/tests/test_provenance.py` against the merged Bay Area ZIP routing. Held until
+> a buyer asks: the website showing it, registers stamping their retrieval date, source URLs.
+>
+> **Crime roll to ONS year ending June 2026: BUILT on branch `crime-roll-ye-june-2026`, stacked on
+> `provenance-per-field` (23 Oct, not live).** Both holders written by code (`refresh_crime_from_ons.py
+> --write-lambda --all`, new), 102 area pages + open data rebuilt, METHODOLOGY s6 re-derived; 8 balanced scores
+> move by 0.1. Ships in the SAME changeset as provenance after Thursday (Bill executes), then `data-deploy`,
+> `web-deploy`, `area-deploy`, `open-data-deploy`, `home-deploy`; verify with `check_score_sanity.py`,
+> `tests/area-page-freshness.mjs`, `tests/site-api-parity.mjs`.
 >
 > ## START HERE (2026-10-22, evening)
 >
@@ -1588,11 +1661,23 @@ city on the map follows. Detail and what was learnt: EXPANSION.md.
       Linked from both footers of the main site ("Bay Area") and from `/area/`.
 - [ ] Post it where Bay Area residents are (Bill's to do). Never say "how often
       planes fly over": the page says where the routes are, not their traffic.
-- [ ] Each new FAA cycle (28 days; **next is 2611, effective 2026-10-29**):
+- [ ] **Cycle 2611 (effective 2026-10-29) is BUILT on branch `faa-2611` (18 Oct), NOT deployed**: only Oakland
+      changed (SIDs CNDEL5->6, HUSSH2->3, KATFH3->4, NUEVO8->9 and others, 155 -> 127 records; runway 28L's
+      record); San Leandro loses SALAD5 and SKYL1 overhead; SFO, SJC and New York's four unchanged, so no New
+      York score moves (816 of 816 byte-identical). The Bay Area quiet FIT is unchanged (weight 1.25, SFO 0.85,
+      OAK 0.85, SJC 0.5) but its generated block embeds the routes, so it was rewritten (inert: the Bay Area is
+      not scored yet). The FAA renamed `Not_In_CIFP.xlsx` to `Not_In_CIFP_2611.xlsx`, which crashed the builder:
+      now found by pattern; and a test pinned to Oakland's SLNT3 (withdrawn in 2611 with QUAKE2, SALAD5, SKYL1)
+      now holds its RULE instead. **On the 29th:** merge `faa-2611`, then `bay-area-deploy`, `web-deploy`,
+      `data-deploy` and the backend through a reviewed changeset (the Lambda's block changed), all Bill's, then
+      verify from the origin.
+- [ ] Each new FAA cycle (28 days; **2612 is effective 2026-11-26**):
       `build_us_flight_paths.py --fetch`, then `--write` on
       `build_bay_area_page.py`, `build_bayarea_map_data.py` and
       `build_bayarea_areas.py` (all three read the record, and all three
-      `--check`s are blocking), re-render `share.png` (`node
+      `--check`s are blocking), AND `measure_us_quiet_yardstick.py --write --region bayarea` (its block embeds
+      the routes; a `--check` WITHOUT `--region` checks New York only, which hid this on 18 Oct) and
+      `build_nyc_front.py --write` (`us-nyc-routes.json` records the cycle), re-render `share.png` (`node
       scripts/render_bay_area_share.mjs`) if a line moved, then deploy
       `bay-area-deploy`, `web-deploy` (the BAYAREA-MAP block) and
       `data-deploy`. The legend's cycle number is GENERATED since 2026-10-06
@@ -2327,6 +2412,26 @@ Open, Bill's (the choice among the six is made: v2, 2 Oct; the v2+v3 combination
 then lives (the same `index.html` runs in the native app, about twenty gates
 and 103 area-page links assume the map at `/`); build under "Sky Score" or
 after the rename. Audiences on every version follow the Constraints above.
+
+### Parked idea: Breathe London readings in the Chrome extension (raised by Bill, 2026-10-29)
+
+Checked on the laptop before the Deen Developers demo: the extension's two air rows ("Nitrogen dioxide", "Fine
+particles (PM2.5)", `extension/content/panel.js:779-780`) are DEFRA PCM only, the modelled 2024 annual mean on a
+1 km grid, read from `/v1/environment` (`backend/lambdas/score/app.py:9263-9296`). Breathe London reaches the
+website only (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`); nothing in `extension/` or the
+environment route reads it. **For later, not before a demo.**
+
+- **Shape:** a "measured nearby" row UNDER the modelled ones, never in place of them, so a listing shows the model
+  and, in London, the nearest real sensor. Same behaviour as the site: 5 km, never "none nearby", a stale sensor
+  file hidden, the exact OGL attribution linked. Display only, never scored (rule 1 of "Breathe London is
+  London-only" above).
+- **Route, to decide:** (a) a London-only `/v1/environment` field, absent elsewhere and documented so (rule 3),
+  which needs a reviewed SAM changeset and gives API callers the same reading; or (b) the extension fetches
+  `data/breathe-london-sensors.json` and reuses the site's `nearestSensor` logic, with no backend change but a
+  second copy of that logic (against "one pair of functions") and a manifest host permission. (a) is the
+  recommendation: one holder, and the extension stays a thin reader of `/v1/environment`.
+- **Also consider AURN** (`nearestMonitor`) in the same row, so cities outside London get an official monitor
+  rather than nothing.
 
 ### Parked idea: ask Sky Score on WhatsApp (raised by Bill, 2026-10-21)
 

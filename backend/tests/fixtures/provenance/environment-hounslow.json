@@ -1,0 +1,25 @@
+{
+ "location": {
+  "lat": 51.4675,
+  "lon": -0.3613,
+  "postcode": "TW3 1UQ"
+ },
+ "environment": {
+  "roadNoiseLdenDb": 57.1,
+  "roadNoiseWhoGuidelineDb": 53,
+  "roadNoiseSource": "DEFRA Strategic Noise Mapping Round 4, road Lden. Published 2022, maps 2021 - a COVID-affected year, so readings err quiet.",
+  "no2AnnualMeanUgm3": 19.1,
+  "no2WhoGuidelineUgm3": 10,
+  "pm25AnnualMeanUgm3": 8.9,
+  "pm25WhoGuidelineUgm3": 5,
+  "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid",
+  "aircraftNoiseLdenDb": 61.4,
+  "aircraftQuiet": 0.9,
+  "aircraftQuietCoverage": "measured",
+  "aircraftNoiseWhoGuidelineDb": 45,
+  "aircraftNoiseSource": "DEFRA Strategic Noise Mapping Round 4, aircraft Lden. Published 2022, maps 2021 - a COVID-affected year, so readings err quiet."
+ },
+ "notices": [],
+ "apiVersion": "1.0",
+ "methodologyVersion": "5.7"
+}

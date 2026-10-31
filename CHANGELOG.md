@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-10-31 - Planes overhead, a page per postcode district; areas compared in one table
+
+- **The area index at `/area/` now compares each city's council areas in one table**: the Sky Score, its five
+  parts and the average price, as each area's own page publishes them. A figure a page does not publish shows as a
+  dash. New York's table says its affordability and growth are not comparable with UK scores.
+
+- **464 postcode districts near the ten airports we count now have their own page** at
+  `/planes-overhead/<district>/`, with how many planes pass over each sector's postcodes on a day the airport flies
+  west, both ways, or east, in bands (100 or more a day, 10 to 99, under 10), and a box to check one postcode. An
+  index at `/planes-overhead/` lists them, and they have their own sitemap. Counted from community flight tracking,
+  January to August 2026, checked against the CAA's monthly totals.
+
+## 2026-10-30 - Book a demo
+
+- **Businesses can book a 30-minute demo call**, from the pricing page, the API page, beside the live API demo's
+  answer, and from the front page, under "Who it is for". We go through your own postcodes with you. Bookings are taken on Calendly, a US scheduling service: the
+  privacy policy (sections 2a and 4) says what it receives, and the dated notice is on the changes page.
+
+## 2026-10-29 - The Bay Area in the API; every figure says where it came from; newer crime figures
+
+- **The API now scores the San Francisco Bay Area's 50 cities**, asked by name (`city=bayarea&borough=Palo Alto`)
+  or by ZIP. A ZIP is scored as the city where half or more of its 2020 residents live, and the answer says the
+  shares ("71% of ZIP 94010's 2020 residents live in Burlingame; 26% in Hillsborough"); a ZIP with no such city is
+  not scored. The site keeps showing the Bay Area as facts, with no score, until its own release.
+- **The provenance and crime changes of 23 October are live**: every figure the API returns names its source,
+  method and period, and crime is on ONS's year to June 2026 (eight scores moved, each by 0.1).
+- **The FAA's routes for 29 October (cycle 2611).** Only Oakland's changed: three procedures re-issued under new
+  numbers (CNDEL6, HUSSH3, KATFH4) and four withdrawn (SALAD5, SKYL1, SLNT3, QUAKE2). No score moved.
+
 ## 2026-10-26 (evening) - Planes overhead, for every postcode we cover
 
 - **How many planes pass overhead**, in the answer for a postcode: on an average day of each kind, January to
@@ -56,6 +85,8 @@
 
 ## 2026-10-23 - Who is behind Sky Score; the answer first; a menu on phones
 
+- **Crime figures are now ONS's year to June 2026** (live 29 October), one quarter newer. Most areas
+  move by a few offences per 1,000 residents; eight overall scores change, each by 0.1.
 - **An About page** (`/about/`): who Sky Score is for, why it was built and by whom, the questions people have
   asked about it at talks, and the talks themselves. Linked from every page's top bar and footer.
 - **The front page opens on an answer**: a street in Kew under Heathrow's arrivals, labelled as an example, so
@@ -71,6 +102,14 @@
   your floor: road noise and traffic pollution can differ on an upper floor.
 - Fixed on the way: the front page's "Search a postcode" link now works while Find areas is open; the "How it
   works" page marks itself in the top bar; "Its figures" in an answer is now a full-size touch target.
+- **For developers and AI agents: DEFRA's and the Environment Agency's figures are called modelled, not measured.**
+  Their noise, air and flood maps are worked out by models, as How it works already told readers; the API page,
+  the API reference and the MCP server's environment tool had called them measured. The environment tool also no
+  longer promises a flood value it never returned. No field, value or score changes.
+- **For developers and AI agents: every figure the API returns says where it came from** (live 29 October).
+  A new `provenance` block names, for each value, the source that answered, how that source made it (modelled,
+  an official statistic, our own estimate...), and for what period; `sourceIndex` gives each source's publisher,
+  dataset and licence. Nothing already in a response changes.
 
 ## 2026-10-22 - How a score is worked out; fixes from the week's audit
 

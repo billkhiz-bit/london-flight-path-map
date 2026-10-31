@@ -27,3 +27,4 @@ User-agent: CCBot
 Disallow: /data/
 
 Sitemap: https://skyscore.co.uk/sitemap.xml
+Sitemap: https://skyscore.co.uk/sitemap-planes.xml
