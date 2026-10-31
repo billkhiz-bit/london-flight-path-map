@@ -298,11 +298,13 @@ that pass the CAA check (see "Never say"); for any other airport, pitch noise le
 
 ## Heathrow's consultation window (added 2026-10-30)
 
-Heathrow's third-runway consultation is reported to run **27 October to 22 December 2026** (a trade brief said late
-October; the dates come from a secondary source: confirm them on Heathrow's own consultation site before quoting).
-For those eight weeks, people under and around Heathrow will ask how many planes pass over them, and Sky Score is the
-one source that measures that per postcode. Bill's call (2026-10-30): concentrate marketing on Heathrow's footprint
-for this window. The plan itself is kept privately.
+Heathrow's third-runway consultation runs **27 October to 22 December 2026** (Heathrow's own consultation page, read
+2026-10-31: "From 27 October to 22 December 2026"; it shows no flight paths). For those eight weeks, people under and
+around Heathrow will ask how many planes pass over them. Sky Score is NOT the only source that counts them (corrected
+2026-10-31: a free site already counts flights passing within 2 km of an address from ADS-B tracks, and a paid
+"flight blight" score exists), so never say "only" or "first". Say what is ours: the count by kind of day (west vs
+east), checked against the CAA's monthly totals, beside the official noise, air and flood figures. Bill's call
+(2026-10-30): concentrate marketing on Heathrow's footprint for this window. The plan itself is kept privately.
 
 | Who | What they get | When |
 |---|---|---|
@@ -348,7 +350,7 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 | **DEFRA's Air Quality Grant has had no round since 2023-24**, whose ~GBP 6m was withheld after councils had been told they had won (LocalGov, 16 Apr 2024); the grant's own page says "nearly GBP 92 million" since 1997 | gov.uk Air Quality Grant collection page + LocalGov, read 2026-10-08 (NOT in the repo) | 2026-10-08 |
 | Aircraft noise cannot be a statutory nuisance (Environmental Protection Act 1990 s.79(6)), and boroughs do not write noise action plans (DEFRA and airport operators do): a council's aircraft-noise lever is planning and advocacy, not enforcement | legislation.gov.uk, read 2026-10-08 | 2026-10-08 |
 | **Kew, TW9 3PZ: planes overhead from Heathrow, an average day of each kind, January to August 2026:** flying west on 56% of days, **310 a day**; both ways on 15%, **168**; flying east on 29%, **4**. Quote it with its period and the planes feature's credit line, never as a typical day | the live front page's example answer (`js/planes.mjs` from `data/planes/`), read 2026-10-30 | 2026-10-30 |
-| Heathrow's third-runway consultation is reported to run 27 October to 22 December 2026 | CAPA (29 Sep 2026) for the launch; the dates from a secondary source (NOT in the repo: confirm on Heathrow's site before quoting) | 2026-10-30 |
+| Heathrow's third-runway consultation runs 27 October to 22 December 2026 ("All feedback must be received by 22 December 2026") | Heathrow's own consultation page, heathrow.com/expansion/consultation (read 2026-10-31; not in the repo) | 2026-10-31 |
 
 ## Never say
 

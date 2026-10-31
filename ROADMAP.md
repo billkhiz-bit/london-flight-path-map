@@ -19,6 +19,23 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-10-31)
+>
+> **The planes overhead district pages are MERGED, not yet live** (`40acdad`, Bill's yes to the preview; preflight
+> PASS on the merge; pushed). The deploy (runbook Part D step 2: `planes-pages-deploy`, THEN `meta-deploy`) was
+> refused by the session's auto-mode classifier as a production deploy, so it waits for Bill to run it or allow it.
+> Until it runs, live `robots.txt` stays without the second Sitemap line, as it should: never `meta-deploy` first.
+> After it: Part D step 3's live checks, then Bill submits `sitemap-planes.xml` in Search Console.
+> **Also 31 Oct:** the front page's booking links cut to one (`8f63ab5`, live, 13/13); the weekly audit
+> (`AUDIT_REPORT_2026-10-31.md`: 0 critical, 0 important, 6 minor); its M-1 (the FAA row read the OLDEST listed cycle,
+> so it could not go red on a changeover day; proven red, fixed) and M-6 (html-validate now covers talks/,
+> open-data/, bay-area/, every area page, and the planes pages in their own stage) fixed. M-2 (the public demo key
+> used 3,467 of 5,000 calls in October) was OUR PREFLIGHT: ~13 keyed `/v1/regions` calls per run through
+> `tests/stub-live-api.mjs`, now sent on without the key; real use ~9 lookups a day. Also: Heathrow's page confirms
+> 27 Oct-22 Dec, and a free site already counts flights per address (OUTREACH_TARGETS: never say "only"). `nhs-all-cities` (with `log-5xx`) re-rehearsed on today's master: code merges clean, three PROSE
+> conflicts (CHANGELOG, ROADMAP, `docs/lessons/in-progress-measurements.md`): keep both sides. It ships as one
+> reviewed changeset, merged at deploy time so master's backend keeps matching what is live.
+>
 > ## START HERE (2026-10-29)
 >
 > **Deploy day DONE: Parts A-C of Desktop `deploy-runbook-2026-10-29.md` LIVE, each verified from the origin.**
