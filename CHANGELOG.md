@@ -1,6 +1,10 @@
 # Changelog
 
-## 2026-10-31 - Planes overhead, a page per postcode district
+## 2026-10-31 - Planes overhead, a page per postcode district; areas compared in one table
+
+- **The area index at `/area/` now compares each city's council areas in one table**: the Sky Score, its five
+  parts and the average price, as each area's own page publishes them. A figure a page does not publish shows as a
+  dash. New York's table says its affordability and growth are not comparable with UK scores.
 
 - **464 postcode districts near the ten airports we count now have their own page** at
   `/planes-overhead/<district>/`, with how many planes pass over each sector's postcodes on a day the airport flies

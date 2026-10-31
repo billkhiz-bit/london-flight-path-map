@@ -137,7 +137,8 @@ Or just describe what you need, I have full context of this project.
   re-projection; BT postcodes are Irish Grid. Loaders UPSERT, so a re-placing needs
   `remove_lost_readings.py --apply`.
 - **A data roll is done only when every reader of the file has run** (HANDOVER s0 step 7). Area pages BAKE
-  scores: rerun `build_area_pages.py --write` after any vintage roll.
+  scores (the `/area/` index's tables too): rerun `build_area_pages.py --write` after any vintage roll; on Windows
+  `git add area/` and run it again, or the sitemap dates every page today.
 - **Quarterly crime roll** (first done 2026-10-23): set `EDITION` + `XLSX_FILE` in `refresh_crime_from_ons.py`
   (copied from the ONS page, never its `current` folder), then `--write-lambda --all`, `--write --all`,
   `--check --all`, `build_area_pages.py --write`, and re-derive METHODOLOGY s6 (`check_worked_example.py`);
