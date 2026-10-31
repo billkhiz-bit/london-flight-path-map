@@ -293,8 +293,34 @@ new starts until one invoice is paid.
 | Policy | Aviation Environment Federation, Sustainable Aviation (noise road-map), CAA ERCD, HACAN, GACC | Plain-English noise facts per area, from official sources |
 | Lowest | Manufacturers: Airbus, Rolls-Royce, Boeing, CFM (RISE open fan), ZeroAvia | Research or sponsorship at most: they measure at certification points and do not buy street-level estimates |
 
-The strongest later hook for the first two rows is **how often planes pass**, which "Never say" bars until an
-airport passes the CAA check; until then, pitch noise levels and route geometry only.
+The strongest hook for the first two rows is **how often planes pass**: live since 2026-10-27 for the ten airports
+that pass the CAA check (see "Never say"); for any other airport, pitch noise levels and route geometry only.
+
+## Heathrow's consultation window (added 2026-10-30)
+
+Heathrow's third-runway consultation is reported to run **27 October to 22 December 2026** (a trade brief said late
+October; the dates come from a secondary source: confirm them on Heathrow's own consultation site before quoting).
+For those eight weeks, people under and around Heathrow will ask how many planes pass over them, and Sky Score is the
+one source that measures that per postcode. Bill's call (2026-10-30): concentrate marketing on Heathrow's footprint
+for this window. The plan itself is kept privately.
+
+| Who | What they get | When |
+|---|---|---|
+| Local papers covering Heathrow's footprint (Reach's MyLondon, Newsquest's Richmond & Twickenham Times, the Evening Standard's property pages) | One borough's list: its districts with the most planes overhead, and its quietest | After the ICO fee and DKIM; the loud version after the rename |
+| Residents' associations and amenity societies in Richmond, Hounslow, Ealing, Hammersmith and Fulham, Wandsworth and Hillingdon | A free consultation pack: that borough's measured planes overhead, noise and air, every figure with its source | After the ICO fee and DKIM |
+| Journalists' requests (#journorequest on X) about property, noise or air | A sourced answer from the data | After the ICO fee and DKIM |
+| Buying agents and relocation firms covering south-west London | The Book a demo link and `/badge` | Warm contacts only until the rename (rows 5-10) |
+| London property video creators | The figures, and a clip for their own videos | After the rename |
+
+**Rules for this window:**
+- Show TODAY's measured planes and the routes in force. Third-runway routes are not published: never draw, estimate
+  or imply them.
+- The same pack for everyone. Campaign groups stay under "Avoid for now" above: the pack is public, so they may use
+  it like anyone, but they are not approached.
+- Link the consultation only through `HAVE_YOUR_SAY`, and only after its page has been checked live.
+- Plane counts only as the planes feature states them (an average day of each kind, January to August 2026, at an
+  airport that passes the CAA check), credited "counted from community flight tracking, checked against the CAA's
+  monthly totals".
 
 ## Facts safe to quote
 
@@ -321,11 +347,16 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 | **Mayor's Air Quality Fund Round 5 is open to London boroughs: GBP 6m, closing 5pm Friday 13 November 2026.** Boroughs apply, not community groups | london.gov.uk MAQF page, read 2026-10-08 (NOT in the repo: re-read before quoting) | 2026-10-08 |
 | **DEFRA's Air Quality Grant has had no round since 2023-24**, whose ~GBP 6m was withheld after councils had been told they had won (LocalGov, 16 Apr 2024); the grant's own page says "nearly GBP 92 million" since 1997 | gov.uk Air Quality Grant collection page + LocalGov, read 2026-10-08 (NOT in the repo) | 2026-10-08 |
 | Aircraft noise cannot be a statutory nuisance (Environmental Protection Act 1990 s.79(6)), and boroughs do not write noise action plans (DEFRA and airport operators do): a council's aircraft-noise lever is planning and advocacy, not enforcement | legislation.gov.uk, read 2026-10-08 | 2026-10-08 |
+| **Kew, TW9 3PZ: planes overhead from Heathrow, an average day of each kind, January to August 2026:** flying west on 56% of days, **310 a day**; both ways on 15%, **168**; flying east on 29%, **4**. Quote it with its period and the planes feature's credit line, never as a typical day | the live front page's example answer (`js/planes.mjs` from `data/planes/`), read 2026-10-30 | 2026-10-30 |
+| Heathrow's third-runway consultation is reported to run 27 October to 22 December 2026 | CAPA (29 Sep 2026) for the launch; the dates from a secondary source (NOT in the repo: confirm on Heathrow's site before quoting) | 2026-10-30 |
 
 ## Never say
 
-- **"How often planes fly over."** Sky Score scores LOUDNESS (Lden, an average).
-  Frequency is N65, which is not measured.
+- **"How often planes fly over"**, except as the planes feature states it: since
+  2026-10-27, for the ten airports that pass the CAA check, an average day of each
+  kind (January to August 2026), from `data/planes/`. Never for another airport, and
+  never a figure that is not in that data. Quiet Skies still scores LOUDNESS (Lden,
+  an average), and N65 is not published.
 - **Any accuracy figure as national.** The 1.879 error describes postcodes near
   airports, the only places DEFRA published a comparison.
 - **"AI-powered."** The product is data-first; the consumer site uses no AI.
