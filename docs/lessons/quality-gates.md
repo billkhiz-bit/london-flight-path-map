@@ -85,3 +85,17 @@ Same run: `tests/approach-strip.mjs` asserted "all 8 section links are pills" an
 a ninth section (planes overhead). A count of 8 would also have PASSED a ninth section added without its link (a
 missing pill keeps the count at 8). It now asserts the SET: one pill for every `section[id]` after the strip, in page
 order; proven red by removing the planes pill.
+
+## The preflight spent the public demo key through an "open" route (2026-10-31, audit M-2)
+
+The demo key used 3,467 of its 5,000 calls in October, which read as visitors about to exhaust it. The score
+Lambda's `[API_REQUEST]` log (route, status, key ID only) said otherwise: of the key's 1,724 calls in the 14 days to
+31 Oct, 1,600 were `/v1/regions` and 124 `/v1/score`, and the regions calls came in bursts of 8 and 5 per 10 minutes at
+each preflight's browser stages (23:30/23:50 on 30 Oct after preflight-8, 15:20/15:40 on 31 Oct during preflight-D),
+never between 01:00 and 11:00. `tests/stub-live-api.mjs` (2026-09-11) answered only `/v1/score`, on the premise that
+`/v1/regions` is unauthenticated and "costs nothing"; but `score-demo/status.html` sends `X-Api-Key` on its regions
+probe too, and API Gateway counts a keyed request against the key's usage plan whatever the route (the usage totals
+matched the log counts WITH the regions calls). The stub now sends every non-score request to the API host on without
+the key (`route.fallback` with the header removed; the route is open, so the page renders the same answer). Proof is
+the same log: the demo key's calls during the next full preflight, against 13 per run before. Lesson: an "it costs
+nothing" premise is a measurement to repeat, not a fact to keep.
