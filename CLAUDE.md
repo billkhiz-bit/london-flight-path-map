@@ -148,8 +148,10 @@ Or just describe what you need, I have full context of this project.
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.
 - **N65 publishes nothing until `scripts/n65_gate.py` passes on EASA's FULL database** (Bill, 2026-10-27: the
-  CAA's Heathrow and Gatwick contours, like for like). EASA's noise tables live only in gitignored `data/n65/`:
-  never in the repo, never a per-type figure anywhere (their terms).
+  CAA's Heathrow and Gatwick contours, like for like). EASA's noise tables live only in gitignored `data/n65/` (v2.3)
+  and OUTSIDE the repo (`%USERPROFILE%\data\easa-anp-v9`, the 14 newer aircraft EASA sent 29 Oct): never in the repo,
+  never a per-type figure anywhere (their terms). Aircraft types resolve by `scripts/n65_types.py` (own data, then the
+  engine from the registration, then the louder candidate by level); the engine source is still Bill's to pick.
 - **National anchors are per POOL** (`pool_of(city)` / site `poolOf`: a city's `pool`, else its currency;
   one per US metro: decision 2 of 2026-10-16, built 2026-10-18): never pool USD with GBP, nor the Bay Area
   with New York. The site needs `BACKEND_ONLY_PRICES` /
