@@ -260,7 +260,7 @@ districts against the TRACKED manifest at the origin (red before the first deplo
 with reasons: a late planes fetch from an earlier search fills only a CLOSED answer (render() is the only thing
 that opens it, and clears the block first); "% of days" rounds each kind on its own, so three can sum to 99 or 101.
 
-### THE DISTRICT PAGES (2026-10-28, built, not live)
+### THE DISTRICT PAGES (2026-10-28, built; LIVE 2026-10-31)
 
 Step 1 of the marketing plan: `/planes-overhead/<district>/`, one static page per postcode district, from
 `scripts/build_planes_pages.py`, because robots.txt keeps crawlers out of `/data/` and the front page tells one
@@ -303,3 +303,11 @@ pages. Red before the first deploy, as the planes-file pass was. Proven: live 25
 gap 0; an edited index DRIFT; a dropped sitemap URL "gap 1". Thursday's runbook carries it as an OPTIONAL Part D
 (merge rehearsed on A, B and C: clean). NOT YET: links from the area pages (after Thursday: Part C regenerates
 them), and Search Console (Bill's). Ships after Thursday's three changesets and Bill's review of the preview.
+LIVE 2026-10-31 (merge `40acdad`; Bill ran `planes-pages-deploy` then `meta-deploy`, because the session's auto-mode
+classifier refuses production deploys): 465 pages + `sitemap-planes.xml` (465 URLs), robots.txt names both sitemaps;
+drift 25 of 25 pages, gap 0; in a browser at 390 and 1366 px no sideways scroll, TW9 1 reads 66 / 69 / 25 on a west
+day, and the postcode box opens the front page's answer (TW9 3PZ: 310 / 168). The drift check's FIRST post-deploy
+run read 0 of 25 for both planes passes: false, because the deploy shell had exported `MSYS_NO_PATHCONV=1`, so
+`curl.exe -o /tmp/x` wrote `C:\tmp\x` while `md5sum` hashed the empty `/tmp/x` (the 30 Oct "transient" planes red
+was the same; stray files found in `C:\tmp`). The script now unsets it (proven: 0 of 25 before, 25 of 25 after,
+under the same export). Still NOT YET: links from the area pages; Search Console (Bill's).

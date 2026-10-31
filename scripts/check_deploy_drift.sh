@@ -30,6 +30,13 @@
 
 set -u
 
+# PATH TRANSLATION BACK ON (2026-10-31). The deploy commands export MSYS_NO_PATHCONV=1 for the AWS CLI; inherited
+# here, it stops Git Bash translating /tmp/... for Windows programs, so curl.exe -o and python.exe wrote and read
+# C:\tmp\tmp.X while md5sum read the real, empty /tmp/tmp.X: every sampled planes file and page read as DRIFT (0 of
+# 25, twice, each run straight after a deploy: 30 Oct and 31 Oct; the stray downloads were found in C:\tmp). Nothing
+# here calls the AWS CLI, so translation is switched back on for the whole check.
+unset MSYS_NO_PATHCONV
+
 BASE="${SMOKE_BASE:-https://d1oe4ftwutjpf.cloudfront.net}"
 
 # "<local path>|<url path>"

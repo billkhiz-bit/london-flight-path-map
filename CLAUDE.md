@@ -236,7 +236,9 @@ Or just describe what you need, I have full context of this project.
 
 ### Windows, shell and tools
 - **`export MSYS_NO_PATHCONV=1`** before any AWS command with a `/`-leading argument (CloudFront invalidation
-  paths, `/aws/lambda/*`), or Git Bash rewrites it to a Windows path.
+  paths, `/aws/lambda/*`), or Git Bash rewrites it to a Windows path. It ALSO stops `/tmp/...` reaching Windows
+  programs translated (`curl.exe -o /tmp/x` writes `C:\tmp\x`): a script that hands temp paths to curl or python
+  must `unset MSYS_NO_PATHCONV`, as `check_deploy_drift.sh` now does (2026-10-31: a false "0 of 25" after a deploy).
 - **No user folder in a tracked file**: write `%USERPROFILE%` (prose, cmd), `~` (Git Bash, unquoted) or
   `$env:USERPROFILE` (PowerShell); `tests/test_no_user_paths.py` catches any name (audit M-5, 2026-10-23).
 - **`make` is not on PATH**: `python scripts/make.py <target>` runs any Makefile target (`--dry-run` to see it).
