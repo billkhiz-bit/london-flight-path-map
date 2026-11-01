@@ -70,6 +70,24 @@ previously got a shell, and every fact stays in the served HTML.
   with LF over the CRLF checkout, `git status` then lists all of them as modified though `git diff` shows
   nothing, and `last_changed()` reads `git status`. Run `git add area/` (the unchanged pages stage as no
   change), then `--write` again: only pages whose content changed are dated today (found 2026-10-25).
+- **Planes overhead links (2026-11-01).** Each borough page links the `/planes-overhead/<district>/` pages of the
+  districts it covers: `build_planes_pages.py` writes the TRACKED `data/planes-districts-by-council.json`
+  (`council_index`: ONS council code -> districts with a page holding a tenth or more of their measured postcodes
+  there; names only, no figure, so it can be tracked though the planes pages are not), and `build_area_pages.py`
+  reads it (`planes_section`). 72 of 102 pages gained the block (Hounslow: TW3, TW4, TW5, TW7, TW8, TW13, TW14, UB2,
+  W4); a borough with none gets no heading and an unchanged page. The trap it closed: `--check` compared only the
+  INDEX, and `tests/area-page-freshness.mjs` compares SCORES with the live API, so a page's links could lag a planes
+  roll (a link to a removed page = a 404) with every gate green. `--check` now compares every page byte for byte
+  (CRLF-blind; all 102 matched before the change), proven red twice: no index (a crash, by design) and an index
+  the pages lag (72 named). After a planes roll: planes `--write`, area `--write`, then `planes-pages-deploy` BEFORE
+  `area-deploy` (the links must land on live pages), `meta-deploy` last. `tests/test_area_planes_links.py`.
+- **A merged page was dated by its BRANCH commit (found 2026-11-01).** `last_changed()` read `git log
+  --name-only`, which lists no files for a merge, so `/area/`'s comparison tables (written on a branch 26 Oct,
+  merged and live 31 Oct) took 26 Oct, and `/bay-area/` 18 Oct for release 2 (merged 29 Oct). It now reads
+  `--first-parent -m` (master's own history, each merge listing what it brought): the day a `--no-ff` merge
+  reached master. A FAST-FORWARD still dates by commit (git does not record when a fast-forward happened), so for
+  a page whose date matters, merge with `--no-ff` (found by the 1 Nov code review).
+  Proven red on a throwaway repo (`tests/test_area_planes_links.py`: 26 Oct on the old line, 31 Oct on the new).
 
 - **They BAKE their scores**, so a data vintage silently puts them out of step
   with `/v1/score`. `tests/area-page-freshness.mjs` is blocking and compares all

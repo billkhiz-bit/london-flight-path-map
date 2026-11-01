@@ -41,13 +41,19 @@ them would publish them before Bill's review and before the site, which his 26 O
   sitemap-planes.xml                  listed in robots.txt beside sitemap.xml (one writer per file)
   data/planes-pages-manifest.json     TRACKED: each page's bytes, md5 (S3's ETag) and the day its content last
                                       changed, which dates the sitemap (git cannot date an ignored file)
+  data/planes-districts-by-council.json  TRACKED (2026-11-01): which districts each council's AREA page links to
+                                      (council_index); names only, no figure
 
-AFTER A PLANES ROLL, RERUN THIS (the pages bake the figures, as area pages bake scores)
+AFTER A PLANES ROLL, RERUN THIS (the pages bake the figures, as area pages bake scores; the area pages bake the
+links, so a district gaining or losing its page moves them too: build_area_pages.py --check reds until rerun)
 
     python scripts/build_planes_overhead.py --write
     python scripts/build_planes_pages.py --write
+    python scripts/build_area_pages.py --write
     python scripts/make.py planes-deploy
     python scripts/make.py planes-pages-deploy
+    python scripts/make.py area-deploy         # after the pages it links to
+    python scripts/make.py meta-deploy         # the sitemaps, last
 
 USAGE
     python scripts/build_planes_pages.py --write
@@ -88,6 +94,10 @@ COVERED_FROM = 0.5  # share of the district's live postcodes the covered council
 LARGE_UNDER = 0.5  # share of its live postcodes that may be large users
 MIN_POSTCODES = 20  # measured postcodes, at least
 NEARBY = 8  # districts with a page, nearest first, linked from each page
+# An area page links a district's page when its council holds this share or more of the district's measured
+# postcodes (agreed with Bill 2026-10-31): a district split across a boundary is linked from both sides, one that
+# only grazes a council is not.
+LINK_FROM = 0.10
 # A postcode the files do not list under an airport was shown under 1 a day from it on every kind of day (0 or
 # '<1': build_planes_overhead.reaches_one). The files cannot tell the two apart, so neither can a page.
 UNLISTED = '<1'
@@ -613,6 +623,47 @@ def build(meta, files, ctx, totals, names, order):
     return pages, {d: why for d, why in reasons.items() if why}
 
 
+COUNCILS = REPO / 'data' / 'planes-districts-by-council.json'
+
+
+def council_index(with_page: list[str], ctx: dict) -> dict:
+    """The area pages' "Planes overhead" links: {ONS council code: [districts with a page, postcode order]}.
+
+    A district is listed under every council holding LINK_FROM or more of its measured postcodes. Keyed on the ONS
+    code, never a name (names have failed this repo five times). It holds names only, no figure, so it is TRACKED:
+    the area pages are tracked and must build on a clone without the tracks, and the list of pages is public already
+    (sitemap-planes.xml). scripts/build_area_pages.py reads it; its --check reds an area page that lags it.
+    """
+    by: dict[str, list[str]] = {}
+    for d in sorted(with_page, key=pc_key):
+        lads = ctx[d]['lads']
+        total = sum(lads.values())
+        for lad, n in sorted(lads.items()):
+            if n >= LINK_FROM * total:
+                by.setdefault(lad, []).append(d)
+    return {
+        'about': ('Written by scripts/build_planes_pages.py --write, read by scripts/build_area_pages.py: the '
+                  'postcode districts with a /planes-overhead/ page, under each council (ONS code) holding '
+                  'link_from or more of their measured postcodes. Never edit by hand.'),
+        'link_from': LINK_FROM,
+        'councils': {lad: by[lad] for lad in sorted(by)},
+    }
+
+
+def councils_text(index: dict) -> str:
+    return json.dumps(index, indent=1) + '\n'
+
+
+def check_councils(index: dict, path: Path = COUNCILS) -> list[str]:
+    """[] when the tracked file says what this build would write (read as JSON, so a CRLF checkout is no change)."""
+    try:
+        recorded = json.loads(path.read_text(encoding='utf-8'))
+    except FileNotFoundError:
+        return [f'missing: data/{path.name}']
+    return [] if recorded == index else [f'{path.name} does not match the built pages: run --write, then '
+                                         'scripts/build_area_pages.py --write (the area pages link from it)']
+
+
 NEEDS = ((PLANES / 'airports.json', 'scripts/build_planes_overhead.py --write'),
          (AVERAGES, 'scripts/adsb_postcode_averages.py'), (NSPL, 'the NSPL roll (HANDOVER)'))
 
@@ -719,12 +770,17 @@ def main() -> int:
         if not (a.write or a.check):
             return 0
     pages, without = build(meta, files, ctx, totals, names, order)
-    print(f'{len(pages) - 1} district pages and the index; {len(without)} districts without a page')
+    # From the pages this run WRITES (each at planes-overhead/<district, lower case>/), so an area page can never
+    # link a district page that is not built, whatever build() comes to filter.
+    index = council_index([path.split('/')[1].upper() for path in pages if path != INDEX_PATH], ctx)
+    print(f'{len(pages) - 1} district pages and the index; {len(without)} districts without a page; '
+          f"{len(index['councils'])} councils link to them")
     if a.write:
         write(pages)
-        print(f'wrote {len(pages)} pages and {SITEMAP.name}')
+        COUNCILS.write_text(councils_text(index), encoding='utf-8', newline='\n')
+        print(f'wrote {len(pages)} pages, {SITEMAP.name} and {COUNCILS.name}')
     if a.check:
-        problems = check(pages)
+        problems = check(pages) + check_councils(index)
         print('\n'.join(problems) if problems else 'OK')
         if problems:
             return 1

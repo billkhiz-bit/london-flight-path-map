@@ -217,3 +217,41 @@ def test_a_sitemap_date_is_the_day_its_page_last_changed(tmp_path):
     assert locs == ['https://skyscore.co.uk/planes-overhead/', 'https://skyscore.co.uk/planes-overhead/tw9/',
                     'https://skyscore.co.uk/planes-overhead/tw10/']
     assert '/tw9/</loc><lastmod>2026-10-28<' in sitemap and '/tw10/</loc><lastmod>2026-11-15<' in sitemap
+
+
+# ----------------------------------------------------------------- the area pages' links (2026-11-01)
+
+def _lads(**shares):
+    return {'lads': Counter(shares), 'city': 'london', 'at': (0.0, 0.0)}
+
+
+def test_a_district_is_linked_from_each_council_holding_a_tenth_of_it():
+    ctx = {'TW4': _lads(E09000018=85, E09000027=15),  # split: linked from both sides
+           'TW3': _lads(E09000018=100),
+           'UB2': _lads(E09000009=95, E09000018=5)}   # grazes Hounslow: linked from Ealing only
+    index = bpp.council_index(['TW4', 'TW3', 'UB2'], ctx)
+    assert index['councils'] == {'E09000009': ['UB2'], 'E09000018': ['TW3', 'TW4'], 'E09000027': ['TW4']}
+    assert index['link_from'] == bpp.LINK_FROM == 0.10
+
+
+def test_a_tenth_exactly_is_linked_and_just_under_is_not():
+    on = bpp.council_index(['TW1'], {'TW1': _lads(E09000027=90, E09000018=10)})['councils']
+    under = bpp.council_index(['TW1'], {'TW1': _lads(E09000027=91, E09000018=9)})['councils']
+    assert on == {'E09000018': ['TW1'], 'E09000027': ['TW1']}
+    assert under == {'E09000027': ['TW1']}
+
+
+def test_only_districts_with_a_page_are_linked_in_postcode_order():
+    ctx = {d: _lads(E09000027=50) for d in ('TW10', 'TW9', 'TW2', 'TW15')}
+    index = bpp.council_index(['TW10', 'TW9', 'TW2'], ctx)  # TW15 has no page
+    assert index['councils'] == {'E09000027': ['TW2', 'TW9', 'TW10']}
+
+
+def test_check_councils_finds_a_missing_or_stale_index_and_ignores_line_endings(tmp_path):
+    index = bpp.council_index(['TW9'], {'TW9': _lads(E09000027=40)})
+    path = tmp_path / 'planes-districts-by-council.json'
+    assert bpp.check_councils(index, path) == ['missing: data/planes-districts-by-council.json']
+    path.write_bytes(bpp.councils_text(index).replace('\n', '\r\n').encode('utf-8'))  # a Windows checkout
+    assert bpp.check_councils(index, path) == []
+    moved = bpp.council_index(['TW9', 'TW10'], {'TW9': _lads(E09000027=40), 'TW10': _lads(E09000027=40)})
+    assert 'does not match the built pages' in bpp.check_councils(moved, path)[0]

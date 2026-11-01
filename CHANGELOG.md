@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-11-01 - Each area page links its planes overhead pages; the 2021 noise map measured against 2025
+
+- **Each area page now links the planes overhead pages of the postcode districts it covers**: 72 of the 102 areas
+  (Hounslow, for example, links TW3, TW4, TW5, TW7, TW8, TW13, TW14, UB2 and W4). An area with no such page shows
+  no section.
+- **The COVID-year comparison now uses the CAA's 2025 Heathrow contours** (ERCD Report 2601): DEFRA's 2021 map puts
+  the 55 dB Lden area at 75.6 km², the CAA's model of 2025 at 142.4 km² (148.4 for 2024), so DEFRA's map still shows
+  about half a normal year's footprint. Updated on the full map, the API page, the methodology and the street
+  report. No score changed.
+- **The sitemap dates each page by the day its change went live**: two pages had been dated by the day the change
+  was written.
+
 ## 2026-10-31 - Planes overhead, a page per postcode district; areas compared in one table
 
 - **The area index at `/area/` now compares each city's council areas in one table**: the Sky Score, its five

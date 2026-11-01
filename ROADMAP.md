@@ -19,7 +19,46 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
-> ## START HERE (2026-10-31)
+> ## START HERE (2026-11-01)
+>
+> **The 31 Oct list, worked 1 Nov:** (1) **Search engines: DONE.** Google Search Console's Domain property for
+> skyscore.co.uk is VERIFIED by one DNS TXT at `@` in Cloudflare (keep it; deleting it unverifies); both sitemaps read
+> (465 + 119 pages); indexing requested for `/planes-overhead/`, `/area/` and seven Heathrow drop-in districts (UB7,
+> TW14, TW10, UB1, TW2, TW5, TW3; `/` and W5 were already indexed; about 10 requests a day are allowed). Bing Webmaster
+> Tools imported it from Search Console (skyscore.co.uk only), both sitemaps submitted. Read the coverage ~8 Nov.
+> (2) **The CAA 2025 roll: BUILT, not deployed.** ERCD 2601 Table 12 (55 dB Lden 142.4 km2; 2024 was 148.4) is in
+> `measure_covid_understatement.py`; the JSON's CAA keys are now year-free (`caa_km2`, `caa_year`) and its one reader
+> (`js/street_report.mjs`) drops the comparison when they are absent, so DEPLOY `web-deploy` BEFORE `data-deploy`
+> (the old module would print "undefined" against the new JSON). Map page, `/api/`, METHODOLOGY (s4 table +
+> changelog), OUTREACH_TARGETS, comments rolled; no backend deploy (a comment only). (3) **Area pages -> planes
+> district pages: BUILT, not deployed.** `build_planes_pages.py` writes the TRACKED `data/planes-districts-by-council.json`
+> (ONS code -> districts with a page holding a tenth or more of their postcodes there); `build_area_pages.py` adds a
+> "Planes overhead" block of links to 72 of 102 pages (no figure; none = no heading, page unchanged), and its
+> `--check` now compares EVERY page (it compared the index only). Also fixed: the sitemap dated a merged page by its
+> branch commit (`/area/` read 26 Oct for 31 Oct's tables; now `--first-parent -m`). Deploy: `area-deploy` then
+> `meta-deploy` (the district pages are live already). Nothing else rolls yet: DEFRA's PCM 2025 is not on uk-air
+> (31 Oct) and the CAA's September airport data is not out.
+>
+> **DEPLOY ORDER for all of 1 Nov, after a full preflight PASS:** `web-deploy` (the new `street_report.mjs` + the
+> map and `/api/` text; it uploads all of `js/`), THEN `data-deploy` (the new `covid-understatement.json`),
+> `area-deploy`, `meta-deploy`; then the drift check and a browser look at an area page (390 + 1366).
+> The 1 Nov preflight was killed by Claude Code for low memory (a game was running), so none of this is live yet.
+> **A code review (1 Nov) found what the roll missed, all FIXED:** seven airports' map legends still said "where the
+> CAA also modelled 2024" and the street report's footer credited "ERCD Report 2501" (no figure in either, so the
+> number-only gate passed); `measure_covid_understatement.py --check` now also reds any other CAA year or report
+> number on the served pages (proven red on both). Also: the area `--check` reds a page left on disk that is no
+> longer built; the council index is read from the pages actually written; the date fix covers `--no-ff` merges only
+> (a fast-forward keeps commit dates: say so). Left as is: `web-deploy-all` runs `data` before `web`, so use the
+> single targets in the order above.
+> **AIRAC 2026-10-29 is out** (we serve 2026-10-01). Fetched into the scratchpad and compared on 1 Nov: no procedure
+> or geometry changed, only Cardiff runway 12's RNP chart link (graphic 511875 -> 525382). The roll moves
+> `build_flight_paths.AIRAC`, `data/flight-procedures.json` and the score Lambda's `PROVENANCE_PERIODS['uk-aip']`,
+> so it needs a reviewed SAM changeset (Bill's go): bundle it with `nhs-all-cities` + `log-5xx`. The next cycle is
+> 2026-11-26.
+> **N65 (branch `n65`, pushed):** step 3 committed (`e8ec1e1`, `31c506f`): aircraft types by Bill's rules, EASA's v9
+> (14 newer aircraft, kept outside the repo), engines from the FAA register and a checked airline-and-type table;
+> Heathrow's "assume the louder engine" share 62.5% -> 13.0%. Bill's to send: an EASA follow-up and a CAA G-INFO
+> consent question (both drafted on his Desktop). Next: step 4, thrust.
 >
 > **The planes overhead district pages are LIVE** (merge `40acdad`; the session's auto-mode classifier refused the
 > deploy, so Bill ran `planes-pages-deploy` then `meta-deploy`, 19:30 UTC). Verified: 465 pages and a 465-URL
