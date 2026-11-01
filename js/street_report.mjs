@@ -124,8 +124,14 @@ export function monitorLine(m) {
 // site turns scripts away). An airport joins only when its pages have been checked: a wrong link is a false
 // claim (the full map's WebTrak lesson, 2026-08-24). Never imply a complaint moves a route: routes change
 // through the CAA's airspace change process, which Heathrow itself says.
+// A link with `until` (YYYY-MM-DD, its last open day) shows to the end of that day (UTC, UK time in winter) and
+// drops out by itself after it, so a closed consultation is never offered. Heathrow's expansion consultation runs
+// "From 27 October to 22 December 2026" (checked live 2026-11-01: 200 + page text in Chrome; its response form
+// turns scripts away, so the link is the consultation page, which carries every way to respond). Neutral: a
+// signpost to have a say, never a view on expansion.
 export const HAVE_YOUR_SAY = {
   LHR: [
+    { text: "Heathrow's expansion consultation, open until 22 December", href: 'https://www.heathrow.com/expansion/consultation', until: '2026-12-22' },
     { text: 'contact Heathrow about noise', href: 'https://www.heathrow.com/company/local-community/noise/what-you-can-do/contact-us-about-noise' },
     { text: 'find a flight on WebTrak', href: 'https://webtrak.emsbk.com/lhr6' },
   ],
@@ -140,15 +146,19 @@ export const AIRSPACE_CHANGE = { text: "the CAA's airspace change portal", href:
  * departures, among the airports in scope), else the nearest airport in scope; null when that airport's pages
  * are not verified, never another airport's. Picking the nearest AIRPORT sent Battersea, 1.1 km from Heathrow's
  * 27L approach and nearer London City's runway, to London City's pages (audit 2026-10-22, I-6).
+ * `today` decides which dated links (`until`) are still open.
  */
-export function haveYourSay(routes) {
+export function haveYourSay(routes, today = new Date()) {
+  const day = today.toISOString().slice(0, 10);
   const scope = (routes && routes.scope) || [];
   const inScope = new Set(scope.map((a) => a.code));
   const nearestRoute = [...((routes && routes.finals) || []), ...((routes && routes.departures) || [])]
     .filter((r) => inScope.has(r.code))
     .sort((a, b) => a.dist - b.dist)[0];
   const code = nearestRoute ? nearestRoute.code : scope[0] && scope[0].code;
-  return code && Object.hasOwn(HAVE_YOUR_SAY, code) ? { code, links: HAVE_YOUR_SAY[code], change: AIRSPACE_CHANGE } : null;
+  if (!code || !Object.hasOwn(HAVE_YOUR_SAY, code)) return null;
+  const links = HAVE_YOUR_SAY[code].filter((l) => !l.until || day <= l.until);
+  return links.length ? { code, links, change: AIRSPACE_CHANGE } : null;
 }
 /** The correction address, as the full map's "Spotted something wrong?" has used since before 2026-10-13. */
 export const correctionHref = (place) => `mailto:support@skyscore.co.uk?subject=${encodeURIComponent(`Correction: ${place}`)}`;

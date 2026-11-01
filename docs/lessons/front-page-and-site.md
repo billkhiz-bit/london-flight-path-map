@@ -266,6 +266,12 @@
 >   browser since its site turns scripts away) plus `AIRSPACE_CHANGE`; `haveYourSay(scope)` answers for the nearest
 >   airport in scope only, so Manchester gets nothing rather than a guessed link. `correctionHref()` is the map's
 >   mailto, now on the front page and both reports. Proven red: a planted MAN entry and a postcode-less subject.
+>   **A time-limited link carries `until`** (2026-11-01, Bill: "as drafted"): Heathrow's expansion consultation
+>   ("From 27 October to 22 December 2026", checked live in Chrome; its response form 403s scripts, so the link is
+>   the consultation page) is FIRST in `HAVE_YOUR_SAY.LHR` with `until: '2026-12-22'`; `haveYourSay(routes, today)`
+>   drops it after that day by itself, and `tests/front-page.mjs` expects what `haveYourSay()` offers today (not
+>   the whole list, which would red on 23 Dec) and holds the last day and the day after (proven red with the
+>   filter removed). Neutral signpost only, never a view on expansion.
 >   **The map's brand is a link ONLY where it can be seen**: on phones and tablets in the search view the title is
 >   visually hidden (audit M32 keeps it as the page's heading), and the always-on link was a focusable control
 >   nobody could see, under the city chips: `tests/responsive.mjs` failed 27 of 132 combinations on it (COVERED at

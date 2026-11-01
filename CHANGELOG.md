@@ -11,6 +11,9 @@
   report. No score changed.
 - **The sitemap dates each page by the day its change went live**: two pages had been dated by the day the change
   was written.
+- **Postcodes under Heathrow's flight paths now link Heathrow's expansion consultation** in their "Have your say"
+  line, on the front page answer and the street report, while it is open (until 22 December 2026). The link leaves
+  by itself after that day.
 
 ## 2026-10-31 - Planes overhead, a page per postcode district; areas compared in one table
 

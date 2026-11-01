@@ -670,7 +670,19 @@ ok(await page.locator('.covers').isHidden(), 'the coverage strip steps aside onc
 // link edited in one place and not the other reds here. The correction goes to support@ with the postcode.
 {
   const { HAVE_YOUR_SAY, AIRSPACE_CHANGE, haveYourSay } = await import(pathToFileURL(join(ROOT, 'js', 'street_report.mjs')).href);
-  const want = [...HAVE_YOUR_SAY.LHR, AIRSPACE_CHANGE].map((l) => [l.text, l.href]);
+  // What haveYourSay() offers TODAY, so a dated link (Heathrow's consultation, until 22 Dec) leaving on its own
+  // last day does not red this gate on the 23rd; the dates themselves are held just below.
+  const want = [...haveYourSay({ scope: [{ code: 'LHR', dist: 3 }] }).links, AIRSPACE_CHANGE].map((l) => [l.text, l.href]);
+  const lhr = { scope: [{ code: 'LHR', dist: 3 }] };
+  const dated = HAVE_YOUR_SAY.LHR.filter((l) => l.until);
+  const onLastDay = haveYourSay(lhr, new Date(`${dated[0]?.until}T23:59:00Z`)).links;
+  const dayAfter = haveYourSay(lhr, new Date(Date.parse(`${dated[0]?.until}T00:00:00Z`) + 86400000)).links;
+  ok(
+    dated.length === 1 && /^https:\/\/www\.heathrow\.com\/expansion\/consultation$/.test(dated[0].href) &&
+      onLastDay.includes(dated[0]) && !dayAfter.includes(dated[0]) && dayAfter.length === HAVE_YOUR_SAY.LHR.length - 1,
+    "a dated link (Heathrow's consultation) shows to the end of its last day and is gone the day after, the rest kept",
+    JSON.stringify({ dated: dated.map((l) => l.until), onLastDay: onLastDay.length, dayAfter: dayAfter.length })
+  );
   // The airport whose ROUTE passes nearest, not the nearest airport (audit 2026-10-22, I-6): Battersea is
   // 1.1 km from Heathrow's 27L approach and nearer London City's runway, and was sent to London City. A route
   // from an airport whose pages are unverified gets no links, never another airport's.
@@ -690,7 +702,7 @@ ok(await page.locator('.covers').isHidden(), 'the coverage strip steps aside onc
   });
   ok(
     lines.say && !lines.say.hidden && JSON.stringify(lines.say.links) === JSON.stringify(want) && /^Have your say: /.test(lines.say.text),
-    "Kew's answer says where to have your say: Heathrow's verified pages and the CAA's airspace change portal",
+    "Kew's answer says where to have your say: Heathrow's verified pages (its consultation while open) and the CAA's airspace change portal",
     JSON.stringify(lines.say)
   );
   ok(

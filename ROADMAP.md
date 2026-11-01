@@ -26,12 +26,12 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > (465 + 119 pages); indexing requested for `/planes-overhead/`, `/area/` and seven Heathrow drop-in districts (UB7,
 > TW14, TW10, UB1, TW2, TW5, TW3; `/` and W5 were already indexed; about 10 requests a day are allowed). Bing Webmaster
 > Tools imported it from Search Console (skyscore.co.uk only), both sitemaps submitted. Read the coverage ~8 Nov.
-> (2) **The CAA 2025 roll: BUILT, not deployed.** ERCD 2601 Table 12 (55 dB Lden 142.4 km2; 2024 was 148.4) is in
+> (2) **The CAA 2025 roll: LIVE 1 Nov** (`340465d`; verified on the origin, below). ERCD 2601 Table 12 (55 dB Lden 142.4 km2; 2024 was 148.4) is in
 > `measure_covid_understatement.py`; the JSON's CAA keys are now year-free (`caa_km2`, `caa_year`) and its one reader
 > (`js/street_report.mjs`) drops the comparison when they are absent, so DEPLOY `web-deploy` BEFORE `data-deploy`
 > (the old module would print "undefined" against the new JSON). Map page, `/api/`, METHODOLOGY (s4 table +
 > changelog), OUTREACH_TARGETS, comments rolled; no backend deploy (a comment only). (3) **Area pages -> planes
-> district pages: BUILT, not deployed.** `build_planes_pages.py` writes the TRACKED `data/planes-districts-by-council.json`
+> district pages: LIVE 1 Nov** (`724f94d`). `build_planes_pages.py` writes the TRACKED `data/planes-districts-by-council.json`
 > (ONS code -> districts with a page holding a tenth or more of their postcodes there); `build_area_pages.py` adds a
 > "Planes overhead" block of links to 72 of 102 pages (no figure; none = no heading, page unchanged), and its
 > `--check` now compares EVERY page (it compared the index only). Also fixed: the sitemap dated a merged page by its
@@ -42,7 +42,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **DEPLOY ORDER for all of 1 Nov, after a full preflight PASS:** `web-deploy` (the new `street_report.mjs` + the
 > map and `/api/` text; it uploads all of `js/`), THEN `data-deploy` (the new `covid-understatement.json`),
 > `area-deploy`, `meta-deploy`; then the drift check and a browser look at an area page (390 + 1366).
-> The 1 Nov preflight was killed by Claude Code for low memory (a game was running), so none of this is live yet.
+> **LIVE 1 Nov ~17:50 UTC** (Bill: "deploy"; the second preflight passed every stage but ruff, a lint-only line in a new
+> test, fixed and re-run): web, then data (the live module checked first), area, meta. Verified: drift PASS (39 pages,
+> 41 data files, 103 area pages; planes 25/25, gap 0); live map 7 x "modelled 2025" + 2 x "142.4"; /api/ ERCD 2601;
+> Hounslow's block, 9 links all 200, no sideways scroll or console error at 390 and 1366.
 > **A code review (1 Nov) found what the roll missed, all FIXED:** seven airports' map legends still said "where the
 > CAA also modelled 2024" and the street report's footer credited "ERCD Report 2501" (no figure in either, so the
 > number-only gate passed); `measure_covid_understatement.py --check` now also reds any other CAA year or report
@@ -50,6 +53,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > longer built; the council index is read from the pages actually written; the date fix covers `--no-ff` merges only
 > (a fast-forward keeps commit dates: say so). Left as is: `web-deploy-all` runs `data` before `web`, so use the
 > single targets in the order above.
+> **Heathrow consultation link (Bill's pick + wording "as drafted", 1 Nov):** first in `HAVE_YOUR_SAY.LHR`, `until`
+> 2026-12-22, shown by the front page answer and the street report to Heathrow-route postcodes; drops out by itself.
+> Deploy = `web-deploy` (js/). Drop-ins start Tue 3 Nov (Longford).
 > **AIRAC 2026-10-29 is out** (we serve 2026-10-01). Fetched into the scratchpad and compared on 1 Nov: no procedure
 > or geometry changed, only Cardiff runway 12's RNP chart link (graphic 511875 -> 525382). The roll moves
 > `build_flight_paths.AIRAC`, `data/flight-procedures.json` and the score Lambda's `PROVENANCE_PERIODS['uk-aip']`,
