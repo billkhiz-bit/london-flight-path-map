@@ -66,7 +66,7 @@
 <!--
   Redesigned 2026-10-06 into the front page's light look, with every figure kept word for
   word. Gates that read this page's WORDS: FreeTierQuotaDriftTests (the "N requests"
-  figures), scripts/measure_covid_understatement.py (the 75.6 and 148.4 km2 it must quote),
+  figures), scripts/measure_covid_understatement.py (the 75.6 and 142.4 km2 it must quote),
   check_api_url_drift.sh (the API base in the sample) and the price-mirror check in
   tests/front-page.mjs (every data-price key reads as it does on /pricing). The "UK data
   residency" line in the JSON-LD became "Hosted in AWS London": /v1/chat calls Bedrock in
@@ -226,7 +226,7 @@
       <ul>
         <li><strong>Coverage.</strong> DEFRA's aircraft contours reach only 10.4% of live London postcodes, and treating the unmapped remainder as quiet flattened the component.</li>
         <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
-        <li><strong>Vintage.</strong> DEFRA Round 4 was published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. <strong>Measured at Heathrow</strong>, the one airport with a published normal-year model: DEFRA's 2021 55 dB L<sub>den</sub> contour covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2024 (traffic 0.5% below 2019; ERCD Report 2501, Table 12) covers <strong>148.4 km&sup2;</strong>, about twice the area. They are different models, so that is an order of magnitude, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
+        <li><strong>Vintage.</strong> DEFRA Round 4 was published in 2022 but maps <strong>2021</strong>, which Round 4 documentation describes as "a highly anomalous situation" influenced by COVID travel restrictions. Traffic-suppressed contours understate a normal year, unevenly by airport. <strong>Measured at Heathrow</strong>, the one airport with a published normal-year model: DEFRA's 2021 55 dB L<sub>den</sub> contour covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2025 (flights 1.1% up on 2024, itself 0.5% below 2019; ERCD Report 2601, Table 12) covers <strong>142.4 km&sup2;</strong>, nearly twice the area. They are different models, so that is an order of magnitude, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
         <li><strong>Outdoor levels.</strong> L<sub>den</sub> is assessed outdoors, at the most exposed facade. Indoor exposure depends on glazing and ventilation, which no public dataset records per property.</li>
       </ul>
       <p>The geometry tier is documented in full in METHODOLOGY section 4.5. It is not a DEFRA reading and does not inherit the vintage caveat directly, but it is not independent of it either: since v3.8 each airport's distance scale is sized by that airport's measured Round 4 footprint.</p>

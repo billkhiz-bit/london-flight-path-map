@@ -24,7 +24,7 @@
  *   - the district comparison: the per-postcode Quiet Skies datasets the site
  *     ships, limited to LIVE postcodes (postcodes.io), because those files
  *     keep terminated ones;
- *   - the 2021-vs-2024 caveat: data/covid-understatement.json.
+ *   - the 2021-vs-a-normal-year caveat (the CAA's latest Heathrow contours): data/covid-understatement.json.
  *
  * WHAT IT DELIBERATELY DOES NOT SAY. How OFTEN aircraft pass: that is N65,
  * which this product does not hold. Any adjective for the level ("severe",

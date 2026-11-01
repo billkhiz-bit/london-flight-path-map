@@ -309,7 +309,7 @@ def airport_noise_scale(code):
 # compares the two.
 # PROVISIONAL (2026-09-26): fitted against DEFRA Round 4, which maps 2021 - and
 # measured at Heathrow that map is about HALF a normal year's footprint (55 dB
-# Lden 75.6 km2 against the CAA's 2024 148.4 km2; data/covid-understatement.json).
+# Lden 75.6 km2 against the CAA's 2025 142.4 km2; data/covid-understatement.json).
 # The fit inherits that understatement. Refit when a normal-year yardstick lands.
 #
 # 0.3 -> 0.5 at v5.5 (2026-10-01), REFITTED with the runway-shaped airport term

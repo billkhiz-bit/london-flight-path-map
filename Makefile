@@ -398,7 +398,7 @@ data-deploy:
 	# contents inline, generated. preview-deploy uploaded the first four from
 	# 2026-10-03 and its comment said they move here when the page became the
 	# front door, which it did on 2026-10-06. covid-understatement.json is the
-	# street report's 2021-vs-2024 caveat (scripts/measure_covid_understatement.py).
+	# street report's 2021-vs-a-normal-year caveat (scripts/measure_covid_understatement.py).
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/flight-procedures.json \
 		s3://$(S3_BUCKET)/data/flight-procedures.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
