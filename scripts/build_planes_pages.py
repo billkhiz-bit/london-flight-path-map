@@ -464,7 +464,7 @@ STYLE = """
     table {{ font-size:12.5px; }}
     th, td {{ padding:6px 3px; }}
   }}
-  .note {{ display:block; color:var(--mid); font-size:11px; font-weight:400; }}
+  .note {{ display:block; color:var(--mid); font-size:12px; font-weight:400; }}  /* 12px like the area pages' notes (audit 2026-11-01) */
   .note-p {{ color:var(--mid); font-size:13px; }}
   .tw {{ overflow-x:auto; }}
   .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0;

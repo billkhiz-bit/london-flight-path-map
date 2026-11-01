@@ -55,7 +55,13 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > single targets in the order above.
 > **Heathrow consultation link (Bill's pick + wording "as drafted", 1 Nov):** first in `HAVE_YOUR_SAY.LHR`, `until`
 > 2026-12-22, shown by the front page answer and the street report to Heathrow-route postcodes; drops out by itself.
-> Deploy = `web-deploy` (js/). Drop-ins start Tue 3 Nov (Longford).
+> LIVE 1 Nov (`c3a67d3`, web-deploy; checked on the live front page at 390 + 1366). Drop-ins start Tue 3 Nov (Longford).
+> **Site audit (1 Nov, read-only, live, 390 + 1366):** links are not the problem (5-28 per page body; the indexes are
+> lists by design); length on phones is: `/planes-overhead/` 16.5 screens, `/how-it-works/` 14.6, `/bay-area/` 10.7
+> ("City by city" 1,177 words of prose), `/about/` 9.8, `/pricing` 7.4, `/` 7.3 (leave until ~20 Nov). Acted on (Bill):
+> the 11 px notes on area + planes pages -> 12 px (the site's small print; never shrink), and one name for the API
+> reference on /api/. Open ideas: /bay-area/ city by city as a table; the planes index grouped with a jump list;
+> /pricing mails support@ 9 times; the front page's /api/ and /pricing links under 3 labels each (after ~20 Nov).
 > **AIRAC 2026-10-29 is out** (we serve 2026-10-01). Fetched into the scratchpad and compared on 1 Nov: no procedure
 > or geometry changed, only Cardiff runway 12's RNP chart link (graphic 511875 -> 525382). The roll moves
 > `build_flight_paths.AIRAC`, `data/flight-procedures.json` and the score Lambda's `PROVENANCE_PERIODS['uk-aip']`,

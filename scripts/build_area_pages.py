@@ -430,7 +430,9 @@ PAGE = """<!doctype html>
   table {{ width:100%; border-collapse:collapse; font-size:14px; }}
   th, td {{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }}
   th {{ width:42%; font-weight:600; }}
-  td .note {{ display:block; color:var(--mid); font-size:11px; }}
+  /* 12px, the site's small print everywhere else (sources, the front page's notes); 11px was the one size below
+     it, and 72% of a page's words sat under 13px (site audit 2026-11-01, Bill: raise, never shrink). */
+  td .note {{ display:block; color:var(--mid); font-size:12px; }}
   .tw {{ overflow-x:auto; }}
   /* The caption names the table for a screen reader without adding a
      visible heading. Defined here because these pages ship their own

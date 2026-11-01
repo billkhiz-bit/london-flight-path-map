@@ -14,6 +14,8 @@
 - **Postcodes under Heathrow's flight paths now link Heathrow's expansion consultation** in their "Have your say"
   line, on the front page answer and the street report, while it is open (until 22 December 2026). The link leaves
   by itself after that day.
+- **Easier to read on a phone**: the notes under each figure on the area and planes overhead pages are now the
+  site's usual small print (12 px, from 11 px), and the API page calls its reference docs by one name.
 
 ## 2026-10-31 - Planes overhead, a page per postcode district; areas compared in one table
 
