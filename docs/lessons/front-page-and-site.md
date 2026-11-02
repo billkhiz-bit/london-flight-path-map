@@ -642,3 +642,22 @@ the start or the runway the handle stops and London with it. Checks sample the t
 Kew both ways and from Battersea back to the start (the case Bill hit: Kew alone never needed the floor, so a test of
 Kew alone passed WITHOUT it), plus the end stop; each fix proven red on its own. Waiting for "still" before grabbing
 matters here too: easing 24 km takes ~2 s, and a handle grabbed mid-ease rightly snaps to the end.
+
+## SEARCH ENGINES AND LANGUAGE-MODEL TOOLS (2026-11-02)
+
+Bill asked why Google is a top referrer when he cannot find "Sky Score" on it. Measured that day: GoatCounter
+counted 24 Google referrals 20 Oct-2 Nov, 10 to `/` and ~14 to area pages in 11 areas (Leeds twice). `site:skyscore.co.uk`
+returned 5 pages of results; a district page (TW10) already showed for "how many planes fly over TW9 Kew a day"
+a day after `sitemap-planes.xml` was read; "hackney noise liveability score" put `/map/` (its ranking-table text)
+second, above the Hackney area page. The bare name "Sky Score" returned ten pages of Sky Sports and a Hasbro toy:
+no SEO wins that query, which is the rename's marketing case (memory: the rebrand file's 2 Nov Google test).
+
+Built the same day: a BreadcrumbList on every area page, /open-data/ and every planes page, from ONE helper
+(`build_area_pages.breadcrumb_ld()`), held by `tests/test_breadcrumb_ld.py` to the visible breadcrumb (every item but
+the last is a link the visitor sees, same words and order; the last is the page's canonical). The `/area/` index
+has no per-city anchors, so a city is left out of the trail rather than given an address it lacks. Search engines
+treat markup that disagrees with the page as spam: hence the rule, proven red on six synthetic defects. The front
+page carries Organization + WebSite (no price: the wording gate reads every JSON-LD block for prices).
+`/llms.txt` (llmstxt.org shape; `meta-deploy`) joined the wording gate as plain text (`published_texts()`, only
+`llms*.txt`: robots.txt's comments rightly name the AI crawlers); `tests/test_llms_txt.py` holds its coverage
+sentence to how-it-works', its links to the sitemaps, and its one outside link (the methodology on GitHub).

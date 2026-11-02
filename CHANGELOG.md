@@ -17,6 +17,8 @@
   service, sometimes for 26 seconds, and often fell back to links.
 - **Flight routes from the UK AIP's 29 October cycle** (AIRAC 2026-10-29): no route or procedure moved, only the
   link to one Cardiff chart. No score changed.
+- Behind the scenes: search engines now get each area and planes page's place in the site (its breadcrumb) and who
+  publishes the site, and `/llms.txt` gives tools that read the web a plain summary of the site and its main pages.
 - Behind the scenes: each part of the API now records a line whenever it answers with a server error, so the 1% of
   requests that failed in October (mostly an upstream service we ask on a visitor's behalf being unavailable) can
   be traced to their source. Nothing a visitor typed is recorded with it.

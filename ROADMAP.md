@@ -40,6 +40,12 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > SAM changeset (`--no-execute-changeset`, read it), then Bill executes; verify `/nhs` for a Manchester point, the
 > score's `uk-aip` provenance, and the drift check. Then: N65 step 4's review (agent worktree `n65-step4`); Bill
 > to decide on a /map/ planes layer by district (prompted by ekinomics.com; mock-ups first).
+> **Search (2 Nov, Bill: "yes"):** Google HAS indexed us (`site:` 5 pages; district pages appear a day after the
+> sitemap: TW10 for a Kew query) and sent 24 visits since 20 Oct, about half to area pages; "hackney noise
+> liveability score" ranks /map/ second. "Sky Score" itself is unwinnable (all ten pages Sky Sports + a Hasbro toy):
+> the rename. BUILT: breadcrumb JSON-LD on area, open-data and planes pages, Organization + WebSite on the front page,
+> `/llms.txt`. Deploy: `planes-pages-deploy`, `area-deploy`, `home-deploy`, `meta-deploy`. Read Search Console ~8 Nov.
+> Noted, not done: the map's JSON-LD says "UK and NYC" and /api/'s calls quiet "DEFRA Lden noise" (both predate v5.7).
 >
 > ## START HERE (2026-11-01)
 >

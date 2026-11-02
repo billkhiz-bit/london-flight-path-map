@@ -133,7 +133,9 @@ def test_a_page_reads_its_sectors_and_says_how_much_was_measured():
     assert '<link rel="canonical" href="https://skyscore.co.uk/planes-overhead/tw9/" />' in html
     assert '<a href="/area/london/richmond-upon-thames/">' in html
     assert '<a href="/planes-overhead/tw10/">TW10</a>' in html
-    assert html.count('<script') == 1 and '<script type="module" src="/js/count.mjs"></script>' in html
+    # one script that runs (the counter) and one that does not: the breadcrumb for search engines (2026-11-02)
+    assert html.count('<script') == 2 and html.count('<script type="application/ld+json">') == 1
+    assert '<script type="module" src="/js/count.mjs"></script>' in html
 
 
 def test_the_edge_note_only_where_a_cell_says_on_an_edge():

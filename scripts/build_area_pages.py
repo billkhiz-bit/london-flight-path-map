@@ -88,6 +88,20 @@ def slug(text: str) -> str:
     return re.sub(r'-{2,}', '-', s)
 
 
+def breadcrumb_ld(trail: list[tuple[str, str]]) -> str:
+    """The page's breadcrumb for search engines (schema.org BreadcrumbList, 2026-11-02).
+
+    `trail` is (name, path) from the front page down to the page itself. Every item but the last is a link the
+    page's visible breadcrumb also shows, and the last is the page's own canonical address
+    (tests/test_breadcrumb_ld.py holds both, on every built page). A city with no page of its own is left out
+    rather than given an address it does not have. So the JSON cannot close its <script>, '</' is escaped."""
+    items = [{'@type': 'ListItem', 'position': i, 'name': name, 'item': SITE + path}
+             for i, (name, path) in enumerate(trail, 1)]
+    body = json.dumps({'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': items},
+                      ensure_ascii=False, separators=(',', ':'))
+    return '<script type="application/ld+json">' + body.replace('</', r'<\/') + '</script>'
+
+
 def e(text) -> str:
     return html.escape(str(text), quote=True)
 
@@ -482,6 +496,7 @@ PAGE = """<!doctype html>
 <nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><button type="button" class="menu-btn" popovertarget="site-nav">Menu</button><div class="site-nav" id="site-nav" popover><button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/how-it-works/">How it works</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/about/">About</a></div></nav>
 <div class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; {city_label}</nav>
+{crumbs_ld}
 <main data-city="{city}" data-borough="{borough}">
 <h1>{borough} noise and liveability</h1>
 <p class="sub">{city_label}. {topics_cap}, from published sources.</p>
@@ -589,6 +604,8 @@ def render(data: dict) -> str:
         title=e(f"{data['borough']} noise & liveability score | Sky Score"),
         description=e(desc),
         canonical=f"{SITE}/area/{slug(data['city'])}/{slug(data['borough'])}/",
+        crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Areas', '/area/'),
+                                 (data['borough'], f"/area/{slug(data['city'])}/{slug(data['borough'])}/")]),
         city_label=e(city_label),
         topics_cap=e(shown[0].upper() + shown[1:]),
         # `city` feeds data-city on <main>: the page's machine-readable identity,
@@ -1127,6 +1144,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 <nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><button type="button" class="menu-btn" popovertarget="site-nav">Menu</button><div class="site-nav" id="site-nav" popover><button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/how-it-works/">How it works</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/about/">About</a></div></nav>
 <div class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; Open data</nav>
+{crumbs_ld}
 <main>
 <h1>Open data</h1>
 <p class="sub">Every UK area Sky Score covers, in one file: the published score, its five components and the measurements behind them. {n} areas across {c} city regions. Prices: {vintage} UK House Price Index. Methodology version {methodology}.</p>
@@ -1181,7 +1199,8 @@ def open_data_files() -> dict[str, str]:
     page = OPEN_DATA_PAGE.format(
         n=len(rows), c=len({r[0] for r in rows}), site=SITE, csv=OPEN_DATA_CSV,
         vintage=e(app.SNAPSHOT_VINTAGE_LABEL), methodology=e(app.METHODOLOGY_VERSION),
-        licence=OPEN_DATA_LICENCE, columns=columns)
+        licence=OPEN_DATA_LICENCE, columns=columns,
+        crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Open data', '/open-data/')]))
     return {OPEN_DATA_CSV: open_data_csv(rows), 'index.html': page}
 
 

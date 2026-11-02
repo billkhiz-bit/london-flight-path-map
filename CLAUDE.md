@@ -201,6 +201,10 @@ Or just describe what you need, I have full context of this project.
   `build_planes_pages.py` for every council with a district page counting Heathrow, its link and closing day READ from
   `HAVE_YOUR_SAY` (`until`): neutral wording, today's flights only (never a third runway's routes), the area page's own
   noise/air/flood. After `until` its `--check` reds until `--write` re-says "closed"; then `planes-pages-deploy`.
+- **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
+  page; 2026-11-02): every item but the last is a link the visible breadcrumb shows, the last is the page's canonical
+  (`tests/test_breadcrumb_ld.py`, every built page). `/llms.txt` (`meta-deploy`) is read by the wording gate and held
+  to the sitemaps and the coverage sentence (`tests/test_llms_txt.py`); never a price or "AI" in either.
 - **Focus rings use `--focus: #d35a12`**, never the brand orange `#f27d26` (fails 3:1).
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`). The top bar's clicks are counted there too (`nav-<slug>`, `-menu` from the

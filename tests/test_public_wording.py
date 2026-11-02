@@ -65,6 +65,13 @@ def published_modules():
     return sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'js').rglob('*.mjs') if 'vendor' not in p.parts)
 
 
+def published_texts():
+    """The plain-text summaries the Makefile uploads for language-model tools (llms.txt, 2026-11-02), read whole.
+    Not robots.txt or security.txt: those speak to crawlers and researchers, and robots.txt's comments name the AI
+    training crawlers it addresses, which is the one place that word belongs."""
+    return sorted({f for cmd in _makefile_commands() for f in re.findall(r'aws s3 cp (llms[\w-]*\.txt)\b', cmd)})
+
+
 def _decode_js(raw):
     def one(m):
         e = m.group(1)
@@ -221,6 +228,8 @@ def shown_from_source(path, source):
     """(text, priced) a visitor or a search engine sees in a file's source, whitespace collapsed."""
     if path.endswith('.mjs'):
         parts, ld = script_strings(source), []
+    elif path.endswith('.txt'):
+        parts, ld = [source], []
     else:
         parser = ShownText()
         parser.feed(source)
@@ -247,7 +256,7 @@ def shown(path):
 
 
 def everything():
-    return published_pages() + published_pdfs() + published_modules()
+    return published_pages() + published_pdfs() + published_modules() + published_texts()
 
 
 def allowed_for(path, allowed):
@@ -500,6 +509,11 @@ class RulesCatchTheirDefectsTests(unittest.TestCase):
          '<p>About 120 planes a day pass over.</p>'),
         (WordingTests, 'test_no_page_says_how_often_planes_pass', 'home/index.html',
          '<p>A plane every 90 seconds at rush hour.</p>'),
+        # llms.txt is plain text, read whole (2026-11-02): the same rules reach it.
+        (WordingTests, 'test_ai_only_as_an_event_or_where_it_is_not_used', 'llms.txt',
+         '# Sky Score\n\n> AI-powered property insight for every UK postcode.\n'),
+        (PriceTests, 'test_our_prices_appear_only_on_pricing', 'llms.txt',
+         '- [Pricing](https://skyscore.co.uk/pricing): plans from GBP 499\n'),
     ]
 
     def test_each_rule_fails_on_its_defect(self):
