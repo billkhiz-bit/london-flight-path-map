@@ -369,6 +369,38 @@ def test_a_departure_name_reaches_the_page_escaped():
     assert bay.departure_cell(city(departures=['SFO A<b>&1'])) == 'Yes: SFO A&lt;b&gt;&amp;1'
 
 
+def test_a_citys_routes_share_one_cell_in_the_panels_own_words():
+    # 2026-11-01: three of eight columns in a 980 px table became one cell, so a phone reads a city's
+    # routes beside its name. The words are the cell functions' (the map's panel shows them too).
+    both = city(approaches={'SFO 28L': 1460.0}, departures=['SFO GAPP7'])
+    cell = bay.routes_cell(both)
+    assert cell == (
+        f'<span><b>Landing:</b> {bay.approach_cell(both).removeprefix("Yes: ")}</span>'
+        f'<span><b>Departure:</b> {bay.departure_cell(both).removeprefix("Yes: ")}</span>'
+    )
+    assert 'Yes:' not in cell and 'Arrival' not in cell
+    every = city(approaches={'SFO 28L': 1460.0}, arrivals={'SFO SERFR4': None}, departures=['SFO GAPP7'])
+    assert re.findall(r'<b>(\w+):</b>', bay.routes_cell(every)) == ['Landing', 'Arrival', 'Departure']
+    # Under none: the nearest route, never an empty cell.
+    assert bay.routes_cell(city()) == 'None overhead. Nearest: 1.9 mi (SFO 28L approach)'
+
+
+def test_a_route_cell_in_an_unexpected_shape_stops_the_build(monkeypatch):
+    # The cell drops "Yes: " by its exact text: a reworded cell must fail, not lose or keep words unseen.
+    monkeypatch.setattr(bay, 'ROUTE_KINDS', (('Landing', lambda c: 'Overhead: SFO 28L'),))
+    with pytest.raises(ValueError, match='neither'):
+        bay.routes_cell(city(name='Colma'))
+
+
+def test_the_three_airports_go_by_their_codes_under_a_share_and_other_airfields_by_name():
+    sfo = {'ident': 'KSFO', 'name': 'SAN FRANCISCO INTL'}
+    lvk = {'ident': 'KLVK', 'name': 'LIVERMORE MUNI'}
+    assert bay.airfield_line(city(noise_pct=96.0, airfield=sfo)) == '<span class="af">SFO</span>'
+    assert bay.airfield_line(city(noise_pct=36.0, airfield=lvk)) == '<span class="af">Livermore Municipal</span>'
+    assert bay.airfield_line(city(noise_pct=36.0, airfield=None)) == '<span class="af">Not identified</span>'
+    assert bay.airfield_line(city(noise_pct=0.4, airfield=sfo)) == ''
+
+
 def test_an_airfield_name_is_spelt_out_and_a_cut_off_one_loses_its_fragment():
     assert bay.airfield_name({'name': 'LIVERMORE MUNI'}) == 'Livermore Municipal'
     assert bay.airfield_name({'name': 'SAN FRANCISCO INTL'}) == 'San Francisco International'
@@ -535,14 +567,14 @@ def page():
 def test_the_page_draws_arrivals_and_no_longer_says_it_does_not(page, real):
     # Until 2026-10-06 the notes said arrivals before the final were not drawn.
     assert 'Arrivals further out are not drawn' not in page
-    assert '<th scope="col">Arrival route overhead</th>' in page
+    assert '<th scope="col">Drawn routes overhead</th>' in page and '<b>Arrival:</b>' in page
     assert page.count('stroke-dasharray="5 3"') == len(real[2]['arrivals'])
     rows = re.findall(r'<tr><th scope="row">.*?</tr>', page)
-    assert all(r.count('<td') == 7 for r in rows), 'a row lost or gained a cell'
+    assert all(r.count('<td') == 2 for r in rows), 'a row lost or gained a cell'
 
 
 def test_the_page_lists_every_city_once(page, real):
-    names = re.findall(r'<tr><th scope="row">(.*?)</th>', page)
+    names = re.findall(r'<tr><th scope="row">([^<]*)<span class="co">', page)
     assert len(names) == len(set(names)) == 50
     assert set(names) == {c['name'] for c in real[2]['cities']}
 

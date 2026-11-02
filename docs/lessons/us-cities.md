@@ -367,3 +367,23 @@ was still ours and the row read `current`: it could not go red on the one day it
 the newest listed cycle whose date has arrived (the earliest listed when only future cycles are), a published next
 cycle said in the note so the roll can be prepared, and the hint no longer says the file "feeds no published route"
 (the map and the front page draw `/data/us-flight-procedures.json`). Proven red on a two-cycle page dated 26 Nov.
+
+## The `/bay-area/` city table is three columns (2026-11-01)
+
+The 1 Nov site audit called "City by city" "50 cities written as prose" and promised half the length "as a table".
+It already WAS a table: eight columns at `min-width:980px` inside an `overflow-x:auto` box, so its rows were laid
+out at desktop width on every screen, a phone showed 350 px of it, and the city's name scrolled away while its
+routes were read (desktop overflowed by 40 px too). A text-only reading of the page had taken the table for prose.
+Measured in a browser before anything changed (the live page, 390 and 1366 px): the length is in the route lists
+(Landing 240, Arrival 239, Departure 122 words), which are the page's facts, so no layout halves it.
+
+Bill chose three columns over a frozen city column, knowing the cost: `routes_cell()` puts Landing, Arrival and
+Departure in one cell, the county goes under the city's name, and the airfield under the share (SFO, OAK and SJC by
+code, as the routes beside them say). No sideways scroll at 320, 390 or 1366; the phone page grew 10.7 -> 12.3
+screens (the route lists wrap in a narrower column), the desktop page shrank 8.6 -> 7.7; text stays 13 px.
+
+- The words are the cell functions' own (`approach_cell` and the rest), which `build_bayarea_map_data.row_facts`
+  also gives the map's side panel: change the layout in `render()`, never the cell wording, or the two drift.
+- `routes_cell` drops "Yes: " by exact text and raises on any other shape, so a reworded cell fails the build.
+- Lesson: measure the page's DOM before writing a finding about its structure; a word count cannot tell a table
+  from prose.

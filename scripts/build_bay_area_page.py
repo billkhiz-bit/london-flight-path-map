@@ -1128,6 +1128,37 @@ def airfield_cell(c):
     return e(airfield_name(c['airfield'])) if c['airfield'] else 'Not identified'
 
 
+def airfield_line(c):
+    """The airfield under a city's share on the page: SFO, OAK or SJC by the code its routes use beside it."""
+    name = airfield_cell(c)
+    code = c['airfield']['ident'].removeprefix('K') if name and c['airfield'] else None
+    if code in AIRPORTS:
+        name = code
+    return f'<span class="af">{name}</span>' if name else ''
+
+
+ROUTE_KINDS = (('Landing', approach_cell), ('Arrival', arrival_cell), ('Departure', departure_cell))
+
+
+def routes_cell(c):
+    """A city's three kinds of route in one cell, so a phone reads them beside the city's name.
+
+    Until 2026-11-01 they were three of eight columns in a table 980 px wide, which a phone showed
+    through a 350 px window: the city's name scrolled away while its routes were read. The words are
+    the cell functions' own, which the map's panel shows too (build_bayarea_map_data.row_facts); only
+    their "Yes: " goes, as the label says it. A city under none names the nearest route instead.
+    """
+    held = []
+    for kind, cell in ROUTE_KINDS:
+        text = cell(c)
+        if text == 'No':
+            continue
+        if not text.startswith('Yes: '):
+            raise ValueError(f'{kind} cell for {c["name"]} is neither "No" nor "Yes: ...": {text!r}')
+        held.append(f'<span><b>{kind}:</b> {text.removeprefix("Yes: ")}</span>')
+    return ''.join(held) or f'None overhead. Nearest: {nearest_cell(c)}'
+
+
 def order(cities):
     # Any shading ranks above none: rounded to 1 dp, Hillsborough's 0.04% tied
     # with 0.0, and the tie fell to route distance, so 'Under 1%' sat below two
@@ -1254,10 +1285,20 @@ PAGE_HTML = """<!doctype html>
   .ramp b {{ width:16px; height:12px; }}
   .tw {{ overflow-x:auto; }}
   .tw:focus-visible {{ outline:2px solid var(--link); outline-offset:2px; }}
-  table {{ width:100%; min-width:980px; border-collapse:collapse; font-size:13px; }}
+  /* Three columns, so the table fits a phone and the city's name stays beside its routes
+     (2026-11-01: it was eight columns at a 980px minimum, which scrolled sideways at every width). */
+  table {{ width:100%; border-collapse:collapse; font-size:13px; }}
   th, td {{ text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }}
   th {{ font-weight:600; }}
-  td.n {{ font-family:'JetBrains Mono',ui-monospace,monospace; white-space:nowrap; }}
+  thead th:nth-child(1) {{ width:28%; }}
+  thead th:nth-child(2) {{ width:20%; }}
+  .co, .af {{ display:block; font-weight:400; color:var(--mid); }}
+  td.n {{ font-family:'JetBrains Mono',ui-monospace,monospace; }}
+  td.n .pc {{ white-space:nowrap; }}
+  td.n .af {{ font-family:'Inter',system-ui,sans-serif; }}
+  td.r span {{ display:block; }}
+  td.r span + span {{ margin-top:4px; }}
+  td.r b {{ font-weight:600; }}
   ul.notes {{ padding-left:20px; }}
   ul.notes li {{ margin:0 0 8px; max-width:78ch; }}
   .small {{ font-size:13px; color:var(--mid); max-width:78ch; }}
@@ -1289,10 +1330,10 @@ PAGE_HTML = """<!doctype html>
 
 <h2>City by city</h2>
 <p class="small">Ordered by how much of each city the federal noise map shades. That map is the better guide to what is actually flown, but it covers every airfield the Bureau models, not only these three, so each row names the airfield its shading belongs to. Heights are of landing aircraft on the published glide path, above the runway, to the nearest 100 ft. Arrival altitudes are the ones the FAA publishes at a waypoint inside the city, above sea level.</p>
-<div class="tw" tabindex="0" role="region" aria-label="City by city table, scrolls sideways on a narrow screen">
+<div class="tw" tabindex="0" role="region" aria-label="City by city table">
 <table>
 <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Flight routes and mapped aircraft noise for {n} Bay Area cities</caption>
-<thead><tr><th scope="col">City</th><th scope="col">County</th><th scope="col">Share of city on the noise map</th><th scope="col">Airfield that shading belongs to</th><th scope="col">Landing path overhead</th><th scope="col">Arrival route overhead</th><th scope="col">Departure route overhead</th><th scope="col">Nearest drawn route</th></tr></thead>
+<thead><tr><th scope="col">City, county</th><th scope="col">Share of city on the noise map</th><th scope="col">Drawn routes overhead</th></tr></thead>
 <tbody>
 {rows}
 </tbody>
@@ -1339,9 +1380,8 @@ def render(data, record):
         raise SystemExit('the inputs fail their own checks:\n  ' + '\n  '.join(fails))
     cities = order(f['cities'])
     rows = '\n'.join(
-        f'<tr><th scope="row">{e(c["name"])}</th><td>{e(c["county"])}</td><td class="n">{noise_cell(c)}</td>'
-        f'<td>{airfield_cell(c)}</td>'
-        f'<td>{approach_cell(c)}</td><td>{arrival_cell(c)}</td><td>{departure_cell(c)}</td><td>{nearest_cell(c)}</td></tr>'
+        f'<tr><th scope="row">{e(c["name"])}<span class="co">{e(c["county"])}</span></th>'
+        f'<td class="n"><span class="pc">{noise_cell(c)}</span>{airfield_line(c)}</td><td class="r">{routes_cell(c)}</td></tr>'
         for c in cities
     )
     under = sorted(c['name'] for c in f['communities'] if c['approaches'] or c['departures'] or c['arrivals'])
