@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-11-02 - Planes from Heathrow, council by council, for its consultation; shorter index and Bay Area table
+## 2026-11-02 - Planes from Heathrow, council by council, for its consultation; healthcare nearby in every area
 
 - **A page per London council for Heathrow's expansion consultation** (`/planes-overhead/heathrow-consultation/`):
   for each of the 32 councils with a district Heathrow's planes cross, the planes counted over each of its postcode
@@ -12,6 +12,14 @@
 - **The Bay Area page's city table fits a phone**: three columns (city and county; share of the city on the noise
   map and its airfield; the routes overhead) instead of eight, so nothing scrolls sideways and each city's routes sit
   beside its name. Same facts and wording.
+- **Healthcare nearby now answers at once in every UK area we score**, from a snapshot of OpenStreetMap's GP
+  surgeries, clinics, pharmacies and hospitals, as London already did. Elsewhere the answer had waited on a live
+  service, sometimes for 26 seconds, and often fell back to links.
+- **Flight routes from the UK AIP's 29 October cycle** (AIRAC 2026-10-29): no route or procedure moved, only the
+  link to one Cardiff chart. No score changed.
+- Behind the scenes: each part of the API now records a line whenever it answers with a server error, so the 1% of
+  requests that failed in October (mostly an upstream service we ask on a visitor's behalf being unavailable) can
+  be traced to their source. Nothing a visitor typed is recorded with it.
 
 ## 2026-11-01 - Each area page links its planes overhead pages; the 2021 noise map measured against 2025
 
@@ -58,12 +66,6 @@
   method and period, and crime is on ONS's year to June 2026 (eight scores moved, each by 0.1).
 - **The FAA's routes for 29 October (cycle 2611).** Only Oakland's changed: three procedures re-issued under new
   numbers (CNDEL6, HUSSH3, KATFH4) and four withdrawn (SALAD5, SKYL1, SLNT3, QUAKE2). No score moved.
-
-## 2026-10-27 - Behind the scenes: every server error says where it came from
-
-- Each part of the API now records a line whenever it answers with a server error, so the 1% of requests that
-  failed in October (mostly an upstream service we ask on a visitor's behalf being unavailable) can be traced to
-  their source. Nothing a visitor typed is recorded with it.
 
 ## 2026-10-27 - Planes overhead, for every postcode we cover
 

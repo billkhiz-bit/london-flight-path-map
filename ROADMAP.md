@@ -2,7 +2,9 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
+**Last reviewed:** 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
+/bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll as one SAM changeset; previously
+2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
 `planes-district-pages`, Bill's review first; Thursday's runbook Part D), the N65 build STARTED (branch `n65`: the
 publish gate, and Doc 29's 5th edition proven against ECAC's own worked results), both hackathons skipped; previously
 2026-10-27 - planes overhead LIVE (`5d760c1`), both outside checks passed, the alarms retuned, 5xx logging and NHS
@@ -23,6 +25,22 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-02)
+>
+> **LIVE 2 Nov** (preflight PASS; drift PASS; checked live at 390 + 1366, no sideways scroll, no console error):
+> `ce07eaa` the /bay-area/ city table in 3 columns; `c2ec85a` the planes index by council (8.0 phone screens) and the
+> **Heathrow consultation pack** (`/planes-overhead/heathrow-consultation/`, 32 councils + hub, "open until 22 December
+> 2026"); `ff3d99a` the sitemap dates /bay-area/. Fixed before it shipped: the pack called the borough's modelled
+> noise/air/flood figures "measured" and "readings" (now "figures"); the Bay Area table's region label said it
+> scrolls sideways.
+> **The backend changeset:** `nhs-all-cities` (5xx logging + the healthcare bundle for all 13 areas) MERGED (`5c082cb`;
+> rerere could not replay, since master had moved: the three prose conflicts kept both sides again) + the **AIRAC
+> 2026-10-29 roll** (`build_flight_paths.AIRAC`, `data/flight-procedures.json`, `PROVENANCE_PERIODS['uk-aip']`,
+> `data/area-route-crossings.json`; only cycle strings and Cardiff's chart link moved). Order: `data-deploy`, then the
+> SAM changeset (`--no-execute-changeset`, read it), then Bill executes; verify `/nhs` for a Manchester point, the
+> score's `uk-aip` provenance, and the drift check. Then: N65 step 4's review (agent worktree `n65-step4`); Bill
+> to decide on a /map/ planes layer by district (prompted by ekinomics.com; mock-ups first).
+>
 > ## START HERE (2026-11-01)
 >
 > **The 31 Oct list, worked 1 Nov:** (1) **Search engines: DONE.** Google Search Console's Domain property for
@@ -69,8 +87,8 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > 10.7 -> 12.3 screens, the cost Bill chose; desktop 8.6 -> 7.7). The planes index grouped with a jump list: BUILT
 > (postcode box, councils jump list, a council's districts on one line; 16.5 -> 8.0 screens). **Heathrow consultation
 > pack BUILT** (`/planes-overhead/heathrow-consultation/<council>/` + hub, 32 London councils, link and `until` read from
-> `HAVE_YOUR_SAY`; neutral; after 22 Dec its `--check` reds until `--write` re-says "closed"). Both ship 2 Nov with
-> `planes-pages-deploy` then `meta-deploy`, before the drop-ins start (Tue 3 Nov). Open ideas:
+> `HAVE_YOUR_SAY`; neutral; after 22 Dec its `--check` reds until `--write` re-says "closed"). Both LIVE 2 Nov
+> (`c2ec85a`; `planes-pages-deploy` then `meta-deploy`), before the drop-ins start (Tue 3 Nov). Open ideas:
 > /pricing mails support@ 9 times; the front page's /api/ and /pricing links under 3 labels each (after ~20 Nov).
 > **AIRAC 2026-10-29 is out** (we serve 2026-10-01). Fetched into the scratchpad and compared on 1 Nov: no procedure
 > or geometry changed, only Cardiff runway 12's RNP chart link (graphic 511875 -> 525382). The roll moves

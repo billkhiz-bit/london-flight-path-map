@@ -1,8 +1,8 @@
 {
  "what": "For each council area of each UK region the front page draws, how many routes on its map cross the area: routesAcross() in js/home-engine.mjs, the count each area's card shows. Read by \"avoid aircraft noise\" in Find areas.",
  "generator": "node scripts/build_area_route_crossings.mjs",
- "routes_from": "UK Aeronautical Information Publication (NATS), AIRAC 2026-10-01, via data/flight-procedures.json",
- "airac": "2026-10-01",
+ "routes_from": "UK Aeronautical Information Publication (NATS), AIRAC 2026-10-29, via data/flight-procedures.json",
+ "airac": "2026-10-29",
  "cities": {
   "london": {
    "City of London": 1,
