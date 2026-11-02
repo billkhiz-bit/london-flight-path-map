@@ -140,10 +140,14 @@ def _table(d: Path, kind: str) -> list[dict]:
         raise FileNotFoundError(f'no ANP {kind} table in {d}')
     import openpyxl  # only the v9 workbooks need it
 
-    ws = openpyxl.load_workbook(books[0], read_only=True, data_only=True).worksheets[0]
-    it = ws.iter_rows(values_only=True)
-    head = [_clean(c) for c in next(it)]
-    return [dict(zip(head, row, strict=False)) for row in it if any(c is not None for c in row)]  # rows can be ragged
+    # read_only keeps the file open until close(): left open, Windows holds a lock on EASA's workbook.
+    wb = openpyxl.load_workbook(books[0], read_only=True, data_only=True)
+    try:
+        it = wb.worksheets[0].iter_rows(values_only=True)
+        head = [_clean(c) for c in next(it)]
+        return [dict(zip(head, row, strict=False)) for row in it if any(c is not None for c in row)]  # rows ragged
+    finally:
+        wb.close()
 
 
 def reference_level(anp: dict, candidate: Candidate, op: str) -> float | None:

@@ -33,7 +33,7 @@ When something new is learned: add the one-line rule here and the story to the l
 | `audit-history.md` | audit waves, known issues, the website audit, the current audit's must-not-undo list |
 | `submissions-and-store.md` | competitions, events, Claude Startups, App Store / Play |
 | `building-heights.md` | EA lidar, building heights, the Hounslow pilot (context facts, never scored) |
-| `n65.md` | N65 (planes louder than 65 dB): the publish gate, the Doc 29 arithmetic, `data/n65/` (EASA's tables never in the repo) |
+| `n65.md` | N65 (planes louder than 65 dB): the publish gate, the Doc 29 arithmetic, flight profiles and thrust, `data/n65/` (EASA's tables never in the repo) |
 
 ## Compact Instructions
 
