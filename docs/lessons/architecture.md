@@ -93,7 +93,12 @@
   - `epc`, MHCLG EPC certificate proxy (bearer-token auth via `EPC_BEARER_TOKEN`)
   - `sold_prices`, HM Land Registry Price Paid Data proxy
   - `transport`, TfL Open Data station + line-status
-  - `nhs`, NHS Service Search via OSM Overpass
+  - `nhs`, nearby GPs, pharmacies and hospitals from OSM: a BUNDLED snapshot (`nhs/healthcare.json`, built by
+    `scripts/fetch_healthcare.py`) for every UK area we score, each box derived from its `*-boroughs.json` plus 3 km
+    (London only 2026-08-06 to 2026-10-27; Manchester's centre fell back to links 147 times in October waiting on
+    live Overpass from AWS's shared IPs). Live Overpass only outside every box. A new UK city needs a re-fetch:
+    `test_the_bundle_holds_every_uk_area_we_score` reds until it has one. An area answering under `MIN_NAMED`
+    is refused (an Overpass "200, zero elements" would read as "no healthcare nearby").
 - **Dormant Lambdas** (NOT in `template.yaml`):
   - `multi_agent`, `analyze_image`, `analyze_document`, `report` — all Bedrock Nova Pro/Lite. Code + template entries live in git history only; re-introduction means restoring both from history and redeploying, then unhiding the UI block. **`chat` left this list on 2026-08-06** and is active again — but as a *retrieval-only* function, not the free-form Bedrock one that was parked here. Its dead log group (`ChatFunction-wzeXuMdafiCz`) still exists alongside the live one (`ChatFunction-LuxoNSLxJMva`); see `DRAFT_security_retention_passage.md` §1.
 - **Removed**: `live_flights` (OpenSky proxy) — terminated in May 2026 pending OpenSky's required written licensing agreement for operational use. Lambda code lives in git (last working commit: `a214ba0`); restore + add OpenSky params back to template + flip the prototype's `liveLicensed` flag to revive.

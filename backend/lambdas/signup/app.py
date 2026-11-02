@@ -194,6 +194,10 @@ ses = boto3.client('sesv2', region_name=AWS_REGION, config=_BOTO_CONFIG)
 
 
 def response(status, body, event=None):
+    if status >= 500:
+        # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
+        # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
+        logger.warning('[5XX] %s %s', status, str(body.get('error', '') if isinstance(body, dict) else '')[:200])
     return {
         'statusCode': status,
         'headers': {'Content-Type': 'application/json', **cors_headers(event or {})},
@@ -850,6 +854,10 @@ def html_page(status, title, body):
     """A page, not a JSON envelope: the caller is a person who clicked a link
     in an email. Everything interpolated is escaped, including our own
     strings - the key is the one thing on the page that came from an API."""
+    if status >= 500:
+        # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
+        # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
+        logger.warning('[5XX] %s %s', status, title)
     return {
         'statusCode': status,
         'headers': {

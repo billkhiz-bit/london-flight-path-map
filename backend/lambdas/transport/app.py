@@ -253,6 +253,10 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 def response(status, body):
+    if status >= 500:
+        # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
+        # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
+        logger.warning('[5XX] %s %s', status, str(body.get('error', '') if isinstance(body, dict) else '')[:200])
     return {
         'statusCode': status,
         'headers': {
