@@ -2363,6 +2363,70 @@ const makeReport = async (pc) => {
   await dp.close();
 }
 
+// DESCRIBE WHAT YOU WANT, AND THE PLACE LIST (2026-11-02, Bill: a search "like other websites", "without imposing on
+// privacy concerns"). The words are read in the browser into Find areas' own controls (js/find-words.mjs; its rules
+// are tests/find-words.mjs): here, the DOM. The controls end as the words say, through their own path (the list and
+// the map follow), the reading is shown back with what was not understood, and NOTHING typed leaves the page: no
+// request after typing carries any of the words, nor the address bar. The postcode box offers the places it answers
+// by name, from the rows the page holds.
+{
+  const wp = await context.newPage();
+  await wp.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+  wp.on('pageerror', (e) => errors.push(String(e)));
+  await wp.goto(`${BASE}#find`, { waitUntil: 'domcontentloaded' });
+  await wp.waitForFunction(() => document.getElementById('tab-find')?.getAttribute('aria-selected') === 'true', null, { timeout: 15000 }).catch(() => {});
+  await wp.waitForFunction(() => document.querySelectorAll('#fit-where option').length > 1, null, { timeout: 15000 }).catch(() => {});
+  // "zebrafinch" is a marker no file name holds: data files the map fetches may carry "station" or "quiet" in their
+  // names, so the leak check looks for the marker and the price, never a word a real file could contain.
+  const words = 'Quiet, near a station, under £450k in Greater Manchester, with good schools and a big garden zebrafinch';
+  const asked = [];
+  wp.on('request', (req) => asked.push(req.url()));
+  await wp.locator('#fit-words').fill(words);
+  await wp.locator('#fit-words-form button[type="submit"]').click();
+  await wp.waitForFunction(() => !document.getElementById('fit-read').hidden, null, { timeout: 5000 }).catch(() => {});
+  await wp.waitForTimeout(800); // let the region's change move the map and fetch what it fetches
+  const set = await wp.evaluate(() => ({
+    where: document.getElementById('fit-where').value,
+    budget: document.getElementById('fit-budget').value,
+    on: [...document.querySelectorAll('#fit-avoid input, #fit-want input')].filter((i) => i.checked).map((i) => i.id),
+    read: document.getElementById('fit-read').textContent,
+    live: document.getElementById('fit-read').getAttribute('aria-live'),
+    listed: document.querySelectorAll('#fit-list button[data-borough]').length,
+    href: location.href,
+  }));
+  ok(set.where === 'manchester' && set.budget === '400000'
+    && JSON.stringify(set.on) === JSON.stringify(['fit-planes', 'fit-roads', 'fit-rail', 'fit-schools'])
+    && set.read === 'Read as: Greater Manchester · under £400,000 (the nearest step under £450,000) · avoid aircraft noise, busy roads · want a station, good schools. Not understood: big, garden, zebrafinch.'
+    && set.live === 'polite',
+  'describe what you want: the words set the region, the nearest price step, the chips, and say what was read and what was not',
+  JSON.stringify(set));
+  const typed = ['zebrafinch', '450k', '£450'];
+  const plain = (u) => { try { return decodeURIComponent(u).toLowerCase(); } catch { return u.toLowerCase(); } };
+  const leaked = [...asked, set.href].filter((u) => typed.some((t) => plain(u).includes(t)));
+  ok(leaked.length === 0, 'describe what you want: nothing typed leaves the page (no request, no address carries the words)', JSON.stringify(leaked.slice(0, 5)));
+  // Words that set nothing change nothing and say so.
+  const before = await wp.evaluate(() => [...document.querySelectorAll('#fit-avoid input, #fit-want input')].filter((i) => i.checked).map((i) => i.id).join());
+  await wp.locator('#fit-words').fill('a big garden');
+  await wp.locator('#fit-words').press('Enter');
+  const after = await wp.evaluate(() => ({ on: [...document.querySelectorAll('#fit-avoid input, #fit-want input')].filter((i) => i.checked).map((i) => i.id).join(), read: document.getElementById('fit-read').textContent }));
+  ok(after.on === before && /^Nothing to set from that\. Not understood: big, garden\./.test(after.read),
+    'describe what you want: words that set nothing change nothing and say so (Enter submits too)', JSON.stringify(after));
+  // A price under the lowest step sets no price, and says why instead of "not understood".
+  const budgetBefore = await wp.evaluate(() => document.getElementById('fit-budget').value);
+  await wp.locator('#fit-words').fill('under £150k');
+  await wp.locator('#fit-words').press('Enter');
+  const low = await wp.evaluate(() => ({ budget: document.getElementById('fit-budget').value, read: document.getElementById('fit-read').textContent }));
+  ok(low.budget === budgetBefore && /^No price set: the lowest step is £200,000\. Nothing to set from that\./.test(low.read) && !/Not understood/.test(low.read),
+    'describe what you want: a price under the lowest step is said back, never stretched or dropped', JSON.stringify(low));
+  // The place list: the box offers council areas and regions by name, from the page's own rows.
+  const places = await wp.evaluate(() => ({ list: document.getElementById('pc')?.getAttribute('list'), names: [...document.querySelectorAll('#pc-places option')].map((o) => o.value) }));
+  ok(places.list === 'pc-places' && ['Hounslow', 'Camden', 'Leeds', 'Greater Manchester', 'London', 'Manhattan'].every((n) => places.names.includes(n))
+    && new Set(places.names).size === places.names.length,
+  'the postcode box offers the places it answers by name (council areas, regions, cities), each once',
+  JSON.stringify({ list: places.list, count: places.names.length }));
+  await wp.close();
+}
+
 // 1z. ANSWER FIRST (Bill, 2026-10-23, option B of the mock-ups). A plain visit opens on one real answer, labelled
 // as an example: the address stays /, the live region says nothing, no engagement is counted, the box is empty
 // and the coverage line stays. The visitor's own search replaces it; a link that asks for a place or for Find

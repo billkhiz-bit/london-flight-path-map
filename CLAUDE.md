@@ -234,6 +234,10 @@ Or just describe what you need, I have full context of this project.
   none); every bar is held at 390 and 1366 wide by `tests/front-page.mjs` 16d. A new bar needs the same markup.
 - **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
   address, never engagement, silent on failure. `stubLiveApi` answers its two lookups; scans wait for it.
+- **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without
+  imposing on privacy concerns"): fixed rules, no server, no model, nothing typed sent, stored or counted (front-page.mjs
+  checks no request or address carries the words). It only sets Find areas' own controls and says what it read and
+  what it did not; never a figure of its own. The postcode box's place list is a native `<datalist>` from the page's rows.
 
 ### Gates and verification
 - **Run preflight before every commit**: `sh scripts/preflight.sh` (== `npm run preflight`). Read the EXIT

@@ -733,6 +733,12 @@ check "outside coverage is said, not analysed" node tests/outside-coverage.mjs
 # (/ the front page, /map/ the map) and names any file nothing deploys.
 # postcodes.io and /v1/environment are stubbed with real shapes; no network.
 check "front page is a tool, not a picture" node tests/front-page.mjs
+# The front page's two pure modules, held without a browser (2026-11-02). tests/planes-model.mjs had held the planes
+# answer's rules since 2026-10-26 (rows by the way each airport flies, ranges on a cone's edge, never a 0 for "not
+# measured", and since 2026-11-02 its links only to pages the index lists) but NO gate ran it: found when its links
+# were added. tests/find-words.mjs holds "Describe what you want" (words read into Find areas' choices in the browser).
+check "planes answer: model + links"      node tests/planes-model.mjs
+check "Find areas: words read into choices" node tests/find-words.mjs
 # The approach strip on /how-it-works/ (2026-10-26): the site's first interactive picture outside the map. The
 # page-wide gates read it; only this moves its slider: no sideways scroll at 390 and 1366, the keyboard flies the
 # plane and aria-valuetext follows, reduced motion stills it, tiles load as they come into view, and every picture

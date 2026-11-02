@@ -54,10 +54,14 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **Evening (Bill's "do recommended"):** Book a demo made clear on the front page (the business card's button `card`
 > + a closing band `band`, never the bar; after arcive.ai), and the planes pages made reachable (they were "direct
 > link only"): the planes answer links its district page and, while open, the consultation pack; 230 Heathrow district
-> pages and 32 area pages link their own pack page; both footers link Planes overhead. Deploy: `planes-pages-deploy`
-> (pages + the index the answer reads), `area-deploy`, `home-deploy`, `web-deploy` (map footers, js/). Footnote the
-> ~20 Nov engagement read: the front page changed 2 Nov. NEXT (Bill: "without imposing on privacy"): a place-name
-> dropdown and "search in your own words" for Find areas, rules in the browser, nothing typed leaves the page. N65
+> pages and 32 area pages link their own pack page; both footers link Planes overhead. **LIVE 2 Nov evening**
+> (`2775aa3`; `planes-pages-deploy`, `area-deploy`, `web-deploy`, `home-deploy`, then `meta-deploy`: the 32 area pages
+> moved `sitemap.xml`, and the drift check caught it); drift exit 0; the index JSON 200 with the consultation entry
+> (32 councils), both `data-book-place` spots, the TW6 district page's and Barking's area page's lines checked live. Footnote the
+> ~20 Nov engagement read: the front page changed 2 Nov. THEN BUILT (Bill: "without imposing on privacy"): a
+> place-name `<datalist>` on the postcode box and "Describe what you want" for Find areas (`js/find-words.mjs`, rules in
+> the browser, nothing typed leaves the page; front-page.mjs checks no request carries the words); deploy:
+> `web-deploy` (js/) then `home-deploy`. `tests/planes-model.mjs` had no gate: now in preflight with `find-words.mjs`. N65
 > step 4 committed + pushed on `n65` (`fb126f0`). Data incident + restore: memory `feedback-worktree-remove-follows-junctions`.
 > Noted, not done: the map's JSON-LD says "UK and NYC" and /api/'s calls quiet "DEFRA Lden noise" (both predate v5.7).
 >

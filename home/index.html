@@ -188,6 +188,15 @@
       .panel.is-find .lead { display: none; }
       /* An area opened from the list (or the map) shows its card in place of the list; closing it comes back. */
       .panel.is-find:has(#borough.is-open) #panel-find > :not(#borough) { display: none; }
+      /* Describe what you want (2026-11-02): one line of words above the choices, read in the browser into them. */
+      .find-words { margin: 0 0 14px; }
+      .find-words label { display: block; margin: 0 0 6px; font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      .find-words .find-words-row { display: flex; gap: 8px; }
+      .find-words input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 8px 12px; font: 500 15px var(--font-body); border: 1.5px solid var(--dark); border-radius: 10px; background: #fff; color: var(--dark); }
+      .find-words button { flex: none; min-height: 44px; padding: 0 16px; font: 600 15px var(--font-body); border: 0; border-radius: 10px; background: var(--dark); color: #fff; cursor: pointer; }
+      .find-words input:focus-visible, .find-words button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      .find-words .find-words-note { margin: 6px 0 0; font-size: 12px; color: var(--mid); }
+      .find-words .find-read { margin: 8px 0 0; font-size: 14px; color: var(--dark); }
       .find-form { display: grid; grid-template-columns: 58px 1fr; gap: 10px 12px; align-items: center; }
       .find-form .k { font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
       .find-form select { width: 100%; font: 500 15px var(--font-body); min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--dark); border-radius: 10px; background: #fff; color: var(--dark); }
@@ -518,7 +527,10 @@
                it was cut to "Postcode, ZIP o" at 320 wide. The placeholder is now an example. -->
           <label for="pc" class="field-label">Postcode, ZIP or place</label>
           <form class="check" id="check">
-            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="postal-code" inputmode="text" />
+            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="postal-code" inputmode="text" list="pc-places" />
+            <!-- Places the box answers by name (council areas, regions, cities), offered as you type (2026-11-02): filled in
+                 the page from what it already holds, so nothing is sent while typing. -->
+            <datalist id="pc-places"></datalist>
             <button type="submit">Check<span class="yours"> yours</span></button>
           </form>
           <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="Camden">Camden</button><button type="button" data-pc="Palo Alto">Palo Alto</button></p>
@@ -550,6 +562,15 @@
           </div>
           </div>
           <div role="tabpanel" id="panel-find" aria-labelledby="tab-find" hidden>
+            <!-- Describe what you want (2026-11-02, Bill: a search "like other websites", "without imposing on privacy
+                 concerns"): js/find-words.mjs reads the words into the choices below, in the browser. The input has no
+                 name, so even without the script nothing typed is sent; nothing is stored or counted. -->
+            <form class="find-words" id="fit-words-form" role="search" action="#find">
+              <label for="fit-words">Describe what you want</label>
+              <div class="find-words-row"><input type="text" id="fit-words" autocomplete="off" spellcheck="true" placeholder="e.g. quiet, near a station, under &pound;500k" aria-describedby="fit-words-note" /><button type="submit">Set</button></div>
+              <p class="find-words-note" id="fit-words-note">Read in your browser: nothing you type here is sent or kept.</p>
+              <p class="find-read" id="fit-read" aria-live="polite" hidden></p>
+            </form>
             <div class="find-form" id="fit-form">
               <label class="k" for="fit-where">Where</label><select id="fit-where"></select>
               <label class="k" for="fit-budget">Price</label><select id="fit-budget"></select>

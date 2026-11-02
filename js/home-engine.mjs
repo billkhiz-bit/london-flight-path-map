@@ -16,6 +16,7 @@
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
 import { districtOf, planesLinks, planesModel, planesNodes } from '/js/planes.mjs';
+import { readWords } from '/js/find-words.mjs';
 import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
@@ -348,6 +349,22 @@ function parseCsv(text) {
 }
 const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) || null;
 
+// The places the box answers by name (search(): council areas by rowFor, regions and cities by name), offered as the
+// visitor types (2026-11-02, Bill: a search "like other websites", "without imposing on privacy concerns"). A native
+// <datalist> filled from the rows the page already holds: nothing is fetched or sent while typing. Postcodes are not
+// listed (there are 1.8 million; the box takes any). No rows, no list: the box works as before.
+function fillPlaces() {
+  const list = byId('pc-places');
+  if (!list) return;
+  const names = new Set([...state.rows.map((r) => r.borough), ...state.rows.map((r) => r.city_name), ...CITIES.map(([, n]) => n)]
+    .filter((n) => typeof n === 'string' && n.trim()));
+  list.replaceChildren(...[...names].sort((a, b) => a.localeCompare(b, 'en-GB')).map((n) => {
+    const o = document.createElement('option');
+    o.value = n;
+    return o;
+  }));
+}
+
 async function load() {
   // Read before boot: a deep-linked area or postcode rewrites the address on its way in.
   const wantFind = location.hash === '#find';
@@ -364,6 +381,7 @@ async function load() {
     d3.json(CROSSINGS).catch(() => null),
   ]);
   Object.assign(state, { extra, proc, rasters, nycDoc, rows: [...(csv ? parseCsv(csv) : []), ...(nycDoc?.rows || [])] });
+  fillPlaces();
   state.crossings = crossings?.cities
     ? Object.fromEntries(Object.entries(crossings.cities).map(([k, v]) => [k, new Map(Object.entries(v).map(([n, c]) => [norm(n), c]))]))
     : null;
@@ -1875,6 +1893,42 @@ function bindFit() {
       // Only if the map ended there: a later choice that replaced this one owns the address.
       show(key).then(() => { if (state.city === key) setQuery({ city: key }); });
     }
+  });
+  // Describe what you want (2026-11-02): the words are read in the browser (js/find-words.mjs) into the controls
+  // above; nothing typed is sent, stored or counted. The controls stay the truth: a region or a price is set only when
+  // said, the choices are replaced only when some were read, and the reading is shown back with anything not
+  // understood, so the visitor corrects it on the chips. The change goes through the controls' own path, so the list,
+  // the map and the address follow as if a person had set them.
+  byId('fit-words-form')?.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const where = byId('fit-where'), budgetSel = byId('fit-budget'), read = byId('fit-read');
+    if (!where || !budgetSel || !read) return;
+    const r = readWords(byId('fit-words')?.value || '', {
+      regions: [...where.options].filter((o) => o.value).map((o) => [o.value, o.textContent]),
+      budgets: FIT_BUDGETS,
+      keys: FIT_CONDITIONS.map((c) => c.key),
+    });
+    const any = Boolean(r.where || r.budget || r.keys.length);
+    if (r.where) where.value = r.where;
+    if (r.budget) budgetSel.value = String(r.budget);
+    if (r.keys.length) {
+      for (const c of FIT_CONDITIONS) {
+        const box = byId(`fit-${c.key}`);
+        if (box) box.checked = r.keys.includes(c.key);
+      }
+    }
+    if (any) (r.where ? where : budgetSel).dispatchEvent(new Event('change', { bubbles: true }));
+    const chosen = FIT_CONDITIONS.filter((c) => r.keys.includes(c.key));
+    const avoid = chosen.filter((c) => c.group === 'avoid').map((c) => c.label);
+    const want = chosen.filter((c) => c.group === 'want').map((c) => c.label);
+    const parts = [...r.said, ...(avoid.length ? [`avoid ${avoid.join(', ')}`] : []), ...(want.length ? [`want ${want.join(', ')}`] : [])];
+    read.hidden = false;
+    // A price under the lowest step sets nothing but is still said back ("under £150k" is a real budget in the North):
+    // silence there would read as the words not being understood.
+    const saidAlone = r.said.length ? `${r.said.join(' · ').replace(/^./, (ch) => ch.toUpperCase())}. ` : '';
+    read.textContent = (any ? `Read as: ${parts.join(' · ')}.` : `${saidAlone}Nothing to set from that.`)
+      + (r.unread.length ? ` Not understood: ${r.unread.join(', ')}.` : '')
+      + (any ? '' : ' Try words such as quiet, near a station, clean air, good schools, under £500k, or a region.');
   });
   const list = byId('fit-list');
   list?.addEventListener('click', (ev) => {

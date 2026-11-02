@@ -690,3 +690,24 @@ writes into `data/planes-districts-by-council.json` from the pages it built, and
 if that index lists it, so no link can point at a page that is not there. The pack link sits in the planes answer, not
 in "Have your say": that registry holds outside bodies' verified pages, prints in the street report, and its test pins
 one dated link. Seven mutations, one per rule, all turn their tests red.
+
+## DESCRIBE WHAT YOU WANT, AND THE PLACE LIST (2026-11-02)
+
+Bill asked for Find areas to search "like other websites", then, offered a place-name list, a hosted search service
+or a "describe what you want" box, picked the last two and added: "without imposing on privacy concerns". Both hosted
+routes send what visitors type to a US company (a privacy-policy change, legal batch 2), so neither was built. Built
+instead, all in the browser: `js/find-words.mjs` reads a sentence with fixed rules into Find areas' own controls (a
+region, the nearest price step not above the amount, the six avoid/want choices; "quiet" means both noises; a want
+said with "not" is never read as the want), and the page says back what it read and what it did not. The controls
+stay the truth, and nothing it does can produce a figure. The postcode box got a native `<datalist>` of the names it
+answers (council areas, regions, cities), from the rows the page already holds.
+
+Held by `tests/find-words.mjs` (seven mutations, all red; two survived the first run and each taught a rule: words
+for a choice the tab does not offer must be given back, and "under 450" must be given back rather than swallowed) and
+`tests/front-page.mjs`, which types a sentence and checks the controls, the words shown back, and that no request or
+address after typing carries the words. The leak check looks for a nonsense marker ("zebrafinch") and the price,
+never "station" or "quiet": data files the map fetches can carry those in their names.
+
+FOUND THE SAME DAY: `tests/planes-model.mjs` (the planes answer's rules since 2026-10-26) was never run by preflight.
+Nothing listed it, so 26 Oct to 2 Nov it held nothing. Registered in `scripts/preflight.sh` with `find-words.mjs`. A
+scan of every `tests/*.mjs` that no gate names found only tools besides it (loadtest, rehearse, store-screenshots).

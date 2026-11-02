@@ -16,6 +16,10 @@
   index alone.
 - **Booking a demo is clearer on the front page**: the "Data for your business" card leads with a Book a demo button,
   and the page ends on a band, "Bring your own postcodes", with one button. Never in the top bar.
+- **Find areas: describe what you want in your own words**, such as "quiet, near a station, under £500k in
+  Manchester". It sets the region, price and choices and says what it understood and what it did not; you can adjust
+  the choices as before. It is read in your browser: nothing you type is sent or kept.
+- **The postcode box suggests places as you type**: council areas, regions and cities it can answer by name.
 - **The Bay Area page's city table fits a phone**: three columns (city and county; share of the city on the noise
   map and its airfield; the routes overhead) instead of eight, so nothing scrolls sideways and each city's routes sit
   beside its name. Same facts and wording.
