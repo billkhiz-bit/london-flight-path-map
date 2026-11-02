@@ -11,6 +11,7 @@ step, with each sitemap date the day its page last changed. Offline only (Node f
 """
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -255,3 +256,162 @@ def test_check_councils_finds_a_missing_or_stale_index_and_ignores_line_endings(
     assert bpp.check_councils(index, path) == []
     moved = bpp.council_index(['TW9', 'TW10'], {'TW9': _lads(E09000027=40), 'TW10': _lads(E09000027=40)})
     assert 'does not match the built pages' in bpp.check_councils(moved, path)[0]
+
+
+# ----------------------------------------------------------------- the index, grouped by council (2026-11-01)
+
+def _elsewhere():
+    """A council outside London, read from the registry (never typed), for a second city region."""
+    return next(lad for lad, (city, _) in sorted(bpp.area.app.LAD_TO_BOROUGH.items()) if city != 'london')
+
+
+def _index_page(ctx):
+    models = [{'district': d, 'periods': ['January to August 2026']} for d in ctx]
+    return bpp.render_index(models, bpp.council_index(list(ctx), ctx))
+
+
+def _councils_listed(page):
+    """{council: [district links]} from the index's own list items."""
+    return {m.group(1): re.findall(r'<a href="/planes-overhead/([a-z0-9]+)/">', m.group(2))
+            for m in re.finditer(r'<li><strong>([^<]+)</strong> (.*?)</li>', page)}
+
+
+def test_the_index_lists_each_district_under_each_council_holding_a_tenth_of_it():
+    away = _elsewhere()
+    page = _index_page({'TW4': _lads(E09000018=85, E09000027=15), 'TW3': _lads(E09000018=100),
+                        'UB2': _lads(E09000009=95, E09000018=5), 'XX1': _lads(**{away: 100})})
+    listed = _councils_listed(page)
+    assert listed['Hounslow'] == ['tw3', 'tw4']          # postcode order, lower-case paths
+    assert listed['Richmond upon Thames'] == ['tw4']     # the boundary district under both
+    assert listed['Ealing'] == ['ub2']                   # UB2 grazes Hounslow (5%): Ealing only
+    assert listed[bpp.area.app.LAD_TO_BOROUGH[away][1]] == ['xx1']
+    # Every district with a page is linked at least once, so a search engine still reaches all of them.
+    assert {d for ds in listed.values() for d in ds} == {'tw3', 'tw4', 'ub2', 'xx1'}
+
+
+def test_the_jump_list_names_each_city_region_heading_on_the_page():
+    page = _index_page({'TW3': _lads(E09000018=100), 'XX1': _lads(**{_elsewhere(): 100})})
+    jump = re.search(r'<nav class="jump"[^>]*>(.*?)</nav>', page).group(1)
+    targets = re.findall(r'href="#([a-z0-9-]+)"', jump)
+    assert targets == re.findall(r'<h2 id="([a-z0-9-]+)">', page)
+    assert len(targets) == 2 and targets == sorted(targets)
+    assert '<form class="check" action="/" method="get">' in page  # the postcode box above it
+
+
+def test_the_index_stops_rather_than_drop_a_district_or_link_a_missing_page():
+    ctx = {'TW3': _lads(E09000018=100)}
+    with pytest.raises(ValueError, match='under no council'):
+        bpp.render_index([{'district': 'TW3', 'periods': []}, {'district': 'TW9', 'periods': []}],
+                         bpp.council_index(['TW3'], ctx))
+    with pytest.raises(ValueError, match='no page'):
+        bpp.render_index([], bpp.council_index(['TW3'], ctx))
+
+
+def test_the_index_never_says_how_often_planes_pass():
+    wording = _load_wording()
+    page = _index_page({'TW3': _lads(E09000018=100), 'TW4': _lads(E09000018=60, E09000027=40)})
+    for pattern in wording.FREQUENCY:
+        assert not re.search(pattern, page, re.IGNORECASE), pattern
+
+
+# ----------------------------------------------------------------- the consultation pack (2026-11-01)
+
+LINK = 'https://www.heathrow.com/expansion/consultation'
+OPEN = {'href': LINK, 'until': '2026-12-22'}
+HOUNSLOW = 'E09000018'
+
+
+def _model(name, lads, lhr=(317, 2, 190), lcy=None, n=30):
+    f = _district(name, n=n, lhr=lhr, lcy=lcy)
+    ctx = {'lads': Counter(lads), 'city': 'london', 'at': (0.0, 0.0)}
+    return bpp.model(name, f, META, ctx, (n, 0), NAMES, [], ORDER), ctx
+
+
+def _facts(drop=()):
+    """build_area_pages.gather()'s shape: the four the pack repeats, and a price it must not."""
+    facts = [{'label': 'Aircraft noise band', 'value': 'Severe', 'note': 'Estimated from the routes'},
+             {'label': 'Road noise', 'value': 'Moderate', 'note': None},
+             {'label': 'Air quality', 'value': 'Moderate', 'note': None},
+             {'label': 'Flood risk', 'value': 'Low', 'note': None},
+             {'label': 'Average price', 'value': '£528,051', 'note': None}]
+    sources = ['Aviation noise context: DEFRA', 'Flight routes: UK AIP (NATS)', 'Road noise: DEFRA road',
+               'Air quality: DEFRA PCM', 'Flood risk: EA', 'Prices: HM Land Registry']
+    return {'facts': [f for f in facts if f['label'] not in drop], 'sources': sources}
+
+
+def test_a_whole_district_cell_heads_with_its_busiest_figure():
+    assert bpp.district_cell([317, [2, 318], '<1']) == ['up to 318 a day', '1 at 100+', '1 on an edge', '1 under 10']
+    assert bpp.district_cell(['<1', 0]) == ['under 1 a day', 'at all 2 postcodes']
+    assert bpp.district_cell([None, None]) == ['not measured']  # not measured is never a zero
+
+
+def test_the_link_and_its_closing_day_are_read_from_have_your_say(tmp_path):
+    js = tmp_path / 'street_report.mjs'
+    js.write_text("export const HAVE_YOUR_SAY = {\n  LHR: [\n"
+                  f"    {{ text: 'x', href: '{LINK}', until: '2026-12-22' }},\n"
+                  "    { text: 'y', href: 'https://webtrak.emsbk.com/lhr6' },\n  ],\n  LCY: [\n  ],\n};\n",
+                  encoding='utf-8')
+    assert bpp.consultation(js) == OPEN
+    js.write_text("export const HAVE_YOUR_SAY = {\n  LHR: [\n"
+                  "    { text: 'y', href: 'https://webtrak.emsbk.com/lhr6' },\n  ],\n};\n", encoding='utf-8')
+    assert bpp.consultation(js) is None
+    assert bpp.pack_pages([], {'councils': {}}, '2026-11-01', None) == {}  # no dated link, no pack
+
+
+def test_the_page_says_open_until_its_closing_day_and_closed_after_it():
+    assert bpp.pack_state('2026-12-22', '2026-12-22') == 'open until 22 December 2026'
+    assert bpp.pack_state('2026-12-22', '2026-12-23') == 'which closed on 22 December 2026'
+
+
+def test_a_council_gets_a_page_only_where_one_of_its_district_pages_counts_heathrow():
+    tw3, c3 = _model('TW3', {HOUNSLOW: 30})
+    se1, c1 = _model('SE1', {'E09000028': 30}, lhr=None, lcy=(120, 3, 40))  # London City only
+    ub2, c2 = _model('UB2', {'E09000009': 27, HOUNSLOW: 3})  # a tenth in Hounslow: under both
+    index = bpp.council_index(['TW3', 'SE1', 'UB2'], {'TW3': c3, 'SE1': c1, 'UB2': c2})
+    packs = bpp.pack_councils([tw3, se1, ub2], index)
+    assert {lad: [m['district'] for m in ms] for lad, ms in packs.items()} == {
+        'E09000009': ['UB2'], HOUNSLOW: ['TW3', 'UB2']}
+    pages = bpp.pack_pages([tw3, se1, ub2], index, '2026-11-01', OPEN, gather=lambda city, borough: _facts())
+    assert sorted(pages) == ['planes-overhead/heathrow-consultation/ealing/index.html',
+                             'planes-overhead/heathrow-consultation/hounslow/index.html',
+                             bpp.PACK_HUB_PATH]
+
+
+def test_a_council_page_gives_each_district_its_own_figures_and_the_borough_its_own():
+    tw3, _ = _model('TW3', {HOUNSLOW: 30})
+    html = bpp.render_pack(HOUNSLOW, [tw3], OPEN, '2026-11-01', _facts())
+    row = re.search(r'<tr role="row"><th scope="row" role="rowheader"><a href="/planes-overhead/tw3/">.*?</tr>', html)
+    cells = [re.findall(r'<span(?: class="top")?>(.*?)</span>', td) for td in re.findall(r'<td [^>]*>(.*?)</td>', row[0])]
+    assert cells == [['up to 317 a day', '30 at 100+'], ['up to 190 a day', '30 at 100+'], ['up to 2 a day', '30 under 10']]
+    assert 'data-label="Flying west, 56% of days"' in row[0]  # a phone's stacked line names its column
+    assert '<dt>Aircraft noise band</dt><dd>Severe<span class="note">Estimated from the routes</span></dd>' in html
+    assert 'Average price' not in html and 'Prices: HM Land Registry' not in html  # the four, nothing else
+    assert 'Aviation noise context: DEFRA' in html and 'Flood risk: EA' in html
+    assert f'<a href="{LINK}">' in html and 'open until 22 December 2026' in html
+    assert 'Sky Score takes no side in the consultation.' in html
+    for pattern in _load_wording().FREQUENCY:
+        assert not re.search(pattern, html, re.IGNORECASE), pattern
+
+
+def test_a_missing_reading_is_said_and_its_source_is_not_credited():
+    tw3, _ = _model('TW3', {HOUNSLOW: 30})
+    html = bpp.render_pack(HOUNSLOW, [tw3], OPEN, '2026-11-01', _facts(drop=('Flood risk',)))
+    assert '<dt>Flood risk</dt><dd>Not published for Hounslow</dd>' in html
+    assert 'Flood risk: EA' not in html
+    html = bpp.render_pack(HOUNSLOW, [tw3], OPEN, '2026-11-01', None)  # gather() found nothing
+    assert html.count('<dd>Not published for Hounslow</dd>') == len(bpp.PACK_FACTS)
+
+
+def test_the_pack_is_never_read_as_a_district():
+    # The area pages' links and the index are built from the district pages only.
+    assert bpp.is_district_page('planes-overhead/tw3/index.html')
+    assert not bpp.is_district_page('planes-overhead/index.html')
+    assert not bpp.is_district_page(bpp.PACK_HUB_PATH)
+    assert not bpp.is_district_page('planes-overhead/heathrow-consultation/hounslow/index.html')
+
+
+def _load_wording():
+    spec = importlib.util.spec_from_file_location('test_public_wording', REPO / 'tests' / 'test_public_wording.py')
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod

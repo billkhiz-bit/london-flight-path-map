@@ -197,6 +197,10 @@ Or just describe what you need, I have full context of this project.
 - **The brand links home on every page** (`tests/test_brand_links_home.py` finds them). **"Have your say" links come
   only from `HAVE_YOUR_SAY`** (verified live; add an airport only after checking its pages; a time-limited link, such as
   a consultation, carries `until: 'YYYY-MM-DD'` and drops out by itself after it).
+- **The Heathrow consultation pack** (`/planes-overhead/heathrow-consultation/`, 2026-11-01) is BUILT by
+  `build_planes_pages.py` for every council with a district page counting Heathrow, its link and closing day READ from
+  `HAVE_YOUR_SAY` (`until`): neutral wording, today's flights only (never a third runway's routes), the area page's own
+  noise/air/flood. After `until` its `--check` reds until `--write` re-says "closed"; then `planes-pages-deploy`.
 - **Focus rings use `--focus: #d35a12`**, never the brand orange `#f27d26` (fails 3:1).
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`). The top bar's clicks are counted there too (`nav-<slug>`, `-menu` from the

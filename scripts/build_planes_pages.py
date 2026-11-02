@@ -87,6 +87,7 @@ OUT = REPO / 'planes-overhead'
 SITEMAP = REPO / 'sitemap-planes.xml'
 FLIGHT_GEOMETRY = REPO / 'js' / 'flight_geometry.mjs'
 PLANES_JS = REPO / 'js' / 'planes.mjs'
+STREET_REPORT = REPO / 'js' / 'street_report.mjs'
 URL_ROOT = '/planes-overhead/'
 
 PAGE_FROM = 10  # Bill, 2026-10-28: some postcode shown this many a day or more, on some kind of day
@@ -207,6 +208,19 @@ def overall_reading(figs: list) -> str:
     if busiest == 0:
         return f'under 1 a day at all {len(figs):,} of its postcodes'
     return f'up to {busiest} a day; of its {len(figs):,} postcodes, {sector_reading(figs)}'
+
+
+def district_cell(figs: list) -> list[str]:
+    """A whole district on one kind of day as table lines (the consultation pack, 2026-11-01): overall_reading's
+    words, one line each, so a phone's narrow column never breaks a band: ['up to 317 a day', '137 at 100+', ...].
+    A kind of day with no figure is not measured (null, never 0)."""
+    values = [v for v in figs if v is not None]
+    if not values:
+        return ['not measured']
+    busiest = max(most(v) for v in values)
+    if busiest == 0:
+        return ['under 1 a day', f'at all {len(values):,} postcodes']
+    return [f'up to {busiest} a day', *sector_parts(values)]
 
 
 # ----------------------------------------------------------------- inputs
@@ -340,6 +354,7 @@ def model(name: str, f: dict, meta: dict, ctx: dict, totals: tuple[int, int], na
             'rows': [(sector, len(pcs), [reading([by_pc[pc][col[kind]] for pc in pcs], sector_parts,
                                                  ['not measured']) for kind, _ in order])
                      for sector, pcs in sectors.items()],
+            'district_cells': [district_cell([by_pc[pc][col[kind]] for pc in by_pc]) for kind, _ in order],
         })
     measured = len(f['postcodes']) + len(f['none'])
     live = totals[0]
@@ -421,6 +436,7 @@ def render(m: dict) -> str:
     nearby = ' '.join(f'<a href="{URL_ROOT}{e(n.lower())}/">{e(n)}</a>' for n in m['nearby'])
     first_period = m['periods'][0] if len(m['periods']) == 1 else '; '.join(m['periods'])
     return PAGE.format(
+        extra_style='',
         title=e(f'Planes overhead in {d}: flight paths over {council_names[0]} | Sky Score'),
         description=e(f'How many planes pass over {d} ({where}) on a day {airports} flies west, east or both ways, '
                       f'postcode sector by sector. Counted from flight tracking, {first_period}.')[:300],
@@ -503,6 +519,44 @@ STYLE = """
   }}
 """
 
+# The index and the consultation pack only (2026-11-01): kept out of STYLE so the district pages stay
+# byte-identical (their sitemap dates are the day their CONTENT changed). A format() value: single braces.
+EXTRA_STYLE = """
+  /* The index (2026-11-01): each council's districts on one line under it, links 24 px or more (WCAG 2.5.8). */
+  .jump { margin:0 0 8px; }
+  .jump a { display:inline-block; padding:2px 0; margin:0 12px 4px 0; }
+  ul.councils { list-style:none; margin:0; padding:0; }
+  ul.councils li { padding:8px 0; border-bottom:1px solid var(--line); }
+  ul.councils strong { margin-right:8px; }
+  ul.councils a { display:inline-block; min-width:24px; padding:2px 0; margin:0 10px 0 0; }
+  /* The consultation pack (2026-11-01): its figures for the borough, and a page that prints as a handout. */
+  dl.facts { margin:0 0 12px; }
+  dl.facts div { padding:8px 0; border-bottom:1px solid var(--line); }
+  dl.facts dt { font-weight:600; }
+  dl.facts dd { margin:0; }
+  .respond { font-weight:600; }
+  /* A district's busiest figure heads each cell and may wrap: four columns must fit a phone's 350 px. */
+  td span.top { white-space:normal; font-weight:600; }
+  @media print {
+    .site-top, footer, nav.crumbs, .jump { display:none; }
+    .wrap { max-width:none; padding:0; }
+    .tw { overflow:visible; }
+  }
+  @media (max-width: 680px) {
+    /* The consultation pack's table counts WHOLE districts (4-digit counts): four columns overflowed 350 px on 19
+       of 32 pages (2026-11-01). On a phone each district stacks: its name, then each kind of day as a labelled line.
+       Its ARIA roles keep it a table to a screen reader once display stops being table's own. */
+    table.pack, table.pack tbody, table.pack tr, table.pack th[scope=row], table.pack td { display:block; }
+    table.pack thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+    table.pack tr { padding:8px 0; border-bottom:1px solid var(--line); }
+    table.pack th[scope=row], table.pack td { border:0; padding:2px 0; }
+    table.pack th[scope=row] .note { display:inline; margin-left:8px; }
+    table.pack td::before { content:attr(data-label); display:block; color:var(--mid); }
+    table.pack td span { display:inline; white-space:nowrap; }  /* each band whole, the busiest too */
+    table.pack td span + span::before { content:', '; white-space:normal; }  /* the line breaks at a comma */
+  }
+"""
+
 HEAD = """<!doctype html>
 <html lang="en">
 <head>
@@ -516,7 +570,7 @@ HEAD = """<!doctype html>
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
-<style>""" + STYLE + """</style>
+<style>""" + STYLE + """{extra_style}</style>
 </head>
 <body>
 <!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
@@ -569,27 +623,62 @@ INDEX = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Sc
 <main>
 <h1>Planes overhead, district by district</h1>
 <p class="sub">How many planes pass over {count} postcode districts, on a day each airport flies west, east or both ways, measured from flight tracking, {period}. Districts where no postcode sees {page_from} a day are left out.</p>
+
+<form class="check" action="/" method="get">
+<label for="postcode">See the figures for your postcode</label>
+<div class="row"><input id="postcode" name="postcode" type="text" autocomplete="postal-code" autocapitalize="characters" spellcheck="false" maxlength="8" required placeholder="TW9 3PZ" /><button type="submit">Check</button></div>
+</form>
+
+<nav class="jump" aria-label="City regions on this page">{jump}</nav>
+{pack}<p class="note-p">Each council lists the districts where it holds a tenth or more of the postcodes, so a district on a boundary is under each of its councils.</p>
 {body}
 </main>
 """ + FOOT
 
 
-def render_index(models: list[dict]) -> str:
-    by_city: dict[str, list[dict]] = {}
-    for m in models:
-        by_city.setdefault(m['city_label'], []).append(m)
+def index_regions(models: list[dict], index: dict) -> dict[str, list[tuple[str, list[str]]]]:
+    """{city region's label: [(council, [its districts with a page, postcode order])]}, regions and councils by name.
+
+    The councils are council_index()'s, the area pages' own rule (LINK_FROM), so the index and the area pages list a
+    district under the same councils, and a district on a boundary appears under each. Every district with a page
+    must appear at least once, and nothing without one: either way the build stops, never a page that drops one.
+    """
+    with_page = {m['district'] for m in models}
+    listed_ = {d for ds in index['councils'].values() for d in ds}
+    if missing := sorted(with_page - listed_, key=pc_key):
+        raise ValueError(f'districts with a page under no council: {missing}')
+    if extra := sorted(listed_ - with_page, key=pc_key):
+        raise ValueError(f'councils list districts with no page: {extra}')
+    regions: dict[str, list[tuple[str, list[str]]]] = {}
+    for lad, districts in index['councils'].items():
+        city, borough = area.app.LAD_TO_BOROUGH[lad]
+        regions.setdefault(area.CITY_LABEL.get(city, city.title()), []).append((borough, districts))
+    return {label: sorted(regions[label]) for label in sorted(regions)}
+
+
+def render_index(models: list[dict], index: dict, pack: bool = False) -> str:
+    """The index: a postcode box, a jump list of city regions, then each region's councils and their districts.
+
+    Until 2026-11-01 it was one line per district with its councils beside it: 16.5 screens on a phone (site audit,
+    2026-11-01). Grouped under the councils, every link stays (search engines read them) in far fewer screens.
+    """
+    regions = index_regions(models, index)
+    jump = ' '.join(f'<a href="#{area.slug(label)}">{e(label)}</a>' for label in regions)
     body = []
-    for label in sorted(by_city):
-        items = '\n'.join(f'<li><a href="{URL_ROOT}{e(m["slug"])}/">{e(m["district"])}</a> '
-                          f'<span class="note-p">{e(listed([b for _, b, _ in m["councils"]]))}</span></li>'
-                          for m in sorted(by_city[label], key=lambda m: pc_key(m['district'])))
-        body.append(f'<h2>{e(label)}</h2>\n<ul>\n{items}\n</ul>')
+    for label, councils_ in regions.items():
+        items = '\n'.join(f'<li><strong>{e(borough)}</strong> '
+                          + ' '.join(f'<a href="{URL_ROOT}{e(d.lower())}/">{e(d)}</a>' for d in districts) + '</li>'
+                          for borough, districts in councils_)
+        body.append(f'<h2 id="{area.slug(label)}">{e(label)}</h2>\n<ul class="councils">\n{items}\n</ul>')
     periods = sorted({p for m in models for p in m['periods']})
-    return INDEX.format(title=e('Planes overhead, district by district | Sky Score'),
+    return INDEX.format(extra_style=EXTRA_STYLE, title=e('Planes overhead, district by district | Sky Score'),
                         description=e(f'How many planes pass over {len(models)} postcode districts, by the way '
                                       'each airport flies. Counted from flight tracking.'),
                         canonical=f'{area.SITE}{URL_ROOT}', count=len(models), period=e('; '.join(periods)),
-                        page_from=PAGE_FROM, body='\n'.join(body))
+                        page_from=PAGE_FROM, jump=jump, body='\n'.join(body),
+                        pack=('<p class="respond"><a href="/planes-overhead/heathrow-consultation/">For Heathrow\'s '
+                              'expansion consultation: the planes from Heathrow, council by council</a></p>\n'
+                              if pack else ''))
 
 
 def render_sitemap(manifest: dict) -> str:
@@ -606,21 +695,236 @@ def render_sitemap(manifest: dict) -> str:
     return '\n'.join(out) + '\n'
 
 
+# ----------------------------------------------------------------- the consultation pack (2026-11-01)
+#
+# Heathrow's expansion consultation (open to 22 December 2026). The marketing plan's first technique: one page per
+# council, the same baseline for everyone responding, whatever their view (neutral: being seen on one side costs the
+# neutrality councils, lenders and journalists buy). Every council with a district page that counts Heathrow's planes
+# gets one, by that rule, not a list: Heathrow's approaches cross most of London (32 councils on 1 Nov).
+# - The link and its closing date are READ from js/street_report.mjs HAVE_YOUR_SAY (the one holder of "Have your say"
+#   links, verified live); no entry with an `until`, no pack.
+# - The planes figures are the district pages' own, from the same files (district_cell: overall_reading's words);
+#   the borough's noise, air and flood are its area page's own (build_area_pages.gather), with that page's sources.
+# - The page says "open until" while it is and "closed on" after: built on 23 December it differs, so --check (a
+#   blocking preflight stage) reds until --write, and planes-pages-deploy ships the closed wording. Never a 404 for a
+#   link someone shared.
+# - It shows today's flights on today's routes: never a third runway's routes (none is drawn or guessed anywhere).
+
+PACK_DIR = 'heathrow-consultation'
+PACK_AIRPORT = 'LHR'
+PACK_HUB_PATH = f'planes-overhead/{PACK_DIR}/index.html'
+# The area page's figures the pack repeats, each with the source lines (by their opening words) it credits.
+PACK_FACTS = (('Aircraft noise band', ('Aviation noise context', 'Flight routes')),
+              ('Road noise', ('Road noise',)),
+              ('Air quality', ('Air quality',)),
+              ('Flood risk', ('Flood risk',)))
+
+
+def consultation(src: Path = STREET_REPORT, airport: str = PACK_AIRPORT) -> dict | None:
+    """{'href', 'until'} of the airport's "Have your say" link that carries an `until`, read from the street
+    report's HAVE_YOUR_SAY; None when it has none (then no pack is built)."""
+    block = re.search(rf'^\s+{airport}: \[\n(.*?)^\s+\],$', src.read_text(encoding='utf-8'), re.M | re.S)
+    if not block:
+        raise SystemExit(f'{src.name}: HAVE_YOUR_SAY.{airport} not found')
+    found = re.search(r"href: '(https://[^']+)', until: '(\d{4}-\d{2}-\d{2})'", block.group(1))
+    return {'href': found.group(1), 'until': found.group(2)} if found else None
+
+
+def day_words(iso: str) -> str:
+    """'22 December 2026' from '2026-12-22'."""
+    y, m, d = (int(x) for x in iso.split('-'))
+    return f'{d} {MONTHS[m - 1]} {y}'
+
+
+def pack_councils(models: list[dict], index: dict, airport: str = PACK_AIRPORT) -> dict[str, list[dict]]:
+    """{ONS code: [its districts' models whose page has a table for `airport`]}, councils with one or more only.
+
+    The districts are council_index()'s (a tenth or more of their postcodes in the council), so the pack and the area
+    pages list the same districts under a council."""
+    by_district = {m['district']: m for m in models}
+    out = {}
+    for lad, districts in index['councils'].items():
+        counted = [by_district[d] for d in districts if any(t['code'] == airport for t in by_district[d]['tables'])]
+        if counted:
+            out[lad] = counted
+    return out
+
+
+PACK_LEAD = ('Whatever your view, these are the figures for {borough} now: the planes from Heathrow counted '
+             "over each of its postcode districts, and the borough's noise, air and flood figures from official data. "
+             "They are today's flights on today's routes, not those of a third runway. Sky Score takes no side in "
+             'the consultation.')
+CELLS_SAID = (f'Each cell gives the most planes over any one postcode of the district on that kind of day, then '
+              f"counts the district's postcodes by how many pass over them a day: {BANDS[0][0]} or more, "
+              f'{BANDS[1][0]} to {BANDS[0][0] - 1}, or under {BANDS[1][0]}.')
+
+PACK = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/planes-overhead/">Planes overhead</a> &rsaquo; <a href="/planes-overhead/heathrow-consultation/">Heathrow consultation</a> &rsaquo; {borough}</nav>
+<main>
+<h1>Planes over {borough} today</h1>
+<p class="sub">For Heathrow's expansion consultation, {state}.</p>
+<p>{lead}</p>
+<p class="respond"><a href="{href}">Heathrow's consultation page</a>: how to respond, and Heathrow's own documents.</p>
+
+<h2>Planes from Heathrow, district by district</h2>
+<p>Planes land and take off into the wind, so the weather decides which way Heathrow flies, and that decides how many pass over each place. Counted over each postcode, {period}.</p>
+<p class="note-p">{cells_said}</p>
+<div class="tw">
+<!-- [html-validate-disable-block no-redundant-role: on a phone this table is display:block, which drops its table semantics in Safari; the roles keep them] -->
+<table class="pack" role="table">
+<caption class="visually-hidden">Planes overhead from Heathrow in each postcode district of {borough}, by the way Heathrow flies</caption>
+<thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">District</th>{head}</tr></thead>
+<tbody role="rowgroup">
+{rows}
+</tbody>
+</table>
+</div>
+{notes}
+<p class="note-p">Each district's own page splits it by postcode sector and counts every airport over it.</p>
+
+<h2>Noise, air and flood in {borough}</h2>
+<dl class="facts">
+{facts}
+</dl>
+{area_link}
+
+<h2>What counts as overhead</h2>
+<p>{definition}</p>
+
+<h2>Where these figures come from</h2>
+<p class="sources">{counted} {credits}. Licence: {licence}.</p>
+{area_sources}
+<p class="sources"><a href="/planes-overhead/heathrow-consultation/">Every council Heathrow's flights cross</a></p>
+</main>
+""" + FOOT
+
+PACK_HUB = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/planes-overhead/">Planes overhead</a> &rsaquo; Heathrow consultation</nav>
+<main>
+<h1>Planes from Heathrow, council by council</h1>
+<p class="sub">For Heathrow's expansion consultation, {state}.</p>
+<p>Whatever your view, each page below sets out the figures for one council now: the planes from Heathrow counted over each of its postcode districts, and the borough's noise, air and flood figures from official data. They are today's flights on today's routes, not those of a third runway. Sky Score takes no side in the consultation.</p>
+<p class="respond"><a href="{href}">Heathrow's consultation page</a>: how to respond, and Heathrow's own documents.</p>
+<h2>The {count} councils Heathrow's flights cross</h2>
+<p class="note-p">A council is here when one or more of its postcode districts has a planes overhead page counting Heathrow's planes, {period}.</p>
+<ul class="councils">
+{items}
+</ul>
+</main>
+""" + FOOT
+
+
+def pack_state(until: str, today: str) -> str:
+    return f'open until {day_words(until)}' if today <= until else f'which closed on {day_words(until)}'
+
+
+def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | None) -> str:
+    """One council's page. `facts` is build_area_pages.gather()'s for the borough (None: none published)."""
+    city, borough = area.app.LAD_TO_BOROUGH[lad]
+    tables = [next(t for t in m['tables'] if t['code'] == PACK_AIRPORT) for m in ms]
+    columns = tables[0]['columns']
+    head = ''.join(f'<th scope="col" role="columnheader">{e(label)}<span class="note">{e(share)}</span></th>'
+                   for label, share in columns)
+    rows = '\n'.join(
+        f'<tr role="row"><th scope="row" role="rowheader"><a href="{URL_ROOT}{e(m["slug"])}/">{e(m["district"])}</a>'
+        f'<span class="note">{m["measured"]:,} postcode{"s" if m["measured"] != 1 else ""}</span></th>'
+        + ''.join(f'<td role="cell" data-label="{e(label)}, {e(share)}">'
+                  + ''.join(f'<span class="top">{e(p)}</span>' if i == 0 else f'<span>{e(p)}</span>'
+                            for i, p in enumerate(cell)) + '</td>'
+                  for (label, share), cell in zip(columns, t['district_cells'], strict=True))
+        + '</tr>'
+        for m, t in zip(ms, tables, strict=True))
+    notes = ''
+    if any(EDGE in p for t in tables for cell in t['district_cells'] for p in cell):
+        notes = ('<p class="note-p">On an edge: the postcode is on the edge of a flight path, where a few metres decide '
+                 'whether a plane counts as overhead, and the fewest and the most within 100 m of it fall in different '
+                 'bands.</p>')
+    shown = {f['label']: f for f in (facts or {}).get('facts', [])}
+    items, credited = [], []
+    for label, source_heads in PACK_FACTS:
+        f = shown.get(label)
+        if f is None:  # absence is said, never shown as a reading
+            items.append(f'<div><dt>{e(label)}</dt><dd>Not published for {e(borough)}</dd></div>')
+            continue
+        note = f'<span class="note">{e(f["note"])}</span>' if f.get('note') else ''
+        items.append(f'<div><dt>{e(label)}</dt><dd>{e(f["value"])}{note}</dd></div>')
+        credited += [s for s in (facts or {}).get('sources', []) if s.startswith(source_heads) and s not in credited]
+    area_path = f'/area/{area.slug(city)}/{area.slug(borough)}/'
+    has_area = (REPO / area_path.strip('/') / 'index.html').exists()
+    return PACK.format(
+        extra_style=EXTRA_STYLE,
+        title=e(f'Planes over {borough} today, for Heathrow\'s consultation | Sky Score'),
+        description=e(f'The planes from Heathrow over each postcode district in {borough}, with its official noise, '
+                      f'air and flood figures: the same for anyone responding to Heathrow\'s expansion '
+                      f'consultation. Counted from flight tracking, {tables[0]["period"]}.')[:300],
+        canonical=f'{area.SITE}{URL_ROOT}{PACK_DIR}/{area.slug(borough)}/',
+        borough=e(borough), state=e(pack_state(c['until'], today)), lead=e(PACK_LEAD.format(borough=borough)),
+        href=e(c['href']), period=e(tables[0]['period']), cells_said=e(CELLS_SAID), head=head, rows=rows,
+        notes=notes, facts='\n'.join(items),
+        area_link=(f'<p><a href="{e(area_path)}">{e(borough)}: every figure we publish, with its score</a></p>'
+                   if has_area else ''),
+        definition=e(ms[0]['definition']),
+        counted=e("Counted from community flight tracking, checked against the CAA's monthly totals for Heathrow."),
+        credits=e('; '.join(ms[0]['credits'])), licence=e(ms[0]['licence']),
+        area_sources=''.join(f'<p class="sources">{e(s)}</p>' for s in credited),
+    )
+
+
+def render_pack_hub(packs: dict[str, list[dict]], c: dict, today: str) -> str:
+    entries = sorted((area.app.LAD_TO_BOROUGH[lad][1], ms) for lad, ms in packs.items())
+    items = '\n'.join(
+        f'<li><strong><a href="{URL_ROOT}{PACK_DIR}/{e(area.slug(borough))}/">{e(borough)}</a></strong> '
+        f'<span class="note-p">{e(", ".join(m["district"] for m in ms))}</span></li>'
+        for borough, ms in entries)
+    periods = sorted({t['period'] for ms in packs.values() for m in ms for t in m['tables'] if t['code'] == PACK_AIRPORT})
+    return PACK_HUB.format(
+        extra_style=EXTRA_STYLE,
+        title=e("Planes from Heathrow, council by council, for Heathrow's consultation | Sky Score"),
+        description=e(f'The planes from Heathrow over each of the {len(entries)} councils its flights cross, district '
+                      f"by district, with official noise, air and flood figures, for Heathrow's expansion "
+                      'consultation.'),
+        canonical=f'{area.SITE}{URL_ROOT}{PACK_DIR}/', state=e(pack_state(c['until'], today)), href=e(c['href']),
+        count=len(entries), period=e('; '.join(periods)), items=items)
+
+
+def pack_pages(models: list[dict], index: dict, today: str, c: dict | None, gather=None) -> dict[str, str]:
+    """{repo path: page} for the hub and each council's page; none without a dated consultation link."""
+    if c is None:
+        return {}
+    gather = gather or area.gather
+    packs = pack_councils(models, index)
+    pages = {}
+    for lad, ms in packs.items():
+        city, borough = area.app.LAD_TO_BOROUGH[lad]
+        pages[f'planes-overhead/{PACK_DIR}/{area.slug(borough)}/index.html'] = render_pack(
+            lad, ms, c, today, gather(city, borough))
+    if pages:
+        pages[PACK_HUB_PATH] = render_pack_hub(packs, c, today)
+    return pages
+
+
 # ----------------------------------------------------------------- build, write, check
 
 INDEX_PATH = 'planes-overhead/index.html'
 
 
-def build(meta, files, ctx, totals, names, order):
+def is_district_page(path: str) -> bool:
+    """planes-overhead/<district>/index.html: not the index, nor anything under the consultation pack."""
+    parts = path.split('/')
+    return len(parts) == 3 and parts[1] != PACK_DIR and path != INDEX_PATH
+
+
+def build(meta, files, ctx, totals, names, order, today: str | None = None):
     """({repo path: page text}, {district: reason it has no page}) from the inputs."""
+    today = today or datetime.now(UTC).strftime('%Y-%m-%d')
     reasons = {d: verdict(f, totals[d]) for d, f in files.items()}
     with_page = sorted((d for d, why in reasons.items() if why is None), key=pc_key)
     at = {d: ctx[d]['at'] for d in with_page}
     models = [model(d, files[d], meta, ctx[d], totals[d], names, nearest(d, at, with_page), order)
               for d in with_page]
     pages = {f'planes-overhead/{m["slug"]}/index.html': render(m) for m in models}
-    pages[INDEX_PATH] = render_index(models)
-    return pages, {d: why for d, why in reasons.items() if why}
+    index = council_index(with_page, ctx)
+    packs = pack_pages(models, index, today, consultation())
+    pages[INDEX_PATH] = render_index(models, index, pack=PACK_HUB_PATH in packs)
+    return pages | packs, {d: why for d, why in reasons.items() if why}
 
 
 COUNCILS = REPO / 'data' / 'planes-districts-by-council.json'
@@ -772,9 +1076,11 @@ def main() -> int:
     pages, without = build(meta, files, ctx, totals, names, order)
     # From the pages this run WRITES (each at planes-overhead/<district, lower case>/), so an area page can never
     # link a district page that is not built, whatever build() comes to filter.
-    index = council_index([path.split('/')[1].upper() for path in pages if path != INDEX_PATH], ctx)
-    print(f'{len(pages) - 1} district pages and the index; {len(without)} districts without a page; '
-          f"{len(index['councils'])} councils link to them")
+    districts = [path.split('/')[1].upper() for path in pages if is_district_page(path)]
+    index = council_index(districts, ctx)
+    packs = sum(path.startswith(f'planes-overhead/{PACK_DIR}/') for path in pages)
+    print(f'{len(districts)} district pages and the index; {len(without)} districts without a page; '
+          f"{len(index['councils'])} councils link to them; {packs} consultation pack pages")
     if a.write:
         write(pages)
         COUNCILS.write_text(councils_text(index), encoding='utf-8', newline='\n')

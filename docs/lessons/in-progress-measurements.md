@@ -311,3 +311,35 @@ run read 0 of 25 for both planes passes: false, because the deploy shell had exp
 `curl.exe -o /tmp/x` wrote `C:\tmp\x` while `md5sum` hashed the empty `/tmp/x` (the 30 Oct "transient" planes red
 was the same; stray files found in `C:\tmp`). The script now unsets it (proven: 0 of 25 before, 25 of 25 after,
 under the same export). Still NOT YET: links from the area pages; Search Console (Bill's).
+
+### THE INDEX BY COUNCIL, AND THE HEATHROW CONSULTATION PACK (2026-11-01)
+
+**The index** (`/planes-overhead/`) was one line per district with its councils beside it: 16.5 screens on a phone
+(site audit, 1 Nov). It now opens with a postcode box (the district pages' own form, to `/?postcode=`), a jump list
+of city regions, then each region's councils with their districts as links on one line: **8.0 screens** at 390 px,
+every link kept for search engines. The councils are `council_index()`'s (LINK_FROM, the area pages' own rule), so
+a district on a boundary is under each; `index_regions()` stops the build if a district with a page is under no
+council, or a council lists one without a page. Links are 24 px or more each way (WCAG 2.5.8).
+
+**The consultation pack** (`/planes-overhead/heathrow-consultation/<council>/` and its hub), the marketing plan's
+first technique, built by Bill's "do all of the above" (1 Nov): one page per council, the same baseline for anyone
+responding to Heathrow's expansion consultation, whatever their view. Neutral by wording ("Sky Score takes no side
+in the consultation"; today's flights on today's routes, never a third runway's). Choices made here, each a rule:
+- WHICH COUNCILS: every council with a district page that counts Heathrow's planes (a table, PAGE_FROM): **32 London
+  councils**, because Heathrow's approaches cross most of London below 7,000 ft. Not the marketing plan's six typed
+  in: a rule cannot leave Wandsworth or Lambeth out by mistake.
+- THE LINK AND ITS DAY are READ from `js/street_report.mjs` HAVE_YOUR_SAY (`consultation()`: the LHR entry with an
+  `until`); none, no pack. The page says "open until 22 December 2026" and, built after that day, "which closed on":
+  so `--check` reds on 23 December until `--write`, and the deploy ships the closed wording. Shared links never 404.
+- FIGURES: each district's own, from the same files (`district_cell()`: `overall_reading()`'s words, one per line:
+  the busiest, then the postcodes by band); the borough's aircraft noise band, road noise, air and flood are its
+  area page's own (`build_area_pages.gather()`), with only those figures' source lines. A figure the area page does
+  not publish says "Not published for <council>", never a reading. No price, no score.
+- PHONES: whole districts carry 4-digit counts, so four columns overflowed 350 px on 19 of 32 pages. Below 680 px each
+  district STACKS (its name, then each kind of day as a labelled line, breaking only at a band's comma); ARIA roles
+  keep it a table once `display:block` drops Safari's table semantics (html-validate's no-redundant-role is disabled
+  for that one table, with that reason, in the page). 0 overflow at 320 and 390 on all 32. It prints as a handout.
+- PLUMBING: the pages sit inside `planes-overhead/`, so they inherit the gitignore, `planes-pages-deploy`'s sync, the
+  manifest, `sitemap-planes.xml` and the drift sample; `is_district_page()` keeps them out of the council index and
+  the index. `tests/a11y-source.mjs` scans the hub and the biggest council page at 1440 and 390.
+Held by `tests/test_build_planes_pages.py` (7 pack tests, 4 index tests); 9 mutations, each one rule broken, all red.

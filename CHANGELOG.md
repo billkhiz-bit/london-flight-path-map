@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-11-02 - Planes from Heathrow, council by council, for its consultation; shorter index and Bay Area table
+
+- **A page per London council for Heathrow's expansion consultation** (`/planes-overhead/heathrow-consultation/`):
+  for each of the 32 councils with a district Heathrow's planes cross, the planes counted over each of its postcode
+  districts by the way Heathrow flies, and the borough's noise, air and flood figures, with a link to Heathrow's
+  consultation page. Today's flights on today's routes, never a third runway's; Sky Score takes no side. The pages say
+  "open until 22 December 2026", then "closed".
+- **The planes overhead index is half as long on a phone**: a postcode box, a jump list of councils, and each
+  council's districts on one line (16.5 screens to 8.0).
+- **The Bay Area page's city table fits a phone**: three columns (city and county; share of the city on the noise
+  map and its airfield; the routes overhead) instead of eight, so nothing scrolls sideways and each city's routes sit
+  beside its name. Same facts and wording.
+
 ## 2026-11-01 - Each area page links its planes overhead pages; the 2021 noise map measured against 2025
 
 - **Each area page now links the planes overhead pages of the postcode districts it covers**: 72 of the 102 areas

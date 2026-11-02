@@ -807,7 +807,23 @@ async function planesPagePaths() {
     const widest = pages.reduce((a, b) => (rowText(b.html) > rowText(a.html) ? b : a));
     chosen.set(widest.path, [...(chosen.get(widest.path) || []), 'the widest table row']);
   }
-  return { paths: ['/planes-overhead/', ...chosen.keys()], chosen, absent, total: pages.length };
+  // The consultation pack (2026-11-01): its hub (read above as a folder), and the council page with the most text,
+  // the most districts to stack on a phone (its table overflowed 19 of 32 pages before it stacked).
+  const packBase = join(base, 'heathrow-consultation');
+  const pack = [];
+  try {
+    for (const d of await readdir(packBase, { withFileTypes: true })) {
+      if (d.isDirectory()) pack.push({ path: `/planes-overhead/heathrow-consultation/${d.name}/`, html: await readFile(join(packBase, d.name, 'index.html'), 'utf8') });
+    }
+  } catch {
+    // No pack built (no dated consultation link in HAVE_YOUR_SAY): nothing of it to sample.
+  }
+  if (pack.length) {
+    chosen.set('/planes-overhead/heathrow-consultation/', ['the consultation pack hub']);
+    const biggestPack = pack.reduce((a, b) => (b.html.length > a.html.length ? b : a));
+    chosen.set(biggestPack.path, ['the biggest consultation pack page']);
+  }
+  return { paths: ['/planes-overhead/', ...chosen.keys()], chosen, absent, total: pages.length + pack.length };
 }
 
 const planes = await planesPagePaths();

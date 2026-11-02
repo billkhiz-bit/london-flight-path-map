@@ -60,7 +60,13 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > lists by design); length on phones is: `/planes-overhead/` 16.5 screens, `/how-it-works/` 14.6, `/bay-area/` 10.7
 > ("City by city" 1,177 words of prose), `/about/` 9.8, `/pricing` 7.4, `/` 7.3 (leave until ~20 Nov). Acted on (Bill):
 > the 11 px notes on area + planes pages -> 12 px (the site's small print; never shrink), and one name for the API
-> reference on /api/. Open ideas: /bay-area/ city by city as a table; the planes index grouped with a jump list;
+> reference on /api/. /bay-area/ "City by city" (Bill, 1 Nov: "3 columns"): the audit had misread it, it WAS a table,
+> 980 px wide, so a phone read it through a 350 px window; now three columns, no sideways scroll at any width (phone
+> 10.7 -> 12.3 screens, the cost Bill chose; desktop 8.6 -> 7.7). The planes index grouped with a jump list: BUILT
+> (postcode box, councils jump list, a council's districts on one line; 16.5 -> 8.0 screens). **Heathrow consultation
+> pack BUILT** (`/planes-overhead/heathrow-consultation/<council>/` + hub, 32 London councils, link and `until` read from
+> `HAVE_YOUR_SAY`; neutral; after 22 Dec its `--check` reds until `--write` re-says "closed"). Both ship 2 Nov with
+> `planes-pages-deploy` then `meta-deploy`, before the drop-ins start (Tue 3 Nov). Open ideas:
 > /pricing mails support@ 9 times; the front page's /api/ and /pricing links under 3 labels each (after ~20 Nov).
 > **AIRAC 2026-10-29 is out** (we serve 2026-10-01). Fetched into the scratchpad and compared on 1 Nov: no procedure
 > or geometry changed, only Cardiff runway 12's RNP chart link (graphic 511875 -> 525382). The roll moves
