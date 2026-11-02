@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-11-02 - Planes from Heathrow, council by council, for its consultation; healthcare nearby in every area
+
+- **A page per London council for Heathrow's expansion consultation** (`/planes-overhead/heathrow-consultation/`):
+  for each of the 32 councils with a district Heathrow's planes cross, the planes counted over each of its postcode
+  districts by the way Heathrow flies, and the borough's noise, air and flood figures, with a link to Heathrow's
+  consultation page. Today's flights on today's routes, never a third runway's; Sky Score takes no side. The pages say
+  "open until 22 December 2026", then "closed".
+- **The planes overhead index is half as long on a phone**: a postcode box, a jump list of councils, and each
+  council's districts on one line (16.5 screens to 8.0).
+- **The Bay Area page's city table fits a phone**: three columns (city and county; share of the city on the noise
+  map and its airfield; the routes overhead) instead of eight, so nothing scrolls sideways and each city's routes sit
+  beside its name. Same facts and wording.
+- **Healthcare nearby now answers at once in every UK area we score**, from a snapshot of OpenStreetMap's GP
+  surgeries, clinics, pharmacies and hospitals, as London already did. Elsewhere the answer had waited on a live
+  service, sometimes for 26 seconds, and often fell back to links.
+- **Flight routes from the UK AIP's 29 October cycle** (AIRAC 2026-10-29): no route or procedure moved, only the
+  link to one Cardiff chart. No score changed.
+- Behind the scenes: search engines now get each area and planes page's place in the site (its breadcrumb) and who
+  publishes the site, and `/llms.txt` gives tools that read the web a plain summary of the site and its main pages.
+- Behind the scenes: each part of the API now records a line whenever it answers with a server error, so the 1% of
+  requests that failed in October (mostly an upstream service we ask on a visitor's behalf being unavailable) can
+  be traced to their source. Nothing a visitor typed is recorded with it.
+
+## 2026-11-01 - Each area page links its planes overhead pages; the 2021 noise map measured against 2025
+
+- **Each area page now links the planes overhead pages of the postcode districts it covers**: 72 of the 102 areas
+  (Hounslow, for example, links TW3, TW4, TW5, TW7, TW8, TW13, TW14, UB2 and W4). An area with no such page shows
+  no section.
+- **The COVID-year comparison now uses the CAA's 2025 Heathrow contours** (ERCD Report 2601): DEFRA's 2021 map puts
+  the 55 dB Lden area at 75.6 km², the CAA's model of 2025 at 142.4 km² (148.4 for 2024), so DEFRA's map still shows
+  about half a normal year's footprint. Updated on the full map, the API page, the methodology and the street
+  report. No score changed.
+- **The sitemap dates each page by the day its change went live**: two pages had been dated by the day the change
+  was written.
+- **Postcodes under Heathrow's flight paths now link Heathrow's expansion consultation** in their "Have your say"
+  line, on the front page answer and the street report, while it is open (until 22 December 2026). The link leaves
+  by itself after that day.
+- **Easier to read on a phone**: the notes under each figure on the area and planes overhead pages are now the
+  site's usual small print (12 px, from 11 px), and the API page calls its reference docs by one name.
+
 ## 2026-10-31 - Planes overhead, a page per postcode district; areas compared in one table
 
 - **The area index at `/area/` now compares each city's council areas in one table**: the Sky Score, its five
@@ -29,7 +69,7 @@
 - **The FAA's routes for 29 October (cycle 2611).** Only Oakland's changed: three procedures re-issued under new
   numbers (CNDEL6, HUSSH3, KATFH4) and four withdrawn (SALAD5, SKYL1, SLNT3, QUAKE2). No score moved.
 
-## 2026-10-26 (evening) - Planes overhead, for every postcode we cover
+## 2026-10-27 - Planes overhead, for every postcode we cover
 
 - **How many planes pass overhead**, in the answer for a postcode: on an average day of each kind, January to
   August 2026, from each of ten airports whose tracking matches the CAA's own monthly totals (Heathrow, Gatwick,

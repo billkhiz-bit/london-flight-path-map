@@ -235,7 +235,7 @@ only where a square sits on a cone's edge, which the ranges cover. Not worth a r
 first tally wrongly blamed "splits": an airframe landing several times a day has several passes, so match extra
 passes by TIME, never by their order in a trace. (d) The centreline check on the recounted days: 0.992-1.031 at
 every well-separated runway end, as before.
-**LIVE, 2026-10-26 (evening; Bill: "go live now" after the preview, claude.ai/artifact/TueRqSvmPrkjxmsrcDD3S8).**
+**LIVE, 2026-10-27 (`5d760c1`; Bill: "go live now" 26 Oct evening, after the preview, claude.ai/artifact/TueRqSvmPrkjxmsrcDD3S8; the deploy waited for a clean preflight).**
 Averages rebuilt on the ground counts (London -1.9% median, West Midlands -9.2%, South Yorkshire -15.4%; Kew 310 and
 Hackney 20 unchanged; Hounslow TW3 3QL 310 -> 15, range 1-316). Thresholds MEASURED (scratch `measure_rules.py`): a range
 at gap 10 / ratio 2 on 17,103 postcodes (4.0% of the 431,678 with a figure; London 6.4%); the other-flying flag at 5 a
@@ -259,6 +259,34 @@ from a zip short of tiles, reading missing land as sea level: now refuses fewer 
 districts against the TRACKED manifest at the origin (red before the first deploy, as it should be). NOT changed,
 with reasons: a late planes fetch from an earlier search fills only a CLOSED answer (render() is the only thing
 that opens it, and clears the block first); "% of days" rounds each kind on its own, so three can sum to 99 or 101.
+**AGAINST THE CAA'S OWN OVERFLIGHT MAP, 2026-10-27 (PASS).** ERCD 2601 (Heathrow 2025, CAA for Heathrow Airport
+Ltd) Figure B10a: overflight contours for the 2025 average SUMMER 16-hour day, 48.5 degrees, up to 4,000 ft AMSL,
+levels 1/5/20/100/200 (pictures only; PDF page 51, the image lifted out with pypdf). East is UP in the figure; 23.53
+px per km from its 30 km bar; the thresholds sit at y=787, set by the 4,000 ft cut at the lobe tips (a 3-degree glide
+passes 4,000 ft AMSL ~22.5 km out) and CONFIRMED independently by the gap between the two approaches closing at
+14.9 km against 15.0 by geometry (the cones meet over the midline at ~0.8 km up). Ours: `postcode-averages.npz`,
+Heathrow at 48.5 degrees, each postcode's published westerly and easterly figures weighted 0.79/0.21, the CAA's own
+2025 summer split. Under each approach 4-20 km out: ours 245-283 a day vs its "200+"; the approach band's outer edge
+10 km out: -1.25/+1.20 km vs -1.29/+1.26; every level's edge on one line in both (arrivals hold the centreline);
+the gap between the approaches open to ~15-16 km vs ~14.9; the midline 18-20 km out 463-490 (both runways) vs inside
+its 200. Not comparable: easterly departures (its ceiling 4,000 ft, ours 7,000) and ground with no postcodes (the
+Thames, commons). **A trap met on the way: a TRUE bearing is not a grid bearing.** Grid north is ~1.2 degrees off true
+at Heathrow, so the runway's 89.7 true used as a BNG direction put the "midline" 0.25 km sideways at 12 km, inside one
+runway's cone, and made the gap look 4 km short (a midline reading exactly one runway's 251). Project a point along
+the true bearing with `pyproj.Geod` and take the grid direction from it. Script: that session's scratchpad
+`compare_ercd_overflight.py`.
+**THE DAILY DIRECTION CHECK, 2026-10-27 (PASS, every day).** Our westerly/easterly/mixed label for each of the
+289 counted Heathrow days (`classify_day()` on each day file, the function the averages group by) against the
+wind in Heathrow's hourly METARs, 07:00-22:59 London time (IEM, the service `fetch_metar.py` uses; its cache
+holds only the altimeter, so the wind was fetched afresh, `drct`/`sknt`): a day is FIRM EASTERLY when in 80% of
+its hours the wind along the runway blows from the east at 7 kt or more (a tailwind on 27 past what westerly
+ops accept), FIRM WESTERLY when from the west at 5 kt or more, else ambiguous. 90 firm westerly days: all 90 ours
+westerly. 24 firm easterly: all 24 easterly. Every one of our 40 mixed days is an ambiguous-wind day. The 175
+ambiguous days lean our way too: ours westerly, median +4.1 kt from the west, wind from the east in 6% of hours;
+ours easterly, -5.6 kt, 100%; ours mixed, 0.0 kt, 41% (a wind that turns, or sits on the line). No day leans
+clearly against its label. Heathrow's own daily "% westerly" page is JavaScript-only (its internal API, not
+one offered for use), so the wind, the physical cause, was the check. Script: that scratchpad's
+`check_direction_days.py`.
 
 ### THE DISTRICT PAGES (2026-10-28, built; LIVE 2026-10-31)
 
@@ -311,3 +339,35 @@ run read 0 of 25 for both planes passes: false, because the deploy shell had exp
 `curl.exe -o /tmp/x` wrote `C:\tmp\x` while `md5sum` hashed the empty `/tmp/x` (the 30 Oct "transient" planes red
 was the same; stray files found in `C:\tmp`). The script now unsets it (proven: 0 of 25 before, 25 of 25 after,
 under the same export). Still NOT YET: links from the area pages; Search Console (Bill's).
+
+### THE INDEX BY COUNCIL, AND THE HEATHROW CONSULTATION PACK (2026-11-01)
+
+**The index** (`/planes-overhead/`) was one line per district with its councils beside it: 16.5 screens on a phone
+(site audit, 1 Nov). It now opens with a postcode box (the district pages' own form, to `/?postcode=`), a jump list
+of city regions, then each region's councils with their districts as links on one line: **8.0 screens** at 390 px,
+every link kept for search engines. The councils are `council_index()`'s (LINK_FROM, the area pages' own rule), so
+a district on a boundary is under each; `index_regions()` stops the build if a district with a page is under no
+council, or a council lists one without a page. Links are 24 px or more each way (WCAG 2.5.8).
+
+**The consultation pack** (`/planes-overhead/heathrow-consultation/<council>/` and its hub), the marketing plan's
+first technique, built by Bill's "do all of the above" (1 Nov): one page per council, the same baseline for anyone
+responding to Heathrow's expansion consultation, whatever their view. Neutral by wording ("Sky Score takes no side
+in the consultation"; today's flights on today's routes, never a third runway's). Choices made here, each a rule:
+- WHICH COUNCILS: every council with a district page that counts Heathrow's planes (a table, PAGE_FROM): **32 London
+  councils**, because Heathrow's approaches cross most of London below 7,000 ft. Not the marketing plan's six typed
+  in: a rule cannot leave Wandsworth or Lambeth out by mistake.
+- THE LINK AND ITS DAY are READ from `js/street_report.mjs` HAVE_YOUR_SAY (`consultation()`: the LHR entry with an
+  `until`); none, no pack. The page says "open until 22 December 2026" and, built after that day, "which closed on":
+  so `--check` reds on 23 December until `--write`, and the deploy ships the closed wording. Shared links never 404.
+- FIGURES: each district's own, from the same files (`district_cell()`: `overall_reading()`'s words, one per line:
+  the busiest, then the postcodes by band); the borough's aircraft noise band, road noise, air and flood are its
+  area page's own (`build_area_pages.gather()`), with only those figures' source lines. A figure the area page does
+  not publish says "Not published for <council>", never a reading. No price, no score.
+- PHONES: whole districts carry 4-digit counts, so four columns overflowed 350 px on 19 of 32 pages. Below 680 px each
+  district STACKS (its name, then each kind of day as a labelled line, breaking only at a band's comma); ARIA roles
+  keep it a table once `display:block` drops Safari's table semantics (html-validate's no-redundant-role is disabled
+  for that one table, with that reason, in the page). 0 overflow at 320 and 390 on all 32. It prints as a handout.
+- PLUMBING: the pages sit inside `planes-overhead/`, so they inherit the gitignore, `planes-pages-deploy`'s sync, the
+  manifest, `sitemap-planes.xml` and the drift sample; `is_district_page()` keeps them out of the council index and
+  the index. `tests/a11y-source.mjs` scans the hub and the biggest council page at 1440 and 390.
+Held by `tests/test_build_planes_pages.py` (7 pack tests, 4 index tests); 9 mutations, each one rule broken, all red.

@@ -88,8 +88,58 @@ def slug(text: str) -> str:
     return re.sub(r'-{2,}', '-', s)
 
 
+def breadcrumb_ld(trail: list[tuple[str, str]]) -> str:
+    """The page's breadcrumb for search engines (schema.org BreadcrumbList, 2026-11-02).
+
+    `trail` is (name, path) from the front page down to the page itself. Every item but the last is a link the
+    page's visible breadcrumb also shows, and the last is the page's own canonical address
+    (tests/test_breadcrumb_ld.py holds both, on every built page). A city with no page of its own is left out
+    rather than given an address it does not have. So the JSON cannot close its <script>, '</' is escaped."""
+    items = [{'@type': 'ListItem', 'position': i, 'name': name, 'item': SITE + path}
+             for i, (name, path) in enumerate(trail, 1)]
+    body = json.dumps({'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': items},
+                      ensure_ascii=False, separators=(',', ':'))
+    return '<script type="application/ld+json">' + body.replace('</', r'<\/') + '</script>'
+
+
 def e(text) -> str:
     return html.escape(str(text), quote=True)
+
+
+# THE PLANES OVERHEAD LINKS (2026-11-01). Each borough's page links the /planes-overhead/<district>/ pages of the
+# postcode districts it covers, from the tracked index scripts/build_planes_pages.py writes (its council_index: a
+# district holding a tenth or more of its measured postcodes in the council). Keyed on the ONS council code, never
+# the name. Read, not guarded, like borough-extra.json: a missing index is a crash, not 102 pages quietly without
+# links. Names only: an area page never says how often planes pass (tests/test_public_wording.py).
+PLANES_BY_COUNCIL = REPO / 'data' / 'planes-districts-by-council.json'
+
+
+@functools.cache
+def _planes_by_council() -> dict[str, list[str]]:
+    return json.loads(PLANES_BY_COUNCIL.read_text(encoding='utf-8'))['councils']
+
+
+def _district_order(d: str):
+    """Postcode order (TW2 before TW10), so a borough with two council codes is not ordered by app.py's dict."""
+    m = re.match(r'([A-Z]+)(\d+)(.*)', d)
+    return (m.group(1), int(m.group(2)), m.group(3)) if m else (d, 0, '')
+
+
+def planes_links(city: str, borough: str) -> list[str]:
+    """The districts this borough's page links, in postcode order; [] when none."""
+    found = {d for lad, where in app.LAD_TO_BOROUGH.items() if tuple(where) == (city, borough)
+             for d in _planes_by_council().get(lad, [])}
+    return sorted(found, key=_district_order)
+
+
+def planes_section(city: str, borough: str) -> str:
+    """The page's "Planes overhead" block, or '' (no heading at all) when no district page covers the borough."""
+    districts = planes_links(city, borough)
+    if not districts:
+        return ''
+    links = ', '.join(f'<a href="/planes-overhead/{e(d.lower())}/">{e(d)}</a>' for d in districts)
+    return ('<h2>Planes overhead</h2>\n'
+            f'<p>Planes overhead pages for the postcode districts covering {e(borough)}: {links}.</p>\n\n')
 
 
 def fmt_price(value):
@@ -394,7 +444,9 @@ PAGE = """<!doctype html>
   table {{ width:100%; border-collapse:collapse; font-size:14px; }}
   th, td {{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }}
   th {{ width:42%; font-weight:600; }}
-  td .note {{ display:block; color:var(--mid); font-size:11px; }}
+  /* 12px, the site's small print everywhere else (sources, the front page's notes); 11px was the one size below
+     it, and 72% of a page's words sat under 13px (site audit 2026-11-01, Bill: raise, never shrink). */
+  td .note {{ display:block; color:var(--mid); font-size:12px; }}
   .tw {{ overflow-x:auto; }}
   /* The caption names the table for a screen reader without adding a
      visible heading. Defined here because these pages ship their own
@@ -444,6 +496,7 @@ PAGE = """<!doctype html>
 <nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><button type="button" class="menu-btn" popovertarget="site-nav">Menu</button><div class="site-nav" id="site-nav" popover><button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/how-it-works/">How it works</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/about/">About</a></div></nav>
 <div class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; {city_label}</nav>
+{crumbs_ld}
 <main data-city="{city}" data-borough="{borough}">
 <h1>{borough} noise and liveability</h1>
 <p class="sub">{city_label}. {topics_cap}, from published sources.</p>
@@ -461,7 +514,7 @@ PAGE = """<!doctype html>
 
 {cta}
 
-<h2>Where these numbers come from</h2>
+{planes}<h2>Where these numbers come from</h2>
 <p class="sources">{sources}</p>
 <p class="sources">Methodology version {methodology}. Full method: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">the methodology</a> (and the <a href="/score-demo/api-docs.html">API reference</a>).
 Figures are for the whole borough; a single address can differ{map_note}.</p>
@@ -551,6 +604,8 @@ def render(data: dict) -> str:
         title=e(f"{data['borough']} noise & liveability score | Sky Score"),
         description=e(desc),
         canonical=f"{SITE}/area/{slug(data['city'])}/{slug(data['borough'])}/",
+        crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Areas', '/area/'),
+                                 (data['borough'], f"/area/{slug(data['city'])}/{slug(data['borough'])}/")]),
         city_label=e(city_label),
         topics_cap=e(shown[0].upper() + shown[1:]),
         # `city` feeds data-city on <main>: the page's machine-readable identity,
@@ -559,6 +614,9 @@ def render(data: dict) -> str:
         city=e(data['city']),
         borough=e(data['borough']),
         cta=cta,
+        # Ends in a blank line when there is one, and is '' otherwise, so a page with no district page is
+        # byte-identical to before (its sitemap date does not move).
+        planes=planes_section(data['city'], data['borough']),
         map_note=map_note,
         score=e(data['score']),
         rows=rows,
@@ -786,6 +844,24 @@ def main() -> int:
             # written; the code failed only on ZERO pages (audit M24), so 98
             # good pages and one doorway page read as OK.
             print(f'FAIL: {len(thin)} page(s) would carry fewer than {MIN_FACTS} facts')
+            return 1
+        # EVERY borough page, byte for byte (CRLF-blind), since 2026-11-01. Until then --check compared the index
+        # only and left the pages to tests/area-page-freshness.mjs, which compares their SCORES with the live API
+        # and so cannot see the planes overhead links: a district gaining or losing its page would have left the
+        # pages linking a 404, or missing one, with every gate green.
+        stale = [path for path, data in pages
+                 if not (OUT / path / 'index.html').exists()
+                 or (OUT / path / 'index.html').read_text(encoding='utf-8').replace('\r\n', '\n') != render(data)]
+        if stale:
+            print(f'FAIL: {len(stale)} area page(s) differ from what --write would write (scores, or the planes '
+                  f'overhead links in {PLANES_BY_COUNCIL.name}) - run --write: {", ".join(stale[:5])}')
+            return 1
+        # And none on disk that --write no longer builds (a borough gone thin, or its city made facts-only):
+        # area-deploy SYNCS area/, so a leftover page would be uploaded as current, stale scores and links included.
+        leftover = sorted({p.parent.relative_to(OUT).as_posix() for p in OUT.glob('*/*/index.html')}
+                          - {path for path, _ in pages})
+        if leftover:
+            print(f'FAIL: {len(leftover)} area page(s) on disk are no longer built - delete them: {", ".join(leftover[:5])}')
             return 1
         if sync_scorecards(pages, write=False):
             print('FAIL: index.html AREA_SCORECARDS is stale - run --write')
@@ -1068,6 +1144,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 <nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><button type="button" class="menu-btn" popovertarget="site-nav">Menu</button><div class="site-nav" id="site-nav" popover><button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/how-it-works/">How it works</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/about/">About</a></div></nav>
 <div class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; Open data</nav>
+{crumbs_ld}
 <main>
 <h1>Open data</h1>
 <p class="sub">Every UK area Sky Score covers, in one file: the published score, its five components and the measurements behind them. {n} areas across {c} city regions. Prices: {vintage} UK House Price Index. Methodology version {methodology}.</p>
@@ -1122,7 +1199,8 @@ def open_data_files() -> dict[str, str]:
     page = OPEN_DATA_PAGE.format(
         n=len(rows), c=len({r[0] for r in rows}), site=SITE, csv=OPEN_DATA_CSV,
         vintage=e(app.SNAPSHOT_VINTAGE_LABEL), methodology=e(app.METHODOLOGY_VERSION),
-        licence=OPEN_DATA_LICENCE, columns=columns)
+        licence=OPEN_DATA_LICENCE, columns=columns,
+        crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Open data', '/open-data/')]))
     return {OPEN_DATA_CSV: open_data_csv(rows), 'index.html': page}
 
 
@@ -1200,7 +1278,12 @@ def last_changed(files: list[str]) -> dict[str, str]:
 
     try:
         status = git('status', '--porcelain', '--untracked-files=all')
-        log = git('log', '--format=%x00%cs', '--name-only')
+        # --first-parent -m: master's own history, each merge listing what it brought in. Plain --name-only lists
+        # no files for a merge, so a page merged from a branch (--no-ff) was dated by the BRANCH commit, the day it
+        # was written, not the day it reached master: /area/'s comparison tables (written 26 Oct, merged 31 Oct)
+        # dated themselves 26 Oct on 2026-11-01. A FAST-FORWARD keeps the branch commits on master's own line, so
+        # they still carry the day they were committed: git holds no record of when a fast-forward happened.
+        log = git('log', '--first-parent', '-m', '--format=%x00%cs', '--name-only')
     except (OSError, subprocess.CalledProcessError) as exc:
         print(f'WARNING: git unavailable ({exc}); every sitemap URL is dated today')
         return dict.fromkeys(files, today)

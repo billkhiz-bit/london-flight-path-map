@@ -309,7 +309,7 @@ def airport_noise_scale(code):
 # compares the two.
 # PROVISIONAL (2026-09-26): fitted against DEFRA Round 4, which maps 2021 - and
 # measured at Heathrow that map is about HALF a normal year's footprint (55 dB
-# Lden 75.6 km2 against the CAA's 2024 148.4 km2; data/covid-understatement.json).
+# Lden 75.6 km2 against the CAA's 2025 142.4 km2; data/covid-understatement.json).
 # The fit inherits that understatement. Refit when a normal-year yardstick lands.
 #
 # 0.3 -> 0.5 at v5.5 (2026-10-01), REFITTED with the runway-shaped airport term
@@ -10487,7 +10487,7 @@ PROVENANCE_PERIODS = {
     'ons-crime-c4': CRIME_EDITION_LABEL,        # refresh_crime_from_ons.edition_label()
     'dfe-ks4': '2023/24',               # build_progress8.VINTAGE
     'ons-nspl': 'August 2026',          # load_nspl.NSPL_VINTAGE ('2026-08'), written as a month like the rest
-    'uk-aip': 'AIRAC 2026-10-01',       # build_flight_paths.AIRAC
+    'uk-aip': 'AIRAC 2026-10-29',       # build_flight_paths.AIRAC
     'faa-cifp': 'cycle 2611, effective 2026-10-29',  # build_us_flight_paths.RECORD 'cycle' / 'effective'
 }
 NOT_RECORDED = None  # a continuously updated register or a map with no edition: when we last pulled it is not stored
@@ -11821,6 +11821,10 @@ BADGE_ECHO_MAX = 10
 
 
 def _svg_response(svg, status=200, cache_seconds=86400):
+    if status >= 500:
+        # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
+        # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
+        logger.warning('[5XX] %s badge', status)
     return {
         'statusCode': status,
         'headers': {
@@ -12134,6 +12138,10 @@ def cors_headers():
 
 def response(status, body, headers=None):
     """JSON response. `headers` adds to (and may override) the defaults."""
+    if status >= 500:
+        # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
+        # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
+        logger.warning('[5XX] %s %s', status, str(body.get('error', '') if isinstance(body, dict) else '')[:200])
     return {
         'statusCode': status,
         'headers': {

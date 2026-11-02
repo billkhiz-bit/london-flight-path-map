@@ -27,6 +27,32 @@
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- For search engines (2026-11-02): who publishes the site, and the site itself. Never a price here: prices
+         live on /pricing only, and tests/test_public_wording.py reads every JSON-LD block for them. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://skyscore.co.uk/#organization",
+            "name": "Sky Score",
+            "url": "https://skyscore.co.uk/",
+            "logo": "https://skyscore.co.uk/icons/apple-touch-icon.png",
+            "email": "support@skyscore.co.uk",
+            "sameAs": ["https://apps.apple.com/gb/app/sky-score/id6768118116"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://skyscore.co.uk/#website",
+            "name": "Sky Score",
+            "url": "https://skyscore.co.uk/",
+            "inLanguage": "en-GB",
+            "publisher": { "@id": "https://skyscore.co.uk/#organization" }
+          }
+        ]
+      }
+    </script>
     <link rel="stylesheet" href="/fonts/fonts.css" />
     <style>
       :root {

@@ -1,0 +1,46 @@
+# Sky Score
+
+> Property noise and liveability data for UK postcodes, as scores from 0 to 10 with every source named: aircraft noise estimated from published flight routes, road noise, air quality, flood risk, affordability, price growth, crime, schools, transport and healthcare. Sky Score covers 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only).
+
+How to read the figures:
+
+- Scores rise as things get better and are named for the good thing ("Quiet Skies 8/10"). Measurements rise as things get worse and are named for the bad thing ("Aircraft noise 2/10"). The two can be one value under two labels.
+- Quiet Skies is an estimate from published flight routes, not a noise measurement.
+- Shares are of postcodes, never of addresses.
+- Every figure says its source, its method (measured, modelled, estimated or a statistic) and its period. A modelled figure is not a measurement.
+- This is information, not advice: not a survey, a valuation or a conveyancing search.
+
+## Look up a place
+
+- [Check a postcode](https://skyscore.co.uk/): type a UK postcode or a place for the official noise and air figures for that street, with the flight routes that pass it
+- [Full map](https://skyscore.co.uk/map/): every council area covered, with flight paths, aircraft and road noise, flood risk and air quality
+- [Every area](https://skyscore.co.uk/area/): one page per council area, with its published figures, its score and their sources
+- [Planes overhead, district by district](https://skyscore.co.uk/planes-overhead/): how many planes pass over the postcode districts near ten UK airports, on a day each airport flies west, east or both ways; counted from flight tracking, January to August 2026, and checked against the CAA's monthly totals
+- [Heathrow consultation pages](https://skyscore.co.uk/planes-overhead/heathrow-consultation/): for each London council Heathrow's planes cross, the planes over each of its postcode districts today and the borough's noise, air and flood figures; neutral, today's routes only
+- [Reports](https://skyscore.co.uk/reports/): one page of official figures for a street or an area
+- [Bay Area](https://skyscore.co.uk/bay-area/): which of 50 San Francisco Bay Area cities lie under a published landing, arrival or departure route
+
+## How it works
+
+- [How it works](https://skyscore.co.uk/how-it-works/): what each figure is, where it comes from, and what it cannot tell you
+- [Methodology](https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md): every input, weight and source, with a dated changelog
+- [What changed](https://skyscore.co.uk/changes): which scores moved each quarter and why, and policy notices
+- [Open data](https://skyscore.co.uk/open-data/): each area's published scores and inputs as one CSV
+
+## For developers
+
+- [API](https://skyscore.co.uk/api/): the /v1/score API, by UK postcode, New York ZIP, or Bay Area city or ZIP; every value carries its source, method and period
+- [API reference](https://skyscore.co.uk/score-demo/api-docs.html)
+- [Live API demo](https://skyscore.co.uk/score-demo/)
+
+## Sources
+
+Each page names its sources and their licences. UK flight routes come from the UK AIP (NATS). US routes come from the FAA, which supplies them "as is", without warranty of any kind.
+
+## Optional
+
+- [About](https://skyscore.co.uk/about/): who is behind Sky Score and why it exists
+- [Pricing](https://skyscore.co.uk/pricing)
+- [Privacy](https://skyscore.co.uk/privacy)
+- [Terms](https://skyscore.co.uk/terms)
+- Contact: support@skyscore.co.uk

@@ -869,19 +869,49 @@ other two.
   filter @message like /\[SIGNUP_ORPHAN_KEY\]/
   ```
   Alarm: `> 0` over 1 hour.
-- API Gateway access logs disabled (cost reasons); enable via the APIGW
-  console if investigating an abuse case.
+- `[5XX] <status> <error>` on every response a Lambda RETURNS with a 5xx
+  (2026-10-27; `backend/tests/test_5xx_logged.py` holds all ten builders to
+  it). Why: in October 1.1% of API requests (1,229 of 113,067) answered 5xx
+  while the Lambdas recorded one error, because handlers catch their failures
+  and return the 5xx themselves (epc's 502/504 for an upstream failure), and
+  API Gateway cannot say which route. Which Lambda, and why:
+  ```
+  filter @message like /\[5XX\]/
+  | parse @message /\[5XX\] (?<status>\d+) (?<why>.*)/
+  | stats count(*) by @log, status, why
+  ```
+  API Gateway's `5XXError` beyond these lines is the gateway's own (throttled
+  invocations, malformed proxy responses).
+- API Gateway access logs disabled (cost reasons). Enabling them needs more than
+  the stage setting: the ACCOUNT has no CloudWatch role for API Gateway
+  (`aws apigateway get-account` -> `cloudwatchRoleArn: null`, 2026-10-27), and
+  `flightmap-dev` cannot create one: console work, if an abuse case needs it.
 - Billing alarm: see `AWS_BILLING_ALARM_SETUP.md`. **NOT CREATED as of
   2026-09-08** — verified absent in `us-east-1`, the only region billing
   metrics publish to. See §3.4.
 
-**Alarms, created 2026-09-02 (CLI, `flightmap-dev`):**
+**Alarms, created 2026-09-02 (CLI, `flightmap-dev`); two RETUNED 2026-10-27 (Bill ran it):**
 
 | Alarm | Metric | Fires when |
 |---|---|---|
-| `london-flight-map-lambda-errors` | `AWS/Lambda` `Errors`, Sum, no dimension | any error across all 8 functions, >0 in 5 min |
-| `london-flight-map-lambda-duration` | `AWS/Lambda` `Duration`, Maximum | >25 s, i.e. approaching the **29 s API Gateway integration cap**, before requests start 504-ing |
-| `london-flight-map-api-5xx` | `AWS/ApiGateway` `5XXError`, Sum, `ApiName=london-flight-map` | any 5xx, >0 in 5 min |
+| `london-flight-map-lambda-errors` | `AWS/Lambda` `Errors`, Sum, no dimension | any error across all 8 functions, >0 in 5 min (unchanged: one error a month in October, a real signal; a timeout counts as an error) |
+| `london-flight-map-lambda-duration` | `AWS/Lambda` `Duration`, Maximum, no dimension | >25 s in **3 consecutive** 5-min windows: sustained slowness near the **29 s API Gateway integration cap** |
+| `london-flight-map-api-5xx` | metric math over 15 min: `IF(e5 >= 2, e5 / req, 0)`, `e5` = `5XXError` Sum, `req` = `Count` Sum, `ApiName=london-flight-map` | **>= 0.5**: at least 2 failed AND at least half of all requests: an outage, not a blip |
+
+**Why retuned (2026-10-27).** AWS emailed that October had used 858 of the
+account's 1,000 free alert emails. Both alarms fired on ONE bad 5-min window and
+emailed on ALARM and again on OK: api-5xx ~560 emails (281 separate blips of a ~1%
+background 5xx rate), lambda-duration ~146 (73, nearly all `/nhs` waiting up to
+26 s on Overpass outside the bundled London snapshot). Replayed on October's own
+metrics before applying: **0 false alarms** for both. Traffic is sparse (19% of
+5-min windows see 5+ requests), so any "N bad windows in a row" count rule went
+blind at night: a TOTAL outage replayed from every hour of October was caught
+within an hour 43% of the time by the rate rule against a 47% ceiling for the
+most sensitive rule possible (one failure, which would also have fired 100 false
+alarms). The rest wait for traffic: no 5xx alarm can see an outage nobody asks.
+**Claude Code refuses PutMetricAlarm as "audit tampering"**, so a retune is a
+script Bill runs; the replay scripts and the pre-change config were in that
+session's scratchpad (`alarms-before-2026-10-27.json` for rollback).
 
 All three notify **`arn:aws:sns:eu-west-2:<AWS_ACCOUNT_ID>:sky-score-alerts`** (email
 to Bill) on BOTH `ALARM` and `OK`, and all three use

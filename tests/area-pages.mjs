@@ -153,6 +153,10 @@ check(
 // check, so this costs nothing.
 const noScript = [];
 const COUNT_TAG = '<script type="module" src="/js/count.mjs"></script>'; // the only script allowed, once
+// ... beside one block of DATA (2026-11-02): the breadcrumb for search engines, build_area_pages.breadcrumb_ld().
+// JSON-LD is never run and renders nothing, so readable-without-JavaScript still holds. Exactly that shape, once:
+// any other ld+json type, a second breadcrumb, or a script that runs still fails.
+const BREADCRUMB_LD = /<script type="application\/ld\+json">\{"@context":"https:\/\/schema\.org","@type":"BreadcrumbList"[^<]*<\/script>/;
 const noScore = [];
 const badCta = [];
 let ctaChecked = 0;
@@ -162,7 +166,7 @@ for (const pg of pages) {
   // analytics tag, once (2026-10-22: the area pages counted nothing, so the search entry pages were the
   // unmeasured ones). It renders nothing, the facts stay in the served HTML (checked below), and any
   // other script, or a second tag, still fails here.
-  if (/<script/i.test(html.replace(COUNT_TAG, ''))) noScript.push(pg.url);
+  if (/<script/i.test(html.replace(COUNT_TAG, '').replace(BREADCRUMB_LD, ''))) noScript.push(pg.url);
   if (!/Sky Score out of 10/.test(html)) noScore.push(pg.url);
   // THE CALL-TO-ACTION MUST CARRY THE BOROUGH (2026-08-31, audit D1). Every
   // page links to `/?city=<key>&borough=<Name>`, and index.html read `city`

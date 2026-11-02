@@ -29,9 +29,13 @@ only, verified 2026-07-23).
 >    passthrough** for the `/nhs` nearby-facilities panel. Nothing is
 >    stored, so there is no database of ours for the term to attach to.~~
 >    **NO LONGER TRUE, corrected 2026-08-12.** `backend/lambdas/nhs/london_healthcare.json`
->    is a **stored 3,224-element OSM extract (458 KB) bundled inside the
->    deployed Lambda** and read on the hot path (`nhs/app.py:112`), built by
->    `scripts/fetch_london_healthcare.py`. The re-open trigger below ("if OSM
+>    was a **stored 3,224-element OSM extract (458 KB) bundled inside the
+>    deployed Lambda** and read on the hot path, built by
+>    `scripts/fetch_london_healthcare.py`. **Since 2026-10-27 it is
+>    `nhs/healthcare.json`: 10,992 named services in all 13 UK areas we score
+>    (1.5 MB), built by `scripts/fetch_healthcare.py`**, the same kind of stored
+>    extract over a wider area, so everything below applies to it unchanged
+>    (every answer credits "Healthcare locations: OpenStreetMap contributors (ODbL)", as before). The re-open trigger below ("if OSM
 >    output is ever cached, stored") fired when that snapshot landed and was
 >    not actioned. **This is a stored extract of an ODbL database**, so the
 >    share-alike question is live and needs an actual answer rather than the
@@ -246,8 +250,8 @@ often planes fly"). Measured privately; nothing derived from these is published:
   count derived from it is published, that count is a Derivative Database and must be
   offered under ODbL, credited "aircraft positions via adsb.lol (ODbL)". Commercial use is
   allowed. **Bill accepted the share-alike on 2026-10-15**: the counts will be published
-  under ODbL once they pass the per-airport floor (ROADMAP). **LIVE 2026-10-26 (evening, Bill's "go live
-  now" after the preview):** the front page's
+  under ODbL once they pass the per-airport floor (ROADMAP). **LIVE 2026-10-27 (Bill's "go live
+  now", 26 Oct evening, after the preview):** the front page's
   "Planes overhead" block reads `data/planes/*.json` (`scripts/build_planes_overhead.py`), whose
   `airports.json` carries the credits and names the ODbL; `/how-it-works/` credits adsb.lol, the
   Mesonet and OS Terrain 50 and says the counts are ODbL. Site-only first (Bill, 2026-10-26); the

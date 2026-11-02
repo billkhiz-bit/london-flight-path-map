@@ -286,7 +286,7 @@ NOT_ROLLED = [
     ('OurAirports runway geometry', 'not checked',
      'community-maintained; runways rarely move, and the AIP row checks the procedures'),
     ('CAA ERCD contours (COVID caveat)', 'not checked',
-     'an annual PDF read by hand; measure_covid_understatement.py holds the figures'),
+     'an annual PDF each August (ERCD 2601 = 2025, rolled 2026-11-01); measure_covid_understatement.py holds the figures'),
     ('Airport METARs (QNH, plane counting)', 'not checked',
      'cached per counted month by fetch_metar.py; an uncached month falls back to the aircraft alone'),
     ('EPC register (/epc)', 'live', 'queried per request'),

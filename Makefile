@@ -398,7 +398,7 @@ data-deploy:
 	# contents inline, generated. preview-deploy uploaded the first four from
 	# 2026-10-03 and its comment said they move here when the page became the
 	# front door, which it did on 2026-10-06. covid-understatement.json is the
-	# street report's 2021-vs-2024 caveat (scripts/measure_covid_understatement.py).
+	# street report's 2021-vs-a-normal-year caveat (scripts/measure_covid_understatement.py).
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/flight-procedures.json \
 		s3://$(S3_BUCKET)/data/flight-procedures.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
@@ -666,9 +666,15 @@ meta-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp favicon.ico \
 		s3://$(S3_BUCKET)/favicon.ico \
 		--content-type "image/x-icon" --cache-control "public,max-age=86400" --region $(AWS_REGION)
+	# A plain summary of the site and its main pages for language-model tools (llmstxt.org, 2026-11-02).
+	# Held to the wording rules like every published page (tests/test_public_wording.py) and to the
+	# sitemap and the coverage sentence (tests/test_llms_txt.py).
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp llms.txt \
+		s3://$(S3_BUCKET)/llms.txt \
+		--content-type "text/plain; charset=utf-8" --cache-control "public,max-age=3600" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
-		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png' '/404.html' '/favicon.ico'
+		--paths '/robots.txt' '/sitemap.xml' '/.well-known/*' '/preview.png' '/404.html' '/favicon.ico' '/llms.txt'
 
 .PHONY: open-data-deploy
 open-data-deploy:

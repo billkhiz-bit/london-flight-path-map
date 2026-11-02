@@ -2,7 +2,13 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-10-26 - the approach strip LIVE on `/how-it-works/` (Bill's go; five rounds on its controls), the
+**Last reviewed:** 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
+/bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
+2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
+`planes-district-pages`, Bill's review first; Thursday's runbook Part D), the N65 build STARTED (branch `n65`: the
+publish gate, and Doc 29's 5th edition proven against ECAC's own worked results), both hackathons skipped; previously
+2026-10-27 - planes overhead LIVE (`5d760c1`), both outside checks passed, the alarms retuned, 5xx logging and NHS
+healthcare for all 13 areas built (this branch); previously 2026-10-26 - the approach strip LIVE on `/how-it-works/` (Bill's go; five rounds on its controls), the
 page's section links as pills; planes overhead BUILT on branch `planes-overhead` (Bill: static files, front page
 first, site-only), the cone now on the ground (OS Terrain 50), two independent checks passed, ranges on a cone's
 edge (Bill's call); previously 2026-10-25 - Bill's rulings (planes overhead by runway direction, heights by floor space, the
@@ -19,7 +25,92 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
-> ## START HERE (2026-10-31)
+> ## START HERE (2026-11-02)
+>
+> **LIVE 2 Nov** (preflight PASS; drift PASS; checked live at 390 + 1366, no sideways scroll, no console error):
+> `ce07eaa` the /bay-area/ city table in 3 columns; `c2ec85a` the planes index by council (8.0 phone screens) and the
+> **Heathrow consultation pack** (`/planes-overhead/heathrow-consultation/`, 32 councils + hub, "open until 22 December
+> 2026"); `ff3d99a` the sitemap dates /bay-area/. Fixed before it shipped: the pack called the borough's modelled
+> noise/air/flood figures "measured" and "readings" (now "figures"); the Bay Area table's region label said it
+> scrolls sideways.
+> **The backend changeset:** `nhs-all-cities` (5xx logging + the healthcare bundle for all 13 areas) MERGED (`5c082cb`;
+> rerere could not replay, since master had moved: the three prose conflicts kept both sides again) + the **AIRAC
+> 2026-10-29 roll** (`build_flight_paths.AIRAC`, `data/flight-procedures.json`, `PROVENANCE_PERIODS['uk-aip']`,
+> `data/area-route-crossings.json`; only cycle strings and Cardiff's chart link moved). **LIVE 2 Nov 15:53 UTC**
+> (Bill executed; 8 Lambdas' code, nothing replaced). Verified from the origin: Manchester's `/nhs` answers
+> `bundled-snapshot` (5 GPs, 5 pharmacies, 1 hospital; before: `available: false`); `uk-aip` reads AIRAC 2026-10-29
+> wherever the route estimate answers (M1, LS1, NE1, BS1); score sanity PASS (29 postcodes); the deployed score,
+> epc and nhs code carry as many `[5XX]` markers as the source; data 41 of 41. Read the 5xx query (OPERATIONS.md s5)
+> ~9 Nov. The drift check now compares `/llms.txt` too (it did not). Then: N65 step 4's review (agent worktree
+> `n65-step4`); Bill to decide on a /map/ planes layer by district (prompted by ekinomics.com; mock-ups first).
+> **Search (2 Nov, Bill: "yes"):** Google HAS indexed us (`site:` 5 pages; district pages appear a day after the
+> sitemap: TW10 for a Kew query) and sent 24 visits since 20 Oct, about half to area pages; "hackney noise
+> liveability score" ranks /map/ second. "Sky Score" itself is unwinnable (all ten pages Sky Sports + a Hasbro toy):
+> the rename. BUILT: breadcrumb JSON-LD on area, open-data and planes pages, Organization + WebSite on the front page,
+> `/llms.txt`. **LIVE 2 Nov ~16:16 UTC** (Bill ran `planes-pages-deploy`, `area-deploy`, `home-deploy`, `meta-deploy`
+> and `open-data-deploy`: /open-data/ is NOT in `area-deploy`, and the drift check caught it); drift exit 0, and
+> `breadcrumb_faults()` passes on the live area, open-data, planes and pack pages; live `/llms.txt` == the repo.
+> Read Search Console ~8 Nov (Enhancements > Breadcrumbs should appear).
+> Noted, not done: the map's JSON-LD says "UK and NYC" and /api/'s calls quiet "DEFRA Lden noise" (both predate v5.7).
+>
+> ## START HERE (2026-11-01)
+>
+> **The 31 Oct list, worked 1 Nov:** (1) **Search engines: DONE.** Google Search Console's Domain property for
+> skyscore.co.uk is VERIFIED by one DNS TXT at `@` in Cloudflare (keep it; deleting it unverifies); both sitemaps read
+> (465 + 119 pages); indexing requested for `/planes-overhead/`, `/area/` and seven Heathrow drop-in districts (UB7,
+> TW14, TW10, UB1, TW2, TW5, TW3; `/` and W5 were already indexed; about 10 requests a day are allowed). Bing Webmaster
+> Tools imported it from Search Console (skyscore.co.uk only), both sitemaps submitted. Read the coverage ~8 Nov.
+> (2) **The CAA 2025 roll: LIVE 1 Nov** (`340465d`; verified on the origin, below). ERCD 2601 Table 12 (55 dB Lden 142.4 km2; 2024 was 148.4) is in
+> `measure_covid_understatement.py`; the JSON's CAA keys are now year-free (`caa_km2`, `caa_year`) and its one reader
+> (`js/street_report.mjs`) drops the comparison when they are absent, so DEPLOY `web-deploy` BEFORE `data-deploy`
+> (the old module would print "undefined" against the new JSON). Map page, `/api/`, METHODOLOGY (s4 table +
+> changelog), OUTREACH_TARGETS, comments rolled; no backend deploy (a comment only). (3) **Area pages -> planes
+> district pages: LIVE 1 Nov** (`724f94d`). `build_planes_pages.py` writes the TRACKED `data/planes-districts-by-council.json`
+> (ONS code -> districts with a page holding a tenth or more of their postcodes there); `build_area_pages.py` adds a
+> "Planes overhead" block of links to 72 of 102 pages (no figure; none = no heading, page unchanged), and its
+> `--check` now compares EVERY page (it compared the index only). Also fixed: the sitemap dated a merged page by its
+> branch commit (`/area/` read 26 Oct for 31 Oct's tables; now `--first-parent -m`). Deploy: `area-deploy` then
+> `meta-deploy` (the district pages are live already). Nothing else rolls yet: DEFRA's PCM 2025 is not on uk-air
+> (31 Oct) and the CAA's September airport data is not out.
+>
+> **DEPLOY ORDER for all of 1 Nov, after a full preflight PASS:** `web-deploy` (the new `street_report.mjs` + the
+> map and `/api/` text; it uploads all of `js/`), THEN `data-deploy` (the new `covid-understatement.json`),
+> `area-deploy`, `meta-deploy`; then the drift check and a browser look at an area page (390 + 1366).
+> **LIVE 1 Nov ~17:50 UTC** (Bill: "deploy"; the second preflight passed every stage but ruff, a lint-only line in a new
+> test, fixed and re-run): web, then data (the live module checked first), area, meta. Verified: drift PASS (39 pages,
+> 41 data files, 103 area pages; planes 25/25, gap 0); live map 7 x "modelled 2025" + 2 x "142.4"; /api/ ERCD 2601;
+> Hounslow's block, 9 links all 200, no sideways scroll or console error at 390 and 1366.
+> **A code review (1 Nov) found what the roll missed, all FIXED:** seven airports' map legends still said "where the
+> CAA also modelled 2024" and the street report's footer credited "ERCD Report 2501" (no figure in either, so the
+> number-only gate passed); `measure_covid_understatement.py --check` now also reds any other CAA year or report
+> number on the served pages (proven red on both). Also: the area `--check` reds a page left on disk that is no
+> longer built; the council index is read from the pages actually written; the date fix covers `--no-ff` merges only
+> (a fast-forward keeps commit dates: say so). Left as is: `web-deploy-all` runs `data` before `web`, so use the
+> single targets in the order above.
+> **Heathrow consultation link (Bill's pick + wording "as drafted", 1 Nov):** first in `HAVE_YOUR_SAY.LHR`, `until`
+> 2026-12-22, shown by the front page answer and the street report to Heathrow-route postcodes; drops out by itself.
+> LIVE 1 Nov (`c3a67d3`, web-deploy; checked on the live front page at 390 + 1366). Drop-ins start Tue 3 Nov (Longford).
+> **Site audit (1 Nov, read-only, live, 390 + 1366):** links are not the problem (5-28 per page body; the indexes are
+> lists by design); length on phones is: `/planes-overhead/` 16.5 screens, `/how-it-works/` 14.6, `/bay-area/` 10.7
+> ("City by city" 1,177 words of prose), `/about/` 9.8, `/pricing` 7.4, `/` 7.3 (leave until ~20 Nov). Acted on (Bill):
+> the 11 px notes on area + planes pages -> 12 px (the site's small print; never shrink), and one name for the API
+> reference on /api/. /bay-area/ "City by city" (Bill, 1 Nov: "3 columns"): the audit had misread it, it WAS a table,
+> 980 px wide, so a phone read it through a 350 px window; now three columns, no sideways scroll at any width (phone
+> 10.7 -> 12.3 screens, the cost Bill chose; desktop 8.6 -> 7.7). The planes index grouped with a jump list: BUILT
+> (postcode box, councils jump list, a council's districts on one line; 16.5 -> 8.0 screens). **Heathrow consultation
+> pack BUILT** (`/planes-overhead/heathrow-consultation/<council>/` + hub, 32 London councils, link and `until` read from
+> `HAVE_YOUR_SAY`; neutral; after 22 Dec its `--check` reds until `--write` re-says "closed"). Both LIVE 2 Nov
+> (`c2ec85a`; `planes-pages-deploy` then `meta-deploy`), before the drop-ins start (Tue 3 Nov). Open ideas:
+> /pricing mails support@ 9 times; the front page's /api/ and /pricing links under 3 labels each (after ~20 Nov).
+> **AIRAC 2026-10-29 is out** (we serve 2026-10-01). Fetched into the scratchpad and compared on 1 Nov: no procedure
+> or geometry changed, only Cardiff runway 12's RNP chart link (graphic 511875 -> 525382). The roll moves
+> `build_flight_paths.AIRAC`, `data/flight-procedures.json` and the score Lambda's `PROVENANCE_PERIODS['uk-aip']`,
+> so it needs a reviewed SAM changeset (Bill's go): bundle it with `nhs-all-cities` + `log-5xx`. The next cycle is
+> 2026-11-26.
+> **N65 (branch `n65`, pushed):** step 3 committed (`e8ec1e1`, `31c506f`): aircraft types by Bill's rules, EASA's v9
+> (14 newer aircraft, kept outside the repo), engines from the FAA register and a checked airline-and-type table;
+> Heathrow's "assume the louder engine" share 62.5% -> 13.0%. Bill's to send: an EASA follow-up and a CAA G-INFO
+> consent question (both drafted on his Desktop). Next: step 4, thrust.
 >
 > **The planes overhead district pages are LIVE** (merge `40acdad`; the session's auto-mode classifier refused the
 > deploy, so Bill ran `planes-pages-deploy` then `meta-deploy`, 19:30 UTC). Verified: 465 pages and a 465-URL
@@ -66,6 +157,34 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > the ~20 Nov review, NOT before (they change what the ~6% read measures): the example's detail behind "Show the
 > details" on phones, and dropping the "Buying or renting" box, which repeats cards 1 and 3.
 >
+> ## START HERE (2026-10-28)
+>
+> **Thursday 29 Oct is deploy day:** Desktop `deploy-runbook-2026-10-29.md`, Parts A (FAA cycle 2611), B (the Bay
+> Area in the API), C (provenance + the crime roll), then OPTIONAL D (the district pages, only on Bill's yes to the
+> preview) and E (start the 2025 flight-track fetch for N65, ~18 h). Every merge rehearsed on 28 Oct with
+> `git merge-tree` (no refs touched): A and B clean, C the one ROADMAP hunk, and then this branch, D and `n65` all
+> clean. This branch (`nhs-all-cities`: the 5xx logging and NHS healthcare for all 13 areas) is the reviewed
+> changeset AFTER Thursday's three.
+>
+> **Planes overhead district pages, BUILT 28 Oct, not live** (step 1 of the marketing plan). Branch
+> `planes-district-pages` (`53a33e3`): `scripts/build_planes_pages.py` writes `/planes-overhead/<district>/` for the
+> 464 districts where some postcode is shown 10 or more planes a day (Bill: figures built into the page; the address;
+> each sector read in BANDS, "66 at 100+, 69 on an edge, 25 under 10", since a middle figure is true of nobody near an
+> approach). 37 districts mostly outside our councils and 20 mostly PO boxes get no page. Pages gitignored (this
+> repo is public), manifest tracked; `--check` in preflight; the wording gate, the WCAG scan (with a phone-overflow
+> check) and the deploy-drift check all cover them. Preview for Bill: claude.ai/artifact/KnGM6HVH9RcAjzbhoR1Liz.
+> Next: Bill's review, the deploy (Part D), Search Console (Bill), then links from the area pages. Story:
+> `docs/lessons/in-progress-measurements.md` "THE DISTRICT PAGES".
+>
+> **N65 build STARTED 28 Oct** (Bill: a day early), branch `n65` (`80b06fd`, pushed): `scripts/n65_gate.py` (his
+> 27 Oct publish rule in code, written before any model) and `scripts/n65_doc29.py` (one flight's LAmax at a point by
+> ECAC Doc 29's 5th edition, May 2026, start-of-roll directivity included), held against Volume 3's 3,516 worked rows,
+> which caught two 3 dB errors before anything was built on them. Sources in gitignored `data/n65/` (EASA's tables
+> never in the repo, never a per-type figure). Bill's rulings 28 Oct: an unknown engine is looked up by registration,
+> the LOUDER variant only as a fallback; the 2025 fetch starts Thursday evening. The EASA request was SENT 28 Oct
+> (second draft: is per-postcode N65 inside the terms' 6 a), and whose consent if not; OUTREACH_LOG).
+> Plan: `docs/lessons/n65.md` (on the branch).
+>
 > ## START HERE (2026-10-26)
 >
 > **The approach strip is LIVE on `/how-it-works/`** (Bill: "high up, straight after the opening paragraph"; his go to
@@ -77,7 +196,7 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > `tests/approach-strip.mjs` (107 checks) is in preflight. Story: `docs/lessons/front-page-and-site.md`. The Blender
 > repo's `strip_page.py` must take these changes before any `strip_v8` (NOW.md's Blender line lists them).
 >
-> **Planes overhead, LIVE 26 Oct (evening; Bill: "go live now", after the preview of 12 real answers).** Bill's calls: static per-district files on the
+> **Planes overhead, LIVE 27 Oct (`5d760c1`; Bill's "go live now" was 26 Oct evening, after the preview of 12 real answers; the deploy waited for a clean preflight).** Bill's calls: static per-district files on the
 > site, the front page's answer first, site-only (an ODbL download beside `/open-data/` after a few weeks live); a
 > RANGE on a cone's edge (Hounslow TW3 3QL read 339 then 7 for 21 m of ground). Asked "is this accurate": the cone
 > now stands on the ground under the aircraft (OS Terrain 50; it had been drawn from sea level, too wide on every
@@ -89,7 +208,8 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > rerun the centreline check, then a preview for Bill with real postcodes: ALL DONE (ranges on 4% of postcodes, the
 > other-flying warning on 34,239; centreline 0.992-1.033 on all 289 days). Shipped before Thursday at his word, after
 > `git merge-tree` showed Thursday unchanged (A, B clean; C the same one ROADMAP hunk). Next: the search pages
-> built on it (Desktop `marketing-plan-2026-10-26.md`), September's CAA figures when published.
+> built on it (Desktop `marketing-plan-2026-10-26.md`): BUILT 28 Oct, see the block above; September's CAA figures
+> when published.
 >
 > ## START HERE (2026-10-25)
 >
@@ -115,8 +235,8 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > by one from `/area/`, came back for Hackney and Tower Hamlets, and never opened the map or searched. `/area/`
 > listed names only. A comparison table per city was built on branch `area-compare` and MERGED 31 Oct (Bill: "do
 > the area compare tables"), rebuilt on today's data (crime roll included; no area page changed, only the index and
-> the sitemap's dates). To go live: `area-deploy`, then `meta-deploy` (Bill's: the session's classifier refuses
-> deploys).
+> the sitemap's dates). LIVE 31 Oct 21:45 (Bill ran `area-deploy` and `meta-deploy`): 14 city tables on `/area/`,
+> drift PASS in full. Read `/area` engagement with the rest at ~20 Nov.
 
 > ## START HERE (2026-10-24)
 >
@@ -2281,6 +2401,24 @@ Geovation advised (2026-10-02) and the question residents actually ask ("one pla
    EASA's ANP noise data, which is **by request, not a download** (request drafted,
    OUTREACH_LOG 2026-10-15). Validate against the CAA's published Heathrow N65 contour
    AREAS (ERCD 2501's tables, so no GIS files are needed).
+   **Groundwork done 2026-10-27.** EASA's legacy tables (v2.3, 2020) are a free download:
+   build with them, never publish from them (the terms allow contours for an average
+   fleet, forbid per-type figures and passing the data on, and say nothing about
+   publishing RESULTS, so Bill's request decides that). Newer targets: ERCD 2601
+   (Heathrow 2025, an ANNUAL average 16-hour day, not summer) and Gatwick's ERCD 2602.
+   **THE PUBLISH RULE, agreed by Bill 2026-10-27, to be a gate in code from the start
+   (like `coverage_verdict()`):** Heathrow N65 areas at >50 / >100 / >200 events within
+   **-10% to +15%** of ERCD 2601 at EACH level (reading quieter gets the tighter side);
+   >500 within +-30%; population inside the >50 contour within +-20% (a right-sized
+   contour in the wrong place fails); Gatwick -10% to +15% at every level; LIKE FOR LIKE
+   (2025 tracks for the CAA's exact period: Heathrow's areas moved up to 14% between
+   2024 and 2025 on their own); decided on EASA's FULL database (on v2.3, stand-in
+   aircraft carry ~48% of Heathrow's movements and their errors can cancel). Any miss:
+   nothing published. adsb.lol's 2025 tracks CHECKED 27 Oct (daily from 30 Mar; 31 Dec
+   missing). **BUILD STARTED 2026-10-28** on branch `n65`: the gate (`scripts/n65_gate.py`)
+   and the Doc 29 5th-edition core (`scripts/n65_doc29.py`), proven against ECAC's
+   Volume 3; the 2025 fetch from Thursday evening (runbook Part E). Plan and story:
+   `docs/lessons/n65.md`.
 
 **Gates, none of which blocks measuring:** (a) **ODbL is share-alike**: once a count
 derived from the tracks is PUBLISHED it must be offered under ODbL, credited "aircraft

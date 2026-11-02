@@ -50,10 +50,20 @@
   .ramp b { width:16px; height:12px; }
   .tw { overflow-x:auto; }
   .tw:focus-visible { outline:2px solid var(--link); outline-offset:2px; }
-  table { width:100%; min-width:980px; border-collapse:collapse; font-size:13px; }
+  /* Three columns, so the table fits a phone and the city's name stays beside its routes
+     (2026-11-01: it was eight columns at a 980px minimum, which scrolled sideways at every width). */
+  table { width:100%; border-collapse:collapse; font-size:13px; }
   th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { font-weight:600; }
-  td.n { font-family:'JetBrains Mono',ui-monospace,monospace; white-space:nowrap; }
+  thead th:nth-child(1) { width:28%; }
+  thead th:nth-child(2) { width:20%; }
+  .co, .af { display:block; font-weight:400; color:var(--mid); }
+  td.n { font-family:'JetBrains Mono',ui-monospace,monospace; }
+  td.n .pc { white-space:nowrap; }
+  td.n .af { font-family:'Inter',system-ui,sans-serif; }
+  td.r span { display:block; }
+  td.r span + span { margin-top:4px; }
+  td.r b { font-weight:600; }
   ul.notes { padding-left:20px; }
   ul.notes li { margin:0 0 8px; max-width:78ch; }
   .small { font-size:13px; color:var(--mid); max-width:78ch; }
@@ -265,61 +275,61 @@
 
 <h2>City by city</h2>
 <p class="small">Ordered by how much of each city the federal noise map shades. That map is the better guide to what is actually flown, but it covers every airfield the Bureau models, not only these three, so each row names the airfield its shading belongs to. Heights are of landing aircraft on the published glide path, above the runway, to the nearest 100 ft. Arrival altitudes are the ones the FAA publishes at a waypoint inside the city, above sea level.</p>
-<div class="tw" tabindex="0" role="region" aria-label="City by city table, scrolls sideways on a narrow screen">
+<div class="tw" tabindex="0" role="region" aria-label="City by city table">
 <table>
 <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Flight routes and mapped aircraft noise for 50 Bay Area cities</caption>
-<thead><tr><th scope="col">City</th><th scope="col">County</th><th scope="col">Share of city on the noise map</th><th scope="col">Airfield that shading belongs to</th><th scope="col">Landing path overhead</th><th scope="col">Arrival route overhead</th><th scope="col">Departure route overhead</th><th scope="col">Nearest drawn route</th></tr></thead>
+<thead><tr><th scope="col">City, county</th><th scope="col">Share of city on the noise map</th><th scope="col">Drawn routes overhead</th></tr></thead>
 <tbody>
-<tr><th scope="row">Colma</th><td>San Mateo</td><td class="n">100%</td><td>San Francisco International</td><td>No</td><td>No</td><td>No</td><td>0.2 mi (SFO STLER4 arrival)</td></tr>
-<tr><th scope="row">Brisbane</th><td>San Mateo</td><td class="n">Over 99%</td><td>San Francisco International</td><td>No</td><td>No</td><td>Yes: OAK CNDEL6</td><td>Overhead</td></tr>
-<tr><th scope="row">South San Francisco</th><td>San Mateo</td><td class="n">96%</td><td>San Francisco International</td><td>Yes: SFO 10L, SFO 10R. Lowest under 500 ft above the runway, beside the airport</td><td>No</td><td>Yes: OAK CNDEL6; SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, SSTIK5, WESLA5</td><td>Overhead</td></tr>
-<tr><th scope="row">San Bruno</th><td>San Mateo</td><td class="n">94%</td><td>San Francisco International</td><td>Yes: SFO 10L, SFO 10R. Lowest under 500 ft above the runway, beside the airport</td><td>Yes: SFO WWAVS2</td><td>Yes: SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, SSTIK5, WESLA5</td><td>Overhead</td></tr>
-<tr><th scope="row">Millbrae</th><td>San Mateo</td><td class="n">74%</td><td>San Francisco International</td><td>No</td><td>No</td><td>Yes: SFO SSTIK5</td><td>Overhead</td></tr>
-<tr><th scope="row">Milpitas</th><td>Santa Clara</td><td class="n">72%</td><td>Mineta San Jose International</td><td>No</td><td>Yes: SFO YOSEM3</td><td>Yes: SJC SUNOL1</td><td>Overhead</td></tr>
-<tr><th scope="row">Daly City</th><td>San Mateo</td><td class="n">63%</td><td>San Francisco International</td><td>Yes: SFO 10L, SFO 10R. Lowest about 1,000 ft above the runway</td><td>Yes: SFO STLER4, WWAVS2</td><td>Yes: SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, WESLA5</td><td>Overhead</td></tr>
-<tr><th scope="row">Alameda</th><td>Alameda</td><td class="n">61%</td><td>Oakland San Francisco Bay</td><td>Yes: OAK 10L, OAK 10R, SFO 19L. Lowest under 500 ft above the runway, beside the airport</td><td>No</td><td>Yes: OAK CNDEL6</td><td>Overhead</td></tr>
-<tr><th scope="row">Burlingame</th><td>San Mateo</td><td class="n">58%</td><td>San Francisco International</td><td>No</td><td>No</td><td>No</td><td>0.6 mi (SFO NIITE4 departure)</td></tr>
-<tr><th scope="row">Santa Clara</th><td>Santa Clara</td><td class="n">54%</td><td>Mineta San Jose International</td><td>Yes: SJC 12L, SJC 12R. Lowest under 500 ft above the runway, beside the airport</td><td>No</td><td>Yes: SJC LOUPE1, SPTNS1</td><td>Overhead</td></tr>
-<tr><th scope="row">Foster City</th><td>San Mateo</td><td class="n">51%</td><td>San Francisco International</td><td>Yes: SFO 28L, SFO 28R. Lowest about 1,500 ft above the runway</td><td>No</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">San Leandro</th><td>Alameda</td><td class="n">50%</td><td>Oakland San Francisco Bay</td><td>Yes: OAK 28L, OAK 28R. Lowest under 500 ft above the runway, beside the airport</td><td>No</td><td>Yes: OAK KATFH4</td><td>Overhead</td></tr>
-<tr><th scope="row">Hayward</th><td>Alameda</td><td class="n">37%</td><td>Hayward Executive</td><td>Yes: OAK 28L, OAK 28R, OAK 30. Lowest about 1,100 ft above the runway</td><td>Yes: OAK EMZOH4, OAKES3. Published altitude at MITOE, inside the city: 2,000 ft or above</td><td>Yes: OAK KATFH4</td><td>Overhead</td></tr>
-<tr><th scope="row">Livermore</th><td>Alameda</td><td class="n">36%</td><td>Livermore Municipal</td><td>No</td><td>No</td><td>No</td><td>0.2 mi (OAK OAKES3 arrival)</td></tr>
-<tr><th scope="row">San Jose</th><td>Santa Clara</td><td class="n">27%</td><td>Mineta San Jose International</td><td>Yes: SJC 12L, SJC 12R, SJC 30L, SJC 30R. The airport is inside the city</td><td>Yes: SFO DYAMD5, YOSEM3; SJC RAZRR5, SILCN6. Published altitude at WOXAR, inside the city: 1,600 ft or above</td><td>Yes: SJC ALMDN4, LOUPE1, SPTNS1, SUNOL1, TECKY4</td><td>Overhead</td></tr>
-<tr><th scope="row">Sunnyvale</th><td>Santa Clara</td><td class="n">24%</td><td>Moffett Federal Airfield</td><td>Yes: SJC 12R. Lowest about 1,100 ft above the runway</td><td>No</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Dublin</th><td>Alameda</td><td class="n">23%</td><td>Livermore Municipal</td><td>No</td><td>No</td><td>No</td><td>1.2 mi (OAK WNDSR2 arrival)</td></tr>
-<tr><th scope="row">Pacifica</th><td>San Mateo</td><td class="n">15%</td><td>San Francisco International</td><td>Yes: SFO 10L, SFO 10R. Lowest about 1,400 ft above the runway</td><td>Yes: SFO STLER4, WWAVS2. Published altitude at WESLA, inside the city: 6,000 ft</td><td>Yes: SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, WESLA5</td><td>Overhead</td></tr>
-<tr><th scope="row">Oakland</th><td>Alameda</td><td class="n">13%</td><td>Oakland San Francisco Bay</td><td>Yes: OAK 10L, OAK 10R, OAK 12, OAK 28L, OAK 28R, OAK 30. The airport is inside the city</td><td>Yes: OAK WNDSR2. Published altitude at HOPTA, inside the city: 5,000 ft</td><td>Yes: OAK CNDEL6, HUSSH3, KATFH4; SFO TRUKN2</td><td>Overhead</td></tr>
-<tr><th scope="row">Pleasanton</th><td>Alameda</td><td class="n">13%</td><td>Livermore Municipal</td><td>No</td><td>Yes: OAK OAKES3</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">San Mateo</th><td>San Mateo</td><td class="n">12%</td><td>San Francisco International</td><td>No</td><td>No</td><td>No</td><td>0.1 mi (SFO 28L approach)</td></tr>
-<tr><th scope="row">San Francisco</th><td>San Francisco</td><td class="n">10%</td><td>San Francisco International</td><td>Yes: OAK 10L, OAK 10R. Lowest about 2,500 ft above the runway</td><td>Yes: SFO STLER4, WWAVS2. Published altitude at MVRKK, inside the city: 6,000 ft</td><td>Yes: OAK CNDEL6, HUSSH3; SFO NIITE4</td><td>Overhead</td></tr>
-<tr><th scope="row">Redwood City</th><td>San Mateo</td><td class="n">7%</td><td>San Francisco International</td><td>No</td><td>No</td><td>No</td><td>0.1 mi (SFO SERFR4 arrival)</td></tr>
-<tr><th scope="row">Union City</th><td>Alameda</td><td class="n">5%</td><td>Hayward Executive</td><td>Yes: OAK 30. Lowest about 2,700 ft above the runway</td><td>Yes: OAK EMZOH4, OAKES3. Published altitude at ZOLUM, inside the city: 3,500 ft or above</td><td>Yes: OAK KATFH4</td><td>Overhead</td></tr>
-<tr><th scope="row">Fremont</th><td>Alameda</td><td class="n">3%</td><td>Mineta San Jose International</td><td>Yes: SJC 12L, SJC 12R. Lowest about 2,300 ft above the runway</td><td>Yes: OAK EMZOH4; SFO DYAMD5, YOSEM3. Published altitude at DUMBA, inside the city: 4,000 ft or above</td><td>Yes: OAK KATFH4; SFO GAPP7</td><td>Overhead</td></tr>
-<tr><th scope="row">Mountain View</th><td>Santa Clara</td><td class="n">1%</td><td>Moffett Federal Airfield</td><td>No</td><td>No</td><td>No</td><td>0.6 mi (SFO SERFR4 arrival)</td></tr>
-<tr><th scope="row">Menlo Park</th><td>San Mateo</td><td class="n">Under 1%</td><td></td><td>No</td><td>Yes: SFO SERFR4</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Hillsborough</th><td>San Mateo</td><td class="n">Under 1%</td><td></td><td>No</td><td>No</td><td>No</td><td>1.6 mi (SFO SSTIK5 departure)</td></tr>
-<tr><th scope="row">Berkeley</th><td>Alameda</td><td class="n">None</td><td></td><td>No</td><td>Yes: OAK WNDSR2</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Campbell</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SJC RAZRR5, SILCN6</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Cupertino</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SFO SERFR4; SJC RAZRR5, SILCN6. Published altitude at HITIR, inside the city: 4,000 ft</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">East Palo Alto</th><td>San Mateo</td><td class="n">None</td><td></td><td>No</td><td>Yes: SFO SERFR4</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Gilroy</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SJC RAZRR5, SILCN6</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Half Moon Bay</th><td>San Mateo</td><td class="n">None</td><td></td><td>No</td><td>Yes: SJC FRLON2</td><td>Yes: SFO SSTIK5</td><td>Overhead</td></tr>
-<tr><th scope="row">Los Altos</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SFO SERFR4. Published altitude at EDDYY, inside the city: 6,000 ft</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Los Altos Hills</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SFO SERFR4</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Los Gatos</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SJC RAZRR5, SILCN6. Published altitude at EDMND, inside the city: 5,600 ft or above</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Morgan Hill</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SJC RAZRR5, SILCN6</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Newark</th><td>Alameda</td><td class="n">None</td><td></td><td>No</td><td>Yes: SFO DYAMD5. Published altitude at WIBNI, inside the city: 4,900 ft or above</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Palo Alto</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>Yes: SFO SERFR4. Published altitude at SIDBY, inside the city: 4,000 ft or above</td><td>No</td><td>Overhead</td></tr>
-<tr><th scope="row">Saratoga</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>0.4 mi (SFO SERFR4 arrival)</td></tr>
-<tr><th scope="row">Woodside</th><td>San Mateo</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>0.6 mi (SFO PIRAT3 arrival)</td></tr>
-<tr><th scope="row">Atherton</th><td>San Mateo</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>0.8 mi (SFO SERFR4 arrival)</td></tr>
-<tr><th scope="row">Piedmont</th><td>Alameda</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>1.1 mi (OAK WNDSR2 arrival)</td></tr>
-<tr><th scope="row">Albany</th><td>Alameda</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>1.1 mi (OAK WNDSR2 arrival)</td></tr>
-<tr><th scope="row">Monte Sereno</th><td>Santa Clara</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>1.1 mi (SJC RAZRR5 arrival)</td></tr>
-<tr><th scope="row">Portola Valley</th><td>San Mateo</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>1.9 mi (SJC FRLON2 arrival)</td></tr>
-<tr><th scope="row">Belmont</th><td>San Mateo</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>2.3 mi (SFO 28L approach)</td></tr>
-<tr><th scope="row">San Carlos</th><td>San Mateo</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>2.9 mi (SFO 28L approach)</td></tr>
-<tr><th scope="row">Emeryville</th><td>Alameda</td><td class="n">None</td><td></td><td>No</td><td>No</td><td>No</td><td>3.2 mi (OAK WNDSR2 arrival)</td></tr>
+<tr><th scope="row">Colma<span class="co">San Mateo</span></th><td class="n"><span class="pc">100%</span><span class="af">SFO</span></td><td class="r">None overhead. Nearest: 0.2 mi (SFO STLER4 arrival)</td></tr>
+<tr><th scope="row">Brisbane<span class="co">San Mateo</span></th><td class="n"><span class="pc">Over 99%</span><span class="af">SFO</span></td><td class="r"><span><b>Departure:</b> OAK CNDEL6</span></td></tr>
+<tr><th scope="row">South San Francisco<span class="co">San Mateo</span></th><td class="n"><span class="pc">96%</span><span class="af">SFO</span></td><td class="r"><span><b>Landing:</b> SFO 10L, SFO 10R. Lowest under 500 ft above the runway, beside the airport</span><span><b>Departure:</b> OAK CNDEL6; SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, SSTIK5, WESLA5</span></td></tr>
+<tr><th scope="row">San Bruno<span class="co">San Mateo</span></th><td class="n"><span class="pc">94%</span><span class="af">SFO</span></td><td class="r"><span><b>Landing:</b> SFO 10L, SFO 10R. Lowest under 500 ft above the runway, beside the airport</span><span><b>Arrival:</b> SFO WWAVS2</span><span><b>Departure:</b> SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, SSTIK5, WESLA5</span></td></tr>
+<tr><th scope="row">Millbrae<span class="co">San Mateo</span></th><td class="n"><span class="pc">74%</span><span class="af">SFO</span></td><td class="r"><span><b>Departure:</b> SFO SSTIK5</span></td></tr>
+<tr><th scope="row">Milpitas<span class="co">Santa Clara</span></th><td class="n"><span class="pc">72%</span><span class="af">SJC</span></td><td class="r"><span><b>Arrival:</b> SFO YOSEM3</span><span><b>Departure:</b> SJC SUNOL1</span></td></tr>
+<tr><th scope="row">Daly City<span class="co">San Mateo</span></th><td class="n"><span class="pc">63%</span><span class="af">SFO</span></td><td class="r"><span><b>Landing:</b> SFO 10L, SFO 10R. Lowest about 1,000 ft above the runway</span><span><b>Arrival:</b> SFO STLER4, WWAVS2</span><span><b>Departure:</b> SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, WESLA5</span></td></tr>
+<tr><th scope="row">Alameda<span class="co">Alameda</span></th><td class="n"><span class="pc">61%</span><span class="af">OAK</span></td><td class="r"><span><b>Landing:</b> OAK 10L, OAK 10R, SFO 19L. Lowest under 500 ft above the runway, beside the airport</span><span><b>Departure:</b> OAK CNDEL6</span></td></tr>
+<tr><th scope="row">Burlingame<span class="co">San Mateo</span></th><td class="n"><span class="pc">58%</span><span class="af">SFO</span></td><td class="r">None overhead. Nearest: 0.6 mi (SFO NIITE4 departure)</td></tr>
+<tr><th scope="row">Santa Clara<span class="co">Santa Clara</span></th><td class="n"><span class="pc">54%</span><span class="af">SJC</span></td><td class="r"><span><b>Landing:</b> SJC 12L, SJC 12R. Lowest under 500 ft above the runway, beside the airport</span><span><b>Departure:</b> SJC LOUPE1, SPTNS1</span></td></tr>
+<tr><th scope="row">Foster City<span class="co">San Mateo</span></th><td class="n"><span class="pc">51%</span><span class="af">SFO</span></td><td class="r"><span><b>Landing:</b> SFO 28L, SFO 28R. Lowest about 1,500 ft above the runway</span></td></tr>
+<tr><th scope="row">San Leandro<span class="co">Alameda</span></th><td class="n"><span class="pc">50%</span><span class="af">OAK</span></td><td class="r"><span><b>Landing:</b> OAK 28L, OAK 28R. Lowest under 500 ft above the runway, beside the airport</span><span><b>Departure:</b> OAK KATFH4</span></td></tr>
+<tr><th scope="row">Hayward<span class="co">Alameda</span></th><td class="n"><span class="pc">37%</span><span class="af">Hayward Executive</span></td><td class="r"><span><b>Landing:</b> OAK 28L, OAK 28R, OAK 30. Lowest about 1,100 ft above the runway</span><span><b>Arrival:</b> OAK EMZOH4, OAKES3. Published altitude at MITOE, inside the city: 2,000 ft or above</span><span><b>Departure:</b> OAK KATFH4</span></td></tr>
+<tr><th scope="row">Livermore<span class="co">Alameda</span></th><td class="n"><span class="pc">36%</span><span class="af">Livermore Municipal</span></td><td class="r">None overhead. Nearest: 0.2 mi (OAK OAKES3 arrival)</td></tr>
+<tr><th scope="row">San Jose<span class="co">Santa Clara</span></th><td class="n"><span class="pc">27%</span><span class="af">SJC</span></td><td class="r"><span><b>Landing:</b> SJC 12L, SJC 12R, SJC 30L, SJC 30R. The airport is inside the city</span><span><b>Arrival:</b> SFO DYAMD5, YOSEM3; SJC RAZRR5, SILCN6. Published altitude at WOXAR, inside the city: 1,600 ft or above</span><span><b>Departure:</b> SJC ALMDN4, LOUPE1, SPTNS1, SUNOL1, TECKY4</span></td></tr>
+<tr><th scope="row">Sunnyvale<span class="co">Santa Clara</span></th><td class="n"><span class="pc">24%</span><span class="af">Moffett Federal Airfield</span></td><td class="r"><span><b>Landing:</b> SJC 12R. Lowest about 1,100 ft above the runway</span></td></tr>
+<tr><th scope="row">Dublin<span class="co">Alameda</span></th><td class="n"><span class="pc">23%</span><span class="af">Livermore Municipal</span></td><td class="r">None overhead. Nearest: 1.2 mi (OAK WNDSR2 arrival)</td></tr>
+<tr><th scope="row">Pacifica<span class="co">San Mateo</span></th><td class="n"><span class="pc">15%</span><span class="af">SFO</span></td><td class="r"><span><b>Landing:</b> SFO 10L, SFO 10R. Lowest about 1,400 ft above the runway</span><span><b>Arrival:</b> SFO STLER4, WWAVS2. Published altitude at WESLA, inside the city: 6,000 ft</span><span><b>Departure:</b> SFO GAPP7, GNNRR3, MOLEN9, SEGUL1, SNTNA2, WESLA5</span></td></tr>
+<tr><th scope="row">Oakland<span class="co">Alameda</span></th><td class="n"><span class="pc">13%</span><span class="af">OAK</span></td><td class="r"><span><b>Landing:</b> OAK 10L, OAK 10R, OAK 12, OAK 28L, OAK 28R, OAK 30. The airport is inside the city</span><span><b>Arrival:</b> OAK WNDSR2. Published altitude at HOPTA, inside the city: 5,000 ft</span><span><b>Departure:</b> OAK CNDEL6, HUSSH3, KATFH4; SFO TRUKN2</span></td></tr>
+<tr><th scope="row">Pleasanton<span class="co">Alameda</span></th><td class="n"><span class="pc">13%</span><span class="af">Livermore Municipal</span></td><td class="r"><span><b>Arrival:</b> OAK OAKES3</span></td></tr>
+<tr><th scope="row">San Mateo<span class="co">San Mateo</span></th><td class="n"><span class="pc">12%</span><span class="af">SFO</span></td><td class="r">None overhead. Nearest: 0.1 mi (SFO 28L approach)</td></tr>
+<tr><th scope="row">San Francisco<span class="co">San Francisco</span></th><td class="n"><span class="pc">10%</span><span class="af">SFO</span></td><td class="r"><span><b>Landing:</b> OAK 10L, OAK 10R. Lowest about 2,500 ft above the runway</span><span><b>Arrival:</b> SFO STLER4, WWAVS2. Published altitude at MVRKK, inside the city: 6,000 ft</span><span><b>Departure:</b> OAK CNDEL6, HUSSH3; SFO NIITE4</span></td></tr>
+<tr><th scope="row">Redwood City<span class="co">San Mateo</span></th><td class="n"><span class="pc">7%</span><span class="af">SFO</span></td><td class="r">None overhead. Nearest: 0.1 mi (SFO SERFR4 arrival)</td></tr>
+<tr><th scope="row">Union City<span class="co">Alameda</span></th><td class="n"><span class="pc">5%</span><span class="af">Hayward Executive</span></td><td class="r"><span><b>Landing:</b> OAK 30. Lowest about 2,700 ft above the runway</span><span><b>Arrival:</b> OAK EMZOH4, OAKES3. Published altitude at ZOLUM, inside the city: 3,500 ft or above</span><span><b>Departure:</b> OAK KATFH4</span></td></tr>
+<tr><th scope="row">Fremont<span class="co">Alameda</span></th><td class="n"><span class="pc">3%</span><span class="af">SJC</span></td><td class="r"><span><b>Landing:</b> SJC 12L, SJC 12R. Lowest about 2,300 ft above the runway</span><span><b>Arrival:</b> OAK EMZOH4; SFO DYAMD5, YOSEM3. Published altitude at DUMBA, inside the city: 4,000 ft or above</span><span><b>Departure:</b> OAK KATFH4; SFO GAPP7</span></td></tr>
+<tr><th scope="row">Mountain View<span class="co">Santa Clara</span></th><td class="n"><span class="pc">1%</span><span class="af">Moffett Federal Airfield</span></td><td class="r">None overhead. Nearest: 0.6 mi (SFO SERFR4 arrival)</td></tr>
+<tr><th scope="row">Menlo Park<span class="co">San Mateo</span></th><td class="n"><span class="pc">Under 1%</span></td><td class="r"><span><b>Arrival:</b> SFO SERFR4</span></td></tr>
+<tr><th scope="row">Hillsborough<span class="co">San Mateo</span></th><td class="n"><span class="pc">Under 1%</span></td><td class="r">None overhead. Nearest: 1.6 mi (SFO SSTIK5 departure)</td></tr>
+<tr><th scope="row">Berkeley<span class="co">Alameda</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> OAK WNDSR2</span></td></tr>
+<tr><th scope="row">Campbell<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SJC RAZRR5, SILCN6</span></td></tr>
+<tr><th scope="row">Cupertino<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SFO SERFR4; SJC RAZRR5, SILCN6. Published altitude at HITIR, inside the city: 4,000 ft</span></td></tr>
+<tr><th scope="row">East Palo Alto<span class="co">San Mateo</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SFO SERFR4</span></td></tr>
+<tr><th scope="row">Gilroy<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SJC RAZRR5, SILCN6</span></td></tr>
+<tr><th scope="row">Half Moon Bay<span class="co">San Mateo</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SJC FRLON2</span><span><b>Departure:</b> SFO SSTIK5</span></td></tr>
+<tr><th scope="row">Los Altos<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SFO SERFR4. Published altitude at EDDYY, inside the city: 6,000 ft</span></td></tr>
+<tr><th scope="row">Los Altos Hills<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SFO SERFR4</span></td></tr>
+<tr><th scope="row">Los Gatos<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SJC RAZRR5, SILCN6. Published altitude at EDMND, inside the city: 5,600 ft or above</span></td></tr>
+<tr><th scope="row">Morgan Hill<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SJC RAZRR5, SILCN6</span></td></tr>
+<tr><th scope="row">Newark<span class="co">Alameda</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SFO DYAMD5. Published altitude at WIBNI, inside the city: 4,900 ft or above</span></td></tr>
+<tr><th scope="row">Palo Alto<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r"><span><b>Arrival:</b> SFO SERFR4. Published altitude at SIDBY, inside the city: 4,000 ft or above</span></td></tr>
+<tr><th scope="row">Saratoga<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 0.4 mi (SFO SERFR4 arrival)</td></tr>
+<tr><th scope="row">Woodside<span class="co">San Mateo</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 0.6 mi (SFO PIRAT3 arrival)</td></tr>
+<tr><th scope="row">Atherton<span class="co">San Mateo</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 0.8 mi (SFO SERFR4 arrival)</td></tr>
+<tr><th scope="row">Piedmont<span class="co">Alameda</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 1.1 mi (OAK WNDSR2 arrival)</td></tr>
+<tr><th scope="row">Albany<span class="co">Alameda</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 1.1 mi (OAK WNDSR2 arrival)</td></tr>
+<tr><th scope="row">Monte Sereno<span class="co">Santa Clara</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 1.1 mi (SJC RAZRR5 arrival)</td></tr>
+<tr><th scope="row">Portola Valley<span class="co">San Mateo</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 1.9 mi (SJC FRLON2 arrival)</td></tr>
+<tr><th scope="row">Belmont<span class="co">San Mateo</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 2.3 mi (SFO 28L approach)</td></tr>
+<tr><th scope="row">San Carlos<span class="co">San Mateo</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 2.9 mi (SFO 28L approach)</td></tr>
+<tr><th scope="row">Emeryville<span class="co">Alameda</span></th><td class="n"><span class="pc">None</span></td><td class="r">None overhead. Nearest: 3.2 mi (OAK WNDSR2 arrival)</td></tr>
 </tbody>
 </table>
 </div>

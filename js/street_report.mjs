@@ -124,8 +124,14 @@ export function monitorLine(m) {
 // site turns scripts away). An airport joins only when its pages have been checked: a wrong link is a false
 // claim (the full map's WebTrak lesson, 2026-08-24). Never imply a complaint moves a route: routes change
 // through the CAA's airspace change process, which Heathrow itself says.
+// A link with `until` (YYYY-MM-DD, its last open day) shows to the end of that day (UTC, UK time in winter) and
+// drops out by itself after it, so a closed consultation is never offered. Heathrow's expansion consultation runs
+// "From 27 October to 22 December 2026" (checked live 2026-11-01: 200 + page text in Chrome; its response form
+// turns scripts away, so the link is the consultation page, which carries every way to respond). Neutral: a
+// signpost to have a say, never a view on expansion.
 export const HAVE_YOUR_SAY = {
   LHR: [
+    { text: "Heathrow's expansion consultation, open until 22 December", href: 'https://www.heathrow.com/expansion/consultation', until: '2026-12-22' },
     { text: 'contact Heathrow about noise', href: 'https://www.heathrow.com/company/local-community/noise/what-you-can-do/contact-us-about-noise' },
     { text: 'find a flight on WebTrak', href: 'https://webtrak.emsbk.com/lhr6' },
   ],
@@ -140,15 +146,19 @@ export const AIRSPACE_CHANGE = { text: "the CAA's airspace change portal", href:
  * departures, among the airports in scope), else the nearest airport in scope; null when that airport's pages
  * are not verified, never another airport's. Picking the nearest AIRPORT sent Battersea, 1.1 km from Heathrow's
  * 27L approach and nearer London City's runway, to London City's pages (audit 2026-10-22, I-6).
+ * `today` decides which dated links (`until`) are still open.
  */
-export function haveYourSay(routes) {
+export function haveYourSay(routes, today = new Date()) {
+  const day = today.toISOString().slice(0, 10);
   const scope = (routes && routes.scope) || [];
   const inScope = new Set(scope.map((a) => a.code));
   const nearestRoute = [...((routes && routes.finals) || []), ...((routes && routes.departures) || [])]
     .filter((r) => inScope.has(r.code))
     .sort((a, b) => a.dist - b.dist)[0];
   const code = nearestRoute ? nearestRoute.code : scope[0] && scope[0].code;
-  return code && Object.hasOwn(HAVE_YOUR_SAY, code) ? { code, links: HAVE_YOUR_SAY[code], change: AIRSPACE_CHANGE } : null;
+  if (!code || !Object.hasOwn(HAVE_YOUR_SAY, code)) return null;
+  const links = HAVE_YOUR_SAY[code].filter((l) => !l.until || day <= l.until);
+  return links.length ? { code, links, change: AIRSPACE_CHANGE } : null;
 }
 /** The correction address, as the full map's "Spotted something wrong?" has used since before 2026-10-13. */
 export const correctionHref = (place) => `mailto:support@skyscore.co.uk?subject=${encodeURIComponent(`Correction: ${place}`)}`;
@@ -501,12 +511,20 @@ export function reportParts(spec, f) {
     .map((r) => ` <a href="${esc(r.credit.href)}">${esc(r.credit.text)}</a>${r.credit.text.endsWith('.') ? '' : '.'}`)
     .join('');
 
-  const c55 =
+  // data/covid-understatement.json (scripts/measure_covid_understatement.py). Its CAA keys carry no
+  // year (`caa_km2`, `caa_year`, since 2026-11-01), so a new ERCD edition needs no change here. A file
+  // without them (an older copy still cached, or one mid-deploy) drops the comparison rather than
+  // printing "undefined km2": absence never renders as a measurement.
+  const c55row =
     covid && routes.airports[0] && routes.airports[0].code === covid.airport
       ? covid.rows.find((r) => r.lden_db === 55)
       : null;
+  const c55 =
+    c55row && Number.isFinite(c55row.caa_km2) && Number.isFinite(c55row.defra_2021_km2) && Number.isInteger(covid.caa_year)
+      ? c55row
+      : null;
   const vintage = c55
-    ? `DEFRA's map models 2021, when COVID restrictions cut air traffic. At Heathrow the CAA's model of 2024 puts the 55 dB area at ${c55.caa_2024_km2} km&sup2; against ${c55.defra_2021_km2} km&sup2; on DEFRA's map, so levels today are likely to be higher than DEFRA's map shows. That is an indication, not a correction.`
+    ? `DEFRA's map models 2021, when COVID restrictions cut air traffic. At Heathrow the CAA's model of ${covid.caa_year} puts the 55 dB area at ${c55.caa_km2} km&sup2; against ${c55.defra_2021_km2} km&sup2; on DEFRA's map, so levels today are likely to be higher than DEFRA's map shows. That is an indication, not a correction.`
     : aircraftMap
       ? "DEFRA's map models 2021, when COVID restrictions cut air traffic, so levels today are likely to be higher than DEFRA's map shows."
       : 'DEFRA publishes no aircraft noise map for this airport. Its road-noise map models 2021 traffic, which lockdown reduced.';
@@ -570,7 +588,7 @@ ${airMeasured ? `<p class="note"><strong>Air measured nearby.</strong> ${airMeas
 ${sayLine ? `<p class="note"><strong>Have your say.</strong> ${sayLine}</p>` : ''}
 <p class="note"><strong>Spotted something wrong?</strong> <a href="${esc(correctionHref(f.postcode))}">Tell us</a>: local knowledge is the best check on data like this.</p>
 <p class="note"><strong>Reading this report.</strong> Lden is a yearly average of the outdoor level, with evening and night flights weighted more heavily; it does not describe single loud events or the number of flights. ${vintage} The route lines are the published centre lines: aircraft fly either side of them, and the path to joining a final approach is directed by air traffic control and is not drawn. This is information, not a survey or an environmental search; visit at different times of day before deciding.</p>
-<footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? 'CAA ERCD Report 2501; ' : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS).${airCredits} Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
+<footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? `${esc(String(covid.caa || 'CAA ERCD').split(',')[0])}; ` : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS).${airCredits} Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
 `;
   return { title, css, body };
 }

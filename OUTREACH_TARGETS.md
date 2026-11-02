@@ -330,7 +330,7 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 
 | Fact | Source in repo | As of |
 |---|---|---|
-| Heathrow 55 dB Lden contour: DEFRA 2021 **75.6 km2** vs CAA 2024 **148.4 km2** (ERCD 2501 Table 12), about half | `scripts/measure_covid_understatement.py --check` (blocking) | 2026-09-26 |
+| Heathrow 55 dB Lden contour: DEFRA 2021 **75.6 km2** vs CAA 2025 **142.4 km2** (ERCD 2601 Table 12), 1.9x, about half (rolled 2026-11-01; ERCD 2501's 2024 figure was 148.4, so never quote that now) | `scripts/measure_covid_understatement.py --check` (blocking) | 2026-11-01 |
 | 62% of DEFRA's mapped Heathrow area (124.2 of 199.8 km2) is below 55 dB | ROADMAP, Option C | 2026-09-26 |
 | **Coverage, the ONE sentence: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only).** The full map draws 11 of the 13 UK city regions (91 boroughs); never quote that, "14 cities" or "102 boroughs" as the coverage - each was true of one surface, and three versions were live at once until 2026-10-12 | front page, `/api/`, `/reports/`, `/open-data/`, `/area/` (counted per country by `build_area_pages.py`) | 2026-10-12 |
 | Every input is official public data. DEFRA, the Environment Agency, ONS and HM Land Registry publish under the Open Government Licence; **the UK flight routes come from the UK AIP (NATS), which is public but NOT openly licensed** - never say "all open data" (corrected 2026-10-06; it read "every input is open government data") | LICENSING.md | 2026-10-06 |
@@ -378,7 +378,7 @@ Replace everything in [brackets]. Keep them short: one finding, one ask.
 > Subject: [one finding, e.g. "The official aircraft noise map shows Heathrow at half its size"]
 >
 > [One-sentence finding with the number.] It comes from comparing DEFRA's official
-> 2021 noise map, drawn during lockdown, with the CAA's 2024 figures.
+> 2021 noise map, drawn during lockdown, with the CAA's 2025 figures.
 >
 > I built Sky Score (skyscore.co.uk), a free map joining official public data on
 > noise, air, flood, crime, schools and prices for [N] city regions. I can share

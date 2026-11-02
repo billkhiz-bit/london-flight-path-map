@@ -1183,18 +1183,19 @@ with how hard each airport was hit, and sound energy sums logarithmically:
 | Heathrow | ~448,700 | substantially reduced | see the measurement below |
 
 **Measured at Heathrow (2026-09-26), replacing "a few dB".** The CAA publishes Heathrow's Lden
-contours annually (ERCD Report 2501, August 2025, Table 12), and 2024 traffic was 0.5% below 2019's,
-so it is a normal year to compare against. `scripts/measure_covid_understatement.py` measures DEFRA's
+contours annually. The current edition is ERCD Report 2601 (August 2026, Table 12): 2025, when movements
+were 1.1% above 2024's and 2024's were 0.5% below 2019's, so it is a normal year to compare against
+(rolled 2026-11-01 from ERCD 2501's 2024 figures, which put the 55 dB area at 148.4 km²). `scripts/measure_covid_understatement.py` measures DEFRA's
 2021 areas from its Heathrow GeoTIFF (every contour lies wholly inside the raster, so none is clipped)
 and holds them in `data/covid-understatement.json`; `--verify-caa` re-parses the CAA table:
 
-| Lden | DEFRA 2021 | CAA 2024 | ratio |
+| Lden | DEFRA 2021 | CAA 2025 | ratio |
 |---|---|---|---|
-| ≥ 55 dB | 75.6 km² | 148.4 km² | 2.0x |
-| ≥ 60 dB | 30.1 km² | 60.3 km² | 2.0x |
-| ≥ 65 dB | 9.1 km² | 22.3 km² | 2.5x |
-| ≥ 70 dB | 3.2 km² | 6.7 km² | 2.1x |
-| ≥ 75 dB | 1.5 km² | 2.5 km² | 1.7x |
+| ≥ 55 dB | 75.6 km² | 142.4 km² | 1.9x |
+| ≥ 60 dB | 30.1 km² | 59.0 km² | 2.0x |
+| ≥ 65 dB | 9.1 km² | 21.4 km² | 2.4x |
+| ≥ 70 dB | 3.2 km² | 7.0 km² | 2.2x |
+| ≥ 75 dB | 1.5 km² | 2.7 km² | 1.8x |
 
 So the map this product rests on shows Heathrow's noise footprint at about **half** its
 normal-year size. The two are different models (the CAA's ANCON and DEFRA's strategic mapping), with
@@ -2385,6 +2386,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-11-01 (no version change)**, **the COVID-year comparison rolled to the CAA's 2025 Heathrow contours.** ERCD Report 2601 (August 2026, Table 12) replaces ERCD 2501's 2024 figures in `scripts/measure_covid_understatement.py`: the 55 dB Lden area 148.4 → **142.4 km²** (the CAA attributes the 4% fall to quieter types and more easterly operation, 37% against 27%), so DEFRA's 2021 map (75.6 km², re-measured, unchanged) is **1.9x** smaller, still about half. The other levels: 60 dB 59.0, 65 dB 21.4, 70 dB 7.0, 75 dB 2.7 km². The JSON's CAA keys lost their year (`caa_km2`, `caa_year`), so the next edition is a change to the script alone; `--check` now also fails a JSON written for another edition, and `--verify-caa` a PDF whose Table 12 is titled for another year (both proven red). *Effect on scores:* none; the ratio is a caveat, never a correction (rule below).
 - **2026-10-23 (no version change; live 2026-10-29)**, **crime rates rolled to ONS year ending June 2026, the first quarterly crime roll.** ONS Table C4 (released 22 October 2026, still on mid-2024 population) moved 91 of the 93 borough rates it publishes for our thirteen UK cities, most by 0-3 offences per 1,000 (Westminster 355.5 -> 342.1, its crime sub-score already 0). Written into BOTH holders by code for the first time: `refresh_crime_from_ons.py --write-lambda --all` (the Lambda's copy, through build_borough_bands' city-scoped writer), then `--write --all` (the site's); `--check --all` and tests/test_borough_data_parity.py agree. Effects: liveability moves on 31 of 97 UK boroughs and the `balanced` score on 8, each by 0.1 (Rotherham 7.9 -> 7.8, City of Bristol 6.8 -> 6.9, Ealing 3.9 -> 3.8); section 6's Wandsworth moves 76.4 -> 76.6 and 8.24 -> 8.23, liveability still 7.8, total still 5.1. The edition every credit line names is now one constant, `CRIME_EDITION_LABEL`, derived like the site's `crimeVintage` from the script's EDITION: the site's label had been typed text and would have said March over June's rates.
 - **2026-10-23 (no version change; live 2026-10-29)**, **every value says where it came from (`provenance`, `sourceIndex`).** (1) *Gap:* provenance was prose for people (`sources`, `sourceBreakdown`), with each dataset's period inside a sentence, so an integrator or an AI agent could not pass a figure's source, method and year through without parsing English. (2) *Fix:* each response gains `provenance`, one entry per value (its `sources`, its `method`: measured, modelled, statistic, register, curated, estimated, derived or reference; and, for a source's own figure, `resolution` and `period`), and `sourceIndex`, the sources used. It is built from what answered (the city's credit lines, the quiet tier, the line beside a figure), from the full response and then cut to the fields sent; a batch carries `sourceIndex` once. Periods are held equal to the loaders' own settings by a test. (3) *Effect:* additive; no existing field, value or score changes, so no version bump.
 - **2026-10-23 (no version change; live 2026-10-29)**, **DEFRA's and the Environment Agency's figures are described as modelled, not measured.** (1) *Defect:* the API page, the OpenAPI descriptions of `liveResolution` / `environmentResolution` and of the raster tier, this file's own sections 4.5 and 7.4-7.4.1 and its worked example (step 3), the README, and the MCP server's `environment_at` tool called DEFRA's strategic noise maps and PCM air values, and the Environment Agency's flood map, "measured"; all three are model outputs (the consumer page `/how-it-works/` already said so), and the codebase keeps "measured air quality" for the AURN and Breathe London sensors. The MCP tool also promised a flood value `/v1/environment` never returns. (2) *Fix:* the descriptions say modelled; `measured` as a VALUE of the resolution fields is kept and defined as present for this place, and `measuredAtLocation` as read at this location, because renaming a field breaks integrators. (3) *Effect:* no field, value or score changes, so no version bump.
