@@ -379,6 +379,45 @@ def test_a_council_gets_a_page_only_where_one_of_its_district_pages_counts_heath
                              bpp.PACK_HUB_PATH]
 
 
+def test_a_heathrow_district_page_links_its_councils_pack_pages_while_the_consultation_is_open():
+    # Bill, 2026-11-02: "make the links clear and easy to navigate". The pack was reached only from the index; a
+    # district page with Heathrow figures now links the pack page of each council listing it, while it is open.
+    tw3, c3 = _model('TW3', {HOUNSLOW: 30})
+    se1, c1 = _model('SE1', {'E09000028': 30}, lhr=None, lcy=(120, 3, 40))  # London City only
+    ub2, c2 = _model('UB2', {'E09000009': 27, HOUNSLOW: 3})  # under Ealing and Hounslow both
+    index = bpp.council_index(['TW3', 'SE1', 'UB2'], {'TW3': c3, 'SE1': c1, 'UB2': c2})
+    by = bpp.pack_councils([tw3, se1, ub2], index)
+    packs, until = bpp.district_packs('UB2', by, OPEN, '2026-11-01')
+    assert packs == [('Ealing', '/planes-overhead/heathrow-consultation/ealing/'),
+                     ('Hounslow', '/planes-overhead/heathrow-consultation/hounslow/')]
+    html = bpp.render(ub2, packs, until)
+    line = re.search(r'<p class="respond">.*?</p>', html)[0]
+    assert re.findall(r'href="([^"]+)"', line) == [p for _, p in packs]
+    assert 'open until 22 December 2026' in line and '.respond { font-weight:600; }' in html
+    for pattern in _load_wording().FREQUENCY:
+        assert not re.search(pattern, line, re.IGNORECASE), pattern
+    assert bpp.district_packs('SE1', by, OPEN, '2026-11-01') == ([], '')  # no Heathrow figures, no line
+    assert bpp.district_packs('UB2', by, OPEN, '2026-12-23') == ([], '')  # closed: the line goes
+    assert bpp.district_packs('UB2', by, None, '2026-11-01') == ([], '')  # no pack built
+    # Without the line a page is byte for byte what it was before the line existed: no .respond rule either.
+    plain = bpp.render(tw3)
+    assert 'class="respond"' not in plain and '.respond' not in plain and plain == bpp.render(tw3, [], '')
+
+
+def test_the_index_names_each_council_page_in_the_pack_for_the_area_pages_and_the_front_page():
+    tw3, c3 = _model('TW3', {HOUNSLOW: 30})
+    se1, c1 = _model('SE1', {'E09000028': 30}, lhr=None, lcy=(120, 3, 40))
+    ub2, c2 = _model('UB2', {'E09000009': 27, HOUNSLOW: 3})
+    index = bpp.council_index(['TW3', 'SE1', 'UB2'], {'TW3': c3, 'SE1': c1, 'UB2': c2})
+    pages = bpp.pack_pages([tw3, se1, ub2], index, '2026-11-01', OPEN, gather=lambda city, borough: _facts())
+    assert bpp.consultation_entry(index, pages, OPEN) == {
+        'airport': 'LHR', 'until': '2026-12-22', 'hub': '/planes-overhead/heathrow-consultation/',
+        'councils': {'E09000009': '/planes-overhead/heathrow-consultation/ealing/',
+                     HOUNSLOW: '/planes-overhead/heathrow-consultation/hounslow/'}}  # Southwark: no page, not named
+    assert bpp.consultation_entry(index, {}, OPEN) is None  # no pages built, nothing named
+    assert bpp.consultation_entry(index, pages, None) is None
+
+
 def test_a_council_page_gives_each_district_its_own_figures_and_the_borough_its_own():
     tw3, _ = _model('TW3', {HOUNSLOW: 30})
     html = bpp.render_pack(HOUNSLOW, [tw3], OPEN, '2026-11-01', _facts())

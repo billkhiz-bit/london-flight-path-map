@@ -385,7 +385,19 @@ def listed(names: list[str]) -> str:
     return names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
 
 
-def render(m: dict) -> str:
+def respond_line(packs: list[tuple[str, str]], until: str) -> str:
+    """A district page's way into the consultation pack (2026-11-02, Bill: "make the links clear and easy to
+    navigate"): until then the pack was reached only from the index. `packs` is [(council, its pack page)], the
+    councils that list this district (council_index) and have a page in the pack; '' when there are none, or once the
+    consultation has closed (build() passes none then). Neutral, like the pack: where to find the figures, no view."""
+    if not packs:
+        return ''
+    links = listed([f'<a href="{e(path)}">the planes over {e(b)}</a>' for b, path in packs])
+    return (f"<p class=\"respond\">For Heathrow's expansion consultation, open until {e(day_words(until))}: "
+            f'{links}, council by council.</p>\n')
+
+
+def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
     d = m['district']
     council_names = [b for _, b, _ in m['councils']]
     where = listed(council_names)
@@ -435,8 +447,10 @@ def render(m: dict) -> str:
                            for _, b, path in m['councils'] if path)
     nearby = ' '.join(f'<a href="{URL_ROOT}{e(n.lower())}/">{e(n)}</a>' for n in m['nearby'])
     first_period = m['periods'][0] if len(m['periods']) == 1 else '; '.join(m['periods'])
+    respond = respond_line(list(packs), until)
     return PAGE.format(
-        extra_style='',
+        extra_style='\n  .respond { font-weight:600; }' if respond else '',
+        respond=respond,
         title=e(f'Planes overhead in {d}: flight paths over {council_names[0]} | Sky Score'),
         description=e(f'How many planes pass over {d} ({where}) on a day {airports} flies west, east or both ways, '
                       f'postcode sector by sector. Counted from flight tracking, {first_period}.')[:300],
@@ -595,7 +609,7 @@ PAGE = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Sco
 <main data-district="{district}">
 <h1>Planes overhead in {district}</h1>
 <p class="sub">{where}, {city_label}. {measured}, {period}.</p>
-
+{respond}
 <form class="check" action="/" method="get">
 <label for="postcode">See the figures for one postcode in {district}</label>
 <div class="row"><input id="postcode" name="postcode" type="text" autocomplete="postal-code" autocapitalize="characters" spellcheck="false" maxlength="8" required placeholder="{example}" /><button type="submit">Check</button></div>
@@ -897,6 +911,35 @@ def render_pack_hub(packs: dict[str, list[dict]], c: dict, today: str) -> str:
         count=len(entries), period=e('; '.join(periods)), items=items)
 
 
+def pack_page_path(lad: str) -> str:
+    """A council's page in the pack, as a site path."""
+    return f'{URL_ROOT}{PACK_DIR}/{area.slug(area.app.LAD_TO_BOROUGH[lad][1])}/'
+
+
+def district_packs(district: str, packs: dict[str, list[dict]], c: dict | None, today: str):
+    """(packs, until) for render(): the pack pages of the councils listing this district, while the consultation is
+    open; ([], '') otherwise. `packs` is pack_councils()'s, so a district page never links a pack page that is not
+    built, and one council with two ONS codes is linked once."""
+    if c is None or today > c['until']:
+        return [], ''
+    seen: dict[str, str] = {}
+    for lad, ms in packs.items():
+        if any(x['district'] == district for x in ms):
+            seen.setdefault(pack_page_path(lad), area.app.LAD_TO_BOROUGH[lad][1])
+    return ([(b, path) for path, b in seen.items()], c['until']) if seen else ([], '')
+
+
+def consultation_entry(index: dict, pages: dict, c: dict | None) -> dict | None:
+    """What the area pages and the front page read about the pack (2026-11-02), written into the council index: its
+    airport, its closing day, its hub and each council's page in it. From the pages this run WRITES, so nothing links
+    a pack page that is not built; None when no pack is built."""
+    if c is None or PACK_HUB_PATH not in pages:
+        return None
+    councils = {lad: pack_page_path(lad) for lad in index['councils']
+                if pack_page_path(lad).strip('/') + '/index.html' in pages}
+    return {'airport': PACK_AIRPORT, 'until': c['until'], 'hub': f'{URL_ROOT}{PACK_DIR}/', 'councils': councils}
+
+
 def pack_pages(models: list[dict], index: dict, today: str, c: dict | None, gather=None) -> dict[str, str]:
     """{repo path: page} for the hub and each council's page; none without a dated consultation link."""
     if c is None:
@@ -932,9 +975,12 @@ def build(meta, files, ctx, totals, names, order, today: str | None = None):
     at = {d: ctx[d]['at'] for d in with_page}
     models = [model(d, files[d], meta, ctx[d], totals[d], names, nearest(d, at, with_page), order)
               for d in with_page]
-    pages = {f'planes-overhead/{m["slug"]}/index.html': render(m) for m in models}
     index = council_index(with_page, ctx)
-    packs = pack_pages(models, index, today, consultation())
+    c = consultation()
+    by_council = pack_councils(models, index) if c else {}
+    pages = {f'planes-overhead/{m["slug"]}/index.html': render(m, *district_packs(m['district'], by_council, c, today))
+             for m in models}
+    packs = pack_pages(models, index, today, c)
     pages[INDEX_PATH] = render_index(models, index, pack=PACK_HUB_PATH in packs)
     return pages | packs, {d: why for d, why in reasons.items() if why}
 
@@ -958,9 +1004,11 @@ def council_index(with_page: list[str], ctx: dict) -> dict:
             if n >= LINK_FROM * total:
                 by.setdefault(lad, []).append(d)
     return {
-        'about': ('Written by scripts/build_planes_pages.py --write, read by scripts/build_area_pages.py: the '
-                  'postcode districts with a /planes-overhead/ page, under each council (ONS code) holding '
-                  'link_from or more of their measured postcodes. Never edit by hand.'),
+        'about': ('Written by scripts/build_planes_pages.py --write, read by scripts/build_area_pages.py and the '
+                  "front page's planes answer (js/planes.mjs): the postcode districts with a /planes-overhead/ page, "
+                  'under each council (ONS code) holding link_from or more of their measured postcodes, and, while '
+                  "Heathrow's consultation pack is built, its closing day and each council's page in it. "
+                  'Never edit by hand.'),
         'link_from': LINK_FROM,
         'councils': {lad: by[lad] for lad in sorted(by)},
     }
@@ -1090,6 +1138,8 @@ def main() -> int:
     # link a district page that is not built, whatever build() comes to filter.
     districts = [path.split('/')[1].upper() for path in pages if is_district_page(path)]
     index = council_index(districts, ctx)
+    if entry := consultation_entry(index, pages, consultation()):
+        index['consultation'] = entry
     packs = sum(path.startswith(f'planes-overhead/{PACK_DIR}/') for path in pages)
     print(f'{len(districts)} district pages and the index; {len(without)} districts without a page; '
           f"{len(index['councils'])} councils link to them; {packs} consultation pack pages")

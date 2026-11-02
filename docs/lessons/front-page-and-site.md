@@ -668,3 +668,25 @@ templates needs both targets, and the deploy list handed to Bill had left it out
 (2) The drift check listed robots.txt and sitemap.xml but not `llms.txt`, so a missed or stale upload would have
 passed; it is now a surface, held by `test_the_drift_check_compares_it` (proven red). The live pages were then put
 through `breadcrumb_faults()` itself (fetch, then the repo's check), which reads what a crawler reads.
+
+## BOOK A DEMO, MADE CLEAR, AND THE WAYS INTO THE PLANES PAGES (2026-11-02)
+
+Bill, after seeing arcive.ai (a business-only site whose hero's main button is "Request a demo", repeated as a
+closing section): "can we not have book a demo more clear on the frontpage?" Ours was one orange text line at the foot
+of "Who it is for", about three screens down at 1366 px (his 30 Oct cut from three spots to one). Advised against
+copying the hero: two-thirds of front-page views are home-buyers, whose action is "Check yours". Built his "do
+recommended": the business card's filled button is now Book a demo (`card`; Read the docs moved to its text link, the
+card's Pricing link dropped: the bar and footer carry it), and the line became a dark closing band, "Bring your own
+postcodes", with an orange button (`band`). Never the bar. The ~6% engagement read to ~20 Nov needs a footnote: the
+page changed on 2 Nov.
+
+The same day Bill noticed the planes pages are reachable "only by direct link". Measured: the 464 district pages and
+the index were linked from area pages only (1 Nov), and the Heathrow consultation pack from the planes index ONLY
+(area page, district page, index, pack). Not a decision, a gap, for a pack built for the consultation's drop-ins.
+Built: a line on every Heathrow district page (230) and on the 32 councils' area pages straight to their own pack page,
+and in the front page's planes answer "Every postcode in TW9, sector by sector" plus the pack while it is open; and
+"Planes overhead" in the front page's and the map's footers. Each reads the `consultation` entry the planes builder
+writes into `data/planes-districts-by-council.json` from the pages it built, and the answer links a district only
+if that index lists it, so no link can point at a page that is not there. The pack link sits in the planes answer, not
+in "Have your say": that registry holds outside bodies' verified pages, prints in the street report, and its test pins
+one dated link. Seven mutations, one per rule, all turn their tests red.

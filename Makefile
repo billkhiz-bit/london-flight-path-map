@@ -733,9 +733,15 @@ planes-pages-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp sitemap-planes.xml \
 		s3://$(S3_BUCKET)/sitemap-planes.xml \
 		--content-type "application/xml" --region $(AWS_REGION)
+	# The index of which districts have a page and the consultation pack's councils (2026-11-02): the front
+	# page's planes answer links only to pages it lists, so it ships with the pages it describes. no-cache, as
+	# /data/ is network-first in sw.js.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/planes-districts-by-council.json \
+		s3://$(S3_BUCKET)/data/planes-districts-by-council.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
-		--paths '/planes-overhead/*' '/sitemap-planes.xml'
+		--paths '/planes-overhead/*' '/sitemap-planes.xml' '/data/planes-districts-by-council.json'
 
 .PHONY: bay-area-deploy
 bay-area-deploy:

@@ -28,10 +28,10 @@ DECLARED = {
     'pricing.html': 2,  # the top bar, and the line under the opening (the one a phone sees: its bar is a Menu)
     'api/index.html': 2,  # the top bar, and "Get started" step 5
     'score-demo/index.html': 1,  # beside the live demo's response, where a visitor who just ran the API reads next
-    # Bill, 2026-10-30: ONE line under "Who it is for", never the bar (its filled item is Full map, and the ~6% read
-    # runs to ~20 Nov). Three spots for an hour (card, developers panel, this line), cut to this one because the page
-    # already repeats its actions. Outside WHO-FOR, which is also written into /about/. Counted as who.
-    'home/index.html': 1,
+    # Bill, 2026-11-02 (after arcive.ai: "more clear on the frontpage"): the business card's filled button (`card`) and
+    # a closing band (`band`), never the bar (its filled item is Full map). Until then ONE line under "Who it is for"
+    # (2026-10-30, after three spots for an hour); the band replaced it. Outside WHO-FOR, written into /about/ too.
+    'home/index.html': 2,
 }
 CALENDLY_HREF = re.compile(r'''href=["'](https?://(?:[\w-]+\.)*calendly\.com\b[^"']*)["']''', re.I)
 HOLDER = re.compile(r"^export const DEMO_BOOKING_URL = '([^']+)';", re.M)

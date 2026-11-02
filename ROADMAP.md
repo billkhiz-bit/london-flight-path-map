@@ -51,6 +51,14 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > and `open-data-deploy`: /open-data/ is NOT in `area-deploy`, and the drift check caught it); drift exit 0, and
 > `breadcrumb_faults()` passes on the live area, open-data, planes and pack pages; live `/llms.txt` == the repo.
 > Read Search Console ~8 Nov (Enhancements > Breadcrumbs should appear).
+> **Evening (Bill's "do recommended"):** Book a demo made clear on the front page (the business card's button `card`
+> + a closing band `band`, never the bar; after arcive.ai), and the planes pages made reachable (they were "direct
+> link only"): the planes answer links its district page and, while open, the consultation pack; 230 Heathrow district
+> pages and 32 area pages link their own pack page; both footers link Planes overhead. Deploy: `planes-pages-deploy`
+> (pages + the index the answer reads), `area-deploy`, `home-deploy`, `web-deploy` (map footers, js/). Footnote the
+> ~20 Nov engagement read: the front page changed 2 Nov. NEXT (Bill: "without imposing on privacy"): a place-name
+> dropdown and "search in your own words" for Find areas, rules in the browser, nothing typed leaves the page. N65
+> step 4 committed + pushed on `n65` (`fb126f0`). Data incident + restore: memory `feedback-worktree-remove-follows-junctions`.
 > Noted, not done: the map's JSON-LD says "UK and NYC" and /api/'s calls quiet "DEFRA Lden noise" (both predate v5.7).
 >
 > ## START HERE (2026-11-01)

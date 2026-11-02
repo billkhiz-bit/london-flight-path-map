@@ -9,6 +9,13 @@
   "open until 22 December 2026", then "closed".
 - **The planes overhead index is half as long on a phone**: a postcode box, a jump list of councils, and each
   council's districts on one line (16.5 screens to 8.0).
+- **The planes pages are easy to reach**: a postcode's planes answer on the front page now links its district's page
+  ("Every postcode in TW9, sector by sector") and, while Heathrow's consultation is open, the council-by-council
+  pages; each Heathrow district page and the 32 councils' area pages link their own consultation page; and the front
+  page's and the map's footers link "Planes overhead". Until now the consultation pages were linked from the planes
+  index alone.
+- **Booking a demo is clearer on the front page**: the "Data for your business" card leads with a Book a demo button,
+  and the page ends on a band, "Bring your own postcodes", with one button. Never in the top bar.
 - **The Bay Area page's city table fits a phone**: three columns (city and county; share of the city on the noise
   map and its airfield; the routes overhead) instead of eight, so nothing scrolls sideways and each city's routes sit
   beside its name. Same facts and wording.

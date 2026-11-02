@@ -11,7 +11,7 @@
 //   node tests/planes-model.mjs
 
 import assert from 'node:assert/strict';
-import { districtOf, period, perDay, planesModel } from '../js/planes.mjs';
+import { districtOf, period, perDay, planesLinks, planesModel } from '../js/planes.mjs';
 
 const NAMES = { LHR: 'Heathrow', LCY: 'London City', MAN: 'Manchester' };
 const INFO = {
@@ -113,6 +113,37 @@ check('figures, districts and periods as written', () => {
   assert.equal(perDay([0, 12]), 'up to 12 a day');
   assert.equal(districtOf('ec1a 1bb'), 'EC1A');
   assert.equal(period(['202511', '202608']), 'November 2025 to August 2026');
+});
+
+// Where to go next (2026-11-02, Bill: "make the links clear and easy to navigate"). The index is the one holder of
+// which district pages exist: a link only to a district it lists, and the consultation link only for a postcode with
+// a figure from the pack's airport, only while it is open, and never without the index.
+const INDEX = {
+  councils: { E09000027: ['TW9'], E09000018: ['TW3'] },
+  consultation: { airport: 'LHR', until: '2026-12-22', hub: '/planes-overhead/heathrow-consultation/', councils: {} },
+};
+const SE1 = { district: 'SE1', postcodes: { 'SE1 9AA': { LCY: [40, 2, 20] } }, none: [], approx: [], other: [] };
+const INFO_SE1 = { ...INFO, districts: [...INFO.districts, 'SE1'] };
+const day = (iso) => new Date(`${iso}T12:00:00Z`);
+
+check('the district page and the consultation pack, linked only where they exist and while it is open', () => {
+  const kew = planesModel(TW9, INFO, 'TW9 3PZ', NAMES);
+  assert.deepEqual(planesLinks(INDEX, 'TW9 3PZ', kew, day('2026-11-02')), [
+    { text: 'Every postcode in TW9, sector by sector', href: '/planes-overhead/tw9/' },
+    { text: "For Heathrow's consultation, open until 22 December: the planes over each council", href: '/planes-overhead/heathrow-consultation/' },
+  ]);
+  assert.equal(planesLinks(INDEX, 'TW9 3PZ', kew, day('2026-12-22')).length, 2, 'its last day still offers it');
+  assert.deepEqual(planesLinks(INDEX, 'TW9 3PZ', kew, day('2026-12-23')).map((l) => l.href), ['/planes-overhead/tw9/']);
+  // E16 has Heathrow figures but no page in the index: the pack, never a guessed district page.
+  const e16 = planesModel(E16, INFO, 'E16 2QD', NAMES);
+  assert.deepEqual(planesLinks(INDEX, 'E16 2QD', e16, day('2026-11-02')).map((l) => l.href), ['/planes-overhead/heathrow-consultation/']);
+  // London City only: no consultation link (the pack is Heathrow's).
+  const se1 = planesModel(SE1, INFO_SE1, 'SE1 9AA', NAMES);
+  assert.deepEqual(planesLinks(INDEX, 'SE1 9AA', se1, day('2026-11-02')), []);
+  // No index (a failed fetch): no links at all; an index with no consultation: the page only.
+  assert.deepEqual(planesLinks(null, 'TW9 3PZ', kew, day('2026-11-02')), []);
+  assert.deepEqual(planesLinks({ councils: INDEX.councils }, 'TW9 3PZ', kew, day('2026-11-02')).map((l) => l.href), ['/planes-overhead/tw9/']);
+  assert.deepEqual(planesLinks(INDEX, 'TW9 3PZ', null, day('2026-11-02')), []);
 });
 
 console.log(`planes model: ${passed} checks passed`);

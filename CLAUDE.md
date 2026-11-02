@@ -201,6 +201,11 @@ Or just describe what you need, I have full context of this project.
   `build_planes_pages.py` for every council with a district page counting Heathrow, its link and closing day READ from
   `HAVE_YOUR_SAY` (`until`): neutral wording, today's flights only (never a third runway's routes), the area page's own
   noise/air/flood. After `until` its `--check` reds until `--write` re-says "closed"; then `planes-pages-deploy`.
+  Its ways in (2026-11-02, Bill: "clear and easy to navigate"): a line on each Heathrow district page, on the 32 councils'
+  area pages and in the front page's planes answer, all from the `consultation` entry the builder writes into
+  `data/planes-districts-by-council.json`, all gone after `until` (each `--check` reds until `--write`; then deploy).
+- **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
+  the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
   page; 2026-11-02): every item but the last is a link the visible breadcrumb shows, the last is the page's canonical
   (`tests/test_breadcrumb_ld.py`, every built page). `/llms.txt` (`meta-deploy`) is read by the wording gate and held
@@ -213,7 +218,8 @@ Or just describe what you need, I have full context of this project.
   correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
   page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.
 - **The Book a demo link has ONE holder, `js/count.mjs` `DEMO_BOOKING_URL`** (2026-10-29): only `/pricing`, `/api/`
-  (bar + page), `/score-demo/` and ONE line on the front page under "Who it is for" (never its bar; Bill, 2026-10-30) carry it
+  (bar + page), `/score-demo/` and TWO front-page spots, the business card's button and the closing band (never its
+  bar; Bill, 2026-11-02, after arcive.ai) carry it
   (`tests/test_demo_booking_link.py`), counted by destination as `book-demo-<page>-<bar|bar-menu|page|spot>` (a spot
   from `data-book-place`); `make booking-link-check` refuses web/demo/home deploys while it is a placeholder.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the

@@ -70,6 +70,7 @@ score-demo/openapi.yaml|score-demo/openapi.yaml
 prototype/index.html|prototype/index.html
 robots.txt|robots.txt
 llms.txt|llms.txt
+data/planes-districts-by-council.json|data/planes-districts-by-council.json
 sitemap.xml|sitemap.xml
 .well-known/security.txt|.well-known/security.txt
 preview.png|preview.png

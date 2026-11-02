@@ -108,8 +108,31 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
   };
 }
 
-/** The block's nodes for a model, written with textContent only. */
-export function planesNodes(model, doc = document) {
+/**
+ * Where to go next from a postcode's block (2026-11-02, Bill: "make the links clear and easy to navigate"): its
+ * district's page, when one is built, and while Heathrow's consultation is open, the pack, when the postcode has a
+ * Heathrow figure. `index` is data/planes-districts-by-council.json (scripts/build_planes_pages.py), the one holder of
+ * which pages exist: a district listed under no council has no page, so no link, never a guess at one. No index (a
+ * failed fetch) means no links; the block itself still shows. `today` decides whether the consultation is open.
+ */
+export function planesLinks(index, postcode, model, today = new Date()) {
+  if (!index?.councils || !model) return [];
+  const d = districtOf(postcode);
+  const out = [];
+  if (Object.values(index.councils).some((ds) => Array.isArray(ds) && ds.includes(d))) {
+    out.push({ text: `Every postcode in ${d}, sector by sector`, href: `/planes-overhead/${d.toLowerCase()}/` });
+  }
+  const c = index.consultation;
+  const open = c?.hub && /^\d{4}-\d{2}-\d{2}$/.test(c.until || '') && today.toISOString().slice(0, 10) <= c.until;
+  if (open && model.airports.some((a) => a.code === c.airport)) {
+    const [, m, day] = c.until.split('-').map(Number);
+    out.push({ text: `For Heathrow's consultation, open until ${day} ${MONTHS[m - 1]}: the planes over each council`, href: c.hub });
+  }
+  return out;
+}
+
+/** The block's nodes for a model, written with textContent only; `links` (planesLinks) go just above "How the planes are counted". */
+export function planesNodes(model, doc = document, links = []) {
   const el = (tag, className, text) => {
     const n = doc.createElement(tag);
     if (className) n.className = className;
@@ -141,6 +164,13 @@ export function planesNodes(model, doc = document) {
     if (model[key]) out.push(el('p', className, model[key]));
   }
   out.push(el('p', 'planes-note', model.definition), el('p', 'planes-note', `${model.counted} ${model.credits.join('; ')}.`));
+  for (const l of links) {
+    const p = el('p', 'planes-more');
+    const a = el('a', null, l.text);
+    a.href = l.href;
+    p.append(a);
+    out.push(p);
+  }
   const how = el('p', 'planes-how');
   const link = el('a', null, 'How the planes are counted');
   link.href = model.how;

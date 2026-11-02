@@ -1608,8 +1608,8 @@ const BOOK_WANT = {
   '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
   '/api/': ['book-demo-api-bar', 'book-demo-api-page'],
   '/score-demo/index.html': ['book-demo-score-demo-page'],
-  // The front page (Bill, 2026-10-30): one line under "Who it is for", named by its data-book-place.
-  '/': ['book-demo-home-who'],
+  // The front page (Bill, 2026-11-02): the business card's button, then the closing band, each named by its data-book-place.
+  '/': ['book-demo-home-card', 'book-demo-home-band'],
 };
 for (const [path, want] of Object.entries(BOOK_WANT)) {
   const inBar = want.some((w) => w.endsWith('-bar'));
@@ -2419,8 +2419,16 @@ const makeReport = async (pc) => {
   const planesBlock = () => ep.evaluate(() => {
     const b = document.getElementById('ans-planes');
     return { hidden: b.hidden, head: b.querySelector('h3')?.textContent, rows: [...b.querySelectorAll('.row')].map((r) => r.textContent),
-      link: b.querySelector('.planes-how a')?.getAttribute('href'), barsHidden: [...b.querySelectorAll('.bar')].every((x) => x.getAttribute('aria-hidden') === 'true') };
+      link: b.querySelector('.planes-how a')?.getAttribute('href'), barsHidden: [...b.querySelectorAll('.bar')].every((x) => x.getAttribute('aria-hidden') === 'true'),
+      more: [...b.querySelectorAll('.planes-more a')].map((a) => [a.textContent, a.getAttribute('href'), Math.round(a.getBoundingClientRect().height)]) };
   });
+  // Where to go next (2026-11-02, Bill: "make the links clear and easy to navigate"): TW9's own page, and while
+  // Heathrow's consultation is open, its pack, both from the tracked index the planes builder writes (served as is).
+  // Read from that index, so the day after it closes this expects the page link alone instead of going red.
+  const planesIndex = JSON.parse(await readFile(join(ROOT, 'data', 'planes-districts-by-council.json'), 'utf8'));
+  const packOpen = Boolean(planesIndex.consultation) && new Date().toISOString().slice(0, 10) <= planesIndex.consultation.until;
+  const wantMore = [['Every postcode in TW9, sector by sector', '/planes-overhead/tw9/'],
+    ...(packOpen ? [[`For Heathrow's consultation, open until ${Number(planesIndex.consultation.until.slice(8))} December: the planes over each council`, planesIndex.consultation.hub]] : [])];
 
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
@@ -2434,6 +2442,8 @@ const makeReport = async (pc) => {
     && JSON.stringify(kew.rows) === JSON.stringify(['Flying west56% of days310 a day', 'Both ways15% of days168 a day', 'Flying east29% of days4 a day'])
     && kew.link === '/how-it-works/#planes-overhead' && kew.barsHidden,
     'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, bars hidden from screen readers', JSON.stringify(kew));
+  ok(JSON.stringify(kew.more.map(([t, h]) => [t, h])) === JSON.stringify(wantMore) && kew.more.every(([, , h]) => h >= 24),
+    'planes overhead links on: TW9\'s own page and, while it is open, Heathrow\'s consultation pack, each a 24 px+ target', JSON.stringify({ more: kew.more, wantMore }));
   // ...and no figure is cut off on a phone, the longest kinds included: a range on a cone's edge and "under 1" (the
   // preview of 26 Oct showed "1 to 316 a" and "under 1 a d" in the 84 px column phones give the rows above).
   await ep.setViewportSize({ width: 390, height: 844 });

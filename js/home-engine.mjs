@@ -15,7 +15,7 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
-import { districtOf, planesModel, planesNodes } from '/js/planes.mjs';
+import { districtOf, planesLinks, planesModel, planesNodes } from '/js/planes.mjs';
 import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
@@ -1427,6 +1427,11 @@ const planesFiles = new Map();
 let planesSeq = 0;
 const loadPlanesInfo = () => (planesInfoLoad ??= d3.json('/data/planes/airports.json')
   .catch(() => { planesInfoLoad = null; return null; }));
+// Which districts have a page, and the consultation pack (2026-11-02): the links under the block (planesLinks).
+// Optional: a failed fetch is retried next search and costs only the links, never the block.
+let planesIndexLoad = null;
+const loadPlanesIndex = () => (planesIndexLoad ??= d3.json('/data/planes-districts-by-council.json')
+  .catch(() => { planesIndexLoad = null; return null; }));
 async function loadPlanes(postcode) {
   const info = await loadPlanesInfo();
   const district = districtOf(postcode);
@@ -1481,11 +1486,11 @@ function render(postcode, district, city, e, lat, lon) {
     // As for the station and the air: a later search owns the block. Not tied to the map's cities: the files
     // cover every council the score covers (Nottingham's are under East Midlands' flights), and say who is in.
     const seq = ++planesSeq;
-    loadPlanes(postcode).then(([file, info]) => {
+    Promise.all([loadPlanes(postcode), loadPlanesIndex()]).then(([[file, info], index]) => {
       if (seq !== planesSeq) return;
       const model = planesModel(file, info, postcode);
       if (!model) return;
-      planes.append(...planesNodes(model));
+      planes.append(...planesNodes(model, document, planesLinks(index, postcode, model)));
       planes.hidden = false;
     }).catch((err) => {
       // A file the model cannot read (a field missing after a part-deployed roll) hides the block, as a failed
