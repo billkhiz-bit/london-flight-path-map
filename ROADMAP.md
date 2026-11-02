@@ -3,7 +3,7 @@
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
 **Last reviewed:** 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
-/bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll as one SAM changeset; previously
+/bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
 `planes-district-pages`, Bill's review first; Thursday's runbook Part D), the N65 build STARTED (branch `n65`: the
 publish gate, and Doc 29's 5th edition proven against ECAC's own worked results), both hackathons skipped; previously
@@ -36,15 +36,21 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **The backend changeset:** `nhs-all-cities` (5xx logging + the healthcare bundle for all 13 areas) MERGED (`5c082cb`;
 > rerere could not replay, since master had moved: the three prose conflicts kept both sides again) + the **AIRAC
 > 2026-10-29 roll** (`build_flight_paths.AIRAC`, `data/flight-procedures.json`, `PROVENANCE_PERIODS['uk-aip']`,
-> `data/area-route-crossings.json`; only cycle strings and Cardiff's chart link moved). Order: `data-deploy`, then the
-> SAM changeset (`--no-execute-changeset`, read it), then Bill executes; verify `/nhs` for a Manchester point, the
-> score's `uk-aip` provenance, and the drift check. Then: N65 step 4's review (agent worktree `n65-step4`); Bill
-> to decide on a /map/ planes layer by district (prompted by ekinomics.com; mock-ups first).
+> `data/area-route-crossings.json`; only cycle strings and Cardiff's chart link moved). **LIVE 2 Nov 15:53 UTC**
+> (Bill executed; 8 Lambdas' code, nothing replaced). Verified from the origin: Manchester's `/nhs` answers
+> `bundled-snapshot` (5 GPs, 5 pharmacies, 1 hospital; before: `available: false`); `uk-aip` reads AIRAC 2026-10-29
+> wherever the route estimate answers (M1, LS1, NE1, BS1); score sanity PASS (29 postcodes); the deployed score,
+> epc and nhs code carry as many `[5XX]` markers as the source; data 41 of 41. Read the 5xx query (OPERATIONS.md s5)
+> ~9 Nov. The drift check now compares `/llms.txt` too (it did not). Then: N65 step 4's review (agent worktree
+> `n65-step4`); Bill to decide on a /map/ planes layer by district (prompted by ekinomics.com; mock-ups first).
 > **Search (2 Nov, Bill: "yes"):** Google HAS indexed us (`site:` 5 pages; district pages appear a day after the
 > sitemap: TW10 for a Kew query) and sent 24 visits since 20 Oct, about half to area pages; "hackney noise
 > liveability score" ranks /map/ second. "Sky Score" itself is unwinnable (all ten pages Sky Sports + a Hasbro toy):
 > the rename. BUILT: breadcrumb JSON-LD on area, open-data and planes pages, Organization + WebSite on the front page,
-> `/llms.txt`. Deploy: `planes-pages-deploy`, `area-deploy`, `home-deploy`, `meta-deploy`. Read Search Console ~8 Nov.
+> `/llms.txt`. **LIVE 2 Nov ~16:16 UTC** (Bill ran `planes-pages-deploy`, `area-deploy`, `home-deploy`, `meta-deploy`
+> and `open-data-deploy`: /open-data/ is NOT in `area-deploy`, and the drift check caught it); drift exit 0, and
+> `breadcrumb_faults()` passes on the live area, open-data, planes and pack pages; live `/llms.txt` == the repo.
+> Read Search Console ~8 Nov (Enhancements > Breadcrumbs should appear).
 > Noted, not done: the map's JSON-LD says "UK and NYC" and /api/'s calls quiet "DEFRA Lden noise" (both predate v5.7).
 >
 > ## START HERE (2026-11-01)

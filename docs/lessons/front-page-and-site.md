@@ -661,3 +661,10 @@ page carries Organization + WebSite (no price: the wording gate reads every JSON
 `/llms.txt` (llmstxt.org shape; `meta-deploy`) joined the wording gate as plain text (`published_texts()`, only
 `llms*.txt`: robots.txt's comments rightly name the AI crawlers); `tests/test_llms_txt.py` holds its coverage
 sentence to how-it-works', its links to the sitemaps, and its one outside link (the methodology on GitHub).
+
+Deployed the same afternoon, two misses caught by the drift check rather than by reading. (1) /open-data/ is uploaded
+by `open-data-deploy`, NOT `area-deploy`, though `build_area_pages.py` writes it: a change to the area builder's
+templates needs both targets, and the deploy list handed to Bill had left it out (drift: "open-data/ differs").
+(2) The drift check listed robots.txt and sitemap.xml but not `llms.txt`, so a missed or stale upload would have
+passed; it is now a surface, held by `test_the_drift_check_compares_it` (proven red). The live pages were then put
+through `breadcrumb_faults()` itself (fetch, then the repo's check), which reads what a crawler reads.

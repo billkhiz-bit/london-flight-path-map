@@ -67,6 +67,12 @@ class LlmsTxtTests(unittest.TestCase):
         self.assertIn('aws s3 cp llms.txt', makefile)
         self.assertIn("'/llms.txt'", makefile, 'and invalidates it, or an edit waits out the cache')
 
+    def test_the_drift_check_compares_it(self):
+        # Found 2026-11-02 after the first deploy: the drift check listed robots.txt and sitemap.xml but not
+        # llms.txt, so a meta-deploy that never uploaded it (or a stale live copy) would have passed unseen.
+        drift = (ROOT / 'scripts' / 'check_deploy_drift.sh').read_text(encoding='utf-8')
+        self.assertRegex(drift, r'(?m)^llms\.txt\|llms\.txt\r?$')
+
     def test_the_wording_gate_reads_it(self):
         import test_public_wording as gate  # pylint: disable=import-outside-toplevel
         self.assertIn('llms.txt', gate.everything())

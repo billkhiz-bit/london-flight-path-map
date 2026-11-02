@@ -69,6 +69,7 @@ score-demo/status.html|score-demo/status.html
 score-demo/openapi.yaml|score-demo/openapi.yaml
 prototype/index.html|prototype/index.html
 robots.txt|robots.txt
+llms.txt|llms.txt
 sitemap.xml|sitemap.xml
 .well-known/security.txt|.well-known/security.txt
 preview.png|preview.png
