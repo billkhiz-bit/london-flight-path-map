@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-11-03 - Planes overhead on the full map; Sky Score on LinkedIn
+
+- **Planes overhead on the full map**: a new layer shows how many planes pass overhead a day at every postcode, from
+  the busiest airport over it, in four steps (10 to 49, 50 to 99, 100 to 199, 200 or more), for a day flying west, a
+  day flying both ways or a day flying east, with postcode districts outlined. Where two airports' planes cross one
+  postcode it shows the busier one's count: the two are never added, because each airport's kinds of day are its
+  own. Each postcode keeps its own figure, so the narrow strip under a low
+  approach shows as it is rather than averaged away over a district. Seven city regions: London, Greater Manchester,
+  the West Midlands, West Yorkshire, Bristol, Leicester and Merseyside. It replaces aircraft noise while it is on.
+
+- **Sky Score on LinkedIn**: the company page is linked from the front page's footer, both of the full map's footers
+  and the About page's "Get in touch".
+
+- **Air quality nearby, side by side, on the full map**: for a postcode, DEFRA's model for its own 1 km square sits
+  beside the nearest Breathe London sensor and DEFRA monitor, one chart per pollutant with the WHO guideline drawn
+  through it, so you can see at a glance whether the air is over the guideline and how the measurements compare with
+  the model. A key says what each source is (a low-cost sensor's figures are provisional, a monitor's ratified), where
+  it stands and for what period.
+
+- **Corrected: the Heathrow comparison says what it compares.** DEFRA's 2021 map against the CAA's 2025 contours: the
+  pages called 2025 "a normal year", and `/api/` said 2024's flights were 0.5% below 2019's, which is the CAA's
+  summer-day comparison set beside an annual one. They now give the report's own annual figure (2025's flights 2%
+  below 2019's) and no longer say Heathrow is the only airport the CAA models. The full map's search descriptions name
+  the San Francisco Bay Area, and `/api/` says the quiet score uses DEFRA's map only where DEFRA maps it. The front
+  page's answer called DEFRA's aircraft noise figure "measured": it is DEFRA's model, and now says so.
+
 ## 2026-11-02 - Planes from Heathrow, council by council, for its consultation; healthcare nearby in every area
 
 - **A page per London council for Heathrow's expansion consultation** (`/planes-overhead/heathrow-consultation/`):
@@ -9,6 +35,17 @@
   "open until 22 December 2026", then "closed".
 - **The planes overhead index is half as long on a phone**: a postcode box, a jump list of councils, and each
   council's districts on one line (16.5 screens to 8.0).
+- **The planes pages are easy to reach**: a postcode's planes answer on the front page now links its district's page
+  ("Every postcode in TW9, sector by sector") and, while Heathrow's consultation is open, the council-by-council
+  pages; each Heathrow district page and the 32 councils' area pages link their own consultation page; and the front
+  page's and the map's footers link "Planes overhead". Until now the consultation pages were linked from the planes
+  index alone.
+- **Booking a demo is clearer on the front page**: the "Data for your business" card leads with a Book a demo button,
+  and the page ends on a band, "Bring your own postcodes", with one button. Never in the top bar.
+- **Find areas: describe what you want in your own words**, such as "quiet, near a station, under £500k in
+  Manchester". It sets the region, price and choices and says what it understood and what it did not; you can adjust
+  the choices as before. It is read in your browser: nothing you type is sent or kept.
+- **The postcode box suggests places as you type**: council areas, regions and cities it can answer by name.
 - **The Bay Area page's city table fits a phone**: three columns (city and county; share of the city on the noise
   map and its airfield; the routes overhead) instead of eight, so nothing scrolls sideways and each city's routes sit
   beside its name. Same facts and wording.

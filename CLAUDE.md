@@ -106,10 +106,14 @@ Or just describe what you need, I have full context of this project.
   `terms.html` ONLY. **Cubitt33 is not VAT-registered: never write "+ VAT".**
 - **Wording rules**: never call the whole product "open government data"/OGL (UK routes come from the UK AIP,
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
-  are over **postcodes, not addresses**; never say **how often planes pass** except for airports that pass
+  are over **postcodes, not addresses**; a DEFRA map figure is **modelled, never "measured"** (only a monitor's reading is
+  measured; the front page said "DEFRA, measured" until 2026-11-03, and `tests/test_public_wording.py` now refuses it); never say **how often planes pass** except for airports that pass
   `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26)
   or the district pages `build_planes_pages.py` BUILDS from the same files (`/planes-overhead/`, 2026-10-28: a cell
-  counts postcodes in bands, never a middle figure; its `--check` holds every page), a range on a cone's edge,
+  counts postcodes in bands, never a middle figure; its `--check` holds every page), or the full map's layer pictures
+  `build_planes_layer.py` draws from the same files (2026-11-02: each postcode its own step, from the busiest airport
+  over it, never airports added, never grouped; its
+  `--check` holds every picture, its legend names steps, never a place's figure), a range on a cone's edge,
   never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
@@ -201,6 +205,10 @@ Or just describe what you need, I have full context of this project.
 - **`.no-result-yet`, not `.empty-state`**, marks "nothing searched yet".
 - **Air measured nearby is ONE pair of functions** (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`)
   for the front page, the full map's panel (dynamic import) and both reports: 5 km, never "none nearby", a stale sensor file hidden, credits linked.
+  **The full map's panel is "Air quality nearby", side by side** (Bill, 2026-11-03, refined B): DEFRA's MODEL for the
+  postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
+  if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
+  `airChart()` (pure; `tests/air-chart.mjs`); the model is a hollow ring, never "measured"; `AIR_WHO_2021` equals the API's.
 - **The brand links home on every page** (`tests/test_brand_links_home.py` finds them). **"Have your say" links come
   only from `HAVE_YOUR_SAY`** (verified live; add an airport only after checking its pages; a time-limited link, such as
   a consultation, carries `until: 'YYYY-MM-DD'` and drops out by itself after it).
@@ -208,6 +216,18 @@ Or just describe what you need, I have full context of this project.
   `build_planes_pages.py` for every council with a district page counting Heathrow, its link and closing day READ from
   `HAVE_YOUR_SAY` (`until`): neutral wording, today's flights only (never a third runway's routes), the area page's own
   noise/air/flood. After `until` its `--check` reds until `--write` re-says "closed"; then `planes-pages-deploy`.
+  Its ways in (2026-11-02, Bill: "clear and easy to navigate"): a line on each Heathrow district page, on the 32 councils'
+  area pages and in the front page's planes answer, all from the `consultation` entry the builder writes into
+  `data/planes-districts-by-council.json`, all gone after `until` (each `--check` reds until `--write`; then deploy).
+- **The full map's Planes overhead layer is pictures, never figures** (2026-11-02, Bill's pick B2 of the mock-ups: "B's
+  look without the blur"): `build_planes_layer.py` draws each postcode's own step from `data/planes/` into Web Mercator
+  pictures (the map's projection, so two corners place them); a district/sector/hexagon colour was rejected because it
+  washes out the few-hundred-metre strip under a low approach (TW4: 4% at 100+). A postcode shows its BUSIEST airport,
+  never a sum (each airport's kinds of day are its own): every surface naming the layer says so. Smoothed until one
+  picture pixel covers a screen pixel, sharp from there (`setPlanesRendering`). It and DEFRA aircraft noise are never
+  on together; the legend's step colours equal `index.json`'s (`tests/planes-layer.mjs`, `test_build_planes_layer.py`).
+- **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
+  the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
   page; 2026-11-02): every item but the last is a link the visible breadcrumb shows, the last is the page's canonical
   (`tests/test_breadcrumb_ld.py`, every built page). `/llms.txt` (`meta-deploy`) is read by the wording gate and held
@@ -220,9 +240,14 @@ Or just describe what you need, I have full context of this project.
   correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
   page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.
 - **The Book a demo link has ONE holder, `js/count.mjs` `DEMO_BOOKING_URL`** (2026-10-29): only `/pricing`, `/api/`
-  (bar + page), `/score-demo/` and ONE line on the front page under "Who it is for" (never its bar; Bill, 2026-10-30) carry it
+  (bar + page), `/score-demo/` and TWO front-page spots, the business card's button and the closing band (never its
+  bar; Bill, 2026-11-02, after arcive.ai) carry it
   (`tests/test_demo_booking_link.py`), counted by destination as `book-demo-<page>-<bar|bar-menu|page|spot>` (a spot
   from `data-book-place`); `make booking-link-check` refuses web/demo/home deploys while it is a placeholder.
+- **The company LinkedIn link has ONE holder, `js/count.mjs` `LINKEDIN_URL`** (Bill, 2026-11-03): the front page's footer
+  and Organization `sameAs`, both map footers and /about/'s "Get in touch" only, never the generated area/planes pages
+  (a footer change re-dates them all in the sitemap); counted `<page>-linkedin`; `tests/test_linkedin_company_link.py`
+  holds every copy, so at the rename change the holder and it names what is left.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
   worker installing everywhere; `/data/` is network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
@@ -235,6 +260,10 @@ Or just describe what you need, I have full context of this project.
   none); every bar is held at 390 and 1366 wide by `tests/front-page.mjs` 16d. A new bar needs the same markup.
 - **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
   address, never engagement, silent on failure. `stubLiveApi` answers its two lookups; scans wait for it.
+- **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without
+  imposing on privacy concerns"): fixed rules, no server, no model, nothing typed sent, stored or counted (front-page.mjs
+  checks no request or address carries the words). It only sets Find areas' own controls and says what it read and
+  what it did not; never a figure of its own. The postcode box's place list is a native `<datalist>` from the page's rows.
 
 ### Gates and verification
 - **Run preflight before every commit**: `sh scripts/preflight.sh` (== `npm run preflight`). Read the EXIT
@@ -285,7 +314,9 @@ Or just describe what you need, I have full context of this project.
   privacy, pricing, changes, terms, `api/`, `how-it-works/` (+ its `img/`), `about/`, `js/`), `home-deploy` (front page, `/reports/`), `pwa-deploy`,
   `demo-deploy`, `prototype-deploy`, `meta-deploy`, `area-deploy`, `open-data-deploy`, `bay-area-deploy`,
   plus standalone `talks-deploy` and `deeplinks-deploy` (refuses placeholders), and `planes-pages-deploy` (after
-  `planes-deploy`, before `meta-deploy`; refuses unless `build_planes_pages.py --check --strict` passes).
+  `planes-deploy`, before `meta-deploy`; refuses unless `build_planes_pages.py --check --strict` passes), and
+  `planes-layer-deploy` (the full map's planes pictures: after `planes-deploy`, BEFORE the `web-deploy` that ships a
+  map reading them; refuses unless `build_planes_layer.py --check --strict` passes).
 - **`web-deploy-all` order is load-bearing**: fonts, then data, then web, then home, then pwa. Data before the
   page; web before home; fonts before `sw.js`.
 - Pages go to `<name>/index.html` keys (the CloudFront function rewrites extensionless paths).

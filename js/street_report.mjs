@@ -102,15 +102,21 @@ export function sensorSetting(s) {
   const kind = SENSOR_KIND[s.classification] || String(s.classification).toLowerCase();
   return typeof s.kerbDistanceM === 'number' ? `${kind}, ${Number(s.kerbDistanceM.toFixed(1))} m from the kerb` : kind;
 }
+/** "12 months to September 2026": the sensor file's window, the one place its period is worded. */
+export function sensorPeriod(s) {
+  const month = new Date(`${s.to}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return `12 months to ${month}`;
+}
 /** "nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026" */
 export function sensorReadings(s) {
-  const month = new Date(`${s.to}T12:00:00Z`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  return `${pollutants(s)} over the 12 months to ${month}`;
+  return `${pollutants(s)} over the ${sensorPeriod(s)}`;
 }
 /** "suburban industrial" */
 export const monitorSetting = (m) => String(m.type).toLowerCase();
+/** "2024": the monitor file's year. */
+export const monitorPeriod = (m) => String(m.year);
 /** "nitrogen dioxide 14.2 µg/m³ in 2024" */
-export const monitorReadings = (m) => `${pollutants(m)} in ${m.year}`;
+export const monitorReadings = (m) => `${pollutants(m)} in ${monitorPeriod(m)}`;
 /** "Nearest Breathe London sensor: George Street, 1.5 km away (roadside, 0.7 m from the kerb): nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026." */
 export function sensorLine(s) {
   return `Nearest Breathe London sensor: ${s.name}, ${stationDistance(s.km)} away (${sensorSetting(s)}): ${sensorReadings(s)}.`;
@@ -172,6 +178,77 @@ export function airNotes(sensor, monitor) {
   if (monitor) notes.push("Official monitors are DEFRA's reference instruments, and their figures are ratified.");
   notes.push(`Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.`);
   return notes.join(' ');
+}
+
+// ---- Air side by side (Bill, 2026-11-03: "refined B" of claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc) ----
+// The full map sets DEFRA's model for the postcode's own 1 km square beside the nearest sensor and monitor, ONE scale
+// per pollutant with the WHO 2021 guideline drawn through, so a reader sees at a glance whether the air is over the
+// guideline and how the measurements sit against the model. A pure function returning SVG text (every name escaped
+// here), so tests/air-chart.mjs holds its geometry without a browser.
+/** WHO 2021 annual guidelines, µg/m³. The API sends its own (`no2WhoGuidelineUgm3`, `pm25WhoGuidelineUgm3` in
+ *  backend/lambdas/score/app.py) and the chart prefers those; tests/air-chart.mjs holds the two equal. */
+export const AIR_WHO_2021 = { no2: 10, pm25: 5 };
+/** The scale runs to this many times the guideline: 40 for NO2, also the UK legal limit for its annual mean. */
+export const AIR_SCALE_TIMES = 4;
+/** Each pollutant's heading. */
+export const AIR_POLLUTANT_NAMES = { no2: 'Nitrogen dioxide (NO₂)', pm25: 'Fine particles (PM2.5)' };
+const AIR_MARK = {
+  // DEFRA's MODEL is a hollow ring (modelled, never measured); a sensor a filled circle, a monitor a filled square:
+  // shape carries the source as well as colour. Colours checked for colour-blind separation and 3:1 on the panel.
+  // No fill and no halo: the panel is white on a desktop and cream on a phone, so a "panel-coloured" centre would
+  // show as a blob on one of them; the row's line stops short of the mark instead.
+  model: (cx, cy) => `<circle cx="${cx}" cy="${cy}" r="5.5" fill="none" stroke-width="2.5" style="stroke:var(--air-model, #a85416)"/>`,
+  sensor: (cx, cy) => `<circle cx="${cx}" cy="${cy}" r="6" style="fill:var(--air-sensor, #14866a)"/>`,
+  monitor: (cx, cy) => `<rect x="${cx - 5.5}" y="${cy - 5.5}" width="11" height="11" style="fill:var(--air-monitor, #267df2)"/>`,
+};
+/** The key's mark for a source, 14 px. */
+export function airKeyMark(kind) {
+  return `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">${AIR_MARK[kind](7, 7)}</svg>`;
+}
+/**
+ * One pollutant's rows on one scale, as SVG text: `rows` are [{ kind: 'model'|'sensor'|'monitor', label, sub, v }],
+ * `v` null where that source does not measure the pollutant ("not measured here", no mark). The scale is 0 to
+ * AIR_SCALE_TIMES x `who`; a reading beyond it sits at the end, its own figure beside it with "▸". A value label that
+ * would leave the picture moves to the mark's left. Every mark carries data-kind and data-value for the tests.
+ */
+export function airChart(pollutant, rows, who = AIR_WHO_2021[pollutant]) {
+  const max = who * AIR_SCALE_TIMES;
+  const W = 352, L = 176, R = 14, rowH = 30, top = 16;
+  const x0 = L, x1 = W - R;
+  const x = (u) => +(x0 + (Math.min(Math.max(u, 0), max) / max) * (x1 - x0)).toFixed(2);
+  const g = x(who);
+  const axisY = top + rows.length * rowH + 4;
+  const H = axisY + 18;
+  const fmt = (v) => Number(v).toFixed(1);
+  const name = AIR_POLLUTANT_NAMES[pollutant];
+  const body = rows.map((r, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    const label = r.label.length > 26 ? `${r.label.slice(0, 25)}…` : r.label;
+    const head = `<text x="0" y="${cy - 2}" font-size="11.5" font-weight="600" style="fill:var(--air-ink, #141414)">${esc(label)}</text>`
+      + `<text x="0" y="${cy + 11}" font-size="10" style="fill:var(--air-ink-3, #636363)">${esc(r.sub)}</text>`;
+    if (r.v == null || !Number.isFinite(r.v)) {
+      return `<g data-kind="${r.kind}" data-value="">${head}<text x="${x1}" y="${cy + 4}" font-size="11" text-anchor="end" style="fill:var(--air-ink-3, #636363)">not measured here</text></g>`;
+    }
+    const cx = x(r.v);
+    const beyond = r.v > max;
+    const text = `${fmt(r.v)}${beyond ? ' ▸' : ''}`;
+    const left = cx > W - 46;
+    const tip = `${r.label} (${r.sub}): ${fmt(r.v)} µg/m³${beyond ? `, beyond this scale of ${max}` : ''}, ${(r.v / who).toFixed(1)}× the WHO guideline of ${who}`;
+    return `<g data-kind="${r.kind}" data-value="${fmt(r.v)}"><title>${esc(tip)}</title>${head}`
+      + (cx - 9 > x0 ? `<line x1="${x0}" x2="${(cx - 9).toFixed(2)}" y1="${cy}" y2="${cy}" stroke-width="2" style="stroke:var(--air-rule, #c8c7c4)"/>` : '')
+      + `<g data-mark="${r.kind}" data-cx="${cx}">${AIR_MARK[r.kind](cx, cy)}</g>`
+      + `<text x="${left ? cx - 10 : cx + 10}" y="${cy + 4}" font-size="11" font-weight="600" text-anchor="${left ? 'end' : 'start'}" style="fill:var(--air-ink, #141414);font-family:var(--font-mono, monospace)">${esc(text)}</text></g>`;
+  }).join('');
+  const ticks = [0, who, max / 2, max];
+  const aria = `${name}, µg/m³: ${rows.map((r) => `${r.label} ${r.v == null ? 'not measured here' : fmt(r.v)}`).join('; ')}. WHO guideline ${who}.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(aria)}" data-air-chart="${pollutant}" data-x0="${x0}" data-x1="${x1}" data-max="${max}">`
+    + `<rect x="${g}" y="${top - 4}" width="${(x1 - g).toFixed(2)}" height="${rows.length * rowH + 8}" style="fill:var(--air-band, rgba(20,20,20,0.05))"/>`
+    + `<text x="${((g + x1) / 2).toFixed(2)}" y="${top - 6}" font-size="9" text-anchor="middle" style="fill:var(--air-ink-3, #636363)">over the WHO guideline</text>`
+    + `<line data-who="${g}" x1="${g}" x2="${g}" y1="${top - 4}" y2="${axisY}" stroke-width="1.5" stroke-dasharray="3 2" style="stroke:var(--air-ink, #141414)"/>`
+    + body
+    + `<line data-axis="1" x1="${x0}" x2="${x1}" y1="${axisY}" y2="${axisY}" stroke-width="1" style="stroke:var(--air-ink-3, #636363)"/>`
+    + ticks.map((t) => `<text x="${x(t)}" y="${axisY + 13}" font-size="9.5" text-anchor="${t === max ? 'end' : 'middle'}" style="fill:var(--air-ink-3, #636363);font-family:var(--font-mono, monospace)">${t === who ? `WHO ${t}` : t}</text>`).join('')
+    + '</svg>';
 }
 const MAP = { w: 1000, h: 345, padKm: 5, minHeightKm: 11 };
 

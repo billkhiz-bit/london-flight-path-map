@@ -353,6 +353,9 @@ ADDRESS_SHARE = r'\d+(?:\.\d+)?\s?%\s+of\s+(?:the\s+|its\s+|their\s+)?(?:address
 # held by the builder's --check, a blocking preflight stage: every page byte-equal to a fresh build, so a figure
 # typed into one goes red there. Should their wording ever trip a pattern, the allowance names that folder and
 # this reason, never a looser pattern.
+# The THIRD (Bill, 2026-11-02): the full map's Planes overhead layer, PICTURES drawn by scripts/build_planes_layer.py
+# from the same files (each postcode its own step), held by its --check. index.html carries no figure for it: its
+# legend names steps ("100 TO 199"), which these patterns pass because no "planes a day" follows the number.
 FREQUENCY = [
     (r'\b\d+(?:\.\d+)?\s+(?:planes|flights|aircraft|movements|overflights|arrivals|departures)'
      r'\s+(?:a|per|an|each)\s+(?:day|hour|week|month|year)\b'),
@@ -441,6 +444,15 @@ class WordingTests(unittest.TestCase):
     def test_cubitt33_only_on_privacy_and_terms(self):
         found = hits(r'Cubitt\s?33', [p for p in everything() if p not in CUBITT_PAGES], re.I)
         self.assertEqual(found, {}, 'Cubitt33 named outside privacy and terms:\n' + fmt(found))
+
+    def test_a_defra_map_is_never_called_measured(self):
+        # DEFRA's noise and air maps are MODELS; only an instrument's reading is measured (the API's provenance,
+        # 2026-10-23). The front page's answer said "DEFRA, measured" for aircraft noise until 2026-11-03, in a
+        # template string no rule read for that. A DEFRA MONITOR's reading is measured, and is worded "monitor".
+        found = hits(r'\bDEFRA\b[\s,·]{0,6}measured\b|\bmeasured by DEFRA\b|\bDEFRA(?:\'s)? measurements?\b',
+                     everything(), re.I)
+        self.assertEqual(found, {}, "a DEFRA map called measured (say modelled; only a monitor's reading is measured):\n"
+                         + fmt(found))
 
     def test_the_old_name_is_gone(self):
         found = hits(OLD_BRAND, everything(), re.I)

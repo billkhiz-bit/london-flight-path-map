@@ -558,12 +558,15 @@ const lateCount = await boroCount();
 ok(lateCount === 33 && (await page.locator('#chips button[data-city="london"]').getAttribute('aria-pressed')) === 'true', 'a late outline file does not overwrite the city chosen after it', `${lateCount} council areas drawn`);
 await page.unroute('**/data/manchester-boroughs.json');
 
-// 8. A measured postcode: four rows, the runway line, the council-area line, the pin, the hand-off link.
+// 8. A postcode on DEFRA's map: four rows, the runway line, the council-area line, the pin, the hand-off link.
+// DEFRA's aircraft figure is MODELLED (a strategic noise map), never "measured": this check asserted "measured" until
+// 2026-11-03, holding the wrong word in place (tests/test_public_wording.py now refuses "DEFRA, measured" too).
 await page.fill('#pc', 'TW9 3PZ');
 await page.press('#pc', 'Enter');
 await page.waitForSelector('#answer.is-open', { timeout: 10000 });
 const vals = await page.locator('#ans-rows .val').allTextContents();
-ok(vals.length === 4 && vals[0].startsWith('56 dB') && vals[0].includes('measured') && vals[1].startsWith('53.1 dB'), 'measured postcode renders four rows with the DEFRA readings', vals.join(' | '));
+ok(vals.length === 4 && vals[0].startsWith('56 dB') && vals[0].includes('DEFRA, modelled') && !/measured/i.test(vals[0]) && vals[1].startsWith('53.1 dB'),
+  "a postcode on DEFRA's map renders four rows, the aircraft figure said to be DEFRA's model", vals.join(' | '));
 const routes = await page.locator('#ans-routes').textContent();
 ok((await page.locator('#status').textContent()) === 'Showing the figures for TW9 3PZ.', 'a found postcode is announced in the live region, not left silent (audit M-14)', await page.locator('#status').textContent());
 // ONE decimal, as the full map and the street report print it. TW9 3PZ is ~10.2 km out, the
@@ -1572,8 +1575,10 @@ const aboutSent = await page.evaluate(() => {
   for (const a of document.querySelectorAll('main a[href]')) a.click();
   return window.__gc.slice();
 });
-ok(JSON.stringify(aboutSent) === JSON.stringify(['about-film', 'about-prototype', 'email-about-support']),
-  '/about/: the film and the prototype are counted, the support email keeps its name, and no other link counts', JSON.stringify(aboutSent));
+// The company's LinkedIn page (2026-11-03) counts as about-linkedin; Bill's own profile beside it counts nothing.
+ok(JSON.stringify(aboutSent) === JSON.stringify(['about-film', 'about-prototype', 'email-about-support', 'about-linkedin']),
+  '/about/: the film, the prototype and the company LinkedIn page are counted, the support email keeps its name, and no other link counts',
+  JSON.stringify(aboutSent));
 
 // 16g. BOOK A DEMO (Bill, 2026-10-29: in the bar of /pricing and /api/ only, FILLED and LAST; a line on each page,
 // and one beside the live demo's response). Every copy of the link is count.mjs's DEMO_BOOKING_URL
@@ -1608,8 +1613,8 @@ const BOOK_WANT = {
   '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
   '/api/': ['book-demo-api-bar', 'book-demo-api-page'],
   '/score-demo/index.html': ['book-demo-score-demo-page'],
-  // The front page (Bill, 2026-10-30): one line under "Who it is for", named by its data-book-place.
-  '/': ['book-demo-home-who'],
+  // The front page (Bill, 2026-11-02): the business card's button, then the closing band, each named by its data-book-place.
+  '/': ['book-demo-home-card', 'book-demo-home-band'],
 };
 for (const [path, want] of Object.entries(BOOK_WANT)) {
   const inBar = want.some((w) => w.endsWith('-bar'));
@@ -2363,6 +2368,70 @@ const makeReport = async (pc) => {
   await dp.close();
 }
 
+// DESCRIBE WHAT YOU WANT, AND THE PLACE LIST (2026-11-02, Bill: a search "like other websites", "without imposing on
+// privacy concerns"). The words are read in the browser into Find areas' own controls (js/find-words.mjs; its rules
+// are tests/find-words.mjs): here, the DOM. The controls end as the words say, through their own path (the list and
+// the map follow), the reading is shown back with what was not understood, and NOTHING typed leaves the page: no
+// request after typing carries any of the words, nor the address bar. The postcode box offers the places it answers
+// by name, from the rows the page holds.
+{
+  const wp = await context.newPage();
+  await wp.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+  wp.on('pageerror', (e) => errors.push(String(e)));
+  await wp.goto(`${BASE}#find`, { waitUntil: 'domcontentloaded' });
+  await wp.waitForFunction(() => document.getElementById('tab-find')?.getAttribute('aria-selected') === 'true', null, { timeout: 15000 }).catch(() => {});
+  await wp.waitForFunction(() => document.querySelectorAll('#fit-where option').length > 1, null, { timeout: 15000 }).catch(() => {});
+  // "zebrafinch" is a marker no file name holds: data files the map fetches may carry "station" or "quiet" in their
+  // names, so the leak check looks for the marker and the price, never a word a real file could contain.
+  const words = 'Quiet, near a station, under £450k in Greater Manchester, with good schools and a big garden zebrafinch';
+  const asked = [];
+  wp.on('request', (req) => asked.push(req.url()));
+  await wp.locator('#fit-words').fill(words);
+  await wp.locator('#fit-words-form button[type="submit"]').click();
+  await wp.waitForFunction(() => !document.getElementById('fit-read').hidden, null, { timeout: 5000 }).catch(() => {});
+  await wp.waitForTimeout(800); // let the region's change move the map and fetch what it fetches
+  const set = await wp.evaluate(() => ({
+    where: document.getElementById('fit-where').value,
+    budget: document.getElementById('fit-budget').value,
+    on: [...document.querySelectorAll('#fit-avoid input, #fit-want input')].filter((i) => i.checked).map((i) => i.id),
+    read: document.getElementById('fit-read').textContent,
+    live: document.getElementById('fit-read').getAttribute('aria-live'),
+    listed: document.querySelectorAll('#fit-list button[data-borough]').length,
+    href: location.href,
+  }));
+  ok(set.where === 'manchester' && set.budget === '400000'
+    && JSON.stringify(set.on) === JSON.stringify(['fit-planes', 'fit-roads', 'fit-rail', 'fit-schools'])
+    && set.read === 'Read as: Greater Manchester · under £400,000 (the nearest step under £450,000) · avoid aircraft noise, busy roads · want a station, good schools. Not understood: big, garden, zebrafinch.'
+    && set.live === 'polite',
+  'describe what you want: the words set the region, the nearest price step, the chips, and say what was read and what was not',
+  JSON.stringify(set));
+  const typed = ['zebrafinch', '450k', '£450'];
+  const plain = (u) => { try { return decodeURIComponent(u).toLowerCase(); } catch { return u.toLowerCase(); } };
+  const leaked = [...asked, set.href].filter((u) => typed.some((t) => plain(u).includes(t)));
+  ok(leaked.length === 0, 'describe what you want: nothing typed leaves the page (no request, no address carries the words)', JSON.stringify(leaked.slice(0, 5)));
+  // Words that set nothing change nothing and say so.
+  const before = await wp.evaluate(() => [...document.querySelectorAll('#fit-avoid input, #fit-want input')].filter((i) => i.checked).map((i) => i.id).join());
+  await wp.locator('#fit-words').fill('a big garden');
+  await wp.locator('#fit-words').press('Enter');
+  const after = await wp.evaluate(() => ({ on: [...document.querySelectorAll('#fit-avoid input, #fit-want input')].filter((i) => i.checked).map((i) => i.id).join(), read: document.getElementById('fit-read').textContent }));
+  ok(after.on === before && /^Nothing to set from that\. Not understood: big, garden\./.test(after.read),
+    'describe what you want: words that set nothing change nothing and say so (Enter submits too)', JSON.stringify(after));
+  // A price under the lowest step sets no price, and says why instead of "not understood".
+  const budgetBefore = await wp.evaluate(() => document.getElementById('fit-budget').value);
+  await wp.locator('#fit-words').fill('under £150k');
+  await wp.locator('#fit-words').press('Enter');
+  const low = await wp.evaluate(() => ({ budget: document.getElementById('fit-budget').value, read: document.getElementById('fit-read').textContent }));
+  ok(low.budget === budgetBefore && /^No price set: the lowest step is £200,000\. Nothing to set from that\./.test(low.read) && !/Not understood/.test(low.read),
+    'describe what you want: a price under the lowest step is said back, never stretched or dropped', JSON.stringify(low));
+  // The place list: the box offers council areas and regions by name, from the page's own rows.
+  const places = await wp.evaluate(() => ({ list: document.getElementById('pc')?.getAttribute('list'), names: [...document.querySelectorAll('#pc-places option')].map((o) => o.value) }));
+  ok(places.list === 'pc-places' && ['Hounslow', 'Camden', 'Leeds', 'Greater Manchester', 'London', 'Manhattan'].every((n) => places.names.includes(n))
+    && new Set(places.names).size === places.names.length,
+  'the postcode box offers the places it answers by name (council areas, regions, cities), each once',
+  JSON.stringify({ list: places.list, count: places.names.length }));
+  await wp.close();
+}
+
 // 1z. ANSWER FIRST (Bill, 2026-10-23, option B of the mock-ups). A plain visit opens on one real answer, labelled
 // as an example: the address stays /, the live region says nothing, no engagement is counted, the box is empty
 // and the coverage line stays. The visitor's own search replaces it; a link that asks for a place or for Find
@@ -2419,8 +2488,16 @@ const makeReport = async (pc) => {
   const planesBlock = () => ep.evaluate(() => {
     const b = document.getElementById('ans-planes');
     return { hidden: b.hidden, head: b.querySelector('h3')?.textContent, rows: [...b.querySelectorAll('.row')].map((r) => r.textContent),
-      link: b.querySelector('.planes-how a')?.getAttribute('href'), barsHidden: [...b.querySelectorAll('.bar')].every((x) => x.getAttribute('aria-hidden') === 'true') };
+      link: b.querySelector('.planes-how a')?.getAttribute('href'), barsHidden: [...b.querySelectorAll('.bar')].every((x) => x.getAttribute('aria-hidden') === 'true'),
+      more: [...b.querySelectorAll('.planes-more a')].map((a) => [a.textContent, a.getAttribute('href'), Math.round(a.getBoundingClientRect().height)]) };
   });
+  // Where to go next (2026-11-02, Bill: "make the links clear and easy to navigate"): TW9's own page, and while
+  // Heathrow's consultation is open, its pack, both from the tracked index the planes builder writes (served as is).
+  // Read from that index, so the day after it closes this expects the page link alone instead of going red.
+  const planesIndex = JSON.parse(await readFile(join(ROOT, 'data', 'planes-districts-by-council.json'), 'utf8'));
+  const packOpen = Boolean(planesIndex.consultation) && new Date().toISOString().slice(0, 10) <= planesIndex.consultation.until;
+  const wantMore = [['Every postcode in TW9, sector by sector', '/planes-overhead/tw9/'],
+    ...(packOpen ? [[`For Heathrow's consultation, open until ${Number(planesIndex.consultation.until.slice(8))} December: the planes over each council`, planesIndex.consultation.hub]] : [])];
 
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
@@ -2434,6 +2511,8 @@ const makeReport = async (pc) => {
     && JSON.stringify(kew.rows) === JSON.stringify(['Flying west56% of days310 a day', 'Both ways15% of days168 a day', 'Flying east29% of days4 a day'])
     && kew.link === '/how-it-works/#planes-overhead' && kew.barsHidden,
     'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, bars hidden from screen readers', JSON.stringify(kew));
+  ok(JSON.stringify(kew.more.map(([t, h]) => [t, h])) === JSON.stringify(wantMore) && kew.more.every(([, , h]) => h >= 24),
+    'planes overhead links on: TW9\'s own page and, while it is open, Heathrow\'s consultation pack, each a 24 px+ target', JSON.stringify({ more: kew.more, wantMore }));
   // ...and no figure is cut off on a phone, the longest kinds included: a range on a cone's edge and "under 1" (the
   // preview of 26 Oct showed "1 to 316 a" and "under 1 a d" in the 84 px column phones give the rows above).
   await ep.setViewportSize({ width: 390, height: 844 });

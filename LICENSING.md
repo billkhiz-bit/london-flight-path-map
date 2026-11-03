@@ -260,6 +260,9 @@ often planes fly"). Measured privately; nothing derived from these is published:
   from the same files, each page a **Produced Work** of that database carrying the same credits and naming the ODbL.
   The pages are gitignored (this repo is public, and they publish no figure the front page does not), so the GitHub
   repo never holds them; the ODbL download remains the derived-database offer.
+  **The full map's Planes overhead layer (built 2026-11-02, not live):** `scripts/build_planes_layer.py` draws pictures
+  from the same files, a **Produced Work** too; its `index.json` carries the same credits and the ODbL name, and the
+  map's legend reads them from there ("About this data"). Gitignored for the same reason.
 - **OS Terrain 50** (Ordnance Survey, ASCII grid, release 2026-06-02), **OGL v3.0**, free from the OS
   Downloads API with no key; zip in `data/terrain50/download/` (gitignored). `scripts/build_ground_grid.py`
   makes the 100 m ground grid the overflight counter stands its cones on (2026-10-26: heights above the

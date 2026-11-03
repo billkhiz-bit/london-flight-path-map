@@ -39,10 +39,35 @@ HOUNSLOW = 'E09000018'
 
 @pytest.fixture
 def index(monkeypatch):
-    """Point the builder at a made-up index instead of the tracked one."""
-    def use(councils):
+    """Point the builder at a made-up index instead of the tracked one (with no consultation, unless given)."""
+    def use(councils, consultation=None):
+        whole = {'councils': councils} | ({'consultation': consultation} if consultation else {})
+        monkeypatch.setattr(pages, '_planes_index', lambda: whole)
         monkeypatch.setattr(pages, '_planes_by_council', lambda: councils)
     return use
+
+
+PACK = {'airport': 'LHR', 'until': '2026-12-22', 'hub': '/planes-overhead/heathrow-consultation/',
+        'councils': {HOUNSLOW: '/planes-overhead/heathrow-consultation/hounslow/'}}
+
+
+def test_a_council_in_the_pack_links_its_own_pack_page_while_the_consultation_is_open(index):
+    # Bill, 2026-11-02: "make the links clear and easy to navigate". Until then the pack was reached only from the
+    # planes index; the area page now says the consultation is open and goes straight to the council's own page.
+    index({HOUNSLOW: ['TW3']}, PACK)
+    line = pages.consultation_line('london', 'Hounslow', today='2026-11-02')
+    assert re.findall(r'href="([^"]+)"', line) == ['/planes-overhead/heathrow-consultation/hounslow/']
+    assert 'open until 22 December 2026' in line
+    assert pages.consultation_line('london', 'Hounslow', today='2026-12-22')  # its last day still offers it
+    assert pages.consultation_line('london', 'Hounslow', today='2026-12-23') == ''  # closed: never offered
+    assert pages.consultation_line('london', 'Ealing', today='2026-11-02') == ''  # no page in the pack, no link
+    for pattern in wording.FREQUENCY:
+        assert not re.search(pattern, line, re.IGNORECASE), pattern
+
+
+def test_no_consultation_in_the_index_means_no_line(index):
+    index({HOUNSLOW: ['TW3']})
+    assert pages.consultation_line('london', 'Hounslow', today='2026-11-02') == ''
 
 
 def test_the_block_links_each_district_in_the_index_order(index):

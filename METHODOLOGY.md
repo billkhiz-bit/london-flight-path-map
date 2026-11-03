@@ -1183,8 +1183,9 @@ with how hard each airport was hit, and sound energy sums logarithmically:
 | Heathrow | ~448,700 | substantially reduced | see the measurement below |
 
 **Measured at Heathrow (2026-09-26), replacing "a few dB".** The CAA publishes Heathrow's Lden
-contours annually. The current edition is ERCD Report 2601 (August 2026, Table 12): 2025, when movements
-were 1.1% above 2024's and 2024's were 0.5% below 2019's, so it is a normal year to compare against
+contours annually. The current edition is ERCD Report 2601 (August 2026, Table 12): 2025, when annual 24-hour
+movements (1,315.0 a day) were 1% above 2024's and 2% below 2019's (1,347.1), the report's own figures, so it is
+a near-normal year to compare against
 (rolled 2026-11-01 from ERCD 2501's 2024 figures, which put the 55 dB area at 148.4 km²). `scripts/measure_covid_understatement.py` measures DEFRA's
 2021 areas from its Heathrow GeoTIFF (every contour lies wholly inside the raster, so none is clipped)
 and holds them in `data/covid-understatement.json`; `--verify-caa` re-parses the CAA table:
@@ -1198,8 +1199,8 @@ and holds them in `data/covid-understatement.json`; `--verify-caa` re-parses the
 | ≥ 75 dB | 1.5 km² | 2.7 km² | 1.8x |
 
 So the map this product rests on shows Heathrow's noise footprint at about **half** its
-normal-year size. The two are different models (the CAA's ANCON and DEFRA's strategic mapping), with
-different inputs, so the ratio is an **order of magnitude for this caveat, never a correction
+near-normal-year size. The two model different years with different traffic and population inputs (whether they
+also differ in model is not established: Heathrow's Round 4 map may be the CAA's own), so the ratio is an **order of magnitude for this caveat, never a correction
 factor** - the rule below stands. It also reaches the corridor penalty: `CORRIDOR_WEIGHT` (§4.5) is
 fitted against this 2021 map and inherits its understatement, so it is **provisional until a
 normal-year yardstick exists**. Before v5.3 the geometry read 1.74 points louder than DEFRA; some of

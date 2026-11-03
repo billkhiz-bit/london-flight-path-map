@@ -22,12 +22,12 @@
     <!-- OG Meta Tags for social sharing -->
     <meta
       name="description"
-      content="Sky Score, postcode-level noise, liveability and affordability data for UK and NYC property. Independent of estate agents and listings sites. Free, open methodology."
+      content="Sky Score: noise, liveability and affordability data for property in UK city regions, New York and the San Francisco Bay Area. Independent of estate agents and listings sites. Free, open methodology."
     />
     <meta property="og:title" content="Sky Score, independent property quality data" />
     <meta
       property="og:description"
-      content="The noise + liveability data UK listings sites have a structural reason not to show. Free postcode-level scoring for UK and NYC. Open methodology, reproducible."
+      content="The noise + liveability data UK listings sites have a structural reason not to show. Free postcode-level scores for UK city regions and New York, and facts for San Francisco Bay Area cities. Open methodology, reproducible."
     />
     <!-- The full map is served at /map/ since 2026-10-06; / is the front page (home/index.html). -->
     <link rel="canonical" href="https://skyscore.co.uk/map/" />
@@ -39,7 +39,7 @@
         "@type": "WebApplication",
         "name": "Sky Score",
         "url": "https://skyscore.co.uk/",
-        "description": "Postcode-level noise, liveability and affordability data for UK and NYC property. Independent of estate agents and listings sites.",
+        "description": "Noise, liveability and affordability data for property in UK city regions, New York and the San Francisco Bay Area. Independent of estate agents and listings sites.",
         "applicationCategory": "RealEstateApplication",
         "operatingSystem": "Any",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
@@ -56,7 +56,7 @@
     <meta name="twitter:title" content="Sky Score, UK property quality data API" />
     <meta
       name="twitter:description"
-      content="Postcode-level noise, liveability, affordability scoring for UK and NYC. Free consumer site; B2B API for integrators."
+      content="Noise, liveability and affordability scores for UK city regions and New York, and facts for San Francisco Bay Area cities. Free consumer site; B2B API for integrators."
     />
     <meta name="twitter:image" content="https://skyscore.co.uk/preview.png" />
 
@@ -789,6 +789,50 @@
         height: 10px;
         border: 1px solid rgba(0, 0, 0, 0.2);
       }
+      /* Planes overhead (2026-11-02): the kind-of-day switch. Colours are INHERITED (border and text in
+         currentColor, the pressed one marked by weight and an orange underline), so it reads on the light desktop
+         legend and the dark phone one without a second rule to remember. */
+      .planes-kind {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border: 1px solid currentColor;
+        margin: 2px 0 6px;
+      }
+      .planes-kind button {
+        font: inherit;
+        font-size: 9px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: inherit;
+        background: transparent;
+        border: 0;
+        min-height: 32px;
+        padding: 4px 2px;
+        cursor: pointer;
+      }
+      .planes-kind button + button {
+        border-left: 1px solid currentColor;
+      }
+      .planes-kind button[aria-pressed='true'] {
+        font-weight: 700;
+        box-shadow: inset 0 -3px 0 var(--orange);
+      }
+      .planes-kind button:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: -2px;
+      }
+      .legend-swatch.planes-edge {
+        background: repeating-linear-gradient(135deg, #662809 0 3px, #9a4316 3px 6px);
+      }
+      .legend-swatch.planes-clear {
+        background: transparent;
+        border-color: currentColor;
+      }
+      #legend-planes-group a {
+        color: inherit;
+      }
+      /* No [hidden] rules here: the page's own `[hidden] { display: none !important }` (top of this sheet) beats
+         .planes-kind's grid. A per-element rule once sat here and a mutation proved it could never matter. */
 
       .map-controls {
         position: absolute;
@@ -925,11 +969,16 @@
         background: #7c3aed;
         border-color: #7c3aed;
       }
+      .layer-toggle[data-layer='planes'].active .indicator {
+        background: #9a4316; /* the 100-199 step of the planes overhead layer */
+        border-color: #9a4316;
+      }
       /* The transport toggle's indicator colour lived here until 2026-08-23,
-         eleven days after the toggle itself was removed. Six toggles are
-         declared in the markup - paths, defra-aircraft, defra-road, flood,
+         eleven days after the toggle itself was removed. Six toggles were
+         declared in the markup then - paths, defra-aircraft, defra-road, flood,
          air-quality, labels - and this rule was the seventh, styling a
-         selector that matches nothing.
+         selector that matches nothing. (A seventh TOGGLE, planes, came on
+         2026-11-02 with its own rule above; tests/e2e/app.spec.js names the set.)
 
          FOURTH stale reference from that one removal, after the metric card's
          'TOGGLE "TRANSPORT" ON MAP', the `.layer-transport` selector entry and
@@ -2147,6 +2196,63 @@
       .station-dist {
         color: var(--mid);
         font-size: 10px;
+      }
+      /* Air nearby, side by side (Bill, 2026-11-03: refined B). The key names each source once; the charts are
+         js/street_report.mjs airChart(), coloured through these tokens (checked for colour-blind separation and
+         3:1 on the panel; shape carries the source too: ring = DEFRA's model, circle = sensor, square = monitor). */
+      #postcode-air-section {
+        --air-model: var(--orange-ink);
+        --air-sensor: #14866a;
+        --air-monitor: var(--blue);
+        --air-ink: var(--dark);
+        --air-ink-3: var(--mid);
+        --air-rule: var(--light);
+        --air-band: rgba(20, 20, 20, 0.05);
+      }
+      .air-key {
+        list-style: none;
+        margin: 4px 0 8px;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+        /* The section inherits the mono face; running sentences read heavy in it, so the key is in the sans. */
+        font-family: var(--font-sans);
+      }
+      .air-key li {
+        display: grid;
+        grid-template-columns: 14px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        font-size: 12px;
+      }
+      .air-key li svg {
+        margin-top: 2px;
+      }
+      .air-key-title {
+        font-weight: 600;
+      }
+      .air-key-detail {
+        display: block;
+        color: #555;
+        font-size: 11.5px;
+        line-height: 1.45;
+      }
+      .air-chart {
+        margin: 6px 0 2px;
+      }
+      .air-chart figcaption {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        margin-bottom: 2px;
+      }
+      .air-chart svg {
+        display: block;
+        max-width: 100%;
+      }
+      .air-chart svg text {
+        font-family: var(--font-sans);
       }
       .station-lines {
         display: flex;
@@ -4153,6 +4259,16 @@
           <button
             type="button"
             class="layer-toggle"
+            data-layer="planes"
+            aria-pressed="false"
+            title="How many planes pass overhead a day at each postcode, from the busiest airport over it, by the kind of day"
+          >
+            <div class="indicator" aria-hidden="true"></div>
+            <span id="label-planes">Planes overhead</span>
+          </button>
+          <button
+            type="button"
+            class="layer-toggle"
             data-layer="defra-road"
             aria-pressed="false"
             title="Road traffic noise contours from official DEFRA strategic noise mapping"
@@ -4292,9 +4408,75 @@
               DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR,
               LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is
               2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4
-              result as a highly anomalous situation. Measured, they understate it by about half: DEFRA's 2021 Heathrow 55 dB contour covers 75.6 km&sup2;, and the CAA's own model of 2025, a normal year, covers 142.4 km&sup2;. The two are different models, so read that as an order of magnitude, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date.
+              result as a highly anomalous situation. Measured, they understate it by about half: DEFRA's 2021 Heathrow 55 dB contour covers 75.6 km&sup2;, and the CAA's own model of 2025, when Heathrow's flights were 2% below 2019's, covers 142.4 km&sup2;. The two are different models, so read that as an order of magnitude, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date.
               Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search
                 gives a 0-10 quiet score for that location, not a decibel reading. All levels are outdoor, at the building's facade: indoors, with the windows shut, it is quieter, though gardens, balconies and open windows are not.
+              </div>
+            </details>
+          </div>
+          <!-- PLANES OVERHEAD (2026-11-02, Bill's pick B2 of the mock-ups at claude.ai/artifact/EUGSYeSRLKHymJXLAt8kYW):
+               each postcode's own count in four steps, nothing grouped, districts outlined. The pictures come from
+               scripts/build_planes_layer.py (data/planes-layer/), drawn from the same per-postcode files as the front
+               page's answer; the step colours below are held equal to its index.json by tests/planes-layer.mjs.
+               This legend states steps, never a place's figure. -->
+          <div id="legend-planes-group" style="display: none">
+            <div
+              class="legend-group-title"
+              style="margin: 8px 0 4px; font-size: 10px; letter-spacing: 1px; font-weight: 600"
+              id="legend-planes-title"
+            >
+              PLANES OVERHEAD, A DAY
+            </div>
+            <!-- The busiest airport, never a total (review, 2026-11-02): each postcode is drawn in the step of the
+                 airport sending the most planes over it, because each airport's kinds of day are its own and so cannot
+                 be added. The switch, the steps and "About this data" start HIDDEN and paintPlanesLayer() shows them
+                 once index.json says this city has a picture: before that they would name steps nothing is drawn in. -->
+            <p class="legend-note" id="legend-planes-rule">From the busiest airport over each postcode</p>
+            <div class="planes-kind" id="legend-planes-kind" role="group" aria-label="Kind of day" hidden>
+              <button type="button" data-planes-kind="westerly" aria-pressed="true" aria-label="Flying west">West</button>
+              <button type="button" data-planes-kind="mixed" aria-pressed="false" aria-label="Both ways">Both</button>
+              <button type="button" data-planes-kind="easterly" aria-pressed="false" aria-label="Flying east">East</button>
+            </div>
+            <p class="legend-note" id="legend-planes-none" hidden>Not counted for this city.</p>
+            <div id="legend-planes-steps" hidden>
+              <div class="legend-row" data-step="4">
+                <div class="legend-swatch" style="background: #662809"></div>
+                <span>200 OR MORE</span>
+              </div>
+              <div class="legend-row" data-step="3">
+                <div class="legend-swatch" style="background: #9a4316"></div>
+                <span>100 TO 199</span>
+              </div>
+              <div class="legend-row" data-step="2">
+                <div class="legend-swatch" style="background: #c2622a"></div>
+                <span>50 TO 99</span>
+              </div>
+              <div class="legend-row" data-step="1">
+                <div class="legend-swatch" style="background: #dc8a4a"></div>
+                <span>10 TO 49</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-swatch planes-edge"></div>
+                <span>ON AN EDGE: A FEW METRES DECIDE</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-swatch planes-clear"></div>
+                <span>CLEAR: UNDER 10 FROM EVERY AIRPORT, OR NOT MEASURED</span>
+              </div>
+            </div>
+            <details class="legend-disclosure" id="legend-planes-disclosure" hidden>
+              <summary>About this data</summary>
+              <div class="legend-note" style="font-size: 8px; margin: 4px 0 0; line-height: 1.4">
+                <strong>What this is:</strong> how many planes pass overhead at each postcode on each kind of day (the
+                wind decides which way an airport flies), from the busiest airport over it, counted from community
+                flight tracking and checked against the CAA's monthly totals,
+                <span id="legend-planes-period">over the months counted</span>. Where two airports' planes cross one
+                postcode it shows the busier one's count: the two are never added, because each airport's kinds of day
+                are its own. <span id="legend-planes-definition"></span> Only the airports whose counts passed that check are
+                counted; helicopters and small airfields are not. Each postcode keeps its own figure: nothing is
+                averaged over an area. District lines are drawn faintly; every district's postcodes are on its
+                <a href="/planes-overhead/">planes overhead page</a>.
+                <span id="legend-planes-credits"></span>
               </div>
             </details>
           </div>
@@ -4451,11 +4633,15 @@
             App Store
           </a>
           <span class="sep">·</span>
+          <a href="https://www.linkedin.com/company/sky-score/" target="_blank" rel="noopener" title="Sky Score on LinkedIn">LinkedIn</a>
+          <span class="sep">·</span>
           <a href="https://github.com/billkhiz-bit/london-flight-path-map" target="_blank" rel="noopener">GitHub</a>
           <span class="sep">·</span>
           <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
           <span class="sep">·</span>
           <a href="/area/">Areas</a>
+          <span class="sep">·</span>
+          <a href="/planes-overhead/">Planes overhead</a>
           <span class="sep">·</span>
           <a href="/bay-area/" data-event="bayarea-footer-click" title="Flight paths over 50 San Francisco Bay Area cities">Bay Area</a>
           <span class="sep">·</span>
@@ -4709,11 +4895,15 @@
             App Store
           </a>
           <span class="sep">·</span>
+          <a href="https://www.linkedin.com/company/sky-score/" target="_blank" rel="noopener" title="Sky Score on LinkedIn">LinkedIn</a>
+          <span class="sep">·</span>
           <a href="https://github.com/billkhiz-bit/london-flight-path-map" target="_blank" rel="noopener">GitHub</a>
           <span class="sep">·</span>
           <a href="mailto:support@skyscore.co.uk" data-event="contact-footer-click">Contact</a>
           <span class="sep">·</span>
           <a href="/area/">Areas</a>
+          <span class="sep">·</span>
+          <a href="/planes-overhead/">Planes overhead</a>
           <span class="sep">·</span>
           <a href="/bay-area/" data-event="bayarea-footer-click" title="Flight paths over 50 San Francisco Bay Area cities">Bay Area</a>
           </details>
@@ -6980,7 +7170,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4 result as a highly anomalous situation. Measured, they understate it by about half: DEFRA's 2021 Heathrow 55 dB contour covers 75.6 km&sup2;, and the CAA's own model of 2025, a normal year, covers 142.4 km&sup2;. The two are different models, so read that as an order of magnitude, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading. All levels are outdoor, at the building's facade: indoors, with the windows shut, it is quieter, though gardens, balconies and open windows are not.",
+            "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and DEFRA describes the Round 4 result as a highly anomalous situation. Measured, they understate it by about half: DEFRA's 2021 Heathrow 55 dB contour covers 75.6 km&sup2;, and the CAA's own model of 2025, when Heathrow's flights were 2% below 2019's, covers 142.4 km&sup2;. The two are different models, so read that as an order of magnitude, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading. All levels are outdoor, at the building's facade: indoors, with the windows shut, it is quieter, though gardens, balconies and open windows are not.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7159,7 +7349,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Birmingham Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the normal-year area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BHX is 0.449 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Birmingham Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BHX is 0.449 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7210,7 +7400,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Leeds Bradford Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the normal-year area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LBA is 0.275 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Leeds Bradford Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LBA is 0.275 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7312,7 +7502,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Liverpool John Lennon Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the normal-year area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LPL is 0.312 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Liverpool John Lennon Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LPL is 0.312 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7363,7 +7553,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Newcastle Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the normal-year area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: NCL is 0.346 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Newcastle Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: NCL is 0.346 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7426,7 +7616,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around East Midlands Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the normal-year area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>, and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports measured, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around East Midlands Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>, and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports measured, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7536,7 +7726,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Bristol Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the normal-year area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BRS is 0.365 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Bristol Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BRS is 0.365 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7601,7 +7791,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Manchester Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the normal-year area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: MAN is 0.589 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Manchester Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: MAN is 0.589 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -9337,6 +9527,7 @@
       let layers = {
         paths: true,
         'defra-aircraft': true,
+        planes: false,
         'defra-road': false,
         flood: false,
         'air-quality': false,
@@ -10852,8 +11043,47 @@
         }
         return _airNearbyLoad;
       }
-      async function renderAirNearby(lat, lon, stillCurrent) {
-        const loaded = await loadAirNearby();
+      // DEFRA's MODEL FOR THE POSTCODE'S OWN 1 KM SQUARE (Bill, 2026-11-03, refined B): from our open
+      // /v1/environment, which the front page already calls, read with the provenance the API sends (method,
+      // resolution, period), so the panel says what the API says and never calls the model measured. A council
+      // average smooths away the street-level difference a sensor shows, so the 1 km square is the yardstick.
+      // Null on any failure, a non-modelled answer or no figure: the council's average then stands in, said so.
+      function fetchAirSquare(lat, lon) {
+        return fetch(`${API_BASE}/v1/environment?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`, {
+          signal: withDeadline(undefined, PANEL_TIMEOUT_MS),
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            const e = d && d.environment;
+            const pv = (d && d.provenance) || {};
+            const meta = pv['environment.no2AnnualMeanUgm3'] || pv['environment.pm25AnnualMeanUgm3'];
+            if (!e || !meta || meta.method !== 'modelled') return null;
+            const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+            const no2 = num(e.no2AnnualMeanUgm3);
+            const pm25 = num(e.pm25AnnualMeanUgm3);
+            if (no2 === null && pm25 === null) return null;
+            // "1 km grid" -> "1 km square". One quantifier and a number check (a nested one is what the security
+            // lint calls unsafe: catastrophic backtracking on a crafted string).
+            const res = /^([0-9.]{1,8}) ?km grid$/.exec(String(meta.resolution || ''));
+            const km = res && Number.isFinite(Number(res[1])) ? res[1] : null;
+            return {
+              no2,
+              pm25,
+              period: /^\d{4}$/.test(String(meta.period)) ? String(meta.period) : null,
+              square: km ? `${km} km square` : 'grid square',
+              background: /background/i.test(String(e.airQualitySource || '')),
+              who: { no2: num(e.no2WhoGuidelineUgm3), pm25: num(e.pm25WhoGuidelineUgm3) },
+            };
+          })
+          .catch(() => null);
+      }
+      // AIR NEARBY, SIDE BY SIDE (Bill, 2026-11-03: refined B of claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc). A key
+      // names each source once (shape, name, distance, what it is, its setting and period); then ONE scale per
+      // pollutant, DEFRA's model for this postcode's 1 km square beside the nearest sensor and monitor, the WHO 2021
+      // guideline drawn through (js/street_report.mjs airChart); then one line on how to read them. The notes fold
+      // under "About these readings"; the sources stay visible. Still hidden when no sensor or monitor is in 5 km.
+      async function renderAirNearby(lat, lon, stillCurrent, council) {
+        const [loaded, square] = await Promise.all([loadAirNearby(), fetchAirSquare(lat, lon)]);
         if (!loaded || !stillCurrent()) return;
         const [m, sensors, monitors] = loaded;
         const section = document.getElementById('postcode-air-section');
@@ -10863,29 +11093,73 @@
           const sensor = sensors ? m.nearestSensor(sensors, lat, lon) : null;
           const monitor = monitors ? m.nearestMonitor(monitors, lat, lon) : null;
           if (!sensor && !monitor) return;
-          // Laid out as the nearest stations are: the place and its distance on one row, then one line on
-          // what it is and what it read, all from the front page's own pieces (the same words, in rows).
           const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
-          const row = (name, km, line) =>
-            `<div class="transport-row"><span class="station-name">${escapeHtml(name)}</span><span class="station-dist">${escapeHtml(m.stationDistance(km))}</span></div>` +
-            `<p class="info-note" style="margin:2px 0 8px;">${escapeHtml(line)}</p>`;
+          const haveCouncil = council && council.name && (council.no2 !== null || council.pm25 !== null);
+          const model = square
+            ? {
+                label: "DEFRA's model",
+                sub: `this ${square.square}${square.period ? ` · ${square.period}` : ''}`,
+                no2: square.no2,
+                pm25: square.pm25,
+                detail: `DEFRA's ${square.background ? 'background ' : ''}model for this postcode's ${square.square}${square.period ? `, ${square.period}` : ''}.`,
+              }
+            : haveCouncil
+              ? {
+                  label: `${council.name} average`,
+                  sub: "DEFRA's model, council-wide",
+                  no2: council.no2,
+                  pm25: council.pm25,
+                  detail: `DEFRA's model averaged over ${council.name} (the Air Quality card above). This postcode's own 1 km figure did not load.`,
+                }
+              : null;
+          const sensorNote = sensor && `Breathe London sensor, low-cost, provisional. ${cap(m.sensorSetting(sensor))}. Over the ${m.sensorPeriod(sensor)}.`;
+          const monitorNote = monitor && `Official DEFRA monitor, ratified. ${cap(m.monitorSetting(monitor))}. In ${m.monitorPeriod(monitor)}.`;
+          const keyRow = (kind, title, detail) =>
+            `<li data-air-source="${kind}">${m.airKeyMark(kind)}<span>${title}<span class="air-key-detail">${escapeHtml(detail)}</span></span></li>`;
+          const named = (r) =>
+            `<span class="station-name">${escapeHtml(r.name)}</span> <span class="station-dist">${escapeHtml(m.stationDistance(r.km))}</span>`;
+          const reading = (r, p) => (r && r[p] && typeof r[p].mean === 'number' ? r[p].mean : null);
+          const rowsFor = (p) =>
+            [
+              model && { kind: 'model', label: model.label, sub: model.sub, v: model[p] },
+              sensor && { kind: 'sensor', label: sensor.name, sub: `sensor · ${m.stationDistance(sensor.km)}`, v: reading(sensor, p) },
+              monitor && { kind: 'monitor', label: monitor.name, sub: `monitor · ${m.stationDistance(monitor.km)}`, v: reading(monitor, p) },
+            ].filter(Boolean);
+          // A pollutant gets a chart only when something in it has a figure; the guideline is the API's own when it
+          // answered, else the module's (held equal to the API's by tests/air-chart.mjs).
+          const charts = ['no2', 'pm25']
+            .map((p) => {
+              const rows = rowsFor(p);
+              if (!rows.some((r) => typeof r.v === 'number')) return '';
+              const who = (square && square.who[p]) || m.AIR_WHO_2021[p];
+              return `<figure class="air-chart"><figcaption>${escapeHtml(m.AIR_POLLUTANT_NAMES[p].toUpperCase())}, µg/m³</figcaption>${m.airChart(p, rows, who)}</figure>`;
+            })
+            .join('');
           const credits = [sensor && sensor.credit, monitor && monitor.credit]
             .filter(Boolean)
             .map((c) => `<a href="${escapeHtml(c.href)}" target="_blank" rel="noopener">${escapeHtml(c.text)}</a>`)
             .join(' &middot; ');
           el.innerHTML =
-            (sensor
-              ? row(sensor.name, sensor.km, `Breathe London sensor (low-cost), ${m.sensorSetting(sensor)}. ${cap(m.sensorReadings(sensor))}.`)
-              : '') +
-            (monitor
-              ? row(monitor.name, monitor.km, `Official DEFRA monitor, ${m.monitorSetting(monitor)}. ${cap(m.monitorReadings(monitor))}.`)
-              : '') +
-            `<p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p>` +
+            `<p class="info-note" style="margin-top:0;">${
+              model && square
+                ? "DEFRA's model for this postcode's own 1 km square, beside the nearest readings within 5 km."
+                : model
+                  ? `The nearest readings within 5 km, beside DEFRA's average for ${escapeHtml(council.name)}.`
+                  : 'The nearest readings within 5 km.'
+            }</p>` +
+            `<ul class="air-key">` +
+            (model ? keyRow('model', `<span class="air-key-title">${escapeHtml(model.label)}</span>`, model.detail) : '') +
+            (sensor ? keyRow('sensor', named(sensor), sensorNote) : '') +
+            (monitor ? keyRow('monitor', named(monitor), monitorNote) : '') +
+            `</ul>` +
+            charts +
+            `<p class="info-note">They measure in different ways, places and periods, so expect them to differ.</p>` +
+            `<details class="legend-disclosure air-about"><summary>About these readings</summary><p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p></details>` +
             `<p class="info-note" style="font-size:11px;">Sources: ${credits}</p>`;
           section.hidden = false;
         } catch (e) {
           // A module from an older cache without these functions: say nothing rather than half a line.
-          console.warn('[Sky Score] air measured nearby not shown:', e);
+          console.warn('[Sky Score] air nearby not shown:', e);
         }
       }
 
@@ -12076,6 +12350,20 @@
             .style('pointer-events', 'none');
         }
 
+        // Planes overhead at each postcode (2026-11-02): two pictures, the kind of day's steps and the district
+        // lines, placed by paintPlanesLayer(). Above aircraft noise, which it switches off (two orange layers
+        // multiplied read as neither). Smoothed until zoomed in: setPlanesRendering() says why.
+        const planesG = g.append('g').attr('class', 'layer-planes');
+        if (!layers.planes) planesG.style('display', 'none');
+        for (const id of ['planes-img', 'planes-districts-img']) {
+          planesG
+            .append('image')
+            .attr('id', id)
+            .attr('preserveAspectRatio', 'none')
+            .style('image-rendering', 'auto')
+            .style('pointer-events', 'none');
+        }
+
         // Road noise overlay, borough-level coloring (visible at all zoom levels) + WMS/tiles detail when zoomed in.
         // Audit visual fix-1: mix-blend-mode multiply + reduced opacity so the
         // borough fill *tints* the aircraft raster underneath rather than
@@ -12114,7 +12402,105 @@
         repaintFillLayers();
 
         updateDefraTiles();
+        paintPlanesLayer();
       }
+
+      // ------------------------------------------------------------
+      // PLANES OVERHEAD LAYER (2026-11-02, Bill's pick B2: "I do prefer B's but can we have an alternative for the
+      // averaging so it isn't blurred"). One picture per city and kind of day, drawn by
+      // scripts/build_planes_layer.py from the per-postcode files the front page's answer reads (data/planes/), so
+      // this page holds no figure: it places pictures and names their steps. They are in Web Mercator, the
+      // projection this map draws with, so two projected corners place them exactly; the zoom transform on `g`
+      // does the rest. A city with no picture paints nothing and the legend says so.
+      // ------------------------------------------------------------
+      let planesKind = 'westerly';
+      let planesIndex = null; // a promise; dropped on failure so the next paint asks again
+      function loadPlanesLayerIndex() {
+        if (!planesIndex) {
+          planesIndex = fetch('/data/planes-layer/index.json')
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null)
+            .then((idx) => {
+              if (!idx) planesIndex = null;
+              return idx;
+            });
+        }
+        return planesIndex;
+      }
+      // `pixelated` only once ONE picture pixel spans ONE screen pixel or more (review, 2026-11-02). Below that the
+      // browser must average: London's picture is ~2,300 px wide drawn ~690 px wide at the opening zoom, and
+      // nearest-neighbour there drops two pixels in three, so the steps alias into stripes and the 1 px district
+      // lines vanish. From that zoom up, smoothing would blur each 25 m postcode step into its neighbour instead.
+      // k is the zoom transform's scale; the picture's own width rides on the element (data-picture-width).
+      function setPlanesRendering(k) {
+        for (const id of ['planes-img', 'planes-districts-img']) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          const placedW = Number(el.getAttribute('width'));
+          const pictureW = Number(el.getAttribute('data-picture-width'));
+          const sharp = placedW > 0 && pictureW > 0 && (k * placedW) / pictureW >= 1;
+          el.style.imageRendering = sharp ? 'pixelated' : 'auto';
+        }
+      }
+      function monthName(yyyymm) {
+        const m = /^(\d{4})(\d{2})$/.exec(String(yyyymm || ''));
+        if (!m) return '';
+        return new Date(Date.UTC(+m[1], +m[2] - 1, 1)).toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+      }
+      async function paintPlanesLayer() {
+        if (!layers.planes) return;
+        const img = document.getElementById('planes-img');
+        const lines = document.getElementById('planes-districts-img');
+        if (!img || !lines) return;
+        const city = currentCity;
+        const idx = await loadPlanesLayerIndex();
+        if (city !== currentCity || !layers.planes || !img.isConnected) return; // a switch or a toggle landed meanwhile
+        const entry = idx?.cities?.[city] || null;
+        const none = document.getElementById('legend-planes-none');
+        if (none) {
+          none.hidden = Boolean(entry);
+          none.textContent = idx ? 'Not counted for this city.' : 'The planes overhead pictures did not load.';
+        }
+        // Only now does the legend know what is drawn: the switch, the steps and "About this data" (hidden in the
+        // markup until here) show for a city with a picture and stay hidden for one without.
+        for (const id of ['legend-planes-kind', 'legend-planes-steps', 'legend-planes-disclosure']) {
+          const el = document.getElementById(id);
+          if (el) el.hidden = !entry;
+        }
+        // No picture for this city: nothing to place. The elements are new on every render (renderDefraTiles), so
+        // the last city's picture cannot linger; tests/planes-layer.mjs holds that from the DOM.
+        if (!entry) return;
+        const [w, s, e, n] = entry.bounds;
+        const tl = projection([w, n]);
+        const br = projection([e, s]);
+        const place = (el, file) => {
+          const url = `/data/planes-layer/${file}`;
+          d3.select(el)
+            .attr('href', url)
+            .attr('xlink:href', url)
+            .attr('x', tl[0])
+            .attr('y', tl[1])
+            .attr('width', br[0] - tl[0])
+            .attr('height', br[1] - tl[1])
+            .attr('data-picture-width', entry.size[0]);
+        };
+        place(img, entry.files[planesKind]);
+        place(lines, entry.files.districts);
+        setPlanesRendering(d3.zoomTransform(svg.node()).k);
+        const period = document.getElementById('legend-planes-period');
+        if (period && idx.months) period.textContent = `${monthName(idx.months[0])} to ${monthName(idx.months[1])}`;
+        const def = document.getElementById('legend-planes-definition');
+        if (def) def.textContent = idx.definition || '';
+        const credits = document.getElementById('legend-planes-credits');
+        if (credits) credits.textContent = [...(idx.credits || []), idx.licence ? `Licence: ${idx.licence}.` : ''].join('. ').replace(/\.\./g, '.');
+      }
+      document.querySelectorAll('[data-planes-kind]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          planesKind = btn.dataset.planesKind;
+          document.querySelectorAll('[data-planes-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+          paintPlanesLayer();
+        });
+      });
 
       /**
        * Paint (or repaint) the three borough fill layers into groups that
@@ -13096,10 +13482,10 @@
       // when the card is there.
       isUkCity(currentCity) && !analysis.isOutcode
         ? `<div class="sidebar-section" id="postcode-air-section" hidden>
-      <h3>AIR QUALITY MEASURED NEARBY</h3>
+      <h3>AIR QUALITY NEARBY</h3>
       ${
         extra && extra.airQuality
-          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area. Below are the nearest air quality readings within 5 km.</p>`
+          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area.</p>`
           : ''
       }
       <div id="postcode-air-data"></div>
@@ -13201,9 +13587,15 @@
                 '<p class="info-note">No rail, metro or tram station in the NaPTAN register near this postcode.</p>';
           }
         }
-        // Air measured nearby, for a full UK postcode (an outcode's centre is not a place to measure from).
+        // Air nearby, for a full UK postcode (an outcode's centre is not a place to measure from). The council's
+        // DEFRA figures ride along for when the postcode's own 1 km figure cannot load.
         if (isUkCity(currentCity) && !analysis.isOutcode) {
-          renderAirNearby(analysis.lat, analysis.lon, () => isCurrentSearch(req));
+          const aqExtra = getExtraData(analysis.borough);
+          renderAirNearby(analysis.lat, analysis.lon, () => isCurrentSearch(req), {
+            name: analysis.borough,
+            no2: aqExtra && typeof aqExtra.no2AnnualMeanUgm3 === 'number' ? aqExtra.no2AnnualMeanUgm3 : null,
+            pm25: aqExtra && typeof aqExtra.pm25AnnualMeanUgm3 === 'number' ? aqExtra.pm25AnnualMeanUgm3 : null,
+          });
         }
 
         if (isUkCity(currentCity)) {
@@ -15217,6 +15609,7 @@
             // invisible.
             const aircraftOp = 1;
             g.select('.layer-defra-aircraft').style('opacity', aircraftOp);
+            if (layers.planes) setPlanesRendering(k);
             // visual fix-DEFRA-1: ONLY NYC needs per-pan tile refresh
             // (slippy XYZ tiles need new tiles loaded for the new viewport).
             // London is a single pre-fetched raster positioned in g-coords
@@ -15534,6 +15927,7 @@
             const map = {
               paths: '.layer-paths',
               'defra-aircraft': '.layer-defra-aircraft',
+              planes: '.layer-planes',
               'defra-road': '.layer-defra-road',
               labels: '.layer-labels',
               flood: '.layer-flood',
@@ -15546,6 +15940,7 @@
             // regardless of toggle state - gate it like the others).
             const legendMap = {
               'defra-aircraft': 'legend-aircraft-group',
+              planes: 'legend-planes-group',
               'defra-road': 'legend-road-group',
               flood: 'legend-flood-group',
               'air-quality': 'legend-aq-group',
@@ -15556,6 +15951,15 @@
             }
             // Refresh aircraft noise tiles when toggling on (only overlay using WMS/tiles)
             if (layer === 'defra-aircraft' && layers[layer]) updateDefraTiles();
+            if (layer === 'planes' && layers[layer]) paintPlanesLayer();
+            // Planes overhead and DEFRA aircraft noise are both orange ramps: on together they multiply into a
+            // colour neither legend names, so switching one on switches the other off (through its own button,
+            // so its pressed state and legend follow).
+            const rival = { planes: 'defra-aircraft', 'defra-aircraft': 'planes' }[layer];
+            if (rival && layers[layer] && layers[rival]) {
+              document.querySelector(`.layer-toggle[data-layer="${rival}"]`)?.click();
+            }
+            if (typeof updateLegendFade === 'function') updateLegendFade();
           }
           el.addEventListener('click', toggleLayer);
           el.addEventListener('keydown', (e) => {

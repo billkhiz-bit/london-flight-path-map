@@ -1,5 +1,5 @@
 {
- "about": "Written by scripts/build_planes_pages.py --write, read by scripts/build_area_pages.py: the postcode districts with a /planes-overhead/ page, under each council (ONS code) holding link_from or more of their measured postcodes. Never edit by hand.",
+ "about": "Written by scripts/build_planes_pages.py --write, read by scripts/build_area_pages.py and the front page's planes answer (js/planes.mjs): the postcode districts with a /planes-overhead/ page, under each council (ONS code) holding link_from or more of their measured postcodes, and, while Heathrow's consultation pack is built, its closing day and each council's page in it. Never edit by hand.",
  "link_from": 0.1,
  "councils": {
   "E06000016": [
@@ -706,5 +706,44 @@
   "W06000022": [
    "NP18"
   ]
+ },
+ "consultation": {
+  "airport": "LHR",
+  "until": "2026-12-22",
+  "hub": "/planes-overhead/heathrow-consultation/",
+  "councils": {
+   "E09000001": "/planes-overhead/heathrow-consultation/city-of-london/",
+   "E09000002": "/planes-overhead/heathrow-consultation/barking-and-dagenham/",
+   "E09000003": "/planes-overhead/heathrow-consultation/barnet/",
+   "E09000004": "/planes-overhead/heathrow-consultation/bexley/",
+   "E09000005": "/planes-overhead/heathrow-consultation/brent/",
+   "E09000006": "/planes-overhead/heathrow-consultation/bromley/",
+   "E09000007": "/planes-overhead/heathrow-consultation/camden/",
+   "E09000008": "/planes-overhead/heathrow-consultation/croydon/",
+   "E09000009": "/planes-overhead/heathrow-consultation/ealing/",
+   "E09000010": "/planes-overhead/heathrow-consultation/enfield/",
+   "E09000011": "/planes-overhead/heathrow-consultation/greenwich/",
+   "E09000012": "/planes-overhead/heathrow-consultation/hackney/",
+   "E09000013": "/planes-overhead/heathrow-consultation/hammersmith-and-fulham/",
+   "E09000014": "/planes-overhead/heathrow-consultation/haringey/",
+   "E09000015": "/planes-overhead/heathrow-consultation/harrow/",
+   "E09000017": "/planes-overhead/heathrow-consultation/hillingdon/",
+   "E09000018": "/planes-overhead/heathrow-consultation/hounslow/",
+   "E09000019": "/planes-overhead/heathrow-consultation/islington/",
+   "E09000020": "/planes-overhead/heathrow-consultation/kensington-and-chelsea/",
+   "E09000021": "/planes-overhead/heathrow-consultation/kingston-upon-thames/",
+   "E09000022": "/planes-overhead/heathrow-consultation/lambeth/",
+   "E09000023": "/planes-overhead/heathrow-consultation/lewisham/",
+   "E09000024": "/planes-overhead/heathrow-consultation/merton/",
+   "E09000025": "/planes-overhead/heathrow-consultation/newham/",
+   "E09000026": "/planes-overhead/heathrow-consultation/redbridge/",
+   "E09000027": "/planes-overhead/heathrow-consultation/richmond-upon-thames/",
+   "E09000028": "/planes-overhead/heathrow-consultation/southwark/",
+   "E09000029": "/planes-overhead/heathrow-consultation/sutton/",
+   "E09000030": "/planes-overhead/heathrow-consultation/tower-hamlets/",
+   "E09000031": "/planes-overhead/heathrow-consultation/waltham-forest/",
+   "E09000032": "/planes-overhead/heathrow-consultation/wandsworth/",
+   "E09000033": "/planes-overhead/heathrow-consultation/westminster/"
+  }
  }
 }

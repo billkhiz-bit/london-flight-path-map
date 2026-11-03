@@ -3,7 +3,7 @@
  "defra": "DEFRA strategic noise mapping Round 4 (2021 traffic), Heathrow Lden coverage, measured by this script",
  "caa": "CAA ERCD Report 2601 (August 2026), Table 12: Heathrow 2025 Lden contours",
  "caa_year": 2025,
- "caveat": "Different models and inputs; an order of magnitude for a caveat, never a correction factor.",
+ "caveat": "Different years and inputs; an order of magnitude for a caveat, never a correction factor.",
  "rows": [
   {
    "lden_db": 55,

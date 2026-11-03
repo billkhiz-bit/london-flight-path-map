@@ -83,6 +83,9 @@ NOT_A_POSTCODE = {
     'build_aircraft_rasters.py': 'requests WMS renders by bbox; samples no postcode',
     'lidar_building_heights.py': ("projects the council's BOUNDARY and OpenStreetMap building centres (a check); "
                                   "its postcodes come from NSPL's grid reference (adsb_postcode_averages)"),
+    'build_planes_layer.py': ("projects the PICTURE's pixel centres (Web Mercator) to the British grid to find each "
+                              "pixel's nearest postcode; every postcode stays at NSPL's grid reference "
+                              "(postcode-averages.npz), and gridind 5-6 positions are left out (2026-11-02)"),
 }
 PROJECTS = re.compile(r"from_crs\(\s*'EPSG:4326'\s*,\s*('EPSG:27700'|raster|crs)")
 

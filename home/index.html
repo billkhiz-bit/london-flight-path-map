@@ -40,7 +40,7 @@
             "url": "https://skyscore.co.uk/",
             "logo": "https://skyscore.co.uk/icons/apple-touch-icon.png",
             "email": "support@skyscore.co.uk",
-            "sameAs": ["https://apps.apple.com/gb/app/sky-score/id6768118116"]
+            "sameAs": ["https://apps.apple.com/gb/app/sky-score/id6768118116", "https://www.linkedin.com/company/sky-score/"]
           },
           {
             "@type": "WebSite",
@@ -188,6 +188,15 @@
       .panel.is-find .lead { display: none; }
       /* An area opened from the list (or the map) shows its card in place of the list; closing it comes back. */
       .panel.is-find:has(#borough.is-open) #panel-find > :not(#borough) { display: none; }
+      /* Describe what you want (2026-11-02): one line of words above the choices, read in the browser into them. */
+      .find-words { margin: 0 0 14px; }
+      .find-words label { display: block; margin: 0 0 6px; font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      .find-words .find-words-row { display: flex; gap: 8px; }
+      .find-words input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 8px 12px; font: 500 15px var(--font-body); border: 1.5px solid var(--dark); border-radius: 10px; background: #fff; color: var(--dark); }
+      .find-words button { flex: none; min-height: 44px; padding: 0 16px; font: 600 15px var(--font-body); border: 0; border-radius: 10px; background: var(--dark); color: #fff; cursor: pointer; }
+      .find-words input:focus-visible, .find-words button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+      .find-words .find-words-note { margin: 6px 0 0; font-size: 12px; color: var(--mid); }
+      .find-words .find-read { margin: 8px 0 0; font-size: 14px; color: var(--dark); }
       .find-form { display: grid; grid-template-columns: 58px 1fr; gap: 10px 12px; align-items: center; }
       .find-form .k { font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
       .find-form select { width: 100%; font: 500 15px var(--font-body); min-height: 40px; padding: 6px 10px; border: 1.5px solid var(--dark); border-radius: 10px; background: #fff; color: var(--dark); }
@@ -265,6 +274,10 @@
       .answer .planes .planes-note { font-size: 12px; color: var(--mid); }
       .answer .planes .planes-warn { padding: 8px 10px; border-radius: 8px; background: #fbefe4; }
       .answer .planes .planes-how a { color: var(--orange-ink); font-weight: 600; }
+      /* Where to go next (2026-11-02): the district's page and, while it is open, the consultation pack. Standalone
+         links, so each is a 24 px+ target (WCAG 2.2 target size), not an inline one. */
+      .answer .planes .planes-more { margin: 10px 0 0; }
+      .answer .planes .planes-more a { display: inline-block; padding: 5px 0; font-size: 14px; color: var(--orange-ink); font-weight: 600; }
       .answer .area b { color: var(--dark); font-weight: 600; }
       button.linkish { font: inherit; font-weight: 600; color: var(--orange-ink); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
       /* "Its figures" sits in 13px text, so as a button it was under WCAG 2.2's 24px target (2.5.8). It had always
@@ -382,9 +395,15 @@
       ul.who-list span { color: var(--mid); font-size: 16px; }
       ul.who-list a { font-weight: 600; font-size: 15px; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
       ul.who-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
-      /* The line under the list (2026-10-30): pulled up into the list's own bottom margin, so it reads as the list's foot. */
-      .who-book { max-width: 1120px; margin: -14px 0 30px; color: var(--mid); font-size: 16px; }
-      .who-book a { font-weight: 600; color: var(--orange-ink); white-space: nowrap; }
+      /* Book a demo's band (2026-11-02): dark like the developers panel, so the page ends on one clear button. On #141414:
+         the words #d9d7d0, the button the brand orange with dark ink (6.3:1), the focus ring #d35a12 (3.6:1, over 3:1). */
+      .book-band { max-width: 1120px; margin: 0 0 30px; padding: clamp(22px, 3vw, 32px); border-radius: 18px; background: var(--dark); color: var(--paper);
+        display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 40px; align-items: center; }
+      @media (min-width: 760px) { .book-band { grid-template-columns: minmax(0, 1.4fr) auto; } }
+      .book-band h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.02em; margin: 0 0 6px; }
+      section.who .book-band p { margin: 0; font-size: 17px; color: #d9d7d0; }
+      .book-band a { justify-self: start; display: inline-block; padding: 13px 20px; border-radius: 10px; background: var(--orange); color: var(--dark); font-weight: 700; font-size: 16px; text-decoration: none; white-space: nowrap; }
+      .book-band a:hover { text-decoration: underline; text-underline-offset: 4px; }
       .founder { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 22px 12px 12px; background: var(--paper); border-radius: 16px; max-width: 1120px; }
       .founder img { width: 56px; height: 56px; border-radius: 50%; flex: none; }
       section.who .founder p { margin: 0; font-size: 16px; line-height: 1.45; color: var(--dark); flex: 1 1 260px; }
@@ -508,7 +527,10 @@
                it was cut to "Postcode, ZIP o" at 320 wide. The placeholder is now an example. -->
           <label for="pc" class="field-label">Postcode, ZIP or place</label>
           <form class="check" id="check">
-            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="postal-code" inputmode="text" />
+            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="postal-code" inputmode="text" list="pc-places" />
+            <!-- Places the box answers by name (council areas, regions, cities), offered as you type (2026-11-02): filled in
+                 the page from what it already holds, so nothing is sent while typing. -->
+            <datalist id="pc-places"></datalist>
             <button type="submit">Check<span class="yours"> yours</span></button>
           </form>
           <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="Camden">Camden</button><button type="button" data-pc="Palo Alto">Palo Alto</button></p>
@@ -540,6 +562,15 @@
           </div>
           </div>
           <div role="tabpanel" id="panel-find" aria-labelledby="tab-find" hidden>
+            <!-- Describe what you want (2026-11-02, Bill: a search "like other websites", "without imposing on privacy
+                 concerns"): js/find-words.mjs reads the words into the choices below, in the browser. The input has no
+                 name, so even without the script nothing typed is sent; nothing is stored or counted. -->
+            <form class="find-words" id="fit-words-form" role="search" action="#find">
+              <label for="fit-words">Describe what you want</label>
+              <div class="find-words-row"><input type="text" id="fit-words" autocomplete="off" spellcheck="true" placeholder="e.g. quiet, near a station, under &pound;500k" aria-describedby="fit-words-note" /><button type="submit">Set</button></div>
+              <p class="find-words-note" id="fit-words-note">Read in your browser: nothing you type here is sent or kept.</p>
+              <p class="find-read" id="fit-read" aria-live="polite" hidden></p>
+            </form>
             <div class="find-form" id="fit-form">
               <label class="k" for="fit-where">Where</label><select id="fit-where"></select>
               <label class="k" for="fit-budget">Price</label><select id="fit-budget"></select>
@@ -603,7 +634,8 @@
             <h3>Data for your business</h3>
             <p>The same figures through an API, in your own system, or as one open file of every UK council area, free for non-commercial use, to rank and compare.</p>
             <div class="fig">10,000<small>lookups a month on the free tier</small></div>
-            <div class="go-row"><a class="go quiet" href="/api/">Read the docs</a><a class="also" href="/pricing">Pricing</a></div>
+            <!-- Book a demo leads here (Bill, 2026-11-02, after arcive.ai): the card a business reads first, in the first scroll. -->
+            <div class="go-row"><a class="go" href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="card">Book a demo</a><a class="also" href="/api/">Read the docs</a></div>
           </article>
         </div>
       </section>
@@ -660,11 +692,17 @@
           </ul>
         </div>
         <!-- WHO-FOR:END -->
-        <!-- Book a demo (Bill, 2026-10-30): the front page's ONE booking link, under the professions list, never its bar.
-             It was in three spots for an hour; cut to this one (Bill's "yes") because the page repeats its actions and
-             this is the only spot that says what the call gives. Outside WHO-FOR on purpose: that block is also
-             written into /about/, and the link belongs to this page only. -->
-        <p class="who-book">Not sure which fits? We will go through your own postcodes with you. <a href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="who">Book a 30-minute demo</a></p>
+        <!-- Book a demo (Bill, 2026-11-02, after arcive.ai: "more clear on the frontpage"): two spots, each counted by its
+             data-book-place, never the bar. The business card above leads with it; this band ends the page with one
+             clear button and the only words on what the call gives (until now a line here, `who`, 2026-10-30).
+             Outside WHO-FOR on purpose: that block is also written into /about/, and the link belongs to this page. -->
+        <div class="book-band">
+          <div>
+            <h3>Bring your own postcodes</h3>
+            <p>In 30 minutes we go through the places you work with: the figures for each, and where every one comes from. Nothing to prepare.</p>
+          </div>
+          <a href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="band">Book a 30-minute demo</a>
+        </div>
         <div class="founder">
           <img src="/about/bill-headshot.webp" width="56" height="56" alt="" />
           <p>Built by Bilal Khizar, so you can make a more informed decision when choosing where to live.</p>
@@ -678,7 +716,7 @@
       <!-- The routes drawn above are the UK AIP's and the FAA's (2026-10-07). LICENSING.md: credit NATS wherever
            UK routes are shown, and the FAA's CIFP terms ask for its "as is" disclaimer wherever its procedures are. -->
       <span class="route-credit">Flight routes: UK Aeronautical Information Publication (NATS); in the US, the FAA's Coded Instrument Flight Procedures, supplied "as is", without warranty. Not for navigation.</span>
-      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/about/">About</a> &middot; <a href="/open-data/">Open data</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
+      <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/planes-overhead/">Planes overhead</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/about/">About</a> &middot; <a href="/open-data/">Open data</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a> &middot; <a href="https://www.linkedin.com/company/sky-score/">LinkedIn</a></span>
     </footer>
 
     <script src="/js/vendor/d3.v7.min.js"></script>

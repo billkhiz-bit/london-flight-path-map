@@ -49,3 +49,57 @@
 - Guarded by **`tests/layer-honesty.mjs`** (in preflight), which fails in both directions: over-painting is an invented default, under-painting is a borough whose data the map cannot find. **Since 2026-08-23 it also asserts the legend**: every `FILL_LAYER_COLOURS` key has a `[data-band]` row and vice versa (city-independent, runs once), and per city the set of VISIBLE rows equals the set of bands actually painted - inverted out of the rendered `fill` attributes and read from computed style, never from the counter or the inline style the fix writes. Proven red four ways.
 - **`tests/a11y-source.mjs` reveals the band rows before scanning**, added the same day. Otherwise the EXCELLENT swatch - hidden in all eleven cities - would never be evaluated by axe and would first reach a user on the day coverage widens, never having had its contrast measured. That is exactly how three legend headings shipped at 1.00:1.
 
+
+## The Planes overhead layer (2026-11-02)
+
+**Why B2, and why nothing is grouped.** Bill compared two mock-ups on a canvas (claude.ai/artifact/EUGSYeSRLKHymJXLAt8kYW):
+A, every postcode's band, and B, each district filled by the share of its postcodes at 100+ a day. He preferred B's
+look and asked for "an alternative for the averaging so it isn't blurred". Three were drawn from the same files and
+measured on Hounslow's TW4 (Hounslow West, Cranford), under Heathrow's westerly approach, on westerly days: the
+district share is 4% (paler than Lewisham's SE13 at 100%), postcode SECTORS give TW4 5, 6 and 7 at 5%, 6% and 2%
+(still pale), and 500 m hexagons trace the strip but drop every postcode under 100. The cause is physical: where the
+planes are low the overhead cone is narrow, so the 100+ strip is a few hundred metres wide and ANY unit wider than that
+washes it out. B2 groups nothing (each postcode keeps its own count, in B's four colours, with district lines drawn
+over it), so it is the only one with no blur. Do not "simplify" it back to a district fill.
+
+**Pictures, not vectors, and in Web Mercator.** No shapely on the machine, and the map is D3 on a geoMercator
+projection, so `scripts/build_planes_layer.py` draws 25 m pixels (each takes the nearest NSPL postcode within 220 m)
+straight into EPSG:3857: a picture placed by its two projected corners then lines up at every zoom, because
+geoMercator is linear in 3857. The DEFRA overlay requests EPSG:4326 and stretches it, which is a small skew; this one
+has none.
+
+**Sharp only once zoomed in (review, 2026-11-02).** It shipped `image-rendering: pixelated` throughout, "because each
+pixel is one postcode's step". At the opening zoom that is wrong: London's picture is ~2,300 px wide drawn ~690 px
+wide, so nearest-neighbour keeps one pixel in three, the steps alias into stripes (moire) and the 1 px district lines
+drop out. `setPlanesRendering(k)` now smooths (`auto`) until one picture pixel covers one screen pixel
+(k x placed width / picture width >= 1) and draws sharp from there; the zoom handler and every paint call it.
+`tests/planes-layer.mjs` measures the DRAWN width over the picture's own at 0.9 and 1.1 of that zoom, so a
+threshold anywhere else (0.5 went red) or a handler that never switches (red) fails.
+
+**The busiest airport, never a total (review, 2026-11-02).** A postcode under two airports (E1 4FG on westerly days:
+Heathrow and London City) is drawn in the higher step, which is the BUSIEST airport's count, not the two added. Adding
+is not valid either: each airport's kinds of day are its own, so Heathrow's "flying west" days and London City's are
+different sets. The first legend said "planes overhead, a day" as if it were a total; it now says "from the busiest
+airport over each postcode", and so do the About text, `index.json` (`rule`, `blank`), the toggle's title and
+CHANGELOG.
+
+**The legend says nothing until it knows (review, 2026-11-02).** The steps used to show before `index.json` arrived,
+and "About this data" stayed for a city with no picture. The switch, the steps and the disclosure are `hidden` in the
+markup and `paintPlanesLayer()` shows them only for a city with an entry. The test HOLDS `index.json` (page.route) to
+reach the before-state on purpose, with service workers BLOCKED: `sw.js` claims the page, and a request it makes never
+reaches `page.route`, so the hold silently did nothing at first (the check went red for the wrong reason). The page's
+own `[hidden] { display: none !important }` does the hiding: a per-element `[hidden]` rule added here survived its
+mutation, was dead code, and was deleted; breaking the page-wide rule's `!important` goes red.
+
+**A PNG's palette is not its picture.** `--check` first compared palette indexes and called every picture stale
+straight after `--write`: PIL's `optimize=True` re-orders and trims the palette on save. It now compares what each
+picture SHOWS (RGBA pixels), and the manifest separately describes the bytes on disk (what the drift check compares
+the live files with), so another zlib packing the same pixels differently is not a false alarm.
+
+**One orange layer at a time.** DEFRA aircraft noise is multiplied onto the map in an orange ramp; the planes layer
+is another. Together they read as neither legend, so switching one on clicks the other off through its own button
+(its pressed state and legend follow). `tests/planes-layer.mjs` holds both directions.
+
+**A survivor that was dead code.** Of six breaks to the map code, five went red. The sixth removed clearing the last
+city's picture when a city has none, and stayed green, because every render makes new picture elements: the code
+could never run. It was deleted; the test still holds the behaviour from the DOM ("no picture after switching").

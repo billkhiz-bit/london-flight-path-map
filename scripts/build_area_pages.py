@@ -115,8 +115,32 @@ PLANES_BY_COUNCIL = REPO / 'data' / 'planes-districts-by-council.json'
 
 
 @functools.cache
+def _planes_index() -> dict:
+    return json.loads(PLANES_BY_COUNCIL.read_text(encoding='utf-8'))
+
+
 def _planes_by_council() -> dict[str, list[str]]:
-    return json.loads(PLANES_BY_COUNCIL.read_text(encoding='utf-8'))['councils']
+    return _planes_index()['councils']
+
+
+def consultation_line(city: str, borough: str, today: str | None = None) -> str:
+    """The area page's way into Heathrow's consultation pack (2026-11-02, Bill: "make the links clear and easy to
+    navigate"): a line straight to this council's own pack page, while the consultation is open; '' otherwise, or when
+    the pack has no page for the council. Read from the index the planes builder writes (its `consultation` entry,
+    from the pages it built), so an area page never links a pack page that is not there. Dated like the pack: after
+    the closing day --check reds until --write drops the line. Names only, no figure (the wording gate)."""
+    c = _planes_index().get('consultation')
+    today = today or datetime.now(UTC).strftime('%Y-%m-%d')
+    if not c or today > c['until']:
+        return ''
+    paths = {c['councils'][lad] for lad, where in app.LAD_TO_BOROUGH.items()
+             if tuple(where) == (city, borough) and lad in c['councils']}
+    if len(paths) != 1:
+        return ''
+    day = datetime.strptime(c['until'], '%Y-%m-%d')
+    return (f"<p><strong>Heathrow's expansion consultation is open until {day.day} {day.strftime('%B')} {day.year}.</strong> "
+            f'<a href="{e(paths.pop())}">The planes over {e(borough)} today, for the consultation</a>, district by '
+            'district.</p>\n')
 
 
 def _district_order(d: str):
@@ -139,7 +163,8 @@ def planes_section(city: str, borough: str) -> str:
         return ''
     links = ', '.join(f'<a href="/planes-overhead/{e(d.lower())}/">{e(d)}</a>' for d in districts)
     return ('<h2>Planes overhead</h2>\n'
-            f'<p>Planes overhead pages for the postcode districts covering {e(borough)}: {links}.</p>\n\n')
+            + consultation_line(city, borough)
+            + f'<p>Planes overhead pages for the postcode districts covering {e(borough)}: {links}.</p>\n\n')
 
 
 def fmt_price(value):

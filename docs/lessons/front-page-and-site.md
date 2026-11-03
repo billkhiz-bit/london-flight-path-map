@@ -258,6 +258,26 @@
 >   place to measure from). `tests/uk-city-panel.mjs` works the expected names out from postcodes.io's position:
 >   SW11 1AA shows BOTH (sensor 1.1 km, monitor 4.0 km), M1 1AE / B15 2TT / LS1 4DY a monitor, 10001 no section;
 >   proven red by removing the call and by rendering the section for every city.
+>   **SIDE BY SIDE ON THE FULL MAP (2026-11-03, Bill: "the refined one").** The panel read as two sentences and
+>   two paragraphs, numbers with no yardstick. Mock-ups (claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc: now, A a block per
+>   reading, B one scale per pollutant, C a table) went to B, then "B refined" on three changes: (1) the yardstick is
+>   DEFRA's model for the postcode's OWN 1 km square, from `/v1/environment` (the front page's call), read with the
+>   provenance it sends (`method: modelled`, `resolution`, `period`), because the council average smooths away the
+>   street-level difference a sensor shows (SW11 5BT: 20.8 for its square, 18.9 for Wandsworth); the council average
+>   stands in, named "<Council> average", when it cannot load; (2) a KEY names each source once with A's status
+>   (low-cost, provisional / official, ratified), its setting and its period, the periods from `sensorPeriod()` /
+>   `monitorPeriod()` (exported so the front page's sentences, unchanged, and the key share them); (3) one line, "They
+>   measure in different ways, places and periods, so expect them to differ." The heading became "AIR QUALITY NEARBY":
+>   it now holds a MODEL, which may never be called measured. The chart is `airChart()` in `js/street_report.mjs`, a
+>   pure function returning SVG text: 0 to `AIR_SCALE_TIMES` (4) x the WHO 2021 guideline (40 for NO2, also the UK
+>   legal limit), the model a hollow ring, a sensor a filled circle, a monitor a square (colours checked by the dataviz
+>   validator for colour-blind separation and 3:1 on the panel), a reading beyond the scale pinned to the end with its
+>   own figure and a "▸", a label near the end moved left. Colours go through `style`, never a `var()` in an SVG
+>   attribute (not every browser resolves those); no fill or halo on the marks, as the panel is white on a desktop and
+>   cream on a phone. `AIR_WHO_2021` is held equal to the API's literals in `app.py` by `tests/air-chart.mjs` (21
+>   checks, 7 breaks red); `tests/uk-city-panel.mjs` measures the live panel per city against figures it asks for
+>   itself (the API's 1 km square, the files' readings), marks to scale on the DRAWN axis, and the fallback reached on
+>   purpose by refusing `/v1/environment`.
 > - **THE BRAND GOES HOME; HAVE YOUR SAY; SPOTTED SOMETHING WRONG? (2026-10-19, Bill).** The first "Sky Score" on
 >   every public page links to "/": `tests/test_brand_links_home.py` FINDS the pages (globs, 123 on the day) and
 >   declares the four without a brand (two /preview/ redirect stubs, two printed talk handouts), two-way. The full
@@ -668,3 +688,61 @@ templates needs both targets, and the deploy list handed to Bill had left it out
 (2) The drift check listed robots.txt and sitemap.xml but not `llms.txt`, so a missed or stale upload would have
 passed; it is now a surface, held by `test_the_drift_check_compares_it` (proven red). The live pages were then put
 through `breadcrumb_faults()` itself (fetch, then the repo's check), which reads what a crawler reads.
+
+## BOOK A DEMO, MADE CLEAR, AND THE WAYS INTO THE PLANES PAGES (2026-11-02)
+
+Bill, after seeing arcive.ai (a business-only site whose hero's main button is "Request a demo", repeated as a
+closing section): "can we not have book a demo more clear on the frontpage?" Ours was one orange text line at the foot
+of "Who it is for", about three screens down at 1366 px (his 30 Oct cut from three spots to one). Advised against
+copying the hero: two-thirds of front-page views are home-buyers, whose action is "Check yours". Built his "do
+recommended": the business card's filled button is now Book a demo (`card`; Read the docs moved to its text link, the
+card's Pricing link dropped: the bar and footer carry it), and the line became a dark closing band, "Bring your own
+postcodes", with an orange button (`band`). Never the bar. The ~6% engagement read to ~20 Nov needs a footnote: the
+page changed on 2 Nov.
+
+The same day Bill noticed the planes pages are reachable "only by direct link". Measured: the 464 district pages and
+the index were linked from area pages only (1 Nov), and the Heathrow consultation pack from the planes index ONLY
+(area page, district page, index, pack). Not a decision, a gap, for a pack built for the consultation's drop-ins.
+Built: a line on every Heathrow district page (230) and on the 32 councils' area pages straight to their own pack page,
+and in the front page's planes answer "Every postcode in TW9, sector by sector" plus the pack while it is open; and
+"Planes overhead" in the front page's and the map's footers. Each reads the `consultation` entry the planes builder
+writes into `data/planes-districts-by-council.json` from the pages it built, and the answer links a district only
+if that index lists it, so no link can point at a page that is not there. The pack link sits in the planes answer, not
+in "Have your say": that registry holds outside bodies' verified pages, prints in the street report, and its test pins
+one dated link. Seven mutations, one per rule, all turn their tests red.
+
+## DESCRIBE WHAT YOU WANT, AND THE PLACE LIST (2026-11-02)
+
+Bill asked for Find areas to search "like other websites", then, offered a place-name list, a hosted search service
+or a "describe what you want" box, picked the last two and added: "without imposing on privacy concerns". Both hosted
+routes send what visitors type to a US company (a privacy-policy change, legal batch 2), so neither was built. Built
+instead, all in the browser: `js/find-words.mjs` reads a sentence with fixed rules into Find areas' own controls (a
+region, the nearest price step not above the amount, the six avoid/want choices; "quiet" means both noises; a want
+said with "not" is never read as the want), and the page says back what it read and what it did not. The controls
+stay the truth, and nothing it does can produce a figure. The postcode box got a native `<datalist>` of the names it
+answers (council areas, regions, cities), from the rows the page already holds.
+
+Held by `tests/find-words.mjs` (seven mutations, all red; two survived the first run and each taught a rule: words
+for a choice the tab does not offer must be given back, and "under 450" must be given back rather than swallowed) and
+`tests/front-page.mjs`, which types a sentence and checks the controls, the words shown back, and that no request or
+address after typing carries the words. The leak check looks for a nonsense marker ("zebrafinch") and the price,
+never "station" or "quiet": data files the map fetches can carry those in their names.
+
+FOUND THE SAME DAY: `tests/planes-model.mjs` (the planes answer's rules since 2026-10-26) was never run by preflight.
+Nothing listed it, so 26 Oct to 2 Nov it held nothing. Registered in `scripts/preflight.sh` with `find-words.mjs`. A
+scan of every `tests/*.mjs` that no gate names found only tools besides it (loadtest, rehearse, store-screenshots).
+
+## The company LinkedIn page (2026-11-03)
+
+Bill made a "Sky Score" company page on LinkedIn on 2 Nov and asked for it on the site. Of three placements offered
+(main pages; every page; About + search engines only) he picked the main pages: the front page's footer and its
+Organization `sameAs`, both full-map footers and /about/'s "Get in touch". Not the 566 generated area and planes
+pages, because the sitemap dates a page by its last commit, so one footer link would re-date every page to today for
+nothing a reader would call a change (search engines are told `lastmod` means a real change).
+
+Built like the booking link: ONE holder (`js/count.mjs` `LINKEDIN_URL`), every copy held to it by
+`tests/test_linkedin_company_link.py` on the files the Makefile uploads, so the rename (the page is named for the
+product) is a one-line change plus whatever the test names. A plain link only: LinkedIn's follow button is a script
+that sets its own cookies, and the pages allow none. Counted as `<page>-linkedin` through `WATCHED_LINKS`; on /about/
+it sits beside Bill's own profile, relabelled "Bilal on LinkedIn" so the two are not both called "LinkedIn".
+Four breaks proven red: a stale copy, the phone footer's copy gone, `sameAs` dropped, the count removed.
