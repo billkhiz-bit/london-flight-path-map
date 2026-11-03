@@ -73,7 +73,7 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
     const name = names[code] || code;
     const rows = KINDS.map(([kind, label]) => {
       const v = figs[col[kind]];
-      return { kind, label, share: `${a.share_pct[kind]}% of days`, text: perDay(v), bar: barOf(v, info.bar_full || 1), range: Array.isArray(v) };
+      return { kind, label, share: `${a.share_pct[kind]}% of days`, sharePct: a.share_pct[kind], text: perDay(v), value: v ?? null, bar: barOf(v, info.bar_full || 1), range: Array.isArray(v) };
     });
     const [west, east] = [inWords(figs[col.westerly]), inWords(figs[col.easterly])];
     const wind = `Planes land and take off into the wind, so the weather decides which way ${name} flies, and that decides your day`
@@ -129,6 +129,60 @@ export function planesLinks(index, postcode, model, today = new Date()) {
     out.push({ text: `For Heathrow's consultation, open until ${day} ${MONTHS[m - 1]}: the planes over each council`, href: c.hub });
   }
   return out;
+}
+
+// ---- the front page's walkthrough, step 04 (front-page-v3, 2026-11-03: Bill's mock v8 v12) ----
+// One airport's answer in a sentence, then its three kinds of day as bars, each with its share of days, coloured as the
+// full map's planes layer colours that figure (scripts/build_planes_layer.py's steps, read from the layer's index.json).
+// Everything comes from a planesModel(), so the walkthrough can only say what the answer above it says.
+
+/** The most a figure can be: a range's top, '<1' as 0, no figure -1. */
+const mostOf = (v) => (v == null ? -1 : v === '<1' ? 0 : Array.isArray(v) ? mostOf(v[1]) : v);
+/** A figure as the walkthrough's bars print it, without "a day" (the heading says it once). */
+export function shortFigure(v) {
+  if (v == null) return 'not measured';
+  if (v === 0) return 'none';
+  if (Array.isArray(v)) return v[0] === 0 ? `up to ${one(v[1])}` : `${one(v[0])} to ${one(v[1])}`;
+  return one(v);
+}
+/**
+ * The planes layer's colour for a figure: the highest of `steps` ([{from, colour}], the layer's index.json) it
+ * reaches, judged on a range's top as the layer judges an edge's busier end; null under the first step (the layer draws
+ * nothing there) or without steps.
+ */
+export function stepColour(v, steps = []) {
+  const n = mostOf(v);
+  let colour = null;
+  for (const s of steps || []) if (typeof s?.from === 'number' && n >= s.from && /^#[0-9a-f]{6}$/i.test(s.colour || '')) colour = s.colour;
+  return colour;
+}
+/**
+ * Step 04's content from a planesModel(): { sentence: [{ text, strong }], rows, foot, how }, or null when the model has
+ * no airport to tell (then the step shows no figure). With several airports it tells the busiest, by its top figure.
+ * The sentence leads with the commonest kind of day only where that kind is one way and more than half of all days
+ * ("On most days"); anything else takes the model's own wind sentence.
+ */
+export function planesWalk(model, steps = []) {
+  if (!model?.airports?.length) return null;
+  const a = model.airports.reduce((best, x) => (Math.max(...x.rows.map((r) => mostOf(r.value))) > Math.max(...best.rows.map((r) => mostOf(r.value))) ? x : best));
+  const by = Object.fromEntries(a.rows.map((r) => [r.kind, r]));
+  const DIR = { westerly: 'west', easterly: 'east' };
+  const lead = ['westerly', 'easterly'].map((k) => by[k]).filter(Boolean).sort((x, y) => (y.sharePct ?? 0) - (x.sharePct ?? 0))[0];
+  const other = lead && by[lead.kind === 'westerly' ? 'easterly' : 'westerly'];
+  const [leadWords, otherWords] = [lead && inWords(lead.value), other && inWords(other.value)];
+  const said = (w) => w && w !== 'none' && w !== 'under 1';
+  const sentence = lead && (lead.sharePct ?? 0) > 50 && said(leadWords) && otherWords
+    ? [{ text: 'On most days, ' }, { text: `${leadWords} planes a day`, strong: true },
+      { text: ` pass over ${model.postcode}: the days ${a.name} flies ${DIR[lead.kind]}. On a day it flies ${DIR[other.kind]}, ` },
+      { text: otherWords, strong: true }, { text: '.' }]
+    : [{ text: a.wind }];
+  return {
+    airport: a.name,
+    sentence,
+    rows: a.rows.map((r) => ({ kind: r.kind, label: r.label, share: r.share, figure: shortFigure(r.value), bar: r.bar, range: r.range, colour: stepColour(r.value, steps) })),
+    foot: `Planes a day over ${model.postcode} from ${a.name}, ${a.period}. Never an average of the three: no day is average.`,
+    how: model.how,
+  };
 }
 
 /** The block's nodes for a model, written with textContent only; `links` (planesLinks) go just above "How the planes are counted". */

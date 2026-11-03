@@ -260,30 +260,42 @@ ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpa
 // areas adding up to the page's own figure, then New York and the Bay Area. Cardiff is the region the
 // map's city buttons never named. scripts/build_coverage_strip.py --check holds the markup to the
 // registry; this holds what a visitor sees.
-// FOR DEVELOPERS (2026-10-19): two requests a developer can paste. Both on the API host js/api-base.js
-// holds (window.API_BASE), the key ONLY ever the placeholder, the no-key one by lat and lon (the form
-// /v1/environment answers; by postcode it is a 400), and Copy copies exactly what is shown. The clipboard
-// is stubbed: a headless browser has none to read back.
+// FOR DEVELOPERS (2026-10-19; three languages since front-page-v3, 2026-11-03): the open request a developer can
+// paste, in curl, Python and JavaScript (tabs, js/home-sections.mjs). All on the API host js/api-base.js holds
+// (window.API_BASE), by lat and lon (the form /v1/environment answers; by postcode it is a 400), no key anywhere (the
+// keyed score request moved to /api/ with the redesign), and Copy copies exactly the sample on show. The clipboard is
+// stubbed: a headless browser has none to read back. (Changed by reading, not run, on the branch: run it before merging.)
 {
   const dev = await page.evaluate(async () => {
     const copied = [];
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { copied.push(t); } } });
-    document.querySelector('button.copy[data-copy="dev-score"]')?.click();
+    const copy = () => document.querySelector('section.dev button.copy[data-copy]');
+    copy()?.click();
     await new Promise((r) => setTimeout(r, 100));
+    const status = document.getElementById('copy-status')?.textContent || '';
+    document.getElementById('code-tab-py')?.click();
+    const shownPy = document.getElementById('code-py')?.hidden === false && document.getElementById('code-curl')?.hidden === true;
+    copy()?.click();
+    await new Promise((r) => setTimeout(r, 100));
+    document.getElementById('code-tab-curl')?.click();
     return {
       api: window.API_BASE || '',
-      score: document.getElementById('dev-score')?.textContent || '',
       env: document.getElementById('dev-env')?.textContent || '',
+      py: document.getElementById('dev-env-py')?.textContent || '',
+      js: document.getElementById('dev-env-js')?.textContent || '',
+      keyless: !/X-Api-Key/i.test(document.querySelector('section.dev')?.textContent || ''),
       copied,
-      status: document.getElementById('copy-status')?.textContent || '',
+      status,
+      shownPy,
     };
   });
   ok(
-    Boolean(dev.api) && dev.score === `curl '${dev.api}/v1/score?postcode=TW9+3PZ' \\\n  -H 'X-Api-Key: YOUR_KEY'` &&
-      dev.env === `curl '${dev.api}/v1/environment?lat=51.4790&lon=-0.2860'` &&
-      dev.copied.length === 1 && dev.copied[0] === dev.score && /^Copied/.test(dev.status),
-    'the developer band shows two requests on the live API host, the key only a placeholder, and Copy copies exactly what is shown',
-    JSON.stringify({ api: dev.api, score: dev.score.slice(0, 90), env: dev.env.slice(-50), copied: dev.copied.length, status: dev.status })
+    Boolean(dev.api) && dev.env === `curl '${dev.api}/v1/environment?lat=51.4790&lon=-0.2860'` &&
+      dev.py.includes(`'${dev.api}/v1/environment'`) && dev.py.includes("params={'lat': 51.4790, 'lon': -0.2860}") &&
+      dev.js.includes(`'${dev.api}/v1/environment?lat=51.4790&lon=-0.2860'`) && dev.keyless && dev.shownPy &&
+      dev.copied.length === 2 && dev.copied[0] === dev.env && dev.copied[1] === dev.py && /^Copied/.test(dev.status),
+    'the developer band shows the open request on the live API host in curl, Python and JavaScript, no key anywhere, and Copy copies exactly the sample on show',
+    JSON.stringify({ api: dev.api, env: dev.env.slice(-50), py: dev.py.slice(0, 60), copied: dev.copied.length, status: dev.status, shownPy: dev.shownPy })
   );
 }
 // It is ONE LINE that opens the list: written out, the list made the card cover the whole faded map
@@ -299,7 +311,8 @@ ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpa
       visible: line,
       text: el.innerText,
       regions: [...el.querySelectorAll('li')].map((li) => [li.firstChild.textContent.trim(), Number(li.querySelector('b').textContent)]),
-      figure: document.querySelector('.fig')?.textContent || '',
+      // The page's own figure: THE coverage sentence, in the Questions band since front-page-v3 (the "Four ways" card's until then).
+      figure: document.getElementById('cover-figure')?.textContent || '',
     };
     el.open = false; // closed again, so the checks that follow see the card as a visitor first does
     return read;
@@ -1288,8 +1301,9 @@ const frontText = await page.locator('body').textContent();
   // The 50 INCORPORATED places (43 cities, 7 towns): the file also holds 28 census-designated
   // places, unincorporated, which are outlines on the map and never 'cities'.
   const bayPlaces = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-places.json'), 'utf8')).places.filter((x) => x.kind === 'city' || x.kind === 'town').length;
-  const want = `${csvRows}council areas in ${csvRegions} UK city regions, New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities`;
-  const fig = (await page.locator('.cards .fig').first().textContent()).trim();
+  // THE coverage sentence (CLAUDE.md), word for word, in the Questions band since front-page-v3 (2026-11-03).
+  const want = `${csvRows} council areas in ${csvRegions} UK city regions, plus New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities (facts only).`;
+  const fig = (await page.locator('#cover-figure').textContent()).trim();
   ok(fig === want, 'the coverage figure is recounted from the data: UK council areas and city regions, New York boroughs, Bay Area cities', `page "${fig}" vs data "${want}"`);
 }
 const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
@@ -1613,8 +1627,9 @@ const BOOK_WANT = {
   '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
   '/api/': ['book-demo-api-bar', 'book-demo-api-page'],
   '/score-demo/index.html': ['book-demo-score-demo-page'],
-  // The front page (Bill, 2026-11-02): the business card's button, then the closing band, each named by its data-book-place.
-  '/': ['book-demo-home-card', 'book-demo-home-band'],
+  // The front page: the "Can I use it for my business?" answer, then the closing band, each named by its data-book-place
+  // (front-page-v3, Bill's mock v8, 2026-11-03; the business card's button, `card`, from 2026-11-02 until then).
+  '/': ['book-demo-home-faq', 'book-demo-home-band'],
 };
 for (const [path, want] of Object.entries(BOOK_WANT)) {
   const inBar = want.some((w) => w.endsWith('-bar'));
@@ -1675,10 +1690,10 @@ for (const [path, want] of Object.entries(BOOK_WANT)) {
   await page.setViewportSize({ width: 390, height: 820 });
   await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof window.goatcounter?.count === 'function', null, { timeout: 10000 }).catch(() => {});
-  const pageLine = await page.evaluate((url) => {
-    const a = [...document.querySelectorAll(`a[href="${url}"]`)].find((x) => !x.closest('#site-nav'));
-    return Boolean(a) && a.getClientRects().length > 0 && getComputedStyle(a).visibility !== 'hidden';
-  }, BOOK);
+  // A page line on show, not the first one in the page: the front page's first (`faq`, front-page-v3) sits in a closed
+  // question until it is opened, and its closing band is on show.
+  const pageLine = await page.evaluate((url) => [...document.querySelectorAll(`a[href="${url}"]`)]
+    .some((a) => !a.closest('#site-nav') && a.getClientRects().length > 0 && getComputedStyle(a).visibility !== 'hidden'), BOOK);
   let menuSent = [];
   if (inBar) {
     await page.evaluate(() => {
@@ -2130,10 +2145,12 @@ const makeReport = async (pc) => {
   const UK = CSV.filter((r) => r.ons_code);
   const num = (v) => (v === '' ? null : Number(v));
   const order = (a, b) => (Number(b.score || -1) - Number(a.score || -1)) || (Number(a.avg_price_gbp) - Number(b.avg_price_gbp));
-  const selectedTab = () => fp.locator('[role="tab"][aria-selected="true"]').getAttribute('id');
+  // The search panel's tabs only (`.panel`): the walkthrough and the code samples below the map have tab lists of their
+  // own since front-page-v3 (2026-11-03), and an unscoped locator would match three selected tabs.
+  const selectedTab = () => fp.locator('.panel [role="tab"][aria-selected="true"]').getAttribute('id');
 
   // Real tabs: two, each naming a real panel, one tab stop, the arrow keys move and select.
-  const tabs = await fp.locator('[role="tablist"] [role="tab"]').evaluateAll((ts) => ts.map((t) => [t.id, t.getAttribute('aria-controls'), t.tabIndex, Boolean(document.getElementById(t.getAttribute('aria-controls'))?.matches('[role="tabpanel"]'))]));
+  const tabs = await fp.locator('.panel [role="tablist"] [role="tab"]').evaluateAll((ts) => ts.map((t) => [t.id, t.getAttribute('aria-controls'), t.tabIndex, Boolean(document.getElementById(t.getAttribute('aria-controls'))?.matches('[role="tabpanel"]'))]));
   ok(JSON.stringify(tabs) === JSON.stringify([['tab-check', 'panel-check', 0, true], ['tab-find', 'panel-find', -1, true]]),
     'find: two real tabs, each controlling a real panel, with one tab stop', JSON.stringify(tabs));
   await fp.locator('#tab-check').focus();
@@ -2328,8 +2345,8 @@ const makeReport = async (pc) => {
 
 // 18e. FIND AREAS IS PART OF THE PAGE, NOT A HIDDEN TAB (Bill, 2026-10-14: "where are the options exactly",
 // then "it can fit better on the website"). /#find opens the tab, and is not engagement (nobody has done
-// anything); the "Find an area that fits" card opens it; and the card's figure is the number of choices
-// the tab offers, counted from the page, never a number someone has to remember to change.
+// anything); and the "Find an area that fits" row opens it (a card until front-page-v3, 2026-11-03, whose figure, the
+// number of choices, was held here; the row carries no figure).
 {
   const dp = await context.newPage();
   await dp.addInitScript(() => {
@@ -2343,13 +2360,10 @@ const makeReport = async (pc) => {
   ok((await dp.locator('#tab-find').getAttribute('aria-selected')) === 'true' && await dp.locator('#panel-find').isVisible(), 'find: /#find opens the Find areas tab');
   ok((await dp.evaluate(() => window.__gc.slice())).length === 0, 'find: and a link opening it is not counted as engagement', JSON.stringify(await dp.evaluate(() => window.__gc.slice())));
   await dp.locator('#tab-check').click();
-  const card = dp.locator('.card', { has: dp.locator('a[href="#find"]') });
-  await card.locator('a[href="#find"]').click();
+  const row = dp.locator('.ways li', { has: dp.locator('a[href="#find"]') });
+  await row.locator('a[href="#find"]').click();
   ok((await dp.locator('#tab-find').getAttribute('aria-selected')) === 'true' && await dp.evaluate(() => document.activeElement?.id === 'tab-find'),
-    'find: the "Find an area that fits" card opens the tab, with focus on it');
-  const choices = await dp.locator('#fit-avoid input, #fit-want input').count();
-  const fig = (await card.locator('.fig').evaluate((el) => el.firstChild.textContent)).trim();
-  ok(choices > 0 && fig === String(choices), 'find: the card\'s figure is the number of choices the tab offers', `${fig} vs ${choices}`);
+    'find: the "Find an area that fits" row opens the tab, with focus on it');
   // Review 2026-10-23: "Search a postcode" in "Who it is for" (/#check) scrolled to the hidden check panel and did
   // nothing while Find areas was open. The Find tab is open here (the card above opened it).
   await dp.locator('section.who a[href="/#check"]').click();

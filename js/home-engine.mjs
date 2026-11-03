@@ -1316,7 +1316,10 @@ async function search(raw, { example = false } = {}) {
   if (!example) say('Looking it up...');
   closeBorough(false);
   try {
-    const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
+    // The example's two lookups are exampleAnswer()'s, shared with the walkthrough below the map (one pair of
+    // requests for both); a visitor's own search makes its own.
+    const ex = example ? await exampleAnswer() : null;
+    const geo = example ? { result: ex?.geo ?? null } : await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
     if (stale()) return;
     if (!geo.result) { if (!example) { say('That postcode was not found, and no place on the map has that name.'); wantCountry(); } return; }
     const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
@@ -1325,7 +1328,7 @@ async function search(raw, { example = false } = {}) {
     // screen is how the live site once told a Norwich reader about Stansted.
     if (city && city !== state.city) await show(city, { lat, lon }); else if (city) draw({ lat, lon });
     if (stale()) return;
-    const env = await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
+    const env = example ? ex.env : await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
     if (stale()) return;
     if (!env.environment) { if (!example) say(env.error || 'No figures for that spot.'); return; }
     if (example) {
@@ -1460,6 +1463,33 @@ async function loadPlanes(postcode) {
   }
   return [await planesFiles.get(district), info];
 }
+
+// ---- the example's figures, for the walkthrough below the map (front-page-v3, 2026-11-03) ----
+// The walkthrough ("From a postcode to a sourced answer", js/home-sections.mjs) SHOWS what a search gives with the
+// example's own answer, never a figure typed into the page: these hand it the same lookups and files the answer
+// above reads. exampleAnswer() is the example's postcodes.io and /v1/environment pair, made once and shared with
+// search(), so the walkthrough costs no second pair; it resolves to { geo, env } or null (not found, no figures, a
+// failed fetch), and a failure is retried on the next call, as the planes files are. A deep link never runs the
+// example, so then the walkthrough asks for it itself when it comes near the screen.
+let exampleLoad = null;
+export function exampleAnswer() {
+  const pc = (byId('ans-example')?.dataset.pc || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!pc) return Promise.resolve(null);
+  exampleLoad ??= (async () => {
+    const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`)).json();
+    if (!geo?.result) return null;
+    const env = await (await fetch(`${ENV}?lat=${geo.result.latitude}&lon=${geo.result.longitude}`)).json();
+    return env?.environment ? { geo: geo.result, env } : null;
+  })().catch(() => null).then((found) => {
+    if (!found) exampleLoad = null;
+    return found;
+  });
+  return exampleLoad;
+}
+/** [district file, airports.json] for a postcode, from the answer's own loaders (fetched once, kept). */
+export const planesFilesFor = (postcode) => loadPlanes(postcode);
+/** [Breathe London sensors, DEFRA monitors], the answer's own files (fetched once, kept). */
+export const airFiles = () => Promise.all([loadSensors(), loadMonitors()]);
 
 function render(postcode, district, city, e, lat, lon) {
   const title = byId('ans-title'), where = byId('ans-where');

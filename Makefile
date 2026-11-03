@@ -811,6 +811,11 @@ home-deploy: booking-link-check
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync home/reports/ s3://$(S3_BUCKET)/reports/  \
 		--exclude "*" --include "*.pdf"  \
 		--content-type "application/pdf" --cache-control "public,max-age=86400" --region $(AWS_REGION)
+	# The front page's picture of the sample report's first page (2026-11-03, scripts/build_report_still.py), cached
+	# like the PDF it is made from.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync home/reports/ s3://$(S3_BUCKET)/reports/  \
+		--exclude "*" --include "*.webp"  \
+		--content-type "image/webp" --cache-control "public,max-age=86400" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync home/moved/preview/ s3://$(S3_BUCKET)/preview/  \
 		--exclude "*" --include "*.html"  \
 		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)

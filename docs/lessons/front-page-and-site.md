@@ -779,3 +779,25 @@ destinations linked 3+ times), then each looked at whole: claude.ai/artifact/DKt
   FRONT PAGE's (NOW.md's ~20 Nov list), misread onto Pricing; the rest of its length is prices and terms, which a
   buyer should never have to click for. **API**: the repeats are the hero's three buttons and the numbered "Get
   started" steps, each inline where it is needed. Lesson: before proposing a cut, find the thing on the page.
+
+### Front-page-v3 step 1: the lower page (2026-11-03, branch `front-page-v3`)
+
+Built from Bill's mock v8 (version 12). Three rules decided the build, each now held by a test:
+- **No figure typed below the hero.** The walkthrough's noise, air and planes steps are WRITTEN from the example answer
+  the hero already fetches: `home-engine.mjs` `exampleAnswer()` makes the example's postcodes.io + `/v1/environment`
+  pair once and both the hero and `js/home-sections.mjs` read it (measured: a plain visit still makes exactly two
+  lookups). The hero gives way when a visitor acts first; the walkthrough does not, because the lookup no longer
+  belongs to `search()`. A deep link never runs the example, so the walkthrough asks for it near the screen (at
+  1366 px that is at once: it sits under the map). Pure parts: `noiseRows` / `airPanel` (`tests/home-sections.mjs`),
+  `planesWalk` (`tests/planes-model.mjs`).
+- **The report picture is made, never copied.** `build_report_still.py` renders the top of the sample PDF's first page
+  and records both hashes; `--check` reds when the PDF is regenerated (as the 1 Nov roll showed a stored file goes stale
+  unseen), when the picture is edited, or when the page sizes it wrongly.
+- **The dark band switches itself off.** `build_planes_pages.py` writes it from the council index's `consultation`
+  entry: open, it names each council's pack page; from the day after `until`, the planes pages band. Its `--check` runs
+  even where the tracks are missing (a stale band is a defect on any clone, never inconclusive). The mock's Hounslow
+  table was NOT built: its figures would make the front page a fourth writer of planes figures (CLAUDE.md names three).
+Also: front-page.mjs's search-tab checks are scoped to `.panel` (the page now has three tab lists, and an unscoped
+Playwright locator fails strict mode on three selected tabs); an arrow GLYPH in a button's disc is text axe cannot
+judge (incomplete), so the pills draw it in CSS; and a bash heredoc in the agent's shell turned a double backslash into a single one
+inside Python sources, twice: write such edits as a script file, or build the string with `chr(92)`.

@@ -66,6 +66,8 @@
         --focus: #d35a12;
         --orange-ink: #a85416;
         --water: #dbe4e8;
+        /* The walkthrough's band (front-page-v3, 2026-11-03): the brand orange, faint. */
+        --tint: #fbeee3;
         --font-display: 'Geist', system-ui, sans-serif;
         --font-body: 'Inter', system-ui, sans-serif;
         --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -342,39 +344,159 @@
       .tip { position: absolute; pointer-events: none; background: var(--dark); color: #fff; font-size: 13px; padding: 8px 10px; border-radius: 8px; display: none; max-width: 260px; line-height: 1.35; }
       .tip b { display: block; font-size: 14px; }
 
-      section.cards { padding: 56px var(--gutter) 8px; }
-      section.cards h2, section.who h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.8vw, 34px); letter-spacing: -0.02em; margin: 0 0 20px; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
-      .card { background: var(--paper); border-radius: 16px; padding: 26px 26px 22px; display: flex; flex-direction: column; gap: 10px; }
-      .card h3 { font-family: var(--font-display); font-weight: 600; font-size: 21px; letter-spacing: -0.01em; margin: 0; }
-      .card p { margin: 0; color: var(--mid); }
-      .card .fig { font-family: var(--font-display); font-weight: 700; font-size: 34px; letter-spacing: -0.02em; line-height: 1; margin-top: 6px; }
-      .card .fig small { display: block; font: 400 13px var(--font-body); color: var(--mid); margin-top: 4px; }
-      .card a.go { margin-top: auto; align-self: flex-start; font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
-      .card a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
-      .card .go-row { margin-top: auto; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
-      .card .go-row a.go { margin-top: 0; }
-      .card a.also { display: inline-block; padding: 5px 0; font-size: 14px; font-weight: 600; color: var(--orange-ink); }
+      /* ---------- THE LOWER PAGE (front-page-v3 step 1, 2026-11-03: Bill's mock v8, version 12) ----------
+         Full-width bands, each a 1200 px column, alternating their ground so no two neighbours share one: the
+         walkthrough's tint, plain (the page's own), paper ruled top and bottom, and the one dark band (Bill: "separate
+         the lower part better"; none has its padding cut). Two columns from 900 px. */
+      .band { padding-block: clamp(56px, 7vw, 104px); }
+      .band-tint { margin-top: clamp(32px, 4vw, 56px); background: var(--tint); }
+      .band-paper { background: var(--paper); border-block: 1px solid var(--line); }
+      .band-dark { background: var(--dark); color: #f3f1ec; }
+      .wrap { max-width: 1200px; margin: 0 auto; padding-inline: var(--gutter); }
+      .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0; font: 500 12px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); }
+      .eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
+      .band h2 { margin: 14px 0 0; font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.06; letter-spacing: -0.03em; text-wrap: balance; }
+      .band .lede { margin: 0; max-width: 46ch; font-size: 17px; line-height: 1.55; color: var(--mid); }
+      .split { display: grid; gap: 18px 56px; align-items: end; }
+      @media (min-width: 900px) { .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+      /* The bands' buttons: a pill with its arrow in a disc (the mock's), orange or ink. */
+      .pill { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 8px 0 18px; border-radius: 999px; font: 600 15px var(--font-body); text-decoration: none; white-space: nowrap; background: var(--orange); color: var(--dark); }
+      .pill i { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-style: normal; background: var(--dark); color: #fff; }
+      /* The arrow is drawn, not written: a glyph in the disc is text with no contrast an audit can judge (axe: incomplete). */
+      .pill i::before { content: '\2192' / ''; }
+      .pill.dark { background: var(--dark); color: #fff; }
+      .pill.dark i { background: var(--orange); color: var(--dark); }
+      .pill:hover { text-decoration: underline; text-underline-offset: 4px; }
 
-      /* For developers (2026-10-19): a dark panel in the gutter, rounded like the cards. Colours on #141414:
-         text #fbfaf8, labels #c9c7c0, links the brand orange (6.8:1), the focus ring #d35a12 (3.6:1, over 3:1). */
-      section.dev { margin: 40px var(--gutter) 0; padding: 30px; border-radius: 16px; background: var(--dark); color: var(--paper);
-        display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px 32px; align-items: start; }
-      section.dev h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.02em; margin: 0 0 12px; }
-      section.dev p { margin: 0 0 14px; }
-      section.dev .go-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin: 4px 0 0; }
-      section.dev a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--paper); color: var(--dark); font-size: 14px; }
-      section.dev a.also { font-size: 14px; font-weight: 600; color: var(--orange); }
-      section.dev .dev-label { font-size: 13px; color: #c9c7c0; margin: 0 0 6px; }
-      section.dev .code { position: relative; margin: 0 0 16px; }
-      section.dev pre { margin: 0; padding: 14px 76px 14px 14px; background: #000; border: 1px solid #333; border-radius: 10px; color: var(--paper);
-        font: 13px/1.55 var(--font-mono); overflow-x: auto; white-space: pre; }
-      section.dev button.copy { position: absolute; top: 8px; right: 8px; min-height: 28px; padding: 4px 10px; border: 1px solid #555; border-radius: 8px;
-        background: #1f1f1f; color: var(--paper); font: 600 12px var(--font-body); cursor: pointer; }
-      section.dev button.copy:hover { border-color: var(--paper); }
-      section.dev .copy-status { margin: 0; min-height: 1.2em; font-size: 13px; color: #c9c7c0; }
+      /* The walkthrough (js/home-sections.mjs): five steps as tabs once the script runs, all five in turn without it.
+         The selected step's underline is #d35a12, 3.5:1 on the card and the tint (a state cue needs 3:1). */
+      .walk { margin-top: 36px; background: #fff; border: 1px solid #efd9c6; border-radius: 18px; overflow: hidden; }
+      .walk-steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+      .walk-steps[hidden] { display: none; }
+      .walk-steps button { min-height: 52px; padding: 11px 12px 9px; border: 0; border-bottom: 3px solid transparent; background: none; font: 500 14px var(--font-body); color: var(--mid); text-align: left; cursor: pointer; }
+      .walk-steps button span { display: block; font: 500 11px var(--font-mono); }
+      /* Five steps in a 320 px phone: "Planes" and "Report" spilled their 57 px tabs at the desktop padding (measured). */
+      @media (max-width: 400px) { .walk-steps button { padding: 10px 4px 8px 6px; font-size: 13px; } }
+      .walk-steps button:hover { color: var(--dark); background: #faf8f5; }
+      .walk-steps button[aria-selected='true'] { color: var(--dark); font-weight: 600; border-bottom-color: var(--focus); }
+      .walk-panel { display: grid; gap: 22px 36px; padding: clamp(20px, 3vw, 36px); }
+      .walk-panel[hidden] { display: none; }
+      .walk-panel + .walk-panel { border-top: 1px solid var(--line); }
+      .walk.is-tabbed .walk-panel { border-top: 0; }
+      @media (min-width: 900px) { .walk-panel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; min-height: 320px; } }
+      .walk-n { margin: 0 0 6px; font: 500 12px var(--font-mono); color: var(--orange-ink); }
+      .walk.is-tabbed .walk-n { display: none; }
+      .walk-panel h3 { margin: 0 0 10px; font-family: var(--font-display); font-weight: 600; font-size: 22px; line-height: 1.2; letter-spacing: -0.02em; }
+      .walk-text p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--mid); }
+      .walk-demo { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); font-size: 14px; }
+      .walk-wait { margin: 0; font-size: 14px; color: var(--mid); }
+      /* 01: the little search box, the three things it takes, and where each opens. */
+      .walk-box { display: flex; align-items: center; gap: 2px; padding: 6px 6px 6px 14px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; }
+      .walk-typed { min-height: 1.4em; font: 500 18px var(--font-body); }
+      .walk-caret { width: 2px; height: 22px; background: var(--dark); animation: walk-caret 1.1s steps(1) infinite; }
+      @keyframes walk-caret { 50% { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .walk-caret { animation: none; } }
+      .walk-go { margin-left: auto; padding: 9px 14px; border-radius: 9px; background: var(--orange); font: 600 14px var(--font-body); }
+      .walk-try { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 12px 0; }
+      .walk-try button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; min-height: 44px; padding: 8px 10px; border: 1px solid #b9b5ac; border-radius: 10px; background: #fff; font: 500 12px var(--font-body); color: var(--mid); text-align: left; cursor: pointer; }
+      .walk-try button b { font: 600 15px var(--font-mono); color: var(--dark); }
+      .walk-try button:hover { border-color: var(--dark); }
+      .walk-try button[aria-pressed='true'] { border-color: var(--dark); box-shadow: inset 0 0 0 1px var(--dark); }
+      .walk-opens { margin: 0; font-size: 14px; line-height: 1.5; color: var(--mid); }
+      .walk-opens b { font-weight: 600; color: var(--dark); }
+      .walk-tag { display: inline-block; margin-right: 4px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; font: 500 10px var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; vertical-align: 1px; }
+      .walk-yours { margin: 12px 0 0; }
+      .walk-yours a { display: inline-block; padding: 4px 0; font-weight: 600; color: var(--orange-ink); }
+      /* 02 to 04: the example's own answer, written in by the script. */
+      .walk-rows { display: grid; gap: 10px; }
+      .walk-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+      .walk-label small { display: block; font-size: 11px; color: var(--mid); }
+      .walk-bar { position: relative; height: 10px; border-radius: 5px; background: #e6e4de; }
+      .walk-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--orange); }
+      .walk-bar b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--dark); }
+      .walk-fig { font: 600 14px var(--font-mono); text-align: right; white-space: nowrap; }
+      .walk-note { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--mid); }
+      .walk-note a { color: var(--orange-ink); font-weight: 600; }
+      .walk-air { margin: 0; }
+      .walk-air figcaption { margin: 0 0 4px; font: 600 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      .walk-air svg { display: block; width: 100%; height: auto; }
+      .walk-planes-head { margin: 0 0 14px; font-size: 15px; line-height: 1.45; }
+      .walk-planes-head b { font-family: var(--font-display); }
+      .walk-pbars { display: grid; gap: 12px; }
+      .walk-pb { display: grid; grid-template-columns: 7.4em minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+      .walk-pb-l { display: flex; flex-direction: column; font: 600 13px/1.25 var(--font-body); }
+      .walk-pb-l small { font-weight: 400; font-size: 12px; color: var(--mid); }
+      .walk-pb-t { position: relative; height: 12px; border-radius: 4px; background: #e6e4de; overflow: hidden; }
+      /* A bar under the layer's first step takes no colour of its own: the layer draws nothing there. */
+      .walk-pb-t i { position: absolute; top: 0; bottom: 0; min-width: 3px; border-radius: 4px; background: #b9b5ac; }
+      .walk-pb-t i.range { opacity: 0.6; }
+      .walk-pb-v { font: 700 17px var(--font-display); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      /* 05: the top of the real sample report's first page (scripts/build_report_still.py), fading where it goes on. */
+      .walk-report { display: grid; gap: 12px; }
+      .walk-page { position: relative; max-height: 300px; overflow: hidden; border: 1px solid var(--line); border-bottom: 0; border-radius: 6px 6px 0 0; background: #fff; box-shadow: 0 14px 28px -18px rgba(20, 20, 20, 0.45); }
+      .walk-page img { display: block; width: 100%; height: auto; }
+      .walk-page::after { content: ''; position: absolute; inset: auto 0 0 0; height: 56px; background: linear-gradient(rgba(244, 243, 239, 0), var(--bg)); }
+      .walk-has { display: grid; gap: 3px; margin: 0; padding-left: 18px; font-size: 13px; color: var(--mid); }
+      .walk-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0; font-size: 14px; font-weight: 600; }
+      .walk-cta a { display: inline-block; padding: 4px 0; color: var(--dark); }
+      .walk-cta a.walk-btn { padding: 9px 14px; border-radius: 999px; background: var(--dark); color: #fff; text-decoration: none; }
 
-      section.who { padding: 40px var(--gutter) 56px; }
+      /* See it from above: the film's still, and the way to the approach strip on /how-it-works/. */
+      .above { display: grid; gap: 24px 56px; align-items: center; }
+      @media (min-width: 900px) { .above { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
+      .above img { display: block; width: 100%; height: auto; border-radius: 18px; }
+      .above .lede { margin: 16px 0 24px; }
+
+      /* Beyond one street: numbered rows, in the order a buyer meets them. */
+      .ways { margin: 36px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--dark); }
+      .ways li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 6px 14px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+      .ways li > p { grid-column: 2; }
+      @media (min-width: 900px) {
+        .ways li { grid-template-columns: 60px minmax(0, 0.9fr) minmax(0, 1.3fr) 12em; gap: 20px; align-items: baseline; }
+        .ways li > p { grid-column: auto; }
+      }
+      .way-n { font: 500 12px var(--font-mono); color: var(--orange-ink); }
+      .ways h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 1.25; letter-spacing: -0.015em; }
+      .ways p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--mid); }
+      .ways p.way-go { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+      .way-go a { display: inline-block; padding: 3px 0; font-size: 15px; font-weight: 600; color: var(--orange-ink); white-space: nowrap; }
+
+      /* For developers (light since 2026-11-03; dark until then): one open request in three languages, in a dark code box.
+         Colours on #141414: words #f3f1ec, tab edges #5a5a56 with their words #d9d7d0 (12.8:1), the focus ring #d35a12 (4.6:1). */
+      section.dev .code { min-width: 0; padding: 14px; border-radius: 16px; background: var(--dark); color: #f3f1ec; }
+      .code-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+      .code-tabs[hidden] { display: none; }
+      .code-tabs button { min-height: 32px; padding: 6px 12px; border: 1px solid #5a5a56; border-radius: 8px; background: none; color: #d9d7d0; font: 500 13px var(--font-mono); cursor: pointer; }
+      .code-tabs button:hover { border-color: #d9d7d0; }
+      .code-tabs button[aria-selected='true'] { border-color: #f3f1ec; background: #f3f1ec; color: var(--dark); }
+      section.dev [role='tabpanel'] + [role='tabpanel'] { margin-top: 10px; }
+      section.dev .is-tabbed [role='tabpanel'] + [role='tabpanel'] { margin-top: 0; }
+      section.dev pre { margin: 0; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #000; color: #f3f1ec; font: 13px/1.6 var(--font-mono); overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .code-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 0; }
+      section.dev button.copy { min-height: 32px; padding: 4px 12px; border: 1px solid #5a5a56; border-radius: 8px; background: #1f1f1f; color: #f3f1ec; font: 600 13px var(--font-body); cursor: pointer; }
+      section.dev button.copy:hover { border-color: #f3f1ec; }
+      section.dev .copy-status { font-size: 13px; color: #d9d7d0; }
+      .code-note { margin: 8px 0 0; font-size: 12px; color: #b9b6ae; }
+      section.dev .lede { margin: 16px 0 0; }
+      section.dev .go-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 24px 0 0; }
+      section.dev a.also { display: inline-block; padding: 4px 0; font-size: 15px; font-weight: 600; color: var(--orange-ink); }
+      @media (min-width: 900px) { section.dev .split { align-items: start; } }
+
+      /* The dark band, written by scripts/build_planes_pages.py (Heathrow's consultation while it is open, the planes
+         pages after). On #141414: headings #fff, words #d9d7d0, the eyebrow #b9b6ae (9:1), the orange pill's ink 6.8:1. */
+      .band-dark .eyebrow { color: #b9b6ae; }
+      .band-dark h2 { color: #fff; }
+      .band-dark .lede { margin: 18px 0 26px; color: #d9d7d0; }
+      .band-dark .split { align-items: center; }
+      .band-card { padding: 18px; border-radius: 16px; background: #fff; color: var(--dark); box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.06); }
+      .band-card h3 { margin: 0 0 4px; font: 600 15px var(--font-display); }
+      .band-card p { margin: 0 0 12px; font-size: 13px; color: var(--mid); }
+      .band-card ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+      .band-card a { display: inline-block; padding: 5px 10px; border: 1px solid #b9b5ac; border-radius: 999px; font-size: 13px; color: var(--dark); text-decoration: none; }
+      .band-card a:hover { border-color: var(--dark); text-decoration: underline; }
+      /* On a phone the list of councils was a screen and a half of pills (measured at 390 px): there the button alone,
+         to the pack's own page, which lists every council. */
+      @media (max-width: 759px) { .band-card { display: none; } }
       /* Who it is for (2026-10-22): the list is written by scripts/build_who_for.py, the same words the About page
          carries; here it is a card for choosing a home, the professions as a list, and the founder strip. */
       section.who .who-label { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--mid); }
@@ -395,22 +517,32 @@
       ul.who-list span { color: var(--mid); font-size: 16px; }
       ul.who-list a { font-weight: 600; font-size: 15px; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
       ul.who-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
-      /* Book a demo's band (2026-11-02): dark like the developers panel, so the page ends on one clear button. On #141414:
-         the words #d9d7d0, the button the brand orange with dark ink (6.3:1), the focus ring #d35a12 (3.6:1, over 3:1). */
-      .book-band { max-width: 1120px; margin: 0 0 30px; padding: clamp(22px, 3vw, 32px); border-radius: 18px; background: var(--dark); color: var(--paper);
-        display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 40px; align-items: center; }
+      section.who h2 { margin-bottom: 30px; }
+      /* Questions: plain disclosures. Their + and minus are drawn with empty alt text, so a screen reader reads the
+         question alone. */
+      .faq { display: grid; gap: 24px 64px; }
+      @media (min-width: 900px) { .faq { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); } }
+      .faq details { padding: 16px 0; border-top: 1px solid var(--line); }
+      .faq details:last-child { border-bottom: 1px solid var(--line); }
+      .faq summary { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; font: 600 17px var(--font-display); letter-spacing: -0.01em; cursor: pointer; list-style: none; }
+      .faq summary::-webkit-details-marker { display: none; }
+      .faq summary::after { content: '+' / ''; font-weight: 400; }
+      .faq details[open] summary::after { content: '\2212' / ''; }
+      .faq details p { margin: 10px 0 0; max-width: 62ch; font-size: 15px; line-height: 1.6; color: var(--mid); }
+      .faq details a { color: var(--orange-ink); font-weight: 600; }
+      /* Book a demo's closing band (2026-11-02; a light card since 2026-11-03, the dark band being the consultation's),
+         then the founder line. */
+      .book-band { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px 40px; align-items: center; padding: clamp(24px, 4vw, 48px); border: 1px solid var(--line); border-radius: 20px; background: var(--paper); }
       @media (min-width: 760px) { .book-band { grid-template-columns: minmax(0, 1.4fr) auto; } }
-      .book-band h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.02em; margin: 0 0 6px; }
-      section.who .book-band p { margin: 0; font-size: 17px; color: #d9d7d0; }
-      .book-band a { justify-self: start; display: inline-block; padding: 13px 20px; border-radius: 10px; background: var(--orange); color: var(--dark); font-weight: 700; font-size: 16px; text-decoration: none; white-space: nowrap; }
-      .book-band a:hover { text-decoration: underline; text-underline-offset: 4px; }
-      .founder { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 22px 12px 12px; background: var(--paper); border-radius: 16px; max-width: 1120px; }
-      .founder img { width: 56px; height: 56px; border-radius: 50%; flex: none; }
-      section.who .founder p { margin: 0; font-size: 16px; line-height: 1.45; color: var(--dark); flex: 1 1 260px; }
+      .book-band h2 { margin-top: 12px; }
+      .book-band .lede { margin-top: 14px; }
+      .founder { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 22px; }
+      .founder img { width: 48px; height: 48px; border-radius: 50%; flex: none; }
+      .founder p { flex: 1 1 260px; margin: 0; font-size: 15px; line-height: 1.45; color: var(--mid); }
       .founder a { font-weight: 600; white-space: nowrap; color: var(--orange-ink); text-decoration: none; }
       .founder a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
-      footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
+      footer { padding: 24px var(--gutter) 40px; border-top: 1px solid var(--line); font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer .route-credit { flex-basis: 100%; order: 3; font-size: 12px; }
       footer a { color: var(--mid); }
 
@@ -608,105 +740,274 @@
         </div>
       </section>
 
-      <section class="cards" aria-labelledby="ways">
-        <h2 id="ways">Four ways to use it</h2>
-        <div class="grid">
-          <article class="card">
-            <h3>Check an address</h3>
-            <p>Aircraft and road noise, air quality and flood risk for any postcode in the UK city regions we cover, with the public body behind each figure.</p>
-            <div class="fig">97<small>council areas in 13 UK city regions, New York's 5 boroughs and 50 Bay Area cities</small></div>
-            <div class="go-row"><a class="go" href="#pc">Check a postcode</a><a class="also" href="/area/">Every council area</a></div>
-          </article>
-          <!-- Find areas (2026-10-14): the panel's second tab. The link opens it (js/home-engine.mjs), and /#find works from anywhere. -->
-          <article class="card">
-            <h3>Find an area that fits</h3>
-            <p>Set a budget and what you want to avoid or be near, such as aircraft noise, busy roads, flood risk or a station, and see which council areas fit, shaded on the map.</p>
-            <div class="fig">6<small>things to avoid or want, plus your budget</small></div>
-            <div class="go-row"><a class="go" href="#find">Find areas</a></div>
-          </article>
-          <article class="card" id="reports">
-            <h3>Reports for your street</h3>
-            <p>One page of the official figures for the streets you name. Free for your own home and for residents' groups; for buying agents and surveyors, a sourced answer to hand to a client.</p>
-            <div class="fig">1 page<small>every number with its source and its date</small></div>
-            <div class="go-row"><a class="go" href="/reports/street/">Make yours, free</a><a class="also" href="/pricing#reports">What it costs</a></div>
-          </article>
-          <article class="card">
-            <h3>Data for your business</h3>
-            <p>The same figures through an API, in your own system, or as one open file of every UK council area, free for non-commercial use, to rank and compare.</p>
-            <div class="fig">10,000<small>lookups a month on the free tier</small></div>
-            <!-- Book a demo leads here (Bill, 2026-11-02, after arcive.ai): the card a business reads first, in the first scroll. -->
-            <div class="go-row"><a class="go" href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="card">Book a demo</a><a class="also" href="/api/">Read the docs</a></div>
-          </article>
+      <!-- THE LOWER PAGE (front-page-v3 step 1, 2026-11-03; Bill's mock v8, version 12, claude.ai/artifact/8WjimVxDSZioMkdSCTVCuf;
+           the decisions in ROADMAP's START HERE of 3 Nov). Full-width bands alternate their ground, none with its
+           padding cut. NO FIGURE IS TYPED here: the walkthrough's steps 02 to 04 are written by js/home-sections.mjs from
+           the example answer the map above fetches (planes only through js/planes.mjs), step 05 is a picture
+           scripts/build_report_still.py makes from the sample PDF, and the dark band is scripts/build_planes_pages.py's. -->
+      <section class="band band-tint" id="walkthrough" aria-labelledby="walk-h">
+        <div class="wrap">
+          <div class="split">
+            <div><p class="eyebrow">One postcode</p><h2 id="walk-h">From a postcode to a sourced answer.</h2></div>
+            <p class="lede">A walk through one search. The street is a real example, and every figure in it is the site's own answer for that street today.</p>
+          </div>
+          <div class="walk">
+            <!-- Tabs once js/home-sections.mjs runs (hidden until then, so without it the five steps read in turn). -->
+            <div class="walk-steps" role="tablist" aria-label="The steps of a search" hidden>
+              <button type="button" role="tab" id="walk-tab-1" aria-controls="walk-1" aria-selected="true"><span>01</span>Search</button>
+              <button type="button" role="tab" id="walk-tab-2" aria-controls="walk-2" aria-selected="false" tabindex="-1"><span>02</span>Noise</button>
+              <button type="button" role="tab" id="walk-tab-3" aria-controls="walk-3" aria-selected="false" tabindex="-1"><span>03</span>Air</button>
+              <button type="button" role="tab" id="walk-tab-4" aria-controls="walk-4" aria-selected="false" tabindex="-1"><span>04</span>Planes</button>
+              <button type="button" role="tab" id="walk-tab-5" aria-controls="walk-5" aria-selected="false" tabindex="-1"><span>05</span>Report</button>
+            </div>
+            <div class="walk-panel" id="walk-1" role="tabpanel" aria-labelledby="walk-tab-1" tabindex="0">
+              <div class="walk-text">
+                <p class="walk-n">01</p>
+                <h3>Type a postcode, a place or a ZIP</h3>
+                <p>Any full postcode in the UK city regions we cover, a council area by name, or a Bay Area ZIP (New York&rsquo;s are on the full map). A postcode opens on its own street, with the street&rsquo;s own figures wherever they exist, never the council&rsquo;s average.</p>
+              </div>
+              <div class="walk-demo">
+                <div class="walk-box" aria-hidden="true"><span class="walk-typed" id="walk-typed">TW9 3PZ</span><span class="walk-caret"></span><span class="walk-go">Check</span></div>
+                <div class="walk-try" role="group" aria-label="Try an example">
+                  <button type="button" data-walk-try="postcode" aria-pressed="true"><b>TW9 3PZ</b>a postcode</button>
+                  <button type="button" data-walk-try="place" aria-pressed="false"><b>Hounslow</b>a place</button>
+                  <button type="button" data-walk-try="zip" aria-pressed="false"><b>94301</b>a Bay Area ZIP</button>
+                </div>
+                <p class="walk-opens" aria-live="polite"><span class="walk-tag">Opens on</span>
+                  <span data-walk-opens="postcode"><b>TW9 3PZ, Kew</b>, in Richmond upon Thames, under Heathrow&rsquo;s arrivals: the street&rsquo;s own noise, air and planes.</span>
+                  <span data-walk-opens="place" hidden><b>Hounslow</b>, the council area&rsquo;s card: its score, the five scores behind it and its official figures, with the full scorecard a click away.</span>
+                  <span data-walk-opens="zip" hidden><b>Palo Alto</b>, the Bay Area city holding half or more of the ZIP&rsquo;s residents: its facts and the routes over it.</span>
+                </p>
+                <p class="walk-yours"><a href="#pc">Search yours</a></p>
+              </div>
+            </div>
+            <div class="walk-panel" id="walk-2" role="tabpanel" aria-labelledby="walk-tab-2" tabindex="0">
+              <div class="walk-text">
+                <p class="walk-n">02</p>
+                <h3>Noise, against the WHO guideline</h3>
+                <p>DEFRA&rsquo;s modelled aircraft and road noise for the postcode, each drawn against the World Health Organization&rsquo;s guideline, so a reading says how far over it the street is. Where DEFRA does not map aircraft noise, an estimate from the published routes, which says so.</p>
+              </div>
+              <div class="walk-demo" data-walk-fill="noise" aria-busy="true" aria-live="polite"><p class="walk-wait">The example&rsquo;s noise figures appear here as it loads.</p></div>
+            </div>
+            <div class="walk-panel" id="walk-3" role="tabpanel" aria-labelledby="walk-tab-3" tabindex="0">
+              <div class="walk-text">
+                <p class="walk-n">03</p>
+                <h3>Air: the model, and what is measured</h3>
+                <p>DEFRA&rsquo;s model for the postcode&rsquo;s own 1 km square, beside the nearest Breathe London sensor and DEFRA monitor nearby, on one scale with the guideline drawn through it. The model is a ring, a measurement a solid mark.</p>
+              </div>
+              <div class="walk-demo" data-walk-fill="air" aria-busy="true" aria-live="polite"><p class="walk-wait">The example&rsquo;s air figures appear here as it loads.</p></div>
+            </div>
+            <div class="walk-panel" id="walk-4" role="tabpanel" aria-labelledby="walk-tab-4" tabindex="0">
+              <div class="walk-text">
+                <p class="walk-n">04</p>
+                <h3>Planes overhead, set by the wind</h3>
+                <p>Planes land and take off into the wind, so the wind decides which way an airport flies, and that decides how many pass over a street. Counted from flight tracking, and checked against the CAA&rsquo;s monthly totals.</p>
+              </div>
+              <div class="walk-demo" data-walk-fill="planes" aria-busy="true" aria-live="polite"><p class="walk-wait">The example&rsquo;s planes appear here as it loads.</p></div>
+            </div>
+            <div class="walk-panel" id="walk-5" role="tabpanel" aria-labelledby="walk-tab-5" tabindex="0">
+              <div class="walk-text">
+                <p class="walk-n">05</p>
+                <h3>A page to keep, every figure sourced</h3>
+                <p>One page of the official figures for the street you name, each with who published it and when, ready to print or send. Free for your own home.</p>
+              </div>
+              <div class="walk-demo walk-report">
+                <!-- REPORT-STILL (scripts/build_report_still.py --write makes the picture from the PDF; its --check holds the size here) -->
+                <div class="walk-page"><img src="/reports/sample-street-report-kew-top.webp" width="960" height="639" loading="lazy" decoding="async" alt="The top of the first page of the Kew example report: its headline figures, each with what it means, above a map of the flight routes near the postcode." /></div>
+                <ul class="walk-has">
+                  <li>The headline figures, each against its guideline</li>
+                  <li>The routes nearby, and how high aircraft are there</li>
+                  <li>How the postcode compares with its neighbours</li>
+                  <li>Every source and its year, at the foot of the page</li>
+                </ul>
+                <p class="walk-cta"><a class="walk-btn" href="/reports/street/">Make yours, free</a><a href="/reports/sample-street-report-kew.pdf">See the Kew example (PDF)</a></p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- FOR DEVELOPERS (2026-10-19): the API is the product, and on this page it was one card of four.
-           Two requests a developer can paste, each with a Copy button: the score (key-gated: the header
-           holds a placeholder, never a key) and the environment figures, which need no key. Both URLs
-           were tried before they were written here (403 without a key; 200), and the host is held to
-           js/api-base.js by scripts/check_api_url_drift.sh, which now reads this page too. -->
-      <section class="dev" aria-labelledby="dev">
-        <div class="dev-copy">
-          <h2 id="dev">For developers: the same figures, one request away</h2>
-          <p>Send a postcode and get back the score, its five components and the source of every figure, as JSON. The noise and air figures at any point need no key at all.</p>
-          <p class="go-row"><a class="go" href="/api/">Get a key and read the docs</a><a class="also" href="/score-demo/api-docs.html">Full API reference</a></p>
-        </div>
-        <div class="dev-code">
-          <p class="dev-label">The score for a postcode (with a free key)</p>
-          <div class="code">
-            <pre tabindex="0" role="region" aria-label="Example request for a postcode's score" id="dev-score">curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postcode=TW9+3PZ' \
-  -H 'X-Api-Key: YOUR_KEY'</pre>
-            <button type="button" class="copy" data-copy="dev-score" aria-label="Copy the score request">Copy</button>
+      <!-- SEE IT FROM ABOVE: a still from the Blender film (about/film-still-battersea.webp), linking to the approach strip.
+           After the rename a short silent loop of the film may take its place (Bill, 3 Nov; NOW.md's Blender line). -->
+      <section class="band" aria-labelledby="above-h">
+        <div class="wrap above">
+          <img src="/about/film-still-battersea.webp" width="1280" height="720" loading="lazy" decoding="async" alt="A still from the film: Battersea from the air, its streets coloured by DEFRA's aircraft noise, a plane on Heathrow's approach." />
+          <div>
+            <p class="eyebrow">See it from above</p>
+            <h2 id="above-h">Fly Heathrow&rsquo;s approach over London.</h2>
+            <p class="lede">From Westminster to the runway, see the noise build under one approach, place by place.</p>
+            <a class="pill dark" href="/how-it-works/#see-it">Fly the approach <i aria-hidden="true"></i></a>
           </div>
-          <p class="dev-label">Noise and air at a point (no key needed)</p>
-          <div class="code">
-            <pre tabindex="0" role="region" aria-label="Example request for the environment figures" id="dev-env">curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860'</pre>
-            <button type="button" class="copy" data-copy="dev-env" aria-label="Copy the environment request">Copy</button>
-          </div>
-          <p class="copy-status" id="copy-status" aria-live="polite"></p>
         </div>
       </section>
 
-      <section class="who" aria-labelledby="who">
-        <h2 id="who">Who it is for</h2>
-        <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
-        <div class="who-home">
+      <!-- BEYOND ONE STREET: numbered, in the order a buyer meets them. -->
+      <section class="band band-paper" aria-labelledby="beyond-h">
+        <div class="wrap">
+          <div class="split">
+            <div><p class="eyebrow">More ways in</p><h2 id="beyond-h">Beyond one street.</h2></div>
+            <p class="lede">Whole areas, a page to keep, and the same figures for your own system.</p>
+          </div>
+          <ol class="ways">
+            <li><span class="way-n" aria-hidden="true">01</span><h3>Find an area that fits</h3><p>Set a budget and what you want to avoid or be near, such as aircraft noise, busy roads, flood risk or a station, and see which council areas fit, shaded on the map.</p>
+              <!-- #find opens the Find areas tab above (js/home-engine.mjs), and /#find works from anywhere. -->
+              <p class="way-go"><a href="#find">Find areas</a><a href="/area/">Every council area</a></p></li>
+            <li id="reports"><span class="way-n" aria-hidden="true">02</span><h3>A report for your street</h3><p>One page of the official figures for the streets you name, every number with its source and date. Free for your own home and for residents&rsquo; groups; a sourced answer for agents and surveyors to hand to a client.</p>
+              <p class="way-go"><a href="/reports/">Reports</a><a href="/pricing#reports">What it costs</a></p></li>
+            <li><span class="way-n" aria-hidden="true">03</span><h3>Data for your business</h3><p>The same figures through an API, in your own system, or as one open file of every UK council area, free for non-commercial use.</p>
+              <p class="way-go"><a href="/api/">The API</a><a href="/open-data/">The open data</a></p></li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- FOR DEVELOPERS (2026-10-19; light, with three languages, since 2026-11-03 after Stripe's): the open request a
+           developer can paste, in curl, Python and JavaScript, with a Copy button. The URL was tried before it was written
+           here (200, no key), and the host is held to js/api-base.js by scripts/check_api_url_drift.sh. Tabs once
+           js/home-sections.mjs runs; without it the curl request shows alone. -->
+      <section class="band dev" aria-labelledby="dev">
+        <div class="wrap">
+          <div class="split">
+            <div>
+              <p class="eyebrow">For developers</p>
+              <h2 id="dev">The same figures, one request away.</h2>
+              <p class="lede">Send a postcode or a point and get every figure back with its source, as JSON. Noise and air at any point need no key.</p>
+              <p class="go-row"><a class="pill dark" href="/api/">Get a key and read the docs <i aria-hidden="true"></i></a><a class="also" href="/score-demo/api-docs.html">Full API reference</a></p>
+            </div>
+            <div class="code">
+              <div class="code-tabs" role="tablist" aria-label="Language" hidden>
+                <button type="button" role="tab" id="code-tab-curl" aria-controls="code-curl" aria-selected="true">curl</button>
+                <button type="button" role="tab" id="code-tab-py" aria-controls="code-py" aria-selected="false" tabindex="-1">Python</button>
+                <button type="button" role="tab" id="code-tab-js" aria-controls="code-js" aria-selected="false" tabindex="-1">JavaScript</button>
+              </div>
+              <div role="tabpanel" id="code-curl" aria-labelledby="code-tab-curl"><pre tabindex="0" role="region" aria-label="The request in curl" id="dev-env">curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860'</pre></div>
+              <div role="tabpanel" id="code-py" aria-labelledby="code-tab-py" hidden><pre tabindex="0" role="region" aria-label="The request in Python" id="dev-env-py">import requests
+
+r = requests.get('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment',
+                 params={'lat': 51.4790, 'lon': -0.2860})
+env = r.json()['environment']
+print(env['no2AnnualMeanUgm3'], env['roadNoiseLdenDb'])</pre></div>
+              <div role="tabpanel" id="code-js" aria-labelledby="code-tab-js" hidden><pre tabindex="0" role="region" aria-label="The request in JavaScript" id="dev-env-js">const r = await fetch('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860');
+const { environment } = await r.json();
+console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></div>
+              <p class="code-foot"><button type="button" class="copy" data-copy="dev-env" aria-label="Copy the curl request">Copy</button><span class="copy-status" id="copy-status" aria-live="polite"></span></p>
+              <p class="code-note">Noise and air at a point in Kew: no key needed.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLANES-BAND:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->
+      <section class="band band-dark" id="planes-band" aria-labelledby="planes-band-h">
+        <div class="wrap split">
           <div>
-            <p class="who-label">Choosing a home</p>
-            <h3>Buying or renting</h3>
-            <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
+            <p class="eyebrow">Heathrow&#x27;s consultation</p>
+            <h2 id="planes-band-h">See the planes over your council.</h2>
+            <p class="lede">Whatever your view, one page for each of the 32 councils Heathrow&#x27;s flights cross: the planes counted over each of its postcode districts, and its official noise, air and flood figures. Today&#x27;s flights on today&#x27;s routes, not those of a third runway. The consultation is open until 22 December 2026.</p>
+            <a class="pill" href="/planes-overhead/heathrow-consultation/">Find your council <i aria-hidden="true"></i></a>
           </div>
-          <div class="who-actions">
-            <a class="primary" href="/#check">Search a postcode</a>
-            <a href="/reports/street/">Get a street report</a>
+          <div class="band-card">
+            <h3>The 32 councils</h3>
+            <p>The same figures for anyone responding. Sky Score takes no side in the consultation.</p>
+            <ul>
+              <li><a href="/planes-overhead/heathrow-consultation/barking-and-dagenham/">Barking and Dagenham</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/barnet/">Barnet</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/bexley/">Bexley</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/brent/">Brent</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/bromley/">Bromley</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/camden/">Camden</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/city-of-london/">City of London</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/croydon/">Croydon</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/ealing/">Ealing</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/enfield/">Enfield</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/greenwich/">Greenwich</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/hackney/">Hackney</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/hammersmith-and-fulham/">Hammersmith and Fulham</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/haringey/">Haringey</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/harrow/">Harrow</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/hillingdon/">Hillingdon</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/hounslow/">Hounslow</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/islington/">Islington</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/kensington-and-chelsea/">Kensington and Chelsea</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/kingston-upon-thames/">Kingston upon Thames</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/lambeth/">Lambeth</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/lewisham/">Lewisham</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/merton/">Merton</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/newham/">Newham</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/redbridge/">Redbridge</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/richmond-upon-thames/">Richmond upon Thames</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/southwark/">Southwark</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/sutton/">Sutton</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/tower-hamlets/">Tower Hamlets</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/waltham-forest/">Waltham Forest</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/wandsworth/">Wandsworth</a></li>
+              <li><a href="/planes-overhead/heathrow-consultation/westminster/">Westminster</a></li>
+            </ul>
           </div>
         </div>
-        <div class="who-pro">
-          <p class="who-label">Working with homes and places</p>
-          <ul class="who-list">
-            <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
-            <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
-            <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
-            <li><b>Residents&#x27; groups</b><span>Start a bid from the official baseline.</span><a href="/area/">Browse council areas &rarr;</a></li>
-            <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
-          </ul>
+      </section>
+      <!-- PLANES-BAND:END -->
+
+      <section class="band who" aria-labelledby="who">
+        <div class="wrap">
+          <p class="eyebrow">Who it is for</p>
+          <h2 id="who">Choosing a home, or working with them.</h2>
+          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
+          <div class="who-home">
+            <div>
+              <p class="who-label">Choosing a home</p>
+              <h3>Buying or renting</h3>
+              <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
+            </div>
+            <div class="who-actions">
+              <a class="primary" href="/#check">Search a postcode</a>
+              <a href="/reports/street/">Get a street report</a>
+            </div>
+          </div>
+          <div class="who-pro">
+            <p class="who-label">Working with homes and places</p>
+            <ul class="who-list">
+              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
+              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Residents&#x27; groups</b><span>Start a bid from the official baseline.</span><a href="/area/">Browse council areas &rarr;</a></li>
+              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
+            </ul>
+          </div>
+          <!-- WHO-FOR:END -->
         </div>
-        <!-- WHO-FOR:END -->
-        <!-- Book a demo (Bill, 2026-11-02, after arcive.ai: "more clear on the frontpage"): two spots, each counted by its
-             data-book-place, never the bar. The business card above leads with it; this band ends the page with one
-             clear button and the only words on what the call gives (until now a line here, `who`, 2026-10-30).
-             Outside WHO-FOR on purpose: that block is also written into /about/, and the link belongs to this page. -->
-        <div class="book-band">
+      </section>
+
+      <!-- QUESTIONS. Book a demo's second spot is here (`faq`, Bill's mock v8: it moved from the business card, which the
+           rows above replaced); the first is the closing band below. -->
+      <section class="band band-paper" aria-labelledby="faq-h">
+        <div class="wrap faq">
+          <div><p class="eyebrow">Questions</p><h2 id="faq-h">Before you search.</h2></div>
           <div>
-            <h3>Bring your own postcodes</h3>
-            <p>In 30 minutes we go through the places you work with: the figures for each, and where every one comes from. Nothing to prepare.</p>
+            <details open><summary>Where do the figures come from?</summary><p>From public bodies: DEFRA&rsquo;s noise and air maps, the Environment Agency&rsquo;s flood maps, published flight routes from the UK AIP (NATS), ONS crime figures, HM Land Registry prices and more. Every figure names its source and its year.</p></details>
+            <details><summary>Is aircraft noise measured?</summary><p>Mostly it is modelled: DEFRA&rsquo;s map where DEFRA maps aircraft noise, and an estimate from the published flight routes elsewhere, which says so. The air section adds measured readings from the nearest Breathe London sensor and DEFRA monitor. <a href="/how-it-works/">More in How it works</a></p></details>
+            <details><summary>How are the figures checked?</summary><p>The planes counts are checked against the CAA&rsquo;s monthly totals for each airport, and an airport is counted only once its counts pass. Where DEFRA does not map aircraft noise, the estimate from the flight routes is published with its error against DEFRA&rsquo;s own maps. <a href="/how-it-works/">More in How it works</a></p></details>
+            <!-- THE coverage sentence (CLAUDE.md), recounted from the data by tests/front-page.mjs and added up against the
+                 coverage strip by scripts/build_coverage_strip.py --check. -->
+            <details id="faq-cover"><summary>Which places does it cover?</summary><p id="cover-figure">97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only).</p></details>
+            <details><summary>Is it free?</summary><p>Searching is free. Reports and the API have free and paid options: see <a href="/pricing">Pricing</a>.</p></details>
+            <details><summary>Can I use it for my business?</summary><p>Yes: through the API, in your own system, or as one open file of every UK council area, free for non-commercial use. <a href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="faq">Book a demo</a> to go through your own postcodes.</p></details>
           </div>
-          <a href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="band">Book a 30-minute demo</a>
         </div>
-        <div class="founder">
-          <img src="/about/bill-headshot.webp" width="56" height="56" alt="" />
-          <p>Built by Bilal Khizar, so you can make a more informed decision when choosing where to live.</p>
-          <a href="/about/#why">Our story &rarr;</a>
+      </section>
+
+      <!-- BOOK A DEMO (Bill, 2026-11-02, after arcive.ai): the page ends on one clear button, counted by its data-book-place.
+           Outside WHO-FOR on purpose: the link belongs to this page. -->
+      <section class="band" aria-labelledby="book-h">
+        <div class="wrap">
+          <div class="book-band">
+            <div><p class="eyebrow">Book a demo</p><h2 id="book-h">Bring your own postcodes.</h2><p class="lede">In 30 minutes we go through the places you work with: the figures for each, and where every one comes from. Nothing to prepare.</p></div>
+            <a class="pill dark" href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="band">Book a 30-minute demo <i aria-hidden="true"></i></a>
+          </div>
+          <div class="founder">
+            <img src="/about/bill-headshot.webp" width="56" height="56" alt="" />
+            <p>Built by Bilal Khizar, so you can make a more informed decision when choosing where to live.</p>
+            <a href="/about/#why">Our story &rarr;</a>
+          </div>
         </div>
       </section>
     </main>
@@ -723,6 +1024,8 @@
     <script src="/js/api-base.js"></script>
     <!-- A module: it imports the runway geometry the report generators use, js/flight_geometry.mjs. -->
     <script type="module" src="/js/home-engine.mjs"></script>
+    <!-- The sections below the map: the walkthrough's tabs and figures, the code samples' tabs (front-page-v3). -->
+    <script type="module" src="/js/home-sections.mjs"></script>
     <script type="module" src="/js/count.mjs"></script>
   </body>
 </html>

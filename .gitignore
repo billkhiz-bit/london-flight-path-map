@@ -233,6 +233,9 @@ data/*
 # The full map's planes overhead layer (2026-11-02): pictures drawn from those files by
 # scripts/build_planes_layer.py stay ignored like them; their manifest is tracked for the drift check.
 !data/planes-layer-manifest.json
+# The front page's picture of the sample street report (2026-11-03): its manifest records the PDF it was made from
+# (scripts/build_report_still.py --check holds the picture to it).
+!data/report-still-manifest.json
 /planes-overhead/
 /sitemap-planes.xml
 .defra_load_checkpoint

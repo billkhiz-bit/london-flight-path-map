@@ -502,3 +502,69 @@ def _load_wording():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+# ----------------------------------------------------------------- the front page's dark band (front-page-v3, 2026-11-03)
+
+BAND_INDEX = {'councils': {}, 'consultation': {
+    'airport': 'LHR', 'until': '2026-12-22', 'hub': '/planes-overhead/heathrow-consultation/',
+    'councils': {HOUNSLOW: '/planes-overhead/heathrow-consultation/hounslow/',
+                 'E09000009': '/planes-overhead/heathrow-consultation/ealing/'}}}
+
+
+def _band_page(tmp_path, crlf=False):
+    nl = '\r\n' if crlf else '\n'
+    page = tmp_path / 'index.html'
+    page.write_bytes(nl.join(['<main>', f'      {bpp.BAND_BEGIN}', '      <p>stale</p>', f'      {bpp.BAND_END}', '</main>', ''])
+                     .encode('utf-8'))
+    return page
+
+
+def test_the_band_names_each_council_page_in_the_pack_while_it_is_open():
+    html = '\n'.join(bpp.home_band(BAND_INDEX, '2026-11-03'))
+    assert html.index('>Ealing</a>') < html.index('>Hounslow</a>'), 'councils in name order'
+    assert 'href="/planes-overhead/heathrow-consultation/hounslow/"' in html
+    assert 'href="/planes-overhead/heathrow-consultation/"' in html, 'the hub is the button'
+    assert 'each of the 2 councils' in html and 'The 2 councils' in html, "the count is the index's, never typed"
+    assert 'open until 22 December 2026' in html
+    assert 'not those of a third runway' in html and 'Sky Score takes no side in the consultation.' in html
+
+
+def test_the_band_is_open_on_its_last_day_and_the_planes_pages_after_it():
+    assert 'See the planes over your council.' in '\n'.join(bpp.home_band(BAND_INDEX, '2026-12-22'))
+    after = '\n'.join(bpp.home_band(BAND_INDEX, '2026-12-23'))
+    assert 'See the planes over your district.' in after and 'consultation' not in after.lower()
+    assert f'href="{bpp.URL_ROOT}"' in after
+    assert '\n'.join(bpp.home_band({'councils': {}}, '2026-11-03')) == after, 'no pack built: the planes pages band'
+
+
+def test_the_band_says_how_often_planes_pass_nowhere():
+    wording = _load_wording()
+    for today in ('2026-11-03', '2026-12-23'):
+        text = wording.shown_from_source('home/index.html', '\n'.join(bpp.home_band(BAND_INDEX, today)))[0]
+        for pattern in wording.FREQUENCY:
+            assert not re.search(pattern, text, re.I), (today, pattern)
+
+
+def test_check_home_reds_once_the_consultation_closes_until_write(tmp_path):
+    page = _band_page(tmp_path, crlf=True)
+    assert bpp.check_home(BAND_INDEX, '2026-11-03', page), 'a stale band reds'
+    assert bpp.write_home(BAND_INDEX, '2026-11-03', page) is True
+    assert bpp.check_home(BAND_INDEX, '2026-11-03', page) == []
+    assert b'\r\n' in page.read_bytes() and b'\r\r' not in page.read_bytes(), 'the page keeps its line endings'
+    assert bpp.check_home(BAND_INDEX, '2026-12-22', page) == [], 'its last day is still open'
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page), 'the day after, the open band reds'
+    assert bpp.write_home(BAND_INDEX, '2026-12-23', page) is True
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page) == []
+    assert bpp.write_home(BAND_INDEX, '2026-12-23', page) is False, 'nothing to change'
+
+
+def test_check_home_needs_each_marker_once(tmp_path):
+    page = tmp_path / 'index.html'
+    page.write_text(f'{bpp.BAND_BEGIN}\n{bpp.BAND_BEGIN}\n{bpp.BAND_END}\n', encoding='utf-8')
+    assert bpp.check_home(BAND_INDEX, '2026-11-03', page)
+
+
+def test_the_committed_front_page_band_is_todays():
+    # The real page against the committed index, as preflight's --check reads it (also when the tracks are missing).
+    assert bpp.check_home(bpp.tracked_index(), bpp.datetime.now(bpp.UTC).strftime('%Y-%m-%d')) == []

@@ -221,6 +221,14 @@ Or just describe what you need, I have full context of this project.
   never a sum (each airport's kinds of day are its own): every surface naming the layer says so. Smoothed until one
   picture pixel covers a screen pixel, sharp from there (`setPlanesRendering`). It and DEFRA aircraft noise are never
   on together; the legend's step colours equal `index.json`'s (`tests/planes-layer.mjs`, `test_build_planes_layer.py`).
+- **The front page's lower sections type no figure** (front-page-v3, Bill's mock v8, 2026-11-03; branch until the
+  ~20 Nov read): the walkthrough's steps 02-04 are written by `js/home-sections.mjs` from the hero's own example lookup
+  (`home-engine.mjs` `exampleAnswer()`, one shared pair), the planes step through `planesWalk()` in `js/planes.mjs`
+  (bar colours from the layer's `index.json` steps); step 05's picture is MADE from the sample PDF by
+  `build_report_still.py` (its `--check` reds once the PDF changes: re-run `--write` after any sample regeneration);
+  the dark band is written between PLANES-BAND markers by `build_planes_pages.py` (`--write --home` needs no tracks;
+  `--check` reds the day after `until` until `--write`, then `home-deploy`). A worktree without the tracks checks the
+  planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
@@ -235,8 +243,8 @@ Or just describe what you need, I have full context of this project.
   correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
   page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.
 - **The Book a demo link has ONE holder, `js/count.mjs` `DEMO_BOOKING_URL`** (2026-10-29): only `/pricing`, `/api/`
-  (bar + page), `/score-demo/` and TWO front-page spots, the business card's button and the closing band (never its
-  bar; Bill, 2026-11-02, after arcive.ai) carry it
+  (bar + page), `/score-demo/` and TWO front-page spots, the "Can I use it for my business?" answer (`faq`, since
+  front-page-v3; the business card's button until then) and the closing band (never its bar; Bill, 2026-11-02) carry it
   (`tests/test_demo_booking_link.py`), counted by destination as `book-demo-<page>-<bar|bar-menu|page|spot>` (a spot
   from `data-book-place`); `make booking-link-check` refuses web/demo/home deploys while it is a placeholder.
 - **The company LinkedIn link has ONE holder, `js/count.mjs` `LINKEDIN_URL`** (Bill, 2026-11-03): the front page's footer

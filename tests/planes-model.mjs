@@ -11,7 +11,7 @@
 //   node tests/planes-model.mjs
 
 import assert from 'node:assert/strict';
-import { districtOf, period, perDay, planesLinks, planesModel } from '../js/planes.mjs';
+import { districtOf, period, perDay, planesLinks, planesModel, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
 
 const NAMES = { LHR: 'Heathrow', LCY: 'London City', MAN: 'Manchester' };
 const INFO = {
@@ -144,6 +144,47 @@ check('the district page and the consultation pack, linked only where they exist
   assert.deepEqual(planesLinks(null, 'TW9 3PZ', kew, day('2026-11-02')), []);
   assert.deepEqual(planesLinks({ councils: INDEX.councils }, 'TW9 3PZ', kew, day('2026-11-02')).map((l) => l.href), ['/planes-overhead/tw9/']);
   assert.deepEqual(planesLinks(INDEX, 'TW9 3PZ', null, day('2026-11-02')), []);
+});
+
+// THE FRONT PAGE'S WALKTHROUGH, STEP 04 (front-page-v3, 2026-11-03): the answer in a sentence, then the three kinds of day
+// as bars coloured as the full map's planes layer colours each figure. Every word and figure from the model.
+const STEPS = [{ step: 1, from: 10, colour: '#dc8a4a' }, { step: 2, from: 50, colour: '#c2622a' },
+  { step: 3, from: 100, colour: '#9a4316' }, { step: 4, from: 200, colour: '#662809' }];
+
+check('walkthrough: Kew in one sentence, then west, both ways, east in the layer\'s colours', () => {
+  const w = planesWalk(planesModel(TW9, INFO, 'TW9 3PZ', NAMES), STEPS);
+  assert.equal(w.sentence.map((p) => p.text).join(''),
+    'On most days, about 310 planes a day pass over TW9 3PZ: the days Heathrow flies west. On a day it flies east, about 4.');
+  assert.deepEqual(w.sentence.filter((p) => p.strong).map((p) => p.text), ['about 310 planes a day', 'about 4']);
+  assert.deepEqual(w.rows.map((r) => [r.label, r.share, r.figure, r.colour]), [
+    ['Flying west', '56% of days', '310', '#662809'],
+    ['Both ways', '15% of days', '168', '#9a4316'],
+    ['Flying east', '29% of days', '4', null],
+  ]);
+  assert.deepEqual(w.rows[0].bar, [0, 310 / 400], "the bar is the model's own, on the file's scale");
+  assert.equal(w.foot, 'Planes a day over TW9 3PZ from Heathrow, January to August 2026. Never an average of the three: no day is average.');
+});
+
+check('walkthrough: no "most days" unless one way is over half of all days, and never a range in the sentence', () => {
+  const even = { ...INFO, airports: { ...INFO.airports, LHR: { ...INFO.airports.LHR, share_pct: { westerly: 50, easterly: 35, mixed: 15 } } } };
+  const w = planesWalk(planesModel(TW9, even, 'TW9 3PZ', NAMES), STEPS);
+  assert.equal(w.sentence.length, 1);
+  assert.match(w.sentence[0].text, /^Planes land and take off into the wind/);
+  const edge = planesWalk(planesModel(TW3, INFO, 'TW3 3QL', NAMES), STEPS);
+  assert.doesNotMatch(edge.sentence.map((p) => p.text).join(''), /On most days/);
+  assert.deepEqual(edge.rows.map((r) => [r.figure, r.colour]), [['7 to 339', '#662809'], ['3', null], ['none', null]]);
+});
+
+check('walkthrough: several airports tell the busiest; nothing to tell is null; no steps, no colour', () => {
+  const e16 = planesWalk(planesModel(E16, INFO, 'E16 2QD', NAMES), STEPS);
+  assert.equal(e16.airport, 'Heathrow');
+  assert.equal(planesWalk(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES), STEPS), null);
+  assert.equal(planesWalk(null, STEPS), null);
+  assert.equal(stepColour(310), null);
+  assert.equal(stepColour(310, [{ from: 10, colour: 'red' }]), null, 'a colour that is not #rrggbb is never written into a style');
+  assert.deepEqual([shortFigure(null), shortFigure('<1'), shortFigure([0, 40]), shortFigure(['<1', 40])],
+    ['not measured', 'under 1', 'up to 40', 'under 1 to 40']);
+  assert.equal(stepColour(['<1', 49], STEPS), '#dc8a4a', "a range is coloured by its busier end, as the layer's stripes are");
 });
 
 console.log(`planes model: ${passed} checks passed`);

@@ -59,6 +59,13 @@ USAGE
     python scripts/build_planes_pages.py --write
     python scripts/build_planes_pages.py --check     # the pages on disk == what --write would write
     python scripts/build_planes_pages.py --list      # every district, and why it has a page or not
+    python scripts/build_planes_pages.py --write --home   # the front page's planes band only (2026-11-03), from the
+    python scripts/build_planes_pages.py --check --home   # committed council index: no tracks needed
+    python scripts/build_planes_pages.py --check --inputs-from <main clone>   # a worktree checking against the tracks
+                                                     # and built pages of another clone, reading only
+
+The front page's dark band (home/index.html, between the PLANES-BAND markers) is written by --write too, from the
+council index's `consultation` entry: Heathrow's consultation while it is open, the planes pages from the day after.
 """
 from __future__ import annotations
 
@@ -1094,19 +1101,132 @@ def check_councils(index: dict, path: Path = COUNCILS) -> list[str]:
                                          'scripts/build_area_pages.py --write (the area pages link from it)']
 
 
-NEEDS = ((PLANES / 'airports.json', 'scripts/build_planes_overhead.py --write'),
-         (AVERAGES, 'scripts/adsb_postcode_averages.py'), (NSPL, 'the NSPL roll (HANDOVER)'))
+# ----------------------------------------------------------------- the front page's dark band (front-page-v3, 2026-11-03)
+#
+# Bill's mock v8 (version 12): one DARK band on the front page for Heathrow's consultation, generated, so it switches
+# itself off. Written between the PLANES-BAND markers in home/index.html from the council index's `consultation`
+# entry (consultation_entry(): its closing day, the hub and each council's page in the pack), never typed: while the
+# consultation is open it names the councils and links each one's pack page; from the day after `until` it becomes the
+# planes overhead band (the district pages), so --check reds on 23 December until --write re-says it, like the pack's
+# own "closed on". Neutral, in the pack's words (PACK_LEAD): today's flights, no side taken. NO planes figure: the
+# front page says how often planes pass only through js/planes.mjs (tests/test_public_wording.py FREQUENCY).
+HOME = REPO / 'home' / 'index.html'
+BAND_BEGIN = '<!-- PLANES-BAND:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->'
+BAND_END = '<!-- PLANES-BAND:END -->'
 
 
-def missing_inputs() -> list[str]:
+def band_open(index: dict, today: str) -> dict | None:
+    """The consultation entry while its pack is open on `today` (its last day included), else None."""
+    c = (index or {}).get('consultation')
+    if not c or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', str(c.get('until', ''))) or today > c['until'] or not c.get('councils'):
+        return None
+    return c
+
+
+def home_band(index: dict, today: str) -> list[str]:
+    """The band's lines, unindented: Heathrow's consultation while it is open, the planes overhead pages after."""
+    c = band_open(index, today)
+    if c is None:
+        return [
+            '<section class="band band-dark" id="planes-band" aria-labelledby="planes-band-h">',
+            '  <div class="wrap">',
+            '    <p class="eyebrow">Planes overhead</p>',
+            '    <h2 id="planes-band-h">See the planes over your district.</h2>',
+            "    <p class=\"lede\">How many planes pass over each postcode district on a day each airport flies west, east or both "
+            "ways: counted from flight tracking, and checked against the CAA&#x27;s monthly totals.</p>",
+            f'    <a class="pill" href="{URL_ROOT}">Find your district <i aria-hidden="true"></i></a>',
+            '  </div>',
+            '</section>',
+        ]
+    named = sorted((area.app.LAD_TO_BOROUGH[lad][1], path) for lad, path in c['councils'].items())
+    n = len(named)
+    return [
+        '<section class="band band-dark" id="planes-band" aria-labelledby="planes-band-h">',
+        '  <div class="wrap split">',
+        '    <div>',
+        "      <p class=\"eyebrow\">Heathrow&#x27;s consultation</p>",
+        '      <h2 id="planes-band-h">See the planes over your council.</h2>',
+        f"      <p class=\"lede\">Whatever your view, one page for each of the {n} councils Heathrow&#x27;s flights cross: the "
+        "planes counted over each of its postcode districts, and its official noise, air and flood figures. Today&#x27;s "
+        f"flights on today&#x27;s routes, not those of a third runway. The consultation is open until {e(day_words(c['until']))}.</p>",
+        f'      <a class="pill" href="{e(c["hub"])}">Find your council <i aria-hidden="true"></i></a>',
+        '    </div>',
+        '    <div class="band-card">',
+        f'      <h3>The {n} councils</h3>',
+        '      <p>The same figures for anyone responding. Sky Score takes no side in the consultation.</p>',
+        '      <ul>',
+        *(f'        <li><a href="{e(path)}">{e(name)}</a></li>' for name, path in named),
+        '      </ul>',
+        '    </div>',
+        '  </div>',
+        '</section>',
+    ]
+
+
+def band_held(page: str) -> tuple[str, str] | None:
+    """(the BEGIN marker's indentation, the text between the markers), or None unless each marker appears once."""
+    if page.count(BAND_BEGIN) != 1 or page.count(BAND_END) != 1:
+        return None
+    start = page.index(BAND_BEGIN)
+    indent = page[page.rfind('\n', 0, start) + 1:start]
+    body_at = page.index('\n', start) + 1
+    return indent, page[body_at:page.rfind('\n', 0, page.index(BAND_END)) + 1]
+
+
+def band_text(index: dict, today: str, indent: str) -> str:
+    return ''.join(f'{indent}{line}\n' for line in home_band(index, today))
+
+
+def check_home(index: dict, today: str, path: Path = HOME) -> list[str]:
+    """[] when the front page's band is what the council index says on `today` (line endings aside)."""
+    held = band_held(path.read_text(encoding='utf-8'))
+    if held is None:
+        return [f'{path.name}: the PLANES-BAND markers must appear exactly once each']
+    indent, body = held
+    if body.replace('\r\n', '\n') != band_text(index, today, indent):
+        return [f"{path.parent.name}/{path.name}: the planes band is not what {COUNCILS.name} says today "
+                '(the consultation opened or closed?): run --write, or --write --home']
+    return []
+
+
+def write_home(index: dict, today: str, path: Path = HOME) -> bool:
+    """Rewrite the band from the council index; True when the page changed."""
+    raw = path.read_bytes().decode('utf-8')
+    crlf = '\r\n' in raw
+    page = raw.replace('\r\n', '\n')
+    held = band_held(page)
+    if held is None:
+        raise SystemExit(f'{path.name}: place the two PLANES-BAND markers once each, then --write')
+    indent, body = held
+    want = band_text(index, today, indent)
+    if body == want:
+        return False
+    at = page.index('\n', page.index(BAND_BEGIN)) + 1
+    page = page[:at] + want + page[at + len(body):]
+    path.write_bytes((page.replace('\n', '\r\n') if crlf else page).encode('utf-8'))
+    return True
+
+
+def tracked_index(path: Path = COUNCILS) -> dict:
+    """The council index as committed (the band's holder when the tracks are not on this machine)."""
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+NEEDS = (('data/planes/airports.json', 'scripts/build_planes_overhead.py --write'),
+         ('data/adsb/postcode-averages.npz', 'scripts/adsb_postcode_averages.py'),
+         ('data/nspl.csv', 'the NSPL roll (HANDOVER)'))
+
+
+def missing_inputs(root: Path = REPO) -> list[str]:
     """The gitignored inputs not on this machine, each with what makes it (a clone without the tracks has none)."""
-    return [f'{need.relative_to(REPO)} (made by {how})' for need, how in NEEDS if not need.exists()]
+    return [f'{need} (made by {how})' for need, how in NEEDS if not (root / need).exists()]
 
 
-def inputs():
-    meta, files = read_planes()
-    ctx = district_context()
-    return meta, files, ctx, district_totals(files), airport_names(), kinds()
+def inputs(root: Path = REPO):
+    """Everything a build reads that is not tracked; `root` is another clone with --inputs-from (read only)."""
+    meta, files = read_planes(root / 'data' / 'planes')
+    ctx = district_context(root / 'data' / 'adsb' / 'postcode-averages.npz')
+    return meta, files, ctx, district_totals(files, root / 'data' / 'nspl.csv'), airport_names(), kinds()
 
 
 MANIFEST = REPO / 'data' / 'planes-pages-manifest.json'
@@ -1184,16 +1304,41 @@ def main() -> int:
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--list', action='store_true')
     ap.add_argument('--strict', action='store_true', help='a missing input fails --check (planes-pages-deploy)')
+    ap.add_argument('--home', action='store_true',
+                    help="only the front page's planes band, from the committed council index (needs no tracks)")
+    ap.add_argument('--inputs-from', type=Path, metavar='CLONE',
+                    help='--check / --list only: read the untracked inputs AND the built pages from another clone of '
+                         'this repo (a worktree without the tracks); never writes there')
     a = ap.parse_args()
     if not (a.write or a.check or a.list):
         ap.error('pass --write, --check or --list')
-    if missing := missing_inputs():
+    today = datetime.now(UTC).strftime('%Y-%m-%d')
+    if a.home:
+        # The band reads only the committed index, so it can be written and checked on any clone.
+        if a.list or a.inputs_from:
+            ap.error('--home takes --write or --check only')
+        index = tracked_index()
+        if a.write:
+            print(f"{'wrote' if write_home(index, today) else 'unchanged:'} the planes band in home/index.html")
+        problems = check_home(index, today)
+        print('\n'.join(problems) if problems else 'OK: the front page\'s planes band')
+        return 1 if problems else 0
+    if a.inputs_from and a.write:
+        ap.error('--inputs-from reads another clone: it never writes (run --write there, or --write --home here)')
+    root = (a.inputs_from or REPO).resolve()
+    if missing := missing_inputs(root):
+        # The front page's band needs no tracks, so it is checked even here: a band left open after the consultation
+        # closes is a defect on any clone, never inconclusive.
+        if a.check and (home := check_home(tracked_index(), today)):
+            print('FAIL: ' + '; '.join(home))
+            return 1
         # Unrunnable is not failed, and never a pass: preflight reads a leading INCONCLUSIVE and names the gate.
         # A deploy must not read it at all (--strict): it would upload whatever happens to be on disk.
         soft = a.check and not (a.write or a.list or a.strict)
-        print(('INCONCLUSIVE: ' if soft else 'FAIL: ') + 'missing ' + '; '.join(missing))
+        print(('INCONCLUSIVE: ' if soft else 'FAIL: ') + 'missing ' + '; '.join(missing)
+              + ('' if soft else ' (the front page\'s band alone: --write --home)'))
         return 0 if soft else 1
-    meta, files, ctx, totals, names, order = inputs()
+    meta, files, ctx, totals, names, order = inputs(root)
     if a.list:
         for d in sorted(files, key=pc_key):
             print(f'  {d:6} {verdict(files[d], totals[d]) or "PAGE"}')
@@ -1212,9 +1357,10 @@ def main() -> int:
     if a.write:
         write(pages)
         COUNCILS.write_text(councils_text(index), encoding='utf-8', newline='\n')
-        print(f'wrote {len(pages)} pages, {SITEMAP.name} and {COUNCILS.name}')
+        write_home(index, today)
+        print(f'wrote {len(pages)} pages, {SITEMAP.name}, {COUNCILS.name} and the front page\'s planes band')
     if a.check:
-        problems = check(pages) + check_councils(index)
+        problems = check(pages, root) + check_councils(index) + check_home(index, today)
         print('\n'.join(problems) if problems else 'OK')
         if problems:
             return 1
