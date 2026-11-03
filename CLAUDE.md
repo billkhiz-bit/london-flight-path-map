@@ -221,6 +221,13 @@ Or just describe what you need, I have full context of this project.
   never a sum (each airport's kinds of day are its own): every surface naming the layer says so. Smoothed until one
   picture pixel covers a screen pixel, sharp from there (`setPlanesRendering`). It and DEFRA aircraft noise are never
   on together; the legend's step colours equal `index.json`'s (`tests/planes-layer.mjs`, `test_build_planes_layer.py`).
+  **A tap names the district under it** (2026-11-03, Bill's pick "small card"): read from `<city>-district-ids.json`
+  (the outlines' own grid, run-length rows; a list of numbers, never a colour-coded picture), placed where the picture
+  is; `districtFromGrid` mirrors `build_planes_layer.district_at` line for line; a card only if
+  `planes-districts-by-council.json` lists the district (never a guessed link), beside the tap, never a figure.
+- **`/epc` takes full UK postcodes only** (2026-11-03): a ZIP or a bare district is the caller's 400 and never reaches
+  MHCLG (it answered 400, which the Lambda reported as its own 502: 134 of the API's 146 5xx in a day); the map's
+  `fetchEpcData` asks only with a full postcode. An upstream 400 for a valid postcode stays a 502: their change, loud.
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes

@@ -1,6 +1,14 @@
 # Changelog
 
-## Not yet live (branch `declutter`) - Shorter pages
+## Not yet live (branch `map-fixes`) - The district under a tap
+
+- **Planes overhead on the full map**: with the layer on, a tap names the postcode district under it and links its
+  planes overhead page, in a small card beside the tap. Only districts with a page get one. Nothing about the tap
+  leaves the browser.
+- **Energy certificates**: a search for a postcode district or a US ZIP no longer asks for certificates, which are
+  listed by full postcode only; the panel says so instead of "temporarily unavailable".
+
+## 2026-11-03 (evening) - Shorter pages
 
 - **How it works** opens with a short version under the approach picture, and each section keeps its heading and
   opening words with the detail one click away: about a third shorter.

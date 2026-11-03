@@ -244,8 +244,89 @@ try {
     ok(false, 'a UK city without a picture to test the empty case', 'every UK city has one: pick another empty case');
   }
 
+  // 6b. THE DISTRICT UNDER A TAP (2026-11-03, Bill's pick "small card"): with the layer on, a tap names its postcode
+  // district and links its planes page; a district without a page gets no card. Targets come from the BUILT files (the
+  // district grid and the pages' holder), never typed, and each is a cell deep inside its district, so a tap cannot fall
+  // on a boundary. Each picture pixel goes to the screen through the picture's own transform, then a real mouse click.
+  {
+    const ids = JSON.parse(await readFile(join(ROOT, 'data', 'planes-layer', london.files.district_ids), 'utf8'));
+    const pages = JSON.parse(await readFile(join(ROOT, 'data', 'planes-districts-by-council.json'), 'utf8'));
+    const withPage = new Set(Object.values(pages.councils).flat());
+    const codeAt = (r, c) => {
+      let x = 0;
+      for (let i = 0; i < ids.rows[r].length; i += 2) {
+        x += ids.rows[r][i + 1];
+        if (c < x) return ids.rows[r][i];
+      }
+      return 0;
+    };
+    const deepCells = (want) => {
+      const out = [];
+      for (let r = 6; r < ids.rows.length - 6; r += 9) {
+        for (let c = 6; c < ids.size[0] - 6; c += 9) {
+          const code = codeAt(r, c);
+          if (!code || !want(ids.names[code - 1])) continue;
+          let same = true;
+          for (let dr = -4; dr <= 4 && same; dr += 2) for (let dc = -4; dc <= 4 && same; dc += 2) same = codeAt(r + dr, c + dc) === code;
+          if (same) out.push({ name: ids.names[code - 1], col: (c + 0.5) * ids.cell, row: (r + 0.5) * ids.cell });
+        }
+      }
+      return out;
+    };
+    // The first deep cell whose screen point is a borough on the map (not under the legend, the panel or off screen).
+    const onScreen = async (cells) => {
+      for (const t of cells) {
+        const pt = await page.evaluate(([col, row, W, H]) => {
+          const img = document.getElementById('planes-img');
+          const p = img.ownerSVGElement.createSVGPoint();
+          p.x = +img.getAttribute('x') + (col / W) * +img.getAttribute('width');
+          p.y = +img.getAttribute('y') + (row / H) * +img.getAttribute('height');
+          const s2 = p.matrixTransform(img.getScreenCTM());
+          const hit = document.elementFromPoint(s2.x, s2.y);
+          return hit && hit.closest('path') && hit.ownerSVGElement === img.ownerSVGElement ? [s2.x, s2.y] : null;
+        }, [t.col, t.row, london.size[0], london.size[1]]);
+        if (pt) return { ...t, pt };
+      }
+      return null;
+    };
+    const card = () => page.evaluate(() => {
+      const el = document.getElementById('planes-card');
+      return { shown: !el.hidden, district: el.dataset.district || '', href: el.querySelector('a').getAttribute('href'),
+               text: el.innerText.replace(/\s+/g, ' ').trim() };
+    });
+    const hit = await onScreen(deepCells((n) => withPage.has(n)));
+    ok(Boolean(hit), 'a district with a planes page lies on screen in London, deep inside its outline', '');
+    if (hit) {
+      await page.mouse.click(hit.pt[0], hit.pt[1]);
+      await page.waitForFunction(() => !document.getElementById('planes-card').hidden, null, { timeout: 10000 }).catch(() => {});
+      let c = await card();
+      ok(c.shown && c.district === hit.name && c.href === `/planes-overhead/${hit.name.toLowerCase()}/`,
+        `a tap in ${hit.name} names it and links its page`, JSON.stringify(c));
+      ok(!/\d/.test(c.text.split(hit.name).join('')), 'the card carries no figure, only the district and its link', c.text);
+      await page.evaluate(() => switchCity('manchester'));
+      c = await card();
+      ok(!c.shown, 'switching city closes the card', JSON.stringify(c));
+      await page.evaluate(() => switchCity('london'));
+      await waitHref(london.files.mixed);
+    }
+    const noPage = await onScreen(deepCells((n) => !withPage.has(n)));
+    if (noPage) {
+      await page.mouse.click(noPage.pt[0], noPage.pt[1]);
+      await page.waitForTimeout(800);
+      const c = await card();
+      ok(!c.shown, `a tap in ${noPage.name}, which has no planes page, shows no card (never a guessed link)`, JSON.stringify(c));
+    } else {
+      console.log('  (every on-screen London district has a page: the no-page case is not reachable here)');
+    }
+    if (hit) { // left open for step 7, which turns the layer off
+      await page.mouse.click(hit.pt[0], hit.pt[1]);
+      await page.waitForFunction(() => !document.getElementById('planes-card').hidden, null, { timeout: 10000 }).catch(() => {});
+    }
+  }
+
   // 7. Switching aircraft noise back on switches planes off.
   await page.click('.layer-toggle[data-layer="defra-aircraft"]');
+  ok(await page.evaluate(() => document.getElementById('planes-card').hidden), 'planes off closes the district card', '');
   s = await readState();
   ok(s.aircraft === 'true' && s.planesPressed === 'false' && !s.shown && !s.legend, 'aircraft noise on switches planes overhead off',
     JSON.stringify({ aircraft: s.aircraft, planes: s.planesPressed, shown: s.shown }));

@@ -183,3 +183,35 @@ def test_approx_positions_are_never_drawn():
     east = np.array([1.0, 2.0, 3.0, 4.0, np.nan])
     north = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
     assert L.placed(gridind, east, north).tolist() == [True, True, False, False, False]
+
+
+# THE DISTRICT UNDER A TAP (2026-11-03): <city>-district-ids.json, read back exactly as the full map reads it.
+
+def test_the_district_grid_reads_back_every_cell_as_drawn():
+    dg = np.array([['TW4', 'TW4', 'TW5', 'TW5', 'TW5', 'TW3'],
+                   ['TW4', 'TW4', 'TW5', 'TW5', 'TW3', 'TW3'],
+                   ['TW4', 'TW4', 'TW4', 'TW4', 'TW3', 'TW3'],
+                   ['TW4', 'TW4', 'TW4', 'TW4', 'TW3', 'TW3']])
+    valid = np.ones(dg.shape, bool)
+    valid[2:, :2] = False  # no postcode near: code 0, never a district
+    ids = json.loads(L.district_ids(dg, valid, cell=2))
+    assert ids['cell'] == 2 and ids['size'] == [3, 2] and ids['names'] == ['TW3', 'TW4', 'TW5']
+    # Each cell is decided by its top-left picture pixel; every picture pixel reads its cell's district.
+    want = {(0, 0): 'TW4', (1, 1): 'TW4', (2, 0): 'TW5', (3, 1): 'TW5', (4, 0): 'TW5', (5, 1): 'TW5',
+            (0, 2): None, (1, 3): None, (2, 2): 'TW4', (3, 3): 'TW4', (4, 2): 'TW3', (5, 3): 'TW3'}
+    assert {px: L.district_at(ids, *px) for px in want} == want
+    for off in ((-1, 0), (0, -1), (6, 0), (0, 4), (99, 99)):  # off the picture: nothing, never the edge's district
+        assert L.district_at(ids, *off) is None
+
+
+def test_the_district_grid_runs_cover_each_row_exactly():
+    rng = np.random.default_rng(3)
+    dg = rng.choice(np.array(['E1', 'E2', 'E3']), size=(40, 60))
+    valid = rng.random((40, 60)) > 0.2
+    ids = json.loads(L.district_ids(dg, valid, cell=2))
+    for row in ids['rows']:
+        assert sum(row[1::2]) == ids['size'][0] and all(n > 0 for n in row[1::2])
+        assert all(row[i] != row[i + 2] for i in range(0, len(row) - 2, 2))  # runs merged, never split
+    for r in range(0, 40, 2):
+        for c in range(0, 60, 2):
+            assert L.district_at(ids, c, r) == (str(dg[r, c]) if valid[r, c] else None)

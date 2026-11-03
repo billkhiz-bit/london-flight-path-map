@@ -95,3 +95,13 @@
 - Frontend communicates with backend via fetch to API Gateway endpoints
 - SAM stack name: `london-flight-map`
 
+### /epc and the API's 5xx rate (2026-11-03)
+
+The `[5XX]` logging's first day said 134 of 146 API 5xx were `/epc` refusing a non-postcode: MHCLG's register answers
+400 for a US ZIP or a bare district, and the Lambda reported its own 502. The burst timing (six in two seconds, three
+14 s apart) matched OUR preflight runs: `tests/bayarea-map.mjs` types a ZIP on London's map, the map passed it to
+`/epc`, and the test harness forwards unstubbed API calls to the live API. The map's district searches were already
+guarded (`!analysis.isOutcode`); the ZIP path was not. Fixed both ends: `FULL_POSTCODE` in `backend/lambdas/epc/app.py`
+(400, no upstream call; an upstream 400 for a VALID postcode stays 502, because after the check it can only mean their
+service changed, and a graceful answer would hide it) and `FULL_UK_POSTCODE` in the map's `fetchEpcData`. Lesson: read
+a 5xx rate against the test traffic before reading it as visitors' failures.
