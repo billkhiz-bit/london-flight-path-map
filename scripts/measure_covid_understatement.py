@@ -8,7 +8,8 @@ atypical. The caveat used to say the contours were "likely smaller than in a
 normal year", a hand-wave. The CAA's own annual report for Heathrow publishes
 Lden contour AREAS for a normal year, so the gap can be measured instead of
 described. The current edition is ERCD Report 2601 (August 2026): 2025, when
-movements were 1.1% above 2024's (2024 was 0.5% below 2019). Rolled from ERCD
+annual 24-hour movements were 1% above 2024's and 2% below 2019's (the report's own figures; "2024 was 0.5%
+below 2019", said here until 2026-11-03, was the SUMMER-day comparison). Rolled from ERCD
 2501's 2024 figures on 2026-11-01; the 55 dB area fell 148.4 -> 142.4 km2 (the
 CAA puts it down to quieter types and 10 points more easterly operation).
 
@@ -20,8 +21,9 @@ ERCD_URL together, run --verify-caa (it parses the new PDF), then --write, then
 fix every page --check names. The JSON's keys carry no year (`caa_km2` and
 `caa_year`), so readers never need renaming.
 
-WHAT THE RATIO IS NOT. The two come from different models (the CAA's ANCON and
-DEFRA's strategic-mapping method), with different inputs and population data.
+WHAT THE RATIO IS NOT. The two model different years, with different traffic and
+population inputs. Whether they also differ in MODEL is not established (Heathrow's Round 4 strategic map may be
+the CAA's own ANCON run), so never assert it: "different models" was said here until 2026-11-03.
 The ratio is a published order of magnitude for a caveat, NEVER a correction
 factor: scaling per-postcode readings by an area ratio would be a number nobody
 measured (see memory project-lcy-airport-weighting). It is also Heathrow only;
@@ -93,7 +95,7 @@ def build(defra):
         'defra': "DEFRA strategic noise mapping Round 4 (2021 traffic), Heathrow Lden coverage, measured by this script",
         'caa': CAA_SOURCE,
         'caa_year': CAA_YEAR,
-        'caveat': 'Different models and inputs; an order of magnitude for a caveat, never a correction factor.',
+        'caveat': 'Different years and inputs; an order of magnitude for a caveat, never a correction factor.',
         'rows': rows,
     }
 
