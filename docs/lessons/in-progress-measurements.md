@@ -371,3 +371,21 @@ in the consultation"; today's flights on today's routes, never a third runway's)
   manifest, `sitemap-planes.xml` and the drift sample; `is_district_page()` keeps them out of the council index and
   the index. `tests/a11y-source.mjs` scans the hub and the biggest council page at 1440 and 390.
 Held by `tests/test_build_planes_pages.py` (7 pack tests, 4 index tests); 9 mutations, each one rule broken, all red.
+
+### The band bar: a cell shows one band and draws them all (2026-11-03, branch `declutter`)
+
+Bill's clutter audit (claude.ai/artifact/DKt7s7H8JZjUotbqvpbXN6) found the consultation pack's cells carrying four
+numbers each ("up to 317 a day / 137 at 100+ / 200 on an edge / 450 under 10") and the district pages' sector cells
+three: true, and unscannable down a column. A cell now SHOWS its busiest band ("137 at 100+"; the pack keeps "up to N a
+day" above it) and draws every band as one bar, each band's width its count (`flex-grow:<count>`), in the full map's
+planes-layer colours (100+ = the layer's 100-199 step, 10 to 99 = its 10-49 step, an edge striped, under 10 a neutral).
+The bar's `aria-label` and `title` say every count, and each district page's list above its tables still writes the
+district's counts out in full. Still Bill's option C (bands, never a middle figure): the bar IS the bands.
+- ONE SOURCE: `cell_html()` builds the bar from the cell's own phrases (`split_bands()` reads back what
+  `sector_parts()` wrote), so the line, the bar and the label cannot disagree; the model is unchanged.
+- THE KEY lists only the bands its table draws (`bands_in()`): the first draft listed all four, and the old test "on an
+  edge only where a cell says it" went red on a page with no edges, which was right.
+- PHONES: the pack's bar ends the text's own line (under it, every district grew a line: 5.0 -> 5.2 screens; now 4.8).
+  BR1, SE1 and SK8 (the widest district tables) still fit 390 px.
+- Held by 5 new tests in `tests/test_build_planes_pages.py`, colours by reading both holders; 5 breaks proven red (every
+  band shown as text, widths not the counts, the key listing every band, colours swapped, the least busy band leading).

@@ -79,28 +79,8 @@
       nav.jump a { font-size: 15px; font-weight: 600; text-decoration: none; padding: 7px 13px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--dark); }
       nav.jump a:hover { box-shadow: inset 0 0 0 1.5px var(--dark); text-decoration: underline; text-underline-offset: 4px; }
 
-      /* Who it's for, people first: choosing a home as a dark panel, the professions as a list beside it. */
-      .for-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
-      @media (min-width: 980px) { .for-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr); align-items: stretch; } }
-      .who-label { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--mid); }
-      .who-home { background: var(--dark); color: #fff; border-radius: 18px; padding: clamp(20px, 3vw, 30px); display: grid; gap: 22px; align-content: space-between; }
-      .who-home p, .who-home p.who-label { color: #d9d7d0; margin: 0; }
-      .who-home p.who-label { margin: 0 0 8px; }
-      .who-home h3 { color: #fff; font-size: clamp(26px, 2.8vw, 34px); }
-      .who-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-      .who-actions a, ul.links a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; }
-      .who-actions a { box-shadow: inset 0 0 0 1.5px #fff; color: #fff; }
-      .who-actions a.primary { background: #fff; color: var(--dark); }
-      .who-actions a:hover, ul.links a:hover { text-decoration: underline; text-underline-offset: 4px; }
-      .who-actions a:focus-visible { outline-color: #fff; }
-      .who-pro { background: var(--paper); border-radius: 18px; padding: clamp(20px, 3vw, 30px); }
-      ul.who-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-      ul.who-list li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 24px; padding: 14px 2px; border-bottom: 1px solid var(--line); }
-      @media (min-width: 640px) { ul.who-list li { grid-template-columns: minmax(0, 1fr) auto; } ul.who-list span { grid-column: 1; } ul.who-list a { grid-column: 2; grid-row: 1 / span 2; align-self: center; } }
-      ul.who-list b { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
-      ul.who-list span { color: var(--mid); font-size: 16px; }
-      ul.who-list a { font-weight: 600; font-size: 15px; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
-      ul.who-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
+      ul.links a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; }
+      ul.links a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
       /* Why I built it: a letter beside the photo of the map being explained. */
       .letter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; }
@@ -380,31 +360,9 @@
 
       <section id="for" aria-labelledby="for-h">
         <h2 id="for-h">Who it's for</h2>
-        <div class="for-grid">
-          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
-          <div class="who-home">
-            <div>
-              <p class="who-label">Choosing a home</p>
-              <h3>Buying or renting</h3>
-              <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
-            </div>
-            <div class="who-actions">
-              <a class="primary" href="/#check">Search a postcode</a>
-              <a href="/reports/street/">Get a street report</a>
-            </div>
-          </div>
-          <div class="who-pro">
-            <p class="who-label">Working with homes and places</p>
-            <ul class="who-list">
-              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
-              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Residents&#x27; groups</b><span>Start a bid from the official baseline.</span><a href="/area/">Browse council areas &rarr;</a></li>
-              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
-            </ul>
-          </div>
-          <!-- WHO-FOR:END -->
-        </div>
+        <!-- One line since 2026-11-03 (declutter; Bill: "do the proposed fixes"): the list is the front page's
+             (scripts/build_who_for.py), and About repeated it word for word. -->
+        <p class="read">Anyone choosing a home, and the people who work with homes and places. <a href="/#who">Who it is for, and where each one starts</a>.</p>
       </section>
 
       <section class="contact" id="contact" aria-labelledby="contact-h">

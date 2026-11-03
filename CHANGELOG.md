@@ -1,5 +1,16 @@
 # Changelog
 
+## Not yet live (branch `declutter`) - Shorter pages
+
+- **How it works** opens with a short version under the approach picture, and each section keeps its heading and
+  opening words with the detail one click away: about a third shorter.
+- **Planes overhead pages and the Heathrow consultation pack**: each cell shows the busiest band it reaches and draws
+  every band as one bar, in the full map's colours, with every count in its label.
+- **Bay Area**: each city's routes behind its own expander, and each row on one line.
+- **About**: "Who it's for" is one line linking to the front page's list.
+- **The sample street report** (Kew) is regenerated: it now gives the CAA's 2025 Heathrow figure, shows the air
+  measured nearby, and fits one page again.
+
 ## 2026-11-03 - Planes overhead on the full map; Sky Score on LinkedIn
 
 - **Planes overhead on the full map**: a new layer shows how many planes pass overhead a day at every postcode, from

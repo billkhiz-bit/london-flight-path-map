@@ -126,7 +126,7 @@ def test_a_page_reads_its_sectors_and_says_how_much_was_measured():
     f = _district(n=30, lhr=([2, 317], 2, 190))
     m, html = _page(f, live=40)
     assert [row[0] for row in m['tables'][0]['rows']] == ['TW9 1', 'TW9 2']
-    assert '<td><span>15 on an edge</span></td>' in html  # west: every postcode an edge across the bands
+    assert '<td><span>15 on an edge</span><div class="bands"' in html  # west: every postcode an edge across the bands
     assert '30 of its 40 postcodes measured, the ones in Richmond upon Thames' in html
     assert 'On an edge: the postcode is on the edge of a flight path' in html
     assert '<form class="check" action="/" method="get">' in html and 'name="postcode"' in html
@@ -341,6 +341,49 @@ def _facts(drop=()):
     return {'facts': [f for f in facts if f['label'] not in drop], 'sources': sources}
 
 
+# THE BAND BAR (declutter, 2026-11-03): a cell SHOWS the busiest band it reaches and draws every band as one bar,
+# each band's width its count; the bar's label says every count. Still bands, never a middle figure.
+
+def test_a_cell_shows_its_busiest_band_and_draws_every_band():
+    html = bpp.cell_html(['up to 317 a day', '137 at 100+', '1,200 on an edge', '450 under 10'], top=True)
+    assert re.findall(r'<span(?: class="top")?>(.*?)</span>', html) == ['up to 317 a day', '137 at 100+']
+    assert html.startswith('<span class="top">up to 317 a day</span>')
+    assert re.findall(r'<i class="(b\w+)" style="flex-grow:(\d+)"></i>', html) == \
+        [('b100', '137'), ('bedge', '1200'), ('b0', '450')]  # each width its count, the thousands comma gone
+    label = re.search(r'aria-label="([^"]*)"', html)[1]
+    assert label == 'Postcodes by planes a day: 137 at 100+, 1,200 on an edge, 450 under 10'  # every count
+    assert f'title="{label}"' in html and 'role="img"' in html
+
+
+def test_a_cell_without_bands_draws_no_bar():
+    for parts in (['not measured'], ['under 1 a day', 'at all 2 postcodes']):
+        html = bpp.cell_html(parts)
+        assert 'class="bands"' not in html and re.findall(r'<span>(.*?)</span>', html) == parts
+
+
+def test_a_sector_cell_leads_with_the_busiest_band_it_reaches():
+    shown = lambda figs: re.findall(r'<span>(.*?)</span>', bpp.cell_html(bpp.sector_parts(figs)))  # noqa: E731
+    assert shown([317, 20, 5]) == ['1 at 100+']
+    assert shown([20, 30, 5]) == ['2 at 10 to 99']  # none at 100+: the next band leads
+    assert shown([[9, 20], 5]) == ['1 on an edge']
+    assert shown([5, '<1']) == ['2 under 10']
+
+
+def test_the_key_names_only_the_bands_its_bars_draw():
+    key = bpp.band_key(bpp.bands_in([['3 at 100+', '4 under 10'], ['up to 2 a day', '2 under 10'], ['not measured']]))
+    assert re.findall(r'<i class="(b\w+)"></i>', key) == ['b100', 'b0'] and 'on an edge' not in key
+    assert 'aria-hidden="true"' in key  # the words above it say the bands
+
+
+def test_the_band_colours_are_the_full_maps_planes_layer():
+    bpl = _load('build_planes_layer')
+    step = {start: bpl.COLOURS[i + 1] for i, start in enumerate(bpl.STEPS)}
+    assert [start for start, _ in bpp.BANDS[:2]] == [100, 10]  # the bands start where two of the layer's steps do
+    assert bpp.BAND_COLOURS == {'at 100+': step[100], 'at 10 to 99': step[10]}
+    css = bpp.STYLE.replace('{{', '{').replace('}}', '}')
+    assert f'.b100 {{ background:{step[100]}; }}' in css and f'.b10 {{ background:{step[10]}; }}' in css
+
+
 def test_a_whole_district_cell_heads_with_its_busiest_figure():
     assert bpp.district_cell([317, [2, 318], '<1']) == ['up to 318 a day', '1 at 100+', '1 on an edge', '1 under 10']
     assert bpp.district_cell(['<1', 0]) == ['under 1 a day', 'at all 2 postcodes']
@@ -425,6 +468,9 @@ def test_a_council_page_gives_each_district_its_own_figures_and_the_borough_its_
     cells = [re.findall(r'<span(?: class="top")?>(.*?)</span>', td) for td in re.findall(r'<td [^>]*>(.*?)</td>', row[0])]
     assert cells == [['up to 317 a day', '30 at 100+'], ['up to 190 a day', '30 at 100+'], ['up to 2 a day', '30 under 10']]
     assert 'data-label="Flying west, 56% of days"' in row[0]  # a phone's stacked line names its column
+    assert row[0].count('class="bands"') == 3  # each kind of day its bar
+    assert re.findall(r'<i class="(b\w+)"></i>', re.search(r'<span class="key".*?</span></span>', html)[0]) == \
+        ['b100', 'b0']  # the key names the two bands TW3's bars draw, never one they do not
     assert '<dt>Aircraft noise band</dt><dd>Severe<span class="note">Estimated from the routes</span></dd>' in html
     assert 'Average price' not in html and 'Prices: HM Land Registry' not in html  # the four, nothing else
     assert 'Aviation noise context: DEFRA' in html and 'Flood risk: EA' in html

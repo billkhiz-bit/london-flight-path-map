@@ -109,7 +109,9 @@ Or just describe what you need, I have full context of this project.
   measured; the front page said "DEFRA, measured" until 2026-11-03, and `tests/test_public_wording.py` now refuses it); never say **how often planes pass** except for airports that pass
   `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26)
   or the district pages `build_planes_pages.py` BUILDS from the same files (`/planes-overhead/`, 2026-10-28: a cell
-  counts postcodes in bands, never a middle figure; its `--check` holds every page), or the full map's layer pictures
+  counts postcodes in bands, never a middle figure; since 2026-11-03 it SHOWS the busiest band and draws every band as
+  one bar in the layer's colours (`BAND_COLOURS`, held equal to `build_planes_layer.COLOURS`), every count in the bar's
+  label; its `--check` holds every page), or the full map's layer pictures
   `build_planes_layer.py` draws from the same files (2026-11-02: each postcode its own step, from the busiest airport
   over it, never airports added, never grouped; its
   `--check` holds every picture, its legend names steps, never a place's figure), a range on a cone's edge,

@@ -454,6 +454,20 @@ class WordingTests(unittest.TestCase):
         self.assertEqual(found, {}, "a DEFRA map called measured (say modelled; only a monitor's reading is measured):\n"
                          + fmt(found))
 
+    def test_the_caa_comparison_names_the_current_edition_everywhere(self):
+        # The CAA-vs-DEFRA caveat names the CAA's year and report. The 2025 roll (2026-11-01) checked a hand-kept list of
+        # three text files, so the SAMPLE street report PDF went on saying "the CAA's model of 2024" and "ERCD Report
+        # 2501" until 2026-11-03. This reads every published page, PDF and module, so a new file is held because it is
+        # published. The current edition comes from data/covid-understatement.json, the file the report reads.
+        covid = json.loads((ROOT / 'data' / 'covid-understatement.json').read_text(encoding='utf-8'))
+        edition = re.search(r'\bERCD Report (\d{4})\b', covid['caa'])
+        self.assertIsNotNone(edition, "data/covid-understatement.json's `caa` no longer names its ERCD report")
+        stale_year = rf"\bCAA(?:'s)?(?: own)?(?: also)? model(?:led)?(?: of)? (?!{covid['caa_year']}\b)20\d\d\b"
+        stale_report = rf'\bERCD(?: Report)? (?!{edition[1]}\b)\d{{4}}\b'
+        found = hits(f'{stale_year}|{stale_report}', everything())
+        self.assertEqual(found, {}, f"the CAA comparison on an old edition (now {covid['caa_year']}, ERCD Report "
+                         f'{edition[1]}): regenerate the file, or re-run its builder:\n' + fmt(found))
+
     def test_the_old_name_is_gone(self):
         found = hits(OLD_BRAND, everything(), re.I)
         self.assertEqual(found, {}, 'the old name in public text (always "Sky Score"):\n' + fmt(found))

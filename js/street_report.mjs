@@ -250,7 +250,9 @@ export function airChart(pollutant, rows, who = AIR_WHO_2021[pollutant]) {
     + ticks.map((t) => `<text x="${x(t)}" y="${axisY + 13}" font-size="9.5" text-anchor="${t === max ? 'end' : 'middle'}" style="fill:var(--air-ink-3, #636363);font-family:var(--font-mono, monospace)">${t === who ? `WHO ${t}` : t}</text>`).join('')
     + '</svg>';
 }
-const MAP = { w: 1000, h: 345, padKm: 5, minHeightKm: 11 };
+// h 345 -> 290 on 2026-11-03: a little wider and shorter, so the report fits one A4 page again after it gained the
+// air measured nearby and the have-your-say lines (the frame logic widens the view, so the approach stays in shot).
+const MAP = { w: 1000, h: 290, padKm: 5, minHeightKm: 11 };
 
 // DEFRA's Lden bands for its aircraft map. A MIRROR of NOISE_SCALE_DEFRA_LDEN in
 // index.html, the holder the site's legend reads; the PDF script compares the two
@@ -614,13 +616,13 @@ export function reportParts(spec, f) {
     ? new Date(`${spec.made}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
     : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const css = `  @page { size: A4; margin: 13mm 15mm 11mm; }
+  const css = `  @page { size: A4; margin: 10mm 14mm 8mm; }
   :root { --ink:#1c1c1a; --muted:#5f5e59; --rule:#dedcd6; --band:#f4f2ee; --accent:#b4441a; --fin:#d9480f; --dep:#1d4ed8; }
-  body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); background:#fff; font-size: 9.5pt; line-height: 1.4; margin: 0; }
+  body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); background:#fff; font-size: 9.5pt; line-height: 1.36; margin: 0; }
   h1 { font-size: 18pt; line-height: 1.15; margin: 0 0 3px; }
   .tag { font-size: 8pt; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 1px 6px; vertical-align: middle; margin-left: 8px; }
   .sub { color: var(--muted); margin: 0 0 9px; }
-  h2 { font-size: 10.5pt; margin: 11px 0 5px; }
+  h2 { font-size: 10.5pt; margin: 9px 0 4px; }
   .keys { display: grid; grid-template-columns: repeat(${tiles.length}, 1fr); gap: 7px; margin: 0 0 9px; }
   .key { background: var(--band); border-radius: 6px; padding: 8px 10px; }
   .key .n { font-size: 17pt; font-weight: 700; line-height: 1; }
@@ -642,7 +644,7 @@ export function reportParts(spec, f) {
   .cols { display: grid; grid-template-columns: ${district ? '1.25fr 1fr' : '1fr'}; gap: 16px; align-items: start; }
   ul { margin: 0; padding-left: 17px; } li { margin: 3px 0; }
   .cap { font-size: 8pt; color: var(--muted); margin: 0 0 2px; }
-  .note { font-size: 8pt; color: var(--muted); margin: 8px 0 0; }
+  .note { font-size: 7.6pt; color: var(--muted); margin: 5px 0 0; }
   footer { margin-top: 9px; padding-top: 6px; border-top: 1px solid var(--rule); font-size: 7.4pt; color: var(--muted); }
 `;
 

@@ -349,6 +349,10 @@ names out of the repo, for this page only), with who it is for, why it was built
 talk, and the talks. Published before the rename's attorney opinion (Bill, 23 Oct); the Deen Developers photo is
 held until they agree (original in `sky-score-drafts\about-photos\`). "Who it is for" is ONE list,
 `scripts/build_who_for.py`, written between WHO-FOR markers into the front page and `/about/` (blocking `--check`).
+SINCE 2026-11-03 (declutter, Bill's yes to the clutter audit) it is written into the FRONT PAGE ONLY: About repeated it
+word for word, so About says one line in the builder's two group names and links `/#who`. Putting it back is the
+builder's `PAGES` plus the markers in about/index.html. Never retype the audiences on About (a draft listed
+"councils", which the list does not have).
 Its opening said "beside every postcode" until a review caught the overclaim: "every postcode we cover".
 
 **"How it grew" (2026-10-24, Bill: "a timeline, which includes the video").** Six steps on `/about/`, dated by MONTH
@@ -746,3 +750,32 @@ product) is a one-line change plus whatever the test names. A plain link only: L
 that sets its own cookies, and the pages allow none. Counted as `<page>-linkedin` through `WATCHED_LINKS`; on /about/
 it sits beside Bill's own profile, relabelled "Bilal on LinkedIn" so the two are not both called "LinkedIn".
 Four breaks proven red: a stale copy, the phone footer's copy gone, `sameAs` dropped, the count removed.
+
+### The sample street report is a READER of every file the report reads (2026-11-03)
+
+`home/reports/sample-street-report-kew.pdf` is a stored render of `js/street_report.mjs`. The 1 Nov CAA roll moved
+every page and the live report, but the sample went on saying "the CAA's model of 2024" and "ERCD Report 2501":
+`measure_covid_understatement.py`'s edition check read a hand-kept list of three text files. Now
+`tests/test_public_wording.py` refuses an old edition in every published page, PDF and module (found from the
+Makefile, so a new file is held because it is published). Regenerating showed a second drift: the report had grown
+(nearest station, air measured nearby, have your say) to TWO pages; fitted back by layout only (margins 10/14/8 mm,
+`MAP.h` 345 -> 290, notes 7.6pt). A stored PDF cannot drop a time-limited line: regenerate it after any `until`.
+
+### The clutter audit and the `declutter` branch (2026-11-03)
+
+Bill: "Can we do an audit of all our web pages to see if there is clutter like this", then "do the proposed fixes".
+Every page type measured on the live site at 1366 and 390 (screens tall, words, first-screen words, links, buttons,
+destinations linked 3+ times), then each looked at whole: claude.ai/artifact/DKt7s7H8JZjUotbqvpbXN6. Done on `declutter`:
+- **How it works** 9 -> 6.3 screens (14.6 -> 9.9 on a phone): every heading and its opening words stay open, the detail
+  behind "Read more" pills (`details.more`); a "short version" UNDER the approach strip (Bill wanted the strip straight
+  after the opening words, 26 Oct); the credits one line open, the full list one click away (the OGL asks to include
+  OR LINK the attribution). The strip is 2.1 of the 6.3 screens by design; the audit's "about 3" forgot it.
+- **Bay Area** 7.7 -> 4.9 (12.3 -> 7.4): each city's route sentences behind its own expander (the summary names the
+  kinds, "Landing · Departure"), rows on one line from 760 px, "How to read this" behind one disclosure.
+- **The planes pages' cells**: the band bar (`docs/lessons/in-progress-measurements.md`).
+- **About** 6.3 -> 5.8 (9.8 -> 8.8): "Who it's for" one line (above). Its "blank gap" was lazy talk photos in a
+  full-page capture, not a defect.
+- NOT done, and why: **Pricing**: the audit's two items ("Buying or renting" box, the example's fine print) were the
+  FRONT PAGE's (NOW.md's ~20 Nov list), misread onto Pricing; the rest of its length is prices and terms, which a
+  buyer should never have to click for. **API**: the repeats are the hero's three buttons and the numbered "Get
+  started" steps, each inline where it is needed. Lesson: before proposing a cut, find the thing on the page.

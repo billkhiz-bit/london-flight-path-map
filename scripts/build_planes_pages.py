@@ -171,8 +171,65 @@ def most(v) -> int:
 BANDS = ((100, 'at 100+'), (10, 'at 10 to 99'), (0, 'under 10'))  # (from, words), busiest first
 EDGE = 'on an edge'
 BAND_ORDER = ('at 100+', 'at 10 to 99', EDGE, 'under 10')
-BANDS_SAID = (f'The table counts the postcodes of each sector by how many planes pass over them a day: '
-              f'{BANDS[0][0]} or more, {BANDS[1][0]} to {BANDS[0][0] - 1}, or under {BANDS[1][0]}.')
+BANDS_SAID = ("Each sector's bar splits its postcodes by how many planes pass over them a day; the figure above "
+              "it counts those in the busiest band the sector reaches. The list above gives the whole district's "
+              'counts.')
+
+# THE BAND BAR (declutter, 2026-11-03; Bill: "do the proposed fixes", audit items 4 and 6). A cell showed every band
+# as a line ("137 at 100+ / 200 on an edge / 450 under 10"): true, but four numbers a cell made a table no one could
+# scan. Now a cell SHOWS the busiest band it reaches and draws all of them as one bar, each band's width its count of
+# postcodes; the bar's label (screen readers, and a hover title) says every count. Still bands, never a middle figure:
+# the bar IS the bands. Built from the cell's own phrases (sector_parts), so the bar and the words cannot disagree.
+# Colours: the full map's planes layer (build_planes_layer.COLOURS: its 10-49 step for "10 to 99", its 100-199 step
+# for "100+"), held equal by tests/test_build_planes_pages.py, so a band reads the same on the map and on these pages.
+BAND_CLASS = {'at 100+': 'b100', 'at 10 to 99': 'b10', EDGE: 'bedge', 'under 10': 'b0'}
+BAND_COLOURS = {'at 100+': '#9a4316', 'at 10 to 99': '#dc8a4a'}
+BAND_KEY = (('at 100+', f'{BANDS[0][0]} or more'), ('at 10 to 99', f'{BANDS[1][0]} to {BANDS[0][0] - 1}'),
+            (EDGE, EDGE), ('under 10', f'under {BANDS[1][0]}'))
+
+
+def split_bands(parts: list[str]) -> tuple[list[str], list[tuple[int, str, str]]]:
+    """A cell's phrases as (other lines, bands). A band is sector_parts' "<count> <band words>", kept as (count,
+    words, phrase), busiest first; anything else ("up to 317 a day", "not measured", "at all 2 postcodes") is a line."""
+    lines, bands = [], []
+    for phrase in parts:
+        n, _, words = phrase.partition(' ')
+        if words in BAND_CLASS and n.replace(',', '').isdigit():
+            bands.append((int(n.replace(',', '')), words, phrase))
+        else:
+            lines.append(phrase)
+    return lines, bands
+
+
+def band_bar(bands: list[tuple[int, str, str]]) -> str:
+    """The bands as one bar, each band's width its count of postcodes; its label says every count."""
+    label = 'Postcodes by planes a day: ' + ', '.join(phrase for _, _, phrase in bands)
+    segments = ''.join(f'<i class="{BAND_CLASS[words]}" style="flex-grow:{n}"></i>' for n, words, _ in bands)
+    return f'<div class="bands" role="img" aria-label="{e(label)}" title="{e(label)}">{segments}</div>'
+
+
+def cell_html(parts: list[str], top: bool = False) -> str:
+    """One cell: its lines (the busiest figure, where the cell has one), the busiest band's count, then the bar.
+    `top` marks the first line as the cell's head (the consultation pack's "up to N a day")."""
+    lines, bands = split_bands(parts)
+    shown = lines + [bands[0][2]] if bands else lines
+    html = ''.join(f'<span class="top">{e(p)}</span>' if top and i == 0 else f'<span>{e(p)}</span>'
+                   for i, p in enumerate(shown))
+    return html + (band_bar(bands) if bands else '')
+
+
+def bands_in(cells) -> set[str]:
+    """The bands any of these cells draws."""
+    return {words for cell in cells for _, words, _ in split_bands(cell)[1]}
+
+
+def band_key(present: set[str]) -> str:
+    """The bar's key, after the words above a table: only the bands its cells draw, so "on an edge" appears only
+    where a bar has an edge (the edge note's own rule). The words say it, so the swatches are hidden from readers."""
+    return ('<span class="key" aria-hidden="true">'
+            + ''.join(f'<span><i class="{BAND_CLASS[band]}"></i>{e(words)}</span>'
+                      for band, words in BAND_KEY if band in present)
+            + '</span>')
 
 
 def band(v) -> str:
@@ -412,15 +469,14 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
         head = ''.join(f'<th scope="col">{e(label)}<span class="note">{e(share)}</span></th>'
                        for label, share in t['columns'])
         rows = '\n'.join(f'<tr><th scope="row">{e(sector)}<span class="note">{n} postcode{"s" if n != 1 else ""}'
-                         f'</span></th>' + ''.join('<td>' + ''.join(f'<span>{e(p)}</span>' for p in c) + '</td>'
-                                                   for c in cells) + '</tr>'
+                         f'</span></th>' + ''.join(f'<td>{cell_html(c)}</td>' for c in cells) + '</tr>'
                          for sector, n, cells in t['rows'])
         sections.append(
             f'<h2 id="{e(t["code"].lower())}">From {e(t["name"])}</h2>\n'
             f'<p>Planes land and take off into the wind, so the weather decides which way {e(t["name"])} flies, '
             f'and that decides how many pass over {e(d)}. Across its postcodes, {e(t["period"])}:</p>\n'
             f'<ul class="overall">\n{overall}\n</ul>\n'
-            f'<p class="note-p">{e(BANDS_SAID)}</p>\n'
+            f'<p class="note-p">{e(BANDS_SAID)} {band_key(bands_in(c for row in t["rows"] for c in row[2]))}</p>\n'
             '<div class="tw">\n<table>\n'
             f'<caption class="visually-hidden">Planes overhead from {e(t["name"])} in {e(d)}, by postcode sector '
             f'and the way {e(t["name"])} flies</caption>\n'
@@ -472,7 +528,7 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
 STYLE = """
   /* The area pages' look (scripts/build_area_pages.py), so the two read as one site. */
   :root {{ color-scheme: light dark;
-    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
+    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; --band0:#d6d3d1; }}
   * {{ box-sizing:border-box; }}
   body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
   a:focus-visible, input:focus-visible, button:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
@@ -496,6 +552,16 @@ STYLE = """
     table {{ font-size:12.5px; }}
     th, td {{ padding:6px 3px; }}
   }}
+  /* The band bar (2026-11-03): each band's width its count of postcodes, 2 px apart, the map layer's colours. */
+  .bands {{ display:flex; gap:2px; height:8px; max-width:9em; margin:5px 0 1px; border-radius:4px; overflow:hidden; }}
+  .bands i {{ display:block; flex:0 1 0; min-width:3px; }}
+  .b100 {{ background:""" + BAND_COLOURS['at 100+'] + """; }}
+  .b10 {{ background:""" + BAND_COLOURS['at 10 to 99'] + """; }}
+  .bedge {{ background:repeating-linear-gradient(135deg, """ + BAND_COLOURS['at 10 to 99'] + """ 0 2px, var(--band0) 2px 4px); }}
+  .b0 {{ background:var(--band0); }}
+  .key {{ display:inline-flex; flex-wrap:wrap; gap:2px 12px; vertical-align:middle; }}
+  .key span {{ display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }}
+  .key i {{ display:inline-block; width:14px; height:8px; border-radius:2px; }}
   .note {{ display:block; color:var(--mid); font-size:12px; font-weight:400; }}  /* 12px like the area pages' notes (audit 2026-11-01) */
   .note-p {{ color:var(--mid); font-size:13px; }}
   .tw {{ overflow-x:auto; }}
@@ -516,7 +582,7 @@ STYLE = """
   .site-top .site-nav a:hover {{ text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }}
   .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
+    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; --band0:#4a4a48; }}
     body {{ background:#141414; }}
   }}
   /* The phone menu (2026-10-23), as on the area pages: a popover, so no script. */
@@ -570,6 +636,8 @@ EXTRA_STYLE = """
     table.pack td::before { content:attr(data-label); display:block; color:var(--mid); }
     table.pack td span { display:inline; white-space:nowrap; }  /* each band whole, the busiest too */
     table.pack td span + span::before { content:', '; white-space:normal; }  /* the line breaks at a comma */
+    /* The band bar ends the text's own line (2026-11-03): under it, it made every district a line longer. */
+    table.pack td .bands { display:inline-flex; width:5.5em; margin:0 0 0 8px; vertical-align:middle; }
   }
 """
 
@@ -773,9 +841,9 @@ PACK_LEAD = ('Whatever your view, these are the figures for {borough} now: the p
              "over each of its postcode districts, and the borough's noise, air and flood figures from official data. "
              "They are today's flights on today's routes, not those of a third runway. Sky Score takes no side in "
              'the consultation.')
-CELLS_SAID = (f'Each cell gives the most planes over any one postcode of the district on that kind of day, then '
-              f"counts the district's postcodes by how many pass over them a day: {BANDS[0][0]} or more, "
-              f'{BANDS[1][0]} to {BANDS[0][0] - 1}, or under {BANDS[1][0]}.')
+CELLS_SAID = ('Each cell gives the most planes over any one postcode of the district on that kind of day, and '
+              'counts its postcodes in the busiest band reached; the bar splits all of them by how many planes pass '
+              "over them a day. Each district's own page goes sector by sector.")
 
 PACK = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/planes-overhead/">Planes overhead</a> &rsaquo; <a href="/planes-overhead/heathrow-consultation/">Heathrow consultation</a> &rsaquo; {borough}</nav>
 {crumbs_ld}
@@ -787,7 +855,7 @@ PACK = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Sco
 
 <h2>Planes from Heathrow, district by district</h2>
 <p>Planes land and take off into the wind, so the weather decides which way Heathrow flies, and that decides how many pass over each place. Counted over each postcode, {period}.</p>
-<p class="note-p">{cells_said}</p>
+<p class="note-p">{cells_said} {key}</p>
 <div class="tw">
 <!-- [html-validate-disable-block no-redundant-role: on a phone this table is display:block, which drops its table semantics in Safari; the roles keep them] -->
 <table class="pack" role="table">
@@ -847,9 +915,7 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
     rows = '\n'.join(
         f'<tr role="row"><th scope="row" role="rowheader"><a href="{URL_ROOT}{e(m["slug"])}/">{e(m["district"])}</a>'
         f'<span class="note">{m["measured"]:,} postcode{"s" if m["measured"] != 1 else ""}</span></th>'
-        + ''.join(f'<td role="cell" data-label="{e(label)}, {e(share)}">'
-                  + ''.join(f'<span class="top">{e(p)}</span>' if i == 0 else f'<span>{e(p)}</span>'
-                            for i, p in enumerate(cell)) + '</td>'
+        + ''.join(f'<td role="cell" data-label="{e(label)}, {e(share)}">{cell_html(cell, top=True)}</td>'
                   for (label, share), cell in zip(columns, t['district_cells'], strict=True))
         + '</tr>'
         for m, t in zip(ms, tables, strict=True))
@@ -881,7 +947,7 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
                                       ('Heathrow consultation', f'{URL_ROOT}{PACK_DIR}/'),
                                       (borough, f'{URL_ROOT}{PACK_DIR}/{area.slug(borough)}/')]),
         borough=e(borough), state=e(pack_state(c['until'], today)), lead=e(PACK_LEAD.format(borough=borough)),
-        href=e(c['href']), period=e(tables[0]['period']), cells_said=e(CELLS_SAID), head=head, rows=rows,
+        href=e(c['href']), period=e(tables[0]['period']), cells_said=e(CELLS_SAID), key=band_key(bands_in(cell for t in tables for cell in t['district_cells'])), head=head, rows=rows,
         notes=notes, facts='\n'.join(items),
         area_link=(f'<p><a href="{e(area_path)}">{e(borough)}: every figure we publish, with its score</a></p>'
                    if has_area else ''),
