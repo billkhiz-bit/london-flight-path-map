@@ -1467,11 +1467,12 @@ function render(postcode, district, city, e, lat, lon) {
   if (where) where.textContent = district + (city ? '' : ' (not yet on the map: figures only)');
   const bar = (v, who) => { const max = who * 2; return `<span class="bar"><i style="width:${Math.min(100, (v / max) * 100)}%"></i><b style="left:${(who / max) * 100}%" title="WHO guideline ${who}"></b></span>`; };
   const rows = [];
-  // Aircraft: measured, or the site's own estimate from the published routes,
-  // or outside every city - never the "outside" estimate, which is a maximum
-  // taken from nothing nearby and would read as a quiet verdict.
+  // Aircraft: DEFRA's map (MODELLED: a strategic noise map is a model, never a measurement; it said "DEFRA,
+  // measured" until 2026-11-03, against the API's own provenance), or the site's own estimate from the published
+  // routes, or outside every city - never the "outside" estimate, which is a maximum taken from nothing nearby and
+  // would read as a quiet verdict. tests/test_public_wording.py refuses "DEFRA, measured" on every page and module.
   if (e.aircraftNoiseLdenDb != null) {
-    rows.push(`<div class="row"><span>Aircraft noise</span>${bar(e.aircraftNoiseLdenDb, e.aircraftNoiseWhoGuidelineDb)}<span class="val">${e.aircraftNoiseLdenDb} dB<small>WHO ${e.aircraftNoiseWhoGuidelineDb} &middot; DEFRA, measured</small></span></div>`);
+    rows.push(`<div class="row"><span>Aircraft noise</span>${bar(e.aircraftNoiseLdenDb, e.aircraftNoiseWhoGuidelineDb)}<span class="val">${e.aircraftNoiseLdenDb} dB<small>WHO ${e.aircraftNoiseWhoGuidelineDb} &middot; DEFRA, modelled</small></span></div>`);
   } else if (e.aircraftQuietCoverage === 'outside') {
     rows.push('<div class="row"><span>Aircraft noise</span><span class="bar"></span><span class="val">not covered<small>outside the cities we map</small></span></div>');
   } else if (e.aircraftQuietEstimated != null) {

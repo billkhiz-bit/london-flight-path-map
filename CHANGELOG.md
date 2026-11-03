@@ -23,7 +23,8 @@
   pages called 2025 "a normal year", and `/api/` said 2024's flights were 0.5% below 2019's, which is the CAA's
   summer-day comparison set beside an annual one. They now give the report's own annual figure (2025's flights 2%
   below 2019's) and no longer say Heathrow is the only airport the CAA models. The full map's search descriptions name
-  the San Francisco Bay Area, and `/api/` says the quiet score uses DEFRA's map only where DEFRA maps it.
+  the San Francisco Bay Area, and `/api/` says the quiet score uses DEFRA's map only where DEFRA maps it. The front
+  page's answer called DEFRA's aircraft noise figure "measured": it is DEFRA's model, and now says so.
 
 ## 2026-11-02 - Planes from Heathrow, council by council, for its consultation; healthcare nearby in every area
 

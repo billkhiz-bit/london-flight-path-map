@@ -558,12 +558,15 @@ const lateCount = await boroCount();
 ok(lateCount === 33 && (await page.locator('#chips button[data-city="london"]').getAttribute('aria-pressed')) === 'true', 'a late outline file does not overwrite the city chosen after it', `${lateCount} council areas drawn`);
 await page.unroute('**/data/manchester-boroughs.json');
 
-// 8. A measured postcode: four rows, the runway line, the council-area line, the pin, the hand-off link.
+// 8. A postcode on DEFRA's map: four rows, the runway line, the council-area line, the pin, the hand-off link.
+// DEFRA's aircraft figure is MODELLED (a strategic noise map), never "measured": this check asserted "measured" until
+// 2026-11-03, holding the wrong word in place (tests/test_public_wording.py now refuses "DEFRA, measured" too).
 await page.fill('#pc', 'TW9 3PZ');
 await page.press('#pc', 'Enter');
 await page.waitForSelector('#answer.is-open', { timeout: 10000 });
 const vals = await page.locator('#ans-rows .val').allTextContents();
-ok(vals.length === 4 && vals[0].startsWith('56 dB') && vals[0].includes('measured') && vals[1].startsWith('53.1 dB'), 'measured postcode renders four rows with the DEFRA readings', vals.join(' | '));
+ok(vals.length === 4 && vals[0].startsWith('56 dB') && vals[0].includes('DEFRA, modelled') && !/measured/i.test(vals[0]) && vals[1].startsWith('53.1 dB'),
+  "a postcode on DEFRA's map renders four rows, the aircraft figure said to be DEFRA's model", vals.join(' | '));
 const routes = await page.locator('#ans-routes').textContent();
 ok((await page.locator('#status').textContent()) === 'Showing the figures for TW9 3PZ.', 'a found postcode is announced in the live region, not left silent (audit M-14)', await page.locator('#status').textContent());
 // ONE decimal, as the full map and the street report print it. TW9 3PZ is ~10.2 km out, the

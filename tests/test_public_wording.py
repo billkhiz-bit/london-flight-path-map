@@ -445,6 +445,15 @@ class WordingTests(unittest.TestCase):
         found = hits(r'Cubitt\s?33', [p for p in everything() if p not in CUBITT_PAGES], re.I)
         self.assertEqual(found, {}, 'Cubitt33 named outside privacy and terms:\n' + fmt(found))
 
+    def test_a_defra_map_is_never_called_measured(self):
+        # DEFRA's noise and air maps are MODELS; only an instrument's reading is measured (the API's provenance,
+        # 2026-10-23). The front page's answer said "DEFRA, measured" for aircraft noise until 2026-11-03, in a
+        # template string no rule read for that. A DEFRA MONITOR's reading is measured, and is worded "monitor".
+        found = hits(r'\bDEFRA\b[\s,·]{0,6}measured\b|\bmeasured by DEFRA\b|\bDEFRA(?:\'s)? measurements?\b',
+                     everything(), re.I)
+        self.assertEqual(found, {}, "a DEFRA map called measured (say modelled; only a monitor's reading is measured):\n"
+                         + fmt(found))
+
     def test_the_old_name_is_gone(self):
         found = hits(OLD_BRAND, everything(), re.I)
         self.assertEqual(found, {}, 'the old name in public text (always "Sky Score"):\n' + fmt(found))

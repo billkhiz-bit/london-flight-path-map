@@ -105,7 +105,8 @@ Or just describe what you need, I have full context of this project.
   `terms.html` ONLY. **Cubitt33 is not VAT-registered: never write "+ VAT".**
 - **Wording rules**: never call the whole product "open government data"/OGL (UK routes come from the UK AIP,
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
-  are over **postcodes, not addresses**; never say **how often planes pass** except for airports that pass
+  are over **postcodes, not addresses**; a DEFRA map figure is **modelled, never "measured"** (only a monitor's reading is
+  measured; the front page said "DEFRA, measured" until 2026-11-03, and `tests/test_public_wording.py` now refuses it); never say **how often planes pass** except for airports that pass
   `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26)
   or the district pages `build_planes_pages.py` BUILDS from the same files (`/planes-overhead/`, 2026-10-28: a cell
   counts postcodes in bands, never a middle figure; its `--check` holds every page), or the full map's layer pictures
