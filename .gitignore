@@ -230,6 +230,9 @@ data/*
 # Which district pages each council's AREA page links (2026-11-01): names only, no figure, tracked because the
 # tracked area pages are built from it (scripts/build_planes_pages.py council_index).
 !data/planes-districts-by-council.json
+# The full map's planes overhead layer (2026-11-02): pictures drawn from those files by
+# scripts/build_planes_layer.py stay ignored like them; their manifest is tracked for the drift check.
+!data/planes-layer-manifest.json
 /planes-overhead/
 /sitemap-planes.xml
 .defra_load_checkpoint

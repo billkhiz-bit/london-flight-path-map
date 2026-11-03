@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-11-03 - Planes overhead on the full map; Sky Score on LinkedIn
+
+- **Planes overhead on the full map**: a new layer shows how many planes pass overhead a day at every postcode, from
+  the busiest airport over it, in four steps (10 to 49, 50 to 99, 100 to 199, 200 or more), for a day flying west, a
+  day flying both ways or a day flying east, with postcode districts outlined. Where two airports' planes cross one
+  postcode it shows the busier one's count: the two are never added, because each airport's kinds of day are its
+  own. Each postcode keeps its own figure, so the narrow strip under a low
+  approach shows as it is rather than averaged away over a district. Seven city regions: London, Greater Manchester,
+  the West Midlands, West Yorkshire, Bristol, Leicester and Merseyside. It replaces aircraft noise while it is on.
+
+- **Sky Score on LinkedIn**: the company page is linked from the front page's footer, both of the full map's footers
+  and the About page's "Get in touch".
+
 ## 2026-11-02 - Planes from Heathrow, council by council, for its consultation; healthcare nearby in every area
 
 - **A page per London council for Heathrow's expansion consultation** (`/planes-overhead/heathrow-consultation/`):

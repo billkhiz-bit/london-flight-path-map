@@ -2,7 +2,8 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
+**Last reviewed:** 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
 `planes-district-pages`, Bill's review first; Thursday's runbook Part D), the N65 build STARTED (branch `n65`: the
@@ -25,6 +26,29 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-03)
+>
+> **B2, the full map's Planes overhead layer: the review's six fixes DONE** (Bill: "let's do the above"). (1) The live
+> e2e toggle list allowed `planes` as an extra until `web-deploy`, then was folded back to an exact seven (3 Nov, passes
+> against live). (2) "From the busiest airport over each
+> postcode", never a total, in the legend, About text, toggle title, `index.json` (`rule`, `blank`), CHANGELOG,
+> CLAUDE.md. (3) Smoothed until one picture pixel covers a screen pixel, sharp from there (`setPlanesRendering`, zoom
+> handler + every paint). (4) The period test is word for word. (5) The switch, steps and "About this data" are hidden
+> until `index.json` says the city has a picture. (6) The Makefile comment says BEFORE `web-deploy`. Seven breaks
+> proven red; one survivor showed the per-element `[hidden]` CSS was dead code (the page-wide `!important` rule wins),
+> deleted. The browser test now blocks service workers (sw.js claimed the page, so `page.route` never saw the request).
+> **The company's LinkedIn page** (Bill's pick, "main pages"): front page footer + Organization `sameAs`, both map
+> footers, /about/'s "Get in touch" (Bill's own profile relabelled "Bilal on LinkedIn"); one holder `js/count.mjs`
+> `LINKEDIN_URL`, held by `tests/test_linkedin_company_link.py` (four breaks red); counted `<page>-linkedin`. Not the
+> generated pages (it would re-date all 566 in the sitemap). At the rename: change the holder, the test names the rest.
+> DEPLOY (Bill's `!`, in this order): `planes-layer-deploy` + `web-deploy` DONE 3 Nov ~12:50 UTC (live: the map's two
+> footers + About carry the link, the planes toggle and `index.json` 200); `home-deploy`, `meta-deploy` (the sitemap
+> re-dates `/`, `/map/` and `/about/`, and only those) to go; then the drift check. Still open: the map's JSON-LD "UK and NYC" and /api/'s "DEFRA Lden noise" (predate v5.7); click a
+> district on the layer to open its page. Worktrees TIDIED 3 Nov (Bill: "remove if we don't need"): all 8 extra
+> worktrees removed one at a time, each checked for folder links first (none) with `data/adsb` counted before and after
+> (1,462 files each time); 12 merged or superseded local branches deleted; kept `rehearse-a/b/c`,
+> `i17-flip-verification-on`, `worktree-core-cities-spike-2026-07-31` and every branch on GitHub.
+>
 > ## START HERE (2026-11-02)
 >
 > **LIVE 2 Nov** (preflight PASS; drift PASS; checked live at 390 + 1366, no sideways scroll, no console error):
@@ -61,7 +85,31 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > ~20 Nov engagement read: the front page changed 2 Nov. THEN BUILT (Bill: "without imposing on privacy"): a
 > place-name `<datalist>` on the postcode box and "Describe what you want" for Find areas (`js/find-words.mjs`, rules in
 > the browser, nothing typed leaves the page; front-page.mjs checks no request carries the words); deploy:
-> `web-deploy` (js/) then `home-deploy`. `tests/planes-model.mjs` had no gate: now in preflight with `find-words.mjs`. N65
+> `web-deploy` (js/) then `home-deploy` (LIVE 2 Nov ~21:50 UTC, `48d4a13`; checked live: "under £450k in Leeds" read
+> as West Yorkshire, £400,000, four choices; 116 places offered; drift PASS). THEN (Bill picked B2 of the map-layer
+> mock-ups: "B's look without the blur"): a **Planes overhead layer on /map/**, each postcode its own step in B's
+> four colours, districts outlined, a West/Both/East switch, never on with DEFRA aircraft noise
+> (`scripts/build_planes_layer.py` -> gitignored `data/planes-layer/`, manifest tracked; `tests/planes-layer.mjs`,
+> `tests/test_build_planes_layer.py`; drift check and `planes-layer-deploy` added). Deploy order: `planes-layer-deploy`
+> FIRST, then `web-deploy`. Not yet: clicking a district to open its page.
+> **B2 IS UNCOMMITTED (Bill logged off 2 Nov ~22:30): preflight NOT yet passed.** Safety copy:
+> `.git/wip-2026-11-02/planes-layer-b2.patch` (all of it, new files included). An independent review found six things;
+> FIX ALL, then full preflight, commit, push, hand Bill the deploy (order above):
+> 1. `tests/e2e/app.spec.js:44` lists the live map's toggles exactly and lacks `planes`: it runs against the LIVE site,
+>    so adding it now reds until `web-deploy`, leaving it out reds after. Fix: require the six AND allow only known
+>    extras (`planes`), then fold `planes` into the exact list once live. Also the "Six toggles are declared" comment
+>    in index.html (~line 978).
+> 2. The legend overstates: the picture is the BUSIEST AIRPORT'S step, not a total (E1 4FG westerly: LHR 99 + LCY 4,
+>    painted 50-99; adding airports is not valid either, each has its own kinds of day). Say "from the busiest
+>    airport over it" in the legend title/rows, the About text, index.json `blank`, CHANGELOG and the CLAUDE.md line.
+> 3. `image-rendering: pixelated` aliases at default zoom (London's 2294 px picture shown ~690 px wide: stripes moire,
+>    1 px district lines vanish). Fix: `auto` by default; in the zoom handler (index.html ~15422 `.on('zoom'`) switch
+>    to `pixelated` once a picture pixel is >= 1 screen pixel (k * placed width / picture width >= 1).
+> 4. `tests/planes-layer.mjs` period check accepts any two months (`||` branch): compare to the string built from
+>    `index.months` with a month-name list in the test.
+> 5. Legend transient: steps show before index.json resolves, and "About this data" stays for a city with no picture.
+>    Hide steps + disclosure until the paint finishes; hide the disclosure when there is no entry.
+> 6. Makefile `planes-layer-deploy` comment: say BEFORE `web-deploy` (CLAUDE.md already does). `tests/planes-model.mjs` had no gate: now in preflight with `find-words.mjs`. N65
 > step 4 committed + pushed on `n65` (`fb126f0`). Data incident + restore: memory `feedback-worktree-remove-follows-junctions`.
 > Noted, not done: the map's JSON-LD says "UK and NYC" and /api/'s calls quiet "DEFRA Lden noise" (both predate v5.7).
 >

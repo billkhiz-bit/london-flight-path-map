@@ -70,6 +70,7 @@ help:
 	@echo "    talks-deploy        Sync talks/ PDFs + index.html (the write-ups; standalone, not in web-deploy-all)"
 	@echo "    open-data-deploy    Upload open-data/ (borough CSV + its page; rebuild with the area pages)"
 	@echo "    planes-deploy       Sync data/planes/ (planes overhead per district; --check first, gitignored build)"
+	@echo "    planes-layer-deploy Sync data/planes-layer/ (the full map's planes overhead pictures; --check --strict first)"
 	@echo "    bay-area-deploy     Upload bay-area/ (the Bay Area flight-path page + its noise picture)"
 	@echo "    web-deploy-all      fonts + web + data + pwa + demo + prototype + area + meta + open data + bay area"
 	@echo ""
@@ -712,6 +713,28 @@ planes-deploy:
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/data/planes/*'
+
+.PHONY: planes-layer-deploy
+planes-layer-deploy:
+	# The full map's planes overhead layer (2026-11-02, Bill's pick B2): one picture per city and kind of day
+	# plus district lines and index.json, drawn by scripts/build_planes_layer.py from data/planes/. GITIGNORED
+	# like those files; its manifest, data/planes-layer-manifest.json, is tracked, so this refuses to upload
+	# unless --check --strict says the pictures on disk show what the planes files draw (a missing input fails,
+	# never uploads what happens to be on disk). Run after planes-deploy and BEFORE the web-deploy that ships a
+	# map reading these pictures (a map going first would ask for files not there yet). ODbL (adsb.lol): the credits ride in
+	# index.json and the map legend reads them from there. The map paints nothing for a city it cannot load.
+	python scripts/build_planes_layer.py --check --strict
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync data/planes-layer/ \
+		s3://$(S3_BUCKET)/data/planes-layer/ \
+		--exclude "*" --include "*.png" \
+		--content-type "image/png" --cache-control "no-cache" \
+		--delete --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/planes-layer/index.json \
+		s3://$(S3_BUCKET)/data/planes-layer/index.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
+		--distribution-id $(CF_DISTRIBUTION) \
+		--paths '/data/planes-layer/*'
 
 .PHONY: planes-pages-deploy
 planes-pages-deploy:

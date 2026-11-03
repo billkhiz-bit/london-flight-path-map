@@ -789,6 +789,50 @@
         height: 10px;
         border: 1px solid rgba(0, 0, 0, 0.2);
       }
+      /* Planes overhead (2026-11-02): the kind-of-day switch. Colours are INHERITED (border and text in
+         currentColor, the pressed one marked by weight and an orange underline), so it reads on the light desktop
+         legend and the dark phone one without a second rule to remember. */
+      .planes-kind {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border: 1px solid currentColor;
+        margin: 2px 0 6px;
+      }
+      .planes-kind button {
+        font: inherit;
+        font-size: 9px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: inherit;
+        background: transparent;
+        border: 0;
+        min-height: 32px;
+        padding: 4px 2px;
+        cursor: pointer;
+      }
+      .planes-kind button + button {
+        border-left: 1px solid currentColor;
+      }
+      .planes-kind button[aria-pressed='true'] {
+        font-weight: 700;
+        box-shadow: inset 0 -3px 0 var(--orange);
+      }
+      .planes-kind button:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: -2px;
+      }
+      .legend-swatch.planes-edge {
+        background: repeating-linear-gradient(135deg, #662809 0 3px, #9a4316 3px 6px);
+      }
+      .legend-swatch.planes-clear {
+        background: transparent;
+        border-color: currentColor;
+      }
+      #legend-planes-group a {
+        color: inherit;
+      }
+      /* No [hidden] rules here: the page's own `[hidden] { display: none !important }` (top of this sheet) beats
+         .planes-kind's grid. A per-element rule once sat here and a mutation proved it could never matter. */
 
       .map-controls {
         position: absolute;
@@ -925,11 +969,16 @@
         background: #7c3aed;
         border-color: #7c3aed;
       }
+      .layer-toggle[data-layer='planes'].active .indicator {
+        background: #9a4316; /* the 100-199 step of the planes overhead layer */
+        border-color: #9a4316;
+      }
       /* The transport toggle's indicator colour lived here until 2026-08-23,
-         eleven days after the toggle itself was removed. Six toggles are
-         declared in the markup - paths, defra-aircraft, defra-road, flood,
+         eleven days after the toggle itself was removed. Six toggles were
+         declared in the markup then - paths, defra-aircraft, defra-road, flood,
          air-quality, labels - and this rule was the seventh, styling a
-         selector that matches nothing.
+         selector that matches nothing. (A seventh TOGGLE, planes, came on
+         2026-11-02 with its own rule above; tests/e2e/app.spec.js names the set.)
 
          FOURTH stale reference from that one removal, after the metric card's
          'TOGGLE "TRANSPORT" ON MAP', the `.layer-transport` selector entry and
@@ -4153,6 +4202,16 @@
           <button
             type="button"
             class="layer-toggle"
+            data-layer="planes"
+            aria-pressed="false"
+            title="How many planes pass overhead a day at each postcode, from the busiest airport over it, by the kind of day"
+          >
+            <div class="indicator" aria-hidden="true"></div>
+            <span id="label-planes">Planes overhead</span>
+          </button>
+          <button
+            type="button"
+            class="layer-toggle"
             data-layer="defra-road"
             aria-pressed="false"
             title="Road traffic noise contours from official DEFRA strategic noise mapping"
@@ -4295,6 +4354,72 @@
               result as a highly anomalous situation. Measured, they understate it by about half: DEFRA's 2021 Heathrow 55 dB contour covers 75.6 km&sup2;, and the CAA's own model of 2025, a normal year, covers 142.4 km&sup2;. The two are different models, so read that as an order of magnitude, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date.
               Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search
                 gives a 0-10 quiet score for that location, not a decibel reading. All levels are outdoor, at the building's facade: indoors, with the windows shut, it is quieter, though gardens, balconies and open windows are not.
+              </div>
+            </details>
+          </div>
+          <!-- PLANES OVERHEAD (2026-11-02, Bill's pick B2 of the mock-ups at claude.ai/artifact/EUGSYeSRLKHymJXLAt8kYW):
+               each postcode's own count in four steps, nothing grouped, districts outlined. The pictures come from
+               scripts/build_planes_layer.py (data/planes-layer/), drawn from the same per-postcode files as the front
+               page's answer; the step colours below are held equal to its index.json by tests/planes-layer.mjs.
+               This legend states steps, never a place's figure. -->
+          <div id="legend-planes-group" style="display: none">
+            <div
+              class="legend-group-title"
+              style="margin: 8px 0 4px; font-size: 10px; letter-spacing: 1px; font-weight: 600"
+              id="legend-planes-title"
+            >
+              PLANES OVERHEAD, A DAY
+            </div>
+            <!-- The busiest airport, never a total (review, 2026-11-02): each postcode is drawn in the step of the
+                 airport sending the most planes over it, because each airport's kinds of day are its own and so cannot
+                 be added. The switch, the steps and "About this data" start HIDDEN and paintPlanesLayer() shows them
+                 once index.json says this city has a picture: before that they would name steps nothing is drawn in. -->
+            <p class="legend-note" id="legend-planes-rule">From the busiest airport over each postcode</p>
+            <div class="planes-kind" id="legend-planes-kind" role="group" aria-label="Kind of day" hidden>
+              <button type="button" data-planes-kind="westerly" aria-pressed="true" aria-label="Flying west">West</button>
+              <button type="button" data-planes-kind="mixed" aria-pressed="false" aria-label="Both ways">Both</button>
+              <button type="button" data-planes-kind="easterly" aria-pressed="false" aria-label="Flying east">East</button>
+            </div>
+            <p class="legend-note" id="legend-planes-none" hidden>Not counted for this city.</p>
+            <div id="legend-planes-steps" hidden>
+              <div class="legend-row" data-step="4">
+                <div class="legend-swatch" style="background: #662809"></div>
+                <span>200 OR MORE</span>
+              </div>
+              <div class="legend-row" data-step="3">
+                <div class="legend-swatch" style="background: #9a4316"></div>
+                <span>100 TO 199</span>
+              </div>
+              <div class="legend-row" data-step="2">
+                <div class="legend-swatch" style="background: #c2622a"></div>
+                <span>50 TO 99</span>
+              </div>
+              <div class="legend-row" data-step="1">
+                <div class="legend-swatch" style="background: #dc8a4a"></div>
+                <span>10 TO 49</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-swatch planes-edge"></div>
+                <span>ON AN EDGE: A FEW METRES DECIDE</span>
+              </div>
+              <div class="legend-row">
+                <div class="legend-swatch planes-clear"></div>
+                <span>CLEAR: UNDER 10 FROM EVERY AIRPORT, OR NOT MEASURED</span>
+              </div>
+            </div>
+            <details class="legend-disclosure" id="legend-planes-disclosure" hidden>
+              <summary>About this data</summary>
+              <div class="legend-note" style="font-size: 8px; margin: 4px 0 0; line-height: 1.4">
+                <strong>What this is:</strong> how many planes pass overhead at each postcode on each kind of day (the
+                wind decides which way an airport flies), from the busiest airport over it, counted from community
+                flight tracking and checked against the CAA's monthly totals,
+                <span id="legend-planes-period">over the months counted</span>. Where two airports' planes cross one
+                postcode it shows the busier one's count: the two are never added, because each airport's kinds of day
+                are its own. <span id="legend-planes-definition"></span> Only the airports whose counts passed that check are
+                counted; helicopters and small airfields are not. Each postcode keeps its own figure: nothing is
+                averaged over an area. District lines are drawn faintly; every district's postcodes are on its
+                <a href="/planes-overhead/">planes overhead page</a>.
+                <span id="legend-planes-credits"></span>
               </div>
             </details>
           </div>
@@ -4450,6 +4575,8 @@
           >
             App Store
           </a>
+          <span class="sep">·</span>
+          <a href="https://www.linkedin.com/company/sky-score/" target="_blank" rel="noopener" title="Sky Score on LinkedIn">LinkedIn</a>
           <span class="sep">·</span>
           <a href="https://github.com/billkhiz-bit/london-flight-path-map" target="_blank" rel="noopener">GitHub</a>
           <span class="sep">·</span>
@@ -4710,6 +4837,8 @@
           >
             App Store
           </a>
+          <span class="sep">·</span>
+          <a href="https://www.linkedin.com/company/sky-score/" target="_blank" rel="noopener" title="Sky Score on LinkedIn">LinkedIn</a>
           <span class="sep">·</span>
           <a href="https://github.com/billkhiz-bit/london-flight-path-map" target="_blank" rel="noopener">GitHub</a>
           <span class="sep">·</span>
@@ -9341,6 +9470,7 @@
       let layers = {
         paths: true,
         'defra-aircraft': true,
+        planes: false,
         'defra-road': false,
         flood: false,
         'air-quality': false,
@@ -12080,6 +12210,20 @@
             .style('pointer-events', 'none');
         }
 
+        // Planes overhead at each postcode (2026-11-02): two pictures, the kind of day's steps and the district
+        // lines, placed by paintPlanesLayer(). Above aircraft noise, which it switches off (two orange layers
+        // multiplied read as neither). Smoothed until zoomed in: setPlanesRendering() says why.
+        const planesG = g.append('g').attr('class', 'layer-planes');
+        if (!layers.planes) planesG.style('display', 'none');
+        for (const id of ['planes-img', 'planes-districts-img']) {
+          planesG
+            .append('image')
+            .attr('id', id)
+            .attr('preserveAspectRatio', 'none')
+            .style('image-rendering', 'auto')
+            .style('pointer-events', 'none');
+        }
+
         // Road noise overlay, borough-level coloring (visible at all zoom levels) + WMS/tiles detail when zoomed in.
         // Audit visual fix-1: mix-blend-mode multiply + reduced opacity so the
         // borough fill *tints* the aircraft raster underneath rather than
@@ -12118,7 +12262,105 @@
         repaintFillLayers();
 
         updateDefraTiles();
+        paintPlanesLayer();
       }
+
+      // ------------------------------------------------------------
+      // PLANES OVERHEAD LAYER (2026-11-02, Bill's pick B2: "I do prefer B's but can we have an alternative for the
+      // averaging so it isn't blurred"). One picture per city and kind of day, drawn by
+      // scripts/build_planes_layer.py from the per-postcode files the front page's answer reads (data/planes/), so
+      // this page holds no figure: it places pictures and names their steps. They are in Web Mercator, the
+      // projection this map draws with, so two projected corners place them exactly; the zoom transform on `g`
+      // does the rest. A city with no picture paints nothing and the legend says so.
+      // ------------------------------------------------------------
+      let planesKind = 'westerly';
+      let planesIndex = null; // a promise; dropped on failure so the next paint asks again
+      function loadPlanesLayerIndex() {
+        if (!planesIndex) {
+          planesIndex = fetch('/data/planes-layer/index.json')
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null)
+            .then((idx) => {
+              if (!idx) planesIndex = null;
+              return idx;
+            });
+        }
+        return planesIndex;
+      }
+      // `pixelated` only once ONE picture pixel spans ONE screen pixel or more (review, 2026-11-02). Below that the
+      // browser must average: London's picture is ~2,300 px wide drawn ~690 px wide at the opening zoom, and
+      // nearest-neighbour there drops two pixels in three, so the steps alias into stripes and the 1 px district
+      // lines vanish. From that zoom up, smoothing would blur each 25 m postcode step into its neighbour instead.
+      // k is the zoom transform's scale; the picture's own width rides on the element (data-picture-width).
+      function setPlanesRendering(k) {
+        for (const id of ['planes-img', 'planes-districts-img']) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          const placedW = Number(el.getAttribute('width'));
+          const pictureW = Number(el.getAttribute('data-picture-width'));
+          const sharp = placedW > 0 && pictureW > 0 && (k * placedW) / pictureW >= 1;
+          el.style.imageRendering = sharp ? 'pixelated' : 'auto';
+        }
+      }
+      function monthName(yyyymm) {
+        const m = /^(\d{4})(\d{2})$/.exec(String(yyyymm || ''));
+        if (!m) return '';
+        return new Date(Date.UTC(+m[1], +m[2] - 1, 1)).toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+      }
+      async function paintPlanesLayer() {
+        if (!layers.planes) return;
+        const img = document.getElementById('planes-img');
+        const lines = document.getElementById('planes-districts-img');
+        if (!img || !lines) return;
+        const city = currentCity;
+        const idx = await loadPlanesLayerIndex();
+        if (city !== currentCity || !layers.planes || !img.isConnected) return; // a switch or a toggle landed meanwhile
+        const entry = idx?.cities?.[city] || null;
+        const none = document.getElementById('legend-planes-none');
+        if (none) {
+          none.hidden = Boolean(entry);
+          none.textContent = idx ? 'Not counted for this city.' : 'The planes overhead pictures did not load.';
+        }
+        // Only now does the legend know what is drawn: the switch, the steps and "About this data" (hidden in the
+        // markup until here) show for a city with a picture and stay hidden for one without.
+        for (const id of ['legend-planes-kind', 'legend-planes-steps', 'legend-planes-disclosure']) {
+          const el = document.getElementById(id);
+          if (el) el.hidden = !entry;
+        }
+        // No picture for this city: nothing to place. The elements are new on every render (renderDefraTiles), so
+        // the last city's picture cannot linger; tests/planes-layer.mjs holds that from the DOM.
+        if (!entry) return;
+        const [w, s, e, n] = entry.bounds;
+        const tl = projection([w, n]);
+        const br = projection([e, s]);
+        const place = (el, file) => {
+          const url = `/data/planes-layer/${file}`;
+          d3.select(el)
+            .attr('href', url)
+            .attr('xlink:href', url)
+            .attr('x', tl[0])
+            .attr('y', tl[1])
+            .attr('width', br[0] - tl[0])
+            .attr('height', br[1] - tl[1])
+            .attr('data-picture-width', entry.size[0]);
+        };
+        place(img, entry.files[planesKind]);
+        place(lines, entry.files.districts);
+        setPlanesRendering(d3.zoomTransform(svg.node()).k);
+        const period = document.getElementById('legend-planes-period');
+        if (period && idx.months) period.textContent = `${monthName(idx.months[0])} to ${monthName(idx.months[1])}`;
+        const def = document.getElementById('legend-planes-definition');
+        if (def) def.textContent = idx.definition || '';
+        const credits = document.getElementById('legend-planes-credits');
+        if (credits) credits.textContent = [...(idx.credits || []), idx.licence ? `Licence: ${idx.licence}.` : ''].join('. ').replace(/\.\./g, '.');
+      }
+      document.querySelectorAll('[data-planes-kind]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          planesKind = btn.dataset.planesKind;
+          document.querySelectorAll('[data-planes-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+          paintPlanesLayer();
+        });
+      });
 
       /**
        * Paint (or repaint) the three borough fill layers into groups that
@@ -15221,6 +15463,7 @@
             // invisible.
             const aircraftOp = 1;
             g.select('.layer-defra-aircraft').style('opacity', aircraftOp);
+            if (layers.planes) setPlanesRendering(k);
             // visual fix-DEFRA-1: ONLY NYC needs per-pan tile refresh
             // (slippy XYZ tiles need new tiles loaded for the new viewport).
             // London is a single pre-fetched raster positioned in g-coords
@@ -15538,6 +15781,7 @@
             const map = {
               paths: '.layer-paths',
               'defra-aircraft': '.layer-defra-aircraft',
+              planes: '.layer-planes',
               'defra-road': '.layer-defra-road',
               labels: '.layer-labels',
               flood: '.layer-flood',
@@ -15550,6 +15794,7 @@
             // regardless of toggle state - gate it like the others).
             const legendMap = {
               'defra-aircraft': 'legend-aircraft-group',
+              planes: 'legend-planes-group',
               'defra-road': 'legend-road-group',
               flood: 'legend-flood-group',
               'air-quality': 'legend-aq-group',
@@ -15560,6 +15805,15 @@
             }
             // Refresh aircraft noise tiles when toggling on (only overlay using WMS/tiles)
             if (layer === 'defra-aircraft' && layers[layer]) updateDefraTiles();
+            if (layer === 'planes' && layers[layer]) paintPlanesLayer();
+            // Planes overhead and DEFRA aircraft noise are both orange ramps: on together they multiply into a
+            // colour neither legend names, so switching one on switches the other off (through its own button,
+            // so its pressed state and legend follow).
+            const rival = { planes: 'defra-aircraft', 'defra-aircraft': 'planes' }[layer];
+            if (rival && layers[layer] && layers[rival]) {
+              document.querySelector(`.layer-toggle[data-layer="${rival}"]`)?.click();
+            }
+            if (typeof updateLegendFade === 'function') updateLegendFade();
           }
           el.addEventListener('click', toggleLayer);
           el.addEventListener('keydown', (e) => {

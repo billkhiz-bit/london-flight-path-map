@@ -395,6 +395,40 @@ if [ "$SITEMAP_GAP" != "0" ]; then
   PAGES_DRIFTED=$((PAGES_DRIFTED + 1))
 fi
 
+# THE FULL MAP'S PLANES OVERHEAD LAYER (2026-11-02). data/planes-layer/ is a gitignored build (pictures drawn by
+# scripts/build_planes_layer.py from data/planes/), shipped by its own `planes-layer-deploy`. Same shape again:
+# the TRACKED data/planes-layer-manifest.json says what the build wrote. It is ~30 small files, so all are checked.
+LAYER_LIST=$(mktemp)
+LAYER_BODY=$(mktemp)
+python - <<'EOF' | tr -d '\r' > "$LAYER_LIST"
+import json
+for n, v in sorted(json.load(open('data/planes-layer-manifest.json', encoding='utf-8')).items()):
+    print(n, v['md5'])
+EOF
+LAYER_DRIFTED=0
+while read -r name want; do
+  [ -z "$name" ] && continue
+  if ! curl -fsS "$BASE/data/planes-layer/$name" -o "$LAYER_BODY" 2>/dev/null; then
+    printf '  UNREACHABLE      data/planes-layer/%s\n' "$name"
+    LAYER_DRIFTED=$((LAYER_DRIFTED + 1))
+    continue
+  fi
+  got=$(md5sum < "$LAYER_BODY" | cut -d' ' -f1)
+  if [ "$got" != "$want" ]; then
+    printf '  DRIFT            data/planes-layer/%s\n' "$name"
+    LAYER_DRIFTED=$((LAYER_DRIFTED + 1))
+  fi
+done < "$LAYER_LIST"
+LAYER_LISTED=$(grep -c . "$LAYER_LIST" 2>/dev/null || true)
+rm -f "$LAYER_LIST" "$LAYER_BODY"
+# A floor: index.json plus at least one city's three kinds and its district lines.
+if [ "${LAYER_LISTED:-0}" -lt 5 ]; then
+  printf 'FAIL: listed only %s planes layer files from data/planes-layer-manifest.json, expected 5 or more.\n' "${LAYER_LISTED:-0}"
+  exit 1
+fi
+printf '  planes layer: %d of %d files match data/planes-layer-manifest.json at the live origin\n' \
+  "$((LAYER_LISTED - LAYER_DRIFTED))" "$LAYER_LISTED"
+
 DATA_FAILED=0
 if [ "$DATA_DRIFTED" -gt 0 ] || [ "$AREA_DRIFTED" -gt 0 ]; then
   printf '  %d data file(s) and %d area page(s) differ from the live origin.\n' \
@@ -410,6 +444,11 @@ fi
 if [ "$PAGES_DRIFTED" -gt 0 ]; then
   printf '  %d planes page check(s) differ from data/planes-pages-manifest.json. Run\n' "$PAGES_DRIFTED"
   printf '  `python scripts/make.py planes-pages-deploy` (it refuses unless --check --strict passes).\n'
+  DATA_FAILED=1
+fi
+if [ "$LAYER_DRIFTED" -gt 0 ]; then
+  printf '  %d planes layer file(s) differ from data/planes-layer-manifest.json. Run\n' "$LAYER_DRIFTED"
+  printf '  `python scripts/make.py planes-layer-deploy` (it refuses unless --check --strict passes).\n'
   DATA_FAILED=1
 fi
 

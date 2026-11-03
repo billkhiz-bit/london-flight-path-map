@@ -353,6 +353,9 @@ ADDRESS_SHARE = r'\d+(?:\.\d+)?\s?%\s+of\s+(?:the\s+|its\s+|their\s+)?(?:address
 # held by the builder's --check, a blocking preflight stage: every page byte-equal to a fresh build, so a figure
 # typed into one goes red there. Should their wording ever trip a pattern, the allowance names that folder and
 # this reason, never a looser pattern.
+# The THIRD (Bill, 2026-11-02): the full map's Planes overhead layer, PICTURES drawn by scripts/build_planes_layer.py
+# from the same files (each postcode its own step), held by its --check. index.html carries no figure for it: its
+# legend names steps ("100 TO 199"), which these patterns pass because no "planes a day" follows the number.
 FREQUENCY = [
     (r'\b\d+(?:\.\d+)?\s+(?:planes|flights|aircraft|movements|overflights|arrivals|departures)'
      r'\s+(?:a|per|an|each)\s+(?:day|hour|week|month|year)\b'),

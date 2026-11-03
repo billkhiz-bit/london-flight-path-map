@@ -757,6 +757,10 @@ check "area builder == its outputs"   python scripts/build_area_pages.py --check
 # from those files, so a figure typed into one goes red. Its inputs are gitignored, so a clone without the
 # tracks prints INCONCLUSIVE, never PASS. Offline, ~8 s (it reads NSPL).
 check "planes pages == their builder" python scripts/build_planes_pages.py --check
+# The full map's planes overhead layer (2026-11-02, Bill's pick B2): every picture shows what a fresh draw from
+# the planes files would, and the tracked manifest describes the files on disk (the drift check compares the live
+# ones with it). Offline, ~20 s.
+check "planes map layer == its builder" python scripts/build_planes_layer.py --check
 # The area pages BAKE their scores at build time - that is what makes them
 # indexable without JS, and what lets them go stale when a data vintage
 # lands. No other gate can see it: `area pages carry real data` checks
@@ -773,6 +777,11 @@ net_check "area pages match the live API" node tests/area-page-freshness.mjs
 # self-consistent. Fails in BOTH directions: over-painting is an invented
 # default, under-painting is a borough whose data the map cannot find.
 check "layers paint only real data"   node tests/layer-honesty.mjs
+# The planes overhead layer (2026-11-02, Bill's pick B2): its legend names exactly the builder's steps, each
+# picture sits on its corners through the map projection, the kind switch swaps it, it and DEFRA aircraft noise
+# are never on together, a city with no picture paints nothing and says so, the credits ride along, and it fits
+# 390 px. INCONCLUSIVE without the gitignored pictures. Port 8971.
+check "planes layer placed and named"  node tests/planes-layer.mjs
 # The aircraft-noise legend against what the overlay paints (2026-09-25). The
 # legend was five static rows in a palette neither overlay uses, and read the
 # London map 10-15 dB louder than DEFRA published; layer-honesty checks WHETHER

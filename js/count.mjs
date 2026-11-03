@@ -248,9 +248,17 @@ document.addEventListener('click', (ev) => {
 // film or tries the 3D prototype before either is used to market anything). Counted as `<page>-<what>`, the what
 // from this ALLOW-LIST of exact destinations, so only these links count and nothing is read from the link itself.
 // front-page.mjs 16f clicks every link on /about/ and fails if any other link counts, or either of these does not.
+//
+// THE COMPANY'S LINKEDIN PAGE (Bill, 2026-11-03): ONE holder, as for the booking link below. It sits in the front
+// page's footer and Organization data (sameAs), both of the map's footers and /about/'s "Get in touch", never the
+// generated area or planes pages (a footer change there re-dates every page in the sitemap). The page is named for
+// the product, so its address changes at the rename: change it HERE and tests/test_linkedin_company_link.py names
+// every copy left behind. Counted as `<page>-linkedin`, like the film.
+export const LINKEDIN_URL = 'https://www.linkedin.com/company/sky-score/';
 const WATCHED_LINKS = {
   'https://youtu.be/xbR9cP4Ad4A': 'film',
   '/prototype/': 'prototype',
+  [LINKEDIN_URL]: 'linkedin',
 };
 
 /** A watched link's counted name ('film', 'prototype'); '' for any other link. */

@@ -711,3 +711,18 @@ never "station" or "quiet": data files the map fetches can carry those in their 
 FOUND THE SAME DAY: `tests/planes-model.mjs` (the planes answer's rules since 2026-10-26) was never run by preflight.
 Nothing listed it, so 26 Oct to 2 Nov it held nothing. Registered in `scripts/preflight.sh` with `find-words.mjs`. A
 scan of every `tests/*.mjs` that no gate names found only tools besides it (loadtest, rehearse, store-screenshots).
+
+## The company LinkedIn page (2026-11-03)
+
+Bill made a "Sky Score" company page on LinkedIn on 2 Nov and asked for it on the site. Of three placements offered
+(main pages; every page; About + search engines only) he picked the main pages: the front page's footer and its
+Organization `sameAs`, both full-map footers and /about/'s "Get in touch". Not the 566 generated area and planes
+pages, because the sitemap dates a page by its last commit, so one footer link would re-date every page to today for
+nothing a reader would call a change (search engines are told `lastmod` means a real change).
+
+Built like the booking link: ONE holder (`js/count.mjs` `LINKEDIN_URL`), every copy held to it by
+`tests/test_linkedin_company_link.py` on the files the Makefile uploads, so the rename (the page is named for the
+product) is a one-line change plus whatever the test names. A plain link only: LinkedIn's follow button is a script
+that sets its own cookies, and the pages allow none. Counted as `<page>-linkedin` through `WATCHED_LINKS`; on /about/
+it sits beside Bill's own profile, relabelled "Bilal on LinkedIn" so the two are not both called "LinkedIn".
+Four breaks proven red: a stale copy, the phone footer's copy gone, `sameAs` dropped, the count removed.

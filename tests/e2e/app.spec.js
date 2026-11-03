@@ -36,7 +36,10 @@ test.describe('Core loading', () => {
     // and a new toggle added without a renderer fails too.
     //
     // History: the "live flights" toggle went with the live_flights Lambda in
-    // May 2026 (OpenSky licensing); transport went on 2026-08-12.
+    // May 2026 (OpenSky licensing); transport went on 2026-08-12; planes
+    // (overhead, Bill's pick B2) came on 2026-11-03. This suite reads the LIVE
+    // site (playwright.config.js baseURL), so a new toggle is ALLOWED as an
+    // extra until its web-deploy, then folded in here (as planes was).
     await expect(page.locator('#loading')).toBeHidden({ timeout: 15_000 });
     const layers = await page
       .locator('.layer-toggle')
@@ -48,6 +51,7 @@ test.describe('Core loading', () => {
       'flood',
       'labels',
       'paths',
+      'planes',
     ]);
   });
 

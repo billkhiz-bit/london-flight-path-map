@@ -1572,8 +1572,10 @@ const aboutSent = await page.evaluate(() => {
   for (const a of document.querySelectorAll('main a[href]')) a.click();
   return window.__gc.slice();
 });
-ok(JSON.stringify(aboutSent) === JSON.stringify(['about-film', 'about-prototype', 'email-about-support']),
-  '/about/: the film and the prototype are counted, the support email keeps its name, and no other link counts', JSON.stringify(aboutSent));
+// The company's LinkedIn page (2026-11-03) counts as about-linkedin; Bill's own profile beside it counts nothing.
+ok(JSON.stringify(aboutSent) === JSON.stringify(['about-film', 'about-prototype', 'email-about-support', 'about-linkedin']),
+  '/about/: the film, the prototype and the company LinkedIn page are counted, the support email keeps its name, and no other link counts',
+  JSON.stringify(aboutSent));
 
 // 16g. BOOK A DEMO (Bill, 2026-10-29: in the bar of /pricing and /api/ only, FILLED and LAST; a line on each page,
 // and one beside the live demo's response). Every copy of the link is count.mjs's DEMO_BOOKING_URL
