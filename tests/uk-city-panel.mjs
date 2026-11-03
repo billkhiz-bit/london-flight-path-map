@@ -167,11 +167,43 @@ const nearestWithin5 = (sites, lat, lon) => {
 async function expectedAir(postcode) {
   const resp = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`, { signal: AbortSignal.timeout(20000) });
   const { result } = await resp.json();
+  // DEFRA's model for the postcode's 1 km square (2026-11-03, refined B), asked of the API HERE too, so the panel's
+  // figure is checked against an answer this test got for itself. Null when the API does not answer: the case then
+  // checks only that the panel names its yardstick honestly.
+  let square = null;
+  try {
+    const env = await (await fetch(`${API}/v1/environment?lat=${result.latitude}&lon=${result.longitude}`, { signal: AbortSignal.timeout(20000) })).json();
+    if (env && env.environment && env.provenance?.['environment.no2AnnualMeanUgm3']?.method === 'modelled') {
+      square = { no2: env.environment.no2AnnualMeanUgm3 ?? null, pm25: env.environment.pm25AnnualMeanUgm3 ?? null };
+    }
+  } catch {
+    square = null;
+  }
   return {
     sensor: nearestWithin5(AIR_SENSORS.sites, result.latitude, result.longitude),
     monitor: nearestWithin5(AIR_MONITORS.sites, result.latitude, result.longitude),
+    square,
   };
 }
+// What the panel's charts show, measured from the DOM: per pollutant, each row's kind and printed value, and where
+// its mark's centre sits along the drawn axis (0 at its start, 1 at its end), against the axis's own maximum.
+const readCharts = (pg) =>
+  pg.evaluate(() => {
+    const out = {};
+    for (const svg of document.querySelectorAll('#postcode-air-section svg[data-air-chart]')) {
+      const axis = svg.querySelector('line[data-axis]').getBoundingClientRect();
+      out[svg.dataset.airChart] = {
+        max: Number(svg.dataset.max),
+        rows: [...svg.querySelectorAll('g[data-kind]')].map((g) => {
+          const mark = g.querySelector('[data-mark]');
+          const r = mark && mark.getBoundingClientRect();
+          return { kind: g.dataset.kind, value: g.dataset.value, at: r ? (r.left + r.width / 2 - axis.left) / axis.width : null };
+        }),
+      };
+    }
+    const first = document.querySelector('#postcode-air-section .air-key li');
+    return { charts: out, keyFirst: first ? { source: first.dataset.airSource, text: first.innerText } : null };
+  });
 
 for (const c of CASES) {
   await page.evaluate((city) => window.switchCity(city), c.city);
@@ -317,11 +349,45 @@ for (const c of CASES) {
       `  ${c.city}: air measured nearby lists ${wantNames.length ? wantNames.join(' and ') : 'nothing (none within 5 km)'}, each saying what it is`,
       wantNames.length
         ? Boolean(air) && !air.hidden && JSON.stringify(air.names) === JSON.stringify(wantNames) &&
-            Boolean(want.sensor) === /Breathe London sensor \(low-cost\), /.test(air.text) &&
-            Boolean(want.monitor) === /Official DEFRA monitor, /.test(air.text)
+            Boolean(want.sensor) === /Breathe London sensor, low-cost, provisional\./.test(air.text) &&
+            Boolean(want.monitor) === /Official DEFRA monitor, ratified\./.test(air.text)
         : !air || air.hidden,
       air ? `${JSON.stringify(air.names)} | ${air.text.slice(0, 160)}` : 'no air section',
     );
+    if (wantNames.length) {
+      // SIDE BY SIDE (2026-11-03, refined B): one chart per pollutant something measures; DEFRA's model for the
+      // postcode's own 1 km square first (the API's figure, asked for above), then the sensor and the monitor, each
+      // printing ITS OWN figure and drawn to scale on the axis the chart draws.
+      const seen = await readCharts(page);
+      const fmt = (v) => (v === null || v === undefined ? '' : Number(v).toFixed(1));
+      const wantRows = (p) =>
+        [
+          want.square && { kind: 'model', value: fmt(want.square[p]) },
+          want.sensor && { kind: 'sensor', value: fmt(want.sensor[p] && want.sensor[p].mean) },
+          want.monitor && { kind: 'monitor', value: fmt(want.monitor[p] && want.monitor[p].mean) },
+        ].filter(Boolean);
+      for (const p of ['no2', 'pm25']) {
+        const rows = wantRows(p);
+        const expectChart = rows.some((r) => r.value !== '');
+        const got = seen.charts[p];
+        check(
+          `  ${c.city}: ${p.toUpperCase()} ${expectChart ? 'shows each source\'s own figure, DEFRA\'s 1 km model first' : 'has no chart (nothing measures it here)'}`,
+          expectChart
+            ? Boolean(got) && JSON.stringify(got.rows.map((r) => ({ kind: r.kind, value: r.value }))) === JSON.stringify(rows)
+            : !got,
+          JSON.stringify({ want: rows, got: got && got.rows.map((r) => `${r.kind}=${r.value}`) }),
+        );
+        if (got) {
+          const off = got.rows.filter((r) => r.value !== '' && Math.abs(r.at - Math.min(Number(r.value), got.max) / got.max) > 0.012);
+          check(`  ${c.city}: ${p.toUpperCase()} marks sit to scale on the drawn axis`, off.length === 0, JSON.stringify(off));
+        }
+      }
+      check(
+        `  ${c.city}: the key opens with DEFRA's model for the postcode's own 1 km square`,
+        !want.square || (seen.keyFirst && seen.keyFirst.source === 'model' && /1 km square/.test(seen.keyFirst.text)),
+        JSON.stringify(seen.keyFirst),
+      );
+    }
     if (wantNames.length) {
       check(
         `  ${c.city}: it comes after "Additional insights", and names the Air Quality card above only when it is there`,
@@ -348,6 +414,42 @@ for (const c of CASES) {
   }
   console.log('');
 }
+
+// THE 1 KM FIGURE CANNOT LOAD (2026-11-03, refined B): the council's DEFRA average stands in, named as the council's,
+// and the key says the postcode's own figure did not load. Reached ON PURPOSE by refusing /v1/environment for this
+// page, never by hoping the API is slow; the expected figure is read from the data file, not from the page.
+console.log('Air nearby when the 1 km figure cannot load');
+{
+  const fb = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await fb.route('**/v1/environment**', (r) => r.abort());
+  await fb.goto(url, { waitUntil: 'domcontentloaded' });
+  await fb.waitForTimeout(3000);
+  await fb.evaluate((city) => window.switchCity(city), 'london');
+  await fb.waitForTimeout(1200);
+  await fb.fill('#search-input', 'SW11 1AA');
+  await fb.press('#search-input', 'Enter');
+  await fb
+    .waitForFunction(() => {
+      const s = document.getElementById('postcode-air-section');
+      return s && !s.hidden;
+    }, null, { timeout: 30000 })
+    .catch(() => {});
+  const seen = await readCharts(fb);
+  const council = JSON.parse(await readFile(join(ROOT, 'data', 'borough-extra.json'), 'utf8')).london.Wandsworth;
+  const model = seen.charts.no2 && seen.charts.no2.rows.find((r) => r.kind === 'model');
+  check(
+    '  SW11 1AA: the key names the council average and says the 1 km figure did not load',
+    Boolean(seen.keyFirst) && seen.keyFirst.source === 'model' && /Wandsworth average/.test(seen.keyFirst.text) && /did not load/.test(seen.keyFirst.text),
+    JSON.stringify(seen.keyFirst),
+  );
+  check(
+    "  SW11 1AA: its NO2 row is Wandsworth's DEFRA figure, read from the data file",
+    Boolean(model) && model.value === Number(council.no2AnnualMeanUgm3).toFixed(1),
+    JSON.stringify({ model, want: council.no2AnnualMeanUgm3 }),
+  );
+  await fb.close();
+}
+console.log('');
 
 // THE PLANE ALTITUDE IS THE GLIDE PATH'S (website audit A1, 2026-10-07).
 //

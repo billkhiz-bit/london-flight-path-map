@@ -197,6 +197,10 @@ Or just describe what you need, I have full context of this project.
 - **`.no-result-yet`, not `.empty-state`**, marks "nothing searched yet".
 - **Air measured nearby is ONE pair of functions** (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`)
   for the front page, the full map's panel (dynamic import) and both reports: 5 km, never "none nearby", a stale sensor file hidden, credits linked.
+  **The full map's panel is "Air quality nearby", side by side** (Bill, 2026-11-03, refined B): DEFRA's MODEL for the
+  postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
+  if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
+  `airChart()` (pure; `tests/air-chart.mjs`); the model is a hollow ring, never "measured"; `AIR_WHO_2021` equals the API's.
 - **The brand links home on every page** (`tests/test_brand_links_home.py` finds them). **"Have your say" links come
   only from `HAVE_YOUR_SAY`** (verified live; add an airport only after checking its pages; a time-limited link, such as
   a consultation, carries `until: 'YYYY-MM-DD'` and drops out by itself after it).

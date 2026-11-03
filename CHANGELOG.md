@@ -13,6 +13,12 @@
 - **Sky Score on LinkedIn**: the company page is linked from the front page's footer, both of the full map's footers
   and the About page's "Get in touch".
 
+- **Air quality nearby, side by side, on the full map**: for a postcode, DEFRA's model for its own 1 km square sits
+  beside the nearest Breathe London sensor and DEFRA monitor, one chart per pollutant with the WHO guideline drawn
+  through it, so you can see at a glance whether the air is over the guideline and how the measurements compare with
+  the model. A key says what each source is (a low-cost sensor's figures are provisional, a monitor's ratified), where
+  it stands and for what period.
+
 - **Corrected: the Heathrow comparison says what it compares.** DEFRA's 2021 map against the CAA's 2025 contours: the
   pages called 2025 "a normal year", and `/api/` said 2024's flights were 0.5% below 2019's, which is the CAA's
   summer-day comparison set beside an annual one. They now give the report's own annual figure (2025's flights 2%

@@ -2197,6 +2197,63 @@
         color: var(--mid);
         font-size: 10px;
       }
+      /* Air nearby, side by side (Bill, 2026-11-03: refined B). The key names each source once; the charts are
+         js/street_report.mjs airChart(), coloured through these tokens (checked for colour-blind separation and
+         3:1 on the panel; shape carries the source too: ring = DEFRA's model, circle = sensor, square = monitor). */
+      #postcode-air-section {
+        --air-model: var(--orange-ink);
+        --air-sensor: #14866a;
+        --air-monitor: var(--blue);
+        --air-ink: var(--dark);
+        --air-ink-3: var(--mid);
+        --air-rule: var(--light);
+        --air-band: rgba(20, 20, 20, 0.05);
+      }
+      .air-key {
+        list-style: none;
+        margin: 4px 0 8px;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+        /* The section inherits the mono face; running sentences read heavy in it, so the key is in the sans. */
+        font-family: var(--font-sans);
+      }
+      .air-key li {
+        display: grid;
+        grid-template-columns: 14px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        font-size: 12px;
+      }
+      .air-key li svg {
+        margin-top: 2px;
+      }
+      .air-key-title {
+        font-weight: 600;
+      }
+      .air-key-detail {
+        display: block;
+        color: #555;
+        font-size: 11.5px;
+        line-height: 1.45;
+      }
+      .air-chart {
+        margin: 6px 0 2px;
+      }
+      .air-chart figcaption {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        margin-bottom: 2px;
+      }
+      .air-chart svg {
+        display: block;
+        max-width: 100%;
+      }
+      .air-chart svg text {
+        font-family: var(--font-sans);
+      }
       .station-lines {
         display: flex;
         flex-wrap: wrap;
@@ -10986,8 +11043,47 @@
         }
         return _airNearbyLoad;
       }
-      async function renderAirNearby(lat, lon, stillCurrent) {
-        const loaded = await loadAirNearby();
+      // DEFRA's MODEL FOR THE POSTCODE'S OWN 1 KM SQUARE (Bill, 2026-11-03, refined B): from our open
+      // /v1/environment, which the front page already calls, read with the provenance the API sends (method,
+      // resolution, period), so the panel says what the API says and never calls the model measured. A council
+      // average smooths away the street-level difference a sensor shows, so the 1 km square is the yardstick.
+      // Null on any failure, a non-modelled answer or no figure: the council's average then stands in, said so.
+      function fetchAirSquare(lat, lon) {
+        return fetch(`${API_BASE}/v1/environment?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`, {
+          signal: withDeadline(undefined, PANEL_TIMEOUT_MS),
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            const e = d && d.environment;
+            const pv = (d && d.provenance) || {};
+            const meta = pv['environment.no2AnnualMeanUgm3'] || pv['environment.pm25AnnualMeanUgm3'];
+            if (!e || !meta || meta.method !== 'modelled') return null;
+            const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+            const no2 = num(e.no2AnnualMeanUgm3);
+            const pm25 = num(e.pm25AnnualMeanUgm3);
+            if (no2 === null && pm25 === null) return null;
+            // "1 km grid" -> "1 km square". One quantifier and a number check (a nested one is what the security
+            // lint calls unsafe: catastrophic backtracking on a crafted string).
+            const res = /^([0-9.]{1,8}) ?km grid$/.exec(String(meta.resolution || ''));
+            const km = res && Number.isFinite(Number(res[1])) ? res[1] : null;
+            return {
+              no2,
+              pm25,
+              period: /^\d{4}$/.test(String(meta.period)) ? String(meta.period) : null,
+              square: km ? `${km} km square` : 'grid square',
+              background: /background/i.test(String(e.airQualitySource || '')),
+              who: { no2: num(e.no2WhoGuidelineUgm3), pm25: num(e.pm25WhoGuidelineUgm3) },
+            };
+          })
+          .catch(() => null);
+      }
+      // AIR NEARBY, SIDE BY SIDE (Bill, 2026-11-03: refined B of claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc). A key
+      // names each source once (shape, name, distance, what it is, its setting and period); then ONE scale per
+      // pollutant, DEFRA's model for this postcode's 1 km square beside the nearest sensor and monitor, the WHO 2021
+      // guideline drawn through (js/street_report.mjs airChart); then one line on how to read them. The notes fold
+      // under "About these readings"; the sources stay visible. Still hidden when no sensor or monitor is in 5 km.
+      async function renderAirNearby(lat, lon, stillCurrent, council) {
+        const [loaded, square] = await Promise.all([loadAirNearby(), fetchAirSquare(lat, lon)]);
         if (!loaded || !stillCurrent()) return;
         const [m, sensors, monitors] = loaded;
         const section = document.getElementById('postcode-air-section');
@@ -10997,29 +11093,73 @@
           const sensor = sensors ? m.nearestSensor(sensors, lat, lon) : null;
           const monitor = monitors ? m.nearestMonitor(monitors, lat, lon) : null;
           if (!sensor && !monitor) return;
-          // Laid out as the nearest stations are: the place and its distance on one row, then one line on
-          // what it is and what it read, all from the front page's own pieces (the same words, in rows).
           const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
-          const row = (name, km, line) =>
-            `<div class="transport-row"><span class="station-name">${escapeHtml(name)}</span><span class="station-dist">${escapeHtml(m.stationDistance(km))}</span></div>` +
-            `<p class="info-note" style="margin:2px 0 8px;">${escapeHtml(line)}</p>`;
+          const haveCouncil = council && council.name && (council.no2 !== null || council.pm25 !== null);
+          const model = square
+            ? {
+                label: "DEFRA's model",
+                sub: `this ${square.square}${square.period ? ` · ${square.period}` : ''}`,
+                no2: square.no2,
+                pm25: square.pm25,
+                detail: `DEFRA's ${square.background ? 'background ' : ''}model for this postcode's ${square.square}${square.period ? `, ${square.period}` : ''}.`,
+              }
+            : haveCouncil
+              ? {
+                  label: `${council.name} average`,
+                  sub: "DEFRA's model, council-wide",
+                  no2: council.no2,
+                  pm25: council.pm25,
+                  detail: `DEFRA's model averaged over ${council.name} (the Air Quality card above). This postcode's own 1 km figure did not load.`,
+                }
+              : null;
+          const sensorNote = sensor && `Breathe London sensor, low-cost, provisional. ${cap(m.sensorSetting(sensor))}. Over the ${m.sensorPeriod(sensor)}.`;
+          const monitorNote = monitor && `Official DEFRA monitor, ratified. ${cap(m.monitorSetting(monitor))}. In ${m.monitorPeriod(monitor)}.`;
+          const keyRow = (kind, title, detail) =>
+            `<li data-air-source="${kind}">${m.airKeyMark(kind)}<span>${title}<span class="air-key-detail">${escapeHtml(detail)}</span></span></li>`;
+          const named = (r) =>
+            `<span class="station-name">${escapeHtml(r.name)}</span> <span class="station-dist">${escapeHtml(m.stationDistance(r.km))}</span>`;
+          const reading = (r, p) => (r && r[p] && typeof r[p].mean === 'number' ? r[p].mean : null);
+          const rowsFor = (p) =>
+            [
+              model && { kind: 'model', label: model.label, sub: model.sub, v: model[p] },
+              sensor && { kind: 'sensor', label: sensor.name, sub: `sensor · ${m.stationDistance(sensor.km)}`, v: reading(sensor, p) },
+              monitor && { kind: 'monitor', label: monitor.name, sub: `monitor · ${m.stationDistance(monitor.km)}`, v: reading(monitor, p) },
+            ].filter(Boolean);
+          // A pollutant gets a chart only when something in it has a figure; the guideline is the API's own when it
+          // answered, else the module's (held equal to the API's by tests/air-chart.mjs).
+          const charts = ['no2', 'pm25']
+            .map((p) => {
+              const rows = rowsFor(p);
+              if (!rows.some((r) => typeof r.v === 'number')) return '';
+              const who = (square && square.who[p]) || m.AIR_WHO_2021[p];
+              return `<figure class="air-chart"><figcaption>${escapeHtml(m.AIR_POLLUTANT_NAMES[p].toUpperCase())}, µg/m³</figcaption>${m.airChart(p, rows, who)}</figure>`;
+            })
+            .join('');
           const credits = [sensor && sensor.credit, monitor && monitor.credit]
             .filter(Boolean)
             .map((c) => `<a href="${escapeHtml(c.href)}" target="_blank" rel="noopener">${escapeHtml(c.text)}</a>`)
             .join(' &middot; ');
           el.innerHTML =
-            (sensor
-              ? row(sensor.name, sensor.km, `Breathe London sensor (low-cost), ${m.sensorSetting(sensor)}. ${cap(m.sensorReadings(sensor))}.`)
-              : '') +
-            (monitor
-              ? row(monitor.name, monitor.km, `Official DEFRA monitor, ${m.monitorSetting(monitor)}. ${cap(m.monitorReadings(monitor))}.`)
-              : '') +
-            `<p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p>` +
+            `<p class="info-note" style="margin-top:0;">${
+              model && square
+                ? "DEFRA's model for this postcode's own 1 km square, beside the nearest readings within 5 km."
+                : model
+                  ? `The nearest readings within 5 km, beside DEFRA's average for ${escapeHtml(council.name)}.`
+                  : 'The nearest readings within 5 km.'
+            }</p>` +
+            `<ul class="air-key">` +
+            (model ? keyRow('model', `<span class="air-key-title">${escapeHtml(model.label)}</span>`, model.detail) : '') +
+            (sensor ? keyRow('sensor', named(sensor), sensorNote) : '') +
+            (monitor ? keyRow('monitor', named(monitor), monitorNote) : '') +
+            `</ul>` +
+            charts +
+            `<p class="info-note">They measure in different ways, places and periods, so expect them to differ.</p>` +
+            `<details class="legend-disclosure air-about"><summary>About these readings</summary><p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p></details>` +
             `<p class="info-note" style="font-size:11px;">Sources: ${credits}</p>`;
           section.hidden = false;
         } catch (e) {
           // A module from an older cache without these functions: say nothing rather than half a line.
-          console.warn('[Sky Score] air measured nearby not shown:', e);
+          console.warn('[Sky Score] air nearby not shown:', e);
         }
       }
 
@@ -13342,10 +13482,10 @@
       // when the card is there.
       isUkCity(currentCity) && !analysis.isOutcode
         ? `<div class="sidebar-section" id="postcode-air-section" hidden>
-      <h3>AIR QUALITY MEASURED NEARBY</h3>
+      <h3>AIR QUALITY NEARBY</h3>
       ${
         extra && extra.airQuality
-          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area. Below are the nearest air quality readings within 5 km.</p>`
+          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area.</p>`
           : ''
       }
       <div id="postcode-air-data"></div>
@@ -13447,9 +13587,15 @@
                 '<p class="info-note">No rail, metro or tram station in the NaPTAN register near this postcode.</p>';
           }
         }
-        // Air measured nearby, for a full UK postcode (an outcode's centre is not a place to measure from).
+        // Air nearby, for a full UK postcode (an outcode's centre is not a place to measure from). The council's
+        // DEFRA figures ride along for when the postcode's own 1 km figure cannot load.
         if (isUkCity(currentCity) && !analysis.isOutcode) {
-          renderAirNearby(analysis.lat, analysis.lon, () => isCurrentSearch(req));
+          const aqExtra = getExtraData(analysis.borough);
+          renderAirNearby(analysis.lat, analysis.lon, () => isCurrentSearch(req), {
+            name: analysis.borough,
+            no2: aqExtra && typeof aqExtra.no2AnnualMeanUgm3 === 'number' ? aqExtra.no2AnnualMeanUgm3 : null,
+            pm25: aqExtra && typeof aqExtra.pm25AnnualMeanUgm3 === 'number' ? aqExtra.pm25AnnualMeanUgm3 : null,
+          });
         }
 
         if (isUkCity(currentCity)) {

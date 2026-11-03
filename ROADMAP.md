@@ -37,6 +37,12 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > until `index.json` says the city has a picture. (6) The Makefile comment says BEFORE `web-deploy`. Seven breaks
 > proven red; one survivor showed the per-element `[hidden]` CSS was dead code (the page-wide `!important` rule wins),
 > deleted. The browser test now blocks service workers (sw.js claimed the page, so `page.route` never saw the request).
+> **Later 3 Nov:** accuracy fix PUSHED (`f5e582c`: the CAA comparison's year basis, "different models" unasserted, the
+> map's "UK and NYC", /api/'s quiet; deploy `web-deploy` + `meta-deploy`); Dependabot CI PRs #20-22 merged, #15-19 left
+> open (Bill); 24 merged GitHub branches await Bill's `!` delete. **Air quality nearby, side by side** on the full map
+> (Bill picked "refined B" of claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc): DEFRA's 1 km model beside the sensor and
+> monitor, one scale per pollutant (`airChart()`, `tests/air-chart.mjs`, `tests/uk-city-panel.mjs`). Then: the district
+> card on the planes layer (Bill picked "small card"), then N65 step 5's vectorised LAmax on `n65`.
 > **The company's LinkedIn page** (Bill's pick, "main pages"): front page footer + Organization `sameAs`, both map
 > footers, /about/'s "Get in touch" (Bill's own profile relabelled "Bilal on LinkedIn"); one holder `js/count.mjs`
 > `LINKEDIN_URL`, held by `tests/test_linkedin_company_link.py` (four breaks red); counted `<page>-linkedin`. Not the

@@ -739,6 +739,10 @@ check "front page is a tool, not a picture" node tests/front-page.mjs
 # were added. tests/find-words.mjs holds "Describe what you want" (words read into Find areas' choices in the browser).
 check "planes answer: model + links"      node tests/planes-model.mjs
 check "Find areas: words read into choices" node tests/find-words.mjs
+# The full map's air side by side (2026-11-03, Bill's refined B): js/street_report.mjs airChart() is pure, so its
+# geometry (to scale, beyond the scale, labels at the edge), its shapes, its escaping and the WHO guideline it shares
+# with the API (read from app.py) are held here without a browser; the live panel is tests/uk-city-panel.mjs.
+check "air side by side: chart"           node tests/air-chart.mjs
 # The approach strip on /how-it-works/ (2026-10-26): the site's first interactive picture outside the map. The
 # page-wide gates read it; only this moves its slider: no sideways scroll at 390 and 1366, the keyboard flies the
 # plane and aria-valuetext follows, reduced motion stills it, tiles load as they come into view, and every picture

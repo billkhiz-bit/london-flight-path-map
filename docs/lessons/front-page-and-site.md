@@ -258,6 +258,26 @@
 >   place to measure from). `tests/uk-city-panel.mjs` works the expected names out from postcodes.io's position:
 >   SW11 1AA shows BOTH (sensor 1.1 km, monitor 4.0 km), M1 1AE / B15 2TT / LS1 4DY a monitor, 10001 no section;
 >   proven red by removing the call and by rendering the section for every city.
+>   **SIDE BY SIDE ON THE FULL MAP (2026-11-03, Bill: "the refined one").** The panel read as two sentences and
+>   two paragraphs, numbers with no yardstick. Mock-ups (claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc: now, A a block per
+>   reading, B one scale per pollutant, C a table) went to B, then "B refined" on three changes: (1) the yardstick is
+>   DEFRA's model for the postcode's OWN 1 km square, from `/v1/environment` (the front page's call), read with the
+>   provenance it sends (`method: modelled`, `resolution`, `period`), because the council average smooths away the
+>   street-level difference a sensor shows (SW11 5BT: 20.8 for its square, 18.9 for Wandsworth); the council average
+>   stands in, named "<Council> average", when it cannot load; (2) a KEY names each source once with A's status
+>   (low-cost, provisional / official, ratified), its setting and its period, the periods from `sensorPeriod()` /
+>   `monitorPeriod()` (exported so the front page's sentences, unchanged, and the key share them); (3) one line, "They
+>   measure in different ways, places and periods, so expect them to differ." The heading became "AIR QUALITY NEARBY":
+>   it now holds a MODEL, which may never be called measured. The chart is `airChart()` in `js/street_report.mjs`, a
+>   pure function returning SVG text: 0 to `AIR_SCALE_TIMES` (4) x the WHO 2021 guideline (40 for NO2, also the UK
+>   legal limit), the model a hollow ring, a sensor a filled circle, a monitor a square (colours checked by the dataviz
+>   validator for colour-blind separation and 3:1 on the panel), a reading beyond the scale pinned to the end with its
+>   own figure and a "▸", a label near the end moved left. Colours go through `style`, never a `var()` in an SVG
+>   attribute (not every browser resolves those); no fill or halo on the marks, as the panel is white on a desktop and
+>   cream on a phone. `AIR_WHO_2021` is held equal to the API's literals in `app.py` by `tests/air-chart.mjs` (21
+>   checks, 7 breaks red); `tests/uk-city-panel.mjs` measures the live panel per city against figures it asks for
+>   itself (the API's 1 km square, the files' readings), marks to scale on the DRAWN axis, and the fallback reached on
+>   purpose by refusing `/v1/environment`.
 > - **THE BRAND GOES HOME; HAVE YOUR SAY; SPOTTED SOMETHING WRONG? (2026-10-19, Bill).** The first "Sky Score" on
 >   every public page links to "/": `tests/test_brand_links_home.py` FINDS the pages (globs, 123 on the day) and
 >   declares the four without a brand (two /preview/ redirect stubs, two printed talk handouts), two-way. The full
