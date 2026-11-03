@@ -59,3 +59,25 @@ def test_a_month_still_running_is_fetched_again():
     today = dt.date(2026, 10, 24)
     assert fetch_metar.finished(2026, 9, today)
     assert not fetch_metar.finished(2026, 10, today)  # cached on the 24th, it would keep only 24 days for good
+
+
+def test_the_days_air_keeps_a_missing_wind_blank_and_drops_a_report_without_temperature():
+    # N65's --air file (2026-11-03): the wind may be missing (a variable or unreported wind) and is kept blank for the
+    # reader to say so; a report without its temperature or altimeter cannot fly a profile and is dropped.
+    body = ('station,valid,tmpf,drct,sknt,alti\n'
+            'EGLL,2026-07-15 06:50,68.00,60.00,10.00,30.21\n'
+            'EGLL,2026-07-15 07:20,68.00,M,3.00,30.21\n'
+            'EGLL,2026-07-15 07:50,M,50.00,9.00,30.20\n'
+            'EGLL,2026-07-15 08:20,69.80,50.00,9.00,M\n')
+    with answering(body):
+        assert fetch_metar.fetch_air('EGLL', '2026-07', '2026-07') == [
+            ('2026-07-15 06:50', '68.00', '60.00', '10.00', '30.21'),
+            ('2026-07-15 07:20', '68.00', '', '3.00', '30.21')]
+
+
+def test_the_days_air_refuses_the_altimeter_only_csv_and_a_web_page():
+    # The header names every field asked for: an answer for other fields is not this file.
+    with answering('station,valid,alti\nEGLL,2026-07-15 06:50,30.21\n'), pytest.raises(SystemExit, match='EGLL'):
+        fetch_metar.fetch_air('EGLL', '2026-07', '2026-07')
+    with answering('<html>Website Maintenance</html>'), pytest.raises(SystemExit, match='EGLL'):
+        fetch_metar.fetch_air('EGLL', '2026-07', '2026-07')
