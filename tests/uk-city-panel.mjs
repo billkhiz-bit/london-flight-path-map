@@ -56,6 +56,7 @@ import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const ROOT = process.cwd();
 // 8123, 8921, 8922, 8923 and 8924 are taken by the other harnesses and preflight
@@ -114,6 +115,7 @@ const CASES = [
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await keepPanelOpen(page);
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
@@ -330,17 +332,14 @@ for (const c of CASES) {
     const air = await page.evaluate(() => {
       const s = document.getElementById('postcode-air-section');
       if (!s) return null;
-      // Where it sits: AFTER "Additional insights" (whose Air Quality card is DEFRA's modelled figure),
-      // so the panel reads modelled first, then measured (Bill, 2026-10-19).
-      const insights = Array.from(document.querySelectorAll('#sidebar h3')).find((h) => /ADDITIONAL INSIGHTS/.test(h.textContent));
-      const insightsSection = insights && insights.closest('.sidebar-section');
+      // Where it sits: in the Air and flood group, ahead of the fold, under the council's rating (Bill's pick, 2026-11-04).
+      const group = s.closest('.find-group');
       return {
         hidden: s.hidden,
         text: s.innerText,
         names: Array.from(s.querySelectorAll('.station-name')).map((n) => n.textContent.trim()),
         links: Array.from(s.querySelectorAll('a')).map((a) => a.textContent.trim()),
-        afterInsights: insightsSection ? Boolean(insightsSection.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING) : null,
-        aqCard: Boolean(insightsSection && /AIR QUALITY/i.test(insightsSection.innerText)),
+        inGroup: Boolean(group) && /AIR AND FLOOD/i.test(group.querySelector('h3')?.textContent || '') && !s.closest('#panel-all'),
       };
     });
     const wantNames = [want.sensor && want.sensor.name, want.monitor && want.monitor.name].filter(Boolean);
@@ -390,10 +389,9 @@ for (const c of CASES) {
     }
     if (wantNames.length) {
       check(
-        `  ${c.city}: it comes after "Additional insights", and names the Air Quality card above only when it is there`,
-        Boolean(air) && air.afterInsights !== false &&
-          air.aqCard === /The Air Quality card above is DEFRA's modelled average/.test(air.text),
-        JSON.stringify(air && { afterInsights: air.afterInsights, aqCard: air.aqCard }),
+        `  ${c.city}: it sits in Air and flood, ahead of the fold`,
+        Boolean(air) && air.inGroup,
+        JSON.stringify(air && { inGroup: air.inGroup }),
       );
     }
     if (wantNames.length) {
@@ -421,6 +419,7 @@ for (const c of CASES) {
 console.log('Air nearby when the 1 km figure cannot load');
 {
   const fb = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await keepPanelOpen(fb);
   await fb.route('**/v1/environment**', (r) => r.abort());
   await fb.goto(url, { waitUntil: 'domcontentloaded' });
   await fb.waitForTimeout(3000);
@@ -491,6 +490,7 @@ console.log('Plane altitude under an approach');
   // /map/?postcode= does not, and the first version analysed before the geometry
   // arrived and printed N/A (found retaking the LGM demo screenshot, 7 Oct).
   const deep = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await keepPanelOpen(deep);
   await deep.goto(`${url}${url.includes('?') ? '&' : '?'}city=london&postcode=TW9%203PZ`, { waitUntil: 'domcontentloaded' });
   const deepRow = await deep
     .waitForFunction(
@@ -830,6 +830,146 @@ console.log('');
   await page.unroute('**/epc?**');
 }
 console.log('');
+
+// THE PANEL LEADS WITH ITS FINDINGS (Bill's pick, 2026-11-04: Stitch's draft). This page does NOT keep the fold open: it
+// reads what a visitor sees before opening anything. Every lookup is stubbed, so each road case is reached on purpose.
+console.log('Findings first');
+{
+  const fp = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const fpErrors = [];
+  fp.on('pageerror', (e) => fpErrors.push(e.message));
+  const json = (route, body) =>
+    route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(body) });
+  const environmentWith = (road, postcode = 'SW5 9HP') => ({
+    location: { postcode },
+    environment: { ...road, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 24, pm25AnnualMeanUgm3: 9.6, no2WhoGuidelineUgm3: 10, pm25WhoGuidelineUgm3: 5, airQualitySource: 'DEFRA background pollution maps' },
+    provenance: {
+      'environment.roadNoiseLdenDb': { method: 'modelled', period: '2021' },
+      'environment.no2AnnualMeanUgm3': { method: 'modelled', resolution: '1 km grid', period: '2024' },
+    },
+  });
+  let environment = null;
+  await fp.route('**/v1/environment**', (r) => (environment ? json(r, environment) : r.abort()));
+  await fp.route('**/transport?**', (r) => json(r, { stations: [{ name: "Earl's Court Underground Station", distance: 376, lines: ['district'] }], lineStatus: [] }));
+  await fp.route('**/nhs?**', (r) => json(r, { gp: [{ name: 'Brompton Medical Centre', distance: 49 }], pharmacies: [], hospitals: [] }));
+  await fp.route('**/sold-prices?**', (r) =>
+    json(r, { transactions: [
+      { price: 20000, type: 'other', date: '2025-06-01', address: '1', street: 'Shop Row' },
+      { price: 1810000, type: 'terraced', category: 'A', date: '2025-01-15', address: '241', street: 'Old Brompton Road' },
+    ] }));
+  await fp.route('**/epc?**', (r) => json(r, { available: true, count: 32, certificates: [], summary: { averageBand: 'D', averageRating: 67, bandDistribution: { D: 16 } } }));
+  await fp.goto(url, { waitUntil: 'domcontentloaded' });
+  await fp.waitForTimeout(2500);
+  await fp.evaluate((city) => window.switchCity(city), 'london');
+  await fp.waitForTimeout(1200);
+
+  const readPanel = () =>
+    fp.evaluate(() => {
+      const text = (k) => (document.querySelector(`[data-find="${k}"]`)?.innerText || '').replace(/\s+/g, ' ').trim();
+      const fold = document.getElementById('panel-all');
+      const groups = [...document.querySelectorAll('.find-group')];
+      const notify = document.querySelector('.notify-block');
+      return {
+        road: text('road'), aircraft: text('aircraft'), planes: text('planes'), path: text('path'), air: text('air'), flood: text('flood'),
+        crime: text('crime'), transport: text('transport'), healthcare: text('healthcare'), schools: text('schools'),
+        price: text('price'), sold: text('sold'), epc: text('epc'),
+        roadBar: Boolean(document.querySelector('[data-find="road"] .find-track')),
+        foldOpen: Boolean(fold && fold.open),
+        foldHides: ![...document.querySelectorAll('.noise-detail-label')].some((l) => l.getClientRects().length > 0),
+        shown: groups.filter((g) => getComputedStyle(g).display !== 'none').map((g) => g.querySelector('h3').textContent.trim()),
+        order: Boolean(fold && notify) && Boolean(groups.at(-1).compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING) && Boolean(fold.compareDocumentPosition(notify) & Node.DOCUMENT_POSITION_FOLLOWING),
+        airInGroup: Boolean(document.getElementById('postcode-air-section')?.closest('.find-group')),
+        note: [...document.querySelectorAll('.find-group .find-note')].map((n) => n.textContent.trim()),
+        shownText: groups.map((g) => g.innerText).join(' '),
+        favImpact: document.querySelector('.fav-btn')?.dataset.favImpact,
+        foldImpact: document.querySelector('.noise-indicator')?.textContent.trim(),
+        all: document.getElementById('sidebar-content').innerText,
+      };
+    });
+  const search = async (pc, env, settled) => {
+    environment = env;
+    await fp.evaluate(() => { const c = document.getElementById('sidebar-content'); if (c) c.innerHTML = ''; });
+    await fp.fill('#search-input', '');
+    await fp.fill('#search-input', pc);
+    await fp.press('#search-input', 'Enter');
+    await fp.waitForFunction(settled, null, { timeout: 20000 }).catch(() => {});
+    return readPanel();
+  };
+  const loaded = () => /\S/.test(document.querySelector('[data-find="sold"]')?.innerText || '') && /\S/.test(document.querySelector('[data-find="epc"]')?.innerText || '') && /m$/.test((document.querySelector('[data-find="healthcare"]')?.innerText || '').trim()) && /\S/.test(document.querySelector('[data-find="road"]')?.innerText || '') && /\S/.test(document.querySelector('[data-find="planes"]')?.innerText || '');
+
+  const over = await search('SW5 9HP', environmentWith({ roadNoiseLdenDb: 71.8 }), loaded);
+  check('the rating leads, explained by the postcode\'s own figure', /Road noise is high 71\.8 dB\. The WHO guideline is 53 dB\. This is a modelled figure for 2021\./.test(over.road), over.road);
+  check('all four groups show, the fold starts closed and hides its sections', over.shown.length === 4 && !over.foldOpen && over.foldHides, JSON.stringify([over.shown, over.foldOpen, over.foldHides]));
+  check('the findings come first, then the fold, then the notify form', over.order);
+  check('the air charts sit in their group, ahead of the fold', over.airInGroup);
+  check('the note says whose rating it is', over.note.some((n) => n === 'The road noise rating is for all of Kensington and Chelsea. The figures are for this postcode.'), JSON.stringify(over.note));
+  check('aircraft says its figure, as an estimate', /^Aircraft noise is (low|moderate|high) \d+\.\d out of 10/.test(over.aircraft), over.aircraft);
+  check('planes come from the postcode\'s own file', /^Heathrow planes overhead/.test(over.planes) && /Flying west: /.test(over.planes) && /56% of days/.test(over.planes), over.planes);
+  check('the planes notes keep their credits', /adsb\.lol/.test(await fp.evaluate(() => document.querySelector('[data-find="planes"] details')?.textContent || '')));
+  check('crime is set against the London median', /^Crime is \w+ /.test(over.crime) && /London median/.test(over.crime) && /This council/.test(over.crime), over.crime);
+  check('station and doctor are the lists\' own first rows', /Earl's Court 376 m$/.test(over.transport) && /Brompton Medical Centre 49 m$/.test(over.healthcare), `${over.transport} | ${over.healthcare}`);
+  check('the last sale passes the shop', /£1,810,000 January 2025$/.test(over.sold), over.sold);
+  check('energy reads plainly', /^Energy rating D 67 out of 100, from 32 certificates\./.test(over.epc), over.epc);
+  check('nothing reads undefined, null or NaN', !/\bundefined\b|\bNaN\b|\bnull\b/.test(over.all));
+  const notifyLabel = await fp.evaluate(() => document.querySelector('label[for="notify-email"]').getBoundingClientRect().width);
+  check('the email label is for screen readers only (a class with no rule showed it, live, until 2026-11-04)', notifyLabel <= 1, String(notifyLabel));
+
+  check('the fold and a saved favourite use the finding\'s own word', new RegExp(`^${over.favImpact} AIRCRAFT NOISE$`, 'i').test(over.foldImpact) && new RegExp(`^Aircraft noise is ${over.favImpact}`, 'i').test(over.aircraft), JSON.stringify([over.aircraft, over.foldImpact, over.favImpact]));
+
+  const under = await search('SW5 9JZ', environmentWith({ roadNoiseLdenDb: 49.9 }, 'SW5 9JZ'), loaded);
+  check('a figure under the guideline keeps the council\'s rating, as Bill chose, and its own true number', /Road noise is high 49\.9 dB\./.test(under.road), under.road);
+
+  const quiet = await search('SW5 9HP', environmentWith({ roadNoiseBelowDb: 45 }), loaded);
+  check('a surveyed-quiet postcode gets no rating, no reading, no bar and no note about a rating', /^Road noise is under the WHO guideline DEFRA surveyed/.test(quiet.road) && !quiet.roadBar && !quiet.note.some((n) => /road noise rating/.test(n)), quiet.road);
+
+  const neighbour = await search('SW5 9HP', environmentWith({ roadNoiseLdenDb: 49.9 }, 'SW5 9JZ'), loaded);
+  check('a reading the API gives for a neighbouring postcode never passes as this one', /^Road noise in Kensington and Chelsea is high/.test(neighbour.road) && !/49\.9/.test(neighbour.road), neighbour.road);
+
+  const failed = await search('SW5 9HP', null, loaded);
+  check('with no figure the rating names its council, and says so', /^Road noise in Kensington and Chelsea is high A rating for the whole council: \d+% of its postcodes are over the WHO guideline\. There is no figure for this postcode\./.test(failed.road) && !failed.roadBar && !failed.note.some((n) => /figures are for this postcode/.test(n)), failed.road);
+
+  const area = await search('SW5', environmentWith({ roadNoiseLdenDb: 71.8 }), () => /\S/.test(document.querySelector('[data-find="road"]')?.innerText || ''));
+  check('an area search asks for no postcode figure', /^Road noise in /.test(area.road), area.road);
+  // Outside London the list is NaPTAN's, in rows of its own: the finding must find those too.
+  await fp.evaluate((city) => window.switchCity(city), 'manchester');
+  await fp.waitForTimeout(1200);
+  const north = await search('M1 1AE', environmentWith({ roadNoiseLdenDb: 60 }, 'M1 1AE'), () => /\d/.test(document.querySelector('[data-find="transport"]')?.innerText || ''));
+  check('outside London the station comes from the NaPTAN list', /\d(\.\d)? ?k?m$/.test(north.transport), north.transport);
+  check('no page errors in the findings', fpErrors.length === 0, fpErrors.slice(0, 2).join(' | '));
+  await fp.close();
+
+  // Should the module not load, nothing may be stranded behind a fold no one was told to open.
+  // Service workers off: the worker fetches the module itself, out of sight of page.route, so the block would not bite.
+  const noModule = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' })).newPage();
+  await noModule.route('**/js/panel-findings.mjs', (r) => r.abort());
+  await noModule.goto(url, { waitUntil: 'domcontentloaded' });
+  await noModule.waitForTimeout(2500);
+  await noModule.evaluate((city) => window.switchCity(city), 'london');
+  await noModule.waitForTimeout(1200);
+  await noModule.fill('#search-input', 'SW5 9HP');
+  await noModule.press('#search-input', 'Enter');
+  const opened = await noModule.waitForFunction(() => document.getElementById('panel-all')?.open === true, null, { timeout: 15000 }).then(() => true).catch(() => false);
+  check('if the findings cannot load, the fold opens by itself', opened);
+  await noModule.close();
+
+  // New York answers from its own figures, never against London's.
+  const ny = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await ny.goto(url, { waitUntil: 'domcontentloaded' });
+  await ny.waitForTimeout(2500);
+  await ny.evaluate((city) => window.switchCity(city), 'nyc');
+  await ny.waitForTimeout(1200);
+  await ny.fill('#search-input', '10001');
+  await ny.press('#search-input', 'Enter');
+  await ny.waitForFunction(() => /\S/.test(document.querySelector('[data-find="crime"]')?.innerText || ''), null, { timeout: 20000 }).catch(() => {});
+  const nyCrime = await ny.evaluate(() => document.querySelector('[data-find="crime"]')?.innerText || '');
+  const nyAll = await ny.evaluate(() => document.getElementById('sidebar-content').innerText);
+  const nyShown = await ny.evaluate(() => [...document.querySelectorAll('.find-group')].map((g) => g.innerText).join(' '));
+  check('New York\'s findings say borough and ZIP code, never council or postcode', /borough/i.test(nyShown) && !/\bcouncil\b|\bpostcode/i.test(nyShown), nyShown.slice(0, 160));
+  check('New York\'s crime is never set against London\'s', nyCrime !== '' && !/London/.test(nyCrime), nyCrime);
+  check('New York\'s panel reads nothing undefined', !/\bundefined\b|\bNaN\b/.test(nyAll));
+  await ny.close();
+  console.log('');
+}
 
 check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 

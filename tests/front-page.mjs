@@ -1370,12 +1370,21 @@ const pricesOn = () =>
     })
   );
 // No card is "the one to pick" (Bill, 2026-10-06): a homeowner who jumps to the report tiers
-// saw the firms card outlined. Read from computed style: no card carries a ring or shadow, and
-// every card button has one look.
+// saw the firms card outlined. Read from computed style: no card carries a ring or shadow, and within
+// a section every card and every button looks the same. Since his pick B (2026-11-04) each audience's
+// section has its own colour, so `looks` counts the looks in each section, and each must be one.
 const cardLook = () =>
   page.locator('.tier').evaluateAll((cards) => ({
     cards: cards.length,
     ringed: cards.filter((c) => getComputedStyle(c).boxShadow !== 'none').map((c) => c.querySelector('h3')?.textContent.trim()),
+    looks: Object.entries(Object.groupBy(cards, (c) => c.closest('section')?.id || '')).map(([id, inSection]) => [
+      id,
+      new Set(inSection.map((c) => {
+        const s = getComputedStyle(c);
+        const a = c.querySelector('a.go');
+        return `${s.backgroundColor}|${s.borderTopColor}|${a ? `${getComputedStyle(a).backgroundColor}|${getComputedStyle(a).color}|${a.className}` : ''}`;
+      })).size,
+    ]),
     buttons: [...new Set(cards.flatMap((c) => [...c.querySelectorAll('a.go')].map((a) => `${getComputedStyle(a).backgroundColor}|${a.className}`)))],
   }));
 // /api/ states NO prices since the website audit of 2026-10-06 (I2): its own copy of the API
@@ -1396,8 +1405,8 @@ await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentload
 const pricingPrices = await pricesOn();
 const pricingCards = await cardLook();
 ok(
-  pricingCards.cards >= 4 && pricingCards.ringed.length === 0 && pricingCards.buttons.length === 1,
-  'no pricing card is highlighted on /pricing, and every card button looks the same',
+  pricingCards.cards >= 4 && pricingCards.ringed.length === 0 && pricingCards.looks.length === 3 && pricingCards.looks.every(([, n]) => n === 1),
+  'no pricing card is highlighted on /pricing: within each audience, every card and button looks the same',
   JSON.stringify(pricingCards)
 );
 const priceText = {};

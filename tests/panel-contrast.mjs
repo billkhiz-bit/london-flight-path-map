@@ -44,6 +44,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const ROOT = process.cwd();
 const PORT = 8934;
@@ -408,6 +409,7 @@ let statesReached = 0;
 const browser = await chromium.launch();
 for (const vp of VIEWPORTS) {
   const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+  await keepPanelOpen(context);
   const page = await context.newPage();
   for (const state of ACTIVE_STATES) {
     await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'domcontentloaded' });

@@ -207,6 +207,15 @@ Or just describe what you need, I have full context of this project.
   postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
   if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
   `airChart()` (pure; `tests/air-chart.mjs`); the model is a hollow ring, never "measured"; `AIR_WHO_2021` equals the API's.
+- **The full map's postcode panel is findings first** (Bill's pick, 2026-11-04: Stitch's draft): four `.find-group`s, then every earlier section unchanged in
+  `#panel-all` ("All the detail"), closed; ids stay, so the loaders fill them there. `js/panel-findings.mjs` words each finding, pure text, null when there is
+  nothing true to say (`tests/panel-findings.mjs`); `fillFindings()` places them. Road noise leads with the council's rating over the postcode's own figure
+  (Bill's call: a rating can sit above a figure under the guideline, so the group's note says whose it is); with no figure the rating names its council;
+  a surveyed-quiet bound (`roadNoiseBelowDb`) is no reading and takes no rating. Station and doctor read the panel's own first row, so they cannot disagree
+  with it. "Last home sold" skips `other` and category B: SW5 9HP's January 2025 sale is not a home. A test of a folded section calls `keepPanelOpen()`
+  (`tests/panel-fold.mjs`); what shows before anything is opened is `tests/uk-city-panel.mjs` "Findings first". If the module fails, the fold opens.
+- **/pricing has a colour for each audience** (Bill's pick B, 2026-11-04): `#reports` tint, `#councils` water, `#platforms` dark. His "no highlighted card, one
+  button style" (2026-10-06) now holds WITHIN a section, measured by `tests/front-page.mjs` 16b. Words and `data-event`s are untouched by a restyle: diff them.
 - **One palette for the pages, held by `tests/test_site_palette.py`** (Bill, 2026-11-04: "ensure the colour scheme is consistent"): a
   rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink. Read a
   colour from the repo, never from a mock-up (the amber `#f0b429` I called the scores' was in no file). Colours that carry meaning keep

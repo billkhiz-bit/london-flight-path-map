@@ -49,6 +49,7 @@ import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const ROOT = process.cwd();
 // 8123 (smoke-local), 8921 (locator), 8922 (selector-widths) and 8923
@@ -113,6 +114,7 @@ const openAt = async (vp) => {
     isMobile: vp.width < 900,
     hasTouch: vp.width < 900,
   });
+  await keepPanelOpen(context);
   const pg = await context.newPage();
   pg.on('pageerror', (e) => errors.push(e.message));
   pg.on('console', (m) => {

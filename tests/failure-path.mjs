@@ -5,6 +5,7 @@
 //      paint a map (cache.addAll is all-or-nothing, so a single missing
 //      SHELL_ASSET silently prevents the SW installing at all)
 import { chromium } from '@playwright/test';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const BASE = process.env.SMOKE_BASE || 'https://d1oe4ftwutjpf.cloudfront.net';
 const results = [];
@@ -15,6 +16,7 @@ const record = (name, pass, detail = '') => {
 
 const browser = await chromium.launch();
 const context = await browser.newContext();
+await keepPanelOpen(context);
 const page = await context.newPage();
 
 // ---------------------------------------------------------------------------
@@ -201,6 +203,7 @@ await context.setOffline(false);
 // would be the same defect pointing the other way: a false outage claim on
 // every good-service response.
 const tfl = await browser.newContext({ serviceWorkers: 'block' });
+await keepPanelOpen(tfl);
 const page3 = await tfl.newPage();
 
 let transportBody = null;

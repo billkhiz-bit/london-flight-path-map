@@ -745,6 +745,7 @@ check "Find areas: words read into choices" node tests/find-words.mjs
 # The walkthrough below the map (2026-11-03): what its noise and air steps say from the example's answer.
 check "walkthrough: noise + air steps"    node tests/home-sections.mjs
 check "postcode box suggestions"        node tests/place-box.mjs
+check "panel findings"                  node tests/panel-findings.mjs
 # The full map's air side by side (2026-11-03, Bill's refined B): js/street_report.mjs airChart() is pure, so its
 # geometry (to scale, beyond the scale, labels at the edge), its shapes, its escaping and the WHO guideline it shares
 # with the API (read from app.py) are held here without a browser; the live panel is tests/uk-city-panel.mjs.

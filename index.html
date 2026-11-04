@@ -2264,6 +2264,134 @@
       .air-chart svg text {
         font-family: var(--font-sans);
       }
+      /* FINDINGS FIRST (Bill's pick, 2026-11-04: Stitch's draft, after four rounds of charts). The finding in plain
+         words, its number under it, on the map's own surfaces. Bars only draw what the words already say. */
+      .find-note {
+        font-family: var(--font-sans);
+        font-size: 12px;
+        color: #555;
+        margin: -6px 0 2px;
+      }
+      .find {
+        font-family: var(--font-sans);
+        margin-top: 14px;
+      }
+      .find .find-note {
+        margin: 0 0 8px;
+      }
+      .find-caveat {
+        margin-top: 6px;
+        font-size: 12.5px;
+      }
+      .find-h {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.3;
+        color: var(--dark);
+      }
+      .find-big {
+        font-size: 22px;
+      }
+      .find-d {
+        margin: 3px 0 0;
+        font-size: 13.5px;
+        line-height: 1.45;
+        color: #555;
+      }
+      .find-cap,
+      .find-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: #555;
+      }
+      .find-cap {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        margin: 9px 0 4px;
+      }
+      .find-cap b {
+        font-weight: 500;
+        color: var(--dark);
+      }
+      .find-row {
+        font-size: 13.5px;
+        margin-top: 5px;
+      }
+      .find-row b {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--dark);
+        white-space: nowrap;
+      }
+      .find-strong span {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--dark);
+      }
+      .find-strong b {
+        font-family: var(--font-sans);
+        font-weight: 400;
+        color: #555;
+      }
+      .find-track {
+        position: relative;
+        height: 8px;
+        margin-top: 6px;
+        background: var(--bg);
+        border-radius: 4px;
+      }
+      .find-cap + .find-track {
+        margin-top: 0;
+      }
+      .find-track i {
+        display: block;
+        height: 100%;
+        background: var(--orange);
+        border-radius: 4px;
+      }
+      .find-track i.find-yardstick {
+        background: var(--light);
+      }
+      .find-track u {
+        position: absolute;
+        top: -2px;
+        bottom: -2px;
+        width: 2px;
+        background: var(--dark);
+      }
+      /* Road noise waits for its own figure, so the rest does not jump when it lands. */
+      [data-find].is-waiting {
+        min-height: 64px;
+      }
+      /* A group with nothing true to say is not shown, rather than a heading over nothing. */
+      .find-group:not(:has(.find, .is-waiting, #postcode-air-section:not([hidden]))) {
+        display: none;
+      }
+      #postcode-air-section {
+        margin-top: 10px;
+      }
+      .panel-all > summary {
+        display: list-item;
+        min-height: 44px;
+        padding: 14px 24px;
+        font-family: var(--font-sans);
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--orange-text);
+        border-bottom: 1px solid var(--bg);
+        cursor: pointer;
+      }
+      .panel-all > summary:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: -2px;
+      }
+      /* A closed <details> keeps its children's boxes in Chrome: the layout gates read them as there. */
+      .panel-all:not([open]) > :not(summary) {
+        display: none;
+      }
       .station-lines {
         display: flex;
         flex-wrap: wrap;
@@ -10386,9 +10514,7 @@
           noiseScore += 1;
         }
 
-        if (noiseScore >= 7) noiseEstimate = 'High';
-        else if (noiseScore >= 4) noiseEstimate = 'Moderate';
-        else noiseEstimate = 'Low';
+        noiseEstimate = noiseBand(noiseScore);
 
         // The plane altitude: the published glide path the home sits under, the
         // AIP's in the UK and the FAA's in New York (A1, 2026-10-07), never a ladder
@@ -10416,9 +10542,7 @@
         }, 0);
         noiseScore += heliBonus;
         // Recalculate estimate after heliport factor
-        if (noiseScore >= 7) noiseEstimate = 'High';
-        else if (noiseScore >= 4) noiseEstimate = 'Moderate';
-        else noiseEstimate = 'Low';
+        noiseEstimate = noiseBand(noiseScore);
 
         return {
           borough,
@@ -11064,42 +11188,61 @@
       // resolution, period), so the panel says what the API says and never calls the model measured. A council
       // average smooths away the street-level difference a sensor shows, so the 1 km square is the yardstick.
       // Null on any failure, a non-modelled answer or no figure: the council's average then stands in, said so.
-      function fetchAirSquare(lat, lon) {
+      function fetchPostcodeEnvironment(lat, lon) {
         return fetch(`${API_BASE}/v1/environment?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`, {
           signal: withDeadline(undefined, PANEL_TIMEOUT_MS),
         })
           .then((r) => (r.ok ? r.json() : null))
-          .then((d) => {
-            const e = d && d.environment;
-            const pv = (d && d.provenance) || {};
-            const meta = pv['environment.no2AnnualMeanUgm3'] || pv['environment.pm25AnnualMeanUgm3'];
-            if (!e || !meta || meta.method !== 'modelled') return null;
-            const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-            const no2 = num(e.no2AnnualMeanUgm3);
-            const pm25 = num(e.pm25AnnualMeanUgm3);
-            if (no2 === null && pm25 === null) return null;
-            // "1 km grid" -> "1 km square". One quantifier and a number check (a nested one is what the security
-            // lint calls unsafe: catastrophic backtracking on a crafted string).
-            const res = /^([0-9.]{1,8}) ?km grid$/.exec(String(meta.resolution || ''));
-            const km = res && Number.isFinite(Number(res[1])) ? res[1] : null;
-            return {
-              no2,
-              pm25,
-              period: /^\d{4}$/.test(String(meta.period)) ? String(meta.period) : null,
-              square: km ? `${km} km square` : 'grid square',
-              background: /background/i.test(String(e.airQualitySource || '')),
-              who: { no2: num(e.no2WhoGuidelineUgm3), pm25: num(e.pm25WhoGuidelineUgm3) },
-            };
-          })
           .catch(() => null);
+      }
+      function airSquareFrom(d) {
+        const e = d && d.environment;
+        const pv = (d && d.provenance) || {};
+        const meta = pv['environment.no2AnnualMeanUgm3'] || pv['environment.pm25AnnualMeanUgm3'];
+        if (!e || !meta || meta.method !== 'modelled') return null;
+        const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+        const no2 = num(e.no2AnnualMeanUgm3);
+        const pm25 = num(e.pm25AnnualMeanUgm3);
+        if (no2 === null && pm25 === null) return null;
+        // "1 km grid" -> "1 km square". One quantifier and a number check (a nested one is what the security
+        // lint calls unsafe: catastrophic backtracking on a crafted string).
+        const res = /^([0-9.]{1,8}) ?km grid$/.exec(String(meta.resolution || ''));
+        const km = res && Number.isFinite(Number(res[1])) ? res[1] : null;
+        return {
+          no2,
+          pm25,
+          period: /^\d{4}$/.test(String(meta.period)) ? String(meta.period) : null,
+          square: km ? `${km} km square` : 'grid square',
+          background: /background/i.test(String(e.airQualitySource || '')),
+          who: { no2: num(e.no2WhoGuidelineUgm3), pm25: num(e.pm25WhoGuidelineUgm3) },
+        };
+      }
+      // The postcode's own road noise, for its finding: a modelled reading with its period, or the surveyed-quiet bound,
+      // which is no reading (js/panel-findings.mjs roadFinding). Nothing usable leaves the council's rating to speak.
+      // /v1/environment takes a point and answers for the NEAREST postcode, which is fine for a 1 km air square and wrong
+      // for road noise: neighbours differ by 20 dB. So the reading counts only if the postcode it names is this one.
+      function roadReadingFrom(d, postcode) {
+        const e = d && d.environment;
+        const key = (pc) => String(pc || '').replace(/\s+/g, '').toUpperCase();
+        if (!e || !postcode || key(d.location && d.location.postcode) !== key(postcode)) return {};
+        const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+        const meta = (d.provenance || {})['environment.roadNoiseLdenDb'];
+        const modelled = Boolean(meta) && meta.method === 'modelled';
+        return {
+          db: modelled ? num(e.roadNoiseLdenDb) : null,
+          belowDb: num(e.roadNoiseBelowDb),
+          who: num(e.roadNoiseWhoGuidelineDb),
+          period: modelled && /^\d{4}$/.test(String(meta.period)) ? String(meta.period) : null,
+        };
       }
       // AIR NEARBY, SIDE BY SIDE (Bill, 2026-11-03: refined B of claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc). A key
       // names each source once (shape, name, distance, what it is, its setting and period); then ONE scale per
       // pollutant, DEFRA's model for this postcode's 1 km square beside the nearest sensor and monitor, the WHO 2021
       // guideline drawn through (js/street_report.mjs airChart); then one line on how to read them. The notes fold
       // under "About these readings"; the sources stay visible. Still hidden when no sensor or monitor is in 5 km.
-      async function renderAirNearby(lat, lon, stillCurrent, council) {
-        const [loaded, square] = await Promise.all([loadAirNearby(), fetchAirSquare(lat, lon)]);
+      async function renderAirNearby(lat, lon, stillCurrent, council, environment) {
+        const [loaded, env] = await Promise.all([loadAirNearby(), environment]);
+        const square = airSquareFrom(env);
         if (!loaded || !stillCurrent()) return;
         const [m, sensors, monitors] = loaded;
         const section = document.getElementById('postcode-air-section');
@@ -11125,7 +11268,7 @@
                   sub: "DEFRA's model, council-wide",
                   no2: council.no2,
                   pm25: council.pm25,
-                  detail: `DEFRA's model averaged over ${council.name} (the Air Quality card above). This postcode's own 1 km figure did not load.`,
+                  detail: `DEFRA's model averaged over ${council.name}. This postcode's own 1 km figure did not load.`,
                 }
               : null;
           const sensorNote = sensor && `Breathe London sensor, low-cost, provisional. ${cap(m.sensorSetting(sensor))}. Over the ${m.sensorPeriod(sensor)}.`;
@@ -11156,6 +11299,8 @@
             .map((c) => `<a href="${escapeHtml(c.href)}" target="_blank" rel="noopener">${escapeHtml(c.text)}</a>`)
             .join(' &middot; ');
           el.innerHTML =
+            charts +
+            `<details class="legend-disclosure air-about"><summary>About these readings</summary>` +
             `<p class="info-note" style="margin-top:0;">${
               model && square
                 ? "DEFRA's model for this postcode's own 1 km square, beside the nearest readings within 5 km."
@@ -11168,9 +11313,8 @@
             (sensor ? keyRow('sensor', named(sensor), sensorNote) : '') +
             (monitor ? keyRow('monitor', named(monitor), monitorNote) : '') +
             `</ul>` +
-            charts +
             `<p class="info-note">They measure in different ways, places and periods, so expect them to differ.</p>` +
-            `<details class="legend-disclosure air-about"><summary>About these readings</summary><p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p></details>` +
+            `<p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p></details>` +
             `<p class="info-note" style="font-size:11px;">Sources: ${credits}</p>`;
           section.hidden = false;
         } catch (e) {
@@ -13144,6 +13288,10 @@
     </div>`;
       }
 
+      // The word for an aircraft noise figure out of 10: its one holder, for the analysis and for the panel.
+      function noiseBand(score) {
+        return score >= 7 ? 'High' : score >= 4 ? 'Moderate' : 'Low';
+      }
       function postcodeNoiseSummary(analysis) {
         // The SHOWN figures (shownDistances), the ones the front page prints too.
         const d = analysis.pathShown.dist;
@@ -13256,6 +13404,107 @@
       // is exactly how SW11's EPC counts and sold prices ended up rendered
       // under a TW3 heading. The fallback keeps a future call site that omits
       // the token working; it simply inherits the current sequence.
+      // FINDINGS FIRST (Bill's pick, 2026-11-04). js/panel-findings.mjs words them; this places them. Should the module
+      // not load, the fold opens, so nothing a reader came for is hidden behind a section that never filled.
+      let _findingsLoad = null;
+      function loadFindings() {
+        if (!_findingsLoad) {
+          _findingsLoad = import('/js/panel-findings.mjs').catch((e) => {
+            _findingsLoad = null; // a failed load is retried on the next search
+            console.warn('[Sky Score] panel findings not loaded:', e);
+            const fold = document.getElementById('panel-all');
+            if (fold) fold.open = true;
+            return null;
+          });
+        }
+        return _findingsLoad;
+      }
+      function withFindings(req, fn) {
+        return loadFindings().then((m) => {
+          if (m && isCurrentSearch(req)) fn(m);
+        });
+      }
+      function placeFinding(m, slot, findings) {
+        const el = document.querySelector(`#sidebar-content [data-find="${slot}"]`);
+        if (!el) return null;
+        el.classList.remove('is-waiting');
+        el.innerHTML = [].concat(findings).map((f) => m.findingHtml(f)).join('');
+        return el;
+      }
+      // The first row a panel list shows, read from that list, so a finding cannot disagree with it.
+      function nearestListed(containerId) {
+        const row = document.querySelector(`#${containerId} .transport-station, #${containerId} .transport-row`);
+        const name = row && row.querySelector('.station-name');
+        const dist = row && row.querySelector('.station-dist');
+        return name ? { name: name.textContent.trim(), dist: dist ? dist.textContent.trim() : '' } : null;
+      }
+      function showNearest(req, slot, label, rating, containerId) {
+        withFindings(req, (m) => placeFinding(m, slot, m.nearestFinding(slot, label, rating, nearestListed(containerId))));
+      }
+      let _planesInfoLoad = null;
+      async function loadPanelPlanes(postcode) {
+        const json = (path) =>
+          fetch(path, { cache: 'no-cache' })
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null);
+        try {
+          const p = await import('/js/planes.mjs');
+          const district = p.districtOf(postcode);
+          if (!/^[A-Z]{1,2}[0-9][0-9A-Z]?$/.test(district)) return null;
+          if (!_planesInfoLoad) _planesInfoLoad = json('/data/planes/airports.json');
+          const [file, info] = await Promise.all([json(`/data/planes/${district}.json`), _planesInfoLoad]);
+          if (!info) _planesInfoLoad = null; // a failed load is retried on the next search
+          return p.planesModel(file, info, postcode);
+        } catch (e) {
+          console.warn('[Sky Score] planes overhead not shown:', e);
+          return null;
+        }
+      }
+      function fillFindings(analysis, boroughData, extra, aircraft, environment, req) {
+        const fullUkPostcode = isUkCity(currentCity) && !analysis.isOutcode;
+        const area = isUkCity(currentCity) ? 'council' : 'borough';
+        const spot = isUkCity(currentCity) ? 'postcode' : 'ZIP code';
+        withFindings(req, (m) => {
+          placeFinding(m, 'aircraft', m.aircraftFinding(aircraft));
+          placeFinding(m, 'path', m.pathFinding(analysis.pathShown.dist));
+          placeFinding(m, 'air', m.ratingFinding('air', 'Air quality', extra && extra.airQuality));
+          placeFinding(m, 'flood', m.ratingFinding('flood', 'Flood risk', extra && extra.flood));
+          placeFinding(m, 'crime', m.crimeFinding({
+            band: extra && extra.crime,
+            rate: extra && extra.crimeRate,
+            median: londonCrimeMedian(),
+            comparable: isUkCity(currentCity),
+            area,
+          }));
+          placeFinding(m, 'schools', extra ? m.ratingFinding('schools', 'Schools', schoolBadge(extra).text) : null);
+          placeFinding(m, 'price', boroughData
+            ? m.priceFinding({ price: formatPrice(boroughData.avg_price, currentCity), trend: boroughData.trend_pct, area })
+            : null);
+        });
+        showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data');
+        showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data');
+        environment.then((d) =>
+          withFindings(req, (m) =>
+            placeFinding(m, 'road', m.roadFinding({
+              ...roadReadingFrom(d, analysis.postcode),
+              council: extra && extra.name,
+              band: extra && extra.roadNoise,
+              abovePct: extra && extra.roadNoiseAboveWhoPct,
+              area,
+              spot,
+            })),
+          ),
+        );
+        if (fullUkPostcode) {
+          loadPanelPlanes(analysis.postcode).then((model) =>
+            withFindings(req, (m) => {
+              const el = placeFinding(m, 'planes', m.planesFindings(model));
+              if (el) el.insertAdjacentHTML('beforeend', m.planesNotesHtml(model));
+            }),
+          );
+        }
+      }
+
       function updateSidebarPostcode(analysis, boroughData, search) {
         const req = search || { token: searchSeq };
         panelSubject = { kind: 'postcode', analysis };
@@ -13270,15 +13519,17 @@
         switchTab('analysis');
         revealSheetIfMobile();
 
-        const noiseClass =
-          analysis.noiseEstimate === 'High'
-            ? 'noise-high'
-            : analysis.noiseEstimate === 'Moderate'
-              ? 'noise-moderate'
-              : 'noise-low';
-        const noiseCol =
-          analysis.noiseEstimate === 'High' ? '#F27D26' : analysis.noiseEstimate === 'Moderate' ? '#F2B826' : '#26F27D';
-        const noisePct = Math.min(100, analysis.noiseScore * 10);
+        // ONE FIGURE AND ONE WORD, wherever the panel says them (a review, 2026-11-04): DEFRA's picture where it covers the
+        // postcode, else the estimate, held to 0-10 (the geometry's points can add past 10). The finding, the fold's
+        // indicator and a saved favourite all read these, so "low" above can never meet "HIGH" below.
+        const pcKey = (analysis.postcode || '').replace(/\s+/g, '').toUpperCase();
+        const rasterQuiet = AIRCRAFT_QUIET[pcKey];
+        const shownNoise = typeof rasterQuiet === 'number' ? 10 - rasterQuiet : Math.max(0, Math.min(10, analysis.noiseScore));
+        const shownEstimate = noiseBand(shownNoise);
+        const aircraft = { score: shownNoise, word: shownEstimate, modelled: typeof rasterQuiet === 'number' };
+        const noiseClass = shownEstimate === 'High' ? 'noise-high' : shownEstimate === 'Moderate' ? 'noise-moderate' : 'noise-low';
+        const noiseCol = shownEstimate === 'High' ? '#F27D26' : shownEstimate === 'Moderate' ? '#F2B826' : '#26F27D';
+        const noisePct = shownNoise * 10;
         const top3 = analysis.airportsShown.slice(0, 3);
         // Every flight-path name already starts with its airport's code ("LHR 27R final
         // approach"), so prefixing the code again printed "LHR LHR ..." on every city.
@@ -13338,8 +13589,6 @@
           // SiteApiGeometryParityTests would not catch it: it compares
           // FLIGHT_PATHS waypoints, and those still match. The API would simply
           // stop consulting them wherever a raster sample exists.
-          const pcKey = (analysis.postcode || '').replace(/\s+/g, '').toUpperCase();
-          const rasterQuiet = AIRCRAFT_QUIET[pcKey];
           const pcQuiet =
             typeof rasterQuiet === 'number'
               ? rasterQuiet
@@ -13458,18 +13707,53 @@
             <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${escapeHtml(analysis.label || analysis.postcode)}</div>
             <div style="font-size:12px;color:var(--mid);">${escapeHtml(analysis.ward)}, ${escapeHtml(analysis.borough)}</div>
           </div>
-          <button class="fav-btn ${isFavourite(analysis.postcode) ? 'saved' : ''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(analysis.noiseEstimate)}" data-fav-score="${boroughData ? pcScore : 0}">
+          <button class="fav-btn ${isFavourite(analysis.postcode) ? 'saved' : ''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(shownEstimate)}" data-fav-score="${boroughData ? pcScore : 0}">
             <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(analysis.postcode) ? 'SAVED' : 'SAVE'}
           </button>
         </div>
       </div>
       ${analysis.isOutcode ? '<p class="info-note" style="margin-top:8px;"><strong>Area-level results.</strong> For street-level crime, EPC and sold price data, try a full postcode e.g. ' + escapeHtml(analysis.postcode) + ' 1AA.</p>' : ''}
     </div>
+    <div class="sidebar-section find-group">
+      <h3>NOISE AND PLANES</h3>
+      <div data-find="road" class="is-waiting"></div>
+      <div data-find="aircraft"></div>
+      <div data-find="planes"></div>
+      <div data-find="path"></div>
+    </div>
+    <div class="sidebar-section find-group">
+      <h3>AIR AND FLOOD</h3>
+      ${extra && (extra.airQuality || extra.flood) ? `<p class="find-note">Ratings are for all of ${escapeHtml(extra.name)}.</p>` : ''}
+      <div data-find="air"></div>
+      ${
+        // Filled by renderAirNearby(); left hidden when nothing is in reach, so the panel never says "no monitor nearby".
+        isUkCity(currentCity) && !analysis.isOutcode
+          ? `<div id="postcode-air-section" hidden><div id="postcode-air-data"></div></div>`
+          : ''
+      }
+      <div data-find="flood"></div>
+    </div>
+    <div class="sidebar-section find-group">
+      <h3>LIVING HERE</h3>
+      ${extra ? `<p class="find-note">Ratings are for all of ${escapeHtml(extra.name)}.</p>` : ''}
+      <div data-find="crime"></div>
+      <div data-find="transport"></div>
+      <div data-find="healthcare"></div>
+      <div data-find="schools"></div>
+    </div>
+    <div class="sidebar-section find-group">
+      <h3>PROPERTY</h3>
+      <div data-find="price"></div>
+      <div data-find="sold"></div>
+      <div data-find="epc"></div>
+    </div>
+    <details class="panel-all" id="panel-all">
+    <summary>All the detail</summary>
     <div class="sidebar-section">
       <h3>WHAT YOU NEED TO KNOW ABOUT NOISE HERE</h3>
-      <span class="noise-indicator ${noiseClass}" style="margin-bottom:8px;">${escapeHtml(analysis.noiseEstimate)} AIRCRAFT NOISE</span>
+      <span class="noise-indicator ${noiseClass}" style="margin-bottom:8px;">${escapeHtml(shownEstimate)} AIRCRAFT NOISE</span>
       <div class="noise-bar" style="margin-bottom:12px;"><div class="noise-bar-fill" style="width:${noisePct}%;background:${noiseCol};"></div></div>
-      <p class="property-note" style="margin-top:0;">${postcodeNoiseSummary(analysis)}</p>
+      <p class="property-note" style="margin-top:0;">${postcodeNoiseSummary({ ...analysis, noiseEstimate: shownEstimate })}</p>
     </div>
     <div class="sidebar-section">
       <h3>KEY FACTS</h3>
@@ -13577,24 +13861,6 @@
     </div>`
     }
     ${buildOptionalSections(extra, 'pc')}
-    ${
-      // Air quality measured nearby (2026-10-19): AFTER "Additional insights", whose Air Quality card is
-      // DEFRA's modelled council-area average, so the panel reads modelled first, then measured (Bill:
-      // above it, the two read as unrelated). Filled by renderAirNearby(); left hidden when nothing is
-      // in reach, so the panel never says "no monitor nearby". The framing line names the card only
-      // when the card is there.
-      isUkCity(currentCity) && !analysis.isOutcode
-        ? `<div class="sidebar-section" id="postcode-air-section" hidden>
-      <h3>AIR QUALITY NEARBY</h3>
-      ${
-        extra && extra.airQuality
-          ? `<p class="info-note" style="margin-top:0;">The Air Quality card above is DEFRA's modelled average for the council area.</p>`
-          : ''
-      }
-      <div id="postcode-air-data"></div>
-    </div>`
-        : ''
-    }
     ${buildPropertyLinks(analysis.postcode, analysis.borough)}
     ${
       analysis.postcode && !analysis.isOutcode
@@ -13602,31 +13868,13 @@
       <h3>PUT THIS ON YOUR SITE</h3>
       <p class="info-note" style="margin-top:0;">A badge for ${escapeHtml(analysis.postcode)}, free to embed. It is an image, so it works anywhere HTML does.</p>
       <img class="badge-preview" src="${BADGE_BASE}?postcode=${encodeURIComponent(analysis.postcode)}" width="220" height="64" alt="Sky Score badge for ${escapeHtml(analysis.postcode)}" loading="lazy" />
-      <label class="visually-hidden" for="badge-embed">Embed code for this badge</label>
+      <label class="sr-only" for="badge-embed">Embed code for this badge</label>
       <textarea id="badge-embed" class="badge-embed" rows="3" readonly>${escapeHtml(embedSnippet(analysis.postcode))}</textarea>
       <button id="badge-copy" type="button" class="badge-copy">Copy embed code</button>
       <p id="badge-copy-result" class="info-note" role="status" aria-live="polite" style="margin-top:4px;"></p>
     </div>`
         : ''
     }
-    <div class="sidebar-section notify-block">
-      <h3>TELL ME WHEN THIS CHANGES</h3>
-      <p class="info-note" style="margin-top:0;">Scores move when the underlying data is refreshed, roughly quarterly. Leave an email and we will tell you when ${escapeHtml(analysis.postcode || 'this area')} moves.</p>
-      <!-- method="post": JS handles the submit, but without JS a form with no
-           method GETs, putting the email in the URL (history, analytics).
-           Found by an OWASP ZAP baseline scan, 2026-09-29. -->
-      <form id="notify-form" class="notify-form" method="post" novalidate>
-        <label class="visually-hidden" for="notify-email">Email address for score updates</label>
-        <input id="notify-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="notify-privacy" />
-        <button id="notify-btn" type="submit">Notify me</button>
-      </form>
-      <p id="notify-result" class="info-note" role="status" aria-live="polite" style="margin-top:6px;"></p>
-      <p id="notify-privacy" class="info-note" style="margin-top:4px;font-size:11px;">One email per refresh at most. No marketing, no sharing. <a href="/privacy" style="color:var(--orange-text);">How we handle it</a>.</p>
-    </div>
-    <div class="sidebar-section">
-      <h3>SPOTTED SOMETHING WRONG?</h3>
-      <p class="info-note" style="margin-top:0;">If a figure looks wrong for ${escapeHtml(analysis.postcode || analysis.borough || 'this area')}, <a href="mailto:support@skyscore.co.uk?subject=${encodeURIComponent('Correction: ' + (analysis.postcode || analysis.borough || 'area'))}" data-event="report-mistake-click" style="color:var(--orange-text);">tell us</a>. Local knowledge is the best check on data like this.</p>
-    </div>
     <div class="sidebar-section">
       <h3>YOUR NEXT STEPS</h3>
       <p class="property-note" style="margin-top:0;">
@@ -13650,6 +13898,25 @@
         <strong>3. Visit at different times</strong> - ${cityOf(currentCity).runwayNote}, so noise changes between morning and afternoon. Visit at least twice.<br><br>
         <strong>4. Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.
       </p>
+    </div>
+    </details>
+    <div class="sidebar-section notify-block">
+      <h3>TELL ME WHEN THIS CHANGES</h3>
+      <p class="info-note" style="margin-top:0;">Scores move when the underlying data is refreshed, roughly quarterly. Leave an email and we will tell you when ${escapeHtml(analysis.postcode || 'this area')} moves.</p>
+      <!-- method="post": JS handles the submit, but without JS a form with no
+           method GETs, putting the email in the URL (history, analytics).
+           Found by an OWASP ZAP baseline scan, 2026-09-29. -->
+      <form id="notify-form" class="notify-form" method="post" novalidate>
+        <label class="sr-only" for="notify-email">Email address for score updates</label>
+        <input id="notify-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="you@example.com" aria-describedby="notify-privacy" />
+        <button id="notify-btn" type="submit">Notify me</button>
+      </form>
+      <p id="notify-result" class="info-note" role="status" aria-live="polite" style="margin-top:6px;"></p>
+      <p id="notify-privacy" class="info-note" style="margin-top:4px;font-size:11px;">One email per refresh at most. No marketing, no sharing. <a href="/privacy" style="color:var(--orange-text);">How we handle it</a>.</p>
+    </div>
+    <div class="sidebar-section">
+      <h3>SPOTTED SOMETHING WRONG?</h3>
+      <p class="info-note" style="margin-top:0;">If a figure looks wrong for ${escapeHtml(analysis.postcode || analysis.borough || 'this area')}, <a href="mailto:support@skyscore.co.uk?subject=${encodeURIComponent('Correction: ' + (analysis.postcode || analysis.borough || 'area'))}" data-event="report-mistake-click" style="color:var(--orange-text);">tell us</a>. Local knowledge is the best check on data like this.</p>
     </div>`;
 
         // The notify form is rebuilt with the panel on every search, so it is
@@ -13658,6 +13925,13 @@
         // on the second search.
         wireNotifyForm(analysis.postcode);
         wireBadgeCopy();
+
+        // One request serves the road finding and the air chart. An area search has no postcode to ask about.
+        const environment =
+          isUkCity(currentCity) && !analysis.isOutcode
+            ? fetchPostcodeEnvironment(analysis.lat, analysis.lon)
+            : Promise.resolve(null);
+        fillFindings(analysis, boroughData, extra, aircraft, environment, req);
 
         // Populate the panels. EPC and HM Land Registry are UK-WIDE, so the
         // gate is the country, not the city - the comment here used to say
@@ -13672,10 +13946,12 @@
           fetchTransportData(analysis.lat, analysis.lon, signal).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderTransportData('postcode-transport-data', data);
+            showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data');
           });
           fetchNhsData(analysis.lat, analysis.lon, signal).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderNhsData('postcode-nhs-data', data);
+            showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data');
           });
         } else if (isUkCity(currentCity)) {
           // No fetch: NaPTAN is already on the page for the map, so this is a
@@ -13689,6 +13965,7 @@
               tEl.innerHTML =
                 '<p class="info-note">No rail, metro or tram station in the NaPTAN register near this postcode.</p>';
           }
+          showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data');
         }
         // Air nearby, for a full UK postcode (an outcode's centre is not a place to measure from). The council's
         // DEFRA figures ride along for when the postcode's own 1 km figure cannot load.
@@ -13698,7 +13975,7 @@
             name: analysis.borough,
             no2: aqExtra && typeof aqExtra.no2AnnualMeanUgm3 === 'number' ? aqExtra.no2AnnualMeanUgm3 : null,
             pm25: aqExtra && typeof aqExtra.pm25AnnualMeanUgm3 === 'number' ? aqExtra.pm25AnnualMeanUgm3 : null,
-          });
+          }, environment);
         }
 
         if (isUkCity(currentCity)) {
@@ -13706,10 +13983,13 @@
             fetchSoldPrices(analysis.postcode, signal).then((soldData) => {
               if (!isCurrentSearch(req)) return;
               renderSoldPrices('sold-prices-data', soldData, analysis.postcode);
+              const pounds = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
+              withFindings(req, (m) => placeFinding(m, 'sold', m.soldFinding(soldData, (n) => pounds.format(n))));
             });
             fetchEpcData(analysis.postcode, signal).then((data) => {
               if (!isCurrentSearch(req)) return;
               renderEpcData('postcode-epc-data', data);
+              withFindings(req, (m) => placeFinding(m, 'epc', m.epcFinding(data)));
             });
           } else {
             const epcEl = document.getElementById('postcode-epc-data');

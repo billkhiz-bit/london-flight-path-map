@@ -240,7 +240,7 @@ for (const vp of VIEWPORTS) {
 
   const s = await search(vp, sthelens.postcode);
   checks++;
-  const sOk = s.title !== 'NOT COVERED YET' && s.city === 'Merseyside' && /nearest airport/i.test(s.text);
+  const sOk = s.title !== 'NOT COVERED YET' && s.city === 'Merseyside' && /noise and planes/i.test(s.text); // the panel's first group: what a visitor sees before opening anything
   if (!sOk) failures.push(`${vp.label} ${sthelens.postcode}: title "${s.title}", city "${s.city}"`);
   console.log(`  ${sOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(9)} "St. Helens" lands on Merseyside with an analysis`);
 

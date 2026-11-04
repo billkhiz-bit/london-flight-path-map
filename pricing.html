@@ -45,6 +45,9 @@
   :root {
     color-scheme: light;
     --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+    /* A colour for each audience (Bill's pick B, 2026-11-04), all three already the site's: the front page's --tint and
+       --water, the map's --blue. --on-tint is --mid darkened for the coloured bands; --on-dark is text on the dark one. */
+    --tint: #fbeee3; --water: #dbe4e8; --blue: #267df2; --on-tint: #3f3f3b; --on-dark: #dedcd6; --dark-card: #262624;
     /* Focus rings (audit 2026-10-09 I-7): the brand orange is 2.44:1 on --bg and 2.60:1 on the cards, under
        WCAG 1.4.11's 3:1. #d35a12 is the front page's --focus, the "you are here" underline's colour. */
     --focus: #d35a12;
@@ -78,8 +81,9 @@
      own padding outranks this rule. front-page.mjs 16g measures the row at 681 and 760. */
   @media (max-width: 760px) { nav.top-nav a { padding-left: 7px; padding-right: 7px; } }
 
-  /* Wider than the reports page's 1080px: the platform ladder is four cards side by side. */
-  main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
+  /* Wider than the reports page's 1080px: the platform ladder is four cards side by side, and the coloured bands should
+     reach the bar's right edge on a laptop. */
+  main { padding: 24px var(--gutter) 40px; max-width: 1440px; }
   h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 12px; }
   p.lead { margin: 0 0 22px; color: var(--mid); font-size: 18px; max-width: 60ch; }
   p.book { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: -6px 0 28px; color: var(--mid); }
@@ -87,9 +91,12 @@
   /* Jump links: three buyers, three sections. */
   .jump { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 44px; padding: 0; list-style: none; }
   .jump a { display: inline-block; text-decoration: none; font-weight: 600; font-size: 14px; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--dark); }
-  .jump a:hover { background: #ffe6cf; }
+  .jump a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .jump a[href='#reports'] { background: var(--tint); }
+  .jump a[href='#councils'] { background: var(--water); }
+  .jump a[href='#platforms'] { background: var(--dark); color: #fff; }
 
-  section { margin: 0 0 52px; scroll-margin-top: 16px; }
+  section { margin: 0 0 24px; padding: clamp(20px, 3vw, 32px); border-radius: 18px; scroll-margin-top: 16px; }
   h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.8vw, 32px); letter-spacing: -0.02em; margin: 0 0 8px; }
   p.intro { margin: 0 0 22px; color: var(--mid); max-width: 70ch; }
 
@@ -104,11 +111,13 @@
   .tier ul { margin: 0; padding-left: 20px; color: var(--mid); }
   .tier ul li { margin: 4px 0; }
   .tier .go { margin-top: auto; align-self: flex-start; }
-  /* No highlighted card and one button style (Bill, 2026-10-06): each section is for a different
-     buyer, so no card is the one to pick. tests/front-page.mjs 16b holds both pages to it. */
+  /* No highlighted card (Bill, 2026-10-06): each section is for a different buyer, so no card is the one to pick. Since
+     his pick B (2026-11-04) each section has its own colour, so the rule holds WITHIN a section: every card and button
+     in it looks the same. tests/front-page.mjs 16b measures it. */
   /* The platform ladder has four steps, so its cards may be narrower and stay on one row. */
   .tiers.four { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-  h3.tl-head { font-family: var(--font-display); font-weight: 600; font-size: 17px; margin: 26px 0 10px; }
+  .tiers.four .price { font-size: 30px; }
+  h2.tl-head { font-family: var(--font-display); font-weight: 600; font-size: 20px; margin: 0 0 14px; }
 
   a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
   a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
@@ -116,8 +125,30 @@
   p.note { margin: 0; color: var(--mid); max-width: 72ch; font-size: 15px; }
   p.note + p.note { margin-top: 10px; }
 
+  /* A COLOUR FOR EACH AUDIENCE (Bill's pick B, 2026-11-04), so the eye finds its own section first. */
+  #reports { background: var(--tint); }
+  #councils { background: var(--water); }
+  #reports p.intro, #councils p.intro, #reports p.note, #councils p.note { color: var(--on-tint); }
+  #reports .tier { border-top: 4px solid var(--orange); }
+  #councils .tier { border-top: 4px solid var(--blue); }
+  #reports a.go, #councils a.go { background: var(--dark); color: #fff; border: 1.5px solid var(--dark); }
+  #platforms { background: var(--dark); color: #fff; }
+  #platforms p.intro { color: var(--on-dark); }
+  #platforms a:not(.go) { color: #fff; }
+  #platforms p.note { color: var(--on-dark); }
+  #platforms .tier { background: var(--dark-card); border-top: 4px solid var(--orange); }
+  #platforms .tier p { color: var(--on-dark); }
+  #platforms .tier .price { color: var(--orange); }
+  #platforms .tier .price small { color: var(--on-dark); }
+  #platforms a.go { background: var(--orange); color: var(--dark); border: 1.5px solid var(--orange); }
+  #pilot { background: var(--paper); border: 1px solid var(--line); }
+  #reports a.go:hover, #councils a.go:hover, #platforms a.go:hover { text-decoration: underline; text-underline-offset: 3px; }
+  #reports a.go:hover, #councils a.go:hover { background: var(--dark); }
+  #platforms a.go:hover { background: var(--orange); }
+  .tier .go { align-self: stretch; text-align: center; }
+
   /* The pilot's three checkpoints, under the platform ladder. */
-  ol.timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 24px; margin: 0 0 18px; padding: 0; list-style: none; }
+  ol.timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 24px; margin: 0; padding: 0; list-style: none; }
   ol.timeline li { border-top: 2px solid var(--line); padding-top: 10px; color: var(--mid); font-size: 15px; }
   ol.timeline b { display: block; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dark); margin-bottom: 2px; }
 
@@ -286,13 +317,16 @@
         <a class="go quiet" data-event="pricing-enterprise-cta" href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20Enterprise%20licence">Talk to us</a>
       </article>
     </div>
-    <h3 class="tl-head">How a pilot runs</h3>
+    <p class="note platforms-note">You pay for the convenience (a service level, structured JSON, batch, an audit trail, a pinned methodology), not for exclusive data: the public site keeps every feature.</p>
+  </section>
+
+  <section id="pilot" aria-labelledby="pilot-heading">
+    <h2 class="tl-head" id="pilot-heading">How a pilot runs</h2>
     <ol class="timeline">
       <li><b>Day 0</b>Kickoff. One measure agreed together before any integration work starts.</li>
       <li><b>Day 45</b>A mid-point review against that measure.</li>
       <li><b>Day 90</b>A written evidence report: what the data moved, by how much, with the workings. Yours to keep whether or not you continue.</li>
     </ol>
-    <p class="note">You pay for the convenience (a service level, structured JSON, batch, an audit trail, a pinned methodology), not for exclusive data: the public site keeps every feature.</p>
   </section>
 
 </main>

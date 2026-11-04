@@ -2,6 +2,9 @@
 
 ## 2026-11-04 (night) - Faster first answer; an honest word in the API
 
+- **The full map's panel leads with its findings.** Four groups (noise and planes, air and flood, living here, property), each finding in plain words with its number under it; every earlier section is still there, in "All the detail". The first screen of a postcode's panel falls from about 1,200 words to about 480.
+- **Pricing has a colour for each audience**: orange for homes and firms, blue for councils, dark for developers. No price or term changed.
+- **The panel's email label** no longer shows beside its box: its class had no rule on the map.
 - **`/v1/environment`**: `aircraftQuietCoverage` now says `modelled` where it said `measured`. A DEFRA noise map is a model; only an
   instrument's reading is measured. The values are now `modelled`, `city` and `outside`.
 - **The front page's example** arrives sooner: the first request after a quiet spell no longer takes about 2.5 seconds.

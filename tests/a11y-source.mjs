@@ -29,6 +29,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { createServer } from 'node:http';
 import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const ROOT = process.cwd();
 // NOT 8123. preflight.sh binds that to a `python -m http.server` for
@@ -378,6 +379,7 @@ for (const viewport of VIEWPORTS) {
   const context = await browser.newContext({
     viewport: { width: viewport.width, height: viewport.height },
   });
+  await keepPanelOpen(context);
   const page = await context.newPage();
   // score-demo/status.html probes the live API on load with the PUBLIC DEMO
   // KEY. Left unstubbed, this gate spent that key's monthly quota on every
@@ -740,6 +742,7 @@ if (unstraddled.length) {
 
 for (const viewport of AREA_VIEWPORTS) {
   const context = await browser.newContext({ viewport });
+  await keepPanelOpen(context);
   const page = await context.newPage();
   let areaFailed = 0;
   for (const path of areaPages) {
@@ -834,7 +837,8 @@ if (!planes || planes.total === 0) {
   if (planes.absent.length) console.log(`${'planes sample'.padEnd(28)} on no page this build: ${planes.absent.join(', ')}`);
   for (const viewport of AREA_VIEWPORTS) {
     const context = await browser.newContext({ viewport });
-    const page = await context.newPage();
+    await keepPanelOpen(context);
+  const page = await context.newPage();
     let planesFailed = 0;
     for (const path of planes.paths) {
       try {

@@ -850,6 +850,17 @@ Playwright locator fails strict mode on three selected tabs); an arrow GLYPH in 
 judge (incomplete), so the pills draw it in CSS; and a bash heredoc in the agent's shell turned a double backslash into a single one
 inside Python sources, twice: write such edits as a script file, or build the string with `chr(92)`.
 
+## The panel's whose-figure question (2026-11-04)
+
+Reading the panel for the build showed Stitch's "Road noise is high" is the COUNCIL's rating while 71.8 dB is the POSTCODE's. Sampling 19 Kensington and
+Chelsea postcodes found 8 under the guideline, SW5 9JZ at 49.9 dB in the same ward as SW5 9HP. Bill saw both wordings on those real postcodes and kept Stitch's
+("explains it better"), with the fact-free council wording only when there is no figure. A one-line note on the group says whose rating it is. Flood, air and
+transport ratings are council-wide too, and carry the same note.
+
+Real data also corrected the mock-up: its "last sold" £1.81m was a sale Land Registry records as not a home. `soldFinding` skips those, so the live panel reads
+£1,380,000, June 2018, under the label "Last home sold at this postcode". And the map's `.visually-hidden` had no rule (the class here is `.sr-only`), so the
+notify form's label had been showing beside its box, live; only a screenshot showed it.
+
 ## Stitch, the palette and when a chart earns its place (2026-11-04)
 
 Four rounds on the full map's panel failed: groups, charts in every group, thin bars, then the Breathe London chart on everything. Bill
