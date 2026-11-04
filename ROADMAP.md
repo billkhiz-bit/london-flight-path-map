@@ -28,6 +28,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-11-04)
 >
+> **Evening, on `front-page-polish`:** Bill's five points, all his B picks: the answer summary first with diagrams in its folds
+> (495 words to about 230), the guided postcode box (`js/place-box.mjs`), the page arriving in place (phone shift 0.133 to 0.008),
+> the new "London from above" picture, Play for visitors with animation off, and the MG/M³ caption fixed.
+>
 > **The front page rework shipped today, on Bill's call, ahead of the ~20 Nov read.** He chose the whole rework, so the read
 > ended at 12 days: counts frozen in Desktop `Sky Score Marketing\engagement-read-2026-11-04.md` (52 of 87 front-page views
 > acted since 23 Oct, 60%, against 35 of 104 before, 34%; small numbers). Step 2 built the two-column hero: compact example

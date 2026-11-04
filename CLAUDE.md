@@ -278,10 +278,24 @@ Or just describe what you need, I have full context of this project.
   their holder; tests go through `pickCity`), and `#map-full` follows the city. The "New" pill goes with the consultation
   (PLANES-PILL markers, `build_planes_pages.py`). The map's box rule is `.mapwrap > svg`, never `.hero svg`: that one
   stretched a tick icon over half the page. No plane glides on the hero map (Bill: "isn't clear"; the mock's was dropped).
+- **The answer after a search is summary first** (Bill's pick B, 2026-11-04: it ran to 495 words): the rows, the planes as tiles
+  (`planesNodes`), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
+  say, nothing deleted; a caveat that changes what a figure means stays on the row. A fold with nothing to say hides itself
+  (`.ans-fold:has(> [hidden])`). The overhead drawing reads its two figures from the file's `definition`.
+- **Never `text-transform: uppercase` on a unit** (2026-11-04): it turns the micro sign into a capital mu, so µg/m³ read MG/M³.
+- **The front page counts its controls by name** (Bill, 2026-11-04, for the read that starts from the new page): `front-place-pick`,
+  `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`, `front-dev-lang`, `front-full-map`, through `engaged()`, once per
+  page view. Never a postcode or anything typed; `tests/front-page.mjs` holds the shape of every counted path.
+- **The postcode box's suggestions are `js/place-box.mjs`** (Bill's pick B, 2026-11-04; a WAI-ARIA combobox, replacing a
+  `<datalist>`): read in the browser from what the page holds, nothing typed fetched, stored or counted (`tests/place-box.mjs`).
+- **The front page arrives in place** (2026-11-04: phone layout shift 0.133 to 0.008): `.panel.is-loading` shows `.ans-skeleton`, the
+  example's frame, until `endLoading()`; hidden tabs keep their room. Anything that fills in later keeps its place from the first
+  frame. Held in `tests/front-page.mjs`, on a phone with the example held back.
 - **The developers band's animation shows only what was answered** (Bill's pick C, 2026-11-04): `devAnswer()` builds the
   JSON and tiles from the example's own response, and `showDev()` rewrites the three samples to that answer's point, so the
   request on show is the one answered and no lookup is added. Once on arriving, about 4 s (under WCAG 2.2.2's five), never a
-  loop; again on a language change or Replay; at rest and with reduced motion everything shows. A number, its card and the
+  loop; again on a language change or Replay; at rest and with reduced motion everything shows, and Play is offered: a press
+  is a request, whatever the setting (Bill's PC has Windows animations off, which is why he saw none). A number, its card and the
   card's figure arrive in one frame, one figure at a time, and the request box never moves (held frame by frame in
   `tests/front-page.mjs`, all three languages and at 390). The caret stays out of the text's flow, or a long URL re-wraps;
   typing keeps the whole text in the node, so Copy is never partial.
@@ -293,7 +307,7 @@ Or just describe what you need, I have full context of this project.
 - **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without
   imposing on privacy concerns"): fixed rules, no server, no model, nothing typed sent, stored or counted (front-page.mjs
   checks no request or address carries the words). It only sets Find areas' own controls and says what it read and
-  what it did not; never a figure of its own. The postcode box's place list is a native `<datalist>` from the page's rows.
+  what it did not; never a figure of its own. The postcode box's place list comes from the page's rows (`js/place-box.mjs`).
 
 ### Gates and verification
 - **Run preflight before every commit**: `sh scripts/preflight.sh` (== `npm run preflight`). Read the EXIT

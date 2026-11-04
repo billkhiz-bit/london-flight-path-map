@@ -195,11 +195,17 @@ function bindTry() {
   }
 }
 
+// A control used, by name only. The engine holds the count, once per page view; a page that lost it simply counts nothing.
+const countWay = (way) => { import('./home-engine.mjs').then((engine) => engine.engaged(way)).catch(() => {}); };
+
 /** The developers band: Copy copies the sample on show (home-engine.mjs reads data-copy when it is clicked). */
 function onCodeTab(tab, panel) {
   finishDev();
   // A reader who changes language sees that language's request answered. Never at load: this also runs when the tabs bind.
-  if (devReady) playDev();
+  if (devReady) {
+    playDev();
+    countWay('dev-lang');
+  }
   const copy = document.querySelector('section.dev button.copy[data-copy]');
   const pre = panel.querySelector('pre[id]');
   if (copy && pre) {
@@ -248,8 +254,8 @@ function writeNoise(box, n) {
   settle(box, [rows, el('p', 'walk-note', n.note)]);
 }
 
-function writeAir(box, a) {
-  if (!a) return settle(box, [el('p', 'walk-wait', 'No air figures near this example.')]);
+/** The air chart as a figure, for the walkthrough and for the fold under a visitor's own answer. */
+export function airFigure(a) {
   const fig = el('figure', 'walk-air');
   fig.append(el('figcaption', null, 'Nitrogen dioxide, µg/m³'));
   // airChart() returns SVG text with every name escaped (js/street_report.mjs), as the full map's panel sets it; parsed
@@ -258,6 +264,12 @@ function writeAir(box, a) {
   t.innerHTML = a.svg;
   const svg = t.content.querySelector('svg');
   if (svg) fig.append(svg);
+  return fig;
+}
+
+function writeAir(box, a) {
+  if (!a) return settle(box, [el('p', 'walk-wait', 'No air figures near this example.')]);
+  const fig = airFigure(a);
   const credit = el('p', 'walk-note');
   a.credits.forEach((c, i) => {
     if (i) credit.append(' · ');
@@ -411,12 +423,20 @@ function showDev(geo, env) {
   res.replaceChildren(...dev.lines.map(jsonLine));
   tiles.replaceChildren(...dev.figures.map(devTile));
   box.hidden = false;
-  if (still() || !('IntersectionObserver' in window)) return;
+  // A reader who asks for less motion is never sent this animation, but may ask for it: what they press is theirs to see.
   const replay = document.getElementById('dev-replay');
   if (replay) {
     replay.hidden = false;
-    replay.addEventListener('click', playDev);
+    replay.addEventListener('click', () => {
+      playDev();
+      countWay('dev-play');
+    });
+    if (still()) {
+      replay.textContent = 'Play';
+      replay.setAttribute('aria-label', 'Play the request and its answer');
+    }
   }
+  if (still() || !('IntersectionObserver' in window)) return;
   devReady = true;
   const io = new IntersectionObserver((entries) => {
     if (entries.some((x) => x.isIntersecting)) { io.disconnect(); playDev(); }
@@ -458,7 +478,10 @@ async function fillWalk() {
 }
 
 function init() {
-  bindTabs(document.querySelector('.walk-steps'));
+  // bindTabs selects the first tab as it binds: that is the page, not a reader, so only what follows is counted.
+  let walkBound = false;
+  bindTabs(document.querySelector('.walk-steps'), (tab) => { if (walkBound) countWay(`walk-${tab.id.replace('walk-tab-', '')}`); });
+  walkBound = true;
   bindTabs(document.querySelector('.code-tabs'), onCodeTab);
   bindTry();
   const walk = document.getElementById('walkthrough');

@@ -78,7 +78,7 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
     const [west, east] = [inWords(figs[col.westerly]), inWords(figs[col.easterly])];
     const wind = `Planes land and take off into the wind, so the weather decides which way ${name} flies, and that decides your day`
       + (west && east ? `: here, ${west} on a day it flies west and ${east} on a day it flies east.` : '.');
-    return { code, name, rows, wind, period: period(a.months) };
+    return { code, name, rows, wind, windShort: `The wind decides which way ${name} flies, and that decides your day.`, period: period(a.months) };
   });
   // Listed only under airports airports.json no longer publishes (a district file older than it): nothing left
   // to say, so say nothing, as for a postcode never measured. An empty block would read as a measurement.
@@ -198,28 +198,17 @@ export function planesNodes(model, doc = document, links = []) {
   const out = [el('h3', 'planes-h', model.heading), el('p', 'planes-sub', model.sub)];
   for (const a of model.airports) {
     if (model.airports.length > 1) out.push(el('h4', 'planes-airport', a.name));
-    const rows = el('div', 'rows');
+    const kinds = el('div', 'planes-kinds');
     for (const r of a.rows) {
-      const row = el('div', 'row');
-      const label = el('span', null, r.label);
-      label.append(el('small', null, r.share));
-      const bar = el('span', 'bar');
-      bar.setAttribute('aria-hidden', 'true');
-      if (r.bar) {
-        const fill = el('i', r.range ? 'range' : null);
-        fill.style.left = `${(r.bar[0] * 100).toFixed(1)}%`;
-        fill.style.width = `${Math.max(1, (r.bar[1] - r.bar[0]) * 100).toFixed(1)}%`;
-        bar.append(fill);
-      }
-      row.append(label, bar, el('span', 'val', r.text));
-      rows.append(row);
+      const kind = el('div', 'planes-kind');
+      kind.append(el('b', null, r.text), el('span', null, r.label), el('small', null, r.share));
+      kinds.append(kind);
     }
-    out.push(rows, el('p', 'planes-wind', a.wind));
+    out.push(kinds, el('p', 'planes-wind', a.windShort));
   }
   for (const [key, className] of [['none', 'planes-none'], ['edge', 'planes-note'], ['approx', 'planes-note'], ['other', 'planes-warn']]) {
     if (model[key]) out.push(el('p', className, model[key]));
   }
-  out.push(el('p', 'planes-note', model.definition), el('p', 'planes-note', `${model.counted} ${model.credits.join('; ')}.`));
   for (const l of links) {
     const p = el('p', 'planes-more');
     const a = el('a', null, l.text);
@@ -227,10 +216,91 @@ export function planesNodes(model, doc = document, links = []) {
     p.append(a);
     out.push(p);
   }
-  const how = el('p', 'planes-how');
-  const link = el('a', null, 'How the planes are counted');
+  return out;
+}
+
+/** What the block's figures rest on, for the fold under the answer: why the days differ, what overhead means, who counted. */
+export function planesNotes(model, doc = document) {
+  const para = (text, className = 'planes-note') => {
+    const n = doc.createElement('p');
+    n.className = className;
+    n.textContent = text;
+    return n;
+  };
+  const how = para('', 'planes-how');
+  const link = doc.createElement('a');
+  link.textContent = 'More on how it works';
   link.href = model.how;
   how.append(link);
-  out.push(how);
+  const out = [];
+  for (const a of model.airports) out.push(para(a.wind), daysBar(a, doc));
+  const cone = overheadCone(model.definition, doc);
+  if (cone) out.push(cone);
+  out.push(para(model.definition), para(`${model.counted} ${model.credits.join('; ')}.`), how);
   return out;
+}
+
+// How an airport's days split, as one bar: each kind of day its true share, every share also said in words.
+function daysBar(airport, doc) {
+  const box = doc.createElement('div');
+  box.className = 'planes-days';
+  const cap = doc.createElement('p');
+  cap.className = 'planes-days-h';
+  cap.textContent = `How ${airport.name}'s days split`;
+  const bar = doc.createElement('div');
+  bar.className = 'planes-days-bar';
+  bar.setAttribute('role', 'img');
+  bar.setAttribute('aria-label', airport.rows.map((r) => `${r.label}, ${r.share}`).join('; '));
+  airport.rows.forEach((r, i) => {
+    const part = doc.createElement('span');
+    part.className = `planes-day-${i}`;
+    part.style.width = `${r.sharePct ?? 0}%`;
+    part.textContent = `${r.sharePct ?? 0}%`;
+    bar.append(part);
+  });
+  const key = doc.createElement('p');
+  key.className = 'planes-days-key';
+  key.setAttribute('aria-hidden', 'true');
+  airport.rows.forEach((r, i) => {
+    const item = doc.createElement('span');
+    const swatch = doc.createElement('i');
+    swatch.className = `planes-day-${i}`;
+    item.append(swatch, r.label);
+    key.append(item);
+  });
+  box.append(cap, bar, key);
+  return box;
+}
+
+// The overhead rule, drawn: a cone over a home, its angle true to the rule. The two figures are read from the definition the
+// page already holds, so a change to the rule cannot leave a stale drawing: no figures found, no drawing.
+function overheadCone(definition, doc) {
+  const angle = /([\d.]+) degrees/.exec(definition || '')?.[1];
+  const ceiling = /below ([\d,]+) ft/.exec(definition || '')?.[1];
+  if (!angle || !ceiling) return null;
+  const NS = 'http://www.w3.org/2000/svg';
+  const draw = (tag, attrs, text) => {
+    const n = doc.createElementNS(NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const baseX = 170;
+  const groundY = 134;
+  const topY = 22;
+  const spread = (groundY - topY) / Math.tan((Number(angle) * Math.PI) / 180);
+  const svg = draw('svg', { viewBox: '0 0 340 150', class: 'planes-cone', role: 'img', 'aria-label': `Overhead means inside this cone: at least ${angle} degrees up the sky from your home, and below ${ceiling} ft.` });
+  svg.append(
+    draw('path', { d: `M${baseX} ${groundY} L${baseX - spread} ${topY} L${baseX + spread} ${topY} Z`, class: 'cone-fill' }),
+    draw('line', { x1: baseX - spread - 26, y1: topY, x2: baseX + spread + 26, y2: topY, class: 'cone-top' }),
+    draw('line', { x1: 8, y1: groundY, x2: 332, y2: groundY, class: 'cone-ground' }),
+    draw('path', { d: `M${baseX - 9} ${groundY} v-11 l9 -8 l9 8 v11 Z`, class: 'cone-home' }),
+    draw('text', { x: baseX + spread + 4, y: topY - 6, class: 'cone-label', 'text-anchor': 'end' }, `${ceiling} ft`),
+    draw('text', { x: baseX + 24, y: groundY - 6, class: 'cone-label' }, `${angle}\u00b0`),
+    draw('circle', { cx: baseX - 22, cy: 58, r: 5, class: 'cone-in' }),
+    draw('text', { x: baseX - 22, y: 76, class: 'cone-label', 'text-anchor': 'middle' }, 'counted'),
+    draw('circle', { cx: baseX + spread + 22, cy: 58, r: 5, class: 'cone-out' }),
+    draw('text', { x: baseX + spread + 22, y: 76, class: 'cone-label', 'text-anchor': 'middle' }, 'not counted'),
+  );
+  return svg;
 }

@@ -101,7 +101,8 @@
       .hero { position: relative; margin: 0 var(--gutter); display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 3vw, 56px); align-items: start; }
       .mapcol { position: sticky; top: 16px; min-width: 0; }
       .mapwrap { position: relative; height: min(calc(100vh - 150px), 680px); min-height: 480px; border-radius: 18px; overflow: hidden; background: var(--water); }
-      .mapwrap > svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+      .mapwrap > svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; transition: opacity 0.25s; }
+      .mapwrap > svg:empty { opacity: 0; }
       .mapwrap > svg:active { cursor: grabbing; }
       /* Strokes keep their on-screen width at any zoom; the engine counter-scales the marks. */
       .hero svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; vector-effect: non-scaling-stroke; transition: fill 0.15s; cursor: pointer; }
@@ -136,6 +137,17 @@
       .os-credit { position: absolute; left: 24px; bottom: 6px; margin: 0; font-size: 10px; color: var(--dark); background: rgba(251, 250, 248, 0.85); padding: 1px 6px; border-radius: 4px; pointer-events: none; }
 
       .panel { min-width: 0; padding-top: 10px; }
+      /* A plain visit arrives in place (Bill, 2026-11-04: "it doesn't look smooth"; measured, the example pushed the map down
+         0.08 of the screen on a phone). The example's frame and labels are in the page from the first frame, so only the
+         figures arrive. The engine ends this state however the example ends; it also ends by itself if the engine never ran. */
+      .ans-skeleton { display: none; margin-top: 18px; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; }
+      .panel.is-loading .ans-skeleton { display: block; animation: skeleton-gone 0s linear 8s forwards; }
+      .panel.is-loading .status:empty { min-height: 0; margin: 0; }
+      .ans-skeleton .ans-pc { margin: 0 0 2px; font: 600 18px/1.55 var(--font-display); }
+      .ans-skeleton .ans-show { visibility: hidden; }
+      @keyframes skeleton-gone { to { visibility: hidden; } }
+      #ans-tiles .ans-tile b { animation: figure-in 0.25s ease-out; }
+      @keyframes figure-in { from { opacity: 0; } }
       .panel h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 3.9vw, 56px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 12px; text-wrap: balance; }
       /* Once there is a visitor's own answer or a card, the question makes way for it so the result stays on one screen.
          The example does not: it is a line of tiles, and the question is still the page's. */
@@ -152,7 +164,16 @@
       .promises li { display: inline-flex; align-items: center; gap: 8px; font: 600 14px var(--font-body); color: var(--dark); }
       .promises svg { flex: none; }
       .field-label { display: block; margin: 0 0 6px; font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
-      form.check { display: flex; gap: 8px; }
+      form.check { position: relative; display: flex; gap: 8px; }
+      .pc-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20; max-height: 320px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px rgba(20, 20, 20, 0.14); }
+      .pc-list[hidden] { display: none; }
+      .pc-head { margin: 0; padding: 8px 10px 4px; font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      .pc-foot { margin: 4px 0 0; padding: 8px 10px 6px; font-size: 12px; color: var(--mid); border-top: 1px solid var(--line); }
+      .pc-foot:first-child { margin: 0; border-top: 0; }
+      .pc-opt { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 40px; padding: 8px 10px; font: 500 15px var(--font-body); color: var(--dark); border-radius: 8px; cursor: pointer; }
+      .pc-opt small { flex: none; font: 400 12.5px var(--font-body); color: var(--mid); }
+      .pc-opt mark { font-weight: 600; color: var(--orange-ink); background: none; }
+      .pc-opt:hover, .pc-opt[aria-selected='true'] { background: var(--tint); }
       form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
       /* --mid, 7.4:1 on white. The placeholder is the field's only visible label,
          and #8a8985 measured 3.50:1 (audit 2026-10-05 I-6). */
@@ -197,7 +218,8 @@
          weight. The first version was an underline with the second tab in grey, and read as a caption:
          Bill asked where the options were. The chosen one is filled, as a chosen city chip is. */
       .tabs { display: inline-flex; gap: 4px; padding: 4px; margin: 2px 0 16px; background: #ebe9e3; border-radius: 12px; }
-      .tabs[hidden] { display: none; }
+      /* Waiting for the rows they search. Unseen and out of the tab order, but holding their place: arriving must move nothing. */
+      .tabs[hidden] { visibility: hidden; opacity: 0; }
       .tabs [role="tab"] { font: 600 15px var(--font-body); color: var(--dark); background: transparent; border: 0; border-radius: 9px; padding: 9px 18px; cursor: pointer; }
       .tabs [role="tab"]:hover { background: #fff; }
       .tabs [role="tab"][aria-selected="true"] { color: #fff; background: var(--dark); }
@@ -270,6 +292,46 @@
       .row .val { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
       .row .val small { color: var(--mid); font-size: 11px; display: block; white-space: normal; }
       .answer .more, .borough .more { margin: 12px 0 0; font-size: 14px; }
+      /* The planes as three kinds of day, each a tile: a range on a cone's edge wraps inside its own. */
+      .planes-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0 0; }
+      .planes-kind { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 9px 10px; font: 500 12.5px/1.3 var(--font-body); color: var(--mid); background: var(--tint); border-radius: 10px; }
+      .planes-kind b { font: 700 17px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--dark); overflow-wrap: anywhere; }
+      .planes-kind small { font-size: 12px; }
+      .nearby { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+      .nearby:not(:has(.fact:not([hidden]))) { display: none; }
+      .nearby h3 { margin: 0 0 6px; font: 600 16px/1.3 var(--font-display); letter-spacing: -0.01em; }
+      .fact { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 2px 0; font-size: 14px; }
+      .fact[hidden] { display: none; }
+      .fact .k { color: var(--mid); }
+      .ans-fold { border-top: 1px solid var(--line); }
+      .ans-fold:first-of-type { margin-top: 14px; }
+      .ans-fold:has(> [hidden]) { display: none; }
+      /* Hidden for every tool, not only for the eye: a closed details keeps its children's boxes in current Chrome. */
+      .ans-fold:not([open]) > :not(summary) { display: none; }
+      .ans-fold p { margin: 0 0 8px; }
+      .ans-fold .walk-air { max-width: 400px; margin: 4px 0 10px; }
+      .planes-days { margin: 10px 0 14px; }
+      .planes-days-h { margin: 0 0 6px; font: 600 13px var(--font-body); color: var(--dark); }
+      .planes-days-bar { display: flex; height: 26px; overflow: hidden; border-radius: 6px; }
+      .planes-days-bar span { display: grid; place-items: center; min-width: 0; overflow: hidden; font: 600 12px var(--font-body); white-space: nowrap; }
+      .planes-day-0 { color: #fff; background: #a85416; }
+      .planes-day-1 { color: var(--dark); background: #f2b27f; }
+      .planes-day-2 { color: var(--dark); background: #f6dcc6; }
+      .planes-days-key { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0; font-size: 12px; }
+      .planes-days-key span { display: inline-flex; align-items: center; gap: 5px; }
+      .planes-days-key i { width: 10px; height: 10px; border-radius: 2px; }
+      .planes-cone { display: block; width: 100%; max-width: 340px; height: auto; margin: 4px 0 8px; }
+      .cone-fill { fill: var(--tint); stroke: #e5b48c; }
+      .cone-top { stroke: var(--mid); stroke-dasharray: 4 3; }
+      .cone-ground { stroke: var(--dark); stroke-width: 1.5; }
+      .cone-home { fill: var(--dark); }
+      .cone-in { fill: var(--orange); stroke: var(--dark); }
+      .cone-out { fill: #fff; stroke: var(--mid); }
+      .cone-label { font: 500 11px var(--font-body); fill: var(--dark); }
+      .say-links { display: grid; gap: 4px; margin: 0 0 8px; padding: 0; list-style: none; font-size: 14px; }
+      .say-links a { font-weight: 600; color: var(--orange-ink); }
+      .ans-fold summary { min-height: 40px; padding: 9px 0; font: 600 14px var(--font-body); cursor: pointer; }
+      .ans-fold > div, .ans-fold > p { margin: 0 0 10px; font-size: 13px; color: var(--mid); }
       .answer .more a, .borough .more a { color: var(--orange-ink); font-weight: 600; }
       .answer .routes, .answer .area { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
       /* Air measured nearby (2026-10-19): the readings, what kind each is, then each publisher's credit. */
@@ -447,7 +509,8 @@
       .walk-note { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--mid); }
       .walk-note a { color: var(--orange-ink); font-weight: 600; }
       .walk-air { margin: 0; }
-      .walk-air figcaption { margin: 0 0 4px; font: 600 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      /* Never uppercase: it turns the micro sign into a capital mu, so "\00B5 g/m\00B3" read as MG/M\00B3, a thousand times too much. */
+      .walk-air figcaption { margin: 0 0 4px; font: 600 11px var(--font-mono); letter-spacing: 0.06em; color: var(--mid); }
       .walk-air svg { display: block; width: 100%; height: auto; }
       .walk-planes-head { margin: 0 0 14px; font-size: 15px; line-height: 1.45; }
       .walk-planes-head b { font-family: var(--font-display); }
@@ -473,7 +536,11 @@
       /* See it from above: the film's still, and the way to the approach strip on /how-it-works/. */
       .above { display: grid; gap: 24px 56px; align-items: center; }
       @media (min-width: 900px) { .above { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
-      .above img { display: block; width: 100%; height: auto; border-radius: 18px; }
+      .above-shot { min-width: 0; margin: 0; padding: 10px; color: #d9d7d0; background: #000; border-radius: 18px; }
+      .above-shot img { display: block; width: 100%; height: auto; border-radius: 10px; }
+      .above-key { display: flex; align-items: center; gap: 8px; margin: 8px 4px 0; font: 500 11.5px var(--font-body); }
+      .above-key i { flex: 0 1 180px; height: 8px; border-radius: 2px; background: linear-gradient(90deg, #e7d7bd, #efb56f, #e27a4c, #c73e2e, #8b1a1a); }
+      .above-shot figcaption { margin: 8px 4px 2px; font-size: 11.5px; line-height: 1.45; }
       .above .lede { margin: 16px 0 24px; }
 
       /* Beyond one street: numbered rows, in the order a buyer meets them. */
@@ -608,7 +675,7 @@
         /* The map is below the list on a stacked layout: a way down to it. */
         .find-mapjump { display: block; }
       }
-      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .mapwrap > svg { transition: none; } #ans-tiles .ans-tile b { animation: none; } }
       /* The answer under the request (js/home-sections.mjs): at rest everything shows; a run hides it and brings it back. */
       .dev-wire { display: flex; align-items: center; gap: 10px; height: 30px; margin: 0 0 0 20px; font: 500 12px var(--font-mono); color: #b9b6ae; }
       .dev-wire::before { content: ''; width: 2px; height: 100%; background: var(--orange); transform-origin: top; transition: transform 0.25s; }
@@ -672,7 +739,7 @@
         <!-- The panel FIRST in the page (audit 2026-10-05 I-5): after the map it was
              reached after thirty-odd map controls, and on a stacked layout focus ran
              map-then-panel while the eye ran panel-then-map. -->
-        <div class="panel">
+        <div class="panel is-loading">
           <!-- PLANES-PILL:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->
           <a class="news" href="#planes-band"><b>New</b>Heathrow&rsquo;s consultation: the planes over your council <i aria-hidden="true">&rarr;</i></a>
           <!-- PLANES-PILL:END -->
@@ -690,10 +757,10 @@
                it was cut to "Postcode, ZIP o" at 320 wide. The placeholder is now an example. -->
           <label for="pc" class="field-label">Postcode, ZIP or place</label>
           <form class="check" id="check">
-            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="postal-code" inputmode="text" list="pc-places" />
-            <!-- Places the box answers by name (council areas, regions, cities), offered as you type (2026-11-02): filled in
-                 the page from what it already holds, so nothing is sent while typing. -->
-            <datalist id="pc-places"></datalist>
+            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="off" inputmode="text" role="combobox" aria-expanded="false" aria-controls="pc-list" aria-autocomplete="list" />
+            <!-- What the box takes, and the places it answers by name (js/place-box.mjs, Bill's pick B, 2026-11-04): filled in the
+                 page from what it already holds, so nothing is sent while typing. -->
+            <div class="pc-list" id="pc-list" role="listbox" aria-label="Suggestions" hidden></div>
             <button type="submit">Check<span class="yours"> yours</span></button>
           </form>
           <ul class="promises">
@@ -703,6 +770,16 @@
           </ul>
           <p class="status" id="status" aria-live="polite"></p>
           <div class="want" id="want-country" aria-live="polite" hidden></div>
+          <!-- The example's frame while its figures load: labels only, never a figure, and the same boxes as the tiles it gives way to. -->
+          <div class="ans-skeleton" aria-hidden="true">
+            <p class="ans-pc"><span class="ex">Example:</span></p>
+            <div class="ans-tiles">
+              <span class="ans-tile"><b>&nbsp;</b>aircraft noise</span>
+              <span class="ans-tile"><b>&nbsp;</b>NO₂ in the air</span>
+              <span class="ans-tile"><b>&nbsp;</b>planes a day, flying west</span>
+            </div>
+            <p class="ans-show"><button type="button" tabindex="-1">Show the full example</button></p>
+          </div>
           <div class="answer" id="answer">
             <!-- Text from the first answer on; never empty (html-validate), and hidden with the answer until then. -->
             <h2 class="ans-pc" id="ans-title">Your answer</h2>
@@ -717,14 +794,21 @@
             <p class="where" id="ans-where"></p>
             <div class="rows" id="ans-rows"></div>
             <div class="planes" id="ans-planes" hidden></div>
-            <p class="routes" id="ans-routes"></p>
-            <p class="routes" id="ans-station" hidden></p>
-            <div class="routes air" id="ans-air" hidden></div>
-            <p class="routes" id="ans-say" hidden></p>
-            <p class="routes" id="ans-wrong" hidden></p>
+            <!-- Summary first (Bill's pick B, 2026-11-04: the answer ran to 495 words, mostly small print). The figures and one
+                 list to scan stay open; every definition, credit and way to act is kept, one tap away, in the folds below. -->
+            <div class="nearby" id="ans-nearby">
+              <h3>Nearby</h3>
+              <div id="ans-routes"></div>
+              <div class="fact" id="ans-station" hidden></div>
+              <div id="ans-air-near"></div>
+            </div>
             <p class="area" id="ans-area"></p>
             <p class="want" id="ans-want" aria-live="polite" hidden></p>
             <p class="more"><a id="ans-link" href="/map/">See the full picture on the map</a></p>
+            <details class="ans-fold" data-fold="planes"><summary>How the planes are counted</summary><div id="ans-planes-notes" hidden></div></details>
+            <details class="ans-fold" data-fold="air"><summary>About the air readings</summary><div class="routes air" id="ans-air" hidden></div></details>
+            <details class="ans-fold" data-fold="say"><summary>Have your say</summary><div class="routes" id="ans-say" hidden></div></details>
+            <details class="ans-fold" data-fold="wrong"><summary>Spotted something wrong?</summary><p class="routes" id="ans-wrong" hidden></p></details>
           </div>
           </div>
           <div role="tabpanel" id="panel-find" aria-labelledby="tab-find" hidden>
@@ -877,11 +961,15 @@
            After the rename a short silent loop of the film may take its place (Bill, 3 Nov; NOW.md's Blender line). -->
       <section class="band" aria-labelledby="above-h">
         <div class="wrap above">
-          <img src="/about/film-still-battersea.webp" width="1280" height="720" loading="lazy" decoding="async" alt="A still from the film: Battersea from the air, its streets coloured by DEFRA's aircraft noise, a plane on Heathrow's approach." />
+          <figure class="above-shot">
+            <img src="/about/hounslow-noise-render.webp" width="1100" height="602" loading="lazy" decoding="async" alt="A model of Hounslow from above, its buildings coloured by aircraft noise, redder where it is louder, with the Great West Road, the Piccadilly line and Hounslow East station named." />
+            <p class="above-key" aria-hidden="true"><span>Aircraft noise</span><i></i><span>louder</span></p>
+            <figcaption>Hounslow, each building coloured by DEFRA&rsquo;s modelled aircraft noise (Round 4). Contains OS data &copy; Crown copyright 2026; &copy; OpenStreetMap contributors; building heights &copy; Environment Agency copyright and/or database right 2022. All rights reserved.</figcaption>
+          </figure>
           <div>
-            <p class="eyebrow">See it from above</p>
+            <p class="eyebrow">London from above</p>
             <h2 id="above-h">Fly Heathrow&rsquo;s approach over London.</h2>
-            <p class="lede">From Westminster to the runway, see the noise build under one approach, place by place.</p>
+            <p class="lede">Follow the planes in over London and watch the noise rise, street by street, to Hounslow.</p>
             <a class="pill dark" href="/how-it-works/#see-it">Fly the approach <i aria-hidden="true"></i></a>
           </div>
         </div>

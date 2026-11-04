@@ -118,6 +118,9 @@ export const monitorPeriod = (m) => String(m.year);
 /** "nitrogen dioxide 14.2 µg/m³ in 2024" */
 export const monitorReadings = (m) => `${pollutants(m)} in ${monitorPeriod(m)}`;
 /** "Nearest Breathe London sensor: George Street, 1.5 km away (roadside, 0.7 m from the kerb): nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026." */
+/** The short forms for the answer's Nearby list: the place, how far, and the readings; the full line sits in its fold. */
+export const sensorFact = (s) => `${s.name}, ${stationDistance(s.km)}: ${sensorReadings(s)}`;
+export const monitorFact = (m) => `${m.name}, ${stationDistance(m.km)}: ${monitorReadings(m)}`;
 export function sensorLine(s) {
   return `Nearest Breathe London sensor: ${s.name}, ${stationDistance(s.km)} away (${sensorSetting(s)}): ${sensorReadings(s)}.`;
 }

@@ -780,6 +780,23 @@ destinations linked 3+ times), then each looked at whole: claude.ai/artifact/DKt
   buyer should never have to click for. **API**: the repeats are the hero's three buttons and the numbered "Get
   started" steps, each inline where it is needed. Lesson: before proposing a cut, find the thing on the page.
 
+### The answer, the box and the arrival (2026-11-04, evening)
+
+Bill's five points after the first release, and what each turned out to be:
+- **"I don't see the animation"**: Windows' animation effects were off on his PC (`SPI_GETCLIENTAREAANIMATION` false), so Chrome said
+  `prefers-reduced-motion`, and the page did what it was built to. He had seen it in the mock-up by pressing its own Motion switch.
+  Check the setting before suspecting the code. The gap it exposed was real: such a visitor could not ask for it at all, so Play.
+- **"It doesn't look smooth"**: measured, four stages over a second, and a layout shift of 0.133 on a phone, the example pushing the
+  map down. Reserving the frame took it to 0.008. A desktop-only look said 0.006 and would have called it fine.
+- **The still**: caught mid-fade, it showed no noise at all. The new picture's crop removes the credits the frame carried, so they
+  are a caption now: cropping a film frame is a licensing step as well as a design one.
+- **The answer**: 495 words, most of them the same grey as the findings. Moved, not cut, then drawn.
+- A screenshot found what 405 passing checks could not: `text-transform: uppercase` had made the chart's caption read MG/M³ on the
+  LIVE walkthrough, a unit a thousand times too big.
+- Live-only gates see a release only after it ships: the e2e accessibility scan waited for `#ans-example`, which the compact example
+  hides, so it could not reach the new page until a later preflight. When a selector a live test waits on changes, run that test
+  against the live page straight after the deploy.
+
 ### Front-page-v3 step 2: the two-column hero (2026-11-04)
 
 Bill brought the rework forward ("deploy the frontpage and website changes today"), ending the ~20 Nov read at 12 days: the

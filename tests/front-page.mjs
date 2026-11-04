@@ -258,6 +258,7 @@ const heroState = () =>
       inert: document.querySelector('.mapwrap').inert === true,
     };
   });
+await page.waitForFunction(() => getComputedStyle(document.querySelector('#map')).opacity === '1', null, { timeout: 3000 }).catch(() => {});
 const before = await heroState();
 ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !before.inert, 'on a wide screen the question sits beside a live map, nothing over it', JSON.stringify(before));
 // WHERE THE SEARCH COVERS, before anyone types (2026-10-19): every UK region the API serves, its council
@@ -628,7 +629,7 @@ const routes = await page.locator('#ans-routes').textContent();
 ok((await page.locator('#status').textContent()) === 'Showing the figures for TW9 3PZ.', 'a found postcode is announced in the live region, not left silent (audit M-14)', await page.locator('#status').textContent());
 // ONE decimal, as the full map and the street report print it. TW9 3PZ is ~10.2 km out, the
 // distance at which this page used to switch to whole km and print "10 km" (2026-10-09).
-ok(/Nearest airport on the map: Heathrow, \d+\.\d km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance (one decimal, like the map) and direction', routes);
+ok(/Airport\s*Heathrow, \d+\.\d km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance (one decimal, like the map) and direction', routes);
 ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.test(routes), 'Kew is reported under a Heathrow 27 final approach at a height', routes);
 // The nearest station (Bill, 2026-10-06: "show it first"): worked out HERE with this test's own
 // distance maths over data/stations.json, so the shared nearestStation() cannot pass by agreeing
@@ -646,7 +647,7 @@ ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.te
   await page.waitForFunction(() => !document.getElementById('ans-station').hidden, null, { timeout: 10000 }).catch(() => {});
   const line = await page.locator('#ans-station').evaluate((p) => ({ hidden: p.hidden, text: p.textContent }));
   ok(
-    !line.hidden && line.text === `Nearest station: ${near.name}, ${metres} m in a straight line.`,
+    !line.hidden && line.text === `Station${near.name}, ${metres} m in a straight line`,
     'the answer names the nearest station, as worked out independently from the station list',
     `${line.text} | expected ${near.name}, ${metres} m`
   );
@@ -682,7 +683,7 @@ const monitorFile = JSON.parse(await readFile(join(ROOT, 'data', 'aurn-sites.jso
 const nearestTo = (sites, lat, lon) => sites.reduce((a, s) => (kmBetween(lat, lon, s.lat, s.lon) < kmBetween(lat, lon, a.lat, a.lon) ? s : a));
 const airBlock = async () => {
   await page.waitForFunction(() => !document.getElementById('ans-air').hidden, null, { timeout: 10000 }).catch(() => {});
-  return page.locator('#ans-air').evaluate((d) => ({ hidden: d.hidden, text: d.textContent, links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]) }));
+  return page.locator('#ans-air').evaluate((d) => ({ hidden: d.hidden, text: [...d.querySelectorAll(':scope > p')].map((x) => x.textContent).join(' '), links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]) }));
 };
 {
   const sensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
@@ -761,7 +762,7 @@ ok(await page.locator('.promises').isHidden() && await page.locator('.covers').i
     return { say: read('ans-say'), wrong: read('ans-wrong') };
   });
   ok(
-    lines.say && !lines.say.hidden && JSON.stringify(lines.say.links) === JSON.stringify(want) && /^Have your say: /.test(lines.say.text),
+    lines.say && !lines.say.hidden && JSON.stringify(lines.say.links) === JSON.stringify(want) && /airspace change process/.test(lines.say.text),
     "Kew's answer says where to have your say: Heathrow's verified pages (its consultation while open) and the CAA's airspace change portal",
     JSON.stringify(lines.say)
   );
@@ -866,7 +867,7 @@ await page.fill('#pc', 'M22 5RX');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10 && document.querySelector('#answer.is-open'), null, { timeout: 10000 });
 ok(/published only as charts and are not drawn here/.test(await page.locator('#ans-routes').textContent()), 'Manchester\'s undrawn departures are said, not left silent (audit M-7)', await page.locator('#ans-routes').textContent());
-ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
+ok(/Airport\s*Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
 // Outside London no Breathe London line (the network is London's), and the official monitor within 5 km
 // is named with DEFRA's credit; worked out independently, as for Kew.
 {
@@ -2479,12 +2480,32 @@ const makeReport = async (pc) => {
   const low = await wp.evaluate(() => ({ budget: document.getElementById('fit-budget').value, read: document.getElementById('fit-read').textContent }));
   ok(low.budget === budgetBefore && /^No price set: the lowest step is £200,000\. Nothing to set from that\./.test(low.read) && !/Not understood/.test(low.read),
     'describe what you want: a price under the lowest step is said back, never stretched or dropped', JSON.stringify(low));
-  // The place list: the box offers council areas and regions by name, from the page's own rows.
-  const places = await wp.evaluate(() => ({ list: document.getElementById('pc')?.getAttribute('list'), names: [...document.querySelectorAll('#pc-places option')].map((o) => o.value) }));
-  ok(places.list === 'pc-places' && ['Hounslow', 'Camden', 'Leeds', 'Greater Manchester', 'London', 'Manhattan'].every((n) => places.names.includes(n))
-    && new Set(places.names).size === places.names.length,
-  'the postcode box offers the places it answers by name (council areas, regions, cities), each once',
-  JSON.stringify({ list: places.list, count: places.names.length }));
+  // The box (Bill's pick B, 2026-11-04): a first click shows what it takes, typing lists places and says what each is, and
+  // a full postcode is offered as itself. All of it from what the page holds: nothing typed is requested.
+  {
+  const boxAsked = [];
+  wp.on('request', (r) => { if (/camd|sw5/i.test(r.url())) boxAsked.push(r.url()); });
+  await wp.evaluate(() => { document.getElementById('tab-check')?.click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
+  await wp.click('#pc');
+  const first = await wp.evaluate(() => ({ open: !document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded'), options: [...document.querySelectorAll('#pc-list [role="option"]')].map((o) => o.dataset.value), foot: document.querySelector('#pc-list .pc-foot')?.textContent }));
+  ok(first.open && first.expanded === 'true' && first.options.length === 3 && first.options.includes('Hounslow') && /not? ?.*sent until you search/i.test(first.foot || ''),
+    'a first click on the box shows one of each thing it takes, and says nothing is sent', JSON.stringify(first));
+  await wp.fill('#pc', 'camd');
+  const camd = await wp.locator('#pc-list [role="option"]').allInnerTexts();
+  ok(camd.length === 1 && /Camden/.test(camd[0]) && /Council area/.test(camd[0]), 'typing lists the places it answers by name and says what each is', JSON.stringify(camd));
+  await wp.fill('#pc', 'sw5 9hp');
+  const asPostcode = await wp.locator('#pc-list [role="option"]').allInnerTexts();
+  ok(asPostcode.length === 1 && /SW5 9HP/.test(asPostcode[0]), 'a full postcode is offered as itself', JSON.stringify(asPostcode));
+  ok(boxAsked.length === 0, 'nothing typed in the box is requested', boxAsked.join(' '));
+  await wp.fill('#pc', 'camd');
+  await wp.keyboard.press('ArrowDown');
+  const kb = await wp.evaluate(() => ({ active: document.getElementById('pc').getAttribute('aria-activedescendant'), chosen: document.querySelector('#pc-list [aria-selected="true"]')?.dataset.value }));
+  await wp.keyboard.press('Escape');
+  const shut = await wp.evaluate(() => ({ hidden: document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded') }));
+  ok(kb.chosen === 'Camden' && Boolean(kb.active) && shut.hidden && shut.expanded === 'false', 'Down picks a place for a screen reader too, and Escape closes the list', JSON.stringify({ kb, shut }));
+  await wp.fill('#pc', '');
+  await wp.evaluate(() => document.getElementById('pc').blur());
+  }
   await wp.close();
 }
 
@@ -2542,8 +2563,8 @@ const makeReport = async (pc) => {
   });
   const planesBlock = () => ep.evaluate(() => {
     const b = document.getElementById('ans-planes');
-    return { hidden: b.hidden, head: b.querySelector('h3')?.textContent, rows: [...b.querySelectorAll('.row')].map((r) => r.textContent),
-      link: b.querySelector('.planes-how a')?.getAttribute('href'), barsHidden: [...b.querySelectorAll('.bar')].every((x) => x.getAttribute('aria-hidden') === 'true'),
+    return { hidden: b.hidden, head: b.querySelector('h3')?.textContent, rows: [...b.querySelectorAll('.planes-kind')].map((r) => r.textContent),
+      link: document.querySelector('#ans-planes-notes .planes-how a')?.getAttribute('href'),
       more: [...b.querySelectorAll('.planes-more a')].map((a) => [a.textContent, a.getAttribute('href'), Math.round(a.getBoundingClientRect().height)]) };
   });
   // Where to go next (2026-11-02, Bill: "make the links clear and easy to navigate"): TW9's own page, and while
@@ -2554,6 +2575,25 @@ const makeReport = async (pc) => {
   const wantMore = [['Every postcode in TW9, sector by sector', '/planes-overhead/tw9/'],
     ...(packOpen ? [[`For Heathrow's consultation, open until ${Number(planesIndex.consultation.until.slice(8))} December: the planes over each council`, planesIndex.consultation.hub]] : [])];
 
+  // THE PAGE ARRIVES IN PLACE (Bill, 2026-11-04: "it doesn't look smooth"): the browser's own layout-shift score, on a phone,
+  // where the example used to push the map down. Measured from the first frame; the example's lookups are held back a
+  // moment so the frame is really seen. Good is under 0.1.
+  {
+    const held = await context.newPage();
+    await held.setViewportSize({ width: 390, height: 844 });
+    await held.addInitScript(() => {
+      window.__cls = 0;
+      new PerformanceObserver((l) => { for (const x of l.getEntries()) if (!x.hadRecentInput) window.__cls += x.value; }).observe({ type: 'layout-shift', buffered: true });
+    });
+    await held.route((u) => u.hostname === 'api.postcodes.io', async (route) => { await new Promise((r) => setTimeout(r, 700)); return stubOffsite(route); });
+    await held.goto(BASE, { waitUntil: 'domcontentloaded' });
+    const frame = await held.waitForFunction(() => getComputedStyle(document.querySelector('.ans-skeleton')).display === 'block', null, { timeout: 3000 }).then(() => true).catch(() => false);
+    await held.waitForFunction(() => document.querySelectorAll('#ans-tiles .ans-tile:not(.is-waiting)').length >= 2, null, { timeout: 10000 }).catch(() => {});
+    await held.waitForTimeout(800);
+    const arrived = await held.evaluate(() => ({ cls: +window.__cls.toFixed(4), loading: document.querySelector('.panel').classList.contains('is-loading'), frameGone: getComputedStyle(document.querySelector('.ans-skeleton')).display === 'none' }));
+    ok(frame && arrived.cls < 0.02 && !arrived.loading && arrived.frameGone, 'on a phone the example arrives in its frame and the page does not move', JSON.stringify(arrived));
+    await held.close();
+  }
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
   const first = await look();
@@ -2585,9 +2625,31 @@ const makeReport = async (pc) => {
     'Show the full example opens the whole answer in place, says so, and counts once', JSON.stringify(opened));
   const kew = await planesBlock();
   ok(!kew.hidden && kew.head === 'Planes overhead'
-    && JSON.stringify(kew.rows) === JSON.stringify(['Flying west56% of days310 a day', 'Both ways15% of days168 a day', 'Flying east29% of days4 a day'])
-    && kew.link === '/how-it-works/#planes-overhead' && kew.barsHidden,
-    'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, bars hidden from screen readers', JSON.stringify(kew));
+    && JSON.stringify(kew.rows) === JSON.stringify(['310 a dayFlying west56% of days', '168 a dayBoth ways15% of days', '4 a dayFlying east29% of days'])
+    && kew.link === '/how-it-works/#planes-overhead',
+    'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, as three tiles', JSON.stringify(kew));
+  // The folds say it in pictures: the days as one bar of true shares, the overhead rule as a cone, the air on one scale.
+  await ep.evaluate(() => document.querySelectorAll('.ans-fold').forEach((d) => { d.open = true; }));
+  const folds = await ep.evaluate(() => {
+    const parts = [...document.querySelectorAll('.planes-days-bar span')];
+    const box = document.querySelector('.planes-days-bar')?.getBoundingClientRect();
+    return {
+      shares: parts.map((p) => p.textContent),
+      widths: parts.map((p) => Math.round((p.getBoundingClientRect().width / box.width) * 100)),
+      cone: document.querySelector('.planes-cone')?.getAttribute('aria-label') || '',
+      coneAngle: [...document.querySelectorAll('.planes-cone text')].map((t) => t.textContent),
+      says: document.querySelectorAll('#ans-say .say-links a').length,
+    };
+  });
+  ok(JSON.stringify(folds.shares) === JSON.stringify(['56%', '15%', '29%']) && JSON.stringify(folds.widths) === JSON.stringify([56, 15, 29]),
+    'the days bar draws each kind of day at its true share', JSON.stringify(folds));
+  ok(folds.coneAngle.includes('48.5\u00b0') && folds.coneAngle.includes('7,000 ft') && /48\.5 degrees/.test(folds.cone),
+    'the overhead drawing takes its two figures from the definition the page holds', JSON.stringify(folds));
+  await ep.waitForTimeout(100);
+  const foldCounts = await ep.evaluate(() => window.__gc.slice());
+  ok(['planes', 'air', 'say', 'wrong'].every((f) => foldCounts.includes(`event/front-fold-${f}`)) && foldCounts.every((c) => /^event\/front-[a-z-]+$/.test(c)),
+    'each fold opened is counted by its name, and nothing counted holds a postcode', JSON.stringify(foldCounts));
+  await ep.evaluate(() => document.querySelectorAll('.ans-fold').forEach((d) => { d.open = false; }));
   ok(JSON.stringify(kew.more.map(([t, h]) => [t, h])) === JSON.stringify(wantMore) && kew.more.every(([, , h]) => h >= 24),
     'planes overhead links on: TW9\'s own page and, while it is open, Heathrow\'s consultation pack, each a 24 px+ target', JSON.stringify({ more: kew.more, wantMore }));
   // ...and no figure is cut off on a phone, the longest kinds included: a range on a cone's edge and "under 1" (the
@@ -2601,7 +2663,7 @@ const makeReport = async (pc) => {
     const box = document.getElementById('ans-planes'), card = document.getElementById('answer').getBoundingClientRect();
     box.replaceChildren(...planesNodes(planesModel(file, info, 'TW3 3QL', { LHR: 'Heathrow' })));
     box.hidden = false;
-    return [...box.querySelectorAll('.row .val')].filter((v) => v.scrollWidth > v.clientWidth + 1 || v.getBoundingClientRect().right > card.right + 1)
+    return [...box.querySelectorAll('.planes-kind b')].filter((v) => v.scrollWidth > v.clientWidth + 1 || v.getBoundingClientRect().right > card.right + 1)
       .map((v) => v.textContent);
   });
   ok(clipped.length === 0, 'planes overhead: no figure is cut off on a phone, "1 to 316 a day" and "under 1 to 191 a day" included', clipped.join(' | '));
@@ -2637,6 +2699,7 @@ const makeReport = async (pc) => {
     && frames.filter((f) => f.n >= 0).every((f) => f.shown === f.n + 1) && new Set(frames.map((f) => f.h)).size === 1;
   const report = (frames) => JSON.stringify({ frames: frames.length, split: frames.filter((f) => f.n !== f.t).length, early: frames.filter((f) => f.n >= 0 && f.shown !== f.n + 1).length, heights: [...new Set(frames.map((f) => f.h))] });
   const litStarted = () => ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 8000 }).then(() => true).catch(() => false);
+  const litStarted1500 = () => ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 1500 }).then(() => true).catch(() => false);
   await watchLit();
   await ep.locator('section.dev .code').scrollIntoViewIfNeeded();
   const flew = await litStarted();
@@ -2693,8 +2756,21 @@ const makeReport = async (pc) => {
   await ep.locator('section.dev .code').scrollIntoViewIfNeeded();
   await ep.waitForFunction(() => document.getElementById('dev-run')?.hidden === false, null, { timeout: 8000 }).catch(() => {});
   const movedAnyway = await ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 1500 }).then(() => true).catch(() => false);
-  const calm = await ep.evaluate(() => ({ tiles: document.querySelectorAll('#dev-tiles .ans-tile b:not(.is-empty)').length, replay: document.getElementById('dev-replay').hidden }));
-  ok(!movedAnyway && calm.tiles >= 2 && calm.replay, 'with reduced motion the band shows everything at once and offers no replay', JSON.stringify({ movedAnyway, calm }));
+  const calm = await ep.evaluate(() => ({ tiles: document.querySelectorAll('#dev-tiles .ans-tile b:not(.is-empty)').length, play: document.getElementById('dev-replay').textContent, shown: !document.getElementById('dev-replay').hidden }));
+  ok(!movedAnyway && calm.tiles >= 2 && calm.shown && calm.play === 'Play', 'with reduced motion the band shows everything at once, unplayed, and offers Play', JSON.stringify({ movedAnyway, calm }));
+  // Bill's PC has Windows animations off, so this is the only way he sees it: a press is a request, whatever the setting.
+  await ep.click('#code-tab-py');
+  const tabStill = await litStarted1500();
+  await ep.click('#dev-replay');
+  const pressed = await litStarted();
+  await runEnded();
+  ok(!tabStill && pressed, 'with reduced motion a language change moves nothing, and pressing Play plays it', JSON.stringify({ tabStill, pressed }));
+  await ep.locator('#walk-tab-3').evaluate((t) => t.click());
+  await ep.waitForTimeout(150);
+  const playCounts = await ep.evaluate(() => window.__gc.slice());
+  ok(playCounts.includes('event/front-dev-play') && playCounts.includes('event/front-walk-3') && !playCounts.some((c) => /front-walk-1$/.test(c)),
+    'Play and a walkthrough step are counted, and the step the page opens on is not', JSON.stringify(playCounts));
+  await ep.click('#code-tab-curl');
   await ep.emulateMedia({ reducedMotion: null });
   await ep.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 

@@ -15,8 +15,9 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
-import { districtOf, planesLinks, planesModel, planesNodes, planesWalk } from '/js/planes.mjs';
-import { exampleFigures } from '/js/home-sections.mjs';
+import { districtOf, planesLinks, planesModel, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
+import { bindPlaceBox } from '/js/place-box.mjs';
+import { airFigure, airPanel, exampleFigures } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
 import {
   DEFRA_LDEN_SCALE,
@@ -24,10 +25,12 @@ import {
   airNotes,
   correctionHref,
   haveYourSay,
+  monitorFact,
   monitorLine,
   nearestMonitor,
   nearestSensor,
   nearestStation,
+  sensorFact,
   sensorLine,
   stationDistance,
 } from '/js/street_report.mjs';
@@ -58,7 +61,8 @@ const isMapCity = (k) => Object.hasOwn(CITY_NAME, k);
 // GoatCounter has no bounce rate, and "more interactive, fewer bounces" (Bill, 6 Oct) cannot be
 // judged without one. So the front page counts `front-engaged` ONCE per page view, at the first
 // action a visitor takes, and each way in once (`front-search`, `front-example`, `front-city`,
-// `front-map`): engaged views over views of / is the measure. Only a person's
+// `front-map`, and since 2026-11-04 `front-place-pick`, `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`,
+// `front-dev-lang`, `front-full-map`: each the NAME of a control, never a postcode or anything typed): engaged views over views of / is the measure. Only a person's
 // actions count; a deep link runs search() at boot and is never engagement, so the calls sit
 // on the controls, not in search(). Like every page count, no cookie and no identifier
 // (privacy s2c). A way is recorded only once GoatCounter has taken it, and analytics must
@@ -67,7 +71,7 @@ const engagedWays = new Set();
 // Whether the visitor has done anything yet, counted or not (an ad blocker stops the count, never this):
 // the example answer gives way to it (search()).
 let acted = false;
-function engaged(way) {
+export function engaged(way) {
   acted = true;
   if (engagedWays.has(way)) return;
   try {
@@ -310,19 +314,27 @@ function parseCsv(text) {
 const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) || null;
 
 // The places the box answers by name (search(): council areas by rowFor, regions and cities by name), offered as the
-// visitor types (2026-11-02, Bill: a search "like other websites", "without imposing on privacy concerns"). A native
-// <datalist> filled from the rows the page already holds: nothing is fetched or sent while typing. Postcodes are not
-// listed (there are 1.8 million; the box takes any). No rows, no list: the box works as before.
+// visitor types (2026-11-02, Bill: a search "like other websites", "without imposing on privacy concerns"), from the rows
+// the page already holds: nothing is fetched or sent while typing. Postcodes are not listed (there are 1.8 million; the box
+// takes any and spots one). No rows, no places: the box still works, and still offers its examples.
+const PLACE_EXAMPLES = () => [
+  { value: byId('ans-example')?.dataset.pc || 'TW9 3PZ', note: 'a postcode, under Heathrow\u2019s arrivals' },
+  { value: 'Hounslow', note: 'a council area' },
+  { value: 'Palo Alto', note: 'a Bay Area city' },
+];
+const setPlaces = byId('pc') && byId('pc-list')
+  ? bindPlaceBox(byId('pc'), byId('pc-list'), PLACE_EXAMPLES(), (value) => {
+    const box = byId('pc');
+    box.value = value;
+    engaged('place-pick');
+    byId('check')?.requestSubmit();
+  })
+  : () => {};
 function fillPlaces() {
-  const list = byId('pc-places');
-  if (!list) return;
-  const names = new Set([...state.rows.map((r) => r.borough), ...state.rows.map((r) => r.city_name), ...CITIES.map(([, n]) => n)]
-    .filter((n) => typeof n === 'string' && n.trim()));
-  list.replaceChildren(...[...names].sort((a, b) => a.localeCompare(b, 'en-GB')).map((n) => {
-    const o = document.createElement('option');
-    o.value = n;
-    return o;
-  }));
+  const councils = new Set(state.rows.map((r) => r.borough).filter((n) => typeof n === 'string' && n.trim()));
+  const regions = [...state.rows.map((r) => r.city_name), ...CITIES.map(([, n]) => n)].filter((n) => typeof n === 'string' && n.trim() && !councils.has(n));
+  setPlaces([...[...councils].map((name) => ({ name, kind: 'Council area' })), ...[...new Set(regions)].map((name) => ({ name, kind: 'City region' }))]
+    .sort((a, b) => a.name.localeCompare(b.name, 'en-GB')));
 }
 
 async function load() {
@@ -354,7 +366,9 @@ async function load() {
   // nobody has done anything yet.
   if (wantFind && !document.querySelector('.tabs[role="tablist"]')?.hidden) setTab('find', { counted: false, keepCard: true });
   // Not awaited: the page is ready now, and the example arrives when its two lookups do.
-  if (plain) search(byId('ans-example')?.dataset.pc || '', { example: true });
+  // However the example ends (shown, failed, or overtaken by the visitor), its frame gives way.
+  if (plain) search(byId('ans-example')?.dataset.pc || '', { example: true }).finally(endLoading);
+  else endLoading();
 }
 
 function renderChips() {
@@ -1225,6 +1239,7 @@ let searchSeq = 0;
 // THE EXAMPLE, COMPACT (front-page-v3 step 2): the answer stays whole in the page, shown as three tiles until the
 // visitor asks for the rest. Each tile is written from the live answer; a figure it lacks is no tile, never a zero.
 const examplePanel = () => answer?.closest('.panel');
+const endLoading = () => document.querySelector('.panel')?.classList.remove('is-loading');
 function tileNode({ figure, words }) {
   const tile = document.createElement('span');
   tile.className = 'ans-tile';
@@ -1239,7 +1254,8 @@ function showExampleTiles(e) {
   const more = byId('ans-more');
   examplePanel()?.classList.add('is-example');
   if (tiles) {
-    tiles.replaceChildren(...exampleFigures(e).map(tileNode));
+    tiles.replaceChildren(...exampleFigures(e).map(tileNode), tileNode({ figure: '\u00a0', words: '\u00a0' }));
+    tiles.lastElementChild.classList.add('is-waiting');
     tiles.hidden = false;
   }
   if (show) show.hidden = false;
@@ -1249,8 +1265,9 @@ function showExampleTiles(e) {
 function addPlanesTile(model) {
   const tiles = byId('ans-tiles');
   const lead = planesWalk(model)?.lead;
-  if (!tiles || tiles.hidden || !lead || !examplePanel()?.classList.contains('is-example')) return;
-  tiles.append(tileNode(lead));
+  if (!tiles || tiles.hidden || !examplePanel()?.classList.contains('is-example')) return;
+  tiles.querySelector('.is-waiting')?.remove();
+  if (lead) tiles.append(tileNode(lead));
 }
 function clearExampleTiles() {
   examplePanel()?.classList.remove('is-example', 'is-full');
@@ -1259,6 +1276,10 @@ function clearExampleTiles() {
   if (tiles) { tiles.hidden = true; tiles.replaceChildren(); }
   if (show) show.hidden = true;
 }
+for (const fold of document.querySelectorAll('.ans-fold[data-fold]')) {
+  fold.addEventListener('toggle', () => { if (fold.open) engaged(`fold-${fold.dataset.fold}`); });
+}
+byId('map-full')?.addEventListener('click', () => engaged('full-map'));
 byId('ans-more')?.addEventListener('click', (ev) => {
   const open = examplePanel()?.classList.toggle('is-full') === true;
   ev.currentTarget.textContent = open ? 'Hide the full example' : 'Show the full example';
@@ -1276,6 +1297,7 @@ async function search(raw, { example = false } = {}) {
   if (!text) return;
   const seq = ++searchSeq;
   const stale = () => seq !== searchSeq || (example && acted);
+  if (!example) endLoading();
   const label = byId('ans-example');
   if (label) label.hidden = true;
   clearExampleTiles();
@@ -1342,7 +1364,7 @@ async function search(raw, { example = false } = {}) {
     if (stale()) return;
     if (!env.environment) { if (!example) say(env.error || 'No figures for that spot.'); return; }
     if (example) {
-      render(geo.result.postcode, district, city, env.environment, lat, lon);
+      render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance);
       if (label) label.hidden = false;
       // The heading says it too: "Example: TW9 3PZ, Kew". render() wrote the bare postcode, and the visitor's own
       // search writes theirs over it, so the prefix can only ever sit on the example.
@@ -1361,7 +1383,7 @@ async function search(raw, { example = false } = {}) {
     // and it went from "Looking it up..." to empty, so a screen-reader user
     // heard nothing when the figures arrived (audit 2026-10-05 M-14).
     say(city ? `Showing the figures for ${geo.result.postcode}.` : `${geo.result.postcode} is outside the cities on the map. Here are the figures we hold for it.`);
-    render(geo.result.postcode, district, city, env.environment, lat, lon);
+    render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance);
     setQuery({ city: city || state.city, postcode: geo.result.postcode });
   } catch {
     // A stale search's failure is not this one's: say nothing over the newer answer. Nor the example's own.
@@ -1500,7 +1522,23 @@ export const planesFilesFor = (postcode) => loadPlanes(postcode);
 /** [Breathe London sensors, DEFRA monitors], the answer's own files (fetched once, kept). */
 export const airFiles = () => Promise.all([loadSensors(), loadMonitors()]);
 
-function render(postcode, district, city, e, lat, lon) {
+// One line of the answer's Nearby list: what it is, then the fact.
+function factRow(label, text) {
+  const row = document.createElement('div');
+  row.className = 'fact';
+  row.append(Object.assign(document.createElement('span'), { className: 'k', textContent: label }), Object.assign(document.createElement('span'), { textContent: text }));
+  return row;
+}
+// routesText() speaks in sentences; the list wants what each is about. A sentence it does not recognise is kept whole.
+function routeFacts(text) {
+  return text.split(/(?<=\.)\s+/).filter(Boolean).map((sentence) => {
+    const airport = /^Nearest airport on the map: (.*?)\.?$/.exec(sentence);
+    const approach = /^Nearest published approach: (.*?)\.?$/.exec(sentence);
+    return airport ? factRow('Airport', airport[1]) : approach ? factRow('Flight path', approach[1]) : factRow('Flight paths', sentence);
+  });
+}
+
+function render(postcode, district, city, e, lat, lon, prov = {}) {
   const title = byId('ans-title'), where = byId('ans-where');
   if (title) title.textContent = postcode;
   if (where) where.textContent = district + (city ? '' : ' (not yet on the map: figures only)');
@@ -1541,6 +1579,11 @@ function render(postcode, district, city, e, lat, lon) {
   if (planes) {
     planes.hidden = true;
     planes.replaceChildren();
+    const notes = byId('ans-planes-notes');
+    if (notes) {
+      notes.hidden = true;
+      notes.replaceChildren();
+    }
     // As for the station and the air: a later search owns the block. Not tied to the map's cities: the files
     // cover every council the score covers (Nottingham's are under East Midlands' flights), and say who is in.
     const seq = ++planesSeq;
@@ -1550,6 +1593,11 @@ function render(postcode, district, city, e, lat, lon) {
       if (!model) return;
       planes.append(...planesNodes(model, document, planesLinks(index, postcode, model)));
       planes.hidden = false;
+      const notes = byId('ans-planes-notes');
+      if (notes) {
+        notes.replaceChildren(...planesNotes(model));
+        notes.hidden = false;
+      }
       addPlanesTile(model);
     }).catch((err) => {
       // A file the model cannot read (a field missing after a part-deployed roll) hides the block, as a failed
@@ -1563,26 +1611,28 @@ function render(postcode, district, city, e, lat, lon) {
   }
 
   const routes = byId('ans-routes');
-  if (routes) routes.textContent = city && state.proc ? routesText(state.proc, lat, lon) : '';
+  if (routes) routes.replaceChildren(...routeFacts(city && state.proc ? routesText(state.proc, lat, lon) : ''));
   const station = byId('ans-station');
   if (station) {
     station.hidden = true;
-    station.textContent = '';
+    station.replaceChildren();
     // A later search owns the line: an earlier one's list landing late must not write it.
     const seq = ++stationSeq;
     if (city) {
       loadStations().then((list) => {
         const near = list && seq === stationSeq ? nearestStation(list, lat, lon) : null;
         if (!near) return;
-        station.textContent = `Nearest station: ${near.name}, ${stationDistance(near.km)} in a straight line.`;
+        station.replaceChildren(...factRow('Station', `${near.name}, ${stationDistance(near.km)} in a straight line`).childNodes);
         station.hidden = false;
       });
     }
   }
   const air = byId('ans-air');
+  const airNear = byId('ans-air-near');
   if (air) {
     air.hidden = true;
     air.replaceChildren();
+    airNear?.replaceChildren();
     // As for the station: a later search owns the block.
     const seq = ++airSeq;
     if (city) {
@@ -1592,8 +1642,12 @@ function render(postcode, district, city, e, lat, lon) {
         const monitor = monitors ? nearestMonitor(monitors, lat, lon) : null;
         if (!sensor && !monitor) return;
         const para = (className, text) => Object.assign(document.createElement('p'), { className, textContent: text });
+        const chart = airPanel(e, prov, sensor, monitor);
+        if (chart) air.append(airFigure(chart));
         if (sensor) air.append(para('', sensorLine(sensor)));
         if (monitor) air.append(para('', monitorLine(monitor)));
+        if (sensor) airNear?.append(factRow('Air sensor', sensorFact(sensor)));
+        if (monitor) airNear?.append(factRow('Air monitor', monitorFact(monitor)));
         air.append(para('air-note', airNotes(sensor, monitor)));
         const credit = para('air-credit', '');
         for (const c of [sensor?.credit, monitor?.credit].filter(Boolean)) {
@@ -1614,9 +1668,16 @@ function render(postcode, district, city, e, lat, lon) {
     sayEl.replaceChildren();
     const say = city && state.proc ? haveYourSay(routesNear(state.proc, plane(lat, lon), AIRPORT_SCOPE_KM)) : null;
     if (say) {
-      sayEl.append('Have your say: ');
-      say.links.forEach((l, i) => sayEl.append(...(i ? [' · ', anchorFor(l)] : [anchorFor(l)])));
-      sayEl.append(". Flight paths change through the CAA's airspace change process: ", anchorFor(say.change), ' shows each proposal and the stage it has reached.');
+      const links = document.createElement('ul');
+      links.className = 'say-links';
+      for (const l of say.links) {
+        const item = document.createElement('li');
+        item.append(anchorFor(l));
+        links.append(item);
+      }
+      const change = document.createElement('p');
+      change.append("Flight paths change through the CAA's airspace change process: ", anchorFor(say.change), ' shows each proposal and the stage it has reached.');
+      sayEl.append(links, change);
       sayEl.hidden = false;
     }
   }
@@ -1624,7 +1685,7 @@ function render(postcode, district, city, e, lat, lon) {
   if (wrong) {
     wrong.replaceChildren();
     wrong.hidden = !city;
-    if (city) wrong.append('Spotted something wrong? ', anchorFor({ href: correctionHref(postcode), text: 'Tell us' }), ': local knowledge is the best check on data like this.');
+    if (city) wrong.append(anchorFor({ href: correctionHref(postcode), text: 'Tell us' }), ': local knowledge is the best check on data like this.');
   }
   const area = byId('ans-area');
   if (area) {

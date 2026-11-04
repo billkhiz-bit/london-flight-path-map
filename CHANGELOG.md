@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-11-04 (evening) - A calmer answer
+
+- **The answer after a search** leads with the figures, the planes as three tiles and one "Nearby" list, at under half the
+  words. Every definition, credit and way to act is kept, a tap away, and now in pictures where that is clearer: how the
+  airport's days split, the overhead rule as a drawing, and the air on one scale.
+- **The postcode box** shows what it takes when you click it, says what each place is as you type, and spots a full postcode.
+  Nothing you type is sent until you search.
+- **The page arrives in place**: the example's frame is there from the first moment, so nothing jumps as the figures land.
+- **"London from above"** has a new, sharper picture of Hounslow, its buildings coloured by aircraft noise.
+- **A visitor with animation turned off** can press Play to see the API at work.
+- **Fixed**: the air chart's caption read "MG/M\u00b3", when the unit is \u00b5g/m\u00b3.
+
 ## 2026-11-04 - A new front page
 
 - **Two columns**: the question, the search and the answer on the left, the live map beside them with nothing over it.

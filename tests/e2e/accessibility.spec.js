@@ -29,7 +29,7 @@ const PAGES = [
   // for its label too: the page a visitor settles on, never one caught
   // mid-change. "Where it carries one" because this suite tests the LIVE site,
   // which gains the example only when it deploys (preflight ran red on that).
-  { path: '/', name: 'front page', ready: '#map .boro', settled: '#ans-example' },
+  { path: '/', name: 'front page', ready: '#map .boro', settled: '#ans-tiles' },
   { path: '/reports/', name: 'reports' },
   { path: '/reports/street/', name: 'free street report' },
   { path: '/how-it-works/', name: 'how it works' },
