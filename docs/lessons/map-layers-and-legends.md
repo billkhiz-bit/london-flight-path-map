@@ -125,3 +125,9 @@ for that reason.
 - BESIDE THE TAP, flipped to stay in the map, never under the phone's floating search box (measured: its height
   varies). A fixed corner was tried first: top-left sat on the desktop's title and city buttons and under the phone's
   search box. Checked at 1366 and 390 by `elementFromPoint` at the card's corners, not by its `hidden` flag.
+- A NEW KIND OF OUTPUT NEEDS ITS OWN DEPLOY LINE. `planes-layer-deploy` shipped the pictures with
+  `--exclude "*" --include "*.png"` and `index.json` by name, so the first `<city>-district-ids.json` files stayed on
+  this PC: every grid answered 404, the map treated that as "no card", and the deploy itself reported success. Nothing
+  in the build, the tests or the deploy could fail, because each read the local files. The drift check caught it (7
+  UNREACHABLE), since it reads the tracked manifest and asks the live origin. Keep that order of trust: when a builder
+  starts writing a new kind of file, add its deploy line in the same change, then prove it from the origin.

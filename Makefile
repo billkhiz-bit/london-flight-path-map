@@ -729,6 +729,13 @@ planes-layer-deploy:
 		--exclude "*" --include "*.png" \
 		--content-type "image/png" --cache-control "no-cache" \
 		--delete --region $(AWS_REGION)
+	# The district grids (2026-11-03): the map names the district under a tap from <city>-district-ids.json. The first
+	# deploy shipped only the pictures and index.json, so the live card stayed silent (the drift check caught it).
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 sync data/planes-layer/ \
+		s3://$(S3_BUCKET)/data/planes-layer/ \
+		--exclude "*" --include "*-district-ids.json" \
+		--content-type "application/json" --cache-control "no-cache" \
+		--delete --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/planes-layer/index.json \
 		s3://$(S3_BUCKET)/data/planes-layer/index.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
