@@ -81,6 +81,7 @@ NOT_A_POSTCODE = {
     'fetch_defra_road_noise.py': "builds each city's fetch bbox from its BOUNDARY vertices",
     'measure_aircraft_footprint.py': 'projects borough BOUNDARY geometry',
     'build_aircraft_rasters.py': 'requests WMS renders by bbox; samples no postcode',
+    'n65_day.py': "projects RUNWAY ends and the airport's centre for one day's noise grid; reads no postcode",
     'lidar_building_heights.py': ("projects the council's BOUNDARY and OpenStreetMap building centres (a check); "
                                   "its postcodes come from NSPL's grid reference (adsb_postcode_averages)"),
     'build_planes_layer.py': ("projects the PICTURE's pixel centres (Web Mercator) to the British grid to find each "
