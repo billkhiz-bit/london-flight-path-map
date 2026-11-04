@@ -72,6 +72,16 @@ ERODE_M = 150      # a sample must sit this far inside a homogeneous region
 # instead of one scraping MIN_COMPARED.
 PAUSE_S = 10.0
 MIN_AGREE = 0.80   # per city, per direction
+# THE SAMPLE MUST BE ABLE TO SAY SO (2026-11-04). Preflight samples 4 cells a class, so one miss is 75%, under the bar:
+# Merseyside read 3/4 on one boundary cell and turned every run that day red (the seed is fixed and it was the rotating
+# city, so the same cell failed all day), while 16 cells read 15/16 and 15/15 on the same mosaic. A class that misses on
+# a small sample is therefore re-sampled at this size and judged on that, at a HIGHER bar. It has to be higher: 4 samples
+# are all edge cells (spread_samples goes periphery first) but 16 take the whole 4x4 grid, interior included, so one bad
+# edge reading a third would score about 13/16 = 81% and pass the plain bar. One honest boundary cell is 15/16 = 94%.
+# And a throttled confirmation proves nothing, so it must reach most of its cells (proven both ways, docs/lessons/flood.md).
+CONFIRM_PER_CLASS = 16
+CONFIRM_AGREE = 0.90
+CONFIRM_MIN_COMPARED = 12
 # A class that reached the service only once or twice has not been tested, and
 # must not report 'ok'. Throttling shrinks the sample silently - at three
 # workers, half of one London class came back unreachable - so the floor is
@@ -287,7 +297,7 @@ def spread_samples(ys, xs, shape, n, rng):
     return picks
 
 
-def check_city(city, mosaic_dir, per_class, seed):
+def check_city(city, mosaic_dir, per_class, seed, bar=MIN_AGREE, floor=MIN_COMPARED):
     import numpy as np
     import rasterio
 
@@ -352,7 +362,7 @@ def check_city(city, mosaic_dir, per_class, seed):
 
         used = set(picks)
         for _ in range(TOPUP_ROUNDS):
-            if tally['agree'] + tally['disagree'] >= MIN_COMPARED:
+            if tally['agree'] + tally['disagree'] >= floor:
                 break
             spare = [i for i in range(len(ys)) if i not in used]
             if not spare:
@@ -366,10 +376,12 @@ def check_city(city, mosaic_dir, per_class, seed):
         compared = agree + disagree
         rate = agree / compared if compared else 0.0
         results[label] = (agree, compared, unreachable, rate)
-        if compared < MIN_COMPARED:
+        if compared < floor:
             flag = 'INCONCLUSIVE'
-        elif rate >= MIN_AGREE:
+        elif rate >= bar:
             flag = 'ok'
+        elif per_class < CONFIRM_PER_CLASS:
+            flag = 'to confirm'
         else:
             flag = 'FAIL'
         print(
@@ -461,6 +473,14 @@ def rotating_city(cities):
     return cities[date.today().toordinal() % len(cities)]
 
 
+def needs_confirming(results, per_class):
+    """True when a class fell under the bar on a sample too small to say so. An unreachable or untested class is not
+    a miss: those keep their own verdicts below, so a throttled run is never quietly re-run into a pass."""
+    if results is None or per_class >= CONFIRM_PER_CLASS:
+        return False
+    return any(r is not None and r[1] >= MIN_COMPARED and r[3] < MIN_AGREE for r in results.values())
+
+
 def main():
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -520,6 +540,11 @@ def main():
             checked += 1
             continue
         res = check_city(city, mosaic_dir, args.per_class, args.seed)
+        bar, floor = MIN_AGREE, MIN_COMPARED
+        if needs_confirming(res, args.per_class):
+            print(f'{city:<16} a sample of {args.per_class} a class cannot say so: confirming on {CONFIRM_PER_CLASS} at {CONFIRM_AGREE:.0%}')
+            bar, floor = CONFIRM_AGREE, CONFIRM_MIN_COMPARED
+            res = check_city(city, mosaic_dir, CONFIRM_PER_CLASS, args.seed, bar, floor)
         if res is None:
             # A MISSING MOSAIC IS A FAILURE, NOT A SKIP (2026-08-31).
             #
@@ -559,9 +584,9 @@ def main():
                 continue
             _agree, compared, _unreach, rate = r
             city_compared += compared
-            if compared < MIN_COMPARED:
+            if compared < floor:
                 failed.append(f'{city}/{label} INCONCLUSIVE ({compared} reached)')
-            elif rate < MIN_AGREE:
+            elif rate < bar:
                 failed.append(f'{city}/{label} {rate:.0%}')
         # PER-CITY FLOOR. A city that compared nothing is not a city that
         # agreed. This repo has shipped that exact pass five times.
