@@ -37,6 +37,19 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > until `index.json` says the city has a picture. (6) The Makefile comment says BEFORE `web-deploy`. Seven breaks
 > proven red; one survivor showed the per-element `[hidden]` CSS was dead code (the page-wide `!important` rule wins),
 > deleted. The browser test now blocks service workers (sw.js claimed the page, so `page.route` never saw the request).
+> **NIGHT 3 Nov, where it stands:** `declutter` LIVE (`530b14ff`, merged and pushed, five deploys, drift PASS, checked
+> on the live pages; the sample report one page with the CAA 2025 figure). `map-fixes` BUILT (the district card on
+> the planes layer, `/epc` for full postcodes only): commit after preflight; deploy = `planes-layer-deploy` BEFORE
+> `web-deploy`, then Bill executes the backend changeset (epc Lambda). `cost-of-living` branch PUSHED (docs only,
+> `73ad5e4e`; pick up in a month or two). N65 step 5 (one Heathrow day) BUILT by an agent on `n65` in its worktree
+> `.claude/worktrees/agent-a3fdc3c767180fb13`: 15 commits, NOT pushed, needs preflight (see its lesson section;
+> 96.9% of movements computed; contours read low vs ERCD 2601: departures fly 100-300 m high, so observed
+> profiles next; Bill to confirm the procedure/stage/wind choices). Front page step 1: an agent on
+> `front-page-v3` in its own worktree. Leicester brief on the Desktop; SETTLED that DEFRA's 2021 Heathrow map is
+> the CAA's own 2021 contours (ERCD 2201 Table 8; NAP annexes p.40): correct METHODOLOGY (~line 1203 "not
+> established"), `measure_covid_understatement.py`'s docstring and the caveat wording before the 26 Nov call.
+> TODO 23 Dec: regenerate the sample report (its have-your-say line names the consultation until 22 Dec).
+
 > **Evening 3 Nov, the plan for the next sessions (Bill's calls):**
 > - **Front page rework, branch `front-page-v3`, ships AFTER the ~20 Nov engagement read** (Bill: "build on a branch").
 >   Agreed mock-up: claude.ai/artifact/8WjimVxDSZioMkdSCTVCuf (v8; v7 at claude.ai/artifact/BbdTeiUSrph1TiU5rzLkNH).

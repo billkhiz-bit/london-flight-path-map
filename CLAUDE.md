@@ -221,6 +221,13 @@ Or just describe what you need, I have full context of this project.
   never a sum (each airport's kinds of day are its own): every surface naming the layer says so. Smoothed until one
   picture pixel covers a screen pixel, sharp from there (`setPlanesRendering`). It and DEFRA aircraft noise are never
   on together; the legend's step colours equal `index.json`'s (`tests/planes-layer.mjs`, `test_build_planes_layer.py`).
+  **A tap names the district under it** (2026-11-03, Bill's pick "small card"): read from `<city>-district-ids.json`
+  (the outlines' own grid, run-length rows; a list of numbers, never a colour-coded picture), placed where the picture
+  is; `districtFromGrid` mirrors `build_planes_layer.district_at` line for line; a card only if
+  `planes-districts-by-council.json` lists the district (never a guessed link), beside the tap, never a figure.
+- **`/epc` takes full UK postcodes only** (2026-11-03): a ZIP or a bare district is the caller's 400 and never reaches
+  MHCLG (it answered 400, which the Lambda reported as its own 502: 134 of the API's 146 5xx in a day); the map's
+  `fetchEpcData` asks only with a full postcode. An upstream 400 for a valid postcode stays a 502: their change, loud.
 - **The front page's lower sections type no figure** (front-page-v3, Bill's mock v8, 2026-11-03; branch until the
   ~20 Nov read): the walkthrough's steps 02-04 are written by `js/home-sections.mjs` from the hero's own example lookup
   (`home-engine.mjs` `exampleAnswer()`, one shared pair), the planes step through `planesWalk()` in `js/planes.mjs`

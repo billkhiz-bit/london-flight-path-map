@@ -103,3 +103,25 @@ is another. Together they read as neither legend, so switching one on clicks the
 **A survivor that was dead code.** Of six breaks to the map code, five went red. The sixth removed clearing the last
 city's picture when a city has none, and stayed green, because every render makes new picture elements: the code
 could never run. It was deleted; the test still holds the behaviour from the DOM ("no picture after switching").
+
+### The district under a tap (2026-11-03, branch `map-fixes`)
+
+Bill picked "small card" for the planes layer's next step: tap the map, see the postcode district and its page. The map
+has no district shapes, only the outline PICTURE, so `build_planes_layer.py` now also writes `<city>-district-ids.json`:
+the same district grid the outlines come from, at 2 picture pixels a cell (50 m), each row run-length coded. A list of
+numbers, not a colour-coded picture: a browser may colour-manage an image, and a shifted colour names the wrong
+district. 78-219 KB a city (20-56 KB gzipped), fetched on the first tap only. Nothing about the tap is sent anywhere
+(Bill's privacy line); the reverse geocoder the map uses for "locate me" (postcodes.io) was the alternative, rejected
+for that reason.
+- A tap is converted exactly as the picture is placed: the pointer in the picture's own coordinates (zoom included), as
+  a fraction of its box, times its pixel size. `districtFromGrid` mirrors `district_at` line for line; each is tested on
+  its side (`test_build_planes_layer.py` on made-up grids, 2 of 3 mutations red, the third an equivalent mutant whose
+  redundant bound was deleted; `tests/planes-layer.mjs` on the BUILT files: targets are cells deep inside a district,
+  taken from the files, never typed).
+- A card only for a district `planes-districts-by-council.json` lists (the pages' one holder, as the front page's
+  `planesLinks`): IG7 has no page and gets no card. Never a figure on the card.
+- THE LISTENER IS ON THE WHOLE MAP (`svg.on('click.planesCard')`), not on the borough paths: on a phone the place labels
+  cover much of west London, and a tap on a label reached no borough handler. d3-zoom swallows the click that ends a drag.
+- BESIDE THE TAP, flipped to stay in the map, never under the phone's floating search box (measured: its height
+  varies). A fixed corner was tried first: top-left sat on the desktop's title and city buttons and under the phone's
+  search box. Checked at 1366 and 390 by `elementFromPoint` at the card's corners, not by its `hidden` flag.

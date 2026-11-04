@@ -636,7 +636,7 @@ class EpcHandlerTests(unittest.TestCase):
         result = self.app.handler({'queryStringParameters': None}, None)
         self.assertEqual(result['statusCode'], 400)
 
-    def _invoke_with_upstream_status(self, status):
+    def _invoke_with_upstream_status(self, status, postcode='SW1A 1AA'):
         """Drive the handler with a token set and a chosen upstream HTTP error."""
         from urllib.error import HTTPError  # noqa: PLC0415
 
@@ -644,7 +644,7 @@ class EpcHandlerTests(unittest.TestCase):
         with patch.dict(os.environ, {'EPC_BEARER_TOKEN': 'test-token'}), \
              patch.object(self.app, 'urlopen', side_effect=err):
             return self.app.handler(
-                {'queryStringParameters': {'postcode': 'SW1A 1AA'}}, None
+                {'queryStringParameters': {'postcode': postcode}}, None
             )
 
     def test_rejected_token_degrades_gracefully(self):
@@ -668,6 +668,24 @@ class EpcHandlerTests(unittest.TestCase):
         """The graceful branch must not swallow unrelated upstream failures."""
         result = self._invoke_with_upstream_status(500)
         self.assertEqual(result['statusCode'], 502)
+
+    def test_a_zip_or_a_district_is_the_callers_400_and_never_reaches_mhclg(self):
+        """2026-11-03: "94301" and "TW9" were sent on to MHCLG, which answered 400, reported as OUR 502 (134 of the
+        API's 146 5xx in a day). They are the caller's mistake: 400, logged as no 5xx, and no upstream call."""
+        def never(*_a, **_k):
+            raise AssertionError('MHCLG was called for a non-postcode')
+        for postcode in ('94301', 'TW9', 'SW1A', 'Hounslow', 'TW9 3PZZ', '<b>TW9 3PZ'):
+            with self.subTest(postcode=postcode), patch.dict(os.environ, {'EPC_BEARER_TOKEN': 'test-token'}), \
+                 patch.object(self.app, 'urlopen', side_effect=never), self.assertNoLogs(level='WARNING'):
+                result = self.app.handler({'queryStringParameters': {'postcode': postcode}}, None)
+                self.assertEqual(result['statusCode'], 400)
+                self.assertEqual(json.loads(result['body'])['error'], 'a full UK postcode is required')
+
+    def test_a_full_postcode_in_any_case_or_spacing_still_reaches_mhclg(self):
+        for postcode in ('TW9 3PZ', 'tw93pz', ' TW9 3PZ ', 'EC1A 1BB', 'M1 1AE', 'BT1 1AA'):
+            with self.subTest(postcode=postcode):
+                result = self._invoke_with_upstream_status(404, postcode)
+                self.assertEqual(result['statusCode'], 200)  # reached MHCLG: its 404 is "no certificates"
 
     def test_upstream_404_means_no_certificates_not_an_error(self):
         """404 is 'no certificates match' per the MHCLG docs, not a failure."""
