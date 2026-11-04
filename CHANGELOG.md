@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-04 (night) - Faster first answer; an honest word in the API
+
+- **`/v1/environment`**: `aircraftQuietCoverage` now says `modelled` where it said `measured`. A DEFRA noise map is a model; only an
+  instrument's reading is measured. The values are now `modelled`, `city` and `outside`.
+- **The front page's example** arrives sooner: the first request after a quiet spell no longer takes about 2.5 seconds.
+
 ## 2026-11-04 (evening) - A calmer answer
 
 - **The answer after a search** leads with the figures, the planes as three tiles and one "Nearby" list, at under half the

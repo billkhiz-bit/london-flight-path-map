@@ -344,6 +344,13 @@ async function load() {
   // Campaign tags do not count as asking (Reddit, the best channel, links with them).
   const asked = new URLSearchParams(location.search);
   const plain = !wantFind && !['city', 'postcode', 'borough'].some((k) => asked.get(k));
+  // The example's lookups and planes files start now, beside the map's data, not after it: each is fetched once and kept, so
+  // search() finds them answered. They used to queue behind the map, and the third tile behind the first two.
+  if (plain) {
+    const pc = byId('ans-example')?.dataset.pc || '';
+    exampleAnswer();
+    Promise.all([loadPlanes(pc), loadPlanesIndex()]).catch(() => {});
+  }
   const [extra, proc, rasters, csv, nycDoc, crossings] = await Promise.all([
     d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
     d3.text(CSV).catch(() => ''),

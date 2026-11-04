@@ -541,7 +541,10 @@ Resources:
     Properties:
       CodeUri: lambdas/score/
       Handler: app.handler
-      MemorySize: 256
+      # 1024, not 256 (2026-11-04): the first request of a new instance took 2.3-2.6 s at 256 (init itself is 0.2 s), and the
+      # front page's example waits on it, so the first visitor after a quiet spell saw 3.7 s. Lambda's CPU scales with memory.
+      # Peak use is about 97 MB: this buys speed, not room.
+      MemorySize: 1024
       # 28s, not 10s: a worst-case /v1/score/batch (100 queries, cold caches)
       # could exceed 10s and lose the whole batch with no partial results
       # (A-0724-I4). API Gateway cuts integrations at 29s, so 28s is the

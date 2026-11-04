@@ -15,7 +15,7 @@ import { airPanel, devAnswer, exampleFigures, noiseRows } from '../js/home-secti
 // /v1/environment for TW9 3PZ, as captured 2026-11-03 (trimmed to what the page reads).
 const ENV = {
   roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10,
-  pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56, aircraftQuietCoverage: 'measured',
+  pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56, aircraftQuietCoverage: 'modelled',
   aircraftNoiseWhoGuidelineDb: 45,
 };
 const PROV = {

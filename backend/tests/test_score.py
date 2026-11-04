@@ -3886,7 +3886,7 @@ class AircraftQuietCoverageTests(unittest.TestCase):
 
     def test_measured_when_defra_has_the_postcode(self):
         env = self._environment(dict(self.NO_ROW, lden=61.2), self.WANDSWORTH)
-        self.assertEqual(env['aircraftQuietCoverage'], 'measured')
+        self.assertEqual(env['aircraftQuietCoverage'], 'modelled')
         self.assertIn('aircraftNoiseLdenDb', env)
         self.assertNotIn('aircraftQuietBasis', env)
 

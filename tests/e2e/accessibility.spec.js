@@ -79,6 +79,12 @@ test.describe('Accessibility', () => {
         await expect(page.locator(settled)).toBeVisible({ timeout: 15_000 });
       }
 
+      // A figure fades in over a quarter of a second, and axe reads the colour it has at that moment: 2.5:1 mid-fade on a
+      // tile whose settled figure is far past AA (2026-11-04). Finite animations end first; a caret that blinks for ever never will.
+      await page.evaluate(() => Promise.all(document.getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => {}))));
+
       let builder = new AxeBuilder({ page }).withTags([
         'wcag2a',
         'wcag2aa',

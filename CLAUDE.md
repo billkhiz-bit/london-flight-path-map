@@ -190,6 +190,7 @@ Or just describe what you need, I have full context of this project.
   registry source (`backend/tests/test_provenance.py` names it); a loader roll moves `PROVENANCE_PERIODS` with it
   (`tests/test_provenance_periods.py`); a credit-line pattern names its city's OWN airports (the Bay Area once
   matched New York's); only an instrument's reading is `measured`: DEFRA's and the EA's maps are `modelled`.
+  `aircraftQuietCoverage` follows it (`modelled`/`city`/`outside` since 2026-11-04; every reader tests only `=== 'outside'`).
 
 ### Frontend
 - **One registry, `CITY_DATA`.** No `if (city === 'x')`; add a registry field to ALL cities
