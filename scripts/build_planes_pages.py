@@ -1113,6 +1113,10 @@ def check_councils(index: dict, path: Path = COUNCILS) -> list[str]:
 HOME = REPO / 'home' / 'index.html'
 BAND_BEGIN = '<!-- PLANES-BAND:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->'
 BAND_END = '<!-- PLANES-BAND:END -->'
+# The "New" pill above the question (front-page-v3 step 2): the band's way in. It points at the band, so it goes the day
+# the band stops being the consultation's; after that the page holds the two markers and nothing between them.
+PILL_BEGIN = '<!-- PLANES-PILL:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->'
+PILL_END = '<!-- PLANES-PILL:END -->'
 
 
 def band_open(index: dict, today: str) -> dict | None:
@@ -1163,48 +1167,68 @@ def home_band(index: dict, today: str) -> list[str]:
     ]
 
 
-def band_held(page: str) -> tuple[str, str] | None:
+def home_pill(index: dict, today: str) -> list[str]:
+    """The "New" pill's line while the consultation is open, nothing after it."""
+    if band_open(index, today) is None:
+        return []
+    return ['<a class="news" href="#planes-band"><b>New</b>Heathrow&rsquo;s consultation: the planes over your council '
+            '<i aria-hidden="true">&rarr;</i></a>']
+
+
+def band_held(page: str, begin: str = BAND_BEGIN, end: str = BAND_END) -> tuple[str, str] | None:
     """(the BEGIN marker's indentation, the text between the markers), or None unless each marker appears once."""
-    if page.count(BAND_BEGIN) != 1 or page.count(BAND_END) != 1:
+    if page.count(begin) != 1 or page.count(end) != 1:
         return None
-    start = page.index(BAND_BEGIN)
+    start = page.index(begin)
     indent = page[page.rfind('\n', 0, start) + 1:start]
     body_at = page.index('\n', start) + 1
-    return indent, page[body_at:page.rfind('\n', 0, page.index(BAND_END)) + 1]
+    return indent, page[body_at:page.rfind('\n', 0, page.index(end)) + 1]
 
 
-def band_text(index: dict, today: str, indent: str) -> str:
-    return ''.join(f'{indent}{line}\n' for line in home_band(index, today))
+def band_text(index: dict, today: str, indent: str, lines=home_band) -> str:
+    return ''.join(f'{indent}{line}\n' for line in lines(index, today))
+
+
+# Each generated stretch of the front page: its name, its two markers and what it holds.
+HOME_PARTS = (('planes band', BAND_BEGIN, BAND_END, home_band), ('"New" pill', PILL_BEGIN, PILL_END, home_pill))
 
 
 def check_home(index: dict, today: str, path: Path = HOME) -> list[str]:
-    """[] when the front page's band is what the council index says on `today` (line endings aside)."""
-    held = band_held(path.read_text(encoding='utf-8'))
-    if held is None:
-        return [f'{path.name}: the PLANES-BAND markers must appear exactly once each']
-    indent, body = held
-    if body.replace('\r\n', '\n') != band_text(index, today, indent):
-        return [f"{path.parent.name}/{path.name}: the planes band is not what {COUNCILS.name} says today "
-                '(the consultation opened or closed?): run --write, or --write --home']
-    return []
+    """[] when the front page's band and pill are what the council index says on `today` (line endings aside)."""
+    page = path.read_text(encoding='utf-8')
+    problems = []
+    for name, begin, end, lines in HOME_PARTS:
+        held = band_held(page, begin, end)
+        if held is None:
+            problems.append(f"{path.name}: the {name}'s two markers must appear exactly once each")
+            continue
+        indent, body = held
+        if body.replace('\r\n', '\n') != band_text(index, today, indent, lines):
+            problems.append(f"{path.parent.name}/{path.name}: the {name} is not what {COUNCILS.name} says today "
+                            '(the consultation opened or closed?): run --write, or --write --home')
+    return problems
 
 
 def write_home(index: dict, today: str, path: Path = HOME) -> bool:
-    """Rewrite the band from the council index; True when the page changed."""
+    """Rewrite the band and the pill from the council index; True when the page changed."""
     raw = path.read_bytes().decode('utf-8')
     crlf = '\r\n' in raw
     page = raw.replace('\r\n', '\n')
-    held = band_held(page)
-    if held is None:
-        raise SystemExit(f'{path.name}: place the two PLANES-BAND markers once each, then --write')
-    indent, body = held
-    want = band_text(index, today, indent)
-    if body == want:
-        return False
-    at = page.index('\n', page.index(BAND_BEGIN)) + 1
-    page = page[:at] + want + page[at + len(body):]
-    path.write_bytes((page.replace('\n', '\r\n') if crlf else page).encode('utf-8'))
-    return True
+    changed = False
+    for name, begin, end, lines in HOME_PARTS:
+        held = band_held(page, begin, end)
+        if held is None:
+            raise SystemExit(f"{path.name}: place the {name}'s two markers once each, then --write")
+        indent, body = held
+        want = band_text(index, today, indent, lines)
+        if body == want:
+            continue
+        at = page.index('\n', page.index(begin)) + 1
+        page = page[:at] + want + page[at + len(body):]
+        changed = True
+    if changed:
+        path.write_bytes((page.replace('\n', '\r\n') if crlf else page).encode('utf-8'))
+    return changed
 
 
 def tracked_index(path: Path = COUNCILS) -> dict:

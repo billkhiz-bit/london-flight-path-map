@@ -179,6 +179,8 @@ export function planesWalk(model, steps = []) {
   return {
     airport: a.name,
     sentence,
+    // The hero's third tile: the commonest one-way kind of day, or nothing if that day has no planes to tell.
+    lead: lead && said(leadWords) ? { figure: shortFigure(lead.value), words: `planes a day, flying ${DIR[lead.kind]}` } : null,
     rows: a.rows.map((r) => ({ kind: r.kind, label: r.label, share: r.share, figure: shortFigure(r.value), bar: r.bar, range: r.range, colour: stepColour(r.value, steps) })),
     foot: `Planes a day over ${model.postcode} from ${a.name}, ${a.period}. Never an average of the three: no day is average.`,
     how: model.how,

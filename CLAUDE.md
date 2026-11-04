@@ -170,6 +170,8 @@ Or just describe what you need, I have full context of this project.
   `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html). A runway lobe
   runs `RUNWAY_LOBE_KM` (15 km), mirrored in index.html. A fit only tests points near its monitors: check
   anything far from every monitor against an independent source (v5.7: the US DOT map caught Manhattan).
+- **`check_flood_georef.py` re-samples a small-sample miss on 16 cells a class before failing** (2026-11-04): at preflight's
+  4 a class one boundary cell is 75%, under the bar, all day (`docs/lessons/flood.md`). The bar stays 80%.
 - **A download's 200 is not the product**: test its magic bytes (FEMA's portal answered a missing county
   product with its page template, 2026-10-20; `docs/lessons/us-cities.md`).
 - **A tile service's 404 is "not cached", never "quiet"**: measure which levels a cache holds before reading
@@ -225,11 +227,12 @@ Or just describe what you need, I have full context of this project.
   (the outlines' own grid, run-length rows; a list of numbers, never a colour-coded picture), placed where the picture
   is; `districtFromGrid` mirrors `build_planes_layer.district_at` line for line; a card only if
   `planes-districts-by-council.json` lists the district (never a guessed link), beside the tap, never a figure.
+  **A builder's new KIND of output needs its own deploy line**: `planes-layer-deploy` syncs named file types, so the
+  first grids never shipped and the card stayed silent (2026-11-03); nothing fails, only the drift check can see it.
 - **`/epc` takes full UK postcodes only** (2026-11-03): a ZIP or a bare district is the caller's 400 and never reaches
   MHCLG (it answered 400, which the Lambda reported as its own 502: 134 of the API's 146 5xx in a day); the map's
   `fetchEpcData` asks only with a full postcode. An upstream 400 for a valid postcode stays a 502: their change, loud.
-- **The front page's lower sections type no figure** (front-page-v3, Bill's mock v8, 2026-11-03; branch until the
-  ~20 Nov read): the walkthrough's steps 02-04 are written by `js/home-sections.mjs` from the hero's own example lookup
+- **The front page's lower sections type no figure** (front-page-v3, Bill's mock v8, live 2026-11-04): the walkthrough's steps 02-04 are written by `js/home-sections.mjs` from the hero's own example lookup
   (`home-engine.mjs` `exampleAnswer()`, one shared pair), the planes step through `planesWalk()` in `js/planes.mjs`
   (bar colours from the layer's `index.json` steps); step 05's picture is MADE from the sample PDF by
   `build_report_still.py` (its `--check` reds once the PDF changes: re-run `--write` after any sample regeneration);
@@ -268,6 +271,23 @@ Or just describe what you need, I have full context of this project.
 - **`d3.v7.min.js` sits at the foot of `<body>` with a matching preload**; `defer` is wrong here.
 - **The top bar folds behind a Menu POPOVER below 680 px** (no script: privacy/terms allow none, area pages carry
   none); every bar is held at 390 and 1366 wide by `tests/front-page.mjs` 16d. A new bar needs the same markup.
+- **The front page's hero is two columns** (front-page-v3 step 2, live 2026-11-04; it ended the ~20 Nov read early, Bill's
+  call, counts frozen on the Desktop): question, search and answer left, the live map right, nothing over it (no
+  `.is-intro`, `data-map-inset` or `inert` any more). The example opens compact: `#ans-tiles` from `exampleFigures()` and
+  `planesWalk().lead`, never typed; `#ans-more` opens the rest in place. The cities sit in `#city-menu` (`#chips` is still
+  their holder; tests go through `pickCity`), and `#map-full` follows the city. The "New" pill goes with the consultation
+  (PLANES-PILL markers, `build_planes_pages.py`). The map's box rule is `.mapwrap > svg`, never `.hero svg`: that one
+  stretched a tick icon over half the page. No plane glides on the hero map (Bill: "isn't clear"; the mock's was dropped).
+- **The developers band's animation shows only what was answered** (Bill's pick C, 2026-11-04): `devAnswer()` builds the
+  JSON and tiles from the example's own response, and `showDev()` rewrites the three samples to that answer's point, so the
+  request on show is the one answered and no lookup is added. Once on arriving, about 4 s (under WCAG 2.2.2's five), never a
+  loop; again on a language change or Replay; at rest and with reduced motion everything shows. A number, its card and the
+  card's figure arrive in one frame, one figure at a time, and the request box never moves (held frame by frame in
+  `tests/front-page.mjs`, all three languages and at 390). The caret stays out of the text's flow, or a long URL re-wraps;
+  typing keeps the whole text in the node, so Copy is never partial.
+- **`tests/test_home_links.py` holds every link the front page makes and every link back to it** (Bill, 2026-11-04):
+  each reaches a tracked file or a page the planes index lists, each fragment an id there (a fragment that misses opens
+  the page at the top, with no error). Links to other sites are checked from the live page after a deploy, never there.
 - **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
   address, never engagement, silent on failure. `stubLiveApi` answers its two lookups; scans wait for it.
 - **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without

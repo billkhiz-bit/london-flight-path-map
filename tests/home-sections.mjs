@@ -10,7 +10,7 @@
 //   node tests/home-sections.mjs
 
 import assert from 'node:assert/strict';
-import { airPanel, noiseRows } from '../js/home-sections.mjs';
+import { airPanel, devAnswer, exampleFigures, noiseRows } from '../js/home-sections.mjs';
 
 // /v1/environment for TW9 3PZ, as captured 2026-11-03 (trimmed to what the page reads).
 const ENV = {
@@ -69,6 +69,50 @@ check('air: no provenance, no model row (never a figure the API did not call mod
 check('air: a hostile name is escaped inside the chart', () => {
   const a = airPanel(ENV, PROV, { ...SENSOR, name: '<img src=x onerror=alert(1)>' }, null);
   assert.doesNotMatch(a.svg, /<img/);
+});
+
+check('example tiles: the aircraft and air figures, from the answer', () => {
+  const tiles = exampleFigures({ aircraftNoiseLdenDb: 57.2, aircraftNoiseWhoGuidelineDb: 45, no2AnnualMeanUgm3: 17 });
+  assert.deepEqual(tiles, [{ figure: '57.2 dB', words: 'aircraft noise' }, { figure: '17 µg/m³', words: 'NO₂ in the air' }]);
+});
+
+check('example tiles: an estimate says it is one', () => {
+  const [tile] = exampleFigures({ aircraftQuietCoverage: 'estimated', aircraftQuietEstimated: 7 });
+  assert.equal(tile.figure, '3.0 / 10');
+  assert.match(tile.words, /estimate from the routes, not measured/);
+});
+
+check('example tiles: a figure the answer lacks is no tile, never a zero', () => {
+  assert.deepEqual(exampleFigures({ aircraftQuietCoverage: 'outside' }), []);
+  assert.deepEqual(exampleFigures(null), []);
+  assert.deepEqual(exampleFigures({ no2AnnualMeanUgm3: 0 }), [{ figure: '0 µg/m³', words: 'NO₂ in the air' }], 'a real zero stays');
+});
+
+const DEV = {
+  location: { postcode: 'TW9 3PZ' },
+  environment: { aircraftNoiseLdenDb: 57.2, roadNoiseLdenDb: 50.5, no2AnnualMeanUgm3: 17 },
+  provenance: { 'environment.no2AnnualMeanUgm3': { sources: ['defra-pcm'], method: 'modelled', period: '2024' } },
+  sourceIndex: { 'defra-pcm': { publisher: 'DEFRA' } },
+};
+
+check('developers band: the lines are valid JSON holding the response\'s own values', () => {
+  const { lines } = devAnswer(DEV);
+  assert.deepEqual(JSON.parse(lines.join('\n')), { location: DEV.location, environment: DEV.environment });
+});
+
+check('developers band: each figure says who made it and how, from the response\'s provenance', () => {
+  const { figures } = devAnswer(DEV);
+  assert.deepEqual(figures.map((f) => f.figure), ['57.2 dB', '50.5 dB', '17 µg/m³']);
+  assert.equal(figures[2].credit, 'DEFRA, modelled, 2024');
+  assert.equal(figures[0].credit, '', 'no provenance, no credit: never a guessed one');
+});
+
+check('developers band: a value the answer lacks is no line and no tile, never a zero', () => {
+  const dev = devAnswer({ environment: { no2AnnualMeanUgm3: 17 } });
+  assert.deepEqual(dev.figures.map((f) => f.key), ['no2AnnualMeanUgm3']);
+  assert.deepEqual(JSON.parse(dev.lines.join('\n')), { environment: { no2AnnualMeanUgm3: 17 } });
+  assert.equal(devAnswer({ environment: {} }), null);
+  assert.equal(devAnswer(null), null);
 });
 
 console.log(`home sections: ${passed} checks passed`);

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sky Score: how loud are the planes where you want to live?</title>
-    <meta name="description" content="Type a postcode and get the official aircraft and road noise and air quality figures for that street, with the flight routes that pass it. Official public data for UK city regions, New York and the San Francisco Bay Area." />
+    <meta name="description" content="Type a postcode and get the official aircraft and road noise and air quality figures for that street, with the flight routes that pass it. Official public data for UK city regions, New York and the San Francisco Bay Area. Free to search, no cookies, no ads." />
     <link rel="canonical" href="https://skyscore.co.uk/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Sky Score" />
@@ -95,10 +95,14 @@
       nav.top-nav a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
       nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: #d35a12; text-decoration-thickness: 3px; text-underline-offset: 7px; }
 
-      /* The hero IS the map. Everything else floats on it. */
-      .hero { position: relative; margin: 0 var(--gutter); height: min(72vh, 760px); min-height: 520px; border-radius: 18px; overflow: hidden; background: var(--water); }
-      .hero svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
-      .hero svg:active { cursor: grabbing; }
+      /* Two columns (front-page-v3 step 2, 2026-11-04, Bill's mock v8): the question, the search and the answer on the
+         left, the live map beside them with nothing over it. It replaces "ask first", the card centred on a faded map,
+         and the floating panel the map had to fit itself around. The column holds still while a long answer scrolls. */
+      .hero { position: relative; margin: 0 var(--gutter); display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 3vw, 56px); align-items: start; }
+      .mapcol { position: sticky; top: 16px; min-width: 0; }
+      .mapwrap { position: relative; height: min(calc(100vh - 150px), 680px); min-height: 480px; border-radius: 18px; overflow: hidden; background: var(--water); }
+      .mapwrap > svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+      .mapwrap > svg:active { cursor: grabbing; }
       /* Strokes keep their on-screen width at any zoom; the engine counter-scales the marks. */
       .hero svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; vector-effect: non-scaling-stroke; transition: fill 0.15s; cursor: pointer; }
       .hero svg .boro:hover, .hero svg .boro.is-selected { fill: #ffe6cf; }
@@ -131,12 +135,22 @@
       .hero svg.has-streets .boro:hover, .hero svg.has-streets .boro.is-selected { fill-opacity: 0.45; }
       .os-credit { position: absolute; left: 24px; bottom: 6px; margin: 0; font-size: 10px; color: var(--dark); background: rgba(251, 250, 248, 0.85); padding: 1px 6px; border-radius: 4px; pointer-events: none; }
 
-      .panel { position: absolute; z-index: 3; left: 24px; top: 24px; width: min(520px, calc(100% - 48px)); max-height: calc(100% - 48px); overflow-y: auto; background: rgba(251, 250, 248, 0.94); backdrop-filter: blur(6px); border-radius: 16px; padding: 24px 24px 20px; box-shadow: 0 10px 30px rgba(20, 20, 20, 0.12); }
-      .panel h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 10px; text-wrap: balance; }
-      /* Once there is an answer or a card, the question makes way for it so the result stays on one screen. */
-      .panel.has-result h1 { font-size: 22px; margin-bottom: 8px; }
-      .panel.has-result .lead, .panel.has-result .try { display: none; }
-      .panel p.lead { margin: 0 0 16px; color: var(--mid); font-size: 16px; max-width: 46ch; }
+      .panel { min-width: 0; padding-top: 10px; }
+      .panel h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 3.9vw, 56px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 12px; text-wrap: balance; }
+      /* Once there is a visitor's own answer or a card, the question makes way for it so the result stays on one screen.
+         The example does not: it is a line of tiles, and the question is still the page's. */
+      .panel.has-result:not(.is-example) h1 { font-size: 22px; margin-bottom: 8px; }
+      .panel.has-result:not(.is-example) .lead, .panel.has-result:not(.is-example) .promises, .panel.has-result:not(.is-example) .news { display: none; }
+      .panel p.lead { margin: 0 0 18px; color: var(--mid); font-size: 17px; line-height: 1.5; max-width: 46ch; }
+      /* The "New" pill: written by build_planes_pages.py between PLANES-PILL markers, so it goes with the consultation. */
+      .news { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; margin: 0 0 16px; padding: 5px 12px 5px 5px; font-size: 13px; line-height: 1.3; color: var(--dark); text-decoration: none; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; }
+      .news:hover { border-color: var(--dark); }
+      .news b { flex: none; padding: 4px 8px; font: 600 11px var(--font-mono); letter-spacing: 0.03em; text-transform: uppercase; background: var(--orange); color: var(--dark); border-radius: 999px; }
+      .news i { flex: none; font-style: normal; color: var(--mid); }
+      /* The promise as a selling point (Bill, 2026-11-03): true per privacy.html, unboxed so it never reads as a control. */
+      .promises { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; margin: 16px 0 0; padding: 0; }
+      .promises li { display: inline-flex; align-items: center; gap: 8px; font: 600 14px var(--font-body); color: var(--dark); }
+      .promises svg { flex: none; }
       .field-label { display: block; margin: 0 0 6px; font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
       form.check { display: flex; gap: 8px; }
       form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
@@ -152,16 +166,9 @@
       /* "Check yours" (answer first, 2026-10-23) leaves the box no room for its hint on the narrowest phones, so there
          the button says "Check" and the box's "Your postcode" carries the "yours". */
       @media (max-width: 360px) { form.check button { padding: 14px 16px; } form.check button .yours { display: none; } }
-      .try { margin: 10px 0 0; font-size: 13px; color: var(--mid); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-      .try button { font: 500 13px var(--font-mono); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; color: var(--dark); }
-      .try button:hover { border-color: var(--dark); }
       .status { margin: 10px 0 0; font-size: 14px; color: var(--mid); min-height: 1.4em; }
-      /* "Or explore the map" (2026-10-06): the way to the map before any search. Gone once
-         the page has been used, when the map is already the tool. */
-      .explore { margin: 12px 0 0; font-size: 15px; }
-      .hero:not(.is-intro) .explore, .panel.has-result .explore { display: none; }
       /* Where the search covers (2026-10-19), generated by scripts/build_coverage_strip.py: one line that
-         opens a plain list (not chips: nothing in it is clickable yet). Gone with "Try" once an answer shows. */
+         opens a plain list (not chips: nothing in it is clickable yet). Under the map since front-page-v3. */
       .covers { margin: 10px 0 0; font-size: 13px; line-height: 1.6; color: var(--mid); }
       .covers summary { cursor: pointer; padding: 4px 0; color: var(--dark); }
       .covers[open] { font-size: 12px; }
@@ -170,13 +177,22 @@
       .covers li { display: inline; }
       .covers li + li::before { content: " \00B7 "; }
       .covers b { font-weight: 600; color: var(--dark); }
-      .panel.has-result .covers { display: none; }
-      /* Answer first (2026-10-23): the example is labelled as one, and the coverage line stays while it is open,
-         so a visitor from a place we do not cover still sees that before typing. */
+      /* Answer first (2026-10-23), compact since front-page-v3: the example is labelled as one, and a visit opens on its
+         three figures as tiles ("they instantly tell you what the product is"), the first thing a visitor sees of what a
+         search gives. The engine writes them from the live answer; "Show the full example" opens the rest in place. */
       .ans-example { margin: 2px 0 6px; font-size: 15px; line-height: 1.45; color: var(--dark); }
       .ans-pc .ex { color: var(--orange-ink); }
-      .panel.has-result.is-example .covers { display: block; }
       .panel.is-example .status:empty { min-height: 0; margin: 0; }
+      .panel.is-example .answer { margin-top: 18px; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; }
+      .panel.is-example:not(.is-full) .answer > :not(#ans-title, #ans-tiles, #ans-show) { display: none; }
+      .ans-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0 4px; }
+      .ans-tiles[hidden] { display: none; }
+      .ans-tile { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; font: 500 12.5px/1.3 var(--font-body); color: var(--mid); background: var(--tint); border-radius: 10px; }
+      .ans-tile b { font: 700 19px/1.15 var(--font-display); letter-spacing: -0.01em; color: var(--dark); }
+      .ans-show { margin: 8px 0 0; font-size: 13px; }
+      .ans-show[hidden] { display: none; }
+      .ans-show button { min-height: 24px; padding: 2px 0; font: 600 13px var(--font-body); color: var(--orange-ink); background: none; border: 0; cursor: pointer; }
+      .ans-show button:hover { text-decoration: underline; }
       /* Two tabs (2026-10-14): "Check a postcode" and "Find areas", as a two-button switch of equal
          weight. The first version was an underline with the second tab in grey, and read as a caption:
          Bill asked where the options were. The chosen one is filled, as a chosen city chip is. */
@@ -319,12 +335,25 @@
       /* The routes the record lacks, under the list (M-4): never let an undrawn route read as absent. */
       .borough .route-gaps { margin: 6px 0 0; }
 
-      .chips { position: absolute; right: 24px; bottom: 20px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: min(56%, calc(100% - 48px)); }
-      .chips button, .chips a { font: 500 13px var(--font-body); padding: 7px 12px; border-radius: 999px; border: 1px solid transparent; background: rgba(251, 250, 248, 0.92); color: var(--dark); cursor: pointer; text-decoration: none; }
-      .chips button[aria-pressed='true'] { background: var(--dark); color: #fff; }
+      /* The city switch: one "Map: London" control, with #chips (the twelve cities) inside it. It stands over the map's
+         corner and opens upward, so it never covers the routes until it is asked to. */
+      .citymenu { position: absolute; left: 14px; bottom: 14px; z-index: 2; }
+      .citymenu summary { list-style: none; display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 8px 14px; font: 500 13px var(--font-body); color: var(--dark); background: var(--paper); border: 1px solid var(--dark); border-radius: 999px; cursor: pointer; white-space: nowrap; }
+      .citymenu summary::-webkit-details-marker { display: none; }
+      /* A closed details keeps its children's layout boxes in current Chrome, so the same state must mean the same in every tool. */
+      .citymenu:not([open]) > :not(summary) { display: none; }
+      .citymenu summary b { font-weight: 600; }
+      .chips { position: absolute; left: 0; bottom: calc(100% + 8px); display: flex; gap: 6px; flex-wrap: wrap; width: min(340px, calc(100vw - 72px)); max-height: 400px; overflow-y: auto; padding: 10px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgba(20, 20, 20, 0.16); }
+      .chips button, .chips a { font: 500 13px var(--font-body); padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--dark); cursor: pointer; text-decoration: none; }
+      .chips button:hover { border-color: var(--dark); }
+      .chips button[aria-pressed='true'] { background: var(--dark); border-color: var(--dark); color: #fff; }
       .chips a { border-color: var(--dark); }
+      .map-full { position: absolute; right: 14px; bottom: 14px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 8px 14px; font: 500 13px var(--font-body); color: #fff; background: var(--dark); border-radius: 999px; text-decoration: none; white-space: nowrap; }
+      .map-full:hover { background: #2a2a28; }
+      /* Under the map: where the search covers. */
+      .map-key { margin: 2px 2px 0; }
       /* The legend is the layer control: each row is a button that shows or hides what it names. */
-      .legend { position: absolute; right: 24px; top: 20px; max-width: 48%; font-size: 12px; color: var(--mid); background: rgba(251, 250, 248, 0.92); padding: 6px 8px; border-radius: 10px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+      .legend { position: absolute; left: 12px; top: 12px; max-width: calc(100% - 72px); font-size: 12px; color: var(--mid); background: var(--paper); border: 1px solid var(--line); padding: 3px 6px; border-radius: 12px; box-shadow: 0 4px 14px rgba(20, 20, 20, 0.08); display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
       .legend button { font: 500 12px var(--font-body); color: var(--dark); background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 5px 8px; cursor: pointer; display: inline-flex; align-items: center; min-height: 28px; }
       .legend button[aria-pressed='false'] { color: var(--mid); text-decoration: line-through; }
       .legend button:hover:not(:disabled) { border-color: var(--line); background: #fff; }
@@ -336,7 +365,7 @@
       .legend .short { display: none; }
       .legend .ramp { display: inline-flex; margin-right: 6px; vertical-align: middle; }
       .legend .ramp b { width: 9px; height: 10px; display: block; }
-      .zoom { position: absolute; right: 24px; top: 68px; display: flex; flex-direction: column; gap: 4px; }
+      .zoom { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 4px; }
       .zoom button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: rgba(251, 250, 248, 0.95); color: var(--dark); font: 600 18px var(--font-body); cursor: pointer; }
       .zoom button:hover:not(:disabled) { border-color: var(--dark); }
       .zoom button:disabled { opacity: 0.4; cursor: default; }
@@ -553,56 +582,56 @@
          decide whether the panel covers the map; tests/preview-home.mjs holds the two
          to one string. */
       @media (max-width: 1279px), (max-height: 500px) {
-        .hero { margin: 0 12px; height: auto; min-height: 0; display: flex; flex-direction: column; border-radius: 14px; }
+        .hero { margin: 0 12px; display: flex; flex-direction: column; align-items: stretch; gap: 0; }
         /* On a phone the question, the search and the answer come first and the map follows: measured, the answer otherwise opened a whole screen below the box. */
-        .panel { position: static; order: -1; width: auto; border-radius: 0; box-shadow: none; backdrop-filter: none; background: var(--paper); padding: 20px 18px 16px; }
-        .hero .mapwrap { position: relative; height: 52vh; min-height: 320px; }
+        .panel { order: -1; padding: 12px 6px 16px; }
+        .panel h1 { font-size: clamp(28px, 4.6vw, 42px); }
+        .panel p.lead { font-size: 16px; margin-bottom: 14px; }
+        .mapcol { position: static; }
+        .mapwrap { height: 52vh; min-height: 320px; border-radius: 14px; }
         /* The routes summary's focus ring cleared its label by -5 px here (audit 2026-10-09 M-13). */
         .borough .routes-across summary { margin-top: 6px; }
-        .hero svg { position: absolute; }
-        /* A scroll strip, as the live site's city chips are on a phone: wrapped, twelve chips stood taller than the map and reached up into the panel. */
-        .chips { left: 12px; right: 12px; bottom: 12px; max-width: none; flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 2px; }
-        .chips button, .chips a { flex: 0 0 auto; }
+        /* The city switch stands above "Open the full map": side by side, the longest city's name reached it at 390 px. */
+        .citymenu { left: 12px; bottom: 58px; }
+        /* The map is 320 px at its smallest; the switch stands 106 px up it. Short of room, the list scrolls in its own box. */
+        .chips { max-height: max(196px, calc(52vh - 118px)); }
+        .map-full { right: 12px; bottom: 12px; }
         /* The layer buttons stay: on a phone they are the only way to see the map under the noise picture. Short labels there. */
         .legend { left: 12px; right: 60px; top: 12px; max-width: none; padding: 4px 6px; }
         .legend .long { display: none; }
         .legend .short { display: inline; }
         .legend .ramp b { width: 6px; height: 9px; }
-        .zoom { right: 12px; top: 12px; }
-        /* Above the city strip, which runs along the bottom edge on a phone. */
-        .os-credit { left: 12px; bottom: 52px; }
+        /* Beside "Open the full map", clear of the city switch above it. */
+        .os-credit { left: 12px; bottom: 16px; }
         .row { grid-template-columns: 96px 1fr 84px; }
         .borough .facts div { grid-template-columns: 1fr; gap: 0; }
-        .panel { max-height: none; overflow: visible; }
         /* The map is below the list on a stacked layout: a way down to it. */
         .find-mapjump { display: block; }
       }
-      /* ASK FIRST, THEN THE TOOL (Bill, 2026-10-05: "combinations of v2 and v3").
-         Before anyone has searched or touched the map, the page is v3: the question and
-         a large search, centred over the map faded behind it, with the map's own
-         controls out of the way. The first search, tap, city or deep link removes
-         .is-intro and the page is v2: the panel at the side with the answer, the map
-         and its pin beside it, on one screen. Wide screens only: below 1280px and on
-         short screens the panel already stacks above the map (STACKED in the engine),
-         which is the ask-first order there. The query below is STACKED's complement. */
-      @media (min-width: 1280px) and (min-height: 501px) {
-        .hero.is-intro .panel { left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(640px, calc(100% - 48px)); text-align: center; padding: 36px 40px; }
-        .hero.is-intro .panel h1 { font-size: clamp(34px, 3.6vw, 52px); }
-        .hero.is-intro .panel p.lead { margin-left: auto; margin-right: auto; }
-        .hero.is-intro form.check { justify-content: center; }
-        .hero.is-intro .try { justify-content: center; }
-        .hero.is-intro .explore { text-align: center; }
-        .hero.is-intro .covers { text-align: center; }
-        .hero.is-intro .tabs { justify-content: center; }
-        /* The empty status line collapses rather than leaving a gap; it stays in the page,
-           because a live region added at the moment it speaks can miss what it says. */
-        .hero.is-intro .status:empty { min-height: 0; margin: 0; }
-        .hero.is-intro svg { opacity: 0.32; filter: saturate(0.5); transition: opacity 0.3s; }
-        /* visibility, not display: the engine still measures them, and hidden they leave the tab order. */
-        .hero.is-intro .legend, .hero.is-intro .zoom, .hero.is-intro .chips, .hero.is-intro .os-credit { visibility: hidden; }
-      }
-      @media (prefers-reduced-motion: reduce) { .hero.is-intro svg { transition: none; } }
       @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+      /* The answer under the request (js/home-sections.mjs): at rest everything shows; a run hides it and brings it back. */
+      .dev-wire { display: flex; align-items: center; gap: 10px; height: 30px; margin: 0 0 0 20px; font: 500 12px var(--font-mono); color: #b9b6ae; }
+      .dev-wire::before { content: ''; width: 2px; height: 100%; background: var(--orange); transform-origin: top; transition: transform 0.25s; }
+      .dev-run.is-waiting:not(.is-answered) .dev-wire { color: transparent; }
+      .dev-run.is-waiting:not(.is-answered) .dev-wire::before { transform: scaleY(0); }
+      .dev-ln { display: block; min-height: 1.6em; transition: opacity 0.2s, transform 0.2s; }
+      .dev-run.is-waiting .dev-ln:not(.is-on) { opacity: 0; transform: translateY(6px); }
+      .dev-n { font-weight: 600; color: #ffb27a; }
+      .dev-n.is-lit { color: #000; background: #ffb27a; border-radius: 3px; box-shadow: 0 0 0 2px #ffb27a; }
+      .dev-rest { visibility: hidden; }
+      /* Out of the text's flow on purpose: in it, the caret is a place to break, and a long URL re-wraps as it types. */
+      .dev-caret { position: absolute; width: 8px; height: 1.05em; margin-top: 0.2em; background: var(--orange); }
+      .dev-page { margin-top: 10px; padding: 10px 12px 12px; color: var(--dark); background: var(--paper); border-radius: 10px; }
+      .dev-page-head { margin: 0 0 8px; font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      .dev-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .dev-tiles .ans-tile { padding: 9px 10px; }
+      .dev-tiles .ans-tile b { min-height: 1.15em; font-size: 18px; }
+      .dev-tiles .ans-tile b.is-empty { visibility: hidden; }
+      .dev-tiles .ans-tile.is-lit { box-shadow: inset 0 0 0 2px var(--orange); }
+      .dev-tiles .ans-tile small { font-size: 11px; }
+      /* The free quota: backend/tests/test_handlers.py holds this figure to the plan the API enforces. */
+      .dev-free { margin: 14px 0 0; font-size: 15px; color: var(--mid); }
+      .dev-free b { font: 700 22px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--dark); }
       /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
          fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
          pages carry none), and a browser without popovers keeps the plain bar. On a wide screen the closed popover
@@ -622,7 +651,7 @@
       }
     </style>
   </head>
-  <body data-map-inset='{"left":566,"top":0,"right":0,"bottom":0}'>
+  <body>
     <a class="skip" href="#pc">Skip to the search</a>
     <header class="top">
       <a class="brand" href="/">Sky Score</a>
@@ -639,14 +668,16 @@
     </header>
 
     <main>
-      <section class="hero is-intro" aria-label="Map, postcode check and area finder">
+      <section class="hero" aria-label="Postcode check, area finder and map">
         <!-- The panel FIRST in the page (audit 2026-10-05 I-5): after the map it was
              reached after thirty-odd map controls, and on a stacked layout focus ran
-             map-then-panel while the eye ran panel-then-map. Its z-index keeps it
-             above the positioned map on a wide screen, as DOM order did. -->
+             map-then-panel while the eye ran panel-then-map. -->
         <div class="panel">
+          <!-- PLANES-PILL:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->
+          <a class="news" href="#planes-band"><b>New</b>Heathrow&rsquo;s consultation: the planes over your council <i aria-hidden="true">&rarr;</i></a>
+          <!-- PLANES-PILL:END -->
           <h1>How loud are the planes where you want to live?</h1>
-          <p class="lead">Type a postcode or a place and get the official noise and air figures for that street, with the flight routes that pass it.</p>
+          <p class="lead">Aircraft and road noise and air quality for your street, and flood risk for your area, from official data.</p>
           <!-- Two tabs (2026-10-14): the postcode check, and Find areas, which shades the council areas
                that fit your choices on the map beside it. Hidden until the engine has the open-data
                rows to search, so without them the panel is the postcode check alone. -->
@@ -665,21 +696,24 @@
             <datalist id="pc-places"></datalist>
             <button type="submit">Check<span class="yours"> yours</span></button>
           </form>
-          <p class="try">Try: <button type="button" data-pc="TW9 3PZ">TW9 3PZ</button><button type="button" data-pc="M22 5RX">M22 5RX</button><button type="button" data-pc="B33 0YS">B33 0YS</button><button type="button" data-pc="Camden">Camden</button><button type="button" data-pc="Palo Alto">Palo Alto</button></p>
-          <p class="explore"><button type="button" class="linkish" id="explore-map">Or explore the map</button></p>
-          <!-- COVERAGE-STRIP:BEGIN (scripts/build_coverage_strip.py --write; never edit by hand) -->
-          <details class="covers"><summary>Which places does it cover?</summary><ul><li>Bristol <b>4</b></li><li>Cardiff <b>4</b></li><li>Greater Manchester <b>10</b></li><li>Greater Norwich <b>3</b></li><li>Leicester <b>8</b></li><li>London <b>33</b></li><li>Merseyside <b>5</b></li><li>Nottingham <b>4</b></li><li>South Yorkshire <b>4</b></li><li>Teesside <b>5</b></li><li>Tyne and Wear <b>5</b></li><li>West Midlands <b>7</b></li><li>West Yorkshire <b>5</b></li></ul> council areas, plus New York's 5 boroughs and 50 Bay Area cities (facts only).</details>
-          <!-- COVERAGE-STRIP:END -->
+          <ul class="promises">
+            <li><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="10" fill="#f27d26" /><path d="M5.6 10.4l2.9 2.9 5.9-6.2" fill="none" stroke="#141414" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>Free to search</li>
+            <li><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="10" fill="#f27d26" /><path d="M5.6 10.4l2.9 2.9 5.9-6.2" fill="none" stroke="#141414" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>No cookies</li>
+            <li><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="10" fill="#f27d26" /><path d="M5.6 10.4l2.9 2.9 5.9-6.2" fill="none" stroke="#141414" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>No ads</li>
+          </ul>
           <p class="status" id="status" aria-live="polite"></p>
           <div class="want" id="want-country" aria-live="polite" hidden></div>
           <div class="answer" id="answer">
             <!-- Text from the first answer on; never empty (html-validate), and hidden with the answer until then. -->
             <h2 class="ans-pc" id="ans-title">Your answer</h2>
+            <!-- The example's three figures (front-page-v3): written by the engine from the live answer, never typed. -->
+            <div class="ans-tiles" id="ans-tiles" hidden></div>
+            <p class="ans-show" id="ans-show" hidden><button type="button" id="ans-more" aria-expanded="false">Show the full example</button></p>
             <!-- Answer first (2026-10-23): a plain visit opens on this postcode's answer, its heading reads "Example: ..."
                  and this line says whose street it is and what to do. Made plainer the same day (Bill: a small capitals
                  label above the postcode read as the page showing him TW9 3PZ's scores). The postcode lives here,
                  beside the words that describe it, so the two cannot disagree. -->
-            <p class="ans-example" id="ans-example" data-pc="TW9 3PZ" hidden>A street in Kew, under Heathrow&rsquo;s arrivals. Type your postcode above to see yours.</p>
+            <p class="ans-example" id="ans-example" data-pc="TW9 3PZ" data-place="Kew" hidden>A street in Kew, under Heathrow&rsquo;s arrivals. Type your postcode above to see yours.</p>
             <p class="where" id="ans-where"></p>
             <div class="rows" id="ans-rows"></div>
             <div class="planes" id="ans-planes" hidden></div>
@@ -718,25 +752,37 @@
           </div>
           <div class="borough" id="borough" aria-live="polite"></div>
         </div>
-        <div class="mapwrap">
-          <!-- A group, not an image: each borough inside is a button that opens its figures. -->
-          <svg id="map" role="group" aria-label="Map of the selected city. Each council area is a button that opens its figures; the lines are the published approach and departure routes."></svg>
-          <div class="tip" id="tip" aria-hidden="true"></div>
-          <div class="legend" role="group" aria-label="Map layers">
-            <button type="button" id="toggle-lines" aria-pressed="true"><i></i><span class="long">Approach </span><i class="dash" style="margin-left:6px"></i><span class="long">Departure</span><span class="short">Routes</span></button>
-            <button type="button" id="toggle-noise" aria-pressed="true"><span class="ramp" id="ramp"></span><span class="long">Aircraft noise, quieter to louder</span><span class="short">Noise</span></button>
-            <!-- A trial (2026-10-03): an Ordnance Survey street background. Hidden unless this device holds an OS Data Hub key; see the engine. -->
-            <button type="button" id="toggle-streets" aria-pressed="false" hidden>Streets</button>
-            <!-- The Find tab (2026-10-14): the areas that fit your choices. Shown while there are some to shade. -->
-            <button type="button" id="toggle-fit" aria-pressed="true" hidden><span class="fit-swatch"></span><span class="long">Fits your choices</span><span class="short">Fits</span></button>
+        <div class="mapcol">
+          <div class="mapwrap">
+            <!-- A group, not an image: each borough inside is a button that opens its figures. -->
+            <svg id="map" role="group" aria-label="Map of the selected city. Each council area is a button that opens its figures; the lines are the published approach and departure routes."></svg>
+            <div class="tip" id="tip" aria-hidden="true"></div>
+            <div class="legend" role="group" aria-label="Map layers">
+              <button type="button" id="toggle-lines" aria-pressed="true"><i></i><span class="long">Approach </span><i class="dash" style="margin-left:6px"></i><span class="long">Departure</span><span class="short">Routes</span></button>
+              <button type="button" id="toggle-noise" aria-pressed="true"><span class="ramp" id="ramp"></span><span class="long">Aircraft noise, quieter to louder</span><span class="short">Noise</span></button>
+              <!-- A trial (2026-10-03): an Ordnance Survey street background. Hidden unless this device holds an OS Data Hub key; see the engine. -->
+              <button type="button" id="toggle-streets" aria-pressed="false" hidden>Streets</button>
+              <!-- The Find tab (2026-10-14): the areas that fit your choices. Shown while there are some to shade. -->
+              <button type="button" id="toggle-fit" aria-pressed="true" hidden><span class="fit-swatch"></span><span class="long">Fits your choices</span><span class="short">Fits</span></button>
+            </div>
+            <p class="os-credit" id="os-credit" hidden>Contains OS data &copy; Crown copyright and database right 2026</p>
+            <div class="zoom" role="group" aria-label="Zoom">
+              <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+              <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+              <button type="button" id="zoom-reset" aria-label="Reset the view" disabled>&#8634;</button>
+            </div>
+            <!-- The city switch (mock v8: "Map: London"). A details element, so it needs no script to open; #chips stays the one holder of the cities. -->
+            <details class="citymenu" id="city-menu">
+              <summary>Map: <b id="city-name">London</b> <span aria-hidden="true">&#9662;</span></summary>
+              <div class="chips" id="chips" role="group" aria-label="Choose a city"></div>
+            </details>
+            <a class="map-full" id="map-full" href="/map/">Open the full map <span aria-hidden="true">&#8599;</span></a>
           </div>
-          <p class="os-credit" id="os-credit" hidden>Contains OS data &copy; Crown copyright and database right 2026</p>
-          <div class="zoom" role="group" aria-label="Zoom">
-            <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
-            <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
-            <button type="button" id="zoom-reset" aria-label="Reset the view" disabled>&#8634;</button>
+          <div class="map-key">
+            <!-- COVERAGE-STRIP:BEGIN (scripts/build_coverage_strip.py --write; never edit by hand) -->
+            <details class="covers"><summary>Which places does it cover?</summary><ul><li>Bristol <b>4</b></li><li>Cardiff <b>4</b></li><li>Greater Manchester <b>10</b></li><li>Greater Norwich <b>3</b></li><li>Leicester <b>8</b></li><li>London <b>33</b></li><li>Merseyside <b>5</b></li><li>Nottingham <b>4</b></li><li>South Yorkshire <b>4</b></li><li>Teesside <b>5</b></li><li>Tyne and Wear <b>5</b></li><li>West Midlands <b>7</b></li><li>West Yorkshire <b>5</b></li></ul> council areas, plus New York's 5 boroughs and 50 Bay Area cities (facts only).</details>
+            <!-- COVERAGE-STRIP:END -->
           </div>
-          <div class="chips" id="chips" role="group" aria-label="Choose a city"></div>
         </div>
       </section>
 
@@ -871,6 +917,7 @@
               <p class="eyebrow">For developers</p>
               <h2 id="dev">The same figures, one request away.</h2>
               <p class="lede">Send a postcode or a point and get every figure back with its source, as JSON. Noise and air at any point need no key.</p>
+              <p class="dev-free"><b>10,000</b> lookups a month on the free tier</p>
               <p class="go-row"><a class="pill dark" href="/api/">Get a key and read the docs <i aria-hidden="true"></i></a><a class="also" href="/score-demo/api-docs.html">Full API reference</a></p>
             </div>
             <div class="code">
@@ -889,7 +936,18 @@ print(env['no2AnnualMeanUgm3'], env['roadNoiseLdenDb'])</pre></div>
               <div role="tabpanel" id="code-js" aria-labelledby="code-tab-js" hidden><pre tabindex="0" role="region" aria-label="The request in JavaScript" id="dev-env-js">const r = await fetch('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860');
 const { environment } = await r.json();
 console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></div>
-              <p class="code-foot"><button type="button" class="copy" data-copy="dev-env" aria-label="Copy the curl request">Copy</button><span class="copy-status" id="copy-status" aria-live="polite"></span></p>
+              <!-- The answer (Bill's pick C of the API mock-up, 2026-11-04): written by js/home-sections.mjs from the example's own
+                   response, never typed, and hidden until then, so without it the band is the request alone. -->
+              <div class="dev-run" id="dev-run" hidden>
+                <p class="dev-wire" aria-hidden="true">200 OK</p>
+                <pre tabindex="0" role="region" aria-label="The response, shortened" id="dev-res"></pre>
+                <div class="dev-page">
+                  <p class="dev-page-head">On your page</p>
+                  <div class="dev-tiles" id="dev-tiles"></div>
+                </div>
+                <p class="code-note">Shortened to fit: the full answer names the source of every figure.</p>
+              </div>
+              <p class="code-foot"><button type="button" class="copy" data-copy="dev-env" aria-label="Copy the curl request">Copy</button><button type="button" class="copy" id="dev-replay" aria-label="Replay the request and its answer" hidden>Replay</button><span class="copy-status" id="copy-status" aria-live="polite"></span></p>
               <p class="code-note">Noise and air at a point in Kew: no key needed.</p>
             </div>
           </div>

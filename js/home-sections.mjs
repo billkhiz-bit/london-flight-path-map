@@ -60,6 +60,56 @@ export function noiseRows(e, provenance = {}) {
 }
 
 /**
+ * The hero's example, compact: { figure, words } tiles for aircraft noise and nitrogen dioxide, from the same answer the
+ * full example shows. The aircraft figure is noiseRows()'s, so an estimate from the routes says it is one. A figure the
+ * answer lacks is no tile, never a zero. The planes tile joins from planesWalk(), when its files arrive.
+ */
+export function exampleFigures(e) {
+  const tiles = [];
+  const aircraft = noiseRows(e)?.rows.find((r) => r.label === 'Aircraft');
+  if (aircraft) tiles.push({ figure: aircraft.figure, words: aircraft.sub ? `aircraft noise, ${aircraft.sub}` : 'aircraft noise' });
+  if (finite(e?.no2AnnualMeanUgm3)) tiles.push({ figure: `${e.no2AnnualMeanUgm3} µg/m³`, words: 'NO₂ in the air' });
+  return tiles;
+}
+
+// The figures the developers band shows, in the order the response's own lines put them.
+const DEV_FIELDS = [
+  ['aircraftNoiseLdenDb', (v) => `${v} dB`, 'aircraft noise'],
+  ['roadNoiseLdenDb', (v) => `${v} dB`, 'road noise'],
+  ['no2AnnualMeanUgm3', (v) => `${v} µg/m³`, 'NO₂ in the air'],
+];
+const devCredit = (answer, key) => {
+  const p = answer.provenance?.[`environment.${key}`];
+  return [answer.sourceIndex?.[p?.sources?.[0]]?.publisher, p?.method, p?.period].filter(Boolean).join(', ');
+};
+
+/**
+ * The developers band's answer: { lines, figures } from a /v1/environment response, shortened to what fits. The lines are
+ * the response's own values as JSON; each figure says who made it and how, from the response's provenance. A value the
+ * answer lacks is no line and no tile, never a zero; with none of them, null, and the band stays the request alone.
+ */
+export function devAnswer(answer) {
+  const e = answer?.environment;
+  if (!e) return null;
+  const figures = DEV_FIELDS.filter(([key]) => finite(e[key])).map(([key, figure, words]) => ({
+    key, value: e[key], figure: figure(e[key]), words, credit: devCredit(answer, key),
+  }));
+  if (!figures.length) return null;
+  const postcode = answer.location?.postcode;
+  return {
+    figures,
+    lines: [
+      '{',
+      ...(postcode ? [`  "location": { "postcode": ${JSON.stringify(postcode)} },`] : []),
+      '  "environment": {',
+      ...figures.map((f, i) => `    "${f.key}": ${f.value}${i < figures.length - 1 ? ',' : ''}`),
+      '  }',
+      '}',
+    ],
+  };
+}
+
+/**
  * Step 03: { svg, credits: [{ text, href }] } for nitrogen dioxide, or null with nothing measured or modelled. DEFRA's
  * model joins only when the answer's provenance calls it modelled on a grid (as the full map's panel reads it: never
  * called measured), beside the nearest Breathe London sensor and DEFRA monitor; one scale, the WHO guideline through it.
@@ -147,6 +197,9 @@ function bindTry() {
 
 /** The developers band: Copy copies the sample on show (home-engine.mjs reads data-copy when it is clicked). */
 function onCodeTab(tab, panel) {
+  finishDev();
+  // A reader who changes language sees that language's request answered. Never at load: this also runs when the tabs bind.
+  if (devReady) playDev();
   const copy = document.querySelector('section.dev button.copy[data-copy]');
   const pre = panel.querySelector('pre[id]');
   if (copy && pre) {
@@ -164,7 +217,7 @@ const layerSteps = () => (stepsLoad ??= fetch('/data/planes-layer/index.json')
   .then((r) => (r.ok ? r.json() : null)).then((d) => (Array.isArray(d?.steps) ? d.steps : []))
   .catch(() => { stepsLoad = null; return []; }));
 
-const FAILED = "The example's figures could not load just now. Search a postcode above to see them for any street.";
+const FAILED = "The example's figures could not load just now. Search a postcode above to see them for your street.";
 
 function settle(box, nodes) {
   if (!box) return;
@@ -239,6 +292,138 @@ function writePlanes(box, w) {
   settle(box, [head, bars, how]);
 }
 
+// ---- the developers band's answer (Bill's pick C of the mock-up, claude.ai/artifact/VgTpCjGHZHMLhz1zYFPNpM) ----
+// The request types itself, the answer arrives under it, and its figures light up as the tiles a caller's own page could
+// show. All of it is the example's answer, the one pair of lookups the page already makes: the samples are rewritten to
+// that answer's point, so the request on show is the one that was answered. It plays once on arriving, in about four
+// seconds (under the five of WCAG 2.2.2), and again for a reader who changes language or presses Replay; at rest, or with
+// reduced motion, everything is simply there. Typing never shortens a
+// sample's text (the rest stays in the node, unseen), so Copy is whole at every moment, and the caret stands outside the
+// text's flow: an inline box in the text was a place to break, so a long unbroken URL re-wrapped and its box jumped.
+const STALE = Symbol('stale');
+let devRun = 0;
+let typing = null;
+let devReady = false;
+const devBox = () => document.getElementById('dev-run');
+const devWait = (ms, id) => new Promise((resolve, reject) => { setTimeout(() => (id === devRun ? resolve() : reject(STALE)), ms); });
+
+/** The end of a run, however it ended: every figure on show, and nothing still moving. */
+function finishDev() {
+  devRun++;
+  if (typing) { typing.pre.textContent = typing.text; typing = null; }
+  const box = devBox();
+  if (!box) return;
+  box.classList.remove('is-waiting', 'is-answered');
+  box.querySelectorAll('.is-on, .is-empty, .is-lit').forEach((n) => n.classList.remove('is-on', 'is-empty', 'is-lit'));
+}
+
+function typeDev(pre, id) {
+  const text = pre.textContent;
+  const shown = document.createTextNode('');
+  const rest = el('span', 'dev-rest', text);
+  typing = { pre, text };
+  pre.replaceChildren(shown, el('span', 'dev-caret'), rest);
+  const start = performance.now();
+  return new Promise((resolve, reject) => {
+    const step = (now) => {
+      if (id !== devRun) { reject(STALE); return; }
+      const n = Math.min(text.length, Math.ceil(((now - start) / 700) * text.length));
+      shown.data = text.slice(0, n);
+      rest.textContent = text.slice(n);
+      if (n < text.length) { requestAnimationFrame(step); return; }
+      pre.textContent = text;
+      typing = null;
+      resolve();
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+// One figure at a time, all of it at once: the number lights in the answer, its card lights, and the card's figure
+// appears, in one frame, then the number and the card go out together (Bill, 2026-11-04: a card lighting on landing, and
+// a figure arriving after its number, both read as a mismatch). Nothing here has a transition: a fade on one side is a lag.
+async function lightDev(n, i, id) {
+  const out = devBox()?.querySelectorAll('.ans-tile b')[i];
+  const tile = out?.closest('.ans-tile');
+  if (!tile) return;
+  n.classList.add('is-lit');
+  tile.classList.add('is-lit');
+  out.classList.remove('is-empty');
+  await devWait(520, id);
+  n.classList.remove('is-lit');
+  tile.classList.remove('is-lit');
+  await devWait(80, id);
+}
+
+async function playDev() {
+  finishDev();
+  const id = devRun;
+  const box = devBox();
+  const pre = document.querySelector('section.dev [role="tabpanel"]:not([hidden]) pre');
+  if (!box || !pre) return;
+  try {
+    box.classList.add('is-waiting');
+    box.querySelectorAll('.ans-tile b').forEach((b) => b.classList.add('is-empty'));
+    await typeDev(pre, id);
+    await devWait(260, id);
+    box.classList.add('is-answered');
+    await devWait(240, id);
+    for (const line of box.querySelectorAll('.dev-ln')) {
+      line.classList.add('is-on');
+      await devWait(50, id);
+    }
+    await devWait(160, id);
+    for (const [i, n] of [...box.querySelectorAll('.dev-n')].entries()) await lightDev(n, i, id);
+    await devWait(200, id);
+    finishDev();
+  } catch (err) {
+    if (err !== STALE) throw err;
+  }
+}
+
+function jsonLine(line) {
+  const row = el('span', 'dev-ln');
+  const m = /^(\s*"\w+": )(-?[\d.]+)(,?)$/.exec(line);
+  if (m) row.append(m[1], el('span', 'dev-n', m[2]), m[3]);
+  else row.textContent = line;
+  return row;
+}
+
+function devTile(f) {
+  const tile = el('span', 'ans-tile');
+  tile.append(el('b', '', f.figure), f.words);
+  if (f.credit) tile.append(el('small', '', f.credit));
+  return tile;
+}
+
+function showDev(geo, env) {
+  const box = devBox();
+  const res = document.getElementById('dev-res');
+  const tiles = document.getElementById('dev-tiles');
+  const dev = devAnswer(env);
+  if (!box || !res || !tiles || !dev) return;
+  // The samples name a point in Kew; the answer below them is for the example's own point, so they say that point.
+  const was = /lat=(-?[\d.]+)&lon=(-?[\d.]+)/.exec(document.getElementById('dev-env')?.textContent || '');
+  if (!was) return;
+  for (const pre of document.querySelectorAll('section.dev pre[id^="dev-env"]')) {
+    pre.textContent = pre.textContent.replaceAll(was[1], String(geo.latitude)).replaceAll(was[2], String(geo.longitude));
+  }
+  res.replaceChildren(...dev.lines.map(jsonLine));
+  tiles.replaceChildren(...dev.figures.map(devTile));
+  box.hidden = false;
+  if (still() || !('IntersectionObserver' in window)) return;
+  const replay = document.getElementById('dev-replay');
+  if (replay) {
+    replay.hidden = false;
+    replay.addEventListener('click', playDev);
+  }
+  devReady = true;
+  const io = new IntersectionObserver((entries) => {
+    if (entries.some((x) => x.isIntersecting)) { io.disconnect(); playDev(); }
+  }, { threshold: 0.35 });
+  io.observe(box.closest('.code'));
+}
+
 async function fillWalk() {
   const boxes = Object.fromEntries([...document.querySelectorAll('[data-walk-fill]')].map((b) => [b.dataset.walkFill, b]));
   let engine;
@@ -256,6 +441,7 @@ async function fillWalk() {
   const { geo, env } = ex;
   const e = env.environment;
   const prov = env.provenance || {};
+  try { showDev(geo, env); } catch (err) { console.error('The developers band shows the request alone.', err); }
   try { writeNoise(boxes.noise, noiseRows(e, prov)); } catch { settle(boxes.noise, [el('p', 'walk-wait', FAILED)]); }
   engine.airFiles().then(([sensors, monitors]) => {
     const sensor = sensors ? nearestSensor(sensors, geo.latitude, geo.longitude) : null;

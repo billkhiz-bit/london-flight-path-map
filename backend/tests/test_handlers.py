@@ -1210,29 +1210,29 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         )
 
     def test_the_front_page_quotes_the_enforced_free_quota(self):
-        """home/index.html (the front page, at / since 2026-10-06; preview/index.html
-        while it was trialled) is a mirror the pattern above cannot read.
-
-        It prints the free quota as a headline figure with its unit in a
-        <small> beside it ("10,000" then "lookups a month on the free tier"),
-        so "N requests" never matches and the page would sit outside this
-        class on the day the plan changes. Read by its own shape here, and the
-        shape is asserted: a reworded card must fail, not read as a clean page.
+        """home/index.html prints the free quota once, in the developers band
+        (Bill, 2026-11-04; a headline card until the front-page-v3 rework), in a
+        shape the pattern above cannot read: the figure in a tag, its unit after.
+        So any number standing before lookups or requests, tags between them
+        allowed, must be the plan's, and there must be exactly one: a reworded
+        line must fail, not read as a clean page. Fix the pattern, do not delete it.
         """
+        self.assertEqual(
+            self._quotas_in(self._page('home/index.html')), [self._plan_int('Limit')],
+            'home/index.html must print the free quota once, as the plan enforces it')
+
+    def test_a_stale_quota_on_the_front_page_is_caught(self):
+        for shape in ('<div class="fig">25,000<small>lookups a month on the free tier</small></div>',
+                      '<p>25,000 requests a month</p>'):
+            self.assertEqual(self._quotas_in(shape), [25000], shape)
+        self.assertEqual(self._quotas_in('<p>two lookups</p>'), [])
+
+    @staticmethod
+    def _quotas_in(page):
         import re  # noqa: PLC0415
 
-        found = re.findall(
-            r'class="fig">([\d,]+)<small>lookups a month on the free tier',
-            self._page('home/index.html'))
-        self.assertEqual(
-            len(found), 1,
-            'home/index.html no longer prints the free quota in the shape '
-            'this gate reads, so it is checking nothing. Fix the pattern, do '
-            'not delete the test.')
-        self.assertEqual(
-            int(found[0].replace(',', '')), self._plan_int('Limit'),
-            f'home/index.html advertises {found[0]} lookups a month on the '
-            f'free tier; the plan enforces {self._plan_int("Limit"):,}')
+        found = re.findall(r'(\d[\d,]*)\s*(?:<[^>]+>\s*)*(?:lookups|requests)\b', page)
+        return [int(f.replace(',', '')) for f in found]
 
     def test_published_per_second_rates_match_the_plan(self):
         """A page quoting a rate must quote the one the plan throttles at.

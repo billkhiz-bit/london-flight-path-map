@@ -1,6 +1,17 @@
 # Changelog
 
-## Not yet live (branch `map-fixes`) - The district under a tap
+## 2026-11-04 - A new front page
+
+- **Two columns**: the question, the search and the answer on the left, the live map beside them with nothing over it.
+- **The example opens compact**: three figures for Kew as tiles, with the whole answer one press away.
+- **Free to search, no cookies, no ads**, said under the search box.
+- **The API, shown working**: in the developers band a request types itself, the real answer arrives, and its figures light
+  up as tiles. It plays once; with animation turned off, everything is simply there. The free quota is there too.
+- **One city switch** on the map, "Map: London", and a way to open the full map on the same city.
+- **Below the map**: how a search works in five steps, the approach from above, what else the site does, the API in three
+  languages, Heathrow's consultation by council (until it closes), who it is for, and questions.
+
+## 2026-11-04 - The district under a tap
 
 - **Planes overhead on the full map**: with the layer on, a tap names the postcode district under it and links its
   planes overhead page, in a small card beside the tap. Only districts with a page get one. Nothing about the tap

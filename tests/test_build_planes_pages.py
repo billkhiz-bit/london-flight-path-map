@@ -515,7 +515,8 @@ BAND_INDEX = {'councils': {}, 'consultation': {
 def _band_page(tmp_path, crlf=False):
     nl = '\r\n' if crlf else '\n'
     page = tmp_path / 'index.html'
-    page.write_bytes(nl.join(['<main>', f'      {bpp.BAND_BEGIN}', '      <p>stale</p>', f'      {bpp.BAND_END}', '</main>', ''])
+    page.write_bytes(nl.join(['<main>', f'      {bpp.PILL_BEGIN}', f'      {bpp.PILL_END}', f'      {bpp.BAND_BEGIN}', '      <p>stale</p>',
+                              f'      {bpp.BAND_END}', '</main>', ''])
                      .encode('utf-8'))
     return page
 
@@ -544,6 +545,24 @@ def test_the_band_says_how_often_planes_pass_nowhere():
         text = wording.shown_from_source('home/index.html', '\n'.join(bpp.home_band(BAND_INDEX, today)))[0]
         for pattern in wording.FREQUENCY:
             assert not re.search(pattern, text, re.I), (today, pattern)
+
+
+def test_the_new_pill_points_at_the_band_and_goes_with_the_consultation(tmp_path):
+    page = _band_page(tmp_path)
+    assert bpp.write_home(BAND_INDEX, '2026-12-22', page) is True
+    assert 'href="#planes-band"' in page.read_text(encoding='utf-8'), 'open: the pill leads to the band'
+    assert 'id="planes-band"' in page.read_text(encoding='utf-8'), 'and the band it names is on the page'
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page), 'the day after, the pill reds with the band'
+    assert bpp.write_home(BAND_INDEX, '2026-12-23', page) is True
+    held = bpp.band_held(page.read_text(encoding='utf-8'), bpp.PILL_BEGIN, bpp.PILL_END)
+    assert held and held[1] == '', 'closed: the two markers and nothing between them'
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page) == []
+
+
+def test_a_page_without_the_pill_markers_is_refused(tmp_path):
+    page = tmp_path / 'index.html'
+    page.write_text('\n'.join([bpp.BAND_BEGIN, bpp.BAND_END, '']), encoding='utf-8')
+    assert any('pill' in problem for problem in bpp.check_home(BAND_INDEX, '2026-11-03', page))
 
 
 def test_check_home_reds_once_the_consultation_closes_until_write(tmp_path):

@@ -780,6 +780,37 @@ destinations linked 3+ times), then each looked at whole: claude.ai/artifact/DKt
   buyer should never have to click for. **API**: the repeats are the hero's three buttons and the numbered "Get
   started" steps, each inline where it is needed. Lesson: before proposing a cut, find the thing on the page.
 
+### Front-page-v3 step 2: the two-column hero (2026-11-04)
+
+Bill brought the rework forward ("deploy the frontpage and website changes today"), ending the ~20 Nov read at 12 days: the
+counts are frozen in Desktop `Sky Score Marketing\engagement-read-2026-11-04.md` (+ `.json`): 52 of 87 front-page views
+acted since 23 Oct (60%) against 35 of 104 before (34%). Small numbers; read them as direction only.
+- **The intro is gone, and with it everything that served it**: `.is-intro`, `leaveIntro()`, the inert map, `data-map-inset`,
+  "Or explore the map" (`front-explore`, 1 click in October) and the "Try" row (the walkthrough's step 01 does that job).
+- **A descendant rule written for one SVG catches the next one.** `.hero svg { position: absolute; inset: 0; width: 100% }`
+  stretched the new tick icons over half the page; the unit tests were all green and only a browser click (Playwright:
+  "svg intercepts pointer events") and a screenshot showed it. Now `.mapwrap > svg`.
+- **`align-items: start` from the desktop grid survives into the stacked flex column**, which shrank the map to 190 px and
+  let the panel run past the screen at 390. Stacked says `align-items: stretch`. Found by measuring the boxes.
+- **A panel that stops floating needs its old height rules gone**: nothing caps it now; the map column is `position: sticky`,
+  so a long answer scrolls past a map that stays in view.
+- Measured at 390: tiles end at 608 px (first screen 844), no sideways scroll, 9.2 screens (10.7 with step 1 alone).
+- The free quota left with the old business card (the mock has none), which a backend test caught; Bill then asked for
+  it in the developers band, so `test_the_front_page_quotes_the_enforced_free_quota` is strict again and reads any shape.
+- **The API animation** (mock claude.ai/artifact/VgTpCjGHZHMLhz1zYFPNpM; Bill picked C of three, built the same day). The band's
+  samples named a point in Kew and the example a postcode in Kew, with different figures, so an animation of one over the
+  other would have shown an answer the request never got. `showDev()` rewrites the samples to the example's own point
+  instead of adding a third lookup. The mock-up's measuring caught two slips before Bill relied on them: version A still
+  showing C's tiles, and a note calling C the tallest when B was (608 px against 576).
+  Bill then tried it and saw the timing was off: the number lit on leaving and the card only on landing, about half a second
+  later, with the next number already lit. Now one figure at a time, all changing in one frame, with no transition on either
+  side (a fade on one side is a lag). The flying chip went too: once a card's figure appears as its number lights, the chip
+  would only arrive at a figure already there. Bill also saw the curl box move while Python's and JavaScript's held still: the
+  caret was an inline box inside the text, so it was a place to break, and the one long unbroken URL re-wrapped as it typed.
+  Absolutely placed, it is out of the flow, and text and hidden remainder wrap as one. A test samples every painted frame
+  and holds lit number == lit card, figures shown == number lit + 1, and one height, in each language and at 390.
+- The mock's gliding plane was NOT built: Bill, on seeing it, "the plane isn't clear so maybe remove that".
+
 ### Front-page-v3 step 1: the lower page (2026-11-03, branch `front-page-v3`)
 
 Built from Bill's mock v8 (version 12). Three rules decided the build, each now held by a test:

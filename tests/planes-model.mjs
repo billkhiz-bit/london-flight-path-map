@@ -165,6 +165,12 @@ check('walkthrough: Kew in one sentence, then west, both ways, east in the layer
   assert.equal(w.foot, 'Planes a day over TW9 3PZ from Heathrow, January to August 2026. Never an average of the three: no day is average.');
 });
 
+check('the hero\'s tile: the commonest one-way day, its figure from the model, and nothing if that day has no planes', () => {
+  assert.deepEqual(planesWalk(planesModel(TW9, INFO, 'TW9 3PZ', NAMES), STEPS).lead, { figure: '310', words: 'planes a day, flying west' });
+  const east = { ...INFO, airports: { ...INFO.airports, LHR: { ...INFO.airports.LHR, share_pct: { westerly: 29, easterly: 56, mixed: 15 } } } };
+  assert.deepEqual(planesWalk(planesModel(TW9, east, 'TW9 3PZ', NAMES), STEPS).lead, { figure: '4', words: 'planes a day, flying east' });
+});
+
 check('walkthrough: no "most days" unless one way is over half of all days, and never a range in the sentence', () => {
   const even = { ...INFO, airports: { ...INFO.airports, LHR: { ...INFO.airports.LHR, share_pct: { westerly: 50, easterly: 35, mixed: 15 } } } };
   const w = planesWalk(planesModel(TW9, even, 'TW9 3PZ', NAMES), STEPS);

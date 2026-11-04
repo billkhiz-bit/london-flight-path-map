@@ -26,6 +26,22 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-04)
+>
+> **The front page rework shipped today, on Bill's call, ahead of the ~20 Nov read.** He chose the whole rework, so the read
+> ended at 12 days: counts frozen in Desktop `Sky Score Marketing\engagement-read-2026-11-04.md` (52 of 87 front-page views
+> acted since 23 Oct, 60%, against 35 of 104 before, 34%; small numbers). Step 2 built the two-column hero: compact example
+> tiles, the tick bar, the "New" pill, the "Map: London" switch and "Open the full map". Bill's changes to mock v8: no gliding
+> plane ("isn't clear"), the API animation added (version C of claude.ai/artifact/VgTpCjGHZHMLhz1zYFPNpM), the free quota in
+> the developers band, and the lede says what the answer gives ("for your street, and flood risk for your area": a review
+> showed flood is a council share and "any street" overclaimed). `tests/test_home_links.py` now holds every link the front
+> page makes and every link back (Bill: "linked and connected correctly"); a live crawl read 659 same-site links before
+> the deploy, all good. Preflight's flood stage was red on one boundary cell of four, with no flood file changed, so
+> `check_flood_georef.py` now confirms a small-sample miss on 16 a class at 90%, proven red on a whole-mosaic and an edge-only
+> shift (`docs/lessons/flood.md`). NEXT: the `/epc` backend changeset (Bill's `!`), preflight + push `n65`, the Leicester
+> corrections before 26 Nov; the top-bar and `book-demo-*` counts go on being read ~20 Nov, on the new page. The detached
+> worktree `agent-a79b7fad56eabf34c` is empty of work: remove it with the reparse check first.
+
 > ## START HERE (2026-11-03)
 >
 > **B2, the full map's Planes overhead layer: the review's six fixes DONE** (Bill: "let's do the above"). (1) The live
@@ -37,6 +53,14 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > until `index.json` says the city has a picture. (6) The Makefile comment says BEFORE `web-deploy`. Seven breaks
 > proven red; one survivor showed the per-element `[hidden]` CSS was dead code (the page-wide `!important` rule wins),
 > deleted. The browser test now blocks service workers (sw.js claimed the page, so `page.route` never saw the request).
+> **CLOSED 3 Nov ~21:05, PICK UP HERE:** `map-fixes` COMMITTED + merged + pushed (`3f89cb70`) and its frontend is
+> LIVE, but the district card is SILENT: `planes-layer-deploy` shipped no `*-district-ids.json` (drift check: 7
+> UNREACHABLE). The Makefile fix went in on 4 Nov (with this paragraph); `planes-layer-deploy` + the drift check
+> follow it. Epc backend changeset still to create (Bill's `!`). Then preflight +
+> push `n65` (16 commits, agent worktree) and `front-page-v3` (step 1, agent worktree; run tests/front-page.mjs). Never
+> switch the main clone's branch while a deploy is pending: deploys ship the working tree. Full list: the newest
+> `project-start-here-2026-11-03` memory.
+>
 > **NIGHT 3 Nov, where it stands:** `declutter` LIVE (`530b14ff`, merged and pushed, five deploys, drift PASS, checked
 > on the live pages; the sample report one page with the CAA 2025 figure). `map-fixes` BUILT (the district card on
 > the planes layer, `/epc` for full postcodes only): commit after preflight; deploy = `planes-layer-deploy` BEFORE
@@ -2712,6 +2736,21 @@ environment route reads it. **For later, not before a demo.**
   recommendation: one holder, and the extension stays a thin reader of `/v1/environment`.
 - **Also consider AURN** (`nearestMonitor`) in the same row, so cities outside London get an official monitor
   rather than nothing.
+
+### Parked idea: sewage and storm overflows (raised by Bill, 2026-11-04)
+
+Bill: "is there data for sewage waste/pollution?", then "in future would be nice to make a branch and see how this might
+fit the website". For England, yes: the Environment Agency's Event Duration Monitoring annual returns (per overflow,
+2020-2025, verified) and Water UK's National Storm Overflows Hub (about 14,000 overflows, near real time, an API, no
+history, unverified). Not checked: Wales, Scotland, Northern Ireland, the US.
+- **Licence first.** The official dataset's attribution reads "All rights reserved" while third parties cite OGL v3.0, and
+  the Hub API's terms were not found. Settle both before any build; LICENSING.md gets the answer.
+- **Then a branch to try it.** Shape to test: a context line beside a postcode (the nearest overflows and their spill hours
+  last year), never scored. It suits yearly data, unlike roadworks. Wording to hold: it says when and how long an overflow
+  ran, not how much sewage or what it did to the water; some figures are floors (monitors not working all year); and an
+  outfall's place says little about a street away from the water, so it needs a distance rule and a river, not a radius alone.
+- Others already show it per overflow (floodradar.co.uk, top-of-the-poops.org): any value is in sitting beside the rest of
+  a street's answer, so never "only".
 
 ### Parked idea: ask Sky Score on WhatsApp (raised by Bill, 2026-10-21)
 
