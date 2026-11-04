@@ -770,6 +770,67 @@ for (const s of SOLD_STATES) {
 }
 console.log('');
 
+// /epc ONLY FOR A FULL POSTCODE (2026-11-03). A district search carried `postcode: 'TW3'` (the outcode fallback) to
+// /epc; the register answered 400 and the Lambda reported its own 502: 134 of the API's 146 5xx in a day. The panel
+// said "temporarily unavailable", which was not true either. Counted at the network, with /epc stubbed.
+{
+  await page.evaluate((city) => window.switchCity(city), 'london');
+  await page.waitForTimeout(1200);
+  const epcAsked = [];
+  await page.route('**/epc?**', (route) => {
+    epcAsked.push(new URL(route.request().url()).searchParams.get('postcode'));
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ postcode: 'stub', available: true, count: 0, certificates: [], summary: null }),
+    });
+  });
+  for (const [q, full] of [['TW3', false], ['TW3 3QL', true]]) {
+    epcAsked.length = 0;
+    await page.evaluate(() => {
+      const el = document.getElementById('postcode-epc-data');
+      if (el) el.innerHTML = '';
+    });
+    await page.fill('#search-input', '');
+    await page.fill('#search-input', q);
+    await page.press('#search-input', 'Enter');
+    const text = await page
+      .waitForFunction(
+        () => {
+          const el = document.getElementById('postcode-epc-data');
+          const t = el ? el.innerText : '';
+          return t && !/Loading/i.test(t) ? t : false;
+        },
+        { timeout: 15000 },
+      )
+      .then((h) => h.jsonValue())
+      .catch(() => '');
+    if (full) {
+      check(`  EPC: a full postcode (${q}) still asks /epc`, epcAsked.length > 0, `asked ${JSON.stringify(epcAsked)}`);
+    } else {
+      check(`  EPC: a district search (${q}) never asks /epc`, epcAsked.length === 0, `asked ${JSON.stringify(epcAsked)}`);
+      check('  EPC: a district search asks for a full postcode', /Enter a full postcode for EPC data/.test(text),
+        `reads "${text.replace(/\s+/g, ' ').slice(0, 100)}"`);
+    }
+  }
+  // The guard itself, for the paths a district flag does not catch (a US ZIP typed on a UK map, which
+  // tests/bayarea-map.mjs does on every run): no request, and the panel says why.
+  epcAsked.length = 0;
+  const guard = await page.evaluate(async () => {
+    const zip = await fetchEpcData('94301');
+    const district = await fetchEpcData('TW9');
+    renderEpcData('postcode-epc-data', zip);
+    return { zip, district, text: document.getElementById('postcode-epc-data')?.innerText || '' };
+  });
+  check('  EPC: fetchEpcData sends nothing for a ZIP or a district', epcAsked.length === 0
+    && guard.zip.fullPostcodeOnly === true && guard.district.fullPostcodeOnly === true, JSON.stringify({ epcAsked, ...guard }));
+  check('  EPC: the panel says why, never "temporarily unavailable"', /Enter a full postcode for EPC data/.test(guard.text)
+    && !/temporarily/i.test(guard.text), `reads "${guard.text.slice(0, 100)}"`);
+  await page.unroute('**/epc?**');
+}
+console.log('');
+
 check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 
 await browser.close();

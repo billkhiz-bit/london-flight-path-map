@@ -83,3 +83,15 @@ which the rotation makes unreachable by construction - asserted because the
 construction is what a future edit would remove. Skipped cities print **in
 their own position**, never as an end-of-run summary.
 
+### A sample too small to fail on (2026-11-04)
+
+Preflight went red on Merseyside at 3/4 (75%) with no change to any flood file. At 4 cells a class, ONE miss is under the
+80% bar; the seed is fixed and Merseyside was the day's rotating city, so the same cell would have failed every run that
+day. Re-measured at 16 a class with another seed: 15/16 and 15/15, 13-16 cells. So a class under the bar on fewer than
+`CONFIRM_PER_CLASS` (16) a class is now re-sampled at 16 and judged on that (`needs_confirming`), at a HIGHER bar: 90%, with
+12 cells reached. The first version kept 80%, and a review caught it: 4 samples are all edge cells but 16 take the whole
+4x4 grid, so one bad edge reading a third scores about 81% and would pass and be cached, while a whole-mosaic proof could
+never show that. An unreachable or untested class never reaches the re-sample, so a throttled run cannot be re-run into a
+pass (`tests/test_check_flood_georef.py`). Because this makes a gate more forgiving it was proven red: a copy of Merseyside's
+mosaic moved 2.5 km with its georeferencing kept (`--mosaic-dir`) read 3/14 (21%) on the bigger sample and exits 1, and one with only its top quarter moved read 11/14 (79%) and exits 1, while the true mosaic read 14/15 (93%) and 15/15. A confirmed miss adds about five minutes.
+

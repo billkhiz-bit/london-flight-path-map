@@ -174,9 +174,9 @@ const NO_EXAMPLE = 'ZZ0 0ZZ';
 await context.route((url) => url.hostname === '127.0.0.1' && url.pathname === '/', async (route) => {
   const res = await route.fetch();
   const body = await res.text();
-  const line = 'data-pc="TW9 3PZ" hidden>';
+  const line = 'data-pc="TW9 3PZ" data-place="Kew" hidden>';
   if (!exampleOn && !body.includes(line)) ok(false, 'the front page carries its example line as this file expects (update the route above)');
-  return route.fulfill({ response: res, body: exampleOn ? body : body.replace(line, `data-pc="${NO_EXAMPLE}" hidden>`) });
+  return route.fulfill({ response: res, body: exampleOn ? body : body.replace(line, `data-pc="${NO_EXAMPLE}" data-place="Kew" hidden>`) });
 });
 const page = await context.newPage();
 const errors = [];
@@ -190,6 +190,11 @@ page.on('response', (res) => {
 const boroCount = () => page.locator('#map .boro').count();
 const cardOpen = () => page.locator('#borough.is-open');
 const answerOpen = () => page.locator('#answer.is-open');
+// The twelve cities sit in the "Map: London" switch (front-page-v3): open it the way a visitor does, then choose.
+const pickCity = async (p, key) => {
+  if (!(await p.locator('#city-menu').evaluate((d) => d.open))) await p.locator('#city-menu summary').click();
+  await p.locator(`#chips button[data-city="${key}"]`).click();
+};
 const waitMap = async () => { await page.waitForSelector('#map .boro', { timeout: 20000 }); await page.waitForTimeout(150); };
 
 // 1. Landing: London, 33 council areas, each a keyboard-reachable button with a CSV row.
@@ -239,52 +244,64 @@ const derived = await page.evaluate(async (ds) => {
 const wrong = derived ? derived.filter((d) => d.got !== d.city) : [{ admin_district: 'the engine exports no cityOf', got: '' }];
 ok(spellings.length >= 80 && wrong.length === 0, `all ${spellings.length} postcodes.io district spellings resolve to their own city (audit I-1)`, wrong.map((d) => `${d.admin_district} -> ${d.got}`).join('; '));
 
-// 1b. ASK FIRST, THEN THE TOOL (Bill, 2026-10-05). On a wide screen the page opens as
-// v3 - the question centred over a faded map, the map's controls out of the way -
-// and the first use makes it v2: the panel at the side, the map refitted beside it.
-const introState = () =>
+// 1b. TWO COLUMNS (front-page-v3 step 2, 2026-11-04; Bill's mock v8). It replaces "ask first", the question centred
+// over a faded map: on a wide screen the question and the search sit on the left and the live map beside them, with
+// nothing over it, from the first paint. Measured from the boxes, never from a class.
+const heroState = () =>
   page.evaluate(() => {
-    const hero = document.querySelector('.hero').getBoundingClientRect();
     const panel = document.querySelector('.panel').getBoundingClientRect();
+    const map = document.querySelector('.mapwrap').getBoundingClientRect();
     return {
-      intro: document.querySelector('.hero').classList.contains('is-intro'),
-      centred: Math.abs(panel.left + panel.width / 2 - (hero.left + hero.width / 2)) < 4,
-      atLeft: panel.left - hero.left < 40,
+      beside: panel.right <= map.left && panel.left < map.left,
       legend: getComputedStyle(document.querySelector('.legend')).visibility,
       mapOpacity: Number(getComputedStyle(document.querySelector('#map')).opacity),
+      inert: document.querySelector('.mapwrap').inert === true,
     };
   });
-const before = await introState();
-ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpacity < 0.5, 'on a wide screen the page opens as the question, centred over a faded map', JSON.stringify(before));
+const before = await heroState();
+ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !before.inert, 'on a wide screen the question sits beside a live map, nothing over it', JSON.stringify(before));
 // WHERE THE SEARCH COVERS, before anyone types (2026-10-19): every UK region the API serves, its council
 // areas adding up to the page's own figure, then New York and the Bay Area. Cardiff is the region the
 // map's city buttons never named. scripts/build_coverage_strip.py --check holds the markup to the
 // registry; this holds what a visitor sees.
-// FOR DEVELOPERS (2026-10-19): two requests a developer can paste. Both on the API host js/api-base.js
-// holds (window.API_BASE), the key ONLY ever the placeholder, the no-key one by lat and lon (the form
-// /v1/environment answers; by postcode it is a 400), and Copy copies exactly what is shown. The clipboard
-// is stubbed: a headless browser has none to read back.
+// FOR DEVELOPERS (2026-10-19; three languages since front-page-v3, 2026-11-03): the open request a developer can
+// paste, in curl, Python and JavaScript (tabs, js/home-sections.mjs). All on the API host js/api-base.js holds
+// (window.API_BASE), by lat and lon (the form /v1/environment answers; by postcode it is a 400), no key anywhere (the
+// keyed score request moved to /api/ with the redesign), and Copy copies exactly the sample on show. The clipboard is
+// stubbed: a headless browser has none to read back. (Changed by reading, not run, on the branch: run it before merging.)
 {
   const dev = await page.evaluate(async () => {
     const copied = [];
     Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { copied.push(t); } } });
-    document.querySelector('button.copy[data-copy="dev-score"]')?.click();
+    const copy = () => document.querySelector('section.dev button.copy[data-copy]');
+    copy()?.click();
     await new Promise((r) => setTimeout(r, 100));
+    const status = document.getElementById('copy-status')?.textContent || '';
+    document.getElementById('code-tab-py')?.click();
+    const shownPy = document.getElementById('code-py')?.hidden === false && document.getElementById('code-curl')?.hidden === true;
+    copy()?.click();
+    await new Promise((r) => setTimeout(r, 100));
+    document.getElementById('code-tab-curl')?.click();
     return {
       api: window.API_BASE || '',
-      score: document.getElementById('dev-score')?.textContent || '',
       env: document.getElementById('dev-env')?.textContent || '',
+      py: document.getElementById('dev-env-py')?.textContent || '',
+      js: document.getElementById('dev-env-js')?.textContent || '',
+      keyless: !/X-Api-Key/i.test(document.querySelector('section.dev')?.textContent || ''),
       copied,
-      status: document.getElementById('copy-status')?.textContent || '',
+      status,
+      shownPy,
     };
   });
   ok(
-    Boolean(dev.api) && dev.score === `curl '${dev.api}/v1/score?postcode=TW9+3PZ' \\\n  -H 'X-Api-Key: YOUR_KEY'` &&
-      dev.env === `curl '${dev.api}/v1/environment?lat=51.4790&lon=-0.2860'` &&
-      dev.copied.length === 1 && dev.copied[0] === dev.score && /^Copied/.test(dev.status),
-    'the developer band shows two requests on the live API host, the key only a placeholder, and Copy copies exactly what is shown',
-    JSON.stringify({ api: dev.api, score: dev.score.slice(0, 90), env: dev.env.slice(-50), copied: dev.copied.length, status: dev.status })
+    Boolean(dev.api) && dev.env === `curl '${dev.api}/v1/environment?lat=51.4790&lon=-0.2860'` &&
+      dev.py.includes(`'${dev.api}/v1/environment'`) && dev.py.includes("params={'lat': 51.4790, 'lon': -0.2860}") &&
+      dev.js.includes(`'${dev.api}/v1/environment?lat=51.4790&lon=-0.2860'`) && dev.keyless && dev.shownPy &&
+      dev.copied.length === 2 && dev.copied[0] === dev.env && dev.copied[1] === dev.py && /^Copied/.test(dev.status),
+    'the developer band shows the open request on the live API host in curl, Python and JavaScript, no key anywhere, and Copy copies exactly the sample on show',
+    JSON.stringify({ api: dev.api, env: dev.env.slice(-50), py: dev.py.slice(0, 60), copied: dev.copied.length, status: dev.status, shownPy: dev.shownPy })
   );
+  ok(await page.locator('#dev-run').isHidden(), 'with no example to show, the developers band stays the request alone');
 }
 // It is ONE LINE that opens the list: written out, the list made the card cover the whole faded map
 // (the backdrop check below probed 0 points), so the summary is asserted visible and the list read open.
@@ -299,7 +316,8 @@ ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpa
       visible: line,
       text: el.innerText,
       regions: [...el.querySelectorAll('li')].map((li) => [li.firstChild.textContent.trim(), Number(li.querySelector('b').textContent)]),
-      figure: document.querySelector('.fig')?.textContent || '',
+      // The page's own figure: THE coverage sentence, in the Questions band since front-page-v3 (the "Four ways" card's until then).
+      figure: document.getElementById('cover-figure')?.textContent || '',
     };
     el.open = false; // closed again, so the checks that follow see the card as a visitor first does
     return read;
@@ -313,66 +331,106 @@ ok(before.intro && before.centred && before.legend === 'hidden' && before.mapOpa
     JSON.stringify(covers && { regions: covers.regions.length, total, figure: covers.figure.slice(0, 50) })
   );
 }
-// The faded map is a BACKDROP while the question covers it (Bill, 2026-10-07): no hover, no
-// tooltip, no click, no Tab stop behind the card (WCAG 2.2 2.4.11). Asked of the BROWSER, not of
-// the attribute the fix sets: an 8 px grid over every council area's box, clear of the card and
-// inside the window, must hit no area, and none may take focus. A grid, not one point per area:
-// at 1366x820 the card covers all but ONE area's centre, and a probe of one proves little.
-// Until 7 Oct this step tabbed to Havering behind the card.
-const backdrop = await page.evaluate(() => {
+// THE MAP IS LIVE FROM THE START. Asked of the BROWSER: a grid over every council area's box inside the window must
+// reach the areas (only the map's own floating controls may stand over a few points), and each area takes focus.
+const live = await page.evaluate(() => {
   // The keyboard steps above leave the page scrolled; an off-screen point hit-tests nothing.
   // 'instant': the page scrolls smoothly by default, and a smooth scroll would still be moving.
   window.scrollTo({ top: 0, behavior: 'instant' });
-  const panel = document.querySelector('.panel').getBoundingClientRect();
   const map = document.querySelector('#map').getBoundingClientRect();
   const boxes = [...document.querySelectorAll('#map .boro')].map((el) => el.getBoundingClientRect());
   let probed = 0;
   let hits = 0;
-  // 8 px since 2026-10-14: the panel's tab row made the card taller, and a 12 px grid then found 33
-  // points clear of it, under the floor below. The floor stays; the grid got finer. 6 px since
-  // 2026-10-19, for the same reason: the coverage line made the card one line taller and 8 px found 34.
-  for (let x = Math.max(map.left, 0) + 2; x < Math.min(map.right, innerWidth); x += 6) {
-    for (let y = Math.max(map.top, 0) + 2; y < Math.min(map.bottom, innerHeight); y += 6) {
-      if (x > panel.left - 8 && x < panel.right + 8 && y > panel.top - 8 && y < panel.bottom + 8) continue;
+  for (let x = Math.max(map.left, 0) + 2; x < Math.min(map.right, innerWidth); x += 12) {
+    for (let y = Math.max(map.top, 0) + 2; y < Math.min(map.bottom, innerHeight); y += 12) {
       if (!boxes.some((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom)) continue;
       probed++;
-      if (document.elementFromPoint(x, y)?.closest?.('.boro')) hits++;
+      if (document.elementFromPoint(x, y)?.closest?.('#map')) hits++;
     }
   }
-  const focusable = [...document.querySelectorAll('#map .boro')].filter((el) => {
+  const areas = [...document.querySelectorAll('#map .boro')];
+  const focusable = areas.filter((el) => {
     el.focus();
     return document.activeElement === el;
   }).length;
   document.activeElement?.blur?.();
-  const r = (v) => Math.round(v);
-  const areas = boxes.reduce((u, b) => [Math.min(u[0], b.left), Math.min(u[1], b.top), Math.max(u[2], b.right), Math.max(u[3], b.bottom)], [Infinity, Infinity, -Infinity, -Infinity]);
-  return { probed, hits, focusable, card: [panel.left, panel.top, panel.right, panel.bottom].map(r), areas: areas.map(r), window: [innerWidth, innerHeight] };
+  return { probed, hits, focusable, areas: areas.length };
 });
-ok(backdrop.probed >= 40 && backdrop.hits === 0 && backdrop.focusable === 0, 'while the question covers it, the faded map takes no pointer and no focus', JSON.stringify(backdrop));
-// The first use, here by keyboard and by the honest route: "Or explore the map", then Enter on
-// the council area it focuses.
-await page.locator('#explore-map').focus();
-await page.keyboard.press('Enter');
-await page.waitForFunction(() => document.activeElement?.classList.contains('boro'), null, { timeout: 5000 });
+ok(live.probed >= 40 && live.hits / live.probed > 0.9 && live.focusable === live.areas, 'the map takes the pointer and focus from the first paint', JSON.stringify(live));
+// The first use, here by keyboard: Enter on a council area opens its card in the left column, the map beside it.
+await page.locator('#map .boro').first().focus();
 await page.keyboard.press('Enter');
 await page.waitForSelector('#borough.is-open', { timeout: 5000 });
-const after = await introState();
-ok(!after.intro && after.atLeft && after.legend === 'visible' && after.mapOpacity === 1, 'the first use turns it into the tool: panel at the side, map and controls back', JSON.stringify(after));
+const after = await heroState();
+ok(after.beside && after.legend === 'visible' && after.mapOpacity === 1, 'a council area opens its card in the left column, the map still beside it', JSON.stringify(after));
 
-// 1c. Bill, 2026-10-06: the bar leads with the map as its one button and drops the Bay Area;
-// the intro stops promising "tap a council area on the map" while that map sits faded and
-// hidden behind it, and offers "Or explore the map" instead.
+// 1c. Bill, 2026-10-06: the bar leads with the map as its one button and drops the Bay Area; the lead names what a
+// search gives (since front-page-v3).
 {
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
   await waitMap();
   const nav = await page.locator('header.top nav a').evaluateAll((as) => as.map((a) => [a.textContent.trim(), a.className]));
   ok(nav.length > 0 && !nav.some(([t]) => /Bay Area/.test(t)) && nav[0][0] === 'Full map' && nav[0][1].includes('nav-cta'), 'the bar leads with the full map as its button and no longer lists the Bay Area', JSON.stringify(nav));
-  ok(!/tap a council area/i.test(await page.locator('.panel .lead').textContent()), 'the intro no longer promises a map it is hiding');
-  await page.click('#explore-map');
-  await page.waitForTimeout(300);
-  const st = await introState();
-  const focused = await page.evaluate(() => document.activeElement?.classList.contains('boro'));
-  ok(!st.intro && st.legend === 'visible' && focused && (await page.locator('#explore-map').isHidden()), '"Or explore the map" ends the intro, focuses a council area, then steps aside', JSON.stringify({ ...st, focused }));
+  ok(/^Aircraft and road noise and air quality for your street, and flood risk for your area/.test(await page.locator('.panel .lead').textContent()), 'the lead says what a search gives');
+  ok((await page.locator('#explore-map, .try, .is-intro').count()) === 0, 'the intro and its two ways out are gone');
+  // The city switch names the map, opens the full map on the same city, and closes as a menu does.
+  ok(!(await page.locator('#chips button').first().isVisible()), 'the twelve cities are folded into the switch until asked for');
+  await pickCity(page, 'manchester');
+  await page.waitForFunction(() => document.querySelector('#chips button[data-city="manchester"]')?.getAttribute('aria-pressed') === 'true', null, { timeout: 15000 });
+  const sw = await page.evaluate(() => ({
+    name: document.getElementById('city-name').textContent,
+    open: document.getElementById('city-menu').open,
+    href: document.getElementById('map-full').getAttribute('href'),
+  }));
+  ok(sw.name === 'Greater Manchester' && !sw.open && sw.href === '/map/?city=manchester', 'a chosen city names the switch, closes it, and "Open the full map" follows', JSON.stringify(sw));
+  const afterChoice = await page.evaluate(() => document.activeElement?.tagName);
+  ok(afterChoice === 'SUMMARY', 'choosing a city leaves focus on the switch, never on a hidden chip', String(afterChoice));
+  await page.locator('#city-menu summary').click();
+  await page.keyboard.press('Escape');
+  const esc = await page.evaluate(() => ({ open: document.getElementById('city-menu').open, focus: document.activeElement?.tagName }));
+  ok(!esc.open && esc.focus === 'SUMMARY', 'Escape closes the switch and leaves focus on it', JSON.stringify(esc));
+  await page.locator('#city-menu summary').click();
+  await page.locator('.panel h1').click();
+  ok(!(await page.evaluate(() => document.getElementById('city-menu').open)), 'a click elsewhere closes the switch');
+  // The pill leads to a band on this page, whichever way the band is reading.
+  const pill = await page.locator('.news').getAttribute('href').catch(() => null);
+  ok(pill === null || (pill === '#planes-band' && (await page.locator('#planes-band').count()) === 1), 'the "New" pill, while it shows, lands on the planes band', String(pill));
+  // Every city is reachable however small the map: a narrow phone and a phone on its side, the first and last chips.
+  for (const [w, h] of [[320, 568], [844, 360]]) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await waitMap();
+    await page.locator('#city-menu summary').scrollIntoViewIfNeeded();
+    await page.locator('#city-menu summary').click();
+    const reach = await page.evaluate(() => {
+      const list = document.getElementById('chips');
+      return [...list.querySelectorAll('button')].map((b) => {
+        b.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        // Measured after the scroll: scrolling moves the list and the map as well as the chip.
+        const wrap = document.querySelector('.mapwrap').getBoundingClientRect();
+        const box = list.getBoundingClientRect();
+        const r = b.getBoundingClientRect();
+        const el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+        return el === b && r.top >= Math.max(box.top, wrap.top) - 1 && r.bottom <= Math.min(box.bottom, wrap.bottom) + 1;
+      }).filter(Boolean).length;
+    });
+    ok(reach === 12, `every city can be reached at ${w}x${h}`, String(reach));
+    // ...and a real tap on the last one lands, the way a thumb would reach it.
+    await page.locator('#chips button[data-city="nyc"]').click();
+    await page.waitForFunction(() => document.querySelector('#chips button[data-city="nyc"]')?.getAttribute('aria-pressed') === 'true', null, { timeout: 15000 });
+  }
+  await page.setViewportSize({ width: 1366, height: 820 });
+  // "Search yours" brings the search back with Find areas open (its box is hidden there).
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitMap();
+  await page.waitForSelector('.tabs[role="tablist"]:not([hidden])', { timeout: 15000 });
+  await page.locator('#tab-find').click();
+  await page.locator('.walk-yours a').evaluate((a) => a.click());
+  const yours = await page.evaluate(() => ({ tab: document.getElementById('tab-check').getAttribute('aria-selected'), focus: document.activeElement?.id }));
+  ok(yours.tab === 'true' && yours.focus === 'pc', '"Search yours" with Find areas open goes back to the search box', JSON.stringify(yours));
+  // Back to the plain page: the steps below start from London.
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await waitMap();
 }
 
 // 2. Click Camden: the card opens with the CSV's score and components, and the URL says so.
@@ -414,7 +472,7 @@ ok((await cardOpen().count()) === 0 && backTo.startsWith('Ealing'), 'Escape from
 const missing = [];
 let drawn = 0;
 for (const key of ['london', 'manchester', 'westmidlands', 'westyorkshire', 'southyorkshire', 'merseyside', 'tyneandwear', 'bristol', 'leicester', 'teesside']) {
-  await page.locator(`#chips button[data-city="${key}"]`).click();
+  await pickCity(page, key);
   await page.waitForFunction((k) => document.querySelector(`#chips button[data-city="${k}"]`)?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length > 0, key);
   await page.waitForTimeout(200);
   const names = await page.locator('#map .boro').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label').replace(/: open its figures$/, '')));
@@ -425,15 +483,14 @@ ok(drawn === 86 && missing.length === 0, `all ${drawn} drawn council areas have 
 ok(await page.evaluate(() => location.search) === '?city=teesside', 'a city chip sets ?city=');
 
 // 6. Approach-line tooltip names the airport and the glide; the toggle hides the lines; the noise toggle hides the picture.
-await page.locator('#chips button[data-city="london"]').click();
+await pickCity(page, 'london');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 33);
 await page.waitForTimeout(200);
 // Routes have no hit area (a wide one stole Hounslow's tap): move the mouse onto the midpoint of a final
-// that is clear of the floating panel (Heathrow's 09L final runs west INTO the panel, where the svg sees nothing).
+// at the map's right-hand side, clear of the layer buttons.
 const mid = await page.locator('#map .lines .final').evaluateAll((ls) => {
   const r = ls[0].ownerSVGElement.getBoundingClientRect();
-  const inset = JSON.parse(document.body.dataset.mapInset).left;
-  const mids = ls.map((l) => [(+l.getAttribute('x1') + +l.getAttribute('x2')) / 2, (+l.getAttribute('y1') + +l.getAttribute('y2')) / 2]).filter(([x]) => x > inset + 40);
+  const mids = ls.map((l) => [(+l.getAttribute('x1') + +l.getAttribute('x2')) / 2, (+l.getAttribute('y1') + +l.getAttribute('y2')) / 2]);
   const [x, y] = mids.sort((p, q) => q[0] - p[0])[0];
   return { x: r.left + x, y: r.top + y };
 });
@@ -516,7 +573,7 @@ ok(/Routes: Gatwick's are not drawn here\./.test(sutton?.text || ''), "Sutton's 
 // Trafford read "None of the routes on this map crosses it" under Manchester's departures, which are
 // published only as charts (M-4). Its card must say so, as a postcode's answer there does (M-7).
 await page.locator('#borough-close').click();
-await page.locator('#chips button[data-city="manchester"]').click();
+await pickCity(page, 'manchester');
 await page.waitForFunction(() => document.querySelector('#chips button[data-city="manchester"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length === 10);
 await page.locator('#map .boro[aria-label^="Trafford"]').focus();
 await page.keyboard.press('Enter');
@@ -525,14 +582,14 @@ const trafford = await routeCard();
 ok(/Departure routes: Manchester's are published only as charts and are not drawn here\./.test(trafford?.text || ''), "Trafford's card says Manchester's departures are not drawn (audit 2026-10-09 M-4)", trafford?.text);
 await page.locator('#borough-close').click();
 // A city with no routes at all (South Yorkshire has no airport) prints no routes row.
-await page.locator('#chips button[data-city="southyorkshire"]').click();
+await pickCity(page, 'southyorkshire');
 await page.waitForFunction(() => document.querySelector('#chips button[data-city="southyorkshire"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length === 4);
 await page.locator('#map .boro[aria-label^="Barnsley"]').focus();
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Barnsley');
 ok((await routeCard()) === null, 'a city with no routes on its map prints no routes row');
 await page.locator('#borough-close').click();
-await page.locator('#chips button[data-city="london"]').click();
+await pickCity(page, 'london');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 33);
 await page.waitForTimeout(200);
 
@@ -551,8 +608,8 @@ ok(Number(k0) === 1 && (await page.locator('#zoom-reset').isDisabled()), 'reset 
 
 // 7a. A slow outline file must not draw under another city's routes: choose Manchester, then London before it lands.
 await page.route('**/data/manchester-boroughs.json', async (route) => { await new Promise((r) => setTimeout(r, 900)); await route.continue(); });
-await page.locator('#chips button[data-city="manchester"]').click();
-await page.locator('#chips button[data-city="london"]').click();
+await pickCity(page, 'manchester');
+await pickCity(page, 'london');
 await page.waitForTimeout(1800);
 const lateCount = await boroCount();
 ok(lateCount === 33 && (await page.locator('#chips button[data-city="london"]').getAttribute('aria-pressed')) === 'true', 'a late outline file does not overwrite the city chosen after it', `${lateCount} council areas drawn`);
@@ -667,7 +724,7 @@ const airBlock = async () => {
     JSON.stringify(edge)
   );
 }
-ok(await page.locator('.covers').isHidden(), 'the coverage strip steps aside once an answer shows, as "Try" does');
+ok(await page.locator('.promises').isHidden() && await page.locator('.covers').isVisible(), 'the promises step aside once an answer shows; the coverage line stays under the map');
 // HAVE YOUR SAY and SPOTTED SOMETHING WRONG? (Bill, 2026-10-19). Kew's nearest airport is Heathrow, whose
 // pages were verified: its two links and the CAA's portal, exactly as js/street_report.mjs holds them, so a
 // link edited in one place and not the other reds here. The correction goes to support@ with the postcode.
@@ -796,14 +853,14 @@ ok(!(await page.locator('#ans-link').isVisible()), 'outside coverage: no "see th
   const want = (await page.locator('#ans-want').isVisible()) ? await page.locator('#ans-want').textContent() : '';
   ok(/Want Exeter on the map\? Count my vote/.test(want) && !/EX1/i.test(want), 'outside coverage: a vote for the council area is offered, by name, without the postcode', want);
 }
-await page.locator('#chips button[data-city="manchester"]').click();
+await pickCity(page, 'manchester');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10);
 
 // 11. A postcode in another city switches the map there.
 await page.fill('#pc', 'M22 5RX');
 await page.press('#pc', 'Enter');
 await page.waitForSelector('#answer.is-open', { timeout: 10000 });
-await page.locator('#chips button[data-city="london"]').click();
+await pickCity(page, 'london');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 33);
 await page.fill('#pc', 'M22 5RX');
 await page.press('#pc', 'Enter');
@@ -989,7 +1046,7 @@ ok(true, 'a city name switches the map');
   const nycDoc = JSON.parse(await readFile(join(ROOT, 'data', 'us-nyc.json'), 'utf8'));
   const nycChip = page.locator('#chips button[data-city="nyc"]');
   ok((await nycChip.count()) === 1 && (await page.locator('#chips a[href*="city=nyc"]').count()) === 0, 'New York is a city chip, not a link out to the full map');
-  await nycChip.click();
+  await pickCity(page, 'nyc');
   await page.waitForFunction(
     () => document.querySelector('#chips button[data-city="nyc"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length === 5,
     null,
@@ -1080,7 +1137,7 @@ ok((await page.locator('#ans-title').textContent()) === 'TW9 3PZ' && (await page
 // not the question over a faded map. A city it cannot open is not a city, so it does not.
 await page.goto(`${BASE}?city=teesside`, { waitUntil: 'domcontentloaded' });
 await waitMap();
-ok(!(await page.evaluate(() => document.querySelector('.hero').classList.contains('is-intro'))) && (await page.evaluate(() => getComputedStyle(document.querySelector('.chips')).visibility)) === 'visible', '?city=teesside opens on the tool, not the opening question');
+ok((await page.locator('#city-name').textContent()) === 'Teesside', '?city=teesside opens on the tool, not the opening question');
 await page.goto(`${BASE}?city=constructor`, { waitUntil: 'domcontentloaded' });
 await waitMap();
 ok((await boroCount()) === 33 && !/could not load/.test(await page.locator('#status').textContent()), '?city=constructor opens London, not a map that cannot load (audit M-6)');
@@ -1288,8 +1345,9 @@ const frontText = await page.locator('body').textContent();
   // The 50 INCORPORATED places (43 cities, 7 towns): the file also holds 28 census-designated
   // places, unincorporated, which are outlines on the map and never 'cities'.
   const bayPlaces = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-places.json'), 'utf8')).places.filter((x) => x.kind === 'city' || x.kind === 'town').length;
-  const want = `${csvRows}council areas in ${csvRegions} UK city regions, New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities`;
-  const fig = (await page.locator('.cards .fig').first().textContent()).trim();
+  // THE coverage sentence (CLAUDE.md), word for word, in the Questions band since front-page-v3 (2026-11-03).
+  const want = `${csvRows} council areas in ${csvRegions} UK city regions, plus New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities (facts only).`;
+  const fig = (await page.locator('#cover-figure').textContent()).trim();
   ok(fig === want, 'the coverage figure is recounted from the data: UK council areas and city regions, New York boroughs, Bay Area cities', `page "${fig}" vs data "${want}"`);
 }
 const frontLinks = await page.locator('main a, footer a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
@@ -1613,8 +1671,9 @@ const BOOK_WANT = {
   '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
   '/api/': ['book-demo-api-bar', 'book-demo-api-page'],
   '/score-demo/index.html': ['book-demo-score-demo-page'],
-  // The front page (Bill, 2026-11-02): the business card's button, then the closing band, each named by its data-book-place.
-  '/': ['book-demo-home-card', 'book-demo-home-band'],
+  // The front page: the "Can I use it for my business?" answer, then the closing band, each named by its data-book-place
+  // (front-page-v3, Bill's mock v8, 2026-11-03; the business card's button, `card`, from 2026-11-02 until then).
+  '/': ['book-demo-home-faq', 'book-demo-home-band'],
 };
 for (const [path, want] of Object.entries(BOOK_WANT)) {
   const inBar = want.some((w) => w.endsWith('-bar'));
@@ -1675,10 +1734,10 @@ for (const [path, want] of Object.entries(BOOK_WANT)) {
   await page.setViewportSize({ width: 390, height: 820 });
   await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof window.goatcounter?.count === 'function', null, { timeout: 10000 }).catch(() => {});
-  const pageLine = await page.evaluate((url) => {
-    const a = [...document.querySelectorAll(`a[href="${url}"]`)].find((x) => !x.closest('#site-nav'));
-    return Boolean(a) && a.getClientRects().length > 0 && getComputedStyle(a).visibility !== 'hidden';
-  }, BOOK);
+  // A page line on show, not the first one in the page: the front page's first (`faq`, front-page-v3) sits in a closed
+  // question until it is opened, and its closing band is on show.
+  const pageLine = await page.evaluate((url) => [...document.querySelectorAll(`a[href="${url}"]`)]
+    .some((a) => !a.closest('#site-nav') && a.getClientRects().length > 0 && getComputedStyle(a).visibility !== 'hidden'), BOOK);
   let menuSent = [];
   if (inBar) {
     await page.evaluate(() => {
@@ -1742,7 +1801,7 @@ ok((await page.locator('#map .streets image').count()) === 0 && (await page.loca
 await page.locator('#toggle-streets').click();
 await page.waitForTimeout(500); // let London's tiles finish asking before counting what the Bay Area asks for
 const beforeBay = osTiles.length;
-await page.locator('#chips button[data-city="bayarea"]').click();
+await pickCity(page, 'bayarea');
 await page.waitForFunction(() => document.querySelector('#chips button[data-city="bayarea"]')?.getAttribute('aria-pressed') === 'true' && document.querySelectorAll('#map .boro').length > 20, null, { timeout: 15000 });
 await page.waitForTimeout(300);
 ok((await page.locator('#toggle-streets').isDisabled()) && (await page.locator('#map .streets image').count()) === 0 && osTiles.length === beforeBay, 'the Bay Area asks Ordnance Survey for nothing: it maps Great Britain only', `${osTiles.length - beforeBay} requests`);
@@ -2037,17 +2096,16 @@ const makeReport = async (pc) => {
   ok(afterDeepLink.length === 0, 'a deep link that searches at boot is not counted as engagement', JSON.stringify(afterDeepLink));
 
   await gcPage.goto(BASE, { waitUntil: 'domcontentloaded' });
-  await gcPage.locator('.try button[data-pc="TW9 3PZ"]').click();
   await gcPage.fill('#pc', 'NW1 7PJ');
   await gcPage.press('#pc', 'Enter');
   await gcPage.fill('#pc', 'M22 5RX');
   await gcPage.press('#pc', 'Enter');
-  await gcPage.locator('#chips button[data-city="manchester"]').click();
+  await pickCity(gcPage, 'manchester');
   await gcPage.waitForTimeout(300);
   const ways = await sent();
   ok(
-    JSON.stringify(ways) === JSON.stringify(['event/front-engaged', 'event/front-example', 'event/front-search', 'event/front-city']),
-    'engagement: one front-engaged at the first action, then each way in once (an example is not also a typed search; a second search is not counted again)',
+    JSON.stringify(ways) === JSON.stringify(['event/front-engaged', 'event/front-search', 'event/front-city']),
+    'engagement: one front-engaged at the first action, then each way in once (a second search is not counted again)',
     JSON.stringify(ways)
   );
   await gcPage.close();
@@ -2130,17 +2188,18 @@ const makeReport = async (pc) => {
   const UK = CSV.filter((r) => r.ons_code);
   const num = (v) => (v === '' ? null : Number(v));
   const order = (a, b) => (Number(b.score || -1) - Number(a.score || -1)) || (Number(a.avg_price_gbp) - Number(b.avg_price_gbp));
-  const selectedTab = () => fp.locator('[role="tab"][aria-selected="true"]').getAttribute('id');
+  // The search panel's tabs only (`.panel`): the walkthrough and the code samples below the map have tab lists of their
+  // own since front-page-v3 (2026-11-03), and an unscoped locator would match three selected tabs.
+  const selectedTab = () => fp.locator('.panel [role="tab"][aria-selected="true"]').getAttribute('id');
 
   // Real tabs: two, each naming a real panel, one tab stop, the arrow keys move and select.
-  const tabs = await fp.locator('[role="tablist"] [role="tab"]').evaluateAll((ts) => ts.map((t) => [t.id, t.getAttribute('aria-controls'), t.tabIndex, Boolean(document.getElementById(t.getAttribute('aria-controls'))?.matches('[role="tabpanel"]'))]));
+  const tabs = await fp.locator('.panel [role="tablist"] [role="tab"]').evaluateAll((ts) => ts.map((t) => [t.id, t.getAttribute('aria-controls'), t.tabIndex, Boolean(document.getElementById(t.getAttribute('aria-controls'))?.matches('[role="tabpanel"]'))]));
   ok(JSON.stringify(tabs) === JSON.stringify([['tab-check', 'panel-check', 0, true], ['tab-find', 'panel-find', -1, true]]),
     'find: two real tabs, each controlling a real panel, with one tab stop', JSON.stringify(tabs));
   await fp.locator('#tab-check').focus();
   await fp.keyboard.press('ArrowRight');
   ok((await selectedTab()) === 'tab-find' && await fp.evaluate(() => document.activeElement?.id === 'tab-find'), 'find: the right arrow moves to "Find areas" and selects it');
   ok(await fp.locator('#panel-find').isVisible() && await fp.locator('#panel-check').isHidden(), 'find: its panel shows and the postcode panel hides');
-  ok(!(await fp.locator('.hero').getAttribute('class')).includes('is-intro'), 'find: the question over the faded map makes way, because the map is the answer');
   ok((await fp.locator('#fit-where').inputValue()) === 'london', 'find: the list starts on the region the map shows');
   ok((await listed()).length === 0 && /^Choose a price/.test(await fp.locator('#fit-count').textContent())
     && (await fp.locator('#map .boro.is-fit').count()) === 0 && await fp.locator('#toggle-fit').isHidden(),
@@ -2258,7 +2317,7 @@ const makeReport = async (pc) => {
     'find: the address keeps #find as the region changes, so a reload or a shared link comes back to the tab', await fp.evaluate(() => location.href));
 
   // The other way: a city chosen on the map becomes the list's region.
-  await fp.locator('#chips button[data-city="westmidlands"]').click();
+  await pickCity(fp, 'westmidlands');
   await fp.waitForFunction(() => document.getElementById('fit-where')?.value === 'westmidlands', null, { timeout: 10000 }).catch(() => {});
   ok((await fp.locator('#fit-where').inputValue()) === 'westmidlands', 'find: a city chosen on the map becomes the list\'s region too');
 
@@ -2282,7 +2341,7 @@ const makeReport = async (pc) => {
 
   // Review 2026-10-15: a city the list does not hold (the open-data CSV is UK council areas) must
   // not leave a West Midlands list silently beside a New York map.
-  await fp.locator('#chips button[data-city="nyc"]').click();
+  await pickCity(fp, 'nyc');
   await fp.waitForFunction(() => /does not cover/.test(document.getElementById('fit-note')?.textContent || ''), null, { timeout: 15000 }).catch(() => {});
   ok(/showing New York, which this list does not cover/.test(await fp.locator('#fit-note').textContent()) && await fp.locator('#fit-mapjump').isHidden(),
     'find: on New York the list says the map is elsewhere, and stops offering to show its areas there', await fp.locator('#fit-note').textContent());
@@ -2328,8 +2387,8 @@ const makeReport = async (pc) => {
 
 // 18e. FIND AREAS IS PART OF THE PAGE, NOT A HIDDEN TAB (Bill, 2026-10-14: "where are the options exactly",
 // then "it can fit better on the website"). /#find opens the tab, and is not engagement (nobody has done
-// anything); the "Find an area that fits" card opens it; and the card's figure is the number of choices
-// the tab offers, counted from the page, never a number someone has to remember to change.
+// anything); and the "Find an area that fits" row opens it (a card until front-page-v3, 2026-11-03, whose figure, the
+// number of choices, was held here; the row carries no figure).
 {
   const dp = await context.newPage();
   await dp.addInitScript(() => {
@@ -2343,13 +2402,10 @@ const makeReport = async (pc) => {
   ok((await dp.locator('#tab-find').getAttribute('aria-selected')) === 'true' && await dp.locator('#panel-find').isVisible(), 'find: /#find opens the Find areas tab');
   ok((await dp.evaluate(() => window.__gc.slice())).length === 0, 'find: and a link opening it is not counted as engagement', JSON.stringify(await dp.evaluate(() => window.__gc.slice())));
   await dp.locator('#tab-check').click();
-  const card = dp.locator('.card', { has: dp.locator('a[href="#find"]') });
-  await card.locator('a[href="#find"]').click();
+  const row = dp.locator('.ways li', { has: dp.locator('a[href="#find"]') });
+  await row.locator('a[href="#find"]').click();
   ok((await dp.locator('#tab-find').getAttribute('aria-selected')) === 'true' && await dp.evaluate(() => document.activeElement?.id === 'tab-find'),
-    'find: the "Find an area that fits" card opens the tab, with focus on it');
-  const choices = await dp.locator('#fit-avoid input, #fit-want input').count();
-  const fig = (await card.locator('.fig').evaluate((el) => el.firstChild.textContent)).trim();
-  ok(choices > 0 && fig === String(choices), 'find: the card\'s figure is the number of choices the tab offers', `${fig} vs ${choices}`);
+    'find: the "Find an area that fits" row opens the tab, with focus on it');
   // Review 2026-10-23: "Search a postcode" in "Who it is for" (/#check) scrolled to the hidden check panel and did
   // nothing while Find areas was open. The Find tab is open here (the card above opened it).
   await dp.locator('section.who a[href="/#check"]').click();
@@ -2456,7 +2512,6 @@ const makeReport = async (pc) => {
     address: location.pathname + location.search,
     status: document.getElementById('status').textContent,
     covers: getComputedStyle(document.querySelector('.covers')).display !== 'none',
-    intro: document.querySelector('.hero').classList.contains('is-intro'),
     box: document.getElementById('pc').value,
     counted: window.__gc.slice(),
   }));
@@ -2502,10 +2557,32 @@ const makeReport = async (pc) => {
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
   const first = await look();
-  ok(first.label && first.title === 'Example: TW9 3PZ' && first.address === '/' && first.status === '' && first.covers && !first.intro && first.box === '' && first.counted.length === 0,
+  ok(first.label && first.title === 'Example: TW9 3PZ, Kew' && first.address === '/' && first.status === '' && first.covers && first.box === '' && first.counted.length === 0,
     'answer first: a plain visit opens on the TW9 3PZ answer, labelled as an example, with the address, the live region, the box and the counts untouched and the coverage line kept',
     JSON.stringify(first));
   await ep.waitForFunction(() => !document.getElementById('ans-planes').hidden, null, { timeout: 5000 }).catch(() => {});
+  // THE EXAMPLE, COMPACT (front-page-v3 step 2): three tiles written from the answer, the rest one press away, and the
+  // question stays the page's. Asked of the browser: what is on screen, never the class that should put it there.
+  await ep.waitForFunction(() => document.querySelectorAll('#ans-tiles .ans-tile').length === 3, null, { timeout: 5000 }).catch(() => {});
+  const compact = await ep.evaluate(() => ({
+    tiles: [...document.querySelectorAll('#ans-tiles .ans-tile')].map((t) => t.textContent),
+    rows: getComputedStyle(document.getElementById('ans-rows')).display,
+    h1: parseFloat(getComputedStyle(document.querySelector('.panel h1')).fontSize),
+    lead: getComputedStyle(document.querySelector('.panel .lead')).display,
+    promises: getComputedStyle(document.querySelector('.promises')).display,
+  }));
+  ok(compact.tiles.length === 3 && /^[\d.]+ dBaircraft noise$/.test(compact.tiles[0]) && /µg\/m³NO₂ in the air$/.test(compact.tiles[1])
+    && compact.tiles[2] === '310planes a day, flying west' && compact.rows === 'none' && compact.h1 > 30 && compact.lead !== 'none' && compact.promises !== 'none',
+    'the example opens compact: three tiles from the answer, the rest folded, the question and the promises still there', JSON.stringify(compact));
+  await ep.click('#ans-more');
+  const opened = await ep.evaluate(() => ({
+    rows: getComputedStyle(document.getElementById('ans-rows')).display,
+    label: document.getElementById('ans-more').textContent,
+    expanded: document.getElementById('ans-more').getAttribute('aria-expanded'),
+    counted: window.__gc.slice(),
+  }));
+  ok(opened.rows !== 'none' && opened.label === 'Hide the full example' && opened.expanded === 'true' && opened.counted.includes('event/front-example'),
+    'Show the full example opens the whole answer in place, says so, and counts once', JSON.stringify(opened));
   const kew = await planesBlock();
   ok(!kew.hidden && kew.head === 'Planes overhead'
     && JSON.stringify(kew.rows) === JSON.stringify(['Flying west56% of days310 a day', 'Both ways15% of days168 a day', 'Flying east29% of days4 a day'])
@@ -2530,12 +2607,117 @@ const makeReport = async (pc) => {
   ok(clipped.length === 0, 'planes overhead: no figure is cut off on a phone, "1 to 316 a day" and "under 1 to 191 a day" included', clipped.join(' | '));
   await ep.setViewportSize({ width: 1366, height: 820 });
 
+  // THE DEVELOPERS BAND (Bill's pick C, 2026-11-04): on arriving, the request types itself and its answer's figures land as
+  // tiles, once. What is shown must be what was answered, so all of it is read against the example's own lookup.
+  // Every painted frame of a run, asked of the page: which number is lit, which card is lit, how many cards show their
+  // figure, and how tall the request is. Bill: the three must move as one, and the box must not move at all.
+  const watchLit = () => ep.evaluate(() => {
+    window.__litStop = true;
+    window.__lit = [];
+    const lit = (all) => [...all].findIndex((n) => n.classList.contains('is-lit'));
+    requestAnimationFrame(() => {
+      window.__litStop = false;
+      const tick = () => {
+        const pre = document.querySelector('section.dev [role="tabpanel"]:not([hidden]) pre');
+        window.__lit.push({
+          n: lit(document.querySelectorAll('.dev-n')),
+          t: lit(document.querySelectorAll('#dev-tiles .ans-tile')),
+          shown: document.querySelectorAll('#dev-tiles .ans-tile b:not(.is-empty)').length,
+          h: Math.round(pre.getBoundingClientRect().height * 10) / 10,
+          run: document.getElementById('dev-run').classList.contains('is-waiting'),
+        });
+        if (!window.__litStop) requestAnimationFrame(tick);
+      };
+      tick();
+    });
+  });
+  const runEnded = () => ep.waitForFunction(() => !document.getElementById('dev-run').classList.contains('is-waiting'), null, { timeout: 9000 }).catch(() => {});
+  const litFrames = () => ep.evaluate(() => { window.__litStop = true; return window.__lit.filter((f) => f.run); });
+  const inStep = (frames, count) => frames.every((f) => f.n === f.t) && new Set(frames.map((f) => f.n).filter((n) => n >= 0)).size === count
+    && frames.filter((f) => f.n >= 0).every((f) => f.shown === f.n + 1) && new Set(frames.map((f) => f.h)).size === 1;
+  const report = (frames) => JSON.stringify({ frames: frames.length, split: frames.filter((f) => f.n !== f.t).length, early: frames.filter((f) => f.n >= 0 && f.shown !== f.n + 1).length, heights: [...new Set(frames.map((f) => f.h))] });
+  const litStarted = () => ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 8000 }).then(() => true).catch(() => false);
+  await watchLit();
+  await ep.locator('section.dev .code').scrollIntoViewIfNeeded();
+  const flew = await litStarted();
+  const midRun = await ep.evaluate(() => document.getElementById('dev-env').textContent);
+  await runEnded();
+  const curlFrames = await litFrames();
+  const band = await ep.evaluate(async () => {
+    const { exampleAnswer } = await import('/js/home-engine.mjs');
+    const ex = await exampleAnswer();
+    return {
+      hidden: document.getElementById('dev-run').hidden,
+      json: document.getElementById('dev-res').textContent,
+      tiles: [...document.querySelectorAll('#dev-tiles .ans-tile b')].map((b) => b.textContent),
+      numbers: [...document.querySelectorAll('.dev-n')].map((n) => n.textContent),
+      empty: document.querySelectorAll('#dev-tiles .is-empty').length,
+      request: document.getElementById('dev-env').textContent,
+      python: document.getElementById('dev-env-py').textContent,
+      replay: !document.getElementById('dev-replay').hidden,
+      lat: ex.geo.latitude, lon: ex.geo.longitude, env: ex.env.environment,
+    };
+  });
+  const said = JSON.parse(band.json);
+  ok(flew && !band.hidden && band.empty === 0 && band.tiles.length >= 2 && band.replay
+    && Object.entries(said.environment).every(([k, v]) => band.env[k] === v),
+    'the developers band plays once and ends on the example\'s own figures, every one read from the answer', JSON.stringify({ flew, tiles: band.tiles, said }));
+  ok(band.request.includes(`lat=${band.lat}&lon=${band.lon}`) && band.python.includes(`'lat': ${band.lat}, 'lon': ${band.lon}`) && midRun === band.request,
+    'the request on show is the one that was answered, and its text is whole even while it types (Copy)', JSON.stringify({ request: band.request.slice(-40), midRun: midRun.slice(-40) }));
+  ok(band.numbers.length === band.tiles.length && band.numbers.every((n, i) => band.tiles[i].startsWith(n)) && inStep(curlFrames, band.tiles.length),
+    'curl: each number, its own card and the card\'s figure arrive in one frame, in turn, and the request box never moves', report(curlFrames));
+  for (const [tab, word] of [['py', 'Python'], ['js', 'JavaScript']]) {
+    await watchLit();
+    await ep.click(`#code-tab-${tab}`);
+    const replayed = await litStarted();
+    await runEnded();
+    const frames = await litFrames();
+    ok(replayed && inStep(frames, band.tiles.length), `${word}: changing language plays it again, in step, with the box still`, report(frames));
+  }
+  await ep.click('#code-tab-curl');
+  await runEnded();
+  // A phone wraps the URL over more lines, which is where the box used to jump.
+  await ep.setViewportSize({ width: 390, height: 844 });
+  await ep.locator('section.dev .code').scrollIntoViewIfNeeded();
+  await watchLit();
+  await ep.click('#dev-replay');
+  await litStarted();
+  await runEnded();
+  const phoneFrames = await litFrames();
+  ok(inStep(phoneFrames, band.tiles.length), 'curl on a phone: the same, the request box still at 390 wide', report(phoneFrames));
+  await ep.setViewportSize({ width: 1366, height: 820 });
+  // With reduced motion nothing moves and nothing is missing.
+  await ep.emulateMedia({ reducedMotion: 'reduce' });
+  await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await shown();
+  await ep.locator('section.dev .code').scrollIntoViewIfNeeded();
+  await ep.waitForFunction(() => document.getElementById('dev-run')?.hidden === false, null, { timeout: 8000 }).catch(() => {});
+  const movedAnyway = await ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 1500 }).then(() => true).catch(() => false);
+  const calm = await ep.evaluate(() => ({ tiles: document.querySelectorAll('#dev-tiles .ans-tile b:not(.is-empty)').length, replay: document.getElementById('dev-replay').hidden }));
+  ok(!movedAnyway && calm.tiles >= 2 && calm.replay, 'with reduced motion the band shows everything at once and offers no replay', JSON.stringify({ movedAnyway, calm }));
+  await ep.emulateMedia({ reducedMotion: null });
+  await ep.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+
   await ep.fill('#pc', 'NW1 7PJ');
   await ep.press('#pc', 'Enter');
   await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'NW1 7PJ', null, { timeout: 10000 }).catch(() => {});
   const own = await look();
-  ok(own.title === 'NW1 7PJ' && !own.label && own.address.includes('postcode=NW1') && !own.covers,
+  ok(own.title === 'NW1 7PJ' && !own.label && own.address.includes('postcode=NW1'),
     'answer first: the visitor\'s own search replaces the example, and is theirs (in the address, no example label)', JSON.stringify(own));
+  ok(await ep.locator('#ans-tiles').isHidden() && await ep.locator('#ans-show').isHidden() && (await ep.locator('#answer .rows').isVisible()),
+    'a visitor\'s own search has no tiles and no "full example": the answer is whole');
+  // A card takes the example's place: the question steps aside for it, and a reader scrolled down the column is
+  // brought back to it, because the card is shorter than the answer it replaces.
+  await ep.evaluate(() => window.scrollTo({ top: 500, behavior: 'instant' }));
+  await ep.locator('#map .boro[aria-label^="Camden"]').click();
+  await ep.waitForSelector('#borough.is-open', { timeout: 5000 });
+  await ep.waitForFunction(() => { const r = document.getElementById('borough').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight; }, null, { timeout: 4000 }).catch(() => {});
+  const carded = await ep.evaluate(() => {
+    const r = document.getElementById('borough').getBoundingClientRect();
+    return { top: Math.round(r.top), h1: parseFloat(getComputedStyle(document.querySelector('.panel h1')).fontSize), example: document.querySelector('.panel').classList.contains('is-example') };
+  });
+  ok(carded.top >= 0 && carded.top < 820 && carded.h1 <= 22 && !carded.example, 'a card opened from the map, after scrolling, is on screen and the question has stepped aside', JSON.stringify(carded));
+  await ep.evaluate(() => { document.getElementById('borough-close')?.click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
   await ep.waitForTimeout(500);
   const nw1 = await planesBlock();
   ok(nw1.hidden && !planesAsked.includes('NW1.json'),
@@ -2570,10 +2752,10 @@ const makeReport = async (pc) => {
   await ep.route((u) => u.hostname === 'api.postcodes.io', async (route) => { await new Promise((r) => setTimeout(r, 1500)); return stubOffsite(route); });
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await ep.waitForSelector('#map .boro', { timeout: 20000 });
-  await ep.locator('#explore-map').click();
+  await pickCity(ep, 'manchester');
   await ep.waitForTimeout(3000);
   const yielded = await look();
-  ok(!yielded.label && yielded.counted.includes('event/front-explore'), 'answer first: a visitor who acts before the example arrives keeps what they did', JSON.stringify(yielded));
+  ok(!yielded.label && yielded.counted.includes('event/front-city'), 'answer first: a visitor who acts before the example arrives keeps what they did', JSON.stringify(yielded));
   await ep.close();
   exampleOn = false;
 }

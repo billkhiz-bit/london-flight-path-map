@@ -110,7 +110,9 @@ Or just describe what you need, I have full context of this project.
   measured; the front page said "DEFRA, measured" until 2026-11-03, and `tests/test_public_wording.py` now refuses it); never say **how often planes pass** except for airports that pass
   `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26)
   or the district pages `build_planes_pages.py` BUILDS from the same files (`/planes-overhead/`, 2026-10-28: a cell
-  counts postcodes in bands, never a middle figure; its `--check` holds every page), or the full map's layer pictures
+  counts postcodes in bands, never a middle figure; since 2026-11-03 it SHOWS the busiest band and draws every band as
+  one bar in the layer's colours (`BAND_COLOURS`, held equal to `build_planes_layer.COLOURS`), every count in the bar's
+  label; its `--check` holds every page), or the full map's layer pictures
   `build_planes_layer.py` draws from the same files (2026-11-02: each postcode its own step, from the busiest airport
   over it, never airports added, never grouped; its
   `--check` holds every picture, its legend names steps, never a place's figure), a range on a cone's edge,
@@ -175,6 +177,8 @@ Or just describe what you need, I have full context of this project.
   `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html). A runway lobe
   runs `RUNWAY_LOBE_KM` (15 km), mirrored in index.html. A fit only tests points near its monitors: check
   anything far from every monitor against an independent source (v5.7: the US DOT map caught Manhattan).
+- **`check_flood_georef.py` re-samples a small-sample miss on 16 cells a class before failing** (2026-11-04): at preflight's
+  4 a class one boundary cell is 75%, under the bar, all day (`docs/lessons/flood.md`). The bar stays 80%.
 - **A download's 200 is not the product**: test its magic bytes (FEMA's portal answered a missing county
   product with its page template, 2026-10-20; `docs/lessons/us-cities.md`).
 - **A tile service's 404 is "not cached", never "quiet"**: measure which levels a cache holds before reading
@@ -226,6 +230,22 @@ Or just describe what you need, I have full context of this project.
   never a sum (each airport's kinds of day are its own): every surface naming the layer says so. Smoothed until one
   picture pixel covers a screen pixel, sharp from there (`setPlanesRendering`). It and DEFRA aircraft noise are never
   on together; the legend's step colours equal `index.json`'s (`tests/planes-layer.mjs`, `test_build_planes_layer.py`).
+  **A tap names the district under it** (2026-11-03, Bill's pick "small card"): read from `<city>-district-ids.json`
+  (the outlines' own grid, run-length rows; a list of numbers, never a colour-coded picture), placed where the picture
+  is; `districtFromGrid` mirrors `build_planes_layer.district_at` line for line; a card only if
+  `planes-districts-by-council.json` lists the district (never a guessed link), beside the tap, never a figure.
+  **A builder's new KIND of output needs its own deploy line**: `planes-layer-deploy` syncs named file types, so the
+  first grids never shipped and the card stayed silent (2026-11-03); nothing fails, only the drift check can see it.
+- **`/epc` takes full UK postcodes only** (2026-11-03): a ZIP or a bare district is the caller's 400 and never reaches
+  MHCLG (it answered 400, which the Lambda reported as its own 502: 134 of the API's 146 5xx in a day); the map's
+  `fetchEpcData` asks only with a full postcode. An upstream 400 for a valid postcode stays a 502: their change, loud.
+- **The front page's lower sections type no figure** (front-page-v3, Bill's mock v8, live 2026-11-04): the walkthrough's steps 02-04 are written by `js/home-sections.mjs` from the hero's own example lookup
+  (`home-engine.mjs` `exampleAnswer()`, one shared pair), the planes step through `planesWalk()` in `js/planes.mjs`
+  (bar colours from the layer's `index.json` steps); step 05's picture is MADE from the sample PDF by
+  `build_report_still.py` (its `--check` reds once the PDF changes: re-run `--write` after any sample regeneration);
+  the dark band is written between PLANES-BAND markers by `build_planes_pages.py` (`--write --home` needs no tracks;
+  `--check` reds the day after `until` until `--write`, then `home-deploy`). A worktree without the tracks checks the
+  planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
@@ -240,8 +260,8 @@ Or just describe what you need, I have full context of this project.
   correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
   page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.
 - **The Book a demo link has ONE holder, `js/count.mjs` `DEMO_BOOKING_URL`** (2026-10-29): only `/pricing`, `/api/`
-  (bar + page), `/score-demo/` and TWO front-page spots, the business card's button and the closing band (never its
-  bar; Bill, 2026-11-02, after arcive.ai) carry it
+  (bar + page), `/score-demo/` and TWO front-page spots, the "Can I use it for my business?" answer (`faq`, since
+  front-page-v3; the business card's button until then) and the closing band (never its bar; Bill, 2026-11-02) carry it
   (`tests/test_demo_booking_link.py`), counted by destination as `book-demo-<page>-<bar|bar-menu|page|spot>` (a spot
   from `data-book-place`); `make booking-link-check` refuses web/demo/home deploys while it is a placeholder.
 - **The company LinkedIn link has ONE holder, `js/count.mjs` `LINKEDIN_URL`** (Bill, 2026-11-03): the front page's footer
@@ -258,6 +278,23 @@ Or just describe what you need, I have full context of this project.
 - **`d3.v7.min.js` sits at the foot of `<body>` with a matching preload**; `defer` is wrong here.
 - **The top bar folds behind a Menu POPOVER below 680 px** (no script: privacy/terms allow none, area pages carry
   none); every bar is held at 390 and 1366 wide by `tests/front-page.mjs` 16d. A new bar needs the same markup.
+- **The front page's hero is two columns** (front-page-v3 step 2, live 2026-11-04; it ended the ~20 Nov read early, Bill's
+  call, counts frozen on the Desktop): question, search and answer left, the live map right, nothing over it (no
+  `.is-intro`, `data-map-inset` or `inert` any more). The example opens compact: `#ans-tiles` from `exampleFigures()` and
+  `planesWalk().lead`, never typed; `#ans-more` opens the rest in place. The cities sit in `#city-menu` (`#chips` is still
+  their holder; tests go through `pickCity`), and `#map-full` follows the city. The "New" pill goes with the consultation
+  (PLANES-PILL markers, `build_planes_pages.py`). The map's box rule is `.mapwrap > svg`, never `.hero svg`: that one
+  stretched a tick icon over half the page. No plane glides on the hero map (Bill: "isn't clear"; the mock's was dropped).
+- **The developers band's animation shows only what was answered** (Bill's pick C, 2026-11-04): `devAnswer()` builds the
+  JSON and tiles from the example's own response, and `showDev()` rewrites the three samples to that answer's point, so the
+  request on show is the one answered and no lookup is added. Once on arriving, about 4 s (under WCAG 2.2.2's five), never a
+  loop; again on a language change or Replay; at rest and with reduced motion everything shows. A number, its card and the
+  card's figure arrive in one frame, one figure at a time, and the request box never moves (held frame by frame in
+  `tests/front-page.mjs`, all three languages and at 390). The caret stays out of the text's flow, or a long URL re-wraps;
+  typing keeps the whole text in the node, so Copy is never partial.
+- **`tests/test_home_links.py` holds every link the front page makes and every link back to it** (Bill, 2026-11-04):
+  each reaches a tracked file or a page the planes index lists, each fragment an id there (a fragment that misses opens
+  the page at the top, with no error). Links to other sites are checked from the live page after a deploy, never there.
 - **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
   address, never engagement, silent on failure. `stubLiveApi` answers its two lookups; scans wait for it.
 - **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without

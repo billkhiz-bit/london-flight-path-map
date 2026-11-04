@@ -374,13 +374,18 @@ def test_a_citys_routes_share_one_cell_in_the_panels_own_words():
     # routes beside its name. The words are the cell functions' (the map's panel shows them too).
     both = city(approaches={'SFO 28L': 1460.0}, departures=['SFO GAPP7'])
     cell = bay.routes_cell(both)
+    # 2026-11-03: the kinds show, the sentences sit behind the city's own expander (declutter).
     assert cell == (
+        '<details><summary>Landing &middot; Departure</summary>'
         f'<span><b>Landing:</b> {bay.approach_cell(both).removeprefix("Yes: ")}</span>'
         f'<span><b>Departure:</b> {bay.departure_cell(both).removeprefix("Yes: ")}</span>'
+        '</details>'
     )
     assert 'Yes:' not in cell and 'Arrival' not in cell
     every = city(approaches={'SFO 28L': 1460.0}, arrivals={'SFO SERFR4': None}, departures=['SFO GAPP7'])
     assert re.findall(r'<b>(\w+):</b>', bay.routes_cell(every)) == ['Landing', 'Arrival', 'Departure']
+    assert re.search(r'<summary>(.*?)</summary>', bay.routes_cell(every))[1] == \
+        'Landing &middot; Arrival &middot; Departure'  # the summary names every kind its sentences give
     # Under none: the nearest route, never an empty cell.
     assert bay.routes_cell(city()) == 'None overhead. Nearest: 1.9 mi (SFO 28L approach)'
 

@@ -57,6 +57,21 @@
       h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(23px, 2.6vw, 30px); letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 12px; }
       p { margin: 0 0 14px; }
       .quiet { color: var(--mid); font-size: 15px; }
+      /* Read more (declutter, 2026-11-03; Bill: "do the proposed fixes"): every heading and its opening words stay
+         open, the detail one click away, the contents pills' own look. The page was 9 screens (14.6 on a phone). */
+      details.more { margin: 4px 0 0; }
+      details.more > summary { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; list-style: none;
+        font-size: 15px; font-weight: 600; padding: 8px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line); }
+      details.more > summary::-webkit-details-marker { display: none; }
+      details.more > summary::after { content: "+" / ""; font-family: var(--font-mono); font-weight: 500; color: var(--orange-ink); }
+      details.more[open] > summary::after { content: "\2212" / ""; }
+      details.more > summary:hover { box-shadow: inset 0 0 0 1.5px var(--dark); }
+      details.more[open] > summary { margin-bottom: 16px; }
+      /* The short version, under the approach strip (which Bill wanted straight after the opening words, 26 Oct). */
+      .short { background: var(--paper); border-radius: 18px; padding: clamp(18px, 3vw, 26px); max-width: 76ch; }
+      .short ul { margin: 0; padding-left: 20px; }
+      .short li { margin: 0 0 8px; }
+      .short li:last-child { margin: 0; }
 
       /* The worked example: the arithmetic itself, as a receipt. Numbers are mono so the columns line up. */
       .example { background: var(--paper); border-radius: 18px; padding: clamp(18px, 3vw, 30px); max-width: 760px; margin: 0 0 14px; }
@@ -338,6 +353,7 @@
            like we do for the about page"): the About page's pills, and the way past the approach strip below. -->
       <nav class="contents" aria-label="On this page">
         <ul>
+          <li><a href="#short">The short version</a></li>
           <li><a href="#example">A score, taken apart</a></li>
           <li><a href="#scores">The five scores</a></li>
           <li><a href="#data">Official data, and our own work</a></li>
@@ -444,9 +460,19 @@ enders\strip_v7_site\HANDOFF.md); its
         <details class="notes"><summary>About this picture: what is drawn, and how</summary><div id="approach-notes"></div></details>
       </section>
 
+      <section id="short" class="short" aria-labelledby="short-h">
+        <h2 id="short-h">The short version</h2>
+        <ul>
+          <li>Five scores out of 10, where higher is always better: Quiet Skies, Affordability, Price growth, Liveability and Environment. The overall score weighs them by what you care about.</li>
+          <li>Almost every figure is a public body's own published data. Two we work out ourselves, and every answer says how: Quiet Skies where the official noise map has no figure, and how many planes pass overhead at the airports we can check against official figures.</li>
+          <li>Where something isn't published, we leave it out and say so. We never fill a gap with a typical value, and nothing here is advice.</li>
+        </ul>
+      </section>
+
       <section id="example" aria-labelledby="example-h">
         <h2 id="example-h">A score, taken apart</h2>
         <p class="read">Each score is out of 10, and higher is better. The overall score multiplies each one by its weight and adds them up. Here is Hounslow, the council area next to Heathrow.</p>
+        <details class="more"><summary>Show the worked example</summary>
         <div class="example">
           <!-- HOW-IT-WORKS-EXAMPLE:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
           <table class="sum">
@@ -467,6 +493,7 @@ enders\strip_v7_site\HANDOFF.md); its
           <!-- HOW-IT-WORKS-EXAMPLE:END -->
         </div>
         <p class="read quiet">For a whole council area, Quiet Skies is a band we set from the aircraft noise across it. A postcode inside Hounslow gets its own figure instead, so scores change from street to street. The points are each score times its weight; the overall score is their total, rounded to one decimal place.</p>
+        </details>
       </section>
 
       <section id="scores" aria-labelledby="scores-h">
@@ -484,6 +511,7 @@ enders\strip_v7_site\HANDOFF.md); its
       <section id="data" aria-labelledby="data-h">
         <h2 id="data-h">Official data, and our own work</h2>
         <p class="read">Almost every number comes straight from a public body's own published data. Quiet Skies and planes overhead are the exceptions: we work them out, and every answer says how.</p>
+        <details class="more"><summary>How Quiet Skies is estimated, and who publishes the rest</summary>
         <div class="two">
           <div class="est">
             <h3>Our own work: Quiet Skies</h3>
@@ -495,11 +523,13 @@ enders\strip_v7_site\HANDOFF.md); its
           </div>
         </div>
         <p class="read quiet">Some official data is itself a model, not a reading at your door. DEFRA's air quality and noise maps and the Environment Agency's flood map are worked out by those bodies from measurements and computer models.</p>
+        </details>
       </section>
 
       <section id="planes-overhead" aria-labelledby="planes-overhead-h">
         <h2 id="planes-overhead-h">How the planes are counted</h2>
         <p class="read">The answer for a postcode says how many planes pass overhead on an average day, in three figures: on days the airport flies west, on days it flies east, and on days it uses both. Planes land and take off into the wind, so the weather decides which way an airport flies, and in many places that decides the day: under Heathrow's arrivals in Kew, hundreds on a day it flies west and a handful on a day it flies east. One average of the two would be true on no day at all.</p>
+        <details class="more"><summary>What counts as overhead, and how the counts are checked</summary>
         <ul class="plain read">
           <li><b>Overhead</b> means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft: the Civil Aviation Authority's definition of an overflight (CAP 1498). How high a plane is counts from the ground beneath it, not from sea level.</li>
           <li><b>The planes</b> are the positions aircraft broadcast as they fly, gathered by a community of volunteer receivers (adsb.lol). We count every day since January 2026.</li>
@@ -508,11 +538,13 @@ enders\strip_v7_site\HANDOFF.md); its
           <li><b>Where.</b> Each postcode is read where the Office for National Statistics places it, on a grid of 100 metre squares. On the edge of a flight path, a few metres decide whether a plane counts as overhead, so where the squares around a postcode differ widely, the answer gives the fewest and the most within 100 metres.</li>
         </ul>
         <p class="read quiet">What the count leaves out: aircraft that do not broadcast their position (some small and military aircraft), and flying from airfields, heliports and airports we cannot check against official figures. Where that flying is a large part of what passes over, the answer says so, because few planes from the airports we count does not mean a quiet sky. It counts planes, not noise: how loud each one is depends on its size and height.</p>
+        </details>
       </section>
 
       <section id="overall" aria-labelledby="overall-h">
         <h2 id="overall-h">The overall score</h2>
         <p class="read">Different people care about different things, so there are eight views. Each gives the five scores different weights, and a weight of 0% means that score is not counted in that view. Choose a view on <a href="/map/">the full map</a> and the overall score changes; the five scores stay the same.</p>
+        <details class="more"><summary>Show the weights for each view</summary>
         <div class="scroll" role="region" aria-label="Weights for each view" tabindex="0">
           <!-- HOW-IT-WORKS-WEIGHTS:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
           <table class="weights">
@@ -532,6 +564,7 @@ enders\strip_v7_site\HANDOFF.md); its
           <!-- HOW-IT-WORKS-WEIGHTS:END -->
         </div>
         <p class="read">When a score can't be worked out, for example where no school results are published, we leave it out and share its weight among the others. We never fill a gap with a typical value, and the answer says what is missing. Liveability and environment each need at least two of their parts, or that score is left out.</p>
+        </details>
       </section>
 
       <section id="limits" aria-labelledby="limits-h">
@@ -548,6 +581,8 @@ enders\strip_v7_site\HANDOFF.md); its
 
       <section id="credits" aria-labelledby="credits-h">
         <h2 id="credits-h">Where the data comes from</h2>
+        <p class="read">Each figure's public body, under that body's own licence, with flight routes from the UK AIP (NATS) and aircraft positions from adsb.lol.</p>
+        <details class="more"><summary>Every source and its licence</summary>
         <ul class="credits read">
           <li><b>Prices:</b> HM Land Registry, UK House Price Index. Contains HM Land Registry data &copy; Crown copyright and database right 2026. This data is licensed under the Open Government Licence v3.0.</li>
           <li><b>Crime:</b> Office for National Statistics, Crime in England and Wales. Open Government Licence v3.0.</li>
@@ -561,10 +596,13 @@ enders\strip_v7_site\HANDOFF.md); its
           <li><b>Planes overhead:</b> aircraft positions from adsb.lol, under the Open Database License (ODbL) 1.0, so the counts we make from them are under the ODbL too. Weather at each airport from the Iowa Environmental Mesonet (Iowa State University). Ground heights from OS Terrain 50: Contains OS data &copy; Crown copyright and database right, Open Government Licence v3.0. Checked against the Civil Aviation Authority's monthly airport figures.</li>
         </ul>
         <p class="read quiet">Each licence covers its own dataset, not Sky Score as a whole.</p>
+        </details>
       </section>
 
       <section id="fresh" aria-labelledby="fresh-h">
         <h2 id="fresh-h">How up to date it is</h2>
+        <p class="read">Each dataset is its publisher's latest. The one to know: DEFRA's noise maps describe 2021, a year with fewer flights and less traffic than usual, so they read quieter than today.</p>
+        <details class="more"><summary>The date of each dataset</summary>
         <ul class="plain read">
           <!-- HOW-IT-WORKS-PRICES:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
           <li><b>House prices</b> are HM Land Registry's monthly price index, now for August 2026. We update them each month.</li>
@@ -575,6 +613,7 @@ enders\strip_v7_site\HANDOFF.md); its
           <li><b>School results</b> are the latest Progress 8 figures. The government has paused the measure for two years, so these stay until it returns.</li>
           <li><b>Flight routes</b> are rebuilt from the official aeronautical publication and checked on every release.</li>
         </ul>
+        </details>
       </section>
 
       <section id="coverage" aria-labelledby="coverage-h">

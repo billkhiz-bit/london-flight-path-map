@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -14,6 +15,12 @@ logger.setLevel(logging.INFO)
 # Replaces epc.opendatacommunities.org which retires 2026-05-30.
 EPC_API_BASE = 'https://api.get-energy-performance-data.communities.gov.uk'
 DOMESTIC_SEARCH_PATH = '/api/domestic/search'
+# THE REGISTER IS SEARCHED BY FULL POSTCODE ONLY (2026-11-03). A US ZIP or a bare district ("94301", "TW9") makes
+# MHCLG answer 400, which this Lambda reported as its own 502: 134 of the API's 146 5xx in its first 27 hours of
+# [5XX] logging, all from the full map passing on what a ZIP or district search had produced. The shape is the
+# signup Lambda's UK_POSTCODE. Anything else is the CALLER's mistake (400) and never reaches MHCLG; an upstream 400
+# for a postcode of this shape still answers 502, because after this check it can only mean their service changed.
+FULL_POSTCODE = re.compile(r'^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$')
 
 # Search-response fields are a strict subset of the legacy CSV: only band,
 # address, council, constituency, registration date, UPRN, certificate number.
@@ -35,6 +42,8 @@ def handler(event, context):
 
         if not postcode:
             return response(400, {'error': 'postcode parameter is required'})
+        if not FULL_POSTCODE.match(postcode.strip().upper()):
+            return response(400, {'error': 'a full UK postcode is required'})
 
         bearer_token = os.environ.get('EPC_BEARER_TOKEN', '')
         if not bearer_token:

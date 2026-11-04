@@ -28,9 +28,11 @@ DECLARED = {
     'pricing.html': 2,  # the top bar, and the line under the opening (the one a phone sees: its bar is a Menu)
     'api/index.html': 2,  # the top bar, and "Get started" step 5
     'score-demo/index.html': 1,  # beside the live demo's response, where a visitor who just ran the API reads next
-    # Bill, 2026-11-02 (after arcive.ai: "more clear on the frontpage"): the business card's filled button (`card`) and
-    # a closing band (`band`), never the bar (its filled item is Full map). Until then ONE line under "Who it is for"
-    # (2026-10-30, after three spots for an hour); the band replaced it. Outside WHO-FOR, written into /about/ too.
+    # Bill, 2026-11-02 (after arcive.ai: "more clear on the frontpage"): two spots, never the bar (its filled item is Full
+    # map). Since front-page-v3 (Bill's mock v8, 2026-11-03) the "Can I use it for my business?" answer in the Questions
+    # band (`faq`; the business card it was on until then gave way to the "Beyond one street" rows) and the closing band
+    # (`band`). Until 2026-11-02 ONE line under "Who it is for" (2026-10-30, after three spots for an hour). Both outside
+    # WHO-FOR: the link belongs to this page.
     'home/index.html': 2,
 }
 CALENDLY_HREF = re.compile(r'''href=["'](https?://(?:[\w-]+\.)*calendly\.com\b[^"']*)["']''', re.I)

@@ -126,7 +126,7 @@ def test_a_page_reads_its_sectors_and_says_how_much_was_measured():
     f = _district(n=30, lhr=([2, 317], 2, 190))
     m, html = _page(f, live=40)
     assert [row[0] for row in m['tables'][0]['rows']] == ['TW9 1', 'TW9 2']
-    assert '<td><span>15 on an edge</span></td>' in html  # west: every postcode an edge across the bands
+    assert '<td><span>15 on an edge</span><div class="bands"' in html  # west: every postcode an edge across the bands
     assert '30 of its 40 postcodes measured, the ones in Richmond upon Thames' in html
     assert 'On an edge: the postcode is on the edge of a flight path' in html
     assert '<form class="check" action="/" method="get">' in html and 'name="postcode"' in html
@@ -341,6 +341,49 @@ def _facts(drop=()):
     return {'facts': [f for f in facts if f['label'] not in drop], 'sources': sources}
 
 
+# THE BAND BAR (declutter, 2026-11-03): a cell SHOWS the busiest band it reaches and draws every band as one bar,
+# each band's width its count; the bar's label says every count. Still bands, never a middle figure.
+
+def test_a_cell_shows_its_busiest_band_and_draws_every_band():
+    html = bpp.cell_html(['up to 317 a day', '137 at 100+', '1,200 on an edge', '450 under 10'], top=True)
+    assert re.findall(r'<span(?: class="top")?>(.*?)</span>', html) == ['up to 317 a day', '137 at 100+']
+    assert html.startswith('<span class="top">up to 317 a day</span>')
+    assert re.findall(r'<i class="(b\w+)" style="flex-grow:(\d+)"></i>', html) == \
+        [('b100', '137'), ('bedge', '1200'), ('b0', '450')]  # each width its count, the thousands comma gone
+    label = re.search(r'aria-label="([^"]*)"', html)[1]
+    assert label == 'Postcodes by planes a day: 137 at 100+, 1,200 on an edge, 450 under 10'  # every count
+    assert f'title="{label}"' in html and 'role="img"' in html
+
+
+def test_a_cell_without_bands_draws_no_bar():
+    for parts in (['not measured'], ['under 1 a day', 'at all 2 postcodes']):
+        html = bpp.cell_html(parts)
+        assert 'class="bands"' not in html and re.findall(r'<span>(.*?)</span>', html) == parts
+
+
+def test_a_sector_cell_leads_with_the_busiest_band_it_reaches():
+    shown = lambda figs: re.findall(r'<span>(.*?)</span>', bpp.cell_html(bpp.sector_parts(figs)))  # noqa: E731
+    assert shown([317, 20, 5]) == ['1 at 100+']
+    assert shown([20, 30, 5]) == ['2 at 10 to 99']  # none at 100+: the next band leads
+    assert shown([[9, 20], 5]) == ['1 on an edge']
+    assert shown([5, '<1']) == ['2 under 10']
+
+
+def test_the_key_names_only_the_bands_its_bars_draw():
+    key = bpp.band_key(bpp.bands_in([['3 at 100+', '4 under 10'], ['up to 2 a day', '2 under 10'], ['not measured']]))
+    assert re.findall(r'<i class="(b\w+)"></i>', key) == ['b100', 'b0'] and 'on an edge' not in key
+    assert 'aria-hidden="true"' in key  # the words above it say the bands
+
+
+def test_the_band_colours_are_the_full_maps_planes_layer():
+    bpl = _load('build_planes_layer')
+    step = {start: bpl.COLOURS[i + 1] for i, start in enumerate(bpl.STEPS)}
+    assert [start for start, _ in bpp.BANDS[:2]] == [100, 10]  # the bands start where two of the layer's steps do
+    assert bpp.BAND_COLOURS == {'at 100+': step[100], 'at 10 to 99': step[10]}
+    css = bpp.STYLE.replace('{{', '{').replace('}}', '}')
+    assert f'.b100 {{ background:{step[100]}; }}' in css and f'.b10 {{ background:{step[10]}; }}' in css
+
+
 def test_a_whole_district_cell_heads_with_its_busiest_figure():
     assert bpp.district_cell([317, [2, 318], '<1']) == ['up to 318 a day', '1 at 100+', '1 on an edge', '1 under 10']
     assert bpp.district_cell(['<1', 0]) == ['under 1 a day', 'at all 2 postcodes']
@@ -425,6 +468,9 @@ def test_a_council_page_gives_each_district_its_own_figures_and_the_borough_its_
     cells = [re.findall(r'<span(?: class="top")?>(.*?)</span>', td) for td in re.findall(r'<td [^>]*>(.*?)</td>', row[0])]
     assert cells == [['up to 317 a day', '30 at 100+'], ['up to 190 a day', '30 at 100+'], ['up to 2 a day', '30 under 10']]
     assert 'data-label="Flying west, 56% of days"' in row[0]  # a phone's stacked line names its column
+    assert row[0].count('class="bands"') == 3  # each kind of day its bar
+    assert re.findall(r'<i class="(b\w+)"></i>', re.search(r'<span class="key".*?</span></span>', html)[0]) == \
+        ['b100', 'b0']  # the key names the two bands TW3's bars draw, never one they do not
     assert '<dt>Aircraft noise band</dt><dd>Severe<span class="note">Estimated from the routes</span></dd>' in html
     assert 'Average price' not in html and 'Prices: HM Land Registry' not in html  # the four, nothing else
     assert 'Aviation noise context: DEFRA' in html and 'Flood risk: EA' in html
@@ -456,3 +502,88 @@ def _load_wording():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+# ----------------------------------------------------------------- the front page's dark band (front-page-v3, 2026-11-03)
+
+BAND_INDEX = {'councils': {}, 'consultation': {
+    'airport': 'LHR', 'until': '2026-12-22', 'hub': '/planes-overhead/heathrow-consultation/',
+    'councils': {HOUNSLOW: '/planes-overhead/heathrow-consultation/hounslow/',
+                 'E09000009': '/planes-overhead/heathrow-consultation/ealing/'}}}
+
+
+def _band_page(tmp_path, crlf=False):
+    nl = '\r\n' if crlf else '\n'
+    page = tmp_path / 'index.html'
+    page.write_bytes(nl.join(['<main>', f'      {bpp.PILL_BEGIN}', f'      {bpp.PILL_END}', f'      {bpp.BAND_BEGIN}', '      <p>stale</p>',
+                              f'      {bpp.BAND_END}', '</main>', ''])
+                     .encode('utf-8'))
+    return page
+
+
+def test_the_band_names_each_council_page_in_the_pack_while_it_is_open():
+    html = '\n'.join(bpp.home_band(BAND_INDEX, '2026-11-03'))
+    assert html.index('>Ealing</a>') < html.index('>Hounslow</a>'), 'councils in name order'
+    assert 'href="/planes-overhead/heathrow-consultation/hounslow/"' in html
+    assert 'href="/planes-overhead/heathrow-consultation/"' in html, 'the hub is the button'
+    assert 'each of the 2 councils' in html and 'The 2 councils' in html, "the count is the index's, never typed"
+    assert 'open until 22 December 2026' in html
+    assert 'not those of a third runway' in html and 'Sky Score takes no side in the consultation.' in html
+
+
+def test_the_band_is_open_on_its_last_day_and_the_planes_pages_after_it():
+    assert 'See the planes over your council.' in '\n'.join(bpp.home_band(BAND_INDEX, '2026-12-22'))
+    after = '\n'.join(bpp.home_band(BAND_INDEX, '2026-12-23'))
+    assert 'See the planes over your district.' in after and 'consultation' not in after.lower()
+    assert f'href="{bpp.URL_ROOT}"' in after
+    assert '\n'.join(bpp.home_band({'councils': {}}, '2026-11-03')) == after, 'no pack built: the planes pages band'
+
+
+def test_the_band_says_how_often_planes_pass_nowhere():
+    wording = _load_wording()
+    for today in ('2026-11-03', '2026-12-23'):
+        text = wording.shown_from_source('home/index.html', '\n'.join(bpp.home_band(BAND_INDEX, today)))[0]
+        for pattern in wording.FREQUENCY:
+            assert not re.search(pattern, text, re.I), (today, pattern)
+
+
+def test_the_new_pill_points_at_the_band_and_goes_with_the_consultation(tmp_path):
+    page = _band_page(tmp_path)
+    assert bpp.write_home(BAND_INDEX, '2026-12-22', page) is True
+    assert 'href="#planes-band"' in page.read_text(encoding='utf-8'), 'open: the pill leads to the band'
+    assert 'id="planes-band"' in page.read_text(encoding='utf-8'), 'and the band it names is on the page'
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page), 'the day after, the pill reds with the band'
+    assert bpp.write_home(BAND_INDEX, '2026-12-23', page) is True
+    held = bpp.band_held(page.read_text(encoding='utf-8'), bpp.PILL_BEGIN, bpp.PILL_END)
+    assert held and held[1] == '', 'closed: the two markers and nothing between them'
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page) == []
+
+
+def test_a_page_without_the_pill_markers_is_refused(tmp_path):
+    page = tmp_path / 'index.html'
+    page.write_text('\n'.join([bpp.BAND_BEGIN, bpp.BAND_END, '']), encoding='utf-8')
+    assert any('pill' in problem for problem in bpp.check_home(BAND_INDEX, '2026-11-03', page))
+
+
+def test_check_home_reds_once_the_consultation_closes_until_write(tmp_path):
+    page = _band_page(tmp_path, crlf=True)
+    assert bpp.check_home(BAND_INDEX, '2026-11-03', page), 'a stale band reds'
+    assert bpp.write_home(BAND_INDEX, '2026-11-03', page) is True
+    assert bpp.check_home(BAND_INDEX, '2026-11-03', page) == []
+    assert b'\r\n' in page.read_bytes() and b'\r\r' not in page.read_bytes(), 'the page keeps its line endings'
+    assert bpp.check_home(BAND_INDEX, '2026-12-22', page) == [], 'its last day is still open'
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page), 'the day after, the open band reds'
+    assert bpp.write_home(BAND_INDEX, '2026-12-23', page) is True
+    assert bpp.check_home(BAND_INDEX, '2026-12-23', page) == []
+    assert bpp.write_home(BAND_INDEX, '2026-12-23', page) is False, 'nothing to change'
+
+
+def test_check_home_needs_each_marker_once(tmp_path):
+    page = tmp_path / 'index.html'
+    page.write_text(f'{bpp.BAND_BEGIN}\n{bpp.BAND_BEGIN}\n{bpp.BAND_END}\n', encoding='utf-8')
+    assert bpp.check_home(BAND_INDEX, '2026-11-03', page)
+
+
+def test_the_committed_front_page_band_is_todays():
+    # The real page against the committed index, as preflight's --check reads it (also when the tracks are missing).
+    assert bpp.check_home(bpp.tracked_index(), bpp.datetime.now(bpp.UTC).strftime('%Y-%m-%d')) == []

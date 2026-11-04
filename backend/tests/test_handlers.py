@@ -636,7 +636,7 @@ class EpcHandlerTests(unittest.TestCase):
         result = self.app.handler({'queryStringParameters': None}, None)
         self.assertEqual(result['statusCode'], 400)
 
-    def _invoke_with_upstream_status(self, status):
+    def _invoke_with_upstream_status(self, status, postcode='SW1A 1AA'):
         """Drive the handler with a token set and a chosen upstream HTTP error."""
         from urllib.error import HTTPError  # noqa: PLC0415
 
@@ -644,7 +644,7 @@ class EpcHandlerTests(unittest.TestCase):
         with patch.dict(os.environ, {'EPC_BEARER_TOKEN': 'test-token'}), \
              patch.object(self.app, 'urlopen', side_effect=err):
             return self.app.handler(
-                {'queryStringParameters': {'postcode': 'SW1A 1AA'}}, None
+                {'queryStringParameters': {'postcode': postcode}}, None
             )
 
     def test_rejected_token_degrades_gracefully(self):
@@ -668,6 +668,24 @@ class EpcHandlerTests(unittest.TestCase):
         """The graceful branch must not swallow unrelated upstream failures."""
         result = self._invoke_with_upstream_status(500)
         self.assertEqual(result['statusCode'], 502)
+
+    def test_a_zip_or_a_district_is_the_callers_400_and_never_reaches_mhclg(self):
+        """2026-11-03: "94301" and "TW9" were sent on to MHCLG, which answered 400, reported as OUR 502 (134 of the
+        API's 146 5xx in a day). They are the caller's mistake: 400, logged as no 5xx, and no upstream call."""
+        def never(*_a, **_k):
+            raise AssertionError('MHCLG was called for a non-postcode')
+        for postcode in ('94301', 'TW9', 'SW1A', 'Hounslow', 'TW9 3PZZ', '<b>TW9 3PZ'):
+            with self.subTest(postcode=postcode), patch.dict(os.environ, {'EPC_BEARER_TOKEN': 'test-token'}), \
+                 patch.object(self.app, 'urlopen', side_effect=never), self.assertNoLogs(level='WARNING'):
+                result = self.app.handler({'queryStringParameters': {'postcode': postcode}}, None)
+                self.assertEqual(result['statusCode'], 400)
+                self.assertEqual(json.loads(result['body'])['error'], 'a full UK postcode is required')
+
+    def test_a_full_postcode_in_any_case_or_spacing_still_reaches_mhclg(self):
+        for postcode in ('TW9 3PZ', 'tw93pz', ' TW9 3PZ ', 'EC1A 1BB', 'M1 1AE', 'BT1 1AA'):
+            with self.subTest(postcode=postcode):
+                result = self._invoke_with_upstream_status(404, postcode)
+                self.assertEqual(result['statusCode'], 200)  # reached MHCLG: its 404 is "no certificates"
 
     def test_upstream_404_means_no_certificates_not_an_error(self):
         """404 is 'no certificates match' per the MHCLG docs, not a failure."""
@@ -1192,29 +1210,29 @@ class FreeTierQuotaDriftTests(unittest.TestCase):
         )
 
     def test_the_front_page_quotes_the_enforced_free_quota(self):
-        """home/index.html (the front page, at / since 2026-10-06; preview/index.html
-        while it was trialled) is a mirror the pattern above cannot read.
-
-        It prints the free quota as a headline figure with its unit in a
-        <small> beside it ("10,000" then "lookups a month on the free tier"),
-        so "N requests" never matches and the page would sit outside this
-        class on the day the plan changes. Read by its own shape here, and the
-        shape is asserted: a reworded card must fail, not read as a clean page.
+        """home/index.html prints the free quota once, in the developers band
+        (Bill, 2026-11-04; a headline card until the front-page-v3 rework), in a
+        shape the pattern above cannot read: the figure in a tag, its unit after.
+        So any number standing before lookups or requests, tags between them
+        allowed, must be the plan's, and there must be exactly one: a reworded
+        line must fail, not read as a clean page. Fix the pattern, do not delete it.
         """
+        self.assertEqual(
+            self._quotas_in(self._page('home/index.html')), [self._plan_int('Limit')],
+            'home/index.html must print the free quota once, as the plan enforces it')
+
+    def test_a_stale_quota_on_the_front_page_is_caught(self):
+        for shape in ('<div class="fig">25,000<small>lookups a month on the free tier</small></div>',
+                      '<p>25,000 requests a month</p>'):
+            self.assertEqual(self._quotas_in(shape), [25000], shape)
+        self.assertEqual(self._quotas_in('<p>two lookups</p>'), [])
+
+    @staticmethod
+    def _quotas_in(page):
         import re  # noqa: PLC0415
 
-        found = re.findall(
-            r'class="fig">([\d,]+)<small>lookups a month on the free tier',
-            self._page('home/index.html'))
-        self.assertEqual(
-            len(found), 1,
-            'home/index.html no longer prints the free quota in the shape '
-            'this gate reads, so it is checking nothing. Fix the pattern, do '
-            'not delete the test.')
-        self.assertEqual(
-            int(found[0].replace(',', '')), self._plan_int('Limit'),
-            f'home/index.html advertises {found[0]} lookups a month on the '
-            f'free tier; the plan enforces {self._plan_int("Limit"):,}')
+        found = re.findall(r'(\d[\d,]*)\s*(?:<[^>]+>\s*)*(?:lookups|requests)\b', page)
+        return [int(f.replace(',', '')) for f in found]
 
     def test_published_per_second_rates_match_the_plan(self):
         """A page quoting a rate must quote the one the plan throttles at.

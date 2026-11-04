@@ -288,7 +288,7 @@ document.addEventListener('click', (ev) => {
 export const DEMO_BOOKING_URL = 'https://calendly.com/bilalkhizar-skyscore/30min';
 
 /** Where a booking link sits: 'bar', 'bar-menu' (the phone menu, open), the spot a page with several names on the
- *  link (`data-book-place`: the front page's `card` and `band`, 2026-11-02; its line was `who` before), or
+ *  link (`data-book-place`: the front page's `faq` and `band` since 2026-11-03, `card` and `band` from 2026-11-02, its line `who` before), or
  *  'page'. A spot is a short lower-case word, never free text. */
 function bookingPlace(a) {
   const nav = a.closest('#site-nav');

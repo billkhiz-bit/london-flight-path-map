@@ -194,30 +194,28 @@ const STATES = [
     // Lambda's own summary shape (backend/lambdas/epc/app.py) carrying ALL SEVEN bands, so
     // every band colour is measured with its letter, plus the 22px average on D, the worst.
     name: 'area panel, epc bands',
+    // 2026-11-03: a ranking row's panel names a postcode DISTRICT ("Belmont & South Cheam (SM2)"), and since then the
+    // map asks /epc only with a full postcode (the register refuses a district: MHCLG's 400, which the Lambda reported as
+    // its own 502). Stubbing /epc here had hidden that live failure. So the bands are drawn by the panel's OWN renderer,
+    // renderEpcData, with the Lambda's summary shape and all seven bands: the colours measured are the ones a visitor
+    // sees for a full postcode.
     open: async (page) => {
       const bands = { A: 2, B: 9, C: 21, D: 18, E: 11, F: 6, G: 3 };
-      await page.route(
-        (url) => url.hostname.endsWith('.amazonaws.com') && url.pathname.endsWith('/epc'),
-        (route) =>
-          route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            headers: { 'Access-Control-Allow-Origin': '*' },
-            body: JSON.stringify({
-              available: true,
-              count: Object.values(bands).reduce((a, b) => a + b, 0),
-              summary: { averageRating: 60, averageBand: 'D', bandDistribution: bands },
-            }),
-          })
-      );
-      return page.evaluate(() => {
+      const opened = await page.evaluate(() => {
         const row = document.querySelector('.rank-table tbody tr');
-        if (row) {
-          row.click();
-          return 'ranking row (epc stubbed)';
-        }
-        return null;
+        if (!row) return null;
+        row.click();
+        return 'ranking row (epc drawn by renderEpcData)';
       });
+      if (!opened) return null;
+      await page.waitForFunction(() => /full postcode/i.test(document.getElementById('postcode-epc-data')?.innerText || ''), null,
+        { timeout: 15000 }).catch(() => {});
+      await page.evaluate((b) => renderEpcData('postcode-epc-data', {
+        available: true,
+        count: Object.values(b).reduce((x, y) => x + y, 0),
+        summary: { averageRating: 60, averageBand: 'D', bandDistribution: b },
+      }), bands);
+      return opened;
     },
     expect: (title) => /\(\w{1,2}\d/.test(title),
     // Seven band rows and the average: the stub's own content, asserted on the DOM.

@@ -348,6 +348,9 @@ check "how-it-works == the engine"   python scripts/build_how_it_works.py --chec
 # The audience list is ONE source written into the front page and /about/ (2026-10-22): a hand edit to
 # either copy is the drift this exists to catch.
 check "who it is for == one list"     python scripts/build_who_for.py --check
+# The front page's picture of the sample street report (2026-11-03): made from the PDF by its builder, never by hand;
+# offline, the PDF and the picture are the ones it recorded, and the page sizes the picture as it is.
+check "report picture == the sample PDF" python scripts/build_report_still.py --check
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
@@ -739,6 +742,8 @@ check "front page is a tool, not a picture" node tests/front-page.mjs
 # were added. tests/find-words.mjs holds "Describe what you want" (words read into Find areas' choices in the browser).
 check "planes answer: model + links"      node tests/planes-model.mjs
 check "Find areas: words read into choices" node tests/find-words.mjs
+# The walkthrough below the map (2026-11-03): what its noise and air steps say from the example's answer.
+check "walkthrough: noise + air steps"    node tests/home-sections.mjs
 # The full map's air side by side (2026-11-03, Bill's refined B): js/street_report.mjs airChart() is pure, so its
 # geometry (to scale, beyond the scale, labels at the edge), its shapes, its escaping and the WHO guideline it shares
 # with the API (read from app.py) are held here without a browser; the live panel is tests/uk-city-panel.mjs.

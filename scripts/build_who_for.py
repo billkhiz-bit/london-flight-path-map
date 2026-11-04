@@ -23,7 +23,9 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-PAGES = (REPO / 'home' / 'index.html', REPO / 'about' / 'index.html')
+# The front page only since 2026-11-03 (declutter): About now says it in one line and links here. To put the list back
+# on About, add its path and the WHO-FOR markers to about/index.html.
+PAGES = (REPO / 'home' / 'index.html',)
 BEGIN = '<!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->'
 END = '<!-- WHO-FOR:END -->'
 
@@ -104,7 +106,7 @@ def main(argv=None) -> int:
     if problems:
         print('FAIL:\n  ' + '\n  '.join(problems))
         return 1
-    print(f'ok: both pages carry the same {1 + len(PRO)} audiences')
+    print(f'ok: the front page carries the {1 + len(PRO)} audiences')
     return 0
 
 

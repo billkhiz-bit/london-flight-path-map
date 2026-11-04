@@ -59,6 +59,12 @@ REACH_M = 220.0    # a pixel takes a postcode no farther than this; beyond it, n
 STEPS = (10, 50, 100, 200)   # step 1: 10-49, 2: 50-99, 3: 100-199, 4: 200+ a day
 COLOURS = {1: '#dc8a4a', 2: '#c2622a', 3: '#9a4316', 4: '#662809'}   # B's ramp, validated against the map ground
 OUTLINE = ('#fafaf9', 140)   # district outline colour and alpha (0-255)
+# THE DISTRICT UNDER A TAP (2026-11-03, Bill's pick "small card"): the full map names the postcode district under a
+# tap and links its planes page. Read from <city>-district-ids.json, the same district grid the outlines are drawn from,
+# at DISTRICT_CELL picture pixels a cell (2: 50 m), each row run-length coded [code, run, code, run, ...]; code 0 is no
+# postcode within REACH_M, code i is names[i - 1]. A list of numbers, never a picture: a browser may colour-manage an
+# image, and a shifted colour would name the wrong district. Nothing is sent: the map reads the file it already serves.
+DISTRICT_CELL = 2
 APPROX_GRIDIND = (5, 6)
 R_EARTH = 6378137.0
 
@@ -190,12 +196,47 @@ def draw_city(city, pcs, east, north, figures, classes, to_bng):
     edge[:, 1:] |= (dg[:, 1:] != dg[:, :-1]) & valid[:, 1:] & valid[:, :-1]
     edge[1:, :] |= (dg[1:, :] != dg[:-1, :]) & valid[1:, :] & valid[:-1, :]
     out[f'{city}-districts.png'] = palette_image(edge.astype(np.uint8), [OUTLINE])
+    out[f'{city}-district-ids.json'] = district_ids(dg, valid)
     entry = {
         'bounds': [round(merc_lon(x0), 7), round(merc_lat(y0), 7), round(merc_lon(x1), 7), round(merc_lat(y1), 7)],
         'size': [W, H],
-        'files': {**{cls: f'{city}-{cls}.png' for cls in classes}, 'districts': f'{city}-districts.png'},
+        'files': {**{cls: f'{city}-{cls}.png' for cls in classes}, 'districts': f'{city}-districts.png',
+                  'district_ids': f'{city}-district-ids.json'},
     }
     return out, entry
+
+
+def district_ids(dg, valid, cell=DISTRICT_CELL) -> bytes:
+    """The district grid as run-length rows (DISTRICT_CELL's comment): the top-left picture pixel of each cell decides it."""
+    sub_d, sub_v = dg[::cell, ::cell], valid[::cell, ::cell]
+    names = sorted(set(sub_d[sub_v].tolist()))
+    code = {n: i + 1 for i, n in enumerate(names)}
+    rows = []
+    for r in range(sub_d.shape[0]):
+        vals = [code[d] if v else 0 for d, v in zip(sub_d[r].tolist(), sub_v[r].tolist(), strict=True)]
+        runs, start = [], 0
+        for i in range(1, len(vals) + 1):
+            if i == len(vals) or vals[i] != vals[start]:
+                runs += [vals[start], i - start]
+                start = i
+        rows.append(runs)
+    body = {'cell': cell, 'size': [int(sub_d.shape[1]), int(sub_d.shape[0])], 'names': names, 'rows': rows}
+    return (json.dumps(body, separators=(',', ':')) + chr(10)).encode('utf-8')
+
+
+def district_at(ids: dict, col: int, row: int):
+    """The district (or None) at picture pixel (col, row), read back from district_ids()'s file, as the map reads it."""
+    c, r = col // ids['cell'], row // ids['cell']
+    # Past a row's right end the runs simply run out (None below); only a negative column or a row off the grid needs
+    # saying (a bound on the right was an equivalent mutant, 2026-11-03).
+    if not (0 <= r < len(ids['rows']) and c >= 0):
+        return None
+    runs, x = ids['rows'][r], 0
+    for i in range(0, len(runs), 2):
+        x += runs[i + 1]
+        if c < x:
+            return ids['names'][runs[i] - 1] if runs[i] else None
+    return None
 
 
 def placed(gridind, east, north):

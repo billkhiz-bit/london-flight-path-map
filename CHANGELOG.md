@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-11-04 - A new front page
+
+- **Two columns**: the question, the search and the answer on the left, the live map beside them with nothing over it.
+- **The example opens compact**: three figures for Kew as tiles, with the whole answer one press away.
+- **Free to search, no cookies, no ads**, said under the search box.
+- **The API, shown working**: in the developers band a request types itself, the real answer arrives, and its figures light
+  up as tiles. It plays once; with animation turned off, everything is simply there. The free quota is there too.
+- **One city switch** on the map, "Map: London", and a way to open the full map on the same city.
+- **Below the map**: how a search works in five steps, the approach from above, what else the site does, the API in three
+  languages, Heathrow's consultation by council (until it closes), who it is for, and questions.
+
+## 2026-11-04 - The district under a tap
+
+- **Planes overhead on the full map**: with the layer on, a tap names the postcode district under it and links its
+  planes overhead page, in a small card beside the tap. Only districts with a page get one. Nothing about the tap
+  leaves the browser.
+- **Energy certificates**: a search for a postcode district or a US ZIP no longer asks for certificates, which are
+  listed by full postcode only; the panel says so instead of "temporarily unavailable".
+
+## 2026-11-03 (evening) - Shorter pages
+
+- **How it works** opens with a short version under the approach picture, and each section keeps its heading and
+  opening words with the detail one click away: about a third shorter.
+- **Planes overhead pages and the Heathrow consultation pack**: each cell shows the busiest band it reaches and draws
+  every band as one bar, in the full map's colours, with every count in its label.
+- **Bay Area**: each city's routes behind its own expander, and each row on one line.
+- **About**: "Who it's for" is one line linking to the front page's list.
+- **The sample street report** (Kew) is regenerated: it now gives the CAA's 2025 Heathrow figure, shows the air
+  measured nearby, and fits one page again.
+
 ## 2026-11-03 - Planes overhead on the full map; Sky Score on LinkedIn
 
 - **Planes overhead on the full map**: a new layer shows how many planes pass overhead a day at every postcode, from

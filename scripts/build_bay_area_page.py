@@ -1147,6 +1147,10 @@ def routes_cell(c):
     through a 350 px window: the city's name scrolled away while its routes were read. The words are
     the cell functions' own, which the map's panel shows too (build_bayarea_map_data.row_facts); only
     their "Yes: " goes, as the label says it. A city under none names the nearest route instead.
+
+    2026-11-03 (declutter; Bill: "do the proposed fixes"): the page was 7.7 screens, 12.3 on a phone, mostly this
+    cell's route sentences for 50 cities. Each city now shows the KINDS of route over it ("Landing · Departure", under
+    the column's "Drawn routes overhead") and keeps the sentences, unchanged, behind its own expander.
     """
     held = []
     for kind, cell in ROUTE_KINDS:
@@ -1155,8 +1159,11 @@ def routes_cell(c):
             continue
         if not text.startswith('Yes: '):
             raise ValueError(f'{kind} cell for {c["name"]} is neither "No" nor "Yes: ...": {text!r}')
-        held.append(f'<span><b>{kind}:</b> {text.removeprefix("Yes: ")}</span>')
-    return ''.join(held) or f'None overhead. Nearest: {nearest_cell(c)}'
+        held.append((kind, f'<span><b>{kind}:</b> {text.removeprefix("Yes: ")}</span>'))
+    if not held:
+        return f'None overhead. Nearest: {nearest_cell(c)}'
+    return (f'<details><summary>{" &middot; ".join(kind for kind, _ in held)}</summary>'
+            + ''.join(span for _, span in held) + '</details>')
 
 
 def order(cities):
@@ -1293,10 +1300,18 @@ PAGE_HTML = """<!doctype html>
   thead th:nth-child(1) {{ width:28%; }}
   thead th:nth-child(2) {{ width:20%; }}
   .co, .af {{ display:block; font-weight:400; color:var(--mid); }}
+  /* A row on one line where there is room (declutter, 2026-11-03): the county beside the city, the airport beside its
+     share; 50 two-line rows were most of the page's 7.7 screens. A phone keeps them stacked. */
+  @media (min-width: 760px) {{ .co, .af {{ display:inline; margin-left:8px; }} }}
+  details.more {{ margin:0 0 8px; }}
+  details.more > summary {{ cursor:pointer; font-weight:600; padding:4px 0; }}
+  details.more[open] > summary {{ margin-bottom:8px; }}
   td.n {{ font-family:'JetBrains Mono',ui-monospace,monospace; }}
   td.n .pc {{ white-space:nowrap; }}
   td.n .af {{ font-family:'Inter',system-ui,sans-serif; }}
   td.r span {{ display:block; }}
+  td.r summary {{ cursor:pointer; font-weight:600; }}
+  td.r details[open] summary {{ margin-bottom:6px; }}
   td.r span + span {{ margin-top:4px; }}
   td.r b {{ font-weight:600; }}
   ul.notes {{ padding-left:20px; }}
@@ -1343,6 +1358,7 @@ PAGE_HTML = """<!doctype html>
 {communities}
 
 <h2>How to read this</h2>
+<details class="more"><summary>What each line, shade and height means</summary>
 <ul class="notes">
 <li><strong>The lines are published routes, not radar tracks.</strong> Aircraft fly either side of them, and a city with no line can still hear aircraft.</li>
 <li><strong>This shows where the routes are, not how many aircraft use them.</strong> Which runways are in use depends on the wind, and the FAA's file does not say how often each is flown. The noise shading is the better guide to that.</li>
@@ -1354,6 +1370,7 @@ PAGE_HTML = """<!doctype html>
 <li><strong>City outlines are approximate.</strong> They are the Census Bureau's generalised boundaries, good to a few hundred feet, so treat anything right on a city line as approximate.</li>
 <li><strong>Cities only.</strong> The table lists incorporated cities and towns in San Francisco, San Mateo, Santa Clara and Alameda counties. {homes}</li>
 </ul>
+</details>
 
 <h2>Sources</h2>
 <p class="small"><strong>Flight procedures:</strong> FAA Coded Instrument Flight Procedures (CIFP), cycle {cycle}, effective {effective}. The FAA supplies the CIFP "as is", without warranty of any kind, and neither the FAA nor its personnel is liable for its content or for any use made of it. This page is not for navigation.<br />

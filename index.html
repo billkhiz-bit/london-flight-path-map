@@ -646,6 +646,16 @@
       .map-legend .legend-note {
         color: var(--dark);
       }
+      /* The district card (2026-11-03): top-left, clear of the legend (bottom-left) and the zoom buttons (top-right). */
+      .planes-card { position: absolute; top: 16px; left: 16px; z-index: 11; max-width: min(300px, calc(100% - 32px));
+        background: #fff; color: #141414; border-radius: 10px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+        padding: 10px 40px 10px 12px; font-size: 13px; line-height: 1.4; }
+      .planes-card[hidden] { display: none; }
+      .planes-card p { margin: 0 0 4px; }
+      .planes-card a { font-weight: 600; color: #a85416; }
+      .planes-card .pc-close { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; border: 0;
+        border-radius: 8px; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #141414; }
+      .planes-card .pc-close:focus-visible, .planes-card a:focus-visible { outline: 3px solid var(--focus, #d35a12); outline-offset: 2px; }
       .map-legend {
         position: absolute;
         /* Same footer band as .layer-toggles above - see the note there. */
@@ -4124,6 +4134,12 @@
 
     <div id="app" class="app" style="display: none">
       <main class="map-container" id="map-container">
+        <!-- The district under a tap, with the planes layer on (2026-11-03): filled by showPlanesCard(), never a figure. -->
+        <div id="planes-card" class="planes-card" role="status" aria-live="polite" hidden>
+          <button type="button" class="pc-close" aria-label="Close the district card">&times;</button>
+          <p><strong class="pc-name"></strong> postcode district</p>
+          <a href="/planes-overhead/" data-event="map-planes-district">Planes overhead</a>
+        </div>
         <div class="map-title">
           <!-- The brand goes home, as on every other page (Bill, 2026-10-19). The link WRAPS the heading:
                applyCityChrome() sets the heading's textContent, which would erase a link inside it. -->
@@ -11295,7 +11311,11 @@
       // ============================================================
       // EPC ENERGY DATA (via AWS Lambda)
       // ============================================================
+      // The register is searched by full postcode only (2026-11-03): a district search carries `postcode: 'TW9'`
+      // (lookupPostcode's outcode fallback) and a ZIP its ZIP, and both made /epc answer 502. The Lambda's shape.
+      const FULL_UK_POSTCODE = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/i;
       async function fetchEpcData(postcode, signal) {
+        if (!FULL_UK_POSTCODE.test(String(postcode || '').trim())) return { available: false, fullPostcodeOnly: true };
         // Always resolve to an object, never null. Returning null used to
         // make renderEpcData early-return, which left the "Loading from EPC
         // register..." placeholder on screen permanently - a worse outcome
@@ -11324,6 +11344,10 @@
       function renderEpcData(containerId, data) {
         const el = document.getElementById(containerId);
         if (!el) return;
+        if (data && data.fullPostcodeOnly) {
+          el.innerHTML = '<p class="info-note">Enter a full postcode for EPC data.</p>'; // the district search's own words
+          return;
+        }
         if (!data || !data.available) {
           el.innerHTML =
             '<p class="info-note">EPC data is temporarily unavailable. Certificates are published by MHCLG under the Open Government Licence.</p>';
@@ -12432,6 +12456,85 @@
       // nearest-neighbour there drops two pixels in three, so the steps alias into stripes and the 1 px district
       // lines vanish. From that zoom up, smoothing would blur each 25 m postcode step into its neighbour instead.
       // k is the zoom transform's scale; the picture's own width rides on the element (data-picture-width).
+      // THE DISTRICT UNDER A TAP (2026-11-03, Bill's pick "small card"). With the planes layer on, a tap names the postcode
+      // district under it and links its planes page if one is built: data/planes-districts-by-council.json is the pages'
+      // one holder (as js/planes.mjs planesLinks), so a district without a page gets no card, never a guessed link. The
+      // district comes from <city>-district-ids.json (build_planes_layer.py: the outlines' own grid) placed exactly where
+      // the picture is, so it lines up at every zoom; nothing about the tap is sent anywhere. Never a figure: the page has
+      // them. The borough is still selected as before.
+      const planesDistrictGrids = {};
+      let planesPagesLoad = null;
+      function planesDistrictGrid(city, entry) {
+        const file = entry?.files?.district_ids;
+        if (!file) return Promise.resolve(null);
+        return (planesDistrictGrids[city] ??= fetch(`/data/planes-layer/${file}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null));
+      }
+      function planesPagesIndex() {
+        return (planesPagesLoad ??= fetch('/data/planes-districts-by-council.json')
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null));
+      }
+      // build_planes_layer.district_at, line for line: tests/test_build_planes_layer.py holds that one and
+      // tests/planes-layer.mjs this one, on the same built files.
+      function districtFromGrid(ids, col, row) {
+        if (!ids || !Array.isArray(ids.rows)) return null;
+        const c = Math.floor(col / ids.cell);
+        const r = Math.floor(row / ids.cell);
+        if (!(r >= 0 && r < ids.rows.length && c >= 0)) return null;
+        const runs = ids.rows[r];
+        let x = 0;
+        for (let i = 0; i < runs.length; i += 2) {
+          x += runs[i + 1];
+          if (c < x) return runs[i] ? ids.names[runs[i] - 1] : null;
+        }
+        return null;
+      }
+      function hidePlanesCard() {
+        const card = document.getElementById('planes-card');
+        if (card) card.hidden = true;
+      }
+      async function showPlanesCard(event) {
+        hidePlanesCard();
+        const img = document.getElementById('planes-img');
+        if (!layers.planes || !img || !img.isConnected || !img.getAttribute('width')) return;
+        const city = currentCity;
+        // Where the tap fell, in the picture's own coordinates (zoom included), read before anything is awaited.
+        const [px, py] = d3.pointer(event, img.parentNode);
+        const box = ['x', 'y', 'width', 'height'].map((k) => +img.getAttribute(k));
+        const idx = await loadPlanesLayerIndex();
+        const entry = idx?.cities?.[city];
+        const [ids, pages] = await Promise.all([planesDistrictGrid(city, entry), planesPagesIndex()]);
+        if (city !== currentCity || !layers.planes || !entry || !ids || !pages?.councils) return;
+        const col = Math.floor(((px - box[0]) / box[2]) * entry.size[0]);
+        const row = Math.floor(((py - box[1]) / box[3]) * entry.size[1]);
+        const d = districtFromGrid(ids, col, row);
+        if (!d || !Object.values(pages.councils).some((ds) => Array.isArray(ds) && ds.includes(d))) return;
+        const card = document.getElementById('planes-card');
+        if (!card) return;
+        card.querySelector('.pc-name').textContent = d;
+        const a = card.querySelector('a');
+        a.href = `/planes-overhead/${d.toLowerCase()}/`;
+        a.textContent = `Planes overhead in ${d}, sector by sector`;
+        card.dataset.district = d;
+        card.hidden = false;
+        // BESIDE THE TAP, as a map's popup: a fixed corner collided with the title and city buttons (desktop) or sat under
+        // the floating search box (phone). Flipped to stay inside the map, and never under anything floating over the
+        // map's top (the phone's search box: measured, as its height varies; on a desktop it is beside the map, not over it).
+        const host = card.parentElement.getBoundingClientRect();
+        const { width: cw, height: ch } = card.getBoundingClientRect();
+        let left = event.clientX - host.left + 12;
+        let top = event.clientY - host.top + 12;
+        if (left + cw > host.width - 8) left = event.clientX - host.left - cw - 12;
+        if (top + ch > host.height - 8) top = event.clientY - host.top - ch - 12;
+        const search = document.querySelector('.search-box')?.getBoundingClientRect();
+        const overMap = search && search.left < host.right && search.right > host.left && search.top < host.bottom;
+        const floor = overMap ? search.bottom - host.top + 8 : 8;
+        card.style.left = `${Math.round(Math.max(8, left))}px`;
+        card.style.top = `${Math.round(Math.max(floor, top))}px`;
+      }
+      document.getElementById('planes-card')?.querySelector('.pc-close')?.addEventListener('click', hidePlanesCard);
       function setPlanesRendering(k) {
         for (const id of ['planes-img', 'planes-districts-img']) {
           const el = document.getElementById(id);
@@ -14435,6 +14538,7 @@
       }
 
       async function switchCity(city) {
+        hidePlanesCard();
         if (city === currentCity) return;
         if (!projection || !g) await mapBuilt;
         // The `city === currentCity` guard only stops a repeat click on the
@@ -15622,6 +15726,10 @@
             }
           });
         svg.call(zoom);
+        // The district card listens on the WHOLE map (2026-11-03): a tap on a label, the planes picture or open ground names
+        // the district under it as well as a tap on a borough (on a phone the labels cover much of west London). d3-zoom
+        // swallows the click that ends a drag, so panning never opens it.
+        svg.on('click.planesCard', (e) => showPlanesCard(e));
 
         g = svg.append('g');
         markMapBuilt();
@@ -15952,6 +16060,7 @@
             // Refresh aircraft noise tiles when toggling on (only overlay using WMS/tiles)
             if (layer === 'defra-aircraft' && layers[layer]) updateDefraTiles();
             if (layer === 'planes' && layers[layer]) paintPlanesLayer();
+            if (layer === 'planes' && !layers[layer]) hidePlanesCard();
             // Planes overhead and DEFRA aircraft noise are both orange ramps: on together they multiply into a
             // colour neither legend names, so switching one on switches the other off (through its own button,
             // so its pressed state and legend follow).

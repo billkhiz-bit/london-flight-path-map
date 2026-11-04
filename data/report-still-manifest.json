@@ -1,0 +1,11 @@
+{
+ "about": "Written by scripts/build_report_still.py --write: the top of the sample street report's first page, shown in the front page's walkthrough (step 05). Never edit by hand.",
+ "pdf": "home/reports/sample-street-report-kew.pdf",
+ "pdf_sha256": "1d9f5c488e4bcf1ee4e4b1de733f0d5577bbe69226fcad47daca571b53311248",
+ "still": "home/reports/sample-street-report-kew-top.webp",
+ "still_sha256": "fe65e2d5d62763cf8140ebb52d83346865aaa9066ff195b337afdd59d646dbcc",
+ "width": 960,
+ "height": 639,
+ "top_share": 0.47,
+ "renderer": "PyMuPDF 1.26.7"
+}

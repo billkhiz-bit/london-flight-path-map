@@ -37,9 +37,10 @@ HOME = REPO / 'home' / 'index.html'
 BAY_AREA = REPO / 'data' / 'us-bayarea-cities.json'
 BEGIN = '<!-- COVERAGE-STRIP:BEGIN (scripts/build_coverage_strip.py --write; never edit by hand) -->'
 END = '<!-- COVERAGE-STRIP:END -->'
-INDENT = ' ' * 10
-# The page's own coverage figure, the "Four ways" card: the strip must add up to it.
-FIGURE = re.compile(r'<div class="fig">(\d+)<small>council areas in (\d+) UK city regions')
+INDENT = ' ' * 12
+# The page's own coverage figure: the strip must add up to it. The "Four ways" card held it until 2026-11-03; since
+# front-page-v3 it is the answer to "Which places does it cover?" in the Questions band.
+FIGURE = re.compile(r'<p id="cover-figure">(\d+) council areas in (\d+) UK city regions')
 
 
 def uk_regions() -> list[tuple[str, int]]:

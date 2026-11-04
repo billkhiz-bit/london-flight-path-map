@@ -26,6 +26,22 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-04)
+>
+> **The front page rework shipped today, on Bill's call, ahead of the ~20 Nov read.** He chose the whole rework, so the read
+> ended at 12 days: counts frozen in Desktop `Sky Score Marketing\engagement-read-2026-11-04.md` (52 of 87 front-page views
+> acted since 23 Oct, 60%, against 35 of 104 before, 34%; small numbers). Step 2 built the two-column hero: compact example
+> tiles, the tick bar, the "New" pill, the "Map: London" switch and "Open the full map". Bill's changes to mock v8: no gliding
+> plane ("isn't clear"), the API animation added (version C of claude.ai/artifact/VgTpCjGHZHMLhz1zYFPNpM), the free quota in
+> the developers band, and the lede says what the answer gives ("for your street, and flood risk for your area": a review
+> showed flood is a council share and "any street" overclaimed). `tests/test_home_links.py` now holds every link the front
+> page makes and every link back (Bill: "linked and connected correctly"); a live crawl read 659 same-site links before
+> the deploy, all good. Preflight's flood stage was red on one boundary cell of four, with no flood file changed, so
+> `check_flood_georef.py` now confirms a small-sample miss on 16 a class at 90%, proven red on a whole-mosaic and an edge-only
+> shift (`docs/lessons/flood.md`). NEXT: the `/epc` backend changeset (Bill's `!`), preflight + push `n65`, the Leicester
+> corrections before 26 Nov; the top-bar and `book-demo-*` counts go on being read ~20 Nov, on the new page. The detached
+> worktree `agent-a79b7fad56eabf34c` is empty of work: remove it with the reparse check first.
+
 > ## START HERE (2026-11-03)
 >
 > **B2, the full map's Planes overhead layer: the review's six fixes DONE** (Bill: "let's do the above"). (1) The live
@@ -37,6 +53,27 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > until `index.json` says the city has a picture. (6) The Makefile comment says BEFORE `web-deploy`. Seven breaks
 > proven red; one survivor showed the per-element `[hidden]` CSS was dead code (the page-wide `!important` rule wins),
 > deleted. The browser test now blocks service workers (sw.js claimed the page, so `page.route` never saw the request).
+> **CLOSED 3 Nov ~21:05, PICK UP HERE:** `map-fixes` COMMITTED + merged + pushed (`3f89cb70`) and its frontend is
+> LIVE, but the district card is SILENT: `planes-layer-deploy` shipped no `*-district-ids.json` (drift check: 7
+> UNREACHABLE). The Makefile fix went in on 4 Nov (with this paragraph); `planes-layer-deploy` + the drift check
+> follow it. Epc backend changeset still to create (Bill's `!`). Then preflight +
+> push `n65` (16 commits, agent worktree) and `front-page-v3` (step 1, agent worktree; run tests/front-page.mjs). Never
+> switch the main clone's branch while a deploy is pending: deploys ship the working tree. Full list: the newest
+> `project-start-here-2026-11-03` memory.
+>
+> **NIGHT 3 Nov, where it stands:** `declutter` LIVE (`530b14ff`, merged and pushed, five deploys, drift PASS, checked
+> on the live pages; the sample report one page with the CAA 2025 figure). `map-fixes` BUILT (the district card on
+> the planes layer, `/epc` for full postcodes only): commit after preflight; deploy = `planes-layer-deploy` BEFORE
+> `web-deploy`, then Bill executes the backend changeset (epc Lambda). `cost-of-living` branch PUSHED (docs only,
+> `73ad5e4e`; pick up in a month or two). N65 step 5 (one Heathrow day) BUILT by an agent on `n65` in its worktree
+> `.claude/worktrees/agent-a3fdc3c767180fb13`: 15 commits, NOT pushed, needs preflight (see its lesson section;
+> 96.9% of movements computed; contours read low vs ERCD 2601: departures fly 100-300 m high, so observed
+> profiles next; Bill to confirm the procedure/stage/wind choices). Front page step 1: an agent on
+> `front-page-v3` in its own worktree. Leicester brief on the Desktop; SETTLED that DEFRA's 2021 Heathrow map is
+> the CAA's own 2021 contours (ERCD 2201 Table 8; NAP annexes p.40): correct METHODOLOGY (~line 1203 "not
+> established"), `measure_covid_understatement.py`'s docstring and the caveat wording before the 26 Nov call.
+> TODO 23 Dec: regenerate the sample report (its have-your-say line names the consultation until 22 Dec).
+
 > **Evening 3 Nov, the plan for the next sessions (Bill's calls):**
 > - **Front page rework, branch `front-page-v3`, ships AFTER the ~20 Nov engagement read** (Bill: "build on a branch").
 >   Agreed mock-up: claude.ai/artifact/8WjimVxDSZioMkdSCTVCuf (v8; v7 at claude.ai/artifact/BbdTeiUSrph1TiU5rzLkNH).
@@ -49,11 +86,42 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 >   (`about/film-still-battersea.webp`, prepared in the scratchpad, links `/how-it-works/#see-it`); "Beyond one street"
 >   rows; a light developers band with curl/Python/JS tabs (Stripe); a DARK consultation band GENERATED by
 >   `build_planes_pages.py` from `HAVE_YOUR_SAY` `until` (switches itself off after 22 Dec; `--check` reds after it);
->   FAQ (Book a demo's second spot moves from the business card to the FAQ, `data-book-place="faq"`). NO typed figures in
+>   FAQ (Book a demo's second spot moves from the business card to the FAQ, `data-book-place="faq"`).
+>   ADDED 3 Nov night (Bill's brother, after puurefilters.com: "they instantly tell you what the product is"): the
+>   question headline STAYS (it names the planes; the statement option names no object); the lede cut to 15 words
+>   ("Aircraft and road noise, air quality and flood risk for any street, from official data."; the public-body line
+>   lives in the example's sources); the compact example's line becomes THREE FIGURE TILES (aircraft noise, NO2,
+>   planes a day), rendered by the engine from the live answer, never typed: on a 390 px phone they sit inside the
+>   first screen (629-727 px), so a visitor sees what a search gives before scrolling.
+>   ALSO 3 Nov night (mock v8 v12, Bill's asks): the "Check yours" button stays the LIVE one (plain orange, 12 px
+>   corners, no arrow, beside the box on a phone; " yours" drops under 360 px); the tick bar UNBOXED at every width;
+>   the lower page alternates plain / paper bands (none with its padding cut); the walkthrough SHOWS each step:
+>   01 a miniature box with three examples that type in (TW9 3PZ; Hounslow opens the council's CARD; 94301 opens Palo
+>   Alto: the front page takes BAY AREA ZIPs only, New York's are on the full map), 04 the answer in a sentence then
+>   three bars with each kind of day's SHARE of days (Heathrow 56/15/29 from airports.json `share_pct`; bar colours
+>   = the planes layer's), 05 a picture of the real sample report's first page (generated from the PDF, never a
+>   hand copy). Every figure in them from the engine or the planes files, never typed. NO typed figures in
 >   the new sections (the FREQUENCY gate): the walkthrough points at the live answer. Step 1 = sections below the hero;
 >   step 2 = the two-column hero (replaces the engine's "ask first" centred mode and its `data-map-inset`; the STACKED
 >   query string is held by a test). Also wanted by Bill: the Blender film as a short silent loop AFTER the rename
 >   (noted on the Blender line in NOW.md).
+>   **STEP 1 BUILT 3 Nov night on `front-page-v3` (local, not pushed, not deployed):** the walkthrough (tabs; 02-04 filled
+>   from the hero's own example lookup, planes through `planesWalk()`; 05 a picture `build_report_still.py` makes from
+>   the PDF), "See it from above", "Beyond one street", the light developers band (curl/Python/JS, one Copy), the dark
+>   band GENERATED by `build_planes_pages.py` (`--write --home`), Who it is for, the FAQ (Book a demo `faq`), the demo
+>   band. `tests/front-page.mjs` was changed by reading only: RUN IT before merging. Open for Bill: the dark band lists
+>   the 32 councils, not the mock's Hounslow table (a figure there would make the front page a fourth writer of planes
+>   figures); on a phone the list hides (the button goes to the pack). Next: step 2, the two-column hero.
+> - **Declutter BUILT on `declutter` 3 Nov night, NOT deployed** (results + what was not done, and why:
+>   `docs/lessons/front-page-and-site.md` "The clutter audit"): How it works 9 -> 6.3 screens, Bay Area 7.7 -> 4.9, the
+>   band bar on all 498 planes pages, About's "Who it's for" one line. Pricing and API left as they are. Ships on Bill's
+>   go: `web-deploy` (how-it-works, about), `bay-area-deploy`, `planes-pages-deploy`; then the drift check.
+>   ALSO on it (Bill's yes): the SAMPLE street report regenerated (it still said the CAA's 2024 / ERCD 2501 after the
+>   1 Nov roll; the roll's edition check read 3 text files, never a PDF), the report template fitted back on one A4
+>   page (margins, a shorter map 345 -> 290, smaller notes; no line cut), and `test_public_wording.py` now refuses an
+>   old CAA edition in EVERY published page, PDF and module (proven red on the old PDF). Needs `home-deploy` too.
+>   TODO 23 Dec: regenerate the sample again (`address_noise_report.mjs --sample`): its "Have your say" names
+>   Heathrow's consultation "open until 22 December", which a stored PDF cannot drop by itself.
 > - **Declutter, branch `declutter`** (Bill: "do the proposed fixes above on a branch"), from the measured audit at
 >   claude.ai/artifact/DKt7s7H8JZjUotbqvpbXN6: How it works (9 screens, 14.6 on a phone: keep the strip + a short
 >   version open, fold the rest, sources as a closed table), Pricing (drop the "Buying or renting" box; phone feature lists
@@ -2668,6 +2736,21 @@ environment route reads it. **For later, not before a demo.**
   recommendation: one holder, and the extension stays a thin reader of `/v1/environment`.
 - **Also consider AURN** (`nearestMonitor`) in the same row, so cities outside London get an official monitor
   rather than nothing.
+
+### Parked idea: sewage and storm overflows (raised by Bill, 2026-11-04)
+
+Bill: "is there data for sewage waste/pollution?", then "in future would be nice to make a branch and see how this might
+fit the website". For England, yes: the Environment Agency's Event Duration Monitoring annual returns (per overflow,
+2020-2025, verified) and Water UK's National Storm Overflows Hub (about 14,000 overflows, near real time, an API, no
+history, unverified). Not checked: Wales, Scotland, Northern Ireland, the US.
+- **Licence first.** The official dataset's attribution reads "All rights reserved" while third parties cite OGL v3.0, and
+  the Hub API's terms were not found. Settle both before any build; LICENSING.md gets the answer.
+- **Then a branch to try it.** Shape to test: a context line beside a postcode (the nearest overflows and their spill hours
+  last year), never scored. It suits yearly data, unlike roadworks. Wording to hold: it says when and how long an overflow
+  ran, not how much sewage or what it did to the water; some figures are floors (monitors not working all year); and an
+  outfall's place says little about a street away from the water, so it needs a distance rule and a river, not a radius alone.
+- Others already show it per overflow (floodradar.co.uk, top-of-the-poops.org): any value is in sitting beside the rest of
+  a street's answer, so never "only".
 
 ### Parked idea: ask Sky Score on WhatsApp (raised by Bill, 2026-10-21)
 

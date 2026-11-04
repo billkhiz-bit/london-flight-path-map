@@ -349,6 +349,10 @@ names out of the repo, for this page only), with who it is for, why it was built
 talk, and the talks. Published before the rename's attorney opinion (Bill, 23 Oct); the Deen Developers photo is
 held until they agree (original in `sky-score-drafts\about-photos\`). "Who it is for" is ONE list,
 `scripts/build_who_for.py`, written between WHO-FOR markers into the front page and `/about/` (blocking `--check`).
+SINCE 2026-11-03 (declutter, Bill's yes to the clutter audit) it is written into the FRONT PAGE ONLY: About repeated it
+word for word, so About says one line in the builder's two group names and links `/#who`. Putting it back is the
+builder's `PAGES` plus the markers in about/index.html. Never retype the audiences on About (a draft listed
+"councils", which the list does not have).
 Its opening said "beside every postcode" until a review caught the overclaim: "every postcode we cover".
 
 **"How it grew" (2026-10-24, Bill: "a timeline, which includes the video").** Six steps on `/about/`, dated by MONTH
@@ -746,3 +750,85 @@ product) is a one-line change plus whatever the test names. A plain link only: L
 that sets its own cookies, and the pages allow none. Counted as `<page>-linkedin` through `WATCHED_LINKS`; on /about/
 it sits beside Bill's own profile, relabelled "Bilal on LinkedIn" so the two are not both called "LinkedIn".
 Four breaks proven red: a stale copy, the phone footer's copy gone, `sameAs` dropped, the count removed.
+
+### The sample street report is a READER of every file the report reads (2026-11-03)
+
+`home/reports/sample-street-report-kew.pdf` is a stored render of `js/street_report.mjs`. The 1 Nov CAA roll moved
+every page and the live report, but the sample went on saying "the CAA's model of 2024" and "ERCD Report 2501":
+`measure_covid_understatement.py`'s edition check read a hand-kept list of three text files. Now
+`tests/test_public_wording.py` refuses an old edition in every published page, PDF and module (found from the
+Makefile, so a new file is held because it is published). Regenerating showed a second drift: the report had grown
+(nearest station, air measured nearby, have your say) to TWO pages; fitted back by layout only (margins 10/14/8 mm,
+`MAP.h` 345 -> 290, notes 7.6pt). A stored PDF cannot drop a time-limited line: regenerate it after any `until`.
+
+### The clutter audit and the `declutter` branch (2026-11-03)
+
+Bill: "Can we do an audit of all our web pages to see if there is clutter like this", then "do the proposed fixes".
+Every page type measured on the live site at 1366 and 390 (screens tall, words, first-screen words, links, buttons,
+destinations linked 3+ times), then each looked at whole: claude.ai/artifact/DKt7s7H8JZjUotbqvpbXN6. Done on `declutter`:
+- **How it works** 9 -> 6.3 screens (14.6 -> 9.9 on a phone): every heading and its opening words stay open, the detail
+  behind "Read more" pills (`details.more`); a "short version" UNDER the approach strip (Bill wanted the strip straight
+  after the opening words, 26 Oct); the credits one line open, the full list one click away (the OGL asks to include
+  OR LINK the attribution). The strip is 2.1 of the 6.3 screens by design; the audit's "about 3" forgot it.
+- **Bay Area** 7.7 -> 4.9 (12.3 -> 7.4): each city's route sentences behind its own expander (the summary names the
+  kinds, "Landing · Departure"), rows on one line from 760 px, "How to read this" behind one disclosure.
+- **The planes pages' cells**: the band bar (`docs/lessons/in-progress-measurements.md`).
+- **About** 6.3 -> 5.8 (9.8 -> 8.8): "Who it's for" one line (above). Its "blank gap" was lazy talk photos in a
+  full-page capture, not a defect.
+- NOT done, and why: **Pricing**: the audit's two items ("Buying or renting" box, the example's fine print) were the
+  FRONT PAGE's (NOW.md's ~20 Nov list), misread onto Pricing; the rest of its length is prices and terms, which a
+  buyer should never have to click for. **API**: the repeats are the hero's three buttons and the numbered "Get
+  started" steps, each inline where it is needed. Lesson: before proposing a cut, find the thing on the page.
+
+### Front-page-v3 step 2: the two-column hero (2026-11-04)
+
+Bill brought the rework forward ("deploy the frontpage and website changes today"), ending the ~20 Nov read at 12 days: the
+counts are frozen in Desktop `Sky Score Marketing\engagement-read-2026-11-04.md` (+ `.json`): 52 of 87 front-page views
+acted since 23 Oct (60%) against 35 of 104 before (34%). Small numbers; read them as direction only.
+- **The intro is gone, and with it everything that served it**: `.is-intro`, `leaveIntro()`, the inert map, `data-map-inset`,
+  "Or explore the map" (`front-explore`, 1 click in October) and the "Try" row (the walkthrough's step 01 does that job).
+- **A descendant rule written for one SVG catches the next one.** `.hero svg { position: absolute; inset: 0; width: 100% }`
+  stretched the new tick icons over half the page; the unit tests were all green and only a browser click (Playwright:
+  "svg intercepts pointer events") and a screenshot showed it. Now `.mapwrap > svg`.
+- **`align-items: start` from the desktop grid survives into the stacked flex column**, which shrank the map to 190 px and
+  let the panel run past the screen at 390. Stacked says `align-items: stretch`. Found by measuring the boxes.
+- **A panel that stops floating needs its old height rules gone**: nothing caps it now; the map column is `position: sticky`,
+  so a long answer scrolls past a map that stays in view.
+- Measured at 390: tiles end at 608 px (first screen 844), no sideways scroll, 9.2 screens (10.7 with step 1 alone).
+- The free quota left with the old business card (the mock has none), which a backend test caught; Bill then asked for
+  it in the developers band, so `test_the_front_page_quotes_the_enforced_free_quota` is strict again and reads any shape.
+- **The API animation** (mock claude.ai/artifact/VgTpCjGHZHMLhz1zYFPNpM; Bill picked C of three, built the same day). The band's
+  samples named a point in Kew and the example a postcode in Kew, with different figures, so an animation of one over the
+  other would have shown an answer the request never got. `showDev()` rewrites the samples to the example's own point
+  instead of adding a third lookup. The mock-up's measuring caught two slips before Bill relied on them: version A still
+  showing C's tiles, and a note calling C the tallest when B was (608 px against 576).
+  Bill then tried it and saw the timing was off: the number lit on leaving and the card only on landing, about half a second
+  later, with the next number already lit. Now one figure at a time, all changing in one frame, with no transition on either
+  side (a fade on one side is a lag). The flying chip went too: once a card's figure appears as its number lights, the chip
+  would only arrive at a figure already there. Bill also saw the curl box move while Python's and JavaScript's held still: the
+  caret was an inline box inside the text, so it was a place to break, and the one long unbroken URL re-wrapped as it typed.
+  Absolutely placed, it is out of the flow, and text and hidden remainder wrap as one. A test samples every painted frame
+  and holds lit number == lit card, figures shown == number lit + 1, and one height, in each language and at 390.
+- The mock's gliding plane was NOT built: Bill, on seeing it, "the plane isn't clear so maybe remove that".
+
+### Front-page-v3 step 1: the lower page (2026-11-03, branch `front-page-v3`)
+
+Built from Bill's mock v8 (version 12). Three rules decided the build, each now held by a test:
+- **No figure typed below the hero.** The walkthrough's noise, air and planes steps are WRITTEN from the example answer
+  the hero already fetches: `home-engine.mjs` `exampleAnswer()` makes the example's postcodes.io + `/v1/environment`
+  pair once and both the hero and `js/home-sections.mjs` read it (measured: a plain visit still makes exactly two
+  lookups). The hero gives way when a visitor acts first; the walkthrough does not, because the lookup no longer
+  belongs to `search()`. A deep link never runs the example, so the walkthrough asks for it near the screen (at
+  1366 px that is at once: it sits under the map). Pure parts: `noiseRows` / `airPanel` (`tests/home-sections.mjs`),
+  `planesWalk` (`tests/planes-model.mjs`).
+- **The report picture is made, never copied.** `build_report_still.py` renders the top of the sample PDF's first page
+  and records both hashes; `--check` reds when the PDF is regenerated (as the 1 Nov roll showed a stored file goes stale
+  unseen), when the picture is edited, or when the page sizes it wrongly.
+- **The dark band switches itself off.** `build_planes_pages.py` writes it from the council index's `consultation`
+  entry: open, it names each council's pack page; from the day after `until`, the planes pages band. Its `--check` runs
+  even where the tracks are missing (a stale band is a defect on any clone, never inconclusive). The mock's Hounslow
+  table was NOT built: its figures would make the front page a fourth writer of planes figures (CLAUDE.md names three).
+Also: front-page.mjs's search-tab checks are scoped to `.panel` (the page now has three tab lists, and an unscoped
+Playwright locator fails strict mode on three selected tabs); an arrow GLYPH in a button's disc is text axe cannot
+judge (incomplete), so the pills draw it in CSS; and a bash heredoc in the agent's shell turned a double backslash into a single one
+inside Python sources, twice: write such edits as a script file, or build the string with `chr(92)`.

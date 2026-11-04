@@ -15,7 +15,8 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
-import { districtOf, planesLinks, planesModel, planesNodes } from '/js/planes.mjs';
+import { districtOf, planesLinks, planesModel, planesNodes, planesWalk } from '/js/planes.mjs';
+import { exampleFigures } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
 import {
   DEFRA_LDEN_SCALE,
@@ -57,7 +58,7 @@ const isMapCity = (k) => Object.hasOwn(CITY_NAME, k);
 // GoatCounter has no bounce rate, and "more interactive, fewer bounces" (Bill, 6 Oct) cannot be
 // judged without one. So the front page counts `front-engaged` ONCE per page view, at the first
 // action a visitor takes, and each way in once (`front-search`, `front-example`, `front-city`,
-// `front-explore`, `front-map`): engaged views over views of / is the measure. Only a person's
+// `front-map`): engaged views over views of / is the measure. Only a person's
 // actions count; a deep link runs search() at boot and is never engagement, so the calls sit
 // on the controls, not in search(). Like every page count, no cookie and no identifier
 // (privacy s2c). A way is recorded only once GoatCounter has taken it, and analytics must
@@ -156,32 +157,7 @@ function wantCountry(preset = '') {
   });
 }
 
-// ---- ask first, then the tool (Bill, 2026-10-05) ----
-// The page opens as v3 (the question over a faded map) and becomes v2 (the tool)
-// the first time someone uses it. One way in, one way out: leaveIntro().
 const hero = document.querySelector('.hero');
-// STACKED is declared further down; this runs only after the module has loaded.
-const inIntro = () => Boolean(hero?.classList.contains('is-intro')) && !window.matchMedia(STACKED).matches;
-function leaveIntro() {
-  if (!hero?.classList.contains('is-intro')) return;
-  const wasIntro = inIntro();
-  hero.classList.remove('is-intro');
-  syncIntroMap();
-  // The map refits beside the panel; on a stacked layout nothing moved.
-  if (wasIntro && state.boroughs) draw(state.pin);
-}
-// THE FADED MAP IS A BACKDROP, NOT A CONTROL (Bill, 2026-10-07: "you can still highlight the
-// map behind the card ... which can be confusing"). While the question sits over it, the map is
-// INERT: no hover highlight, no tooltip, no click and no Tab stop. The Tab stops were the worse
-// half - thirty-odd council areas focusable BEHIND the card, which WCAG 2.2 2.4.11 (Focus Not
-// Obscured) fails. The ways in are the search, a city, a deep link and "Or explore the map",
-// which ends the intro and focuses the first area. Stacked (phones, tablets, short screens) the
-// map sits BELOW the question, uncovered, so inIntro() is false there and it is live from the
-// start. Set from JS, not in the markup: if the module failed, an inert map would stay dead.
-const mapwrap = document.querySelector('.mapwrap');
-function syncIntroMap() {
-  if (mapwrap) mapwrap.inert = inIntro();
-}
 // The Bay Area here is drawn from the files the /bay-area/ page is built from:
 // its outlines the Census places, its noise picture the one that page serves,
 // and its LINES from data/us-bayarea-routes.json (2026-10-07), the same records
@@ -214,9 +190,6 @@ const FT_KM = 0.0003048;
 // engine used to decide on the map's own width (> 760px) while the CSS tested
 // the viewport, so 761-826px got the floating CSS with a full-width map beneath.
 const STACKED = '(max-width: 1279px), (max-height: 500px)';
-// After STACKED exists (inIntro reads it); again whenever the layout crosses between wide and stacked.
-syncIntroMap();
-window.matchMedia(STACKED).addEventListener('change', syncIntroMap);
 // How far out an airport counts as "near" a searched postcode, and how close to
 // an approach line a street must be to be called "under" it. The street report
 // (scripts/address_noise_report.mjs) uses its own, wider ones (40 km and 5 km):
@@ -259,19 +232,6 @@ const state = {
   selected: null, // the name of the council area or Bay Area place whose card is open
 };
 
-// "Or explore the map" (Bill, 2026-10-06). The intro used to say "or tap a council area
-// on the map" while, on a wide screen, the map sat faded behind the question with its
-// controls hidden. This is the way to the map without a search: wide, it ends the intro
-// and brings the map and its controls forward; stacked, the map is already below the
-// question and is scrolled into view. Focus lands on the first council area either way,
-// so a keyboard user arrives where they asked to go.
-byId('explore-map')?.addEventListener('click', () => {
-  engaged('explore');
-  leaveIntro();
-  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelector('.mapwrap')?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
-  document.querySelector('#map .boro')?.focus({ preventScroll: true });
-});
 
 // "For developers" (2026-10-19): Copy puts the request EXACTLY as shown on the clipboard, and says so in
 // a polite live region. Where the clipboard is refused (no permission, an old browser), the request is
@@ -406,10 +366,20 @@ function renderChips() {
     b.type = 'button'; b.textContent = name; b.dataset.city = key; b.setAttribute('aria-pressed', 'false');
     // The Find list follows once the map has MOVED: show() sets the city only when its outlines
     // land, so syncing at once read the city being left (review 2026-10-15).
-    b.addEventListener('click', () => { engaged('city'); leaveIntro(); setQuery({ city: key }); show(key).then(() => syncFindWhere(key)); });
+    b.addEventListener('click', () => { engaged('city'); closeCityMenu({ refocus: true }); setQuery({ city: key }); show(key).then(() => syncFindWhere(key)); });
     box.append(b);
   }
 }
+// "Map: London" (mock v8): a details element holding #chips. It opens by itself; closing it after a choice, on Escape
+// and on a click elsewhere is what a menu is expected to do, and the only part that needs a script.
+function closeCityMenu({ refocus = false } = {}) {
+  const menu = byId('city-menu');
+  if (!menu?.open) return;
+  menu.open = false;
+  if (refocus) menu.querySelector('summary')?.focus();
+}
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeCityMenu({ refocus: true }); });
+document.addEventListener('click', (ev) => { if (!ev.target.closest?.('#city-menu')) closeCityMenu(); });
 
 // ?oskey= is read once and removed, so a key is never left in a link that gets
 // shared or bookmarked. Anything that is not a plain token is ignored.
@@ -438,10 +408,8 @@ async function bootFromQuery() {
   const row = borough ? rowFor(borough) : null;
   // A council area names its own city: ?city=manchester&borough=Camden opens London.
   const start = row && isMapCity(row.city) ? row.city : isMapCity(city) ? city : 'london';
-  // A link that names a city came for that city's map: it opens on the tool, not the
-  // question over a faded map with the city chips hidden. (A postcode or council area
-  // leaves the question by itself, through search() and selectBorough().)
-  if (isMapCity(city)) leaveIntro();
+  // A link that names a city came for that city's map. (A postcode or council area
+  // is shown by search() and selectBorough().)
   await show(start);
   if (postcode) {
     const input = byId('pc');
@@ -519,6 +487,11 @@ async function show(key, pin) {
   state.boroughs = boroughs;
   paintRamp(key);
   document.querySelectorAll('#chips button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.city === key)));
+  // The switch says which map this is, and "Open the full map" opens the same one. Only a city the full map draws.
+  const cityName = byId('city-name');
+  if (cityName) cityName.textContent = CITIES.find(([k]) => k === key)?.[1] || cityName.textContent;
+  const mapFull = byId('map-full');
+  if (mapFull) mapFull.href = isMapCity(key) ? `${MAP_PATH}?city=${key}` : MAP_PATH;
   // The reset below ends a zoom, which re-tiles the street map: with no
   // projection it has nothing to tile, so the old city's tiles are not fetched.
   state.projection = null;
@@ -533,14 +506,10 @@ function draw(pin) {
   const [W, H] = size();
   hideTip();
   svg.attr('viewBox', `0 0 ${W} ${H}`).selectAll('*').remove();
-  // Each layout says how much of the map a floating panel covers, in pixels at desktop width.
-  const zero = { left: 0, top: 0, right: 0, bottom: 0 };
-  // While the question sits centred over the map (.is-intro), the map fills the box.
-  const inset = !inIntro() && document.body.dataset.mapInset ? JSON.parse(document.body.dataset.mapInset) : zero;
-  const wide = !window.matchMedia(STACKED).matches;
+  // Nothing floats over the map (front-page-v3): it fills its own box, with room for the city switch along the foot.
   const planar = state.boroughs.features.some((f) => f.properties.planar);
   const projection = d3.geoMercator().fitExtent(
-    [[(wide ? inset.left : 0) + 24, (wide ? inset.top : 0) + 24], [W - (wide ? inset.right : 0) - 24, H - (wide ? inset.bottom : 0) - 64]],
+    [[24, 24], [W - 24, H - 64]],
     planar ? fitTarget(state.boroughs) : state.boroughs,
   );
   state.projection = projection;
@@ -942,10 +911,7 @@ function bringIntoView(el, { centre = false } = {}) {
   const t = d3.zoomTransform(svg.node());
   if (t.k <= 1) return Promise.resolve();
   const [W, H] = size();
-  // On a wide screen the floating panel covers the left of the map: aim beside it.
-  const wide = !window.matchMedia(STACKED).matches;
-  const inset = wide && !inIntro() && document.body.dataset.mapInset ? JSON.parse(document.body.dataset.mapInset) : { left: 0, top: 0, right: 0, bottom: 0 };
-  const box = { x0: inset.left, y0: inset.top, x1: W - inset.right, y1: H - inset.bottom };
+  const box = { x0: 0, y0: 0, x1: W, y1: H };
   const r = el.getBBox();
   const cx = r.x + r.width / 2;
   const cy = r.y + r.height / 2;
@@ -1020,12 +986,12 @@ function selectBorough(name, opts = {}) {
   const f = state.boroughs?.features.find((x) => norm(featureName(x)) === norm(name));
   const row = rowFor(name);
   if (!f && !row) return false;
-  leaveIntro();
   state.selected = f ? featureName(f) : row.borough;
   svg.selectAll('.boro').classed('is-selected', (d) => featureName(d) === state.selected);
   // On a zoomed map, the area opened moves to the middle (M-16).
   bringIntoView(svg.selectAll('.boro').filter((d) => featureName(d) === state.selected).node(), { centre: true });
   byId('answer')?.classList.remove('is-open');
+  clearExampleTiles();
   // A ZIP search opens its city's card WITH the ZIP's pin; any other way in, the pin's answer has closed.
   if (!opts.zip) clearPin();
   // The tooltip goes with the tap that opened the card: it was left on the map,
@@ -1039,6 +1005,12 @@ function selectBorough(name, opts = {}) {
     { announce: !(opts.focus || opts.quiet) });
   setQuery(opts.zip ? { city: state.city, postcode: opts.zip.code } : { city: row ? row.city : state.city, borough: state.selected });
   if (opts.scroll && window.matchMedia(STACKED).matches) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Wide, the map holds still beside the column, so a reader can tap it after scrolling down a long answer or list. The
+  // card is shorter than what it replaces: without this, the hero would leave the screen and the card with it.
+  else if (!window.matchMedia(STACKED).matches && hero && hero.getBoundingClientRect().top < 0) {
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    hero.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+  }
   if (opts.focus) card.querySelector('h2')?.focus();
   return true;
 }
@@ -1237,13 +1209,9 @@ const form = byId('check');
 const status = byId('status');
 const answer = byId('answer');
 const say = (s) => { if (status) status.textContent = s; };
-// An example is its own way in, not also a typed search: the flag tells the submit handler.
-let viaExample = false;
-document.querySelectorAll('.try button').forEach((b) => b.addEventListener('click', () => { const i = byId('pc'); if (i) i.value = b.dataset.pc; viaExample = true; form?.requestSubmit(); }));
 form?.addEventListener('submit', (ev) => {
   ev.preventDefault();
-  engaged(viaExample ? 'example' : 'search');
-  viaExample = false;
+  engaged('search');
   search(byId('pc')?.value || '');
 });
 
@@ -1254,6 +1222,49 @@ form?.addEventListener('submit', (ev) => {
 // every await it stops if a newer one has started - the full map's beginSearch() /
 // isCurrentSearch(), and show()'s own showSeq, one level up.
 let searchSeq = 0;
+// THE EXAMPLE, COMPACT (front-page-v3 step 2): the answer stays whole in the page, shown as three tiles until the
+// visitor asks for the rest. Each tile is written from the live answer; a figure it lacks is no tile, never a zero.
+const examplePanel = () => answer?.closest('.panel');
+function tileNode({ figure, words }) {
+  const tile = document.createElement('span');
+  tile.className = 'ans-tile';
+  const b = document.createElement('b');
+  b.textContent = figure;
+  tile.append(b, words);
+  return tile;
+}
+function showExampleTiles(e) {
+  const tiles = byId('ans-tiles');
+  const show = byId('ans-show');
+  const more = byId('ans-more');
+  examplePanel()?.classList.add('is-example');
+  if (tiles) {
+    tiles.replaceChildren(...exampleFigures(e).map(tileNode));
+    tiles.hidden = false;
+  }
+  if (show) show.hidden = false;
+  if (more) { more.textContent = 'Show the full example'; more.setAttribute('aria-expanded', 'false'); }
+}
+// The planes tile arrives with the planes block, after the rest, and only while the example is on screen.
+function addPlanesTile(model) {
+  const tiles = byId('ans-tiles');
+  const lead = planesWalk(model)?.lead;
+  if (!tiles || tiles.hidden || !lead || !examplePanel()?.classList.contains('is-example')) return;
+  tiles.append(tileNode(lead));
+}
+function clearExampleTiles() {
+  examplePanel()?.classList.remove('is-example', 'is-full');
+  const tiles = byId('ans-tiles');
+  const show = byId('ans-show');
+  if (tiles) { tiles.hidden = true; tiles.replaceChildren(); }
+  if (show) show.hidden = true;
+}
+byId('ans-more')?.addEventListener('click', (ev) => {
+  const open = examplePanel()?.classList.toggle('is-full') === true;
+  ev.currentTarget.textContent = open ? 'Hide the full example' : 'Show the full example';
+  ev.currentTarget.setAttribute('aria-expanded', String(open));
+  engaged('example');
+});
 // ANSWER FIRST (Bill, 2026-10-23, option B of the mock-ups): a plain visit opens on one real answer, the
 // postcode in #ans-example, labelled as an example, so the first screen shows what the page does before it
 // asks for a postcode. It is search() itself, so it can never differ from what a visitor typing it would get,
@@ -1265,10 +1276,9 @@ async function search(raw, { example = false } = {}) {
   if (!text) return;
   const seq = ++searchSeq;
   const stale = () => seq !== searchSeq || (example && acted);
-  if (!example) leaveIntro();
   const label = byId('ans-example');
   if (label) label.hidden = true;
-  answer?.closest('.panel')?.classList.remove('is-example');
+  clearExampleTiles();
   answer?.classList.remove('is-open');
   clearPin();
   hideWant();
@@ -1316,7 +1326,10 @@ async function search(raw, { example = false } = {}) {
   if (!example) say('Looking it up...');
   closeBorough(false);
   try {
-    const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
+    // The example's two lookups are exampleAnswer()'s, shared with the walkthrough below the map (one pair of
+    // requests for both); a visitor's own search makes its own.
+    const ex = example ? await exampleAnswer() : null;
+    const geo = example ? { result: ex?.geo ?? null } : await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
     if (stale()) return;
     if (!geo.result) { if (!example) { say('That postcode was not found, and no place on the map has that name.'); wantCountry(); } return; }
     const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
@@ -1325,15 +1338,13 @@ async function search(raw, { example = false } = {}) {
     // screen is how the live site once told a Norwich reader about Stansted.
     if (city && city !== state.city) await show(city, { lat, lon }); else if (city) draw({ lat, lon });
     if (stale()) return;
-    const env = await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
+    const env = example ? ex.env : await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
     if (stale()) return;
     if (!env.environment) { if (!example) say(env.error || 'No figures for that spot.'); return; }
     if (example) {
-      // The question makes way only now, with the answer ready: one change on screen, not two.
-      leaveIntro();
       render(geo.result.postcode, district, city, env.environment, lat, lon);
       if (label) label.hidden = false;
-      // The heading says it too: "Example: TW9 3PZ". render() wrote the bare postcode, and the visitor's own
+      // The heading says it too: "Example: TW9 3PZ, Kew". render() wrote the bare postcode, and the visitor's own
       // search writes theirs over it, so the prefix can only ever sit on the example.
       const heading = byId('ans-title');
       if (heading) {
@@ -1341,8 +1352,9 @@ async function search(raw, { example = false } = {}) {
         ex.className = 'ex';
         ex.textContent = 'Example: ';
         heading.prepend(ex);
+        if (label?.dataset.place) heading.append(`, ${label.dataset.place}`);
       }
-      answer?.closest('.panel')?.classList.add('is-example');
+      showExampleTiles(env.environment);
       return;
     }
     // A success is announced too: the status line is the page's live region,
@@ -1461,6 +1473,33 @@ async function loadPlanes(postcode) {
   return [await planesFiles.get(district), info];
 }
 
+// ---- the example's figures, for the walkthrough below the map (front-page-v3, 2026-11-03) ----
+// The walkthrough ("From a postcode to a sourced answer", js/home-sections.mjs) SHOWS what a search gives with the
+// example's own answer, never a figure typed into the page: these hand it the same lookups and files the answer
+// above reads. exampleAnswer() is the example's postcodes.io and /v1/environment pair, made once and shared with
+// search(), so the walkthrough costs no second pair; it resolves to { geo, env } or null (not found, no figures, a
+// failed fetch), and a failure is retried on the next call, as the planes files are. A deep link never runs the
+// example, so then the walkthrough asks for it itself when it comes near the screen.
+let exampleLoad = null;
+export function exampleAnswer() {
+  const pc = (byId('ans-example')?.dataset.pc || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!pc) return Promise.resolve(null);
+  exampleLoad ??= (async () => {
+    const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`)).json();
+    if (!geo?.result) return null;
+    const env = await (await fetch(`${ENV}?lat=${geo.result.latitude}&lon=${geo.result.longitude}`)).json();
+    return env?.environment ? { geo: geo.result, env } : null;
+  })().catch(() => null).then((found) => {
+    if (!found) exampleLoad = null;
+    return found;
+  });
+  return exampleLoad;
+}
+/** [district file, airports.json] for a postcode, from the answer's own loaders (fetched once, kept). */
+export const planesFilesFor = (postcode) => loadPlanes(postcode);
+/** [Breathe London sensors, DEFRA monitors], the answer's own files (fetched once, kept). */
+export const airFiles = () => Promise.all([loadSensors(), loadMonitors()]);
+
 function render(postcode, district, city, e, lat, lon) {
   const title = byId('ans-title'), where = byId('ans-where');
   if (title) title.textContent = postcode;
@@ -1511,6 +1550,7 @@ function render(postcode, district, city, e, lat, lon) {
       if (!model) return;
       planes.append(...planesNodes(model, document, planesLinks(index, postcode, model)));
       planes.hidden = false;
+      addPlanesTile(model);
     }).catch((err) => {
       // A file the model cannot read (a field missing after a part-deployed roll) hides the block, as a failed
       // fetch does, but is said in the console so the page tests still see it: hidden here, never silent there.
@@ -1835,8 +1875,6 @@ function setTab(name, { focus = false, counted = true, keepCard = false } = {}) 
   history.replaceState(null, '', location.pathname + location.search + (name === 'find' ? '#find' : ''));
   if (name === 'find') {
     if (counted) engaged('fit');
-    // The map is the answer, so the question over a faded map makes way for it.
-    leaveIntro();
     if (!keepCard) closeBorough(false);
     // The first time, the list starts where the map is (when the map is on a region the list
     // knows); after that, whatever the reader chose, "Anywhere" included, is kept.
@@ -1979,9 +2017,10 @@ function bindFit() {
       hero?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
     });
   }
-  // "Search a postcode" in "Who it is for" links /#check (absolute: /about/ carries the same block). Here it must
-  // bring the check tab back, or with Find areas open it scrolls to a hidden panel and does nothing (review 2026-10-23).
-  for (const a of document.querySelectorAll('a[href="/#check"]')) {
+  // "Search a postcode" in "Who it is for" links /#check (absolute: /about/ carries the same block), and the walkthrough's
+  // "Search yours" links #pc. Here each must bring the check tab back, or with Find areas open it scrolls to a hidden panel
+  // and does nothing (review 2026-10-23).
+  for (const a of document.querySelectorAll('a[href="/#check"], .walk-yours a[href="#pc"]')) {
     a.addEventListener('click', (ev) => {
       ev.preventDefault();
       setTab('check');

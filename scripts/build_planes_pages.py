@@ -59,6 +59,13 @@ USAGE
     python scripts/build_planes_pages.py --write
     python scripts/build_planes_pages.py --check     # the pages on disk == what --write would write
     python scripts/build_planes_pages.py --list      # every district, and why it has a page or not
+    python scripts/build_planes_pages.py --write --home   # the front page's planes band only (2026-11-03), from the
+    python scripts/build_planes_pages.py --check --home   # committed council index: no tracks needed
+    python scripts/build_planes_pages.py --check --inputs-from <main clone>   # a worktree checking against the tracks
+                                                     # and built pages of another clone, reading only
+
+The front page's dark band (home/index.html, between the PLANES-BAND markers) is written by --write too, from the
+council index's `consultation` entry: Heathrow's consultation while it is open, the planes pages from the day after.
 """
 from __future__ import annotations
 
@@ -171,8 +178,65 @@ def most(v) -> int:
 BANDS = ((100, 'at 100+'), (10, 'at 10 to 99'), (0, 'under 10'))  # (from, words), busiest first
 EDGE = 'on an edge'
 BAND_ORDER = ('at 100+', 'at 10 to 99', EDGE, 'under 10')
-BANDS_SAID = (f'The table counts the postcodes of each sector by how many planes pass over them a day: '
-              f'{BANDS[0][0]} or more, {BANDS[1][0]} to {BANDS[0][0] - 1}, or under {BANDS[1][0]}.')
+BANDS_SAID = ("Each sector's bar splits its postcodes by how many planes pass over them a day; the figure above "
+              "it counts those in the busiest band the sector reaches. The list above gives the whole district's "
+              'counts.')
+
+# THE BAND BAR (declutter, 2026-11-03; Bill: "do the proposed fixes", audit items 4 and 6). A cell showed every band
+# as a line ("137 at 100+ / 200 on an edge / 450 under 10"): true, but four numbers a cell made a table no one could
+# scan. Now a cell SHOWS the busiest band it reaches and draws all of them as one bar, each band's width its count of
+# postcodes; the bar's label (screen readers, and a hover title) says every count. Still bands, never a middle figure:
+# the bar IS the bands. Built from the cell's own phrases (sector_parts), so the bar and the words cannot disagree.
+# Colours: the full map's planes layer (build_planes_layer.COLOURS: its 10-49 step for "10 to 99", its 100-199 step
+# for "100+"), held equal by tests/test_build_planes_pages.py, so a band reads the same on the map and on these pages.
+BAND_CLASS = {'at 100+': 'b100', 'at 10 to 99': 'b10', EDGE: 'bedge', 'under 10': 'b0'}
+BAND_COLOURS = {'at 100+': '#9a4316', 'at 10 to 99': '#dc8a4a'}
+BAND_KEY = (('at 100+', f'{BANDS[0][0]} or more'), ('at 10 to 99', f'{BANDS[1][0]} to {BANDS[0][0] - 1}'),
+            (EDGE, EDGE), ('under 10', f'under {BANDS[1][0]}'))
+
+
+def split_bands(parts: list[str]) -> tuple[list[str], list[tuple[int, str, str]]]:
+    """A cell's phrases as (other lines, bands). A band is sector_parts' "<count> <band words>", kept as (count,
+    words, phrase), busiest first; anything else ("up to 317 a day", "not measured", "at all 2 postcodes") is a line."""
+    lines, bands = [], []
+    for phrase in parts:
+        n, _, words = phrase.partition(' ')
+        if words in BAND_CLASS and n.replace(',', '').isdigit():
+            bands.append((int(n.replace(',', '')), words, phrase))
+        else:
+            lines.append(phrase)
+    return lines, bands
+
+
+def band_bar(bands: list[tuple[int, str, str]]) -> str:
+    """The bands as one bar, each band's width its count of postcodes; its label says every count."""
+    label = 'Postcodes by planes a day: ' + ', '.join(phrase for _, _, phrase in bands)
+    segments = ''.join(f'<i class="{BAND_CLASS[words]}" style="flex-grow:{n}"></i>' for n, words, _ in bands)
+    return f'<div class="bands" role="img" aria-label="{e(label)}" title="{e(label)}">{segments}</div>'
+
+
+def cell_html(parts: list[str], top: bool = False) -> str:
+    """One cell: its lines (the busiest figure, where the cell has one), the busiest band's count, then the bar.
+    `top` marks the first line as the cell's head (the consultation pack's "up to N a day")."""
+    lines, bands = split_bands(parts)
+    shown = lines + [bands[0][2]] if bands else lines
+    html = ''.join(f'<span class="top">{e(p)}</span>' if top and i == 0 else f'<span>{e(p)}</span>'
+                   for i, p in enumerate(shown))
+    return html + (band_bar(bands) if bands else '')
+
+
+def bands_in(cells) -> set[str]:
+    """The bands any of these cells draws."""
+    return {words for cell in cells for _, words, _ in split_bands(cell)[1]}
+
+
+def band_key(present: set[str]) -> str:
+    """The bar's key, after the words above a table: only the bands its cells draw, so "on an edge" appears only
+    where a bar has an edge (the edge note's own rule). The words say it, so the swatches are hidden from readers."""
+    return ('<span class="key" aria-hidden="true">'
+            + ''.join(f'<span><i class="{BAND_CLASS[band]}"></i>{e(words)}</span>'
+                      for band, words in BAND_KEY if band in present)
+            + '</span>')
 
 
 def band(v) -> str:
@@ -412,15 +476,14 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
         head = ''.join(f'<th scope="col">{e(label)}<span class="note">{e(share)}</span></th>'
                        for label, share in t['columns'])
         rows = '\n'.join(f'<tr><th scope="row">{e(sector)}<span class="note">{n} postcode{"s" if n != 1 else ""}'
-                         f'</span></th>' + ''.join('<td>' + ''.join(f'<span>{e(p)}</span>' for p in c) + '</td>'
-                                                   for c in cells) + '</tr>'
+                         f'</span></th>' + ''.join(f'<td>{cell_html(c)}</td>' for c in cells) + '</tr>'
                          for sector, n, cells in t['rows'])
         sections.append(
             f'<h2 id="{e(t["code"].lower())}">From {e(t["name"])}</h2>\n'
             f'<p>Planes land and take off into the wind, so the weather decides which way {e(t["name"])} flies, '
             f'and that decides how many pass over {e(d)}. Across its postcodes, {e(t["period"])}:</p>\n'
             f'<ul class="overall">\n{overall}\n</ul>\n'
-            f'<p class="note-p">{e(BANDS_SAID)}</p>\n'
+            f'<p class="note-p">{e(BANDS_SAID)} {band_key(bands_in(c for row in t["rows"] for c in row[2]))}</p>\n'
             '<div class="tw">\n<table>\n'
             f'<caption class="visually-hidden">Planes overhead from {e(t["name"])} in {e(d)}, by postcode sector '
             f'and the way {e(t["name"])} flies</caption>\n'
@@ -472,7 +535,7 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
 STYLE = """
   /* The area pages' look (scripts/build_area_pages.py), so the two read as one site. */
   :root {{ color-scheme: light dark;
-    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
+    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; --band0:#d6d3d1; }}
   * {{ box-sizing:border-box; }}
   body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
   a:focus-visible, input:focus-visible, button:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
@@ -496,6 +559,16 @@ STYLE = """
     table {{ font-size:12.5px; }}
     th, td {{ padding:6px 3px; }}
   }}
+  /* The band bar (2026-11-03): each band's width its count of postcodes, 2 px apart, the map layer's colours. */
+  .bands {{ display:flex; gap:2px; height:8px; max-width:9em; margin:5px 0 1px; border-radius:4px; overflow:hidden; }}
+  .bands i {{ display:block; flex:0 1 0; min-width:3px; }}
+  .b100 {{ background:""" + BAND_COLOURS['at 100+'] + """; }}
+  .b10 {{ background:""" + BAND_COLOURS['at 10 to 99'] + """; }}
+  .bedge {{ background:repeating-linear-gradient(135deg, """ + BAND_COLOURS['at 10 to 99'] + """ 0 2px, var(--band0) 2px 4px); }}
+  .b0 {{ background:var(--band0); }}
+  .key {{ display:inline-flex; flex-wrap:wrap; gap:2px 12px; vertical-align:middle; }}
+  .key span {{ display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }}
+  .key i {{ display:inline-block; width:14px; height:8px; border-radius:2px; }}
   .note {{ display:block; color:var(--mid); font-size:12px; font-weight:400; }}  /* 12px like the area pages' notes (audit 2026-11-01) */
   .note-p {{ color:var(--mid); font-size:13px; }}
   .tw {{ overflow-x:auto; }}
@@ -516,7 +589,7 @@ STYLE = """
   .site-top .site-nav a:hover {{ text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }}
   .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
+    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; --band0:#4a4a48; }}
     body {{ background:#141414; }}
   }}
   /* The phone menu (2026-10-23), as on the area pages: a popover, so no script. */
@@ -570,6 +643,8 @@ EXTRA_STYLE = """
     table.pack td::before { content:attr(data-label); display:block; color:var(--mid); }
     table.pack td span { display:inline; white-space:nowrap; }  /* each band whole, the busiest too */
     table.pack td span + span::before { content:', '; white-space:normal; }  /* the line breaks at a comma */
+    /* The band bar ends the text's own line (2026-11-03): under it, it made every district a line longer. */
+    table.pack td .bands { display:inline-flex; width:5.5em; margin:0 0 0 8px; vertical-align:middle; }
   }
 """
 
@@ -773,9 +848,9 @@ PACK_LEAD = ('Whatever your view, these are the figures for {borough} now: the p
              "over each of its postcode districts, and the borough's noise, air and flood figures from official data. "
              "They are today's flights on today's routes, not those of a third runway. Sky Score takes no side in "
              'the consultation.')
-CELLS_SAID = (f'Each cell gives the most planes over any one postcode of the district on that kind of day, then '
-              f"counts the district's postcodes by how many pass over them a day: {BANDS[0][0]} or more, "
-              f'{BANDS[1][0]} to {BANDS[0][0] - 1}, or under {BANDS[1][0]}.')
+CELLS_SAID = ('Each cell gives the most planes over any one postcode of the district on that kind of day, and '
+              'counts its postcodes in the busiest band reached; the bar splits all of them by how many planes pass '
+              "over them a day. Each district's own page goes sector by sector.")
 
 PACK = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/planes-overhead/">Planes overhead</a> &rsaquo; <a href="/planes-overhead/heathrow-consultation/">Heathrow consultation</a> &rsaquo; {borough}</nav>
 {crumbs_ld}
@@ -787,7 +862,7 @@ PACK = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Sco
 
 <h2>Planes from Heathrow, district by district</h2>
 <p>Planes land and take off into the wind, so the weather decides which way Heathrow flies, and that decides how many pass over each place. Counted over each postcode, {period}.</p>
-<p class="note-p">{cells_said}</p>
+<p class="note-p">{cells_said} {key}</p>
 <div class="tw">
 <!-- [html-validate-disable-block no-redundant-role: on a phone this table is display:block, which drops its table semantics in Safari; the roles keep them] -->
 <table class="pack" role="table">
@@ -847,9 +922,7 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
     rows = '\n'.join(
         f'<tr role="row"><th scope="row" role="rowheader"><a href="{URL_ROOT}{e(m["slug"])}/">{e(m["district"])}</a>'
         f'<span class="note">{m["measured"]:,} postcode{"s" if m["measured"] != 1 else ""}</span></th>'
-        + ''.join(f'<td role="cell" data-label="{e(label)}, {e(share)}">'
-                  + ''.join(f'<span class="top">{e(p)}</span>' if i == 0 else f'<span>{e(p)}</span>'
-                            for i, p in enumerate(cell)) + '</td>'
+        + ''.join(f'<td role="cell" data-label="{e(label)}, {e(share)}">{cell_html(cell, top=True)}</td>'
                   for (label, share), cell in zip(columns, t['district_cells'], strict=True))
         + '</tr>'
         for m, t in zip(ms, tables, strict=True))
@@ -881,7 +954,7 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
                                       ('Heathrow consultation', f'{URL_ROOT}{PACK_DIR}/'),
                                       (borough, f'{URL_ROOT}{PACK_DIR}/{area.slug(borough)}/')]),
         borough=e(borough), state=e(pack_state(c['until'], today)), lead=e(PACK_LEAD.format(borough=borough)),
-        href=e(c['href']), period=e(tables[0]['period']), cells_said=e(CELLS_SAID), head=head, rows=rows,
+        href=e(c['href']), period=e(tables[0]['period']), cells_said=e(CELLS_SAID), key=band_key(bands_in(cell for t in tables for cell in t['district_cells'])), head=head, rows=rows,
         notes=notes, facts='\n'.join(items),
         area_link=(f'<p><a href="{e(area_path)}">{e(borough)}: every figure we publish, with its score</a></p>'
                    if has_area else ''),
@@ -1028,19 +1101,156 @@ def check_councils(index: dict, path: Path = COUNCILS) -> list[str]:
                                          'scripts/build_area_pages.py --write (the area pages link from it)']
 
 
-NEEDS = ((PLANES / 'airports.json', 'scripts/build_planes_overhead.py --write'),
-         (AVERAGES, 'scripts/adsb_postcode_averages.py'), (NSPL, 'the NSPL roll (HANDOVER)'))
+# ----------------------------------------------------------------- the front page's dark band (front-page-v3, 2026-11-03)
+#
+# Bill's mock v8 (version 12): one DARK band on the front page for Heathrow's consultation, generated, so it switches
+# itself off. Written between the PLANES-BAND markers in home/index.html from the council index's `consultation`
+# entry (consultation_entry(): its closing day, the hub and each council's page in the pack), never typed: while the
+# consultation is open it names the councils and links each one's pack page; from the day after `until` it becomes the
+# planes overhead band (the district pages), so --check reds on 23 December until --write re-says it, like the pack's
+# own "closed on". Neutral, in the pack's words (PACK_LEAD): today's flights, no side taken. NO planes figure: the
+# front page says how often planes pass only through js/planes.mjs (tests/test_public_wording.py FREQUENCY).
+HOME = REPO / 'home' / 'index.html'
+BAND_BEGIN = '<!-- PLANES-BAND:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->'
+BAND_END = '<!-- PLANES-BAND:END -->'
+# The "New" pill above the question (front-page-v3 step 2): the band's way in. It points at the band, so it goes the day
+# the band stops being the consultation's; after that the page holds the two markers and nothing between them.
+PILL_BEGIN = '<!-- PLANES-PILL:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->'
+PILL_END = '<!-- PLANES-PILL:END -->'
 
 
-def missing_inputs() -> list[str]:
+def band_open(index: dict, today: str) -> dict | None:
+    """The consultation entry while its pack is open on `today` (its last day included), else None."""
+    c = (index or {}).get('consultation')
+    if not c or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', str(c.get('until', ''))) or today > c['until'] or not c.get('councils'):
+        return None
+    return c
+
+
+def home_band(index: dict, today: str) -> list[str]:
+    """The band's lines, unindented: Heathrow's consultation while it is open, the planes overhead pages after."""
+    c = band_open(index, today)
+    if c is None:
+        return [
+            '<section class="band band-dark" id="planes-band" aria-labelledby="planes-band-h">',
+            '  <div class="wrap">',
+            '    <p class="eyebrow">Planes overhead</p>',
+            '    <h2 id="planes-band-h">See the planes over your district.</h2>',
+            "    <p class=\"lede\">How many planes pass over each postcode district on a day each airport flies west, east or both "
+            "ways: counted from flight tracking, and checked against the CAA&#x27;s monthly totals.</p>",
+            f'    <a class="pill" href="{URL_ROOT}">Find your district <i aria-hidden="true"></i></a>',
+            '  </div>',
+            '</section>',
+        ]
+    named = sorted((area.app.LAD_TO_BOROUGH[lad][1], path) for lad, path in c['councils'].items())
+    n = len(named)
+    return [
+        '<section class="band band-dark" id="planes-band" aria-labelledby="planes-band-h">',
+        '  <div class="wrap split">',
+        '    <div>',
+        "      <p class=\"eyebrow\">Heathrow&#x27;s consultation</p>",
+        '      <h2 id="planes-band-h">See the planes over your council.</h2>',
+        f"      <p class=\"lede\">Whatever your view, one page for each of the {n} councils Heathrow&#x27;s flights cross: the "
+        "planes counted over each of its postcode districts, and its official noise, air and flood figures. Today&#x27;s "
+        f"flights on today&#x27;s routes, not those of a third runway. The consultation is open until {e(day_words(c['until']))}.</p>",
+        f'      <a class="pill" href="{e(c["hub"])}">Find your council <i aria-hidden="true"></i></a>',
+        '    </div>',
+        '    <div class="band-card">',
+        f'      <h3>The {n} councils</h3>',
+        '      <p>The same figures for anyone responding. Sky Score takes no side in the consultation.</p>',
+        '      <ul>',
+        *(f'        <li><a href="{e(path)}">{e(name)}</a></li>' for name, path in named),
+        '      </ul>',
+        '    </div>',
+        '  </div>',
+        '</section>',
+    ]
+
+
+def home_pill(index: dict, today: str) -> list[str]:
+    """The "New" pill's line while the consultation is open, nothing after it."""
+    if band_open(index, today) is None:
+        return []
+    return ['<a class="news" href="#planes-band"><b>New</b>Heathrow&rsquo;s consultation: the planes over your council '
+            '<i aria-hidden="true">&rarr;</i></a>']
+
+
+def band_held(page: str, begin: str = BAND_BEGIN, end: str = BAND_END) -> tuple[str, str] | None:
+    """(the BEGIN marker's indentation, the text between the markers), or None unless each marker appears once."""
+    if page.count(begin) != 1 or page.count(end) != 1:
+        return None
+    start = page.index(begin)
+    indent = page[page.rfind('\n', 0, start) + 1:start]
+    body_at = page.index('\n', start) + 1
+    return indent, page[body_at:page.rfind('\n', 0, page.index(end)) + 1]
+
+
+def band_text(index: dict, today: str, indent: str, lines=home_band) -> str:
+    return ''.join(f'{indent}{line}\n' for line in lines(index, today))
+
+
+# Each generated stretch of the front page: its name, its two markers and what it holds.
+HOME_PARTS = (('planes band', BAND_BEGIN, BAND_END, home_band), ('"New" pill', PILL_BEGIN, PILL_END, home_pill))
+
+
+def check_home(index: dict, today: str, path: Path = HOME) -> list[str]:
+    """[] when the front page's band and pill are what the council index says on `today` (line endings aside)."""
+    page = path.read_text(encoding='utf-8')
+    problems = []
+    for name, begin, end, lines in HOME_PARTS:
+        held = band_held(page, begin, end)
+        if held is None:
+            problems.append(f"{path.name}: the {name}'s two markers must appear exactly once each")
+            continue
+        indent, body = held
+        if body.replace('\r\n', '\n') != band_text(index, today, indent, lines):
+            problems.append(f"{path.parent.name}/{path.name}: the {name} is not what {COUNCILS.name} says today "
+                            '(the consultation opened or closed?): run --write, or --write --home')
+    return problems
+
+
+def write_home(index: dict, today: str, path: Path = HOME) -> bool:
+    """Rewrite the band and the pill from the council index; True when the page changed."""
+    raw = path.read_bytes().decode('utf-8')
+    crlf = '\r\n' in raw
+    page = raw.replace('\r\n', '\n')
+    changed = False
+    for name, begin, end, lines in HOME_PARTS:
+        held = band_held(page, begin, end)
+        if held is None:
+            raise SystemExit(f"{path.name}: place the {name}'s two markers once each, then --write")
+        indent, body = held
+        want = band_text(index, today, indent, lines)
+        if body == want:
+            continue
+        at = page.index('\n', page.index(begin)) + 1
+        page = page[:at] + want + page[at + len(body):]
+        changed = True
+    if changed:
+        path.write_bytes((page.replace('\n', '\r\n') if crlf else page).encode('utf-8'))
+    return changed
+
+
+def tracked_index(path: Path = COUNCILS) -> dict:
+    """The council index as committed (the band's holder when the tracks are not on this machine)."""
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+NEEDS = (('data/planes/airports.json', 'scripts/build_planes_overhead.py --write'),
+         ('data/adsb/postcode-averages.npz', 'scripts/adsb_postcode_averages.py'),
+         ('data/nspl.csv', 'the NSPL roll (HANDOVER)'))
+
+
+def missing_inputs(root: Path = REPO) -> list[str]:
     """The gitignored inputs not on this machine, each with what makes it (a clone without the tracks has none)."""
-    return [f'{need.relative_to(REPO)} (made by {how})' for need, how in NEEDS if not need.exists()]
+    return [f'{need} (made by {how})' for need, how in NEEDS if not (root / need).exists()]
 
 
-def inputs():
-    meta, files = read_planes()
-    ctx = district_context()
-    return meta, files, ctx, district_totals(files), airport_names(), kinds()
+def inputs(root: Path = REPO):
+    """Everything a build reads that is not tracked; `root` is another clone with --inputs-from (read only)."""
+    meta, files = read_planes(root / 'data' / 'planes')
+    ctx = district_context(root / 'data' / 'adsb' / 'postcode-averages.npz')
+    return meta, files, ctx, district_totals(files, root / 'data' / 'nspl.csv'), airport_names(), kinds()
 
 
 MANIFEST = REPO / 'data' / 'planes-pages-manifest.json'
@@ -1118,16 +1328,41 @@ def main() -> int:
     ap.add_argument('--check', action='store_true')
     ap.add_argument('--list', action='store_true')
     ap.add_argument('--strict', action='store_true', help='a missing input fails --check (planes-pages-deploy)')
+    ap.add_argument('--home', action='store_true',
+                    help="only the front page's planes band, from the committed council index (needs no tracks)")
+    ap.add_argument('--inputs-from', type=Path, metavar='CLONE',
+                    help='--check / --list only: read the untracked inputs AND the built pages from another clone of '
+                         'this repo (a worktree without the tracks); never writes there')
     a = ap.parse_args()
     if not (a.write or a.check or a.list):
         ap.error('pass --write, --check or --list')
-    if missing := missing_inputs():
+    today = datetime.now(UTC).strftime('%Y-%m-%d')
+    if a.home:
+        # The band reads only the committed index, so it can be written and checked on any clone.
+        if a.list or a.inputs_from:
+            ap.error('--home takes --write or --check only')
+        index = tracked_index()
+        if a.write:
+            print(f"{'wrote' if write_home(index, today) else 'unchanged:'} the planes band in home/index.html")
+        problems = check_home(index, today)
+        print('\n'.join(problems) if problems else 'OK: the front page\'s planes band')
+        return 1 if problems else 0
+    if a.inputs_from and a.write:
+        ap.error('--inputs-from reads another clone: it never writes (run --write there, or --write --home here)')
+    root = (a.inputs_from or REPO).resolve()
+    if missing := missing_inputs(root):
+        # The front page's band needs no tracks, so it is checked even here: a band left open after the consultation
+        # closes is a defect on any clone, never inconclusive.
+        if a.check and (home := check_home(tracked_index(), today)):
+            print('FAIL: ' + '; '.join(home))
+            return 1
         # Unrunnable is not failed, and never a pass: preflight reads a leading INCONCLUSIVE and names the gate.
         # A deploy must not read it at all (--strict): it would upload whatever happens to be on disk.
         soft = a.check and not (a.write or a.list or a.strict)
-        print(('INCONCLUSIVE: ' if soft else 'FAIL: ') + 'missing ' + '; '.join(missing))
+        print(('INCONCLUSIVE: ' if soft else 'FAIL: ') + 'missing ' + '; '.join(missing)
+              + ('' if soft else ' (the front page\'s band alone: --write --home)'))
         return 0 if soft else 1
-    meta, files, ctx, totals, names, order = inputs()
+    meta, files, ctx, totals, names, order = inputs(root)
     if a.list:
         for d in sorted(files, key=pc_key):
             print(f'  {d:6} {verdict(files[d], totals[d]) or "PAGE"}')
@@ -1146,9 +1381,10 @@ def main() -> int:
     if a.write:
         write(pages)
         COUNCILS.write_text(councils_text(index), encoding='utf-8', newline='\n')
-        print(f'wrote {len(pages)} pages, {SITEMAP.name} and {COUNCILS.name}')
+        write_home(index, today)
+        print(f'wrote {len(pages)} pages, {SITEMAP.name}, {COUNCILS.name} and the front page\'s planes band')
     if a.check:
-        problems = check(pages) + check_councils(index)
+        problems = check(pages, root) + check_councils(index) + check_home(index, today)
         print('\n'.join(problems) if problems else 'OK')
         if problems:
             return 1

@@ -880,6 +880,12 @@ other two.
   | parse @message /\[5XX\] (?<status>\d+) (?<why>.*)/
   | stats count(*) by @log, status, why
   ```
+  FIRST READ (2026-11-03, 27 hours from 2 Nov 15:53): 146 of the 8,353 API calls answered 5xx (1.75%); 134 were
+  `epc` `502 EPC upstream error (400)`, MHCLG refusing a US ZIP or a bare district ("94301", "TW9"),
+  mostly from OUR OWN preflight (tests/bayarea-map.mjs types a ZIP on London's map; the harness sends
+  unstubbed API calls live): bursts of six within two seconds, threes 14 s apart. Fixed on `map-fixes`
+  (the Lambda answers 400 for a non-postcode; the map asks only with a full one). Read it again a
+  week after that deploy: what remains is the real rate.
   API Gateway's `5XXError` beyond these lines is the gateway's own (throttled
   invocations, malformed proxy responses).
 - API Gateway access logs disabled (cost reasons). Enabling them needs more than
