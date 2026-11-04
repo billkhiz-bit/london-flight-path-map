@@ -849,3 +849,18 @@ Also: front-page.mjs's search-tab checks are scoped to `.panel` (the page now ha
 Playwright locator fails strict mode on three selected tabs); an arrow GLYPH in a button's disc is text axe cannot
 judge (incomplete), so the pills draw it in CSS; and a bash heredoc in the agent's shell turned a double backslash into a single one
 inside Python sources, twice: write such edits as a script file, or build the string with `chr(92)`.
+
+## Stitch, the palette and when a chart earns its place (2026-11-04)
+
+Four rounds on the full map's panel failed: groups, charts in every group, thin bars, then the Breathe London chart on everything. Bill
+kept Air and flood and called the rest confusing. The air chart works because three sources measure one thing. Forced onto figures with
+nothing to compare it gave one dot for road noise, one for crime and three bunched planes, and restyling could not fix that. Stitch's
+draft, briefed with "understand each finding within five seconds, no legend", put the finding first in plain words, and Bill chose it.
+
+Asked then to match "what we've done so far", an audit found my briefs were wrong, not Stitch: `#f9f8f5` for `#f4f3ef`, an amber that was
+in no file, Inter for Geist headlines, square corners on rounded pages. Only 7 pages shared the palette; the area and planes pages kept
+an older family (`#c2410c`). `tests/test_site_palette.py` now holds the seven and makes every other page declare itself.
+
+Stitch reported redrawing Pricing in the new colours. Its screenshot was byte-identical and its CSS unchanged. Its design system also
+recalculates values (`#f4f3ef` returned as `#faf9f5`, JetBrains Mono as Public Sans). So Stitch gives the layout, the exact values are
+applied by hand as variables, and a draft counts only once its pixels are measured.

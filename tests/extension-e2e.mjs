@@ -680,9 +680,7 @@ check(
 );
 check(
   'aircraftQuietCoverage, when present, is a declared value',
-  // 'measured' is the old spelling of 'modelled': the live API answers it until the 2026-11-04 changeset is executed, and this
-  // gate reads the live API, so it must pass on both sides of that. Drop it once that is live.
-  envProbe.coverage === null || ['modelled', 'measured', 'city', 'outside'].includes(envProbe.coverage),
+  envProbe.coverage === null || ['modelled', 'city', 'outside'].includes(envProbe.coverage),
   String(envProbe.coverage)
 );
 

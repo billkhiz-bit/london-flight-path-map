@@ -207,6 +207,13 @@ Or just describe what you need, I have full context of this project.
   postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
   if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
   `airChart()` (pure; `tests/air-chart.mjs`); the model is a hollow ring, never "measured"; `AIR_WHO_2021` equals the API's.
+- **One palette for the pages, held by `tests/test_site_palette.py`** (Bill, 2026-11-04: "ensure the colour scheme is consistent"): a
+  rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink. Read a
+  colour from the repo, never from a mock-up (the amber `#f0b429` I called the scores' was in no file). Colours that carry meaning keep
+  their own holders: `scoreColor`, `BAND_COLOURS`, the air marks. The full map keeps its own surfaces.
+- **Stitch gives layouts, never colours or code** (Bill's pick, 2026-11-04): its pages load Google Fonts, some Tailwind from a CDN (the CSP
+  refuses it), its design system recalculates exact values, and it reported a recolour it never made. Apply exact colours yourself and
+  measure the pixels. A chart needs a real comparison; otherwise the finding in plain words, then its number (`docs/lessons/front-page-and-site.md`).
 - **The brand links home on every page** (`tests/test_brand_links_home.py` finds them). **"Have your say" links come
   only from `HAVE_YOUR_SAY`** (verified live; add an airport only after checking its pages; a time-limited link, such as
   a consultation, carries `until: 'YYYY-MM-DD'` and drops out by itself after it).

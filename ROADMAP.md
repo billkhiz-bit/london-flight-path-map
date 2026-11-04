@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+**Last reviewed:** 2026-11-04 - Stitch chosen for page layouts, one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
 the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
@@ -27,6 +27,11 @@ four of the Lambda's five by-name New York branches retired, FAA cycle 2611 buil
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
 > ## START HERE (2026-11-04)
+>
+> **4 Nov night.** LIVE (`b67b2871`): the API's `aircraftQuietCoverage` says `modelled`; the score Lambda has 1,024 MB (cold call about
+> 1.0 s, was 3.0 s). Bill picked Stitch's plain-headline panel over four rounds of charts, then its layouts for the site. Order: full map
+> panel; area + planes templates; Pricing, About, How it works, API; the front page after the ~20 Nov read. Privacy and terms stay.
+> Drafts and palette: claude.ai/artifact/3CXraMciWCAhMvxBPUZuca. `tests/test_site_palette.py` holds the 7 pages on the palette.
 >
 > **Evening, on `front-page-polish`:** Bill's five points, all his B picks: the answer summary first with diagrams in its folds
 > (495 words to about 230), the guided postcode box (`js/place-box.mjs`), the page arriving in place (phone shift 0.133 to 0.008),
