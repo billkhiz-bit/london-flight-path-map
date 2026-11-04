@@ -79,6 +79,7 @@ import sys
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 
@@ -261,30 +262,56 @@ def sector_parts(figs: list) -> list[str]:
     return [f'{counts[words]:,} {words}' for words in BAND_ORDER if counts[words]]
 
 
-def sector_reading(figs: list) -> str:
-    """The parts as one phrase: "66 at 100+, 69 on an edge, 25 under 10"."""
-    return ', '.join(sector_parts(figs))
+class Day(NamedTuple):
+    """One kind of day across a district. `busiest` is None where it was not measured (null, never 0)."""
+    busiest: int | None
+    parts: list[str]
+    total: int
 
 
-def overall_reading(figs: list) -> str:
-    """The line above a table, for a whole district on one kind of day: the busiest figure, then the bands."""
-    busiest = max(most(v) for v in figs)
-    if busiest == 0:
-        return f'under 1 a day at all {len(figs):,} of its postcodes'
-    return f'up to {busiest} a day; of its {len(figs):,} postcodes, {sector_reading(figs)}'
+def day_figure(figs: list) -> Day:
+    values = [v for v in figs if v is not None]
+    return Day(max(most(v) for v in values), sector_parts(values), len(values)) if values else Day(None, [], 0)
+
+
+def day_headline(day: Day) -> str:
+    """The figure as a page leads with it, always with its "Up to": a bare 318 would read as every postcode's, and TW9's
+    66 under 10 say otherwise."""
+    if day.busiest is None:
+        return 'Not measured'
+    return 'Under 1' if day.busiest == 0 else f'Up to {day.busiest}'
+
+
+def day_html(label: str, share: int, day: Day) -> str:
+    """One kind of day: the airport's way of flying, the figure, then its postcodes as one bar with every count said.
+    The bar's counts are of POSTCODES and say so: under "Up to 318 a day" a bare 386 reads as planes. Where every postcode
+    is under 1 there is nothing to split, and "under 10" beneath "Under 1" would read as a second figure, so it says so."""
+    way = label.lower().removeprefix('flying ')
+    head = f'<li><p class="way">On a day it flies {e(way)}, {share}% of days</p><p class="big">{e(day_headline(day))}</p>'
+    if day.busiest is None:
+        return head + '</li>'
+    if day.busiest == 0:
+        return head + f'<p class="aday">a day, at all {day.total:,} of its postcodes</p></li>'
+    _, bands = split_bands(day.parts)
+    counts = {words: n for n, words, _ in bands}
+    key = ''.join(f'<dt><i class="{BAND_CLASS[band_words]}"></i>{e(said)}</dt><dd>{counts[band_words]:,}</dd>'
+                  for band_words, said in BAND_KEY if band_words in counts)
+    return (head + f'<p class="aday">a day</p><p class="of-all">Of its {day.total:,} postcodes:</p>'
+            + band_bar(bands) + f'<dl class="counts">{key}</dl></li>')
+
+
+def day_lines(day: Day) -> list[str]:
+    """A whole district on one kind of day as table lines (the consultation pack, 2026-11-01), one line each, so a phone's
+    narrow column never breaks a band: ['up to 317 a day', '137 at 100+', ...]."""
+    if day.busiest is None:
+        return ['not measured']
+    if day.busiest == 0:
+        return ['under 1 a day', f'at all {day.total:,} postcodes']
+    return [f'up to {day.busiest} a day', *day.parts]
 
 
 def district_cell(figs: list) -> list[str]:
-    """A whole district on one kind of day as table lines (the consultation pack, 2026-11-01): overall_reading's
-    words, one line each, so a phone's narrow column never breaks a band: ['up to 317 a day', '137 at 100+', ...].
-    A kind of day with no figure is not measured (null, never 0)."""
-    values = [v for v in figs if v is not None]
-    if not values:
-        return ['not measured']
-    busiest = max(most(v) for v in values)
-    if busiest == 0:
-        return ['under 1 a day', f'at all {len(values):,} postcodes']
-    return [f'up to {busiest} a day', *sector_parts(values)]
+    return day_lines(day_figure(figs))
 
 
 # ----------------------------------------------------------------- inputs
@@ -408,22 +435,22 @@ def model(name: str, f: dict, meta: dict, ctx: dict, totals: tuple[int, int], na
         if top < PAGE_FROM:
             also.append({'name': names.get(code, code), 'most': per_day(top)})
             continue
+        days = [(label, info['share_pct'][kind], day_figure([by_pc[pc][col[kind]] for pc in by_pc]))
+                for kind, label in order]
         tables.append({
             'code': code, 'name': names.get(code, code), 'period': period(info['months']),
             'columns': [(label, f"{info['share_pct'][kind]}% of days") for kind, label in order],
-            'overall': [(label, info['share_pct'][kind],
-                         reading([by_pc[pc][col[kind]] for pc in by_pc], overall_reading, 'not measured'))
-                        for kind, label in order],
             # Each cell a list of band phrases, one line each, so a narrow column never breaks "at 10 to 99".
             'rows': [(sector, len(pcs), [reading([by_pc[pc][col[kind]] for pc in pcs], sector_parts,
                                                  ['not measured']) for kind, _ in order])
                      for sector, pcs in sectors.items()],
-            'district_cells': [district_cell([by_pc[pc][col[kind]] for pc in by_pc]) for kind, _ in order],
+            'district_cells': [day_lines(day) for _, _, day in days],
+            'days': days,
         })
     measured = len(f['postcodes']) + len(f['none'])
     live = totals[0]
     # The note explains EDGE only where a reading says it: a range inside one band reads as that band.
-    edges = any(EDGE in text for t in tables for text in [*(o[2] for o in t['overall']),
+    edges = any(EDGE in text for t in tables for text in [*(p for _, _, day in t['days'] for p in day.parts),
                                                             *(p for row in t['rows'] for c in row[2] for p in c)])
     return {
         'district': name, 'slug': name.lower(), 'city': ctx['city'],
@@ -470,9 +497,7 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
     airports = listed([t['name'] for t in m['tables']])
     sections = []
     for t in m['tables']:
-        # 'Flying west' -> 'flies west', 'Both ways' -> 'flies both ways': the answer's own labels.
-        overall = '\n'.join(f"<li>On a day it flies {e(label.lower().removeprefix('flying '))} ({share}% of days): "
-                            f'{e(text)}</li>' for label, share, text in t['overall'])
+        overall = '\n'.join(day_html(*day) for day in t['days'])
         head = ''.join(f'<th scope="col">{e(label)}<span class="note">{e(share)}</span></th>'
                        for label, share in t['columns'])
         rows = '\n'.join(f'<tr><th scope="row">{e(sector)}<span class="note">{n} postcode{"s" if n != 1 else ""}'
@@ -535,16 +560,16 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
 STYLE = """
   /* The area pages' look (scripts/build_area_pages.py), so the two read as one site. */
   :root {{ color-scheme: light dark;
-    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; --band0:#d6d3d1; }}
+    """ + area.PALETTE_LIGHT + """ --band0:#d6d3d1; }}
   * {{ box-sizing:border-box; }}
-  body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
-  a:focus-visible, input:focus-visible, button:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
-  .wrap {{ max-width:760px; margin:0 auto; padding:24px 20px 64px; }}
-  a {{ color:var(--orange); }}
+  body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:var(--bg); line-height:1.6; }}
+  a:focus-visible, input:focus-visible, button:focus-visible {{ outline:3px solid var(--focus); outline-offset:2px; }}
+  .wrap {{ max-width:1100px; margin:0 auto; padding:24px clamp(16px, 4vw, 48px) 64px; }}
+  a {{ color:var(--orange-ink); }}
   nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}
-  h1 {{ font-size:28px; line-height:1.25; margin:0 0 6px; }}
-  .sub {{ color:var(--mid); font-size:14px; margin:0 0 20px; }}
-  .check {{ margin:0 0 28px; padding:14px 16px; background:var(--bg); border:1px solid var(--line); border-radius:8px; }}
+  h1 {{ font-family:var(--font-display); font-weight:700; font-size:clamp(30px, 4.4vw, 44px); line-height:1.12; letter-spacing:-0.02em; margin:0 0 10px; }}
+  .sub {{ color:var(--mid); font-size:16px; margin:0 0 20px; max-width:66ch; }}
+  .check {{ margin:0 0 28px; padding:16px 20px; background:var(--paper); border:1px solid var(--line); border-radius:18px; }}
   .check label {{ display:block; font-weight:600; font-size:14px; margin-bottom:6px; }}
   .check .row {{ display:flex; gap:8px; flex-wrap:wrap; }}
   .check input {{ font:inherit; font-size:16px; padding:8px 10px; border:1px solid var(--mid); border-radius:6px; width:12em; max-width:100%; background:Canvas; color:CanvasText; }}
@@ -574,8 +599,19 @@ STYLE = """
   .tw {{ overflow-x:auto; }}
   .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0;
     margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }}
-  h2 {{ font-size:18px; margin:32px 0 8px; }}
-  ul.overall {{ margin:0 0 16px; padding-left:18px; }}
+  h2 {{ font-family:var(--font-display); font-size:22px; font-weight:600; letter-spacing:-0.01em; margin:36px 0 8px; }}
+  /* THE MAIN FINDING FIRST (Bill's pick, 2026-11-04: Stitch's layout): how many pass depends on which way the airport
+     flies, so each kind of day is one column, "Up to N" the largest figure on the page, its postcodes as one bar. */
+  ul.overall {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:24px 40px; list-style:none; margin:20px 0 24px; padding:0; }}
+  ul.overall .way {{ margin:0; font-size:14px; color:var(--mid); }}
+  ul.overall .big {{ margin:6px 0 0; font-family:var(--font-display); font-size:clamp(32px, 4vw, 44px); font-weight:700; line-height:1.05; letter-spacing:-0.03em; }}
+  ul.overall .aday {{ margin:0 0 10px; font-size:14px; color:var(--mid); }}
+  ul.overall .of-all {{ margin:0 0 4px; font-size:13px; color:var(--mid); }}
+  ul.overall .bands {{ max-width:none; margin:0 0 8px; }}
+  dl.counts {{ display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:2px 12px; margin:0; font-size:13px; color:var(--mid); }}
+  dl.counts dt {{ display:flex; align-items:center; gap:6px; }}
+  dl.counts dt i {{ display:inline-block; width:11px; height:11px; border-radius:2px; flex:none; }}
+  dl.counts dd {{ margin:0; font-family:var(--font-mono); font-size:12.5px; font-weight:500; color:var(--dark); text-align:right; }}
   .sources {{ font-size:12px; color:var(--mid); }}
   .nearby a {{ display:inline-block; margin:0 10px 6px 0; }}
   footer {{ margin-top:40px; font-size:12px; color:var(--mid); }}
@@ -587,10 +623,9 @@ STYLE = """
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
   .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
   .site-top .site-nav a:hover {{ text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }}
-  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; --band0:#4a4a48; }}
-    body {{ background:#141414; }}
+    :root {{ """ + area.PALETTE_DARK + """ --band0:#4a4a48; }}
   }}
   /* The phone menu (2026-10-23), as on the area pages: a popover, so no script. */
   .menu-btn, .menu-close {{ display: none; }}
@@ -797,7 +832,7 @@ def render_sitemap(manifest: dict) -> str:
 # gets one, by that rule, not a list: Heathrow's approaches cross most of London (32 councils on 1 Nov).
 # - The link and its closing date are READ from js/street_report.mjs HAVE_YOUR_SAY (the one holder of "Have your say"
 #   links, verified live); no entry with an `until`, no pack.
-# - The planes figures are the district pages' own, from the same files (district_cell: overall_reading's words);
+# - The planes figures are the district pages' own, from the same files (district_cell: day_lines's words);
 #   the borough's noise, air and flood are its area page's own (build_area_pages.gather), with that page's sources.
 # - The page says "open until" while it is and "closed on" after: built on 23 December it differs, so --check (a
 #   blocking preflight stage) reds until --write, and planes-pages-deploy ships the closed wording. Never a 404 for a

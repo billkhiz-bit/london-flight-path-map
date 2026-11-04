@@ -61,7 +61,7 @@ def _ctx(n):
 
 def test_a_sector_is_counted_in_bands():
     figs = [317, 317, [2, 317], [150, 317], '<1', 5, 0, 40, ['<1', 4]]
-    assert bpp.sector_reading(figs) == '3 at 100+, 1 at 10 to 99, 1 on an edge, 4 under 10'
+    assert ', '.join(bpp.sector_parts(figs)) == '3 at 100+, 1 at 10 to 99, 1 on an edge, 4 under 10'
 
 
 def test_a_cell_is_one_band_per_line_and_counts_carry_commas():
@@ -69,16 +69,16 @@ def test_a_cell_is_one_band_per_line_and_counts_carry_commas():
 
 
 def test_an_edge_counts_in_a_band_when_both_its_ends_are_in_it():
-    assert bpp.sector_reading([[150, 317]]) == '1 at 100+'
-    assert bpp.sector_reading([[12, 60]]) == '1 at 10 to 99'
-    assert bpp.sector_reading([[0, 9]]) == '1 under 10'
-    assert bpp.sector_reading([[9, 20], [60, 120]]) == '2 on an edge'
+    assert ', '.join(bpp.sector_parts([[150, 317]])) == '1 at 100+'
+    assert ', '.join(bpp.sector_parts([[12, 60]])) == '1 at 10 to 99'
+    assert ', '.join(bpp.sector_parts([[0, 9]])) == '1 under 10'
+    assert ', '.join(bpp.sector_parts([[9, 20], [60, 120]])) == '2 on an edge'
 
 
 def test_the_line_above_a_table_names_the_busiest_figure():
-    assert bpp.overall_reading([317, [2, 318], '<1']) == \
-        'up to 318 a day; of its 3 postcodes, 1 at 100+, 1 on an edge, 1 under 10'
-    assert bpp.overall_reading(['<1', 0]) == 'under 1 a day at all 2 of its postcodes'
+    assert bpp.day_figure([317, [2, 318], '<1']) == (318, bpp.sector_parts([317, [2, 318], '<1']), 3)
+    assert bpp.day_headline(bpp.day_figure([317, [2, 318], '<1'])) == 'Up to 318'
+    assert bpp.day_headline(bpp.day_figure(['<1', 0])) == 'Under 1'
 
 
 def test_a_postcode_not_listed_under_an_airport_reads_under_one():
@@ -587,3 +587,39 @@ def test_check_home_needs_each_marker_once(tmp_path):
 def test_the_committed_front_page_band_is_todays():
     # The real page against the committed index, as preflight's --check reads it (also when the tracks are missing).
     assert bpp.check_home(bpp.tracked_index(), bpp.datetime.now(bpp.UTC).strftime('%Y-%m-%d')) == []
+
+
+def test_a_kind_of_day_never_shows_a_bare_figure():
+    # The headline of every planes page (Bill's pick, 2026-11-04). A bare 318 reads as every postcode's.
+    html = bpp.day_html('Flying west', 56, bpp.day_figure([318, 150, 12, 3]))
+    assert '<p class="big">Up to 318</p><p class="aday">a day</p>' in html
+    assert 'On a day it flies west, 56% of days' in html
+    assert not re.search(r'class="big">\d', html)
+
+
+def test_the_counts_under_a_figure_say_they_count_postcodes():
+    html = bpp.day_html('Both ways', 15, bpp.day_figure([318, 150, 12, 3]))
+    assert 'Of its 4 postcodes:' in html
+    assert re.findall(r'</i>([^<]+)</dt><dd>(\d+)</dd>', html) == [('100 or more', '2'), ('10 to 99', '1'), ('under 10', '1')]
+    assert html.index('Of its 4 postcodes:') < html.index('class="bands"')
+
+
+def test_a_day_with_nothing_over_it_says_so_with_no_second_figure():
+    day = bpp.day_figure(['<1', 0, '<1'])
+    assert (bpp.day_headline(day), day.total) == ('Under 1', 3)
+    html = bpp.day_html('Flying east', 29, day)
+    assert 'a day, at all 3 of its postcodes' in html
+    assert 'class="bands"' not in html and 'under 10' not in html
+
+
+def test_a_kind_of_day_with_no_figure_is_not_measured_never_zero():
+    day = bpp.day_figure([None, None])
+    assert (bpp.day_headline(day), day.parts, day.total) == ('Not measured', [], 0)
+    html = bpp.day_html('Flying east', 29, day)
+    assert 'Not measured' in html and 'a day' not in html.replace('On a day', '')
+
+
+def test_the_consultation_pack_reads_the_same_figure():
+    assert bpp.district_cell([318, 150])[0] == 'up to 318 a day'
+    assert bpp.district_cell(['<1', 0]) == ['under 1 a day', 'at all 2 postcodes']
+    assert bpp.district_cell([None]) == ['not measured']

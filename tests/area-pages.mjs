@@ -106,7 +106,7 @@ let placeholder = null;
 
 for (const p of pages) {
   const html = readFileSync(p.file, 'utf8');
-  const facts = [...html.matchAll(/<th scope="row">/g)].length;
+  const facts = [...html.matchAll(/ data-fact[ >]/g)].length;
   if (facts < MIN_FACTS && !thin) thin = `${p.url} has ${facts}`;
 
   // A literal {token} means a .format() key was never substituted, which reads
@@ -121,7 +121,11 @@ for (const p of pages) {
   // The concatenated VALUES, not the labels - the labels are identical by
   // design. If two boroughs share a value block, the generator is writing one
   // borough's data under another's name, which is the WA8 join defect again.
-  const values = [...html.matchAll(/<\/th><td>([^<]*)/g)].map((m) => m[1]).join('|');
+  // The score, each score out of 10 and each finding's own words, and NOT the
+  // notes: a note carries the borough's rank, so one borough's figures under
+  // another's name could still differ there and pass.
+  const values = [...html.matchAll(/<span class="n">([^<]*)|<dd><b>([^<]*)|<p class="find-[^"]*">([^<]*)/g)]
+    .map((m) => m[1] ?? m[2] ?? m[3]).join('|');
   factBlocks.set(values, (factBlocks.get(values) || 0) + 1);
 }
 
@@ -247,7 +251,7 @@ for (const [, boroughs] of Object.entries(extra)) {
     if (rec.roadNoise === undefined) recordsWithoutRoad++;
   }
 }
-const pagesWithoutRoad = pages.filter((p) => !/>Road noise</.test(readFileSync(p.file, 'utf8')));
+const pagesWithoutRoad = pages.filter((p) => !/>Road noise( is |<)/.test(readFileSync(p.file, 'utf8')));
 // Only cities that HAVE a borough-extra entry are comparable: NYC has no road
 // data at all and is counted on both sides, Cardiff and Nottingham have no
 // entry, so their pages are excluded from the page-side count. Greater Norwich

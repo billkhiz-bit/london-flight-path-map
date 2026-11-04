@@ -116,13 +116,17 @@ export function ratingFinding(key, name, rating) {
  * Crime is council-wide and said so. Against the London median only where the figures compare (`comparable`: New
  * York's come from a different source). The two amounts get a bar each, from a true zero, on one scale.
  */
-export function crimeFinding({ band, rate, median, comparable = true, area = 'council' } = {}) {
+export function crimeFinding({ band, rate, median, comparable = true, area = 'council', estimated = false } = {}) {
   const hasRate = isNum(rate);
   if (!band && !hasRate) return null;
-  const head = band ? `Crime is ${words(band)}` : `Recorded crime: ${rate} per 1,000 residents a year`;
-  if (!hasRate) return { key: 'crime', head };
-  const rateLine = `${rate} recorded offences per 1,000 residents a year across the whole ${area}`;
-  if (!comparable || !isNum(median) || median <= 0) return { key: 'crime', head, detail: `${rateLine}.` };
+  if (!hasRate) return { key: 'crime', head: `Crime is ${words(band)}` };
+  // ONS publishes no rate for the City of London: the figure is ours, and the sentence says so.
+  const rateLine = estimated
+    ? `${rate} offences per 1,000 residents a year across the whole ${area}, Sky Score's estimate`
+    : `${rate} recorded offences per 1,000 residents a year across the whole ${area}`;
+  if (!comparable || !isNum(median) || median <= 0) {
+    return { key: 'crime', head: band ? `Crime is ${words(band)}` : 'Recorded crime', detail: `${rateLine}.` };
+  }
   const ratio = rate / median;
   const m = median.toFixed(1);
   const against = ratio >= 1.15
@@ -133,8 +137,9 @@ export function crimeFinding({ band, rate, median, comparable = true, area = 'co
   const top = Math.max(rate, median) * 1.12;
   return {
     key: 'crime',
-    head,
-    detail: `${rateLine}, ${against}.`,
+    // With no council band the comparison is the finding, in the area pages' words; the figure then stands under it once.
+    head: band ? `Crime is ${words(band)}` : `${estimated ? 'Estimated' : 'Recorded'} crime is ${against}`,
+    detail: band ? `${rateLine}, ${against}.` : `${rateLine}.`,
     amounts: [[`This ${area}`, rate, clamp((rate / top) * 100), true], ['London median', m, clamp((median / top) * 100), false]],
   };
 }

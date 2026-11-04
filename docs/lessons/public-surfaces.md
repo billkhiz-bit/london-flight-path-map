@@ -263,3 +263,21 @@ money, so a batch carries `sourceIndex` once at the top. Bill's view of the mone
 nothing by itself; it removes an objection for councils (bids cite evidence), data marketplaces (lineage
 questionnaires) and agent platforms, and the binding constraint is still the outreach gates. Finish it, extend it
 only when a buyer asks.
+
+## Area and planes pages: findings, not a table (2026-11-04)
+
+Bill chose Stitch's layout for the site after four rounds of charts on the map's panel. The area page's facts table became a score block and four groups of findings. `gather()` did not change:
+only the rendering did, so every figure, note and credit is still there, and `findings_html()` stops the build if a fact has no place or two share a label. A table would have shown a new row by
+itself; a fixed layout would have dropped it in silence.
+
+Stitch's draft showed crime and Progress 8 as bare numbers, the confusion Bill had just raised on the panel, so they take plain words the data supports: the map's own thresholds against the London
+median, and DfE's bands. A band reads as a word; where an API-only city holds a figure in its place, it stays a figure. Those thresholds and `score_colour` are Python copies of `index.html`, held equal
+by `tests/test_area_findings.py`, which runs the map's own `londonCrimeMedian()` in Node, because a test that recomputes a holder proves nothing about it.
+
+A planes page leads with "Up to 318 a day" for each way the airport flies. "Up to" stays with the figure: a bare 318 reads as every postcode's, and TW9 has 66 under 10. Rebuilding that block dropped the
+word "postcodes", leaving 386 under a planes-a-day figure, where it reads as planes; a review caught it, and the counts now sit under "Of its 597 postcodes:". A day with nothing over it says "at all N of its
+postcodes" with no bar, since "under 10" beneath "Under 1" reads as a second figure.
+
+Bill then asked for more visuals. The panel's lesson set the test: a chart needs a real comparison. So each stat was asked what it can honestly be set against. Road noise and flood hold a share of postcodes (one
+bar, part of a whole); air, crime and price hold a yardstick (two bars from zero); schools, transport and healthcare hold only a rating, so a strip of the rating's own words shows "good" out of what. Aircraft noise and
+the price trend hold nothing to be drawn against and stay words. Mock-ups A (bars) and B (bars and strips) on real Hounslow figures; he chose B.

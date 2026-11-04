@@ -163,7 +163,17 @@ check('crime at, and under, the median', () => {
   assert.match(crimeFinding({ band: 'low', rate: 87.6, median: 87.6 }).detail, /close to the London median/);
   assert.match(crimeFinding({ band: 'low', rate: 40, median: 87.6 }).detail, /2\.2 times lower than the London median/);
 });
-check('no band still tells the rate', () => assert.match(crimeFinding({ rate: 110, median: 87.6 }).head, /^Recorded crime: 110 per 1,000/));
+check('with no band the comparison is the finding, and the figure appears once', () => {
+  const f = crimeFinding({ rate: 110, median: 87.6 });
+  assert.equal(f.head, 'Recorded crime is 1.3 times the London median of 87.6');
+  assert.equal(f.detail, '110 recorded offences per 1,000 residents a year across the whole council.');
+});
+check("an estimate says so, and never says recorded", () => {
+  const f = crimeFinding({ band: 'high', rate: 190, median: 87.6, estimated: true });
+  assert.match(f.detail, /Sky Score's estimate/);
+  assert.doesNotMatch(JSON.stringify(f), /recorded/i);
+  assert.match(crimeFinding({ rate: 190, median: 87.6, estimated: true }).head, /^Estimated crime is/);
+});
 check("New York's figures are never set against London's", () => {
   const f = crimeFinding({ band: 'medium', rate: 30, median: 87.6, comparable: false });
   assert.equal(f.amounts, undefined);

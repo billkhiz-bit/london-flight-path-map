@@ -13475,6 +13475,8 @@
             median: londonCrimeMedian(),
             comparable: isUkCity(currentCity),
             area,
+            // A UK rate with no ONS vintage is our own figure (the City of London: crimeNote's attribution rule).
+            estimated: isUkCity(currentCity) && Boolean(extra) && !extra.crimeVintage,
           }));
           placeFinding(m, 'schools', extra ? m.ratingFinding('schools', 'Schools', schoolBadge(extra).text) : null);
           placeFinding(m, 'price', boroughData

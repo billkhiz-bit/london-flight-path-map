@@ -28,6 +28,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-11-04)
 >
+> **4 Nov late.** LIVE (`b8e9c041`): the full map's panel findings first, Pricing coloured by audience (Bill's pick B). Built next, on Stitch's layout: the area and planes templates, the 404 and
+> open data on the palette, held by `tests/test_site_palette.py`. Order item 3 follows: About, How it works, API.
+>
 > **4 Nov night.** LIVE (`b67b2871`): the API's `aircraftQuietCoverage` says `modelled`; the score Lambda has 1,024 MB (cold call about
 > 1.0 s, was 3.0 s). Bill picked Stitch's plain-headline panel over four rounds of charts, then its layouts for the site. Order: full map
 > panel; area + planes templates; Pricing, About, How it works, API; the front page after the ~20 Nov read. Privacy and terms stay.

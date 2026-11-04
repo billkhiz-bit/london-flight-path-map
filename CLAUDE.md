@@ -216,6 +216,10 @@ Or just describe what you need, I have full context of this project.
   (`tests/panel-fold.mjs`); what shows before anything is opened is `tests/uk-city-panel.mjs` "Findings first". If the module fails, the fold opens.
 - **/pricing has a colour for each audience** (Bill's pick B, 2026-11-04): `#reports` tint, `#councils` water, `#platforms` dark. His "no highlighted card, one
   button style" (2026-10-06) now holds WITHIN a section, measured by `tests/front-page.mjs` 16b. Words and `data-event`s are untouched by a restyle: diff them.
+- **Area pages say findings, not a table** (Bill's yes, 2026-11-04: Stitch's layout): `gather()`'s facts are unchanged; `findings_html()` places each fact, a label with no place stops the build. A bare figure gets
+  plain words: crime against the London median (`crime_against_london`), Progress 8 as a band (`school_band`), bars in `score_colour`, all three held equal to `index.html` by `tests/test_area_findings.py`. A
+  figure where a band would be stays a figure. `visuals()` (his pick B) draws only what truly compares: a share of postcodes, a figure beside a named yardstick from a true zero, a strip for a rating
+  among its own words. Aircraft noise and the price trend stay words: nothing honest to draw them against. A figure not held draws nothing. Planes pages lead with `day_figure()`'s "Up to N", always with its "Up to": a bare 318 reads as every postcode's. The score span and ` data-fact` are read by tests.
 - **One palette for the pages, held by `tests/test_site_palette.py`** (Bill, 2026-11-04: "ensure the colour scheme is consistent"): a
   rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink. Read a
   colour from the repo, never from a mock-up (the amber `#f0b429` I called the scores' was in no file). Colours that carry meaning keep

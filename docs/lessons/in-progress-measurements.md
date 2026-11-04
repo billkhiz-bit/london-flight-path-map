@@ -359,7 +359,7 @@ in the consultation"; today's flights on today's routes, never a third runway's)
 - THE LINK AND ITS DAY are READ from `js/street_report.mjs` HAVE_YOUR_SAY (`consultation()`: the LHR entry with an
   `until`); none, no pack. The page says "open until 22 December 2026" and, built after that day, "which closed on":
   so `--check` reds on 23 December until `--write`, and the deploy ships the closed wording. Shared links never 404.
-- FIGURES: each district's own, from the same files (`district_cell()`: `overall_reading()`'s words, one per line:
+- FIGURES: each district's own, from the same files (`district_cell()`: `day_lines()`'s words, one per line:
   the busiest, then the postcodes by band); the borough's aircraft noise band, road noise, air and flood are its
   area page's own (`build_area_pages.gather()`), with only those figures' source lines. A figure the area page does
   not publish says "Not published for <council>", never a reading. No price, no score.

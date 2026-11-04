@@ -6,8 +6,10 @@ A page joins HELD when it is rebuilt, and cannot drift afterwards. Every other p
 new page must take a side, and a waiting page that reaches the palette has to move to HELD: the list can only shrink.
 Colours that carry meaning (scoreColor, the planes bands, the air marks) have their own holders and tests.
 """
+import importlib.util
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -20,15 +22,13 @@ PALETTE = {
 }
 
 HELD = (
-    'about/index.html', 'api/index.html', 'home/index.html', 'home/reports/index.html',
+    '404.html', 'about/index.html', 'api/index.html', 'home/index.html', 'home/reports/index.html',
     'home/reports/street/index.html', 'how-it-works/index.html', 'pricing.html',
+    'area/', 'open-data/',
 )
 
 WAITING = {
-    '404.html': 'older colours; moves with the area template',
-    'area/': "build_area_pages.py's older colours; moves with the area template rebuild",
-    'bay-area/': 'its own builder; moves after the area template',
-    'open-data/': 'shares the area template',
+    'bay-area/': 'its own builder; moves next',
 }
 
 OWN_COLOURS = {
@@ -75,9 +75,31 @@ def read(page):
     return (REPO / page).read_text(encoding='utf-8')
 
 
-@pytest.mark.parametrize('page', HELD)
-def test_a_held_page_keeps_the_palette(page):
-    assert off_palette(page_tokens(read(page))) == {}
+def held_pages():
+    return [p for p in site_pages() if any(p == h or (h.endswith('/') and p.startswith(h)) for h in HELD)]
+
+
+def test_every_held_page_keeps_the_palette():
+    pages = held_pages()
+    assert len(pages) > 100, 'the area pages have fallen out of this test'
+    assert {p: off for p in pages if (off := off_palette(page_tokens(read(p))))} == {}
+
+
+def test_every_held_entry_still_names_a_page():
+    # A renamed or mistyped entry would otherwise leave the check with no failure.
+    pages = site_pages()
+    assert [h for h in HELD if not any(p == h or (h.endswith('/') and p.startswith(h)) for p in pages)] == []
+
+
+def test_the_planes_pages_keep_the_palette():
+    # 464 generated pages, gitignored, so they are held at their one source: the builders' palette, as the page gets it.
+    sys.path.insert(0, str(REPO / 'scripts'))
+    sys.path.insert(0, str(REPO / 'backend' / 'lambdas' / 'score'))
+    spec = importlib.util.spec_from_file_location('build_planes_pages', REPO / 'scripts' / 'build_planes_pages.py')
+    builder = importlib.util.module_from_spec(spec)
+    sys.modules['build_planes_pages'] = builder
+    spec.loader.exec_module(builder)
+    assert off_palette(page_tokens(f'<style>{builder.STYLE.replace("{{", "{").replace("}}", "}")}</style>')) == {}
 
 
 def test_every_page_has_taken_a_side():
