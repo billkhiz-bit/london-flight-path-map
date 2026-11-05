@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area built on `page-drafts`, not deployed; previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+**Last reviewed:** 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
 the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
@@ -28,6 +28,8 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-11-05)
 >
+> **LIVE 5 Nov, 16:45 (`c415f9af`, master pushed, drift PASS).** Final preflight PASS, the flood stage included; web, home and bay-area deployed. First real run of "Try a request", no stubs, at 390 and 1366: arriving asks the API once and postcodes.io never, SW5 9HP reads 71.8 dB and 24 µg/m³ as a direct call does, a repeat press sends nothing, shift 0.0005 at most, and ZZ99 9ZZ, IM1 1AD, BT1 5GS, AB10 1AB and EX1 1HS are each answered in words. `responsive`, `live-mobile-verify` and `site-api-parity` re-run after the deploy: all pass.
+>
 > **Bill said "deploy" 5 Nov** (his brief of 4 Nov, built on `page-drafts`). `/api/` has "Try a request": a reader sends a postcode and sees the real request and answer, through the front page's band, now one
 > module (`js/dev-demo.mjs`) on two pages, their styles held equal. It asks the open route only, and nothing goes to postcodes.io until a reader sends. About opens on the speaker photo, its promises and questions on the bands, and "How it grew"
 > is ten cards along a rail from 1320 px, his talks among the steps and the film in a wider first card (four rounds of his picks that day). How it works opens on the short version, its example open with a bar per score. `/bay-area/` joined the palette, so `WAITING` is empty.
@@ -39,7 +41,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **LATER, ONE BACKEND CHANGESET, not this release:** (1) `/v1/environment` answers 404 when its own postcodes.io call fails (`reverse_geocode` returns None for both): it should be a 502 or 503, keeping 404 for the sea; the page's words cover both meanwhile. (2) `GatewayResponses` set no CORS header, so a browser cannot tell a throttle from a network failure: adding `Access-Control-Allow-Origin` to DEFAULT_4XX/5XX would let `/api/` say so. Both change what API callers see, so they go through a reviewed changeset, with Bill's yes.
 >
 > **NEXT, Bill's yes 5 Nov, own branch:** the front page holds the example's point, so a visit stops reaching postcodes.io (privacy s2b covers a search, not that), and live postcode suggestions as you type on the front page and `/api/`, as the full map has
-> them; the line "Nothing you type is sent until you search" goes. The short version above the strip stays, unless he says otherwise. SETTLED 5 Nov: a press plays for a reader with reduced motion too (the review queried it; Bill: "yes do the animation").
+> them; the line "Nothing you type is sent until you search" goes. Rides with it, seen on the first live run: `/api/` says "No DEFRA figure here" outside our city regions (EX1 1HS), where DEFRA may map the place and we only do not hold it, as the API's own notice says; `sayAnswer` and `no-figures` should say that. The short version above the strip stays, unless he says otherwise. SETTLED 5 Nov: a press plays for a reader with reduced motion too (the review queried it; Bill: "yes do the animation").
+>
+> **SMALL, ANY TIME:** `frame-ancestors` in a meta CSP is ignored and logs a console error on `/api/`, and it is in 7 more pages (the map, pricing, changes, privacy, terms, prototype, score-demo). It was there before this release, and the header's `X-Frame-Options: DENY` holds.
 >
 > **ALSO 5 NOV:** NOW.md trimmed 385 to 174 lines, section 4's history moved word for word to `90_DAY_ROADMAP.md`. Explee and alternatives assessed: buy nothing (memory `project-outreach-tools-assessment-2026-11-05`). PICKED UP NEXT: a Buyer Scout
 > if Bill says yes: Companies House plus a regulator's list, ranked with our own figures, drafts only, organisations only until the gates clear.
