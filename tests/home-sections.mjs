@@ -10,7 +10,8 @@
 //   node tests/home-sections.mjs
 
 import assert from 'node:assert/strict';
-import { airPanel, devAnswer, exampleFigures, noiseRows } from '../js/home-sections.mjs';
+import { devAnswer } from '../js/dev-demo.mjs';
+import { airPanel, exampleFigures, noiseRows } from '../js/home-sections.mjs';
 
 // /v1/environment for TW9 3PZ, as captured 2026-11-03 (trimmed to what the page reads).
 const ENV = {

@@ -1,0 +1,681 @@
+{
+ "_note": "Real answers from the live route, saved 2026-11-05 by hand. Keyed by postcode, no spaces: `geo` is what postcodes.io said, `env` what /v1/environment said at that point. A shape, not a claim about any figure today.",
+ "TW93PZ": {
+  "why": "all three figures",
+  "geo": {
+   "postcode": "TW9 3PZ",
+   "latitude": 51.476982,
+   "longitude": -0.285639
+  },
+  "env": {
+   "location": {
+    "lat": 51.476982,
+    "lon": -0.285639,
+    "postcode": "TW9 3PZ"
+   },
+   "environment": {
+    "roadNoiseLdenDb": 50.5,
+    "roadNoiseWhoGuidelineDb": 53,
+    "roadNoiseSource": "DEFRA Strategic Noise Mapping Round 4, road Lden. Published 2022, maps 2021 - a COVID-affected year, so readings err quiet.",
+    "no2AnnualMeanUgm3": 17.0,
+    "no2WhoGuidelineUgm3": 10,
+    "pm25AnnualMeanUgm3": 8.6,
+    "pm25WhoGuidelineUgm3": 5,
+    "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid",
+    "aircraftNoiseLdenDb": 57.2,
+    "aircraftQuiet": 3.2,
+    "aircraftQuietCoverage": "modelled",
+    "aircraftNoiseWhoGuidelineDb": 45,
+    "aircraftNoiseSource": "DEFRA Strategic Noise Mapping Round 4, aircraft Lden. Published 2022, maps 2021 - a COVID-affected year, so readings err quiet."
+   },
+   "notices": [],
+   "apiVersion": "1.0",
+   "methodologyVersion": "5.7",
+   "provenance": {
+    "environment.roadNoiseLdenDb": {
+     "sources": [
+      "defra-noise-road"
+     ],
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021"
+    },
+    "environment.roadNoiseWhoGuidelineDb": {
+     "sources": [
+      "who-noise-2018"
+     ],
+     "method": "reference",
+     "period": "2018"
+    },
+    "environment.no2AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.no2WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.pm25AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.pm25WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.aircraftNoiseLdenDb": {
+     "sources": [
+      "defra-noise-aircraft"
+     ],
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021"
+    },
+    "environment.aircraftQuiet": {
+     "sources": [
+      "defra-noise-aircraft"
+     ],
+     "method": "derived"
+    },
+    "environment.aircraftNoiseWhoGuidelineDb": {
+     "sources": [
+      "who-noise-2018"
+     ],
+     "method": "reference",
+     "period": "2018"
+    }
+   },
+   "sourceIndex": {
+    "defra-noise-aircraft": {
+     "publisher": "DEFRA",
+     "dataset": "Strategic Noise Mapping Round 4, aircraft Lden",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021",
+     "published": "2022",
+     "caveat": "maps 2021, a COVID-affected year, so readings err quiet"
+    },
+    "defra-noise-road": {
+     "publisher": "DEFRA",
+     "dataset": "Strategic Noise Mapping Round 4, road Lden",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021",
+     "published": "2022",
+     "caveat": "maps 2021, a COVID-affected year, so readings err quiet"
+    },
+    "defra-pcm": {
+     "publisher": "DEFRA",
+     "dataset": "Background pollution maps (PCM), annual mean NO2 and PM2.5",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "who-aq-2021": {
+     "publisher": "World Health Organization",
+     "dataset": "Global air quality guidelines (2021)",
+     "method": "reference",
+     "period": "2021"
+    },
+    "who-noise-2018": {
+     "publisher": "World Health Organization",
+     "dataset": "Environmental Noise Guidelines for the European Region (2018)",
+     "method": "reference",
+     "period": "2018"
+    }
+   }
+  }
+ },
+ "SW59HP": {
+  "why": "no aircraft dB",
+  "geo": {
+   "postcode": "SW5 9HP",
+   "latitude": 51.489125,
+   "longitude": -0.190676
+  },
+  "env": {
+   "location": {
+    "lat": 51.489125,
+    "lon": -0.190676,
+    "postcode": "SW5 9HP"
+   },
+   "environment": {
+    "roadNoiseLdenDb": 71.8,
+    "roadNoiseWhoGuidelineDb": 53,
+    "roadNoiseSource": "DEFRA Strategic Noise Mapping Round 4, road Lden. Published 2022, maps 2021 - a COVID-affected year, so readings err quiet.",
+    "no2AnnualMeanUgm3": 24.0,
+    "no2WhoGuidelineUgm3": 10,
+    "pm25AnnualMeanUgm3": 9.6,
+    "pm25WhoGuidelineUgm3": 5,
+    "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid",
+    "aircraftQuietEstimated": 6.5,
+    "aircraftQuietBasis": "flight-path geometry, not measured",
+    "aircraftQuietCoverage": "city"
+   },
+   "notices": [
+    "Aircraft noise here is estimated from distance to airports and flight-path geometry, not measured. DEFRA publishes contours for part of this area and this postcode falls outside them."
+   ],
+   "apiVersion": "1.0",
+   "methodologyVersion": "5.7",
+   "provenance": {
+    "environment.roadNoiseLdenDb": {
+     "sources": [
+      "defra-noise-road"
+     ],
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021"
+    },
+    "environment.roadNoiseWhoGuidelineDb": {
+     "sources": [
+      "who-noise-2018"
+     ],
+     "method": "reference",
+     "period": "2018"
+    },
+    "environment.no2AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.no2WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.pm25AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.pm25WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.aircraftQuietEstimated": {
+     "sources": [],
+     "method": null
+    },
+    "environment.aircraftQuietBasis": {
+     "sources": [],
+     "method": null
+    }
+   },
+   "sourceIndex": {
+    "defra-noise-road": {
+     "publisher": "DEFRA",
+     "dataset": "Strategic Noise Mapping Round 4, road Lden",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021",
+     "published": "2022",
+     "caveat": "maps 2021, a COVID-affected year, so readings err quiet"
+    },
+    "defra-pcm": {
+     "publisher": "DEFRA",
+     "dataset": "Background pollution maps (PCM), annual mean NO2 and PM2.5",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "who-aq-2021": {
+     "publisher": "World Health Organization",
+     "dataset": "Global air quality guidelines (2021)",
+     "method": "reference",
+     "period": "2021"
+    },
+    "who-noise-2018": {
+     "publisher": "World Health Organization",
+     "dataset": "Environmental Noise Guidelines for the European Region (2018)",
+     "method": "reference",
+     "period": "2018"
+    }
+   }
+  }
+ },
+ "M11AE": {
+  "why": "no aircraft dB, Manchester",
+  "geo": {
+   "postcode": "M1 1AE",
+   "latitude": 53.483487,
+   "longitude": -2.231182
+  },
+  "env": {
+   "location": {
+    "lat": 53.483487,
+    "lon": -2.231182,
+    "postcode": "M1 1AE"
+   },
+   "environment": {
+    "roadNoiseLdenDb": 68.7,
+    "roadNoiseWhoGuidelineDb": 53,
+    "roadNoiseSource": "DEFRA Strategic Noise Mapping Round 4, road Lden. Published 2022, maps 2021 - a COVID-affected year, so readings err quiet.",
+    "no2AnnualMeanUgm3": 22.0,
+    "no2WhoGuidelineUgm3": 10,
+    "pm25AnnualMeanUgm3": 8.3,
+    "pm25WhoGuidelineUgm3": 5,
+    "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid",
+    "aircraftQuietEstimated": 10.0,
+    "aircraftQuietBasis": "flight-path geometry, not measured",
+    "aircraftQuietCoverage": "city"
+   },
+   "notices": [
+    "Aircraft noise here is estimated from distance to airports and flight-path geometry, not measured. DEFRA publishes contours for part of this area and this postcode falls outside them."
+   ],
+   "apiVersion": "1.0",
+   "methodologyVersion": "5.7",
+   "provenance": {
+    "environment.roadNoiseLdenDb": {
+     "sources": [
+      "defra-noise-road"
+     ],
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021"
+    },
+    "environment.roadNoiseWhoGuidelineDb": {
+     "sources": [
+      "who-noise-2018"
+     ],
+     "method": "reference",
+     "period": "2018"
+    },
+    "environment.no2AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.no2WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.pm25AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.pm25WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.aircraftQuietEstimated": {
+     "sources": [],
+     "method": null
+    },
+    "environment.aircraftQuietBasis": {
+     "sources": [],
+     "method": null
+    }
+   },
+   "sourceIndex": {
+    "defra-noise-road": {
+     "publisher": "DEFRA",
+     "dataset": "Strategic Noise Mapping Round 4, road Lden",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021",
+     "published": "2022",
+     "caveat": "maps 2021, a COVID-affected year, so readings err quiet"
+    },
+    "defra-pcm": {
+     "publisher": "DEFRA",
+     "dataset": "Background pollution maps (PCM), annual mean NO2 and PM2.5",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "who-aq-2021": {
+     "publisher": "World Health Organization",
+     "dataset": "Global air quality guidelines (2021)",
+     "method": "reference",
+     "period": "2021"
+    },
+    "who-noise-2018": {
+     "publisher": "World Health Organization",
+     "dataset": "Environmental Noise Guidelines for the European Region (2018)",
+     "method": "reference",
+     "period": "2018"
+    }
+   }
+  }
+ },
+ "EX11HS": {
+  "why": "NO2 alone, uncovered",
+  "geo": {
+   "postcode": "EX1 1HS",
+   "latitude": 50.722209,
+   "longitude": -3.530574
+  },
+  "env": {
+   "location": {
+    "lat": 50.722209,
+    "lon": -3.530574,
+    "postcode": "EX1 1HS"
+   },
+   "environment": {
+    "no2AnnualMeanUgm3": 8.0,
+    "no2WhoGuidelineUgm3": 10,
+    "pm25AnnualMeanUgm3": 5.6,
+    "pm25WhoGuidelineUgm3": 5,
+    "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid",
+    "aircraftQuietEstimated": 10.0,
+    "aircraftQuietBasis": "the nearest airports we hold, not measured - this postcode is outside every city Sky Score covers",
+    "aircraftQuietCoverage": "outside"
+   },
+   "notices": [
+    "Aircraft noise here is estimated from distance to the nearest airports we hold and from flight-path geometry, not measured. This location is outside every city Sky Score covers, so no measured contour applies.",
+    "Sky Score holds DEFRA's road-noise map for the city-regions it scores, and this postcode is outside all of them. No figure is shown rather than an assumed one."
+   ],
+   "apiVersion": "1.0",
+   "methodologyVersion": "5.7",
+   "provenance": {
+    "environment.no2AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.no2WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.pm25AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.pm25WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.aircraftQuietEstimated": {
+     "sources": [],
+     "method": null
+    },
+    "environment.aircraftQuietBasis": {
+     "sources": [],
+     "method": null
+    }
+   },
+   "sourceIndex": {
+    "defra-pcm": {
+     "publisher": "DEFRA",
+     "dataset": "Background pollution maps (PCM), annual mean NO2 and PM2.5",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "who-aq-2021": {
+     "publisher": "World Health Organization",
+     "dataset": "Global air quality guidelines (2021)",
+     "method": "reference",
+     "period": "2021"
+    }
+   }
+  }
+ },
+ "ZE10AA": {
+  "why": "answered for a neighbour",
+  "geo": {
+   "postcode": "ZE1 0AA",
+   "latitude": 60.153231,
+   "longitude": -1.141602
+  },
+  "env": {
+   "location": {
+    "lat": 60.153231,
+    "lon": -1.141602,
+    "postcode": "ZE1 9ZZ"
+   },
+   "environment": {
+    "no2AnnualMeanUgm3": 6.0,
+    "no2WhoGuidelineUgm3": 10,
+    "pm25AnnualMeanUgm3": 3.5,
+    "pm25WhoGuidelineUgm3": 5,
+    "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid",
+    "aircraftQuietEstimated": 10.0,
+    "aircraftQuietBasis": "the nearest airports we hold, not measured - this postcode is outside every city Sky Score covers",
+    "aircraftQuietCoverage": "outside"
+   },
+   "notices": [
+    "Aircraft noise here is estimated from distance to the nearest airports we hold and from flight-path geometry, not measured. This location is outside every city Sky Score covers, so no measured contour applies.",
+    "Sky Score holds DEFRA's road-noise map for the city-regions it scores, and this postcode is outside all of them. No figure is shown rather than an assumed one."
+   ],
+   "apiVersion": "1.0",
+   "methodologyVersion": "5.7",
+   "provenance": {
+    "environment.no2AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.no2WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.pm25AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.pm25WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.aircraftQuietEstimated": {
+     "sources": [],
+     "method": null
+    },
+    "environment.aircraftQuietBasis": {
+     "sources": [],
+     "method": null
+    }
+   },
+   "sourceIndex": {
+    "defra-pcm": {
+     "publisher": "DEFRA",
+     "dataset": "Background pollution maps (PCM), annual mean NO2 and PM2.5",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "who-aq-2021": {
+     "publisher": "World Health Organization",
+     "dataset": "Global air quality guidelines (2021)",
+     "method": "reference",
+     "period": "2021"
+    }
+   }
+  }
+ },
+ "NG118AH": {
+  "why": "a quiet road: a bound, not a figure",
+  "geo": {
+   "postcode": "NG11 8AH",
+   "latitude": 52.906251,
+   "longitude": -1.17274
+  },
+  "env": {
+   "location": {
+    "lat": 52.906251,
+    "lon": -1.17274,
+    "postcode": "NG11 8AH"
+   },
+   "environment": {
+    "roadNoiseBelowDb": 40.0,
+    "roadNoiseWhoGuidelineDb": 53,
+    "roadNoiseSource": "DEFRA Strategic Noise Mapping Round 4, road Lden. Surveyed; below the lowest level the map records. Published 2022, maps 2021.",
+    "no2AnnualMeanUgm3": 11.6,
+    "no2WhoGuidelineUgm3": 10,
+    "pm25AnnualMeanUgm3": 7.2,
+    "pm25WhoGuidelineUgm3": 5,
+    "airQualitySource": "DEFRA background pollution maps (PCM), annual mean 2024, 1 km grid",
+    "aircraftQuietEstimated": 10.0,
+    "aircraftQuietBasis": "flight-path geometry, not measured",
+    "aircraftQuietCoverage": "city"
+   },
+   "notices": [
+    "Aircraft noise here is estimated from distance to airports and flight-path geometry, not measured. DEFRA publishes contours for part of this area and this postcode falls outside them.",
+    "DEFRA surveyed this postcode and mapped no road noise at or above 40 dB Lden, the lowest level its Round 4 road map records - under the WHO guideline of 53 dB. That is a quiet reading, not a missing one, so no figure is shown."
+   ],
+   "apiVersion": "1.0",
+   "methodologyVersion": "5.7",
+   "provenance": {
+    "environment.roadNoiseBelowDb": {
+     "sources": [
+      "defra-noise-road"
+     ],
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021"
+    },
+    "environment.roadNoiseWhoGuidelineDb": {
+     "sources": [
+      "who-noise-2018"
+     ],
+     "method": "reference",
+     "period": "2018"
+    },
+    "environment.no2AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.no2WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.pm25AnnualMeanUgm3": {
+     "sources": [
+      "defra-pcm"
+     ],
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "environment.pm25WhoGuidelineUgm3": {
+     "sources": [
+      "who-aq-2021"
+     ],
+     "method": "reference",
+     "period": "2021"
+    },
+    "environment.aircraftQuietEstimated": {
+     "sources": [],
+     "method": null
+    },
+    "environment.aircraftQuietBasis": {
+     "sources": [],
+     "method": null
+    }
+   },
+   "sourceIndex": {
+    "defra-noise-road": {
+     "publisher": "DEFRA",
+     "dataset": "Strategic Noise Mapping Round 4, road Lden",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "read at the postcode",
+     "period": "2021",
+     "published": "2022",
+     "caveat": "maps 2021, a COVID-affected year, so readings err quiet"
+    },
+    "defra-pcm": {
+     "publisher": "DEFRA",
+     "dataset": "Background pollution maps (PCM), annual mean NO2 and PM2.5",
+     "licence": "Open Government Licence v3.0",
+     "method": "modelled",
+     "resolution": "1 km grid",
+     "period": "2024"
+    },
+    "who-aq-2021": {
+     "publisher": "World Health Organization",
+     "dataset": "Global air quality guidelines (2021)",
+     "method": "reference",
+     "period": "2021"
+    },
+    "who-noise-2018": {
+     "publisher": "World Health Organization",
+     "dataset": "Environmental Noise Guidelines for the European Region (2018)",
+     "method": "reference",
+     "period": "2018"
+    }
+   }
+  }
+ }
+}

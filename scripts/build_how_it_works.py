@@ -32,6 +32,9 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / 'backend' / 'lambdas' / 'score'))
 import app  # noqa: E402  pylint: disable=wrong-import-position
 
+sys.path.insert(0, str(REPO / 'scripts'))
+from build_area_pages import score_colour  # noqa: E402  pylint: disable=wrong-import-position
+
 PAGE = REPO / 'how-it-works' / 'index.html'
 SITE = REPO / 'index.html'
 BAY_AREA = REPO / 'data' / 'us-bayarea-cities.json'
@@ -72,11 +75,18 @@ def pct(weight: float) -> str:
     return f'{round(weight * 100)}%'
 
 
+def bar(score: float) -> str:
+    """A score on its own scale, from a true zero to 10, in the colours every surface gives a score. The figure in the
+    row says it in numbers, so the bar is hidden from a screen reader and colour is never the only way to read it."""
+    return (f'<span class="bar" aria-hidden="true"><i style="width:{score * 10:.1f}%;'
+            f'background:{score_colour(score)}"></i></span>')
+
+
 def example() -> str:
     city, borough, persona = EXAMPLE
     scored = app.calc_score(borough, city, app.PERSONAS[persona])
     parts, weights = scored['components'], scored['weights']
-    rows, points, segments = [], {}, []
+    rows, points = [], {}
     for key, name in COMPONENTS:
         if key not in parts:
             raise SystemExit(f'{borough} has no {key} score; choose an example scored on all five')
@@ -85,11 +95,9 @@ def example() -> str:
         # band we set for it, never "our estimate" (that is the route geometry at a postcode) nor DEFRA's figure.
         kind, label = (QUIET_TAG[scored['context']['quietResolution']] if key == 'quiet' else ('off', 'official data'))
         tag = f'<span class="tag {kind}">{label}</span>'
-        rows.append(f'<tr><th scope="row"><span class="key key-{key}" aria-hidden="true"></span>{name} {tag}</th>'
+        rows.append(f'<tr><th scope="row">{name} {tag}{bar(parts[key])}</th>'
                     f'<td>{parts[key]:.1f}</td>'
                     f'<td>{pct(weights.get(key, 0.0))}</td><td>{points[key]:.2f}</td></tr>')
-        if points[key] > 0:
-            segments.append(f'<span class="seg seg-{key}" style="width:{points[key] * 10:.1f}%"></span>')
     total = sum(points.values())
     if abs(total - scored['score']) > RESIDUAL:
         raise SystemExit(f'the points add up to {total:.2f}, the score is {scored["score"]}: a sum that does not add up')
@@ -104,11 +112,9 @@ def example() -> str:
             f'  <thead><tr><th scope="col">Score</th><th scope="col">Out of 10</th><th scope="col">Weight</th>'
             f'<th scope="col">Points</th></tr></thead>\n'
             f'  <tbody>\n    ' + '\n    '.join(rows) + '\n  </tbody>\n'
-            f'  <tfoot><tr><th scope="row">Overall score</th><td></td><td>100%</td>'
+            f'  <tfoot><tr><th scope="row">Overall score{bar(scored["score"])}</th><td></td><td>100%</td>'
             f'<td class="total">{scored["score"]:.1f}</td></tr></tfoot>\n'
             f'</table>\n'
-            f'<div class="bar" aria-hidden="true">{"".join(segments)}</div>\n'
-            f'<p class="scale" aria-hidden="true"><span>0</span><span>10</span></p>\n'
             f'{cost}\n')
 
 

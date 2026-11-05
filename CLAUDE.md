@@ -170,8 +170,9 @@ Or just describe what you need, I have full context of this project.
   `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html). A runway lobe
   runs `RUNWAY_LOBE_KM` (15 km), mirrored in index.html. A fit only tests points near its monitors: check
   anything far from every monitor against an independent source (v5.7: the US DOT map caught Manhattan).
-- **`check_flood_georef.py` re-samples a small-sample miss on 16 cells a class before failing** (2026-11-04): at preflight's
-  4 a class one boundary cell is 75%, under the bar, all day (`docs/lessons/flood.md`). The bar stays 80%.
+- **`check_flood_georef.py` re-samples a small-sample miss on 64 cells a class at 92% before failing** (2026-11-05): at preflight's
+  4 a class one boundary cell is 75%, under the 80% bar, all day, and 16 at 90% was too small to say so too (`docs/lessons/flood.md`). Judge a
+  change here per city on the real sampler, never on a formula: the binomial called 48 at 90% an improvement, and three cities' bad edges got easier. Repeat draws in `spread_samples` are on purpose.
 - **A download's 200 is not the product**: test its magic bytes (FEMA's portal answered a missing county
   product with its page template, 2026-10-20; `docs/lessons/us-cities.md`).
 - **A tile service's 404 is "not cached", never "quiet"**: measure which levels a cache holds before reading
@@ -221,7 +222,7 @@ Or just describe what you need, I have full context of this project.
   figure where a band would be stays a figure. `visuals()` (his pick B) draws only what truly compares: a share of postcodes, a figure beside a named yardstick from a true zero, a strip for a rating
   among its own words. Aircraft noise and the price trend stay words: nothing honest to draw them against. A figure not held draws nothing. Planes pages lead with `day_figure()`'s "Up to N", always with its "Up to": a bare 318 reads as every postcode's. The score span and ` data-fact` are read by tests.
 - **One palette for the pages, held by `tests/test_site_palette.py`** (Bill, 2026-11-04: "ensure the colour scheme is consistent"): a
-  rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink. Read a
+  rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink (empty since 2026-11-05, when `/bay-area/` joined). Read a
   colour from the repo, never from a mock-up (the amber `#f0b429` I called the scores' was in no file). Colours that carry meaning keep
   their own holders: `scoreColor`, `BAND_COLOURS`, the air marks. The full map keeps its own surfaces.
 - **Stitch gives layouts, never colours or code** (Bill's pick, 2026-11-04): its pages load Google Fonts, some Tailwind from a CDN (the CSP
@@ -313,13 +314,23 @@ Or just describe what you need, I have full context of this project.
   example's frame, until `endLoading()`; hidden tabs keep their room. Anything that fills in later keeps its place from the first
   frame. Held in `tests/front-page.mjs`, on a phone with the example held back.
 - **The developers band's animation shows only what was answered** (Bill's pick C, 2026-11-04): `devAnswer()` builds the
-  JSON and tiles from the example's own response, and `showDev()` rewrites the three samples to that answer's point, so the
+  JSON and tiles from the example's own response, and `writeAnswer()` rewrites the three samples to that answer's point, so the
   request on show is the one answered and no lookup is added. Once on arriving, about 4 s (under WCAG 2.2.2's five), never a
   loop; again on a language change or Replay; at rest and with reduced motion everything shows, and Play is offered: a press
   is a request, whatever the setting (Bill's PC has Windows animations off, which is why he saw none). A number, its card and the
   card's figure arrive in one frame, one figure at a time, and the request box never moves (held frame by frame in
   `tests/front-page.mjs`, all three languages and at 390). The caret stays out of the text's flow, or a long URL re-wraps;
   typing keeps the whole text in the node, so Copy is never partial.
+- **The developers band is one module on two pages** (`js/dev-demo.mjs`, moved from `js/home-sections.mjs` 2026-11-05): the front page and `/api/` carry the same ids, and
+  `tests/test_dev_band_parity.py` holds their CSS and starting samples equal (a new band rule goes in its `RULES`). `writeAnswer()` runs for every answer, always from the samples as written (a read-back whole degree, `-2`, also matches the API's host), `armDev()` binds once.
+- **/api/'s "Try a request" asks only the open route** (`js/api-demo.mjs`, Bill's brief of 2026-11-04): postcodes.io, then `/v1/environment`, never `/v1/score` (it would spend the public demo key). Arriving asks only the API, at a held point (`EXAMPLE`): the privacy policy covers a search, not an unprompted lookup. A repeat press costs nothing, and any newer press aborts what is on its way, even one that only replays (the route is 5 a second site-wide). The route's 404 is not always "no postcode": the Lambda answers it too when its own postcodes.io call fails, so the words cover both. The band keeps its room from the first frame under `@media (scripting: enabled)`, `.no-answer` giving it back (shift held under 0.02 at five widths). Every
+  outcome is said in words: a neighbour's answer, a figure missing, a quiet road's bound (`under 40 dB`, a reading and never "missing"), no point (the Isle of Man and the Channel Islands: 200 with a null latitude), unknown, no figures, failed. `tests/api-demo.mjs` reaches each from
+  real answers in `tests/fixtures/api-demo-env.json`; a late reply never replaces a newer one; a press plays whatever the motion setting (a review queried it, Bill confirmed it 2026-11-05: do not raise it again); counted `api-demo-<way>`, never a postcode.
+- **A browser cannot read API Gateway's own errors**: `GatewayResponses` set no CORS header, so a throttled 429 is a rejected `fetch`, never a status (checked live 2026-11-05 on the 403 for a missing key). Word a failure to cover it.
+- **About and How it works are on Stitch's layout** (2026-11-05, every word, link and section id kept; `tests/page-bands.mjs` measures them): About's speaker photo is the 16:9 hero, held from the top third so both the
+  speaker and the screen stay; How it works opens on the short version, then the strip (a reversal of Bill's 26 Oct call, one move to undo); its worked example is open, a bar per score from `build_how_it_works.py bar()`.
+  **"How it grew" is ten cards along a rail from 1320 px** (`ol.grew.across`; Bill's picks, 2026-11-05: across, cards, his talks among the steps as `li.talk` on the warm colour, reversing his 24 Oct "product steps only", the film kept in the timeline). They alternate above and
+  below it on twelve columns: the first card takes three, for the film, every other two, each starting further along. Under 1320 px a card drops below a readable line, so it runs down the page. A new step means the column list and `STORY` in `tests/page-bands.mjs`.
 - **`tests/test_home_links.py` holds every link the front page makes and every link back to it** (Bill, 2026-11-04):
   each reaches a tracked file or a page the planes index lists, each fragment an id there (a fragment that misses opens
   the page at the top, with no error). Links to other sites are checked from the live page after a deploy, never there.

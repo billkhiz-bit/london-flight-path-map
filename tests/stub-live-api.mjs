@@ -32,6 +32,8 @@
 // never consulted, 2026-08-27). A predicate cannot quietly match nothing, and
 // the hit counter below is what proves it did not.
 
+import { EXAMPLE as API_PAGE_EXAMPLE } from '../js/api-demo.mjs';
+
 const API_HOSTS = ['execute-api.eu-west-2.amazonaws.com'];
 
 // ONLY /v1/score. Narrowed 2026-09-11, having first intercepted the whole API
@@ -113,7 +115,9 @@ export async function stubLiveApi(page) {
     (route) => route.fulfill(json({ status: 200, result: EXAMPLE_GEO }))
   );
   await page.route(
-    (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && url.pathname.endsWith('/v1/environment') && url.searchParams.get('lat') === String(EXAMPLE_GEO.latitude),
+    (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && url.pathname.endsWith('/v1/environment')
+      // /api/ opens on a held point (js/api-demo.mjs) and asks only the API, so the gates answer that point too.
+      && [EXAMPLE_GEO.latitude, API_PAGE_EXAMPLE.latitude].map(String).includes(url.searchParams.get('lat')),
     (route) => route.fulfill(json(EXAMPLE_ENV))
   );
 

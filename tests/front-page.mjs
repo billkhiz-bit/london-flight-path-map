@@ -266,7 +266,7 @@ ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !b
 // map's city buttons never named. scripts/build_coverage_strip.py --check holds the markup to the
 // registry; this holds what a visitor sees.
 // FOR DEVELOPERS (2026-10-19; three languages since front-page-v3, 2026-11-03): the open request a developer can
-// paste, in curl, Python and JavaScript (tabs, js/home-sections.mjs). All on the API host js/api-base.js holds
+// paste, in curl, Python and JavaScript (tabs, js/dev-demo.mjs). All on the API host js/api-base.js holds
 // (window.API_BASE), by lat and lon (the form /v1/environment answers; by postcode it is a 400), no key anywhere (the
 // keyed score request moved to /api/ with the redesign), and Copy copies exactly the sample on show. The clipboard is
 // stubbed: a headless browser has none to read back. (Changed by reading, not run, on the branch: run it before merging.)

@@ -278,6 +278,7 @@ data/*
 # it is called, and a fixture only enters git by being named rightmove-*.html,
 # which is a deliberate act.
 tests/fixtures/*
+!tests/fixtures/api-demo-env.json
 !tests/fixtures/rightmove-*.html
 # postcodes.io district spellings for every covered borough; the blocking
 # stage "outside coverage is said, not analysed" reads it (2026-09-26).

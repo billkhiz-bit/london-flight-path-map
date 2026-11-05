@@ -66,18 +66,19 @@ for (const [w, h, motion] of [[1366, 900, 'no-preference'], [390, 844, 'no-prefe
     return {
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       // On this page (Bill, 2026-10-26: "links to different sections ... like the about page"): the pills straight
-      // under the opening words, so the way past the strip comes before it; the strip straight after them.
+      // under the opening words, so the way past the strip comes before it. Then the short version (the reviewed draft of
+      // 2026-11-04, on the warm band), and the strip straight after that.
       navAfterLead: lead?.nextElementSibling?.matches('nav.contents'),
-      afterNav: lead?.nextElementSibling?.nextElementSibling === sec,
+      afterNav: lead?.nextElementSibling?.nextElementSibling?.id === 'short' && lead?.nextElementSibling?.nextElementSibling?.nextElementSibling === sec,
       pills: [...document.querySelectorAll('nav.contents a')].map((a) => [a.getAttribute('href'), !!document.getElementById(a.getAttribute('href').slice(1)),
         getComputedStyle(a).borderRadius !== '0px']),
-      // Every section but the strip itself, which comes straight after the pills and needs none.
+      // Every section but the strip itself, which is on the first screen and needs none.
       sections: [...document.querySelectorAll('section[id]:not(.approach)')].map((s) => `#${s.id}`),
       still: sec?.classList.contains('still'),
     };
   });
   ok(layout.overflow <= 0, `${tag}: the page does not scroll sideways`, `${layout.overflow}px too wide`);
-  ok(layout.navAfterLead && layout.afterNav, `${tag}: the opening paragraph, then the links to the page's sections, then the strip`);
+  ok(layout.navAfterLead && layout.afterNav, `${tag}: the opening paragraph, the links to the page's sections, the short version, then the strip`);
   const linked = layout.pills.map(([href]) => href);
   ok(linked.length > 0 && linked.join() === layout.sections.join() && layout.pills.every(([, there, pill]) => there && pill),
     `${tag}: a pill for every section after the strip, in page order (${linked.length}), each to a section on the page`,

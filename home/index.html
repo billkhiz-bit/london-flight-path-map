@@ -677,7 +677,7 @@
         .find-mapjump { display: block; }
       }
       @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .mapwrap > svg { transition: none; } #ans-tiles .ans-tile b { animation: none; } }
-      /* The answer under the request (js/home-sections.mjs): at rest everything shows; a run hides it and brings it back. */
+      /* The answer under the request (js/dev-demo.mjs): at rest everything shows; a run hides it and brings it back. */
       .dev-wire { display: flex; align-items: center; gap: 10px; height: 30px; margin: 0 0 0 20px; font: 500 12px var(--font-mono); color: #b9b6ae; }
       .dev-wire::before { content: ''; width: 2px; height: 100%; background: var(--orange); transform-origin: top; transition: transform 0.25s; }
       .dev-run.is-waiting:not(.is-answered) .dev-wire { color: transparent; }
@@ -691,7 +691,7 @@
       .dev-caret { position: absolute; width: 8px; height: 1.05em; margin-top: 0.2em; background: var(--orange); }
       .dev-page { margin-top: 10px; padding: 10px 12px 12px; color: var(--dark); background: var(--paper); border-radius: 10px; }
       .dev-page-head { margin: 0 0 8px; font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
-      .dev-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .dev-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
       .dev-tiles .ans-tile { padding: 9px 10px; }
       .dev-tiles .ans-tile b { min-height: 1.15em; font-size: 18px; }
       .dev-tiles .ans-tile b.is-empty { visibility: hidden; }
@@ -1025,7 +1025,7 @@ print(env['no2AnnualMeanUgm3'], env['roadNoiseLdenDb'])</pre></div>
               <div role="tabpanel" id="code-js" aria-labelledby="code-tab-js" hidden><pre tabindex="0" role="region" aria-label="The request in JavaScript" id="dev-env-js">const r = await fetch('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860');
 const { environment } = await r.json();
 console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></div>
-              <!-- The answer (Bill's pick C of the API mock-up, 2026-11-04): written by js/home-sections.mjs from the example's own
+              <!-- The answer (Bill's pick C of the API mock-up, 2026-11-04): written by js/dev-demo.mjs from the example's own
                    response, never typed, and hidden until then, so without it the band is the request alone. -->
               <div class="dev-run" id="dev-run" hidden>
                 <p class="dev-wire" aria-hidden="true">200 OK</p>

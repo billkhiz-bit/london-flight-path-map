@@ -5,7 +5,7 @@
 // WAI-ARIA combobox, so Up, Down, Enter and Escape do what a screen reader says they do.
 
 export const NOTHING_SENT = 'Nothing you type is sent until you search.';
-const POSTCODE = /^[a-z]{1,2}\d[a-z\d]?\s*\d[a-z]{2}$/i;
+export const POSTCODE = /^[a-z]{1,2}\d[a-z\d]?\s*\d[a-z]{2}$/i;
 const PARTLY = /^[a-z]{1,2}\d/i;
 
 /** What to offer for the text in the box: { items: [{ value, parts, note }], foot }. Pure, so it can be tested. */

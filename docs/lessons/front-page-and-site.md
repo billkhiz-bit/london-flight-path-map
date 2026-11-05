@@ -816,7 +816,7 @@ acted since 23 Oct (60%) against 35 of 104 before (34%). Small numbers; read the
   it in the developers band, so `test_the_front_page_quotes_the_enforced_free_quota` is strict again and reads any shape.
 - **The API animation** (mock claude.ai/artifact/VgTpCjGHZHMLhz1zYFPNpM; Bill picked C of three, built the same day). The band's
   samples named a point in Kew and the example a postcode in Kew, with different figures, so an animation of one over the
-  other would have shown an answer the request never got. `showDev()` rewrites the samples to the example's own point
+  other would have shown an answer the request never got. `writeAnswer()` (`showDev()` until 2026-11-05) rewrites the samples to the example's own point
   instead of adding a third lookup. The mock-up's measuring caught two slips before Bill relied on them: version A still
   showing C's tiles, and a note calling C the tallest when B was (608 px against 576).
   Bill then tried it and saw the timing was off: the number lit on leaving and the card only on landing, about half a second
@@ -875,3 +875,32 @@ an older family (`#c2410c`). `tests/test_site_palette.py` now holds the seven an
 Stitch reported redrawing Pricing in the new colours. Its screenshot was byte-identical and its CSS unchanged. Its design system also
 recalculates values (`#f4f3ef` returned as `#faf9f5`, JetBrains Mono as Public Sans). So Stitch gives the layout, the exact values are
 applied by hand as variables, and a draft counts only once its pixels are measured.
+
+## The API page, the shared band and the last pages on the layout (2026-11-05)
+
+Bill's brief of 4 Nov: the API page "animated and interactive, like the front page", and the grey boxes of the About and How it works drafts made real. No overnight run happened, so it was built the next day.
+
+The band moved to `js/dev-demo.mjs`, because a second page needed it and a copy would have drifted. Moving it found a bug that was harmless only because it ran once: the samples took a new latitude and then a new longitude, one
+`replaceAll` after the other, so a new latitude holding the old longitude's digits had its middle rewritten. On the front page that ran once, for one point. A form runs it for every postcode sent.
+
+The brief listed a 429 as a case to handle. It cannot be. API Gateway's error replies carry no `Access-Control-Allow-Origin` (`GatewayResponses` set only HSTS and nosniff; checked live on the 403 for a missing key), so the browser refuses to
+show the status and `fetch` rejects. The failure's words say the API may be busy instead. Read the reply a browser actually gets, not the one the server sends.
+
+Probing the live route before writing a word found what a stub of one postcode never would: ZE1 0AA answers as ZE1 9ZZ, EX1 1HS holds NO2 alone, and the Isle of Man and the Channel Islands come back from postcodes.io as 200 with a null
+latitude. Those real answers are the test's fixtures, so the shapes are the route's and not my idea of it.
+
+The tiles were a fixed three columns, right for the front page's one example and wrong for an answer holding two figures: `24 µg/m³` wrapped at 390. `grid-auto-flow: column` with `grid-auto-columns: minmax(0, 1fr)` makes the columns follow the
+answer, on both pages.
+
+"How it grew" across the page was Bill's question mid-build, and it took four rounds of pictures, each tried in the browser on the real page while preflight held the repo. Seven steps in one row came to about 140 px each, so they alternate above and
+below the rail. He chose cards over more air and over the film in its own row, then added his talks ("an important part of the Sky Score story", reversing his own "product steps only" of 24 Oct), then kept the film in the timeline. Ten steps squeezed the
+film's label into a thin column, so moving it was the obvious fix and the wrong one: he wanted it there. Twelve columns with a wider first card gave it room, made the first step read as the start, and came out shorter than the film underneath (763 px against 931).
+The dates moved the order: the AI Tinkerers talk (22 Sep) came before the routes were redrawn (about 26 Sep). Read the dates, never the order things feel like they happened.
+
+The Bay Area's map keeps its own inks: they carry meaning, and only its page moved to the palette.
+
+A second review found ten more, all on `/api/`, and three were one defect. `ask()` returned for "already on show" before it cancelled anything, so a press that needed no request left an older one running to overwrite it, kept an old problem on the status line, and the sibling test for "already on its way" swallowed a press of the example, which is the only thing that can play for a reader who asks for less motion. A shortcut placed ahead of the cleanup skips the cleanup: the cancel now comes first. The run on arriving stayed armed after a press, so on a phone, where the form stacks over the band, scrolling down to an answer restarted it mid-read; `playDev()` now ends that wait for any run. The band measured 0.10 of layout shift at 1366 and 0.057 on a phone with the reply held 800 ms, in three steps: the tabs and the form when the module ran, then the answer. It sits near the top here, where the front page's is far down, so the same band needed room kept only on this page. The room has to be in CSS, since the shift starts before any script runs, and `@media (scripting: enabled)` keeps a reader without scripts from getting a gap; `.no-answer` gives it back when nothing is coming. The heights are the example's own, measured at eight widths, and `tests/api-demo.mjs` holds the shift at five. The line telling a reader to type a postcode moved into the form, so it goes where the form goes. If the module itself fails to load, nothing can give the room back and the band keeps a blank gap: left knowingly, since nothing false shows and the samples still do.
+
+A code review before preflight found ten points 141 green checks could not see. The page looked up the example on postcodes.io at every load, so a visitor's address went to a third party before they did anything, which the privacy policy
+does not cover: the example is now a held point, and only the API is asked. A surveyed-quiet road was called missing, because no fixture carried the bound (NG11 8AH does now). "Copied" stayed beside a request that had changed. A press
+cost two calls against a route throttled for the whole site. Reading the previous point back out of the page was fragile: a whole degree, `-2`, also matches `eu-west-2`. And the accessibility scan met /api/ mid-run, as it once met the front page.

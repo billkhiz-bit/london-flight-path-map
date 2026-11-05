@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <!-- Content Security Policy (enforcing - see comment in /index.html for the rationale).
-     /api landing is a static B2B funnel page; only fonts + analytics, no fetches. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+     Fonts, analytics, and since 2026-11-05 the two lookups "Try a request" makes (js/api-demo.mjs). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -71,6 +71,9 @@
   tests/front-page.mjs (every data-price key reads as it does on /pricing). The "UK data
   residency" line in the JSON-LD became "Hosted in AWS London": /v1/chat calls Bedrock in
   us-east-1 (SUBPROCESSORS row 18), so a residency claim for the whole API was not true.
+  On Stitch's layout since 2026-11-05 (Bill's brief of 4 Nov): every word kept, "Try a request" added. The band's
+  samples and styles are the front page's, held equal by tests/test_dev_band_parity.py; what it does is js/dev-demo.mjs
+  and js/api-demo.mjs, held by tests/api-demo.mjs.
 -->
 
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
@@ -81,6 +84,8 @@
   :root {
     color-scheme: light;
     --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416;
+    /* The bands' colours, as /pricing has them: --on-tint is --mid darkened for a coloured band, --on-dark text on the dark one. */
+    --tint: #fbeee3; --water: #dbe4e8; --on-tint: #3f3f3b; --on-dark: #dedcd6;
     /* Focus rings (audit 2026-10-09 I-7): the brand orange is 2.44:1 on --bg and 2.60:1 on the cards, under
        WCAG 1.4.11's 3:1. #d35a12 is the front page's --focus, the "you are here" underline's colour. */
     --focus: #d35a12;
@@ -116,13 +121,13 @@
      own padding outranks this rule. front-page.mjs 16g measures the row at 681 and 760. */
   @media (max-width: 760px) { nav.top-nav a { padding-left: 7px; padding-right: 7px; } }
 
-  main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
+  /* 1440, as /pricing: the coloured bands should reach the bar's right edge on a laptop. */
+  main { padding: 24px var(--gutter) 40px; max-width: 1440px; }
   h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.02; letter-spacing: -0.035em; margin: 0 0 12px; }
   p.lead { margin: 0 0 22px; color: var(--mid); font-size: 18px; max-width: 62ch; }
   .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 48px; }
   a.go { font-weight: 600; text-decoration: none; padding: 10px 14px; border-radius: 10px; background: var(--dark); color: #fff; font-size: 14px; }
-  a.go.quiet { background: transparent; color: var(--dark); border: 1.5px solid var(--dark); }
-  a.go.quiet:hover { background: #ebe9e3; }
+  a.go:hover { text-decoration: underline; text-underline-offset: 3px; }
 
   section { margin: 0 0 52px; scroll-margin-top: 16px; }
   h2.sec { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.8vw, 32px); letter-spacing: -0.02em; margin: 0 0 14px; }
@@ -150,6 +155,83 @@
 
 
   ol.steps { margin: 0; padding-left: 22px; color: var(--dark); font-size: 15px; line-height: 1.8; max-width: 80ch; }
+
+  /* The bands (Stitch's layout, Bill's brief of 2026-11-04): warm for trying it, dark for the keyed sample, cool for who it
+     is for, the same three colours as /pricing. */
+  section.band { padding: clamp(20px, 3vw, 32px); border-radius: 18px; }
+  section.dev { background: var(--tint); }
+  section.sample { background: var(--dark); color: #fff; }
+  section.sample h2.sec { color: #fff; }
+  section.sample pre { border: 1px solid #333; background: #000; }
+  section.sample p.note { color: var(--on-dark); }
+  section.sample a { color: #fff; }
+  section.cool { background: var(--water); }
+  section.rule { border-top: 1px solid var(--line); padding-top: 20px; }
+
+  /* Try a request. The rest of the band below is the front page's, copied and held equal. */
+  .split { display: grid; gap: 18px 56px; align-items: start; }
+  @media (min-width: 900px) { .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  /* Stacked, the band runs the page's full width, or the cards in it are narrower than the front page's and their figures wrap. */
+  @media (max-width: 899px) { section.band.dev { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); border-radius: 0; } }
+  .lede { margin: 0; max-width: 52ch; color: var(--on-tint); }
+  .try { margin: 18px 0 0; }
+  .try-how { margin: 0 0 14px; max-width: 52ch; color: var(--on-tint); }
+  /* The band keeps its room from the first frame: the form, the tabs and the example's answer all arrive after it, and this
+     band is near the top of the page (0.10 of layout shift at 1366 without this, tests/api-demo.mjs). The heights are the
+     example's own, measured. Only with scripting on, or a reader without it would get empty room; .no-answer gives it back. */
+  @media (scripting: enabled) {
+    .try[hidden]:not(.no-answer), #dev-run[hidden]:not(.no-answer) { display: block; visibility: hidden; }
+    #try .code-tabs[hidden] { display: flex; visibility: hidden; }
+    #dev-run[hidden] { min-height: 376px; }
+  }
+  @media (scripting: enabled) and (max-width: 599px) { #dev-run[hidden] { min-height: 460px; } }
+  @media (scripting: enabled) and (min-width: 900px) and (max-width: 1099px) { #dev-run[hidden] { min-height: 420px; } }
+  .try label { display: block; margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+  .try-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .try-row input { flex: 1 1 170px; min-width: 0; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--dark); border-radius: 10px; background: var(--paper); color: var(--dark); font: 500 16px var(--font-mono); }
+  .try-row input[aria-invalid='true'] { border-color: var(--orange-ink); box-shadow: inset 0 0 0 1px var(--orange-ink); }
+  .try-row button { min-height: 44px; padding: 8px 16px; border: 0; border-radius: 10px; background: var(--dark); color: #fff; font: 600 14px var(--font-body); cursor: pointer; }
+  .try-row button:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .try-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 12px 0 0; font-size: 14px; color: var(--on-tint); }
+  .try-chips button { min-height: 32px; padding: 4px 10px; border: 1.5px solid var(--dark); border-radius: 999px; background: none; color: var(--dark); font: 500 13px var(--font-mono); cursor: pointer; }
+  .try-chips button:hover { text-decoration: underline; text-underline-offset: 3px; }
+  /* Room for two lines from the start, so a longer answer does not move the band under it. */
+  .try-status { min-height: 3em; margin: 12px 0 0; font-size: 14px; color: var(--on-tint); }
+
+  .ans-tile { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; font: 500 12.5px/1.3 var(--font-body); color: var(--mid); background: var(--tint); border-radius: 10px; }
+  .ans-tile b { font: 700 19px/1.15 var(--font-display); letter-spacing: -0.01em; color: var(--dark); }
+  section.dev .code { min-width: 0; padding: 14px; border-radius: 16px; background: var(--dark); color: #f3f1ec; }
+  .code-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+  .code-tabs[hidden] { display: none; }
+  .code-tabs button { min-height: 32px; padding: 6px 12px; border: 1px solid #5a5a56; border-radius: 8px; background: none; color: #d9d7d0; font: 500 13px var(--font-mono); cursor: pointer; }
+  .code-tabs button:hover { border-color: #d9d7d0; }
+  .code-tabs button[aria-selected='true'] { border-color: #f3f1ec; background: #f3f1ec; color: var(--dark); }
+  section.dev [role='tabpanel'] + [role='tabpanel'] { margin-top: 10px; }
+  section.dev .is-tabbed [role='tabpanel'] + [role='tabpanel'] { margin-top: 0; }
+  section.dev pre { margin: 0; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #000; color: #f3f1ec; font: 13px/1.6 var(--font-mono); overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .code-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 0; }
+  section.dev button.copy { min-height: 32px; padding: 4px 12px; border: 1px solid #5a5a56; border-radius: 8px; background: #1f1f1f; color: #f3f1ec; font: 600 13px var(--font-body); cursor: pointer; }
+  section.dev button.copy:hover { border-color: #f3f1ec; }
+  section.dev .copy-status { font-size: 13px; color: #d9d7d0; }
+  .code-note { margin: 8px 0 0; font-size: 12px; color: #b9b6ae; }
+  .dev-wire { display: flex; align-items: center; gap: 10px; height: 30px; margin: 0 0 0 20px; font: 500 12px var(--font-mono); color: #b9b6ae; }
+  .dev-wire::before { content: ''; width: 2px; height: 100%; background: var(--orange); transform-origin: top; transition: transform 0.25s; }
+  .dev-run.is-waiting:not(.is-answered) .dev-wire { color: transparent; }
+  .dev-run.is-waiting:not(.is-answered) .dev-wire::before { transform: scaleY(0); }
+  .dev-ln { display: block; min-height: 1.6em; transition: opacity 0.2s, transform 0.2s; }
+  .dev-run.is-waiting .dev-ln:not(.is-on) { opacity: 0; transform: translateY(6px); }
+  .dev-n { font-weight: 600; color: #ffb27a; }
+  .dev-n.is-lit { color: #000; background: #ffb27a; border-radius: 3px; box-shadow: 0 0 0 2px #ffb27a; }
+  .dev-rest { visibility: hidden; }
+  .dev-caret { position: absolute; width: 8px; height: 1.05em; margin-top: 0.2em; background: var(--orange); }
+  .dev-page { margin-top: 10px; padding: 10px 12px 12px; color: var(--dark); background: var(--paper); border-radius: 10px; }
+  .dev-page-head { margin: 0 0 8px; font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+  .dev-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+  .dev-tiles .ans-tile { padding: 9px 10px; }
+  .dev-tiles .ans-tile b { min-height: 1.15em; font-size: 18px; }
+  .dev-tiles .ans-tile b.is-empty { visibility: hidden; }
+  .dev-tiles .ans-tile.is-lit { box-shadow: inset 0 0 0 2px var(--orange); }
+  .dev-tiles .ans-tile small { font-size: 11px; }
 
 
   footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
@@ -199,9 +281,57 @@
   <p class="lead">UK property noise and liveability data, anchored to DEFRA, DfE and ONS, in one JSON call per postcode, with the source of every figure in the response. Free tier of 10,000 requests a month, with self-service signup.</p>
   <div class="actions">
     <a class="go" href="/score-demo/index.html">Try the live demo</a>
-    <a class="go quiet" href="/score-demo/api-docs.html">API reference</a>
-    <a class="go quiet" href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a>
+    <a class="go" href="/score-demo/api-docs.html">API reference</a>
+    <a class="go" href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a>
   </div>
+
+  <section class="band dev" id="try" aria-labelledby="try-heading">
+    <div class="split">
+      <div>
+        <h2 class="sec" id="try-heading">Try a request</h2>
+        <p class="lede">Noise and air at any point need no key.</p>
+        <!-- Hidden until js/api-demo.mjs runs: without it this band is the request alone, as the front page's is. -->
+        <form class="try" id="try-form" hidden novalidate>
+          <p class="try-how">Type a postcode and send it. This page finds its point on postcodes.io, then sends the request you see here, live.</p>
+          <label for="try-pc">UK postcode</label>
+          <div class="try-row">
+            <input id="try-pc" name="postcode" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="try-status">
+            <button type="submit">Send request</button>
+          </div>
+          <div class="try-chips" role="group" aria-label="Example postcodes">Or try <button type="button" data-try="TW9 3PZ">TW9 3PZ</button><button type="button" data-try="SW5 9HP">SW5 9HP</button><button type="button" data-try="M1 1AE">M1 1AE</button></div>
+          <p class="try-status" id="try-status" role="status"></p>
+        </form>
+      </div>
+      <div class="code">
+              <div class="code-tabs" role="tablist" aria-label="Language" hidden>
+                <button type="button" role="tab" id="code-tab-curl" aria-controls="code-curl" aria-selected="true">curl</button>
+                <button type="button" role="tab" id="code-tab-py" aria-controls="code-py" aria-selected="false" tabindex="-1">Python</button>
+                <button type="button" role="tab" id="code-tab-js" aria-controls="code-js" aria-selected="false" tabindex="-1">JavaScript</button>
+              </div>
+              <div role="tabpanel" id="code-curl" aria-labelledby="code-tab-curl"><pre tabindex="0" role="region" aria-label="The request in curl" id="dev-env">curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860'</pre></div>
+              <div role="tabpanel" id="code-py" aria-labelledby="code-tab-py" hidden><pre tabindex="0" role="region" aria-label="The request in Python" id="dev-env-py">import requests
+
+r = requests.get('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment',
+                 params={'lat': 51.4790, 'lon': -0.2860})
+env = r.json()['environment']
+print(env['no2AnnualMeanUgm3'], env['roadNoiseLdenDb'])</pre></div>
+              <div role="tabpanel" id="code-js" aria-labelledby="code-tab-js" hidden><pre tabindex="0" role="region" aria-label="The request in JavaScript" id="dev-env-js">const r = await fetch('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860');
+const { environment } = await r.json();
+console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></div>
+              <div class="dev-run" id="dev-run" hidden>
+                <p class="dev-wire" aria-hidden="true">200 OK</p>
+                <pre tabindex="0" role="region" aria-label="The response, shortened" id="dev-res"></pre>
+                <div class="dev-page">
+                  <p class="dev-page-head">On your page</p>
+                  <div class="dev-tiles" id="dev-tiles"></div>
+                </div>
+                <p class="code-note">Shortened to fit: the full answer names the source of every figure.</p>
+              </div>
+              <p class="code-foot"><button type="button" class="copy" data-copy="dev-env" aria-label="Copy the curl request">Copy</button><button type="button" class="copy" id="dev-replay" aria-label="Replay the request and its answer" hidden>Replay</button><span class="copy-status" id="copy-status" aria-live="polite"></span></p>
+              <p class="code-note">Noise and air at this point: no key needed.</p>
+            </div>
+    </div>
+  </section>
 
   <section aria-labelledby="get-heading">
     <h2 class="sec" id="get-heading">What you get</h2>
@@ -241,7 +371,7 @@
     </details>
   </section>
 
-  <section aria-labelledby="sample-heading">
+  <section class="band sample" aria-labelledby="sample-heading">
     <h2 class="sec" id="sample-heading">30-second sample</h2>
     <!-- tabindex + role make the horizontally scrollable code block reachable
          by keyboard (WCAG 2.1.1). It scrolls on any narrow viewport, and a
@@ -268,7 +398,7 @@
     <p class="note">More examples in the <a href="/score-demo/api-docs.html">API reference</a>.</p>
   </section>
 
-  <section aria-labelledby="for-heading">
+  <section class="band cool" aria-labelledby="for-heading">
     <h2 class="sec" id="for-heading">Built for</h2>
     <div class="cards five">
       <div class="card">
@@ -294,7 +424,7 @@
     </div>
   </section>
 
-  <section id="pricing" aria-labelledby="pricing-heading">
+  <section class="rule" id="pricing" aria-labelledby="pricing-heading">
     <h2 class="sec" id="pricing-heading">Pricing</h2>
     <!-- Prices live on /pricing alone (audit 2026-10-06, I2): this page's own copy of the ladder
          had already drifted from it. tests/front-page.mjs fails if a price figure returns here. -->
@@ -319,7 +449,9 @@
   <span><a href="/">Front page</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/score-demo/index.html">Demo</a> &middot; <a href="/score-demo/api-docs.html">API reference</a> &middot; <a href="/score-demo/status.html">Status</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Methodology</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">Licensing</a> &middot; <a href="/.well-known/security.txt">Security</a> &middot; <a href="/about/">About</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></span>
 </footer>
 
+<script src="/js/api-base.js"></script>
 <script type="module" src="/js/count.mjs"></script>
+<script type="module" src="/js/api-demo.mjs"></script>
 
 <!-- Wave 12.7: B2B funnel events. Methodology clicks signal real diligence
      (someone reading the maths vs just kicking tyres). Demo/spec clicks

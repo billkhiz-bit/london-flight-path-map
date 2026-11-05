@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-05 - Try a request; About and How it works rebuilt
+
+- **The API page lets you send a real request.** Type a postcode and see the request, its answer and each figure land on a card, in curl, Python or JavaScript. It uses the open route, so no key is needed. It says when an answer is for a neighbouring postcode and which figures an answer lacks.
+- **About opens on a photo of the map being explained.** The promises and the questions sit on coloured bands, the contact band is dark, and "How it grew" runs along a route across the page on a wide screen, now with the talks and demos in it, in date order. Those three cards are the only new words.
+- **How it works starts with the short version.** The worked example is open, with a bar for each score, the five scores are cards and the folds are full-width rows. No word changed.
+- **The Bay Area page joins the site's palette**, the last page to do so.
+- **The developers band** sizes its cards to the answer, so a figure with two neighbours no longer wraps on a phone.
+
 ## 2026-11-04 (night) - Faster first answer; an honest word in the API
 
 - **Area and planes pages share the site's look.** All 103 area pages, 464 planes pages, the consultation pack, open data and the 404 page move to the site's palette and Geist headlines; the area and planes pages take Stitch's layout. An area page says each finding in plain words ("Recorded crime is close to the London median", "Schools are above average") and now prints the London median beside the rate; a planes page leads with "Up to 318 a day" for each way the airport flies, with its postcodes counted under it. Area pages draw what truly compares: bars for the share of postcodes over the road noise guideline or at flood risk, and for air, crime and price against the WHO guideline or the city's median; a labelled strip for each rating. No source figure or credit changed. Dark mode kept.

@@ -78,7 +78,14 @@ const PAGES = [
   { path: '/home/reports/street/', name: 'free street report' },
   { path: '/how-it-works/', name: 'how it works' },
   { path: '/about/', name: 'about' },
-  { path: '/api/', name: 'API landing' },
+  // Since 2026-11-05 /api/ fills in after load and plays on arriving, so a scan at load meets a page mid-change, as the
+  // front page's did. `still` turns the arriving run off and the wait is for the answer: the page a visitor settles on.
+  {
+    path: '/api/',
+    name: 'API landing',
+    still: true,
+    renderedWhenFn: () => !document.getElementById('try-form')?.hasAttribute('aria-busy') && document.getElementById('dev-run')?.hidden === false,
+  },
   {
     path: '/changes',
     name: 'what changed this quarter',
@@ -387,10 +394,11 @@ for (const viewport of VIEWPORTS) {
   // returning 429 to real prospects for two days. See tests/stub-live-api.mjs.
   stubHits.push(await stubLiveApi(page));
   console.log(`\n--- ${viewport.label} (${viewport.width}x${viewport.height}) ---`);
-  for (const { path, name, waitFor, renderedWhen, renderedWhenFn, disableRules } of PAGES) {
+  for (const { path, name, waitFor, renderedWhen, renderedWhenFn, disableRules, still } of PAGES) {
   let violations = [];
   let note = '';
   try {
+    await page.emulateMedia({ reducedMotion: still ? 'reduce' : null });
     await page.goto(`http://127.0.0.1:${PORT}${path}`, { waitUntil: 'domcontentloaded' });
     if (waitFor) {
       await page.waitForSelector(waitFor, { state: 'visible', timeout: 30000 });

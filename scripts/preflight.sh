@@ -744,6 +744,8 @@ check "planes answer: model + links"      node tests/planes-model.mjs
 check "Find areas: words read into choices" node tests/find-words.mjs
 # The walkthrough below the map (2026-11-03): what its noise and air steps say from the example's answer.
 check "walkthrough: noise + air steps"    node tests/home-sections.mjs
+# /api/'s "Try a request" (2026-11-05): every answer a reader can reach, from real responses, under the page's own policy.
+check "API page: try a request"            node tests/api-demo.mjs
 check "postcode box suggestions"        node tests/place-box.mjs
 check "panel findings"                  node tests/panel-findings.mjs
 # The full map's air side by side (2026-11-03, Bill's refined B): js/street_report.mjs airChart() is pure, so its
@@ -755,6 +757,8 @@ check "air side by side: chart"           node tests/air-chart.mjs
 # plane and aria-valuetext follows, reduced motion stills it, tiles load as they come into view, and every picture
 # path is absolute (the page is also served at /how-it-works, no slash, where relative ones 404).
 check "approach strip works, at both widths" node tests/approach-strip.mjs
+# About and How it works on Stitch's layout (2026-11-05): the real pictures, the bands, the rail, each bar's length.
+check "About + How it works: layout"        node tests/page-bands.mjs
 # 99 static area pages are the site's only indexable surface; thin or
 # duplicated ones are worse than none (doorway pages), so this asserts
 # CONTENT and that the sitemap agrees in both directions.

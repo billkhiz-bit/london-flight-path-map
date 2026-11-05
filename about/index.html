@@ -28,7 +28,11 @@
       where it is not used (Bill, 2026-10-24: not "AI slop"). The film itself is a plain link to YouTube, because
       this policy allows no frames and an embed would set YouTube's cookies.
       The film and the prototype link are counted by js/count.mjs (an allow-list; front-page.mjs 16f). Demos given
-      at events go under "Talks and demos", never on the timeline (Bill, 2026-10-24: product steps only there).
+      at events are steps on the timeline too since 2026-11-05 (Bill, reversing his 2026-10-24 "product steps only": "an important
+      part of the Sky Score story"), with their photos and links still under "Talks and demos".
+      On Stitch's layout since 2026-11-05 (Bill's brief of 4 Nov): the speaker photo is the hero, the promises and the
+      questions on the same warm and cool bands as /pricing, the contact band dark; every word and link kept.
+      tests/page-bands.mjs holds the layout.
     -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
@@ -37,6 +41,8 @@
     <style>
       :root {
         --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --rule: #c4c1b8; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12;
+        /* The bands' colours, as /pricing has them: --on-tint is --mid darkened for a coloured band, --on-dark text on the dark one. */
+        --tint: #fbeee3; --water: #dbe4e8; --on-tint: #3f3f3b; --on-dark: #dedcd6;
         --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
         --gutter: clamp(16px, 4vw, 48px);
         color-scheme: light;
@@ -54,7 +60,8 @@
       nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight: 600; }
       nav.top-nav a:hover { color: var(--dark); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
       nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }
-      main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
+      /* 1440, as /pricing: the coloured bands should reach the bar's right edge on a laptop. */
+      main { padding: 24px var(--gutter) 40px; max-width: 1440px; }
       h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 5.2vw, 64px); line-height: 1.0; letter-spacing: -0.04em; margin: 0 0 20px; text-wrap: balance; }
       h1 .ink { color: var(--orange-ink); }
       p.lead { margin: 0; color: var(--mid); font-size: 19px; max-width: 48ch; }
@@ -64,7 +71,12 @@
       /* Sections (2026-10-24, Bill: "bunched up, no clear separation"): each opens on a full-width rule with room
          above and below, so where one ends is seen, not inferred from a gap. The contact band is its own panel. */
       section { margin: 0 0 clamp(64px, 8vw, 104px); scroll-margin-top: 16px; }
-      main > section:not(.contact) { border-top: 1px solid var(--rule); padding-top: clamp(28px, 3.5vw, 44px); }
+      main > section:not(.contact, .band) { border-top: 1px solid var(--rule); padding-top: clamp(28px, 3.5vw, 44px); }
+      /* The bands (Stitch's layout, Bill's brief of 2026-11-04): warm for what we promise, cool for what people ask, dark for
+         the close, the same three as /pricing. */
+      section.band { padding: clamp(20px, 3vw, 36px); border-radius: 18px; }
+      #promises { background: var(--tint); }
+      #asked { background: var(--water); }
       figure { margin: 0; }
       figure img { border-radius: 18px; width: 100%; }
       figcaption { margin: 8px 2px 0; font-size: 13px; color: var(--mid); }
@@ -82,25 +94,27 @@
       ul.links a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; }
       ul.links a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
-      /* Why I built it: a letter beside the photo of the map being explained. */
-      .letter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; }
-      @media (min-width: 900px) { .letter { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 56px; } }
+      /* The hero: the map being explained. 16:9, cropped to keep both the speaker and the screen, so it is held from the top
+         third: the floor is what goes. tests/page-bands.mjs measures the frame. */
+      figure.hero { margin: 0 0 clamp(48px, 6vw, 72px); }
+      figure.hero img { aspect-ratio: 16 / 9; object-fit: cover; object-position: 50% 22%; }
+
+      /* Why I built it: a letter, one column, under the photo of the map being explained. */
       .letter p { max-width: 60ch; }
       .signed { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
       .signed img { width: 52px; height: 52px; border-radius: 50%; }
       .signed b { display: block; font-family: var(--font-display); font-weight: 600; line-height: 1.2; }
       .signed span { font-size: 15px; color: var(--mid); }
 
-      /* What you can hold us to (2026-10-24, Bill): four promises a reader can check, each under a dark rule, so it
-         reads as a standard rather than another set of cards; then the publishers, as text (a logo can imply an
-         endorsement). tests/test_about_sources.py holds every named publisher to a live source in LICENSING.md. */
-      ul.promises { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px 32px; }
+      /* What you can hold us to (2026-10-24, Bill): four promises a reader can check, on the warm band since 2026-11-05;
+         then the publishers, as text (a logo can imply an endorsement). tests/test_about_sources.py holds every named
+         publisher to a live source in LICENSING.md. */
+      ul.promises { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
       @media (min-width: 640px) { ul.promises { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-      @media (min-width: 1080px) { ul.promises { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-      ul.promises li { border-top: 2px solid var(--dark); padding-top: 12px; }
+      ul.promises li { background: var(--paper); border-radius: 16px; padding: 22px 24px; }
       ul.promises b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; line-height: 1.25; margin: 0 0 6px; }
       ul.promises span { color: var(--mid); font-size: 16px; }
-      p.sources { margin: 26px 0 0; max-width: 78ch; font-size: 16px; color: var(--mid); }
+      p.sources { margin: 26px 0 0; max-width: 78ch; font-size: 16px; color: var(--on-tint); }
 
       /* How it grew: a real sequence, so the months sit on a dashed rail like a route on the map, with a waypoint
          at each. The first waypoint is filled: it is where the route starts. */
@@ -115,6 +129,42 @@
       ol.grew h3 { font-size: clamp(19px, 1.9vw, 22px); margin: 0 0 4px; }
       ol.grew p { margin: 0; max-width: 60ch; color: var(--mid); }
       p.grew-more { margin: 4px 0 0 34px; font-size: 16px; color: var(--mid); }
+      /* Across the page on a wide screen (Bill, 2026-11-05: "would it be better for how it grew to be horizontal?", then his pick
+         of cards, his talks among the steps, and the film kept in the timeline). Ten steps in one row would be about 110 px each,
+         so they alternate above and below the rail. Twelve columns: the first card takes three, because it holds the film and
+         the start of the story, and every other card two, each starting further along than the last. Under 1320 px a card
+         would drop below a readable line, so it stays down the page. tests/page-bands.mjs measures all of this. */
+      @media (min-width: 1320px) {
+        ol.grew.across { max-width: none; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto 88px auto; column-gap: 14px; }
+        ol.grew.across::before { content: ""; grid-column: 1 / -1; grid-row: 2; align-self: center; height: 2px; background: repeating-linear-gradient(to right, var(--orange-ink) 0 6px, transparent 6px 12px); }
+        ol.grew.across > li { display: block; padding: 16px 16px 18px; border-radius: 16px; background: var(--paper); grid-row: 1; }
+        ol.grew.across > li:nth-child(even) { grid-row: 3; }
+        ol.grew.across > li:nth-child(1) { grid-column: 1 / 4; }
+        ol.grew.across > li:nth-child(2) { grid-column: 3 / 5; }
+        ol.grew.across > li:nth-child(3) { grid-column: 4 / 6; }
+        ol.grew.across > li:nth-child(4) { grid-column: 5 / 7; }
+        ol.grew.across > li:nth-child(5) { grid-column: 6 / 8; }
+        ol.grew.across > li:nth-child(6) { grid-column: 7 / 9; }
+        ol.grew.across > li:nth-child(7) { grid-column: 8 / 10; }
+        ol.grew.across > li:nth-child(8) { grid-column: 9 / 11; }
+        ol.grew.across > li:nth-child(9) { grid-column: 10 / 12; }
+        ol.grew.across > li:nth-child(10) { grid-column: 11 / 13; }
+        ol.grew.across > li.talk { background: var(--tint); }
+        ol.grew.across > li::before { left: 22px; width: 2px; top: 100%; bottom: auto; height: 37px; background: var(--rule); }
+        ol.grew.across > li:nth-child(even)::before { top: auto; bottom: 100%; }
+        ol.grew.across > li:last-child::before { display: block; }
+        ol.grew.across > li::after { left: 16px; top: calc(100% + 37px); }
+        ol.grew.across > li:nth-child(even)::after { top: auto; bottom: calc(100% + 37px); }
+        ol.grew.across time { display: block; font-size: 14px; }
+        ol.grew.across h3 { font-size: 17px; line-height: 1.25; }
+        ol.grew.across p { font-size: 14.5px; line-height: 1.5; }
+        ol.grew.across figure.film { margin-top: 12px; }
+        ol.grew.across figure.film a { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 12px; align-items: center; }
+        ol.grew.across .film .play { width: 34px; height: 34px; margin: -17px 0 0 -17px; }
+        ol.grew.across .film-label { margin: 0; font-size: 14px; line-height: 1.35; }
+        ol.grew.across figure.film figcaption { margin: 6px 0 0; font-size: 12.5px; }
+        ol.grew.across ~ p.grew-more { margin: 28px 0 0; }
+      }
       /* The hackathon film is a link out, never an embed: a still of our own, and nothing from YouTube loads until
          someone chooses to watch. */
       figure.film { margin: 16px 0 0; max-width: 560px; }
@@ -137,7 +187,7 @@
       dl.asked dt::before { content: "\201C"; color: var(--orange-ink); }
       dl.asked dt::after { content: "\201D"; color: var(--orange-ink); }
       dl.asked dd { margin: 0; color: var(--mid); font-size: 16px; }
-      p.asked-note { color: var(--mid); font-size: 15px; margin: -6px 0 18px; }
+      p.asked-note { color: var(--on-tint); font-size: 15px; margin: -6px 0 18px; }
 
       /* The two talk photos share one 16:9 frame and one row (2026-10-24, Bill: smaller), so the portrait Deen
          Developers photo no longer sets the row's height; its crop keeps the speaker's face (object-position). */
@@ -151,11 +201,11 @@
       ul.talk-links a, ul.talk-links b { font-weight: 600; color: var(--dark); }
 
       /* The close: one band, the three ways to reach a person. */
-      .contact { background: var(--paper); border-radius: 18px; padding: clamp(22px, 3vw, 36px); display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+      .contact { background: var(--dark); color: #fff; border-radius: 18px; padding: clamp(22px, 3vw, 36px); display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
       .contact h2 { margin: 0; }
       ul.links { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
-      ul.links a { box-shadow: inset 0 0 0 1.5px var(--dark); color: var(--dark); }
-      ul.links a.primary { background: var(--dark); color: #fff; }
+      ul.links a { box-shadow: inset 0 0 0 1.5px var(--on-dark); color: #fff; }
+      ul.links a.primary { background: var(--orange); box-shadow: none; color: var(--dark); }
 
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer a { color: var(--mid); }
@@ -207,14 +257,15 @@
         </nav>
       </div>
 
+      <figure class="hero">
+        <picture>
+          <source srcset="/about/talk-ai-tinkerers-speaker.webp" type="image/webp" />
+          <img src="/about/talk-ai-tinkerers-speaker.jpg" width="1600" height="1314" alt="Bilal Khizar speaking into a microphone beside a large screen showing the Sky Score map of London's flight paths." />
+        </picture>
+        <figcaption>Showing the map at AI Tinkerers London, 22 September 2026.</figcaption>
+      </figure>
+
       <section class="letter" id="why" aria-labelledby="why-h">
-        <figure>
-          <picture>
-            <source srcset="/about/talk-ai-tinkerers-speaker.webp" type="image/webp" />
-            <img src="/about/talk-ai-tinkerers-speaker.jpg" width="1600" height="1314" alt="Bilal Khizar speaking into a microphone beside a large screen showing the Sky Score map of London's flight paths." />
-          </picture>
-          <figcaption>Showing the map at AI Tinkerers London, 22 September 2026.</figcaption>
-        </figure>
         <div>
           <h2 id="why-h">Why I built it</h2>
           <p>I went to a property viewing, and while I was there a plane flew low overhead. The listing hadn't said a word about it.</p>
@@ -226,7 +277,7 @@
         </div>
       </section>
 
-      <section id="promises" aria-labelledby="promises-h">
+      <section class="band" id="promises" aria-labelledby="promises-h">
         <h2 id="promises-h">What you can hold us to</h2>
         <ul class="promises">
           <li><b>Every figure has a source.</b><span>Each one comes from the organisation that measured or published it, and is credited to them.</span></li>
@@ -239,7 +290,7 @@
 
       <section id="grew" aria-labelledby="grew-h">
         <h2 id="grew-h">How it grew</h2>
-        <ol class="grew">
+        <ol class="grew across">
           <li>
             <time datetime="2026-03">March 2026</time>
             <div>
@@ -288,6 +339,20 @@
               <p>Nine more English city regions, from Greater Manchester to Teesside.</p>
             </div>
           </li>
+          <li class="talk">
+            <time datetime="2026-07-30">July 2026 &middot; Live demo</time>
+            <div>
+              <h3>Deen Developers' Build Night</h3>
+              <p>No pitching allowed: you open the thing and use it live, in front of everyone. So I did.</p>
+            </div>
+          </li>
+          <li class="talk">
+            <time datetime="2026-09-22">September 2026 &middot; Talk</time>
+            <div>
+              <h3>AI Tinkerers London</h3>
+              <p>I talked through the map on the big screen. <a href="https://london.aitinkerers.org/talks/rsvp_PqkfcAzQqdQ">The talk page and recording</a> (sign-in needed).</p>
+            </div>
+          </li>
           <li>
             <time datetime="2026-09">September 2026</time>
             <div>
@@ -301,11 +366,19 @@
               <h3>The Bay Area, and the air nearby</h3>
               <p>Fifty Bay Area cities, shown as facts without a score, and the air measured near a postcode, from Breathe London's sensors and the government's monitors.</p>
             </div>
-          </li>        </ol>
+          </li>
+          <li class="talk">
+            <time datetime="2026-10-14">October 2026 &middot; Talk and live demo</time>
+            <div>
+              <h3>London Geo Meetup</h3>
+              <p>&ldquo;From hackathon to live map&rdquo;: the stories behind the map, told online.</p>
+            </div>
+          </li>
+        </ol>
         <p class="grew-more">Every change, with its date: <a href="/changes">What changed, and when</a>.</p>
       </section>
 
-      <section id="asked" aria-labelledby="asked-h">
+      <section class="band" id="asked" aria-labelledby="asked-h">
         <h2 id="asked-h">Questions people have asked</h2>
         <p class="asked-note">Asked out loud, by the audience at a talk.</p>
         <dl class="asked">

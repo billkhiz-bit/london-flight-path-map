@@ -24,12 +24,10 @@ PALETTE = {
 HELD = (
     '404.html', 'about/index.html', 'api/index.html', 'home/index.html', 'home/reports/index.html',
     'home/reports/street/index.html', 'how-it-works/index.html', 'pricing.html',
-    'area/', 'open-data/',
+    'area/', 'open-data/', 'bay-area/',
 )
 
-WAITING = {
-    'bay-area/': 'its own builder; moves next',
-}
+WAITING = {}
 
 OWN_COLOURS = {
     'index.html': "the full map: its own surfaces, for a panel that sits on a map",

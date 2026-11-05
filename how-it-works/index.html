@@ -19,6 +19,9 @@
       written by scripts/build_how_it_works.py from the score engine; edit the words around them, never the
       blocks. Wording rules (CLAUDE.md): one licence per dataset, never one for the product; shares are of
       postcodes; nothing here says how often planes fly; no prices of ours outside /pricing.
+      On Stitch's layout since 2026-11-05 (Bill's brief of 4 Nov): the short version first on the warm band, the worked
+      example open with a bar for each score, the five scores as cards, the limits on the cool band, the folds as
+      full-width rows. Every word and section id kept; the approach strip untouched. tests/page-bands.mjs holds the layout.
     -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
@@ -27,6 +30,8 @@
     <style>
       :root {
         --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12;
+        /* The bands' colours, as /pricing has them; --track is the area pages' bar. */
+        --tint: #fbeee3; --water: #dbe4e8; --track: #e4e3e0;
         --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
         --gutter: clamp(16px, 4vw, 48px);
         color-scheme: light;
@@ -58,23 +63,25 @@
       p { margin: 0 0 14px; }
       .quiet { color: var(--mid); font-size: 15px; }
       /* Read more (declutter, 2026-11-03; Bill: "do the proposed fixes"): every heading and its opening words stay
-         open, the detail one click away, the contents pills' own look. The page was 9 screens (14.6 on a phone). */
-      details.more { margin: 4px 0 0; }
-      details.more > summary { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; list-style: none;
-        font-size: 15px; font-weight: 600; padding: 8px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line); }
+         open, the detail one click away. The page was 9 screens (14.6 on a phone). Full-width rows since 2026-11-05. */
+      details.more { margin: 4px 0 0; border-block: 1px solid var(--line); }
+      details.more > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none;
+        font-size: 15px; font-weight: 600; padding: 13px 2px; }
       details.more > summary::-webkit-details-marker { display: none; }
       details.more > summary::after { content: "+" / ""; font-family: var(--font-mono); font-weight: 500; color: var(--orange-ink); }
       details.more[open] > summary::after { content: "\2212" / ""; }
-      details.more > summary:hover { box-shadow: inset 0 0 0 1.5px var(--dark); }
-      details.more[open] > summary { margin-bottom: 16px; }
-      /* The short version, under the approach strip (which Bill wanted straight after the opening words, 26 Oct). */
-      .short { background: var(--paper); border-radius: 18px; padding: clamp(18px, 3vw, 26px); max-width: 76ch; }
-      .short ul { margin: 0; padding-left: 20px; }
-      .short li { margin: 0 0 8px; }
+      details.more > summary:hover { text-decoration: underline; text-underline-offset: 4px; }
+      details.more[open] { padding-bottom: 14px; }
+      details.more[open] > summary { margin-bottom: 6px; }
+      /* The short version comes first, on the warm band (the reviewed draft of 2026-11-04). The strip had been straight after
+         the opening words since Bill's call of 26 Oct: this moves it down by this one band, and is one move to undo. */
+      .short { background: var(--tint); border-radius: 18px; padding: clamp(18px, 3vw, 26px); }
+      .short ul { margin: 0; padding: 0; list-style: none; }
+      .short li { margin: 0 0 12px; }
       .short li:last-child { margin: 0; }
 
       /* The worked example: the arithmetic itself, as a receipt. Numbers are mono so the columns line up. */
-      .example { background: var(--paper); border-radius: 18px; padding: clamp(18px, 3vw, 30px); max-width: 760px; margin: 0 0 14px; }
+      .example { background: var(--paper); border-radius: 18px; padding: clamp(18px, 3vw, 30px); margin: 0 0 14px; }
       table.sum { width: 100%; border-collapse: collapse; font-size: 16px; }
       table.sum caption { text-align: left; font-family: var(--font-display); font-weight: 600; font-size: 18px; margin: 0 0 10px; }
       table.sum th, table.sum td { padding: 9px 0; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--font-mono); font-size: 15px; font-variant-numeric: tabular-nums; }
@@ -88,20 +95,17 @@
       .tag.off { color: var(--mid); box-shadow: inset 0 0 0 1px #bdbab2; }
       .tag.est { color: var(--orange-ink); box-shadow: inset 0 0 0 1.5px var(--orange-ink); }
       .tag.band { color: var(--orange-ink); border: 1px dashed var(--orange-ink); line-height: 17px; }
-      .key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: 0; background: var(--line); }
-      .key-quiet { background: #8b897f; } .key-afford, .seg-afford { background: var(--orange-ink); }
-      .key-growth, .seg-growth { background: #c9c5bb; } .key-live, .seg-live { background: var(--dark); } .key-env, .seg-env { background: var(--orange); }
-      .seg-quiet { background: #8b897f; }
-      /* The total as a length on the 0-10 scale, one segment per score's points; what is left is unscored. */
-      .bar { display: flex; height: 16px; margin: 20px 0 4px; border-radius: 4px; background: repeating-linear-gradient(90deg, #ebe9e3 0 calc(10% - 1px), var(--line) calc(10% - 1px) 10%); overflow: hidden; }
-      .bar .seg { display: block; height: 100%; box-shadow: inset -2px 0 0 var(--paper); }
-      p.scale { display: flex; justify-content: space-between; margin: 0; font-family: var(--font-mono); font-size: 12px; color: var(--mid); }
+      /* Each score on its own scale, from a true zero to 10, as the area pages draw one (scripts/build_how_it_works.py bar()). */
+      .bar { display: block; height: 8px; margin: 7px 0 0; max-width: 340px; border-radius: 4px; background: var(--track); overflow: hidden; }
+      .bar i { display: block; height: 100%; border-radius: 4px; }
       p.cost { margin: 14px 0 0; color: var(--dark); font-size: 16px; }
 
-      dl.scores { margin: 0 0 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-      dl.scores div { padding-left: 14px; border-left: 3px solid var(--line); }
+      dl.scores { margin: 0 0 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+      dl.scores div { padding: 18px 20px; border-radius: 16px; background: var(--paper); }
       dl.scores dt { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
       dl.scores dd { margin: 2px 0 0; color: var(--mid); }
+      #limits { padding: clamp(18px, 3vw, 26px); border-radius: 18px; background: var(--water); }
+      #limits ul.plain { margin-bottom: 0; }
       ul.plain { margin: 0 0 14px; padding-left: 20px; }
       ul.plain li { margin: 6px 0; }
       .two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin: 0 0 14px; max-width: 900px; }
@@ -365,6 +369,15 @@
           <li><a href="#coverage">Places we don't cover yet</a></li>
         </ul>
       </nav>
+      <section id="short" class="short" aria-labelledby="short-h">
+        <h2 id="short-h">The short version</h2>
+        <ul>
+          <li>Five scores out of 10, where higher is always better: Quiet Skies, Affordability, Price growth, Liveability and Environment. The overall score weighs them by what you care about.</li>
+          <li>Almost every figure is a public body's own published data. Two we work out ourselves, and every answer says how: Quiet Skies where the official noise map has no figure, and how many planes pass overhead at the airports we can check against official figures.</li>
+          <li>Where something isn't published, we leave it out and say so. We never fill a gap with a typical value, and nothing here is advice.</li>
+        </ul>
+      </section>
+
       <!-- THE APPROACH STRIP (Bill, 2026-10-26: "high up, straight after the opening paragraph"). Made by the
            Blender repo's scripts/strip_page.py (OneDrive SkyScore Hero
 enders\strip_v7_site\HANDOFF.md); its
@@ -460,45 +473,32 @@ enders\strip_v7_site\HANDOFF.md); its
         <details class="notes"><summary>About this picture: what is drawn, and how</summary><div id="approach-notes"></div></details>
       </section>
 
-      <section id="short" class="short" aria-labelledby="short-h">
-        <h2 id="short-h">The short version</h2>
-        <ul>
-          <li>Five scores out of 10, where higher is always better: Quiet Skies, Affordability, Price growth, Liveability and Environment. The overall score weighs them by what you care about.</li>
-          <li>Almost every figure is a public body's own published data. Two we work out ourselves, and every answer says how: Quiet Skies where the official noise map has no figure, and how many planes pass overhead at the airports we can check against official figures.</li>
-          <li>Where something isn't published, we leave it out and say so. We never fill a gap with a typical value, and nothing here is advice.</li>
-        </ul>
-      </section>
-
       <section id="example" aria-labelledby="example-h">
         <h2 id="example-h">A score, taken apart</h2>
         <p class="read">Each score is out of 10, and higher is better. The overall score multiplies each one by its weight and adds them up. Here is Hounslow, the council area next to Heathrow.</p>
-        <details class="more"><summary>Show the worked example</summary>
         <div class="example">
           <!-- HOW-IT-WORKS-EXAMPLE:BEGIN (scripts/build_how_it_works.py --write; never edit by hand) -->
           <table class="sum">
             <caption>Hounslow, balanced view, for the council area as a whole</caption>
             <thead><tr><th scope="col">Score</th><th scope="col">Out of 10</th><th scope="col">Weight</th><th scope="col">Points</th></tr></thead>
             <tbody>
-              <tr><th scope="row"><span class="key key-quiet" aria-hidden="true"></span>Quiet Skies <span class="tag band">area band</span></th><td>0.0</td><td>32%</td><td>0.00</td></tr>
-              <tr><th scope="row"><span class="key key-afford" aria-hidden="true"></span>Affordability <span class="tag off">official data</span></th><td>2.1</td><td>27%</td><td>0.57</td></tr>
-              <tr><th scope="row"><span class="key key-growth" aria-hidden="true"></span>Price growth <span class="tag off">official data</span></th><td>3.7</td><td>0%</td><td>0.00</td></tr>
-              <tr><th scope="row"><span class="key key-live" aria-hidden="true"></span>Liveability <span class="tag off">official data</span></th><td>7.2</td><td>27%</td><td>1.94</td></tr>
-              <tr><th scope="row"><span class="key key-env" aria-hidden="true"></span>Environment <span class="tag off">official data</span></th><td>6.5</td><td>14%</td><td>0.91</td></tr>
+              <tr><th scope="row">Quiet Skies <span class="tag band">area band</span><span class="bar" aria-hidden="true"><i style="width:0.0%;background:#f27d26"></i></span></th><td>0.0</td><td>32%</td><td>0.00</td></tr>
+              <tr><th scope="row">Affordability <span class="tag off">official data</span><span class="bar" aria-hidden="true"><i style="width:21.0%;background:#f27d26"></i></span></th><td>2.1</td><td>27%</td><td>0.57</td></tr>
+              <tr><th scope="row">Price growth <span class="tag off">official data</span><span class="bar" aria-hidden="true"><i style="width:37.0%;background:#f27d26"></i></span></th><td>3.7</td><td>0%</td><td>0.00</td></tr>
+              <tr><th scope="row">Liveability <span class="tag off">official data</span><span class="bar" aria-hidden="true"><i style="width:72.0%;background:#26f27d"></i></span></th><td>7.2</td><td>27%</td><td>1.94</td></tr>
+              <tr><th scope="row">Environment <span class="tag off">official data</span><span class="bar" aria-hidden="true"><i style="width:65.0%;background:#f2b826"></i></span></th><td>6.5</td><td>14%</td><td>0.91</td></tr>
             </tbody>
-            <tfoot><tr><th scope="row">Overall score</th><td></td><td>100%</td><td class="total">3.4</td></tr></tfoot>
+            <tfoot><tr><th scope="row">Overall score<span class="bar" aria-hidden="true"><i style="width:34.0%;background:#f27d26"></i></span></th><td></td><td>100%</td><td class="total">3.4</td></tr></tfoot>
           </table>
-          <div class="bar" aria-hidden="true"><span class="seg seg-afford" style="width:5.7%"></span><span class="seg seg-live" style="width:19.4%"></span><span class="seg seg-env" style="width:9.1%"></span></div>
-          <p class="scale" aria-hidden="true"><span>0</span><span>10</span></p>
           <p class="cost">Quiet Skies is 32% of the score in this view. At 0.0 next to an airport, 3.2 of the 10 possible points are out of reach before anything else is counted.</p>
           <!-- HOW-IT-WORKS-EXAMPLE:END -->
         </div>
         <p class="read quiet">For a whole council area, Quiet Skies is a band we set from the aircraft noise across it. A postcode inside Hounslow gets its own figure instead, so scores change from street to street. The points are each score times its weight; the overall score is their total, rounded to one decimal place.</p>
-        </details>
       </section>
 
       <section id="scores" aria-labelledby="scores-h">
         <h2 id="scores-h">The five scores</h2>
-        <dl class="scores read">
+        <dl class="scores">
           <div><dt>Quiet Skies</dt><dd>How free a place is from aircraft noise. 10 is the quietest. Where the government's official noise map covers a postcode, we use its figure. Everywhere else, we estimate it from the published flight routes.</dd></div>
           <div><dt>Affordability</dt><dd>How cheap homes are, from the average price in the council area, compared with every council area we cover. 10 is the cheapest.</dd></div>
           <div><dt>Price growth</dt><dd>How much prices rose over the last year, after inflation. Only the investor view counts it.</dd></div>

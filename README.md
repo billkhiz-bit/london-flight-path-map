@@ -88,11 +88,11 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | Reports (samples; their prices are on /pricing) | <https://skyscore.co.uk/reports/> |
 | Pricing (every price since 2026-10-06: councils, platforms, firms' reports) | <https://skyscore.co.uk/pricing> |
 | Privacy policy | <https://skyscore.co.uk/privacy> |
-| Area pages (102 boroughs, static, no JS) | <https://skyscore.co.uk/area/> |
+| Area pages (102 boroughs, static, findings first with bars and rating strips) | <https://skyscore.co.uk/area/> |
 | Open data (every council area's figures in one CSV) | <https://skyscore.co.uk/open-data/> |
 | Bay Area flight paths (San Francisco, Oakland, San Jose) | <https://skyscore.co.uk/bay-area/> |
 | Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
-| API landing page | <https://skyscore.co.uk/api/> |
+| API landing page (send a real request from the page) | <https://skyscore.co.uk/api/> |
 | API browser demo | <https://skyscore.co.uk/score-demo/index.html> |
 | API reference (Swagger UI) | <https://skyscore.co.uk/score-demo/api-docs.html> |
 | OpenAPI 3.0 spec | <https://skyscore.co.uk/score-demo/openapi.yaml> |

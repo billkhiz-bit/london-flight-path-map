@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-04 - Stitch chosen for page layouts, one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+**Last reviewed:** 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area built on `page-drafts`, not deployed; previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
 the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
@@ -26,10 +26,31 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-05)
+>
+> **Bill said "deploy" 5 Nov** (his brief of 4 Nov, built on `page-drafts`). `/api/` has "Try a request": a reader sends a postcode and sees the real request and answer, through the front page's band, now one
+> module (`js/dev-demo.mjs`) on two pages, their styles held equal. It asks the open route only, and nothing goes to postcodes.io until a reader sends. About opens on the speaker photo, its promises and questions on the bands, and "How it grew"
+> is ten cards along a rail from 1320 px, his talks among the steps and the film in a wider first card (four rounds of his picks that day). How it works opens on the short version, its example open with a bar per score. `/bay-area/` joined the palette, so `WAITING` is empty.
+> Every word, link and `data-event` was diffed against master; only "Show the worked example" went, with its fold, and the three talk cards are the only new words. A code review before preflight found 10 points past 141 green checks: 9 fixed, each with a check. Deliberate breaks then proved the gates.
+> The session died at 14:18 mid-check (nothing lost) and the next one re-ran the second review: 10 more points, all on `/api/`. 8 fixed, each proven red: a press of the postcode on show now cancels what is on its way and takes back an old problem, a press of the example still on its way plays when it lands, the run on arriving ends at any press, the band keeps its room (shift 0.10 to under 0.02), its words follow the form, `finite` and `el` have one holder, the sub-processor row is in date order.
+>
+> **THE FLOOD GATE CHANGED 5 NOV:** preflight went red on Tyne and Wear at 12/14 on the fixed seed; seeds 23 and 37 read 13/14 and 16/16, so the map has not drifted. A confirmation is now 64 a class at 92%, not 16 at 90%: no easier on a bad edge in any of the 12 cities, no harder on a true 95% class in any (`docs/lessons/flood.md`, with the table). 48 at 90% was tried first and an independent review caught it easing three cities.
+>
+> **LATER, ONE BACKEND CHANGESET, not this release:** (1) `/v1/environment` answers 404 when its own postcodes.io call fails (`reverse_geocode` returns None for both): it should be a 502 or 503, keeping 404 for the sea; the page's words cover both meanwhile. (2) `GatewayResponses` set no CORS header, so a browser cannot tell a throttle from a network failure: adding `Access-Control-Allow-Origin` to DEFAULT_4XX/5XX would let `/api/` say so. Both change what API callers see, so they go through a reviewed changeset, with Bill's yes.
+>
+> **NEXT, Bill's yes 5 Nov, own branch:** the front page holds the example's point, so a visit stops reaching postcodes.io (privacy s2b covers a search, not that), and live postcode suggestions as you type on the front page and `/api/`, as the full map has
+> them; the line "Nothing you type is sent until you search" goes. The short version above the strip stays, unless he says otherwise. SETTLED 5 Nov: a press plays for a reader with reduced motion too (the review queried it; Bill: "yes do the animation").
+>
+> **ALSO 5 NOV:** NOW.md trimmed 385 to 174 lines, section 4's history moved word for word to `90_DAY_ROADMAP.md`. Explee and alternatives assessed: buy nothing (memory `project-outreach-tools-assessment-2026-11-05`). PICKED UP NEXT: a Buyer Scout
+> if Bill says yes: Companies House plus a regulator's list, ranked with our own figures, drafts only, organisations only until the gates clear.
+
 > ## START HERE (2026-11-04)
 >
-> **4 Nov late.** LIVE (`b8e9c041`): the full map's panel findings first, Pricing coloured by audience (Bill's pick B). Built next, on Stitch's layout: the area and planes templates, the 404 and
-> open data on the palette, held by `tests/test_site_palette.py`. Order item 3 follows: About, How it works, API.
+> **4 Nov, last release.** LIVE (`d0e1d409`): all 103 area and 464 planes pages on Stitch's layout, with Bill's pick B of visuals (bars where a true number compares, labelled strips for ratings) and plain
+> words for crime and schools; the consultation pack, open data and 404 on the palette; `tests/test_site_palette.py` holds them all but `bay-area/`. Next: drafts of About, How it works and API, one at a time.
+> The front page's redesign waits only on Bill's call: the read it protects is the top bar and Book a demo clicks on the page shipped today.
+>
+> **4 Nov late.** LIVE (`b8e9c041`): the full map's panel findings first, Pricing coloured by audience (Bill's pick B).
 >
 > **4 Nov night.** LIVE (`b67b2871`): the API's `aircraftQuietCoverage` says `modelled`; the score Lambda has 1,024 MB (cold call about
 > 1.0 s, was 3.0 s). Bill picked Stitch's plain-headline panel over four rounds of charts, then its layouts for the site. Order: full map
