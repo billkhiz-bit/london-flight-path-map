@@ -139,3 +139,8 @@ Sheffield closed to commercial flights in 2022), and un-gating turned that into
 the gate had been hiding. It now falls back to the borough band. Any new city
 without an airport needs that path to stay intact.
 
+## The Heathrow comparison is one model on two years (2026-11-06)
+
+For two months the map and `/api/` said DEFRA's 2021 Heathrow map and the CAA's yearly contours were "different models". The 3 Nov fix unasserted it in METHODOLOGY and the script, and called it done in ROADMAP, while the two pages kept the sentence: a fix that names a phrase has not landed until the phrase is grepped across what is served. The brief for the Leicester call (Desktop, 3 Nov) had found the answer, and the primary documents, read on 6 Nov, settle it. Heathrow's Noise Action Plan 2024-2028 says ERCD produced the 2021 Lden contours with ANCON version 2.4 (p. 9) and that the CAA is the competent authority for the noise mapping (p. 38). ERCD Report 2201's Table 8 (75.6, 30.2, 9.1, 3.2, 1.4 km2) matches our measurement of DEFRA's raster to within 0.1 km2 at all five levels, and ERCD Report 2601 also used ANCON 2.4. Not known: whether the published raster is ERCD's grid as delivered or a re-run.
+
+"A highly anomalous situation" had been credited to DEFRA, from an August note that mixed "DEFRA's documentation" with "Noise Action Plans" and named no document. A search found no DEFRA source. It may be DEFRA's; the pages now cite where it was read, Heathrow's plan, p. 9. The unsourced "~448,700" 2019 movements in METHODOLOGY went the same way, replaced by the CAA's own daily figures: 1,347.1 in 2019 (ERCD 2601) and 535.0 in 2021 (ERCD 2201).

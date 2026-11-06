@@ -3,8 +3,8 @@
 WHY THIS EXISTS
 ---------------
 Every aircraft figure this product publishes rests on DEFRA's Round 4 strategic
-noise map, which models 2021 traffic - a COVID year DEFRA itself calls
-atypical. The caveat used to say the contours were "likely smaller than in a
+noise map, which models 2021 traffic - a COVID year Heathrow's Noise Action Plan
+says shows "a highly anomalous situation". The caveat used to say the contours were "likely smaller than in a
 normal year", a hand-wave. The CAA's own annual report for Heathrow publishes
 Lden contour AREAS for a normal year, so the gap can be measured instead of
 described. The current edition is ERCD Report 2601 (August 2026): 2025, when
@@ -21,9 +21,11 @@ ERCD_URL together, run --verify-caa (it parses the new PDF), then --write, then
 fix every page --check names. The JSON's keys carry no year (`caa_km2` and
 `caa_year`), so readers never need renaming.
 
-WHAT THE RATIO IS NOT. The two model different years, with different traffic and
-population inputs. Whether they also differ in MODEL is not established (Heathrow's Round 4 strategic map may be
-the CAA's own ANCON run), so never assert it: "different models" was said here until 2026-11-03.
+WHAT THE RATIO IS NOT. Both are the CAA's ANCON model, version 2.4 in ERCD 2201 and 2601: Heathrow's Noise Action
+Plan 2024-2028 says ERCD produced the 2021 Lden contours and the CAA is the competent authority for the noise mapping
+(pp. 9, 38), and this script's measurement of DEFRA's raster reproduces ERCD 2201's Table 8 to within 0.1 km2. So the gap
+is one model's two years, never "different models", which stood on the live pages until 2026-11-06. Whether the raster
+is ERCD's grid as delivered or a re-run is not known.
 The ratio is a published order of magnitude for a caveat, NEVER a correction
 factor: scaling per-postcode readings by an area ratio would be a number nobody
 measured (see memory project-lcy-airport-weighting). It is also Heathrow only;

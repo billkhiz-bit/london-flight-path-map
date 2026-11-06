@@ -472,6 +472,11 @@ class WordingTests(unittest.TestCase):
         found = hits(OLD_BRAND, everything(), re.I)
         self.assertEqual(found, {}, 'the old name in public text (always "Sky Score"):\n' + fmt(found))
 
+    def test_the_heathrow_comparison_is_never_two_models(self):
+        # One model on two years: Heathrow's Noise Action Plan 2024-2028 pp. 9 and 38, ERCD Reports 2201 and 2601 (2026-11-06).
+        found = hits(r'\bdifferent models\b', everything(), re.I)
+        self.assertEqual(found, {}, "DEFRA's Heathrow map and the CAA's yearly contours are both the CAA's model:\n" + fmt(found))
+
     def test_ai_only_as_an_event_or_where_it_is_not_used(self):
         found = hits(AI_WORDS, everything(), allowed=AI_ALLOWED)
         self.assertEqual(found, {}, 'AI named other than as an event or where it is not used; read it, then '

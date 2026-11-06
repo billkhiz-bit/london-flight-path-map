@@ -118,6 +118,7 @@ Or just describe what you need, I have full context of this project.
   never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
+  **DEFRA's Heathrow map and the CAA's yearly contours are ONE model on two years** (ANCON v2.4; read from the PDFs 2026-11-06: Heathrow's Noise Action Plan 2024-2028 pp. 9 and 38, ERCD 2201, ERCD 2601): never "different models". "A highly anomalous situation" is cited to that plan, p. 9: DEFRA's authorship of it was never found.
   **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
   what a visitor sees; a new exception goes in its allow-lists WITH its reason, never a looser pattern.
 

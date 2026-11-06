@@ -3,6 +3,7 @@
 ## 2026-11-06 - About's links
 
 - **About's links stand out.** A section link fills orange under the pointer, and links in the text are dark orange.
+- **The Heathrow comparison says what it compares.** The full map and the API page said the 2021 map and the CAA's 2025 contours were different models. Both are the CAA's model, run on different years, and the pages now say so. The phrase "a highly anomalous situation" is now credited to Heathrow's Noise Action Plan, where it was read.
 
 ## 2026-11-05 - Try a request; About and How it works rebuilt
 
