@@ -136,11 +136,9 @@ for (const { path: page_path, sans, mono } of CASES) {
   const violations = [];
   const failed = [];
 
-  // Only font-related CSP violations matter here. Every page also logs
-  // "frame-ancestors is ignored when delivered via a <meta> element" (true and
-  // pre-existing, it needs a real header), and over local http the GoatCounter
-  // script trips its own https-scheme allow-list. Neither has anything to do
-  // with fonts, and failing on them would make this gate permanently red.
+  // Only font-related CSP violations matter here. Over local http the GoatCounter
+  // script trips its own https-scheme allow-list, which has nothing to do with
+  // fonts, and failing on it would make this gate permanently red.
   page.on('console', (m) => {
     const t = m.text();
     if (/Content Security Policy|Refused to/i.test(t) && /font/i.test(t)) violations.push(t);

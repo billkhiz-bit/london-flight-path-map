@@ -146,7 +146,7 @@ async function open(browser, { width, height, motion = 'no-preference', arrival 
   const seen = { env: [], geo: [], completions: [], score: 0, errors: [], csp: [], cancelled: [] };
   page.on('requestfailed', (r) => { if (/ERR_ABORTED/.test(r.failure()?.errorText || '')) seen.cancelled.push(r.url()); });
   page.on('pageerror', (e) => seen.errors.push(String(e)));
-  // 'frame-ancestors' in a <meta> draws a notice on every page (tests/changes-why.mjs): a refusal says it refused.
+  // A refusal says it refused.
   page.on('console', (m) => { if (/Refused to|violates the following Content Security Policy/i.test(m.text())) seen.csp.push(m.text()); });
   await page.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
   if (js) await page.addInitScript(() => {

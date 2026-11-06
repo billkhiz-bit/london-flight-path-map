@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Content Security Policy (enforcing - switched from Report-Only on 2026-05-07 after the survey of external resources matched all known fetches; revert if anything
-         breaks live and re-add '-Report-Only' to the http-equiv). Blocks
-         frame-ancestors (no clickjacking), restricts external script/style/font/connect origins
-         to known good ones (CDN compromise mitigation), forbids base-uri / form-action redirects.
+         breaks live and re-add '-Report-Only' to the http-equiv). Restricts external
+         script/style/font/connect origins to known good ones (CDN compromise mitigation), forbids
+         base-uri / form-action redirects. Framing is refused by CloudFront's X-Frame-Options: DENY: a meta CSP cannot.
          'unsafe-inline' on script-src is required because the entire app is inline JS; the bounded
          attack surface remains the escapeHtml / safeUrl coverage already audited end-to-end. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://skyscore.co.uk https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.skyscore.co.uk https://hazards.fema.gov https://gispub.epa.gov https://tiles.arcgis.com https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self'; manifest-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://skyscore.co.uk https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.skyscore.co.uk https://hazards.fema.gov https://gispub.epa.gov https://tiles.arcgis.com https://cubitt33.goatcounter.com; connect-src 'self' https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://api.postcodes.io https://hazards.fema.gov https://gispub.epa.gov https://raw.githubusercontent.com https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';"
     />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />

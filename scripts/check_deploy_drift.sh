@@ -625,11 +625,10 @@ for h in strict-transport-security x-content-type-options referrer-policy x-fram
   fi
 done
 
-# X-Frame-Options carries the CSPs' STATED intent, because theirs cannot.
-# Every page declares `frame-ancestors 'none'` in a <meta> CSP, where that
-# directive is IGNORED - so this header is the only thing actually refusing to
-# be framed. DENY matches what the pages claim, and the custom policy has
-# served it since 2026-09-28. SAMEORIGIN used to be accepted as the state
+# X-Frame-Options is the only thing refusing to be framed: a <meta> CSP cannot,
+# and the pages' `frame-ancestors 'none'`, ignored there, went on 2026-11-06
+# (tests/test_meta_csp.py). The custom policy has served
+# DENY since 2026-09-28. SAMEORIGIN used to be accepted as the state
 # inherited from the managed policy; now it would mean the site fell back to
 # that policy, so it reds. (Absent is caught by the presence loop above.)
 XFO=$(hdr 'x-frame-options' | tr 'A-Z' 'a-z')

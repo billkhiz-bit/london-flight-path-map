@@ -269,6 +269,7 @@ Or just describe what you need, I have full context of this project.
   (`tests/test_breadcrumb_ld.py`, every built page). `/llms.txt` (`meta-deploy`) is read by the wording gate and held
   to the sitemaps and the coverage sentence (`tests/test_llms_txt.py`); never a price or "AI" in either.
 - **Focus rings use `--focus: #d35a12`**, never the brand orange `#f27d26` (fails 3:1).
+- **`frame-ancestors` never goes in a meta CSP** (removed 2026-11-06, `tests/test_meta_csp.py`): browsers ignore it there and log an error on every load. Framing is refused by CloudFront's `X-Frame-Options: DENY`, which the drift check holds.
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`). The top bar's clicks are counted there too (`nav-<slug>`, `-menu` from the
   phone menu): reorder the bar from them, not from a guess (Bill, 2026-10-23: read them ~20 Nov). Email buttons

@@ -11,9 +11,10 @@ const record = (name, pass, detail = '') => {
 const browser = await chromium.launch();
 const page = await browser.newPage();
 // Known-benign and inherent to delivering CSP via <meta> rather than a header:
-// frame-ancestors is header-only by spec, so Chrome always logs this. It is
-// present on every page in this project and predates this feature. Allow-listed
-// narrowly by exact substring so any OTHER console error still fails the run.
+// frame-ancestors is header-only by spec, so Chrome logs this while the LIVE page
+// still carries it, and this test reads the live page. Remove this list once the
+// branch dropping the directive is deployed (tests/test_meta_csp.py holds the source).
+// Allow-listed narrowly by exact substring so any OTHER console error still fails.
 const KNOWN_BENIGN = ["directive 'frame-ancestors' is ignored when delivered via a <meta> element"];
 const consoleErrors = [];
 page.on('console', (m) => {
