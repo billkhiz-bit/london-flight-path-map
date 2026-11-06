@@ -5,7 +5,8 @@
   "geo": {
    "postcode": "TW9 3PZ",
    "latitude": 51.476982,
-   "longitude": -0.285639
+   "longitude": -0.285639,
+   "admin_district": "Richmond upon Thames"
   },
   "env": {
    "location": {

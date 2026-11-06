@@ -26,6 +26,9 @@ RULES = (
     '.dev-n', '.dev-n.is-lit', '.dev-rest', '.dev-caret', '.dev-page', '.dev-page-head', '.dev-tiles',
     '.dev-tiles .ans-tile', '.dev-tiles .ans-tile b', '.dev-tiles .ans-tile b.is-empty', '.dev-tiles .ans-tile.is-lit',
     '.dev-tiles .ans-tile small',
+    # The postcode box's list: one module (js/place-box.mjs) on both pages.
+    '.pc-list', '.pc-list[hidden]', '.pc-head', '.pc-foot', '.pc-foot:first-child', '.pc-opt', '.pc-opt small', '.pc-opt mark',
+    ".pc-opt:hover, .pc-opt[aria-selected='true']", '.pc-live',
 )
 
 # Tokens a held rule reads: a page with its own value would change the band without touching a rule.

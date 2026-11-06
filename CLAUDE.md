@@ -256,7 +256,7 @@ Or just describe what you need, I have full context of this project.
   MHCLG (it answered 400, which the Lambda reported as its own 502: 134 of the API's 146 5xx in a day); the map's
   `fetchEpcData` asks only with a full postcode. An upstream 400 for a valid postcode stays a 502: their change, loud.
 - **The front page's lower sections type no figure** (front-page-v3, Bill's mock v8, live 2026-11-04): the walkthrough's steps 02-04 are written by `js/home-sections.mjs` from the hero's own example lookup
-  (`home-engine.mjs` `exampleAnswer()`, one shared pair), the planes step through `planesWalk()` in `js/planes.mjs`
+  (`home-engine.mjs` `exampleAnswer()`, one shared lookup), the planes step through `planesWalk()` in `js/planes.mjs`
   (bar colours from the layer's `index.json` steps); step 05's picture is MADE from the sample PDF by
   `build_report_still.py` (its `--check` reds once the PDF changes: re-run `--write` after any sample regeneration);
   the dark band is written between PLANES-BAND markers by `build_planes_pages.py` (`--write --home` needs no tracks;
@@ -310,7 +310,9 @@ Or just describe what you need, I have full context of this project.
   `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`, `front-dev-lang`, `front-full-map`, through `engaged()`, once per
   page view. Never a postcode or anything typed; `tests/front-page.mjs` holds the shape of every counted path.
 - **The postcode box's suggestions are `js/place-box.mjs`** (Bill's pick B, 2026-11-04; a WAI-ARIA combobox, replacing a
-  `<datalist>`): read in the browser from what the page holds, nothing typed fetched, stored or counted (`tests/place-box.mjs`).
+  `<datalist>`), on `/` and `/api/`: places from what the page holds, so a place name is not sent while typing (Check still sends text no row matches). Only text shaped like the START of a postcode (`askable`) goes to
+  postcodes.io while typing, after a pause, as the full map's does and privacy s2b says (Bill's yes, 2026-11-05); nothing typed is stored or counted, and anything newer, Escape or leaving the box cancels what is on its way. `/api/`'s
+  box is a `postcodeBox`: real choices or nothing, because at 320 wide a hint would sit in the way of Send (`tests/place-box.mjs`, `tests/api-demo.mjs`).
 - **The front page arrives in place** (2026-11-04: phone layout shift 0.133 to 0.008): `.panel.is-loading` shows `.ans-skeleton`, the
   example's frame, until `endLoading()`; hidden tabs keep their room. Anything that fills in later keeps its place from the first
   frame. Held in `tests/front-page.mjs`, on a phone with the example held back.
@@ -326,7 +328,7 @@ Or just describe what you need, I have full context of this project.
   `tests/test_dev_band_parity.py` holds their CSS and starting samples equal (a new band rule goes in its `RULES`). `writeAnswer()` runs for every answer, always from the samples as written (a read-back whole degree, `-2`, also matches the API's host), `armDev()` binds once.
 - **/api/'s "Try a request" asks only the open route** (`js/api-demo.mjs`, Bill's brief of 2026-11-04): postcodes.io, then `/v1/environment`, never `/v1/score` (it would spend the public demo key). Arriving asks only the API, at a held point (`EXAMPLE`): the privacy policy covers a search, not an unprompted lookup. A repeat press costs nothing, and any newer press aborts what is on its way, even one that only replays (the route is 5 a second site-wide). The route's 404 is not always "no postcode": the Lambda answers it too when its own postcodes.io call fails, so the words cover both. The band keeps its room from the first frame under `@media (scripting: enabled)`, `.no-answer` giving it back (shift held under 0.02 at five widths). Every
   outcome is said in words: a neighbour's answer, a figure missing, a quiet road's bound (`under 40 dB`, a reading and never "missing"), no point (the Isle of Man and the Channel Islands: 200 with a null latitude), unknown, no figures, failed. `tests/api-demo.mjs` reaches each from
-  real answers in `tests/fixtures/api-demo-env.json`; a late reply never replaces a newer one; a press plays whatever the motion setting (a review queried it, Bill confirmed it 2026-11-05: do not raise it again); counted `api-demo-<way>`, never a postcode.
+  real answers in `tests/fixtures/api-demo-env.json`; a gap is always said as what WE hold, never what DEFRA maps: outside our city regions DEFRA may map the place, as the API's own notice says, and `aircraftQuietCoverage` cannot see every such place; a late reply never replaces a newer one; a press plays whatever the motion setting (a review queried it, Bill confirmed it 2026-11-05: do not raise it again); counted `api-demo-<way>`, never a postcode.
 - **A browser cannot read API Gateway's own errors**: `GatewayResponses` set no CORS header, so a throttled 429 is a rejected `fetch`, never a status (checked live 2026-11-05 on the 403 for a missing key). Word a failure to cover it.
 - **About and How it works are on Stitch's layout** (2026-11-05, every word, link and section id kept; `tests/page-bands.mjs` measures them): About's speaker photo is the 16:9 hero, held from the top third so both the
   speaker and the screen stay; How it works opens on the short version, then the strip (a reversal of Bill's 26 Oct call, one move to undo); its worked example is open, a bar per score from `build_how_it_works.py bar()`.
@@ -336,7 +338,9 @@ Or just describe what you need, I have full context of this project.
   each reaches a tracked file or a page the planes index lists, each fragment an id there (a fragment that misses opens
   the page at the top, with no error). Links to other sites are checked from the live page after a deploy, never there.
 - **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
-  address, never engagement, silent on failure. `stubLiveApi` answers its two lookups; scans wait for it.
+  address, never engagement, silent on failure. Its point is HELD (`EXAMPLE`, `js/place-box.mjs`, one holder for `/` and `/api/`; Bill's yes, 2026-11-05), so
+  arriving asks our API and postcodes.io nothing, and no `<link>` may open a connection to it either (a preconnect reaches it as surely as a request, and no request event shows it): privacy s2b covers a search, not a lookup nobody asked for. A page naming another example has no point, so no example, silently:
+  `data-pc` and `EXAMPLE` move together (`tests/place-box.mjs`). `stubLiveApi` answers that lookup; scans wait for it. To hold the example back in a test, hold `/v1/environment`: holding postcodes.io now holds nothing.
 - **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without
   imposing on privacy concerns"): fixed rules, no server, no model, nothing typed sent, stored or counted (front-page.mjs
   checks no request or address carries the words). It only sets Find areas' own controls and says what it read and

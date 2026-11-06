@@ -5,9 +5,9 @@
  * THE OPEN ROUTE, NEVER THE KEYED ONE. /v1/environment takes a point and needs no key. /v1/score would spend the public
  * demo key's quota on every visit, and that quota has run out on real prospects before (tests/stub-live-api.mjs).
  *
- * NOTHING LEAVES FOR postcodes.io UNTIL A READER SENDS. The privacy policy covers a postcode someone searches, not a lookup
- * they never asked for, so the example on arriving is a held point (EXAMPLE) and only the API is asked. A postcode a reader
- * sends is turned into a point by postcodes.io, as the front page's search does.
+ * NOTHING LEAVES FOR postcodes.io ON ARRIVING. The privacy policy covers a postcode someone searches, not a lookup they never
+ * asked for, so the example on arriving is a held point (EXAMPLE) and only the API is asked. The start of a postcode a reader
+ * types is offered the rest (js/place-box.mjs), and one they send is turned into a point, as the front page's search does.
  *
  * ONE ROUTE, SHARED BY EVERY VISITOR. /v1/environment is throttled to 5 a second across the whole site (template.yaml), so a
  * press costs nothing it need not: a postcode on its way is not sent twice, a postcode on show replays, and a newer press
@@ -17,7 +17,9 @@
  *   - figures for the postcode asked (TW9 3PZ);
  *   - figures for a NEIGHBOUR: the route answers the nearest postcode to the point (ZE1 0AA answers as ZE1 9ZZ), and
  *     road noise can differ by 20 dB between neighbours, so a reader is told which one it is;
- *   - only some figures (EX1 1HS holds NO2 alone): the rest are said to be missing, never shown as zero;
+ *   - only some figures (EX1 1HS holds NO2 alone): the rest are said to be missing, never shown as zero, and always as what
+ *     WE hold: outside our city regions DEFRA may map the place, as the API's own notice says. 'outside' is read from the
+ *     aircraft field, which cannot see every such place ('modelled' is set whatever the city), so the words hold either way;
  *   - a quiet road (NG11 8AH): a bound, "under 40 dB", which is a reading and never a missing figure;
  *   - a postcode with no point (the Isle of Man and the Channel Islands: postcodes.io answers 200 with a null latitude);
  *   - a postcode nobody knows, or no figures at all.
@@ -33,9 +35,9 @@
  */
 
 import { armDev, bindCodeTabs, bindCopy, devAnswer, finite, playDev, writeAnswer } from './dev-demo.mjs';
-import { POSTCODE } from './place-box.mjs';
+import { EXAMPLE, POSTCODE, bindPlaceBox, postcodeCompletions } from './place-box.mjs';
 
-export const EXAMPLE = { postcode: 'TW9 3PZ', latitude: 51.476982, longitude: -0.285639 };
+export { EXAMPLE };
 
 const squash = (pc) => String(pc ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
@@ -84,7 +86,10 @@ export function sayAnswer(asked, env) {
     ? `Answered for ${answered}.`
     : `Answered for ${answered}, the nearest postcode the API found to ${asked}.`;
   const { missing } = devAnswer(env);
-  return missing.length ? `${head} No DEFRA figure here for ${inWords(missing)}.` : head;
+  if (!missing.length) return head;
+  return env?.environment?.aircraftQuietCoverage === 'outside'
+    ? `${head} Outside the city regions we cover, we hold no figure for ${inWords(missing)}, though DEFRA may map this place.`
+    : `${head} We hold no figure here for ${inWords(missing)}.`;
 }
 
 /** What a reader is told when nothing new is on show. `shown` is the postcode still on the page, if any. */
@@ -94,7 +99,7 @@ export function sayProblem(kind, pc, shown) {
     unknown: `We could not find ${pc}. Check it and send it again.`,
     'no-point': `${pc} has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none.`,
     'no-postcode': `The API could not match ${pc} to a postcode just now. Send it again in a moment, or try another.`,
-    'no-figures': `No DEFRA noise or NO₂ figure for ${pc}.`,
+    'no-figures': `We hold no noise or NO₂ figure for ${pc}.`,
     failed: 'The request did not finish. The API may be busy: wait a moment and send it again.',
   }[kind];
   return shown ? `${said} Still showing ${shown}.` : said;
@@ -187,6 +192,9 @@ function init() {
     ask(box.value, 'send');
   });
   box.addEventListener('input', () => box.removeAttribute('aria-invalid'));
+  // The rest of a postcode, as the front page and the full map offer it. No examples: the chips below the box are those.
+  const list = document.getElementById('try-list');
+  if (list) bindPlaceBox(box, list, [], (value) => { box.value = value; ask(value, 'pick'); }, { lookup: postcodeCompletions, postcodeBox: true });
   for (const chip of form.querySelectorAll('[data-try]')) {
     chip.addEventListener('click', () => {
       box.value = chip.dataset.try;

@@ -31,6 +31,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **ABOUT'S GRID LIVE 6 Nov (`5dc99c4b`, master pushed, preflight PASS, drift PASS).** Checked on the live page at 390, 1000, 1366 and 1920: the arrows in date order, the bar stuck, every jump clear of it, no errors. A review before the final preflight fixed eight points, three of them checks that could not fail (proven red six ways). One link not verified: AI Tinkerers answers a script 403, and the page says sign-in needed; Bill opens it once.
 >
 > **ABOUT'S LINKS, Bill's pick E, 6 Nov:** he asked for them filled or orange, and six filled orange pills were too bright on the real page, so a section link fills orange only under a pointer and links in the text are dark orange. Options: claude.ai/artifact/92Wpsi5ETKhyvPCaFz69dt.
+>
+> **BILL SAID "DEPLOY" 6 NOV, with the Leicester corrections below:** the front page holds the example's point, so arriving asks postcodes.io nothing (closes the legal batch 2 note of 5 Nov once live); live postcode suggestions on `/` and `/api/`, and "Nothing you type is sent until you search" gone; `/api/` says what WE hold outside our city regions. DEPLOY ORDER, or the front page's module fails to link for the seconds between uploads (`aws s3 cp js/` is not atomic, and `home-engine.mjs` now imports what only the new `place-box.mjs` exports): `AWS_PROFILE=flightmap aws s3 cp js/place-box.mjs s3://london-flight-map-frontend/js/place-box.mjs --content-type "application/javascript" --cache-control "no-cache" --region eu-west-2` FIRST (the new file serves the old pages unchanged), then `web-deploy`, then `home-deploy` straight after (until then `/` lacks `.pc-live`, so the status words show beside Check).
+>
+> **THE LEICESTER CORRECTIONS, same deploy:** the full map and `/api/` called the Heathrow comparison "different models" for 41 days, though 3 Nov's note recorded it as fixed. Both are the CAA's ANCON 2.4, read from the PDFs on 6 Nov (`docs/lessons/aircraft-estimate.md`). `test_public_wording.py` now refuses the phrase, and "a highly anomalous situation" cites Heathrow's plan, where it was read.
 
 > ## START HERE (2026-11-05)
 >

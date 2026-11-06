@@ -107,7 +107,7 @@ const quietAndClear = (r) => r.quiet !== '' && Number(r.quiet) >= 10 && crossesO
 
 // Real postcodes.io shapes, trimmed to what the page reads.
 const GEO = {
-  TW93PZ: { postcode: 'TW9 3PZ', latitude: 51.4713, longitude: -0.2894, admin_district: 'Richmond upon Thames' },
+  TW93PZ: { postcode: 'TW9 3PZ', latitude: 51.476982, longitude: -0.285639, admin_district: 'Richmond upon Thames' },
   NW17PJ: { postcode: 'NW1 7PJ', latitude: 51.539, longitude: -0.1426, admin_district: 'Camden' },
   TW33QL: { postcode: 'TW3 3QL', latitude: 51.462735, longitude: -0.372535, admin_district: 'Hounslow' },
   EX11HS: { postcode: 'EX1 1HS', latitude: 50.722209, longitude: -3.530574, admin_district: 'Exeter' },
@@ -120,7 +120,7 @@ const GEO = {
 };
 // Real /v1/environment shapes, captured 2026-10-03, keyed on the latitude the page sends.
 const ENV = {
-  '51.4713': { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
+  '51.476982': { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
   '51.539': { environment: { roadNoiseLdenDb: 74.7, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 23.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.5, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 9.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   '50.722209': { environment: { no2AnnualMeanUgm3: 8.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 5.6, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 10.0, aircraftQuietCoverage: 'outside' }, notices: [] },
   '51.16029': { environment: { no2AnnualMeanUgm3: 9.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 6.0, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 6.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
@@ -152,6 +152,7 @@ const stubOffsite = (route) => {
     return route.fulfill({ status: 200, contentType: 'image/png', body: PNG_1PX });
   }
   if (url.hostname === 'api.postcodes.io') {
+    if (url.pathname.endsWith('/autocomplete')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 200, result: null }) });
     // Spaced or compact, as postcodes.io itself accepts both: the front page sends
     // TW93PZ and the street report sends TW9%203PZ.
     const key = decodeURIComponent(url.pathname.split('/').pop()).replace(/\s+/g, '').toUpperCase();
@@ -167,8 +168,8 @@ const stubOffsite = (route) => {
 await context.route(OFFSITE, stubOffsite);
 // ANSWER FIRST (2026-10-23): a plain visit opens on the example answer (#ans-example). Most of this file tests
 // what the page does without it - the question over a faded map, which a visitor still gets whenever the
-// example's lookup fails - so the front page is served with the example pointed at a postcode no stub answers,
-// exactly that failure. Section 1z turns the real example back on and tests it.
+// example's lookup fails - so the front page is served naming a postcode with no point held for it, which ends
+// the same way. Section 1z turns the real example back on and tests it.
 let exampleOn = false;
 const NO_EXAMPLE = 'ZZ0 0ZZ';
 await context.route((url) => url.hostname === '127.0.0.1' && url.pathname === '/', async (route) => {
@@ -633,14 +634,14 @@ ok(/Airport\s*Heathrow, \d+\.\d km to the (west|north-west|south-west)/.test(rou
 ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.test(routes), 'Kew is reported under a Heathrow 27 final approach at a height', routes);
 // The nearest station (Bill, 2026-10-06: "show it first"): worked out HERE with this test's own
 // distance maths over data/stations.json, so the shared nearestStation() cannot pass by agreeing
-// with itself. TW9 3PZ is at the stub's 51.4713, -0.2894.
+// with itself. TW9 3PZ is at the stub's 51.476982, -0.285639.
 {
   const stations = Object.values(JSON.parse(await readFile(join(ROOT, 'data', 'stations.json'), 'utf8'))).flat();
   const r = Math.PI / 180;
   const km = (s) => {
     const [lon, lat] = s.coords;
-    const dLat = (lat - 51.4713) * r, dLon = (lon + 0.2894) * r;
-    return 2 * 6371.0088 * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(51.4713 * r) * Math.cos(lat * r) * Math.sin(dLon / 2) ** 2));
+    const dLat = (lat - 51.476982) * r, dLon = (lon + 0.285639) * r;
+    return 2 * 6371.0088 * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(51.476982 * r) * Math.cos(lat * r) * Math.sin(dLon / 2) ** 2));
   };
   const near = stations.reduce((a, s) => (km(s) < km(a) ? s : a));
   const metres = Math.round(km(near) * 100) * 10;
@@ -686,9 +687,9 @@ const airBlock = async () => {
   return page.locator('#ans-air').evaluate((d) => ({ hidden: d.hidden, text: [...d.querySelectorAll(':scope > p')].map((x) => x.textContent).join(' '), links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]) }));
 };
 {
-  const sensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
-  const monitor = nearestTo(monitorFile.sites, 51.4713, -0.2894);
-  const sensorKm = kmBetween(51.4713, -0.2894, sensor.lat, sensor.lon);
+  const sensor = nearestTo(sensorFile.sites, 51.476982, -0.285639);
+  const monitor = nearestTo(monitorFile.sites, 51.476982, -0.285639);
+  const sensorKm = kmBetween(51.476982, -0.285639, sensor.lat, sensor.lon);
   const air = await airBlock();
   ok(
     !air.hidden && sensorKm <= 5 && air.text.startsWith(`Nearest Breathe London sensor: ${sensor.name}, ${sensorKm.toFixed(1)} km away (${sensor.classification.toLowerCase()}`),
@@ -696,9 +697,9 @@ const airBlock = async () => {
     `${air.text.slice(0, 160)} | expected ${sensor.name}, ${sensorKm.toFixed(1)} km`
   );
   ok(
-    kmBetween(51.4713, -0.2894, monitor.lat, monitor.lon) > 5 && !air.text.includes('Nearest official monitor'),
+    kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon) > 5 && !air.text.includes('Nearest official monitor'),
     'the nearest official monitor is over 5 km from Kew, so it is not mentioned at all (never "none nearby")',
-    `${monitor.name} ${kmBetween(51.4713, -0.2894, monitor.lat, monitor.lon).toFixed(1)} km`
+    `${monitor.name} ${kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon).toFixed(1)} km`
   );
   ok(/can read higher than DEFRA's background figure/.test(air.text) && /at least 75% of the hours/.test(air.text), 'a roadside sensor carries why it can read above the background, and the capture floor is stated', air.text.slice(-320));
   ok(
@@ -1862,7 +1863,7 @@ const makeReport = async (pc) => {
   const alsoLine = ready ? await sheetDoc().locator('p.note', { hasText: 'Also at this postcode' }).textContent() : '';
   ok(/nearest station [^,]+, \d+ m in a straight line/.test(alsoLine), 'the report names the nearest station, from the same function as the front page', alsoLine.slice(-120));
   const airNote = ready ? await sheetDoc().locator('p.note', { hasText: 'Air measured nearby' }).textContent() : '';
-  const kewSensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
+  const kewSensor = nearestTo(sensorFile.sites, 51.476982, -0.285639);
   ok(airNote.startsWith(`Air measured nearby. Nearest Breathe London sensor: ${kewSensor.name}, `), 'the report names the nearest Breathe London sensor, from the same function as the front page', airNote.slice(0, 140));
   ok(foot.includes(sensorFile.attribution), "the report's sources carry Breathe London's credit word for word", foot.slice(-300));
   const reportSay = ready
@@ -2490,22 +2491,56 @@ const makeReport = async (pc) => {
   ok(low.budget === budgetBefore && /^No price set: the lowest step is £200,000\. Nothing to set from that\./.test(low.read) && !/Not understood/.test(low.read),
     'describe what you want: a price under the lowest step is said back, never stretched or dropped', JSON.stringify(low));
   // The box (Bill's pick B, 2026-11-04): a first click shows what it takes, typing lists places and says what each is, and
-  // a full postcode is offered as itself. All of it from what the page holds: nothing typed is requested.
+  // a full postcode is offered as itself. A place name and a whole postcode are never sent while typing.
   {
   const boxAsked = [];
   wp.on('request', (r) => { if (/camd|sw5/i.test(r.url())) boxAsked.push(r.url()); });
   await wp.evaluate(() => { document.getElementById('tab-check')?.click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
   await wp.click('#pc');
   const first = await wp.evaluate(() => ({ open: !document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded'), options: [...document.querySelectorAll('#pc-list [role="option"]')].map((o) => o.dataset.value), foot: document.querySelector('#pc-list .pc-foot')?.textContent }));
-  ok(first.open && first.expanded === 'true' && first.options.length === 3 && first.options.includes('Hounslow') && /not? ?.*sent until you search/i.test(first.foot || ''),
-    'a first click on the box shows one of each thing it takes, and says nothing is sent', JSON.stringify(first));
+  ok(first.open && first.expanded === 'true' && first.options.length === 3 && first.options.includes('Hounslow') && !first.foot,
+    'a first click on the box shows one of each thing it takes, and promises nothing about what is sent', JSON.stringify(first));
   await wp.fill('#pc', 'camd');
   const camd = await wp.locator('#pc-list [role="option"]').allInnerTexts();
   ok(camd.length === 1 && /Camden/.test(camd[0]) && /Council area/.test(camd[0]), 'typing lists the places it answers by name and says what each is', JSON.stringify(camd));
+  await wp.waitForTimeout(500); // past the pause: the next fill would cancel a lookup that was going to leave
   await wp.fill('#pc', 'sw5 9hp');
   const asPostcode = await wp.locator('#pc-list [role="option"]').allInnerTexts();
   ok(asPostcode.length === 1 && /SW5 9HP/.test(asPostcode[0]), 'a full postcode is offered as itself', JSON.stringify(asPostcode));
-  ok(boxAsked.length === 0, 'nothing typed in the box is requested', boxAsked.join(' '));
+  await wp.waitForTimeout(500); // past the pause, so a request that was going to leave has left
+  ok(boxAsked.length === 0, 'a place name and a whole postcode are not sent while typing', boxAsked.join(' '));
+  // The start of a postcode is asked about after a pause (Bill's yes, 2026-11-05), and the list answers only what is in the box.
+  {
+    const asked = [];
+    const isStart = (u) => u.hostname === 'api.postcodes.io' && u.pathname.endsWith('/autocomplete');
+    const route = async (r) => {
+      const text = new URL(r.request().url()).pathname.split('/')[2];
+      asked.push(text);
+      if (text === 'SW5') await new Promise((done) => setTimeout(done, 900)); // slower than the keystroke after it
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 200, result: text === 'SW5' ? ['SW5 0AA'] : ['SW5 9AA', 'SW5 9AB'] }) }).catch(() => {});
+    };
+    await wp.route(isStart, route);
+    await wp.fill('#pc', 'sw5');
+    await wp.waitForTimeout(350); // on its way, and slow
+    await wp.fill('#pc', 'sw5 9');
+    await wp.waitForSelector('#pc-list [role="option"]', { timeout: 3000 }).catch(() => {});
+    await wp.waitForTimeout(1100); // past the slow reply
+    const found = await wp.locator('#pc-list [role="option"]').allInnerTexts();
+    ok(found.length === 2 && /SW5 9AA/.test(found[0]) && /Postcode/.test(found[0]), 'the start of a postcode is offered the rest', JSON.stringify(found));
+    ok(!found.join().includes('SW5 0AA'), 'and a slower reply for older text never replaces it', JSON.stringify(found));
+    ok(JSON.stringify(asked) === JSON.stringify(['SW5', 'SW59']), 'each start is asked about once, with no space', JSON.stringify(asked));
+    const said = await wp.evaluate(() => document.querySelector('#pc-list + .pc-live')?.textContent);
+    ok(said === '2 suggestions.', 'a screen reader is told the suggestions have arrived', String(said));
+    const quick = asked.length;
+    await wp.fill('#pc', 's');
+    await wp.fill('#pc', 'sw');
+    await wp.fill('#pc', 'sw1');
+    await wp.fill('#pc', 'sw1a');
+    await wp.fill('#pc', '');
+    await wp.waitForTimeout(500);
+    ok(asked.length === quick, 'text typed and gone inside the pause is never sent', JSON.stringify(asked));
+    await wp.unroute(isStart, route);
+  }
   await wp.fill('#pc', 'camd');
   await wp.keyboard.press('ArrowDown');
   const kb = await wp.evaluate(() => ({ active: document.getElementById('pc').getAttribute('aria-activedescendant'), chosen: document.querySelector('#pc-list [aria-selected="true"]')?.dataset.value }));
@@ -2594,7 +2629,7 @@ const makeReport = async (pc) => {
       window.__cls = 0;
       new PerformanceObserver((l) => { for (const x of l.getEntries()) if (!x.hadRecentInput) window.__cls += x.value; }).observe({ type: 'layout-shift', buffered: true });
     });
-    await held.route((u) => u.hostname === 'api.postcodes.io', async (route) => { await new Promise((r) => setTimeout(r, 700)); return stubOffsite(route); });
+    await held.route((u) => u.pathname.endsWith('/v1/environment'), async (route) => { await new Promise((r) => setTimeout(r, 700)); return stubOffsite(route); });
     await held.goto(BASE, { waitUntil: 'domcontentloaded' });
     const frame = await held.waitForFunction(() => getComputedStyle(document.querySelector('.ans-skeleton')).display === 'block', null, { timeout: 3000 }).then(() => true).catch(() => false);
     await held.waitForFunction(() => document.querySelectorAll('#ans-tiles .ans-tile:not(.is-waiting)').length >= 2, null, { timeout: 10000 }).catch(() => {});
@@ -2603,8 +2638,19 @@ const makeReport = async (pc) => {
     ok(frame && arrived.cls < 0.02 && !arrived.loading && arrived.frameGone, 'on a phone the example arrives in its frame and the page does not move', JSON.stringify(arrived));
     await held.close();
   }
+  // The point is held (Bill's yes, 2026-11-05): privacy s2b covers a search, not a lookup nobody asked for.
+  const toPostcodes = [];
+  const watch = (r) => { if (new URL(r.url()).hostname === 'api.postcodes.io') toPostcodes.push(r.url()); };
+  ep.on('request', watch);
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
+  await ep.waitForLoadState('load');
+  // The walkthrough below the map starts as it nears the screen, so it is reached, and nothing it does may reach out either.
+  await ep.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await ep.waitForTimeout(800);
+  await ep.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  ep.off('request', watch);
+  ok(toPostcodes.length === 0, 'answer first: arriving asks postcodes.io nothing, the example and the walkthrough alike', toPostcodes.join(' '));
   const first = await look();
   ok(first.label && first.title === 'Example: TW9 3PZ, Kew' && first.address === '/' && first.status === '' && first.covers && first.box === '' && first.counted.length === 0,
     'answer first: a plain visit opens on the TW9 3PZ answer, labelled as an example, with the address, the live region, the box and the counts untouched and the coverage line kept',
@@ -2834,7 +2880,7 @@ const makeReport = async (pc) => {
   ok(await shown(), 'answer first: a campaign tag is still a plain visit, so it gets the example', JSON.stringify(await look()));
 
   // The example's lookup held back 1.5 s, and the visitor opens the map first: their action stands.
-  await ep.route((u) => u.hostname === 'api.postcodes.io', async (route) => { await new Promise((r) => setTimeout(r, 1500)); return stubOffsite(route); });
+  await ep.route((u) => u.pathname.endsWith('/v1/environment'), async (route) => { await new Promise((r) => setTimeout(r, 1500)); return stubOffsite(route); });
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await ep.waitForSelector('#map .boro', { timeout: 20000 });
   await pickCity(ep, 'manchester');

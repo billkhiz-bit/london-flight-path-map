@@ -85,12 +85,12 @@ const CANNED_SCORE = {
  * end of a run means the interception stopped working - not that the page got
  * quieter.
  */
-// THE FRONT PAGE'S EXAMPLE ANSWER (answer first, 2026-10-23). A plain visit to / looks up TW9 3PZ on
-// postcodes.io and then /v1/environment at its latitude, so without this every gate that audits the front page
-// would reach both services and audit a page that depends on whether they answered. Only those two requests
-// are answered here, with the real shapes front-page.mjs uses (captured 2026-10-03); every other postcode and
-// coordinate goes to the network exactly as before, as this helper's narrowing above asks.
-const EXAMPLE_GEO = { postcode: 'TW9 3PZ', latitude: 51.4713, longitude: -0.2894, admin_district: 'Richmond upon Thames' };
+// THE EXAMPLE ANSWER (answer first, 2026-10-23). A plain visit to / or /api/ asks /v1/environment at the held point
+// (EXAMPLE, js/place-box.mjs), so without this every gate that audits either page would reach the API and audit a page
+// that depends on whether it answered. A search of that same postcode goes through postcodes.io and lands on the same
+// point. Only those two requests are answered here, with the real shapes front-page.mjs uses (captured 2026-10-03);
+// every other postcode and coordinate goes to the network exactly as before, as this helper's narrowing above asks.
+const EXAMPLE_GEO = API_PAGE_EXAMPLE;
 const EXAMPLE_ENV = { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] };
 const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
 
@@ -116,8 +116,7 @@ export async function stubLiveApi(page) {
   );
   await page.route(
     (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && url.pathname.endsWith('/v1/environment')
-      // /api/ opens on a held point (js/api-demo.mjs) and asks only the API, so the gates answer that point too.
-      && [EXAMPLE_GEO.latitude, API_PAGE_EXAMPLE.latitude].map(String).includes(url.searchParams.get('lat')),
+      && url.searchParams.get('lat') === String(EXAMPLE_GEO.latitude),
     (route) => route.fulfill(json(EXAMPLE_ENV))
   );
 

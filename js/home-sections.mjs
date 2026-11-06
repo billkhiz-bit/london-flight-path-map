@@ -7,7 +7,7 @@
  * script (script-src 'self'), so the behaviour lives here.
  *
  * NO FIGURE IS TYPED. The walkthrough's panels 02 to 04 are filled from the example answer the map above already
- * fetches (home-engine.mjs exampleAnswer(): TW9 3PZ, one shared pair of lookups), the planes only through
+ * fetches (home-engine.mjs exampleAnswer(): TW9 3PZ, one shared lookup), the planes only through
  * js/planes.mjs from data/planes/ (tests/test_public_wording.py's FREQUENCY rule), the air through the one pair of
  * functions every surface uses (nearestSensor / nearestMonitor, airChart). Until the answer is in, a panel says it is
  * coming; if it never comes, it says so and shows nothing in its place.

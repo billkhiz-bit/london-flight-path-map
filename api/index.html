@@ -188,7 +188,19 @@
   @media (scripting: enabled) and (min-width: 900px) and (max-width: 1099px) { #dev-run[hidden] { min-height: 420px; } }
   .try label { display: block; margin: 0 0 6px; font-size: 14px; font-weight: 600; }
   .try-row { display: flex; flex-wrap: wrap; gap: 8px; }
-  .try-row input { flex: 1 1 170px; min-width: 0; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--dark); border-radius: 10px; background: var(--paper); color: var(--dark); font: 500 16px var(--font-mono); }
+  .pc-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20; max-height: 320px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px rgba(20, 20, 20, 0.14); }
+  .pc-list[hidden] { display: none; }
+  .pc-head { margin: 0; padding: 8px 10px 4px; font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+  .pc-foot { margin: 4px 0 0; padding: 8px 10px 6px; font-size: 12px; color: var(--mid); border-top: 1px solid var(--line); }
+  .pc-foot:first-child { margin: 0; border-top: 0; }
+  .pc-opt { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 40px; padding: 8px 10px; font: 500 15px var(--font-body); color: var(--dark); border-radius: 8px; cursor: pointer; }
+  .pc-opt small { flex: none; font: 400 12.5px var(--font-body); color: var(--mid); }
+  .pc-opt mark { font-weight: 600; color: var(--orange-ink); background: none; }
+  .pc-opt:hover, .pc-opt[aria-selected='true'] { background: var(--tint); }
+  .pc-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  /* 150 px, not 170: at 320 wide the button then stays on the row, and the list opens below it rather than over it. */
+  .try-box { position: relative; flex: 1 1 150px; min-width: 0; }
+  .try-row input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--dark); border-radius: 10px; background: var(--paper); color: var(--dark); font: 500 16px var(--font-mono); }
   .try-row input[aria-invalid='true'] { border-color: var(--orange-ink); box-shadow: inset 0 0 0 1px var(--orange-ink); }
   .try-row button { min-height: 44px; padding: 8px 16px; border: 0; border-radius: 10px; background: var(--dark); color: #fff; font: 600 14px var(--font-body); cursor: pointer; }
   .try-row button:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -292,10 +304,13 @@
         <p class="lede">Noise and air at any point need no key.</p>
         <!-- Hidden until js/api-demo.mjs runs: without it this band is the request alone, as the front page's is. -->
         <form class="try" id="try-form" hidden novalidate>
-          <p class="try-how">Type a postcode and send it. This page finds its point on postcodes.io, then sends the request you see here, live.</p>
+          <p class="try-how">Type a postcode and send it. postcodes.io suggests the rest as you type and finds its point, then this page sends the request you see here, live.</p>
           <label for="try-pc">UK postcode</label>
           <div class="try-row">
-            <input id="try-pc" name="postcode" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="try-status">
+            <div class="try-box">
+              <input id="try-pc" name="postcode" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="try-list" aria-autocomplete="list" aria-describedby="try-status">
+              <div class="pc-list" id="try-list" role="listbox" aria-label="Suggestions" hidden></div>
+            </div>
             <button type="submit">Send request</button>
           </div>
           <div class="try-chips" role="group" aria-label="Example postcodes">Or try <button type="button" data-try="TW9 3PZ">TW9 3PZ</button><button type="button" data-try="SW5 9HP">SW5 9HP</button><button type="button" data-try="M1 1AE">M1 1AE</button></div>

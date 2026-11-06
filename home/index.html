@@ -14,7 +14,6 @@
     <meta property="og:image" content="https://skyscore.co.uk/preview.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://skyscore.co.uk/preview.png" />
-    <link rel="preconnect" href="https://api.postcodes.io" crossorigin />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://api.os.uk https://cubitt33.goatcounter.com; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
     <!--
       THE FRONT PAGE, served at / since 2026-10-06 (Bill: "making our mockup
@@ -175,6 +174,7 @@
       .pc-opt small { flex: none; font: 400 12.5px var(--font-body); color: var(--mid); }
       .pc-opt mark { font-weight: 600; color: var(--orange-ink); background: none; }
       .pc-opt:hover, .pc-opt[aria-selected='true'] { background: var(--tint); }
+      .pc-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
       form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
       /* --mid, 7.4:1 on white. The placeholder is the field's only visible label,
          and #8a8985 measured 3.50:1 (audit 2026-10-05 I-6). */
@@ -759,8 +759,8 @@
           <label for="pc" class="field-label">Postcode, ZIP or place</label>
           <form class="check" id="check">
             <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="off" inputmode="text" role="combobox" aria-expanded="false" aria-controls="pc-list" aria-autocomplete="list" />
-            <!-- What the box takes, and the places it answers by name (js/place-box.mjs, Bill's pick B, 2026-11-04): filled in the
-                 page from what it already holds, so nothing is sent while typing. -->
+            <!-- What the box takes, and the places it answers by name (js/place-box.mjs, Bill's pick B, 2026-11-04): places from what
+                 the page already holds, and the rest of a postcode from postcodes.io as it is typed. -->
             <div class="pc-list" id="pc-list" role="listbox" aria-label="Suggestions" hidden></div>
             <button type="submit">Check<span class="yours"> yours</span></button>
           </form>

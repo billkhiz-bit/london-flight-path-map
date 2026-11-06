@@ -1,9 +1,12 @@
 # Changelog
 
-## 2026-11-06 - About's links
+## 2026-11-06 - About's links, postcode suggestions, and the Heathrow comparison
 
 - **About's links stand out.** A section link fills orange under the pointer, and links in the text are dark orange.
 - **The Heathrow comparison says what it compares.** The full map and the API page said the 2021 map and the CAA's 2025 contours were different models. Both are the CAA's model, run on different years, and the pages now say so. The phrase "a highly anomalous situation" is now credited to Heathrow's Noise Action Plan, where it was read.
+- **Arriving on the front page looks nothing up at postcodes.io, or connects to it.** The example's place is held in the page, so nothing goes there until you type or search.
+- **The postcode boxes on the front page and the API page suggest the rest of a postcode as you type.** While you type, only the start of a postcode is sent to postcodes.io, never a place name.
+- **The API page says what we hold.** Outside the city regions we cover, a missing figure is one we do not hold, which DEFRA may still map.
 
 ## 2026-11-05 - Try a request; About and How it works rebuilt
 

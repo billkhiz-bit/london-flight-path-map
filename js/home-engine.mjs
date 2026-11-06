@@ -16,7 +16,7 @@
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
 import { districtOf, planesLinks, planesModel, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
-import { bindPlaceBox } from '/js/place-box.mjs';
+import { EXAMPLE, bindPlaceBox, postcodeCompletions } from '/js/place-box.mjs';
 import { airFigure, airPanel, exampleFigures } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
 import {
@@ -287,10 +287,10 @@ const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) 
 
 // The places the box answers by name (search(): council areas by rowFor, regions and cities by name), offered as the
 // visitor types (2026-11-02, Bill: a search "like other websites", "without imposing on privacy concerns"), from the rows
-// the page already holds: nothing is fetched or sent while typing. Postcodes are not listed (there are 1.8 million; the box
-// takes any and spots one). No rows, no places: the box still works, and still offers its examples.
+// the page already holds, so a place name is not sent while typing. The start of a postcode is asked about (js/place-box.mjs). No rows,
+// no places: the box still works, and still offers its examples.
 const PLACE_EXAMPLES = () => [
-  { value: byId('ans-example')?.dataset.pc || 'TW9 3PZ', note: 'a postcode, under Heathrow\u2019s arrivals' },
+  { value: byId('ans-example')?.dataset.pc || EXAMPLE.postcode, note: 'a postcode, under Heathrow\u2019s arrivals' },
   { value: 'Hounslow', note: 'a council area' },
   { value: 'Palo Alto', note: 'a Bay Area city' },
 ];
@@ -300,7 +300,7 @@ const setPlaces = byId('pc') && byId('pc-list')
     box.value = value;
     engaged('place-pick');
     byId('check')?.requestSubmit();
-  })
+  }, { lookup: postcodeCompletions })
   : () => {};
 function fillPlaces() {
   const councils = new Set(state.rows.map((r) => r.borough).filter((n) => typeof n === 'string' && n.trim()));
@@ -1327,8 +1327,8 @@ async function search(raw, { example = false } = {}) {
   if (!example) say('Looking it up...');
   closeBorough(false);
   try {
-    // The example's two lookups are exampleAnswer()'s, shared with the walkthrough below the map (one pair of
-    // requests for both); a visitor's own search makes its own.
+    // The example's lookup is exampleAnswer()'s, shared with the walkthrough below the map (one request for both); a
+    // visitor's own search makes its own.
     const ex = example ? await exampleAnswer() : null;
     const geo = example ? { result: ex?.geo ?? null } : await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
     if (stale()) return;
@@ -1477,19 +1477,17 @@ async function loadPlanes(postcode) {
 // ---- the example's figures, for the walkthrough below the map (front-page-v3, 2026-11-03) ----
 // The walkthrough ("From a postcode to a sourced answer", js/home-sections.mjs) SHOWS what a search gives with the
 // example's own answer, never a figure typed into the page: these hand it the same lookups and files the answer
-// above reads. exampleAnswer() is the example's postcodes.io and /v1/environment pair, made once and shared with
-// search(), so the walkthrough costs no second pair; it resolves to { geo, env } or null (not found, no figures, a
-// failed fetch), and a failure is retried on the next call, as the planes files are. A deep link never runs the
+// above reads. exampleAnswer() is the example's /v1/environment request at its held point, made once and shared with
+// search(), so the walkthrough costs no second one; it resolves to { geo, env } or null (no figures, a failed fetch,
+// a page naming another example), and a failure is retried on the next call, as the planes files are. A deep link never runs the
 // example, so then the walkthrough asks for it itself when it comes near the screen.
 let exampleLoad = null;
 export function exampleAnswer() {
-  const pc = (byId('ans-example')?.dataset.pc || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (!pc) return Promise.resolve(null);
+  // The point is held, so arriving asks our own API and postcodes.io nothing. A page naming another example has no point here.
+  if (byId('ans-example')?.dataset.pc !== EXAMPLE.postcode) return Promise.resolve(null);
   exampleLoad ??= (async () => {
-    const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`)).json();
-    if (!geo?.result) return null;
-    const env = await (await fetch(`${ENV}?lat=${geo.result.latitude}&lon=${geo.result.longitude}`)).json();
-    return env?.environment ? { geo: geo.result, env } : null;
+    const env = await (await fetch(`${ENV}?lat=${EXAMPLE.latitude}&lon=${EXAMPLE.longitude}`)).json();
+    return env?.environment ? { geo: EXAMPLE, env } : null;
   })().catch(() => null).then((found) => {
     if (!found) exampleLoad = null;
     return found;

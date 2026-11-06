@@ -93,8 +93,8 @@ for (const [label, place, env, kind, calls] of [
 
 console.log('What a reader is told');
 same(sayAnswer('TW9 3PZ', kew.env), 'Answered for TW9 3PZ.', 'all three figures: just whose answer it is');
-same(sayAnswer('SW5 9HP', REAL.SW59HP.env), 'Answered for SW5 9HP. No DEFRA figure here for aircraft noise.', 'a figure the answer lacks is said to be missing');
-same(sayAnswer('EX1 1HS', REAL.EX11HS.env), 'Answered for EX1 1HS. No DEFRA figure here for aircraft noise and road noise.', 'two missing read as a sentence');
+same(sayAnswer('SW5 9HP', REAL.SW59HP.env), 'Answered for SW5 9HP. We hold no figure here for aircraft noise.', 'a figure the answer lacks is said to be missing');
+same(sayAnswer('EX1 1HS', REAL.EX11HS.env), 'Answered for EX1 1HS. Outside the city regions we cover, we hold no figure for aircraft noise and road noise, though DEFRA may map this place.', 'outside our city regions it says what we hold, never what DEFRA has');
 ok(sayAnswer('ZE1 0AA', REAL.ZE10AA.env).startsWith('Answered for ZE1 9ZZ, the nearest postcode the API found to ZE1 0AA.'), 'a neighbour is named, with the postcode asked', sayAnswer('ZE1 0AA', REAL.ZE10AA.env));
 ok(!/road noise/.test(sayAnswer('NG11 8AH', REAL.NG118AH.env)), 'a quiet road is a reading, so it is never called missing', sayAnswer('NG11 8AH', REAL.NG118AH.env));
 same(answeredFor('TW9 3PZ', { environment: {} }), 'TW9 3PZ', 'an answer naming no postcode stands for the one asked');
@@ -137,10 +137,13 @@ const MADE_UP = {
   WD11AA: { geo: point(53, -2), env: { body: REAL.M11AE.env } },
 };
 
+// What postcodes.io gives for the start of a postcode: a list, or null when it knows none (read 2026-11-06).
+const COMPLETIONS = { SW59: ['SW5 9HP', 'SW5 9HQ'], M1: ['M1 2AA'], M11: ['M1 1AE'], E1: ['E1 6AN'], N1: ['N1 9AG'], W1: ['W1A 1AA'], SE1: ['SE1 7PB'] };
+
 async function open(browser, { width, height, motion = 'no-preference', arrival = true, js = true, hold = 0, base = true }) {
   const context = await browser.newContext({ viewport: { width, height }, reducedMotion: motion, javaScriptEnabled: js });
   const page = await context.newPage();
-  const seen = { env: [], geo: [], score: 0, errors: [], csp: [], cancelled: [] };
+  const seen = { env: [], geo: [], completions: [], score: 0, errors: [], csp: [], cancelled: [] };
   page.on('requestfailed', (r) => { if (/ERR_ABORTED/.test(r.failure()?.errorText || '')) seen.cancelled.push(r.url()); });
   page.on('pageerror', (e) => seen.errors.push(String(e)));
   // 'frame-ancestors' in a <meta> draws a notice on every page (tests/changes-why.mjs): a refusal says it refused.
@@ -154,6 +157,14 @@ async function open(browser, { width, height, motion = 'no-preference', arrival 
   });
   if (!base) await page.route('**/js/api-base.js', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
   await page.route((u) => u.hostname === 'api.postcodes.io', async (route) => {
+    const parts = new URL(route.request().url()).pathname.split('/');
+    if (parts.at(-1) === 'autocomplete') {
+      const text = parts.at(-2);
+      seen.completions.push(text);
+      if (text === 'FA1') return route.abort();
+      if (text === 'M1' || text === 'W1') await new Promise((r) => setTimeout(r, 900)); // slower than what follows
+      return route.fulfill({ json: { status: 200, result: COMPLETIONS[text] ?? null } }).catch(() => {});
+    }
     const pc = route.request().url().split('/').pop();
     seen.geo.push(pc);
     if (pc === 'EE11EE') return route.abort();
@@ -210,6 +221,94 @@ const atSamePoint = (s, seen) => {
 
 const browser = await chromium.launch();
 
+for (const [width, height] of [[1366, 900], [390, 844], [320, 640]]) {
+  console.log(`Suggestions at ${width}px`);
+  const { page, seen, context } = await open(browser, { width, height });
+  await settled(page);
+  const list = () => page.evaluate(() => {
+    const box = document.getElementById('try-pc'), l = document.getElementById('try-list');
+    const r = l.getBoundingClientRect(), send = document.querySelector('.try-row button').getBoundingClientRect();
+    return {
+      hidden: l.hidden, expanded: box.getAttribute('aria-expanded'),
+      options: [...l.querySelectorAll('[role="option"]')].map((o) => o.dataset.value),
+      bare: !l.hidden && !l.querySelector('[role="option"]'),
+      overButton: !l.hidden && r.left < send.right && send.left < r.right && r.top < send.bottom && send.top < r.bottom,
+      sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      live: document.querySelector('#try-list + .pc-live')?.textContent,
+    };
+  });
+  const past = () => page.waitForTimeout(450);
+  await page.click('#try-pc');
+  ok((await list()).hidden, 'a first click opens nothing: the chips are the examples');
+  for (const text of ['kew', 'SW5 9HP', 'hello there']) {
+    await page.fill('#try-pc', text);
+    await past();
+    ok((await list()).hidden, `"${text}" opens no list and leaves Send clear`);
+  }
+  same(seen.completions, [], 'and none of them is sent');
+  await page.fill('#try-pc', 'sw5 9');
+  await page.waitForSelector('#try-list [role="option"]', { timeout: 3000 }).catch(() => {});
+  const open1 = await list();
+  same(open1.options, ['SW5 9HP', 'SW5 9HQ'], 'the start of a postcode is offered the rest');
+  ok(open1.expanded === 'true' && open1.live === '2 suggestions.' && open1.sideways <= 0, 'and it is said, with nothing scrolling sideways', JSON.stringify(open1));
+  ok(!open1.overButton, 'and the list opens clear of Send', JSON.stringify(open1));
+  // The text's own line boxes: a computed line-height here is "normal", and a guess at it let two lines pass.
+  const line = await page.evaluate(() => {
+    const words = document.createRange();
+    words.selectNodeContents(document.querySelector('#try-list [role="option"] span'));
+    const boxes = [...words.getClientRects()];
+    return { name: Math.max(...boxes.map((b) => b.bottom)) - Math.min(...boxes.map((b) => b.top)), one: boxes[0].height };
+  });
+  ok(line.name < line.one * 1.5, 'and each postcode sits on one line', JSON.stringify(line));
+  same(seen.completions, ['SW59'], 'asked once, with no space');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await settled(page);
+  ok((await state(page)).status.startsWith('Answered for SW5 9HP.') && atSamePoint(await state(page), seen), 'choosing one sends it, and the samples follow', (await state(page)).status);
+  ok(await page.evaluate(() => window.__counted.includes('event/api-demo-pick')), 'counted as a pick, by name only');
+  ok(!(await page.evaluate(() => JSON.stringify(window.__counted))).includes('SW5'), 'with no postcode in the count');
+
+  await page.fill('#try-pc', 'm1');
+  await page.waitForTimeout(350); // on its way, and slow
+  await page.fill('#try-pc', 'm1 1');
+  await page.waitForSelector('#try-list [role="option"]', { timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(1100); // past the slow reply
+  same((await list()).options, ['M1 1AE'], 'a slower reply for older text never replaces the list');
+
+  await page.fill('#try-pc', 'zz9');
+  await past();
+  ok((await list()).hidden, 'a start postcodes.io does not know opens nothing');
+  await page.fill('#try-pc', 'fa1');
+  await past();
+  ok((await list()).hidden && seen.errors.length === 0, 'a lookup that fails opens nothing and breaks nothing', seen.errors.join(' '));
+  const made = seen.geo.length;
+  await page.fill('#try-pc', 'SW5 9HP');
+  await page.click('.try-row button');
+  await settled(page);
+  ok((await state(page)).status.startsWith('Answered for SW5 9HP.') && seen.geo.length === made, 'and the box still sends: a repeat of the postcode on show asks nothing', (await state(page)).status);
+
+  // What ends the box's turn ends the lookup, or a list opens on a reader who has moved on.
+  const leave = () => page.evaluate(() => document.getElementById('try-pc').blur());
+  await page.fill('#try-pc', 'e1');
+  await page.keyboard.press('Escape');
+  await past();
+  ok((await list()).hidden && !seen.completions.includes('E1'), 'Escape inside the pause sends nothing and opens nothing', seen.completions.join());
+  await page.fill('#try-pc', 'n1');
+  await leave();
+  await past();
+  ok((await list()).hidden && !seen.completions.includes('N1'), 'leaving the box inside the pause sends nothing', seen.completions.join());
+  await page.fill('#try-pc', 'w1');
+  await page.waitForTimeout(350); // asked, and slow
+  await leave();
+  await page.waitForTimeout(1100); // past the slow reply
+  ok((await list()).hidden && seen.completions.includes('W1'), 'a reply landing after the reader left opens nothing', seen.completions.join());
+  await page.fill('#try-pc', 'se1');
+  await page.keyboard.press('Enter');
+  await past();
+  ok((await list()).hidden && !seen.completions.includes('SE1') && (await state(page)).invalid === 'true', 'Enter inside the pause is the form\'s, and no lookup follows it', seen.completions.join());
+  await context.close();
+}
+
 for (const [width, height, motion] of [[1366, 900, 'no-preference'], [390, 844, 'no-preference'], [390, 844, 'reduce'], [320, 640, 'no-preference']]) {
   const tag = `${width}px${motion === 'reduce' ? ', reduced motion' : ''}`;
   console.log(`The page at ${tag}`);
@@ -240,7 +339,7 @@ for (const [width, height, motion] of [[1366, 900, 'no-preference'], [390, 844, 
 
   s = await send(page, 'sw5 9hp');
   same(s.tiles, [`${REAL.SW59HP.env.environment.roadNoiseLdenDb} dB`, `${REAL.SW59HP.env.environment.no2AnnualMeanUgm3} µg/m³`], 'a postcode sent: its own figures, and no tile for what it lacks');
-  ok(s.status === 'Answered for SW5 9HP. No DEFRA figure here for aircraft noise.', 'and it says what is missing', s.status);
+  ok(s.status === 'Answered for SW5 9HP. We hold no figure here for aircraft noise.', 'and it says what is missing', s.status);
   ok(atSamePoint(s, seen), 'the samples moved to the point answered', s.curl);
   ok(s.running, 'a press plays, whatever the motion setting');
   await page.waitForFunction(() => !document.getElementById('dev-run').classList.contains('is-waiting'), null, { timeout: 8000 });
@@ -262,7 +361,7 @@ for (const [width, height, motion] of [[1366, 900, 'no-preference'], [390, 844, 
 
   s = await send(page, 'EX1 1HS');
   same(s.tiles, [`${REAL.EX11HS.env.environment.no2AnnualMeanUgm3} µg/m³`], 'NO₂ alone: one card, never a zero for noise');
-  ok(/aircraft noise and road noise\.$/.test(s.status), 'and the two it lacks are named', s.status);
+  ok(/no figure for aircraft noise and road noise, though DEFRA may map this place\.$/.test(s.status), 'and the two it lacks are named, as what we hold', s.status);
 
   s = await send(page, 'ZE1 0AA');
   ok(s.status.startsWith('Answered for ZE1 9ZZ, the nearest postcode the API found to ZE1 0AA.'), 'a neighbour\'s answer says so', s.status);
@@ -270,7 +369,7 @@ for (const [width, height, motion] of [[1366, 900, 'no-preference'], [390, 844, 
 
   s = await send(page, 'NG11 8AH');
   same(s.tiles, [`under ${REAL.NG118AH.env.environment.roadNoiseBelowDb} dB`, `${REAL.NG118AH.env.environment.no2AnnualMeanUgm3} µg/m³`], 'a quiet road reads as its bound, on a card');
-  ok(s.status === 'Answered for NG11 8AH. No DEFRA figure here for aircraft noise.', 'and only what is truly missing is said to be', s.status);
+  ok(s.status === 'Answered for NG11 8AH. We hold no figure here for aircraft noise.', 'and only what is truly missing is said to be', s.status);
   ok(s.json.includes('"roadNoiseBelowDb": '), 'and the answer on show carries the field a caller would read');
 
   await context.close();
@@ -295,7 +394,7 @@ console.log('Nothing to show');
 
   for (const [typed, words] of [
     ['SW5 9XX', 'We could not find SW5 9XX. Check it and send it again. Still showing TW9 3PZ.'],
-    ['AB1 2CD', 'No DEFRA noise or NO₂ figure for AB1 2CD. Still showing TW9 3PZ.'],
+    ['AB1 2CD', 'We hold no noise or NO₂ figure for AB1 2CD. Still showing TW9 3PZ.'],
     ['BB1 1BB', 'The API could not match BB1 1BB to a postcode just now. Send it again in a moment, or try another. Still showing TW9 3PZ.'],
     ['IM1 1AD', 'IM1 1AD has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none. Still showing TW9 3PZ.'],
     ['CC1 1CC', `${sayProblem('failed', 'CC1 1CC', 'TW9 3PZ')}`],
