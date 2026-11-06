@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-06 - About's links
+
+- **About's links stand out.** A section link fills orange under the pointer, and links in the text are dark orange.
+
 ## 2026-11-05 - Try a request; About and How it works rebuilt
 
 - **The API page lets you send a real request.** Type a postcode and see the request, its answer and each figure land on a card, in curl, Python or JavaScript. It uses the open route, so no key is needed. It says when an answer is for a neighbouring postcode and which figures an answer lacks.

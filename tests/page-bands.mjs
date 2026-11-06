@@ -95,6 +95,54 @@ console.log('About: pictures and bands');
   await page.close();
 }
 
+console.log('About: the links');
+{
+  // Bill, 2026-11-06: the section links stay quiet until the pointer is on one, and links in the text are the darker orange.
+  const page = await open('/about/', 1366);
+  const INK = 'rgb(168, 84, 22)', CLEAR = 'rgba(0, 0, 0, 0)', PILL = 'nav.jump a[href="#grew"]', WORDS = 'ol.grew a[href="/api/"]';
+  const pills = () => page.evaluate(() => [...document.querySelectorAll('nav.jump a')].map((a) => ({ href: a.getAttribute('href'), back: getComputedStyle(a).backgroundColor, text: getComputedStyle(a).color })));
+  const rest = await pills();
+  ok(rest.length === 6 && rest.every((p) => p.back === CLEAR && p.text === DARK), 'at rest no section link is filled', JSON.stringify(rest));
+  await page.hover(PILL);
+  const under = await pills();
+  ok(under.filter((p) => p.back === ORANGE).map((p) => p.href).join() === '#grew' && under.find((p) => p.href === '#grew').text === DARK, 'the one under the pointer fills orange, dark text on it, and no other', JSON.stringify(under));
+  await page.mouse.move(2, 2);
+  // Polled: the browser applies a hover change on a later frame, so a read straight after the move sees the old one.
+  const gone = await page.waitForFunction((clear) => [...document.querySelectorAll('nav.jump a')].every((a) => getComputedStyle(a).backgroundColor === clear), CLEAR, { timeout: 2000 }).then(() => true, () => false);
+  ok(gone, 'and it goes when the pointer leaves', JSON.stringify(await pills()));
+
+  // Every link, on what is really behind it: a light band or a dark one, a card or the page.
+  const links = await page.evaluate(() => {
+    const rgb = (s) => { const v = s.match(/[\d.]+/g).map(Number); return { r: v[0], g: v[1], b: v[2], a: v[3] ?? 1 }; };
+    const lin = (c) => { const x = c / 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; };
+    const lum = (c) => 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
+    const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+    const behind = (start) => { for (let n = start; n; n = n.parentElement) { const c = rgb(getComputedStyle(n).backgroundColor); if (c.a === 1) return c; } return { r: 255, g: 255, b: 255 }; };
+    return [...document.querySelectorAll('main a')].map((a) => ({ words: a.textContent.trim().slice(0, 40), ratio: +ratio(rgb(getComputedStyle(a).color), behind(a)).toFixed(2), text: getComputedStyle(a).color }));
+  });
+  ok(links.length >= 30 && links.every((l) => l.ratio >= 4.5), 'every link on the page reads 4.5:1 or better', JSON.stringify(links.filter((l) => l.ratio < 4.5)));
+  const colours = await page.evaluate(() => ({
+    words: [...document.querySelectorAll('ol.grew p a')].map((a) => getComputedStyle(a).color),
+    band: [...document.querySelectorAll('ul.links a:not(.primary)')].map((a) => getComputedStyle(a).color),
+  }));
+  ok(colours.words.length >= 8 && colours.words.every((c) => c === INK), 'links in the text are the darker orange', JSON.stringify(colours.words));
+  ok(colours.band.length >= 3 && colours.band.every((c) => c === WHITE), 'and the dark band keeps its white ones', JSON.stringify(colours.band));
+  await page.hover(WORDS);
+  ok(await page.evaluate((s) => getComputedStyle(document.querySelector(s)).color, WORDS) === DARK, 'a link in the text goes dark under the pointer, or hovering it would change nothing');
+  await page.close();
+
+  // A phone's hover stays on what was tapped.
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const tapped = await phone.newPage();
+  await tapped.route('**/js/count.mjs', (r) => r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+  await tapped.goto(`http://127.0.0.1:${PORT}/about/`, { waitUntil: 'load' });
+  await tapped.tap(PILL);
+  await tapped.waitForTimeout(300);
+  const after = await tapped.evaluate((s) => ({ back: getComputedStyle(document.querySelector(s)).backgroundColor, hovered: document.querySelector(s).matches(':hover'), noPointer: matchMedia('(hover: none)').matches }), PILL);
+  ok(after.noPointer && after.hovered && after.back === CLEAR, 'on a phone a tap leaves no pill stuck orange', JSON.stringify(after));
+  await phone.close();
+}
+
 console.log('About: How it grew');
 // An arrow is a pseudo-element, which has no box to ask for, so its place is worked out from its computed values.
 const grid = (page) => page.evaluate(() => {

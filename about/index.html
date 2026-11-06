@@ -96,6 +96,13 @@
       @media (max-height: 500px) { html { scroll-padding-top: 0; } nav.jump { position: static; } }
       nav.jump a { flex: none; white-space: nowrap; font-size: 15px; font-weight: 600; text-decoration: none; padding: 7px 13px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--dark); }
       nav.jump a:hover { box-shadow: inset 0 0 0 1.5px var(--dark); text-decoration: underline; text-underline-offset: 4px; }
+      /* Orange only under the pointer (Bill, 2026-11-06: six filled pills were "too bright"), and only where there is a pointer: a
+         phone's hover stays on a link after the tap, which would leave one pill stuck orange. */
+      @media (hover: hover) { nav.jump a:hover { background: var(--orange); box-shadow: none; } }
+      /* Links in the text stand out from it (Bill, 2026-11-06), in the darker orange: plain orange text reads 2.4:1 on this page's
+         backgrounds. Not the section links or the film, nor the dark band's, where dark orange reads 3.5:1 and they stay white. */
+      main a:not(nav.jump a, ul.links a, figure.film a) { color: var(--orange-ink); font-weight: 500; }
+      main a:not(nav.jump a, ul.links a, figure.film a):hover { color: var(--dark); }
 
       ul.links a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; }
       ul.links a:hover { text-decoration: underline; text-underline-offset: 4px; }
