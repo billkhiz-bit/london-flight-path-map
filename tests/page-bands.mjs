@@ -2,7 +2,7 @@
 //
 // WHY THIS EXISTS. Both pages are static, and every other gate reads their WORDS or scans them for contrast. None can see
 // what this rebuild is: that the grey boxes of the drafts are real pictures, the bands are the site's colours, a 16:9 crop
-// is 16:9, "How it grew" runs along its rail in order without one step sitting on another, and a bar is the length its
+// is 16:9, "How it grew" reads in date order, arrow by arrow, without one step sitting on another, and a bar is the length its
 // figure says. tests/approach-strip.mjs holds the strip and the page's order around it; this holds the rest.
 //
 //   node tests/page-bands.mjs
@@ -96,34 +96,62 @@ console.log('About: pictures and bands');
 }
 
 console.log('About: How it grew');
-const along = (page) => page.evaluate(() => {
+// An arrow is a pseudo-element, which has no box to ask for, so its place is worked out from its computed values.
+const grid = (page) => page.evaluate(() => {
   const list = document.querySelector('ol.grew');
+  const arrow = (li, which) => {
+    const s = getComputedStyle(li, which);
+    if (s.display === 'none') return null;
+    const r = li.getBoundingClientRect();
+    const left = r.left + parseFloat(s.left) + parseFloat(s.marginLeft), top = r.top + parseFloat(s.top) + parseFloat(s.marginTop);
+    return { left, top, right: left + parseFloat(s.width), bottom: top + parseFloat(s.height), picture: s.backgroundImage, place: s.backgroundPosition };
+  };
   const steps = [...list.children].map((li) => {
     const r = li.getBoundingClientRect();
-    const dot = getComputedStyle(li, '::after');
-    const dotTop = dot.top === 'auto' ? r.top - parseFloat(dot.bottom) - parseFloat(dot.height) : r.top + parseFloat(dot.top);
-    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, spill: li.scrollWidth - li.clientWidth, dotY: dotTop + parseFloat(dot.height) / 2, dotX: r.left + parseFloat(dot.left) };
+    // The arrows stand outside their card on purpose, so what must stay in is the words and the film.
+    const spill = Math.max(...[...li.querySelectorAll('time, h3, p, figure')].map((n) => n.getBoundingClientRect().right)) - r.right;
+    return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, spill, before: arrow(li, '::before'), after: arrow(li, '::after') };
   });
-  const rail = getComputedStyle(list, '::before');
-  return { steps, display: getComputedStyle(list).display, railHeight: rail.height, top: list.getBoundingClientRect().top, rows: getComputedStyle(list).gridTemplateRows };
+  const px = (sel) => parseFloat(getComputedStyle(list.querySelector(sel)).fontSize);
+  return { steps, display: getComputedStyle(list).display, width: list.getBoundingClientRect().width, p: px('li:nth-child(2) p'), h3: px('li:nth-child(2) h3'), time: px('li:nth-child(2) time') };
 });
+const RIGHT = 'M0 0l10 6L0 12z', DOWN = 'M0 0h12L6 10z';
+const near = (a, b, by = 1.5) => Math.abs(a - b) <= by;
+const mid = (x) => (x.left + x.right) / 2;
 const STORY = ['The first map', 'Sky Score Radar', 'Data first', 'An iPhone app', 'Beyond London', "Deen Developers' Build Night", 'AI Tinkerers London', 'Flight paths from the official routes', 'The Bay Area, and the air nearby', 'London Geo Meetup'];
-for (const width of [1366, 1320, 1920]) {
+for (const width of [1920, 1366, 1100, 1000]) {
   const page = await open('/about/', width);
-  const g = await along(page);
+  const g = await grid(page);
   const s = g.steps;
-  ok(s.length === 10 && g.display === 'grid', `${width}: ten steps, across the page`);
-  ok(s.every((x, i) => !i || x.left > s[i - 1].left + 40), `${width}: in order along the rail, left to right`, s.map((x) => Math.round(x.left)).join(' '));
-  const railY = g.top + parseFloat(g.rows.split(' ')[0]) + 44;
-  ok(s.every((x, i) => (i % 2 ? x.top > railY : x.bottom < railY)), `${width}: alternating above and below the rail`, JSON.stringify({ railY, s: s.map((x) => [x.top, x.bottom]) }));
-  ok(s.every((x) => Math.abs(x.dotY - railY) <= 2), `${width}: every waypoint sits on the rail`, s.map((x) => Math.round(x.dotY)).join(' '));
+  ok(s.length === 10 && g.display === 'grid', `${width}: ten steps, on a grid`);
+  ok(near(s[0].width, g.width), `${width}: the first map runs the full width`, `${Math.round(s[0].width)} of ${Math.round(g.width)}`);
+  const rest = s.slice(1);
+  ok(rest.every((x, i) => near(x.top, rest[i - (i % 3)].top) && near(x.bottom, rest[i - (i % 3)].bottom)), `${width}: the other nine sit in rows of three, each row level`, JSON.stringify(rest.map((x) => [Math.round(x.top), Math.round(x.bottom)])));
+  ok(rest.every((x, i) => near(x.left, rest[i % 3].left)) && rest[0].left < rest[1].left && rest[1].left < rest[2].left, `${width}: in three columns, so date order reads left to right`, rest.map((x) => Math.round(x.left)).join(' '));
+  ok(rest.every((x, i) => i < 3 || x.top > rest[i - 3].bottom), `${width}: and row by row down the page`);
   const hit = s.flatMap((a, i) => s.slice(i + 1).filter((b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).map(() => i));
   ok(hit.length === 0, `${width}: no step sits on another`, hit.join());
-  ok(s.every((x) => x.width >= 185 && x.spill <= 0), `${width}: each step has room for a readable line, and nothing spills out`, s.map((x) => Math.round(x.width)).join(' '));
-  ok(s[0].width > s[1].width * 1.4, `${width}: the first card is wider, for the film`, `${Math.round(s[0].width)} against ${Math.round(s[1].width)}`);
-  const row = (i) => s.filter((_, n) => n % 2 === i);
-  ok([0, 1].every((i) => new Set(row(i).map((x) => Math.round(x.top))).size === 1), `${width}: the cards in a row line up`);
+  ok(rest.every((x) => x.width >= 250 && x.spill <= 0), `${width}: each card has room for a readable line, and nothing spills out`, s.map((x) => Math.round(x.width)).join(' '));
+  ok(g.p >= 16 && g.h3 >= 20 && g.time >= 15, `${width}: the steps read near the page's own size`, JSON.stringify([g.p, g.h3, g.time]));
+
+  // Every step points at the next, and only there.
+  const along = [[1, 2], [2, 3], [4, 5], [5, 6], [7, 8], [8, 9]];
+  for (const [a, b] of along) {
+    const w = s[a].after;
+    ok(w && near(w.left, s[a].right) && near(w.right, s[b].left) && w.top > s[a].top && w.bottom < s[a].bottom && w.picture.includes(RIGHT), `${width}: step ${a + 1} points right, at step ${b + 1}`, JSON.stringify(w));
+  }
+  const down = s[1].before;
+  ok(down && near(down.top, s[0].bottom) && near(down.bottom, s[1].top) && near(mid(down), mid(s[1])) && down.picture.includes(DOWN), `${width}: the first map points down, at step 2`, JSON.stringify(down));
+  for (const [a, b] of [[3, 4], [6, 7]]) {
+    const leave = s[a].after, come = s[b].before;
+    ok(leave && near(mid(leave), mid(s[a])) && near(leave.top, s[a].bottom, 6) && near(leave.bottom, come?.top), `${width}: step ${a + 1} leaves from under itself`, JSON.stringify(leave));
+    ok(come && near(come.right, mid(s[a]), 7) && near(come.left + 6, mid(s[b])) && near(come.bottom, s[b].top) && come.picture.includes(DOWN), `${width}: and comes back to point down at step ${b + 1}`, JSON.stringify(come));
+    // The box spans the whole way back, so it cannot say which end the head is at, or that a line is drawn at all.
+    ok(come?.place?.startsWith('0% ') && come.picture.includes('repeating-linear-gradient(to right') && come.picture.split('repeating-linear-gradient(').length === 3, `${width}: its head at that end, on a line all the way back`, JSON.stringify(come));
+  }
+  ok([0, 2, 3, 5, 6, 8, 9].every((i) => !s[i].before) && [0, 9].every((i) => !s[i].after), `${width}: no arrow anywhere else, and none after the last step`, JSON.stringify(s.map((x) => [!!x.before, !!x.after])));
   ok(await sideways(page) <= 0, `${width}: nothing scrolls the page sideways`);
+
   const cards = await page.evaluate(() => {
     const film = document.querySelector('ol.grew > li:first-child figure.film');
     const label = film?.querySelector('.film-label');
@@ -137,14 +165,71 @@ for (const width of [1366, 1320, 1920]) {
   });
   ok(cards.titles.join() === STORY.join(), `${width}: your talks sit among the steps, in date order`, cards.titles.join(' | '));
   ok(cards.talks.length === 3 && cards.talks.every((c) => c === TINT) && cards.rest.every((c) => c === PAPER), `${width}: talks on the warm colour, the rest on paper`, JSON.stringify(cards));
-  ok(cards.labelLines !== null && cards.labelLines <= 4 && cards.still >= 100, `${width}: the film stays in the first card, with room for its label`, JSON.stringify(cards));
+  ok(cards.labelLines !== null && cards.labelLines <= 2 && cards.still >= 300, `${width}: the film stays in the first card, at a size worth pressing`, JSON.stringify(cards));
   await page.close();
 }
-for (const width of [1319, 1080, 760, 390, 320]) {
+for (const width of [999, 760, 390, 320]) {
   const page = await open('/about/', width, 800);
-  const g = await along(page);
+  const g = await grid(page);
   ok(g.display !== 'grid' && g.steps.every((x, i) => !i || x.top >= g.steps[i - 1].bottom - 1), `${width}: the steps run down the page, as they always have`);
+  const dashed = g.steps.slice(0, -1).every((x, i) => x.before?.picture?.includes('repeating-linear-gradient') && near(x.before.right - x.before.left, 2) && x.before.bottom > g.steps[i + 1].top);
+  ok(dashed && !g.steps.at(-1).before && g.steps.every((x) => x.after), `${width}: a dashed line from each step to the next, and a point on each`, JSON.stringify(g.steps.map((x) => x.before)));
+  ok(g.steps.every((x) => !x.after?.picture?.includes('svg') && !x.before?.picture?.includes('svg')), `${width}: and no arrows`);
   ok(await sideways(page) <= 0, `${width}: nothing scrolls the page sideways`);
+  await page.close();
+}
+{
+  // Each step goes on to one place, on the step's own words, and that place is there.
+  const page = await open('/about/', 1366);
+  const steps = await page.evaluate(() => [...document.querySelectorAll('ol.grew > li')].map((li) => [...li.querySelectorAll('a')].map((a) => ({ href: a.getAttribute('href'), words: a.textContent.trim() }))));
+  ok(steps.every((links) => links.length === 1 && links[0].words), 'every step links on to one place', JSON.stringify(steps));
+  const own = steps.flat().filter((l) => !/^https?:/.test(l.href));
+  const reached = await Promise.all(own.map(async ({ href }) => {
+    const [path, id] = href.split('#');
+    const reply = await fetch(`http://127.0.0.1:${PORT}${path || '/about/'}`); // from here, because the page's own CSP refuses it
+    const html = await reply.text();
+    return { href, there: reply.ok && (!id || html.includes(`id="${id}"`)) };
+  }));
+  ok(own.length >= 7 && reached.every((r) => r.there), "each link reaches a page of ours, and each # a section there", JSON.stringify(reached.filter((r) => !r.there)));
+  await page.close();
+}
+
+console.log('About: the section links stay in view');
+for (const [width, height] of [[1366, 900], [1000, 800], [390, 844], [320, 640]]) {
+  const page = await open('/about/', width, height);
+  const hrefs = await page.evaluate(() => [...document.querySelectorAll('nav.jump a')].map((a) => a.getAttribute('href')));
+  ok(hrefs.join() === '#why,#grew,#asked,#talks,#for,#contact', `${width}: a link to each section`, hrefs.join());
+  const bar = () => page.evaluate(() => { const n = document.querySelector('nav.jump'); const r = n.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, height: r.height, background: getComputedStyle(n).backgroundColor, page: getComputedStyle(document.body).backgroundColor }; });
+  const first = await bar();
+  ok(first.height <= 64, `${width}: the links keep to one line, so the bar stays small`, JSON.stringify(first));
+  ok(first.background === first.page, `${width}: the page does not show through the bar`, JSON.stringify(first));
+  for (const href of hrefs) {
+    await page.locator(`nav.jump a[href="${href}"]`).click();
+    const at = await page.evaluate((h) => {
+      const n = document.querySelector('nav.jump').getBoundingClientRect(), head = document.querySelector(`${h} h2`).getBoundingClientRect();
+      return { bar: n.top, barBottom: n.bottom, head: head.top, foot: head.bottom, screen: window.innerHeight };
+    }, href);
+    ok(near(at.bar, 0), `${width}: at ${href} the links are still there`, JSON.stringify(at));
+    ok(at.head >= at.barBottom && at.foot <= at.screen, `${width}: and its heading lands in view, clear of the bar`, JSON.stringify(at));
+  }
+  // The danger is a link already under the bar when Tab reaches it: on screen as far as the browser knows, so nothing would move it.
+  const focus = await page.evaluate(() => {
+    const link = document.querySelector('ol.grew a[href="/api/"]');
+    window.scrollBy(0, link.getBoundingClientRect().top - 20);
+    const before = link.getBoundingClientRect().top;
+    link.focus();
+    const n = document.querySelector('nav.jump').getBoundingClientRect(), r = link.getBoundingClientRect();
+    return { bar: n.bottom, before, link: r.top };
+  });
+  ok(near(focus.before, 20) && focus.link >= focus.bar, `${width}: a link reached by Tab is not hidden under the bar`, JSON.stringify(focus));
+  ok(await sideways(page) <= 0, `${width}: nothing scrolls the page sideways`);
+  await page.close();
+}
+{
+  const page = await open('/about/', 844, 390);
+  await page.evaluate(() => window.scrollTo(0, 1200));
+  const top = await page.evaluate(() => document.querySelector('nav.jump').getBoundingClientRect().top);
+  ok(top < 0, 'a short window keeps its height: the links stay at the top of the page', String(top));
   await page.close();
 }
 

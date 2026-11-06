@@ -3,7 +3,7 @@
 ## 2026-11-05 - Try a request; About and How it works rebuilt
 
 - **The API page lets you send a real request.** Type a postcode and see the request, its answer and each figure land on a card, in curl, Python or JavaScript. It uses the open route, so no key is needed. It says when an answer is for a neighbouring postcode and which figures an answer lacks.
-- **About opens on a photo of the map being explained.** The promises and the questions sit on coloured bands, the contact band is dark, and "How it grew" runs along a route across the page on a wide screen, now with the talks and demos in it, in date order. Those three cards are the only new words.
+- **About opens on a photo of the map being explained.** The promises and the questions sit on coloured bands, the contact band is dark, and "How it grew" is a grid on a wide screen, with arrows in date order and the talks and demos among the steps, each step linking on to what it describes. The page's section links stay in view as you scroll. Those three cards are the only new words.
 - **How it works starts with the short version.** The worked example is open, with a bar for each score, the five scores are cards and the folds are full-width rows. No word changed.
 - **The Bay Area page joins the site's palette**, the last page to do so.
 - **The developers band** sizes its cards to the answer, so a figure with two neighbours no longer wraps on a phone.

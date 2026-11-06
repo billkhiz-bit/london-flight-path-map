@@ -28,6 +28,8 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-11-05)
 >
+> **ABOUT'S TIMELINE, 5 NOV LATE, Bill said "deploy":** the ten-card rail read too small live, and bigger type did not win him over (branch `about-timeline-size`, superseded, never deployed). Stitch redrafted it, he picked the three-column grid and asked for arrows and a link to each section: `ol.grew.grid`, every step linking on from its own words, and the page's section links now stay in view (`nav.jump`, his pick of the two readings).
+>
 > **LIVE 5 Nov, 16:45 (`c415f9af`, master pushed, drift PASS).** Final preflight PASS, the flood stage included; web, home and bay-area deployed. First real run of "Try a request", no stubs, at 390 and 1366: arriving asks the API once and postcodes.io never, SW5 9HP reads 71.8 dB and 24 µg/m³ as a direct call does, a repeat press sends nothing, shift 0.0005 at most, and ZZ99 9ZZ, IM1 1AD, BT1 5GS, AB10 1AB and EX1 1HS are each answered in words. `responsive`, `live-mobile-verify` and `site-api-parity` re-run after the deploy: all pass.
 >
 > **Bill said "deploy" 5 Nov** (his brief of 4 Nov, built on `page-drafts`). `/api/` has "Try a request": a reader sends a postcode and sees the real request and answer, through the front page's band, now one
@@ -43,7 +45,7 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **NEXT, Bill's yes 5 Nov, own branch:** the front page holds the example's point, so a visit stops reaching postcodes.io (privacy s2b covers a search, not that), and live postcode suggestions as you type on the front page and `/api/`, as the full map has
 > them; the line "Nothing you type is sent until you search" goes. Rides with it, seen on the first live run: `/api/` says "No DEFRA figure here" outside our city regions (EX1 1HS), where DEFRA may map the place and we only do not hold it, as the API's own notice says; `sayAnswer` and `no-figures` should say that. The short version above the strip stays, unless he says otherwise. SETTLED 5 Nov: a press plays for a reader with reduced motion too (the review queried it; Bill: "yes do the animation").
 >
-> **SMALL, ANY TIME:** `frame-ancestors` in a meta CSP is ignored and logs a console error on `/api/`, and it is in 7 more pages (the map, pricing, changes, privacy, terms, prototype, score-demo). It was there before this release, and the header's `X-Frame-Options: DENY` holds.
+> **SMALL, ANY TIME:** `frame-ancestors` in a meta CSP is ignored and logs a console error on `/api/`, and it is in 7 more pages (the map, pricing, changes, privacy, terms, prototype, score-demo). It was there before this release, and the header's `X-Frame-Options: DENY` holds. Seen in review 6 Nov, Bill's call: below about 890 px (measured) About's six section links run past the bar's edge, which a phone swipes but a mouse reaches only by Tab or Shift+wheel. A visible scrollbar would push the bar past its 64 px clearance, so it needs a look of its own.
 >
 > **ALSO 5 NOV:** NOW.md trimmed 385 to 174 lines, section 4's history moved word for word to `90_DAY_ROADMAP.md`. Explee and alternatives assessed: buy nothing (memory `project-outreach-tools-assessment-2026-11-05`). PICKED UP NEXT: a Buyer Scout
 > if Bill says yes: Companies House plus a regulator's list, ranked with our own figures, drafts only, organisations only until the gates clear.
