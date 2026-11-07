@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-07 - Clearer API errors
+
+- **`/v1/environment` says when its postcode lookup fails.** It answered 404, its answer for a point with no postcode near it, when its own call to postcodes.io failed too. It now answers 503 with `Retry-After` when that lookup cannot be reached, and 502 when the lookup's answer cannot be read; 404 means only "no postcode here".
+- **The API's own error replies can be read by a browser.** A throttled request's 429 and a missing key's 403 now carry the same CORS header as every other answer, so a web page can tell a throttle from a dropped connection.
+- **The API page's "Try a request"** says the API is busy only when it really was throttled.
+
 ## 2026-11-06 - About's links, postcode suggestions, and the Heathrow comparison
 
 - **About's links stand out.** A section link fills orange under the pointer, and links in the text are dark orange.

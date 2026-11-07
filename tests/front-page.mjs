@@ -932,6 +932,26 @@ await page.waitForFunction(() => document.querySelector('#ans-title')?.textConte
   );
 }
 
+// 11c. A THROTTLE OR A FAILED LOOKUP IS NEVER "NO FIGURES" (2026-11-07). API Gateway's own replies carry a CORS header
+// since then (template.yaml GatewayResponses), so the page READS a throttle's 429 where its fetch used to fail outright;
+// it carries `message`, never our `error`, and read as an answer it said "No figures for that spot": a claim about the
+// place. Our own Lambda's replies keep their words (its 503 when its postcode lookup fails).
+for (const [label, pc, status, body, words] of [
+  ["a throttle (API Gateway's 429)", 'NW1 7PJ', 429, { message: 'Too Many Requests' }, 'The data is busy just now. Try again in a moment.'],
+  ["a gateway failure (API Gateway's 502)", 'TW9 3PZ', 502, { message: 'Internal server error' }, 'Could not reach the data just now. Try again in a moment.'],
+  ['our own failed lookup (the Lambda\'s 503)', 'EX1 1HS', 503, { error: 'The postcode lookup this route depends on is unavailable just now. Try again shortly.' }, 'The postcode lookup this route depends on is unavailable just now. Try again shortly.'],
+]) {
+  const env = /\/v1\/environment\?/;
+  const answer = (route) => route.fulfill({ status, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
+  await page.route(env, answer);
+  await page.fill('#pc', pc);
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction((w) => document.querySelector('#status')?.textContent === w, words, { timeout: 10000 }).catch(() => {});
+  const said = await page.locator('#status').textContent();
+  ok(said === words, `${label} is said as such, never as a place with no figures`, said);
+  await page.unroute(env, answer);
+}
+
 // 12. Place names: a borough opens its card (switching city), a Bay Area city opens the Bay Area, a city name switches.
 await page.fill('#pc', 'Trafford');
 await page.press('#pc', 'Enter');

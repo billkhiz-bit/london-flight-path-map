@@ -5076,3 +5076,85 @@ class CachedPostcodeAttributionTests(unittest.TestCase):
             self.assertIn('ONS National Statistics Postcode Lookup', line,
                           f'request {i} credited: {line}')
         self.assertEqual(len(set(lines)), 1, f'provenance changed between requests: {lines}')
+
+
+class EnvironmentLookupFailureTests(unittest.TestCase):
+    """/v1/environment tells "postcodes.io failed" from "no postcode here" (2026-11-07).
+
+    WHY THIS EXISTS. reverse_geocode returned None for both, so a failed lookup answered the 404 the sea gets, and
+    /api/ had to word a 404 as "no postcode, or the lookup failed, send it again". In the week to 7 Nov the route
+    answered 647 404s; nothing could say how many were the sea. Now a failure raises PostcodeLookupFailed and the
+    route answers 503 (could not reach, timed out, 429, 5xx) or 502 (an answer we cannot read), as sold_prices does.
+    Each case uses its own coordinate, because reverse_geocode caches a found postcode per warm container.
+    """
+
+    EVENT = {'queryStringParameters': {'lat': '51.5', 'lon': '-0.1'}}
+
+    def _reverse(self, lat, *, raises=None, body=None):
+        if raises is not None:
+            opener = MagicMock(side_effect=raises)
+        else:
+            resp = MagicMock()
+            resp.read.return_value = body.encode()
+            opener = MagicMock()
+            opener.return_value.__enter__.return_value = resp
+        with patch.object(app, 'urlopen', opener):
+            return app.reverse_geocode(lat, -0.1), opener
+
+    def _http_error(self, code):
+        return app.HTTPError('https://api.postcodes.io/postcodes', code, 'x', {}, None)
+
+    def test_unreachable_or_refused_is_503(self):
+        for lat, exc in ((50.101, app.URLError('down')), (50.102, TimeoutError()),
+                         (50.103, self._http_error(429)), (50.104, self._http_error(500)),
+                         (50.105, self._http_error(503))):
+            with self.subTest(exc=repr(exc)), self.assertRaises(app.PostcodeLookupFailed) as caught:
+                self._reverse(lat, raises=exc)
+            self.assertEqual(caught.exception.status, 503)
+
+    def test_an_answer_we_cannot_read_is_502(self):
+        for lat, kwargs in ((50.111, {'raises': self._http_error(400)}), (50.112, {'body': '<html>busy</html>'})):
+            with self.subTest(kwargs=kwargs), self.assertRaises(app.PostcodeLookupFailed) as caught:
+                self._reverse(lat, **kwargs)
+            self.assertEqual(caught.exception.status, 502)
+
+    def test_the_sea_is_still_none_and_never_raises(self):
+        found, _ = self._reverse(50.121, body='{"status": 200, "result": null}')
+        self.assertIsNone(found)
+
+    def test_a_failure_is_not_cached(self):
+        # The next call must ask again: a blip must not stick for the container's lifetime.
+        with self.assertRaises(app.PostcodeLookupFailed):
+            self._reverse(50.131, raises=app.URLError('down'))
+        found, opener = self._reverse(50.131, body=json.dumps({'status': 200, 'result': [
+            {'postcode': 'SW11 1PX', 'codes': {'admin_district': 'E09000032'}, 'admin_district': 'Wandsworth'}]}))
+        self.assertEqual(opener.call_count, 1)
+        self.assertEqual(found['postcode'], 'SW11 1PX')
+
+    def _route(self, side_effect):
+        with patch.object(app, 'reverse_geocode', side_effect=side_effect):
+            res = app.handle_environment(self.EVENT)
+        return res, json.loads(res['body'])
+
+    def test_route_answers_503_with_retry_after(self):
+        res, body = self._route(app.PostcodeLookupFailed(503, 'URLError'))
+        self.assertEqual(res['statusCode'], 503)
+        self.assertEqual(res['headers'].get('Retry-After'), '10')
+        self.assertIn('unavailable', body['error'])
+        self.assertEqual(body['location'], {'lat': 51.5, 'lon': -0.1})
+
+    def test_route_answers_502_without_retry_after(self):
+        res, _ = self._route(app.PostcodeLookupFailed(502, 'non-JSON'))
+        self.assertEqual(res['statusCode'], 502)
+        self.assertNotIn('Retry-After', res['headers'])
+
+    def test_route_keeps_404_for_no_postcode(self):
+        res, body = self._route([None])
+        self.assertEqual(res['statusCode'], 404)
+        self.assertEqual(body['error'], 'No UK postcode found near those coordinates.')
+
+    def test_failures_keep_cors_and_security_headers(self):
+        # A browser must be able to READ the 503, or /api/ cannot say what happened.
+        res, _ = self._route(app.PostcodeLookupFailed(503, 'URLError'))
+        for name in ('Access-Control-Allow-Origin', 'Strict-Transport-Security', 'X-Content-Type-Options'):
+            self.assertIn(name, res['headers'])

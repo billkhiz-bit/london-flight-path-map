@@ -24,12 +24,13 @@
  *   - a postcode with no point (the Isle of Man and the Channel Islands: postcodes.io answers 200 with a null latitude);
  *   - a postcode nobody knows, or no figures at all.
  *
- * THE ROUTE'S 404 IS NOT ALWAYS "NO POSTCODE HERE". The Lambda answers it too when its own call to postcodes.io fails
- * (reverse_geocode returns None for both), so the words cover both and ask the reader to send it again.
+ * THE ROUTE'S 404 MEANS "NO POSTCODE HERE", and nothing else (2026-11-07). Until then the Lambda answered 404 when its
+ * own call to postcodes.io failed too, so the words had to cover both; it now answers 503 or 502 for that.
  *
- * A THROTTLED REQUEST HAS NO STATUS HERE. API Gateway's own errors carry no CORS header (checked live 2026-11-05: the 403
- * for a missing key has none, and template.yaml's GatewayResponses set none), so a browser cannot read its 429: fetch
- * just rejects. So one failure covers both, and its words say the API may be busy.
+ * A THROTTLED REQUEST IS A 429 (2026-11-07). API Gateway's own errors carried no CORS header until template.yaml's
+ * GatewayResponses gave them one (checked live 2026-11-05: the 403 for a missing key had none), so a browser saw a
+ * throttle only as a fetch that failed. Now 'busy' is said only for a 429 the page can read; anything else that does not
+ * answer, a refused fetch included, is 'failed', in words true whatever the cause.
  *
  * Nothing typed is counted or stored. A way is a word from this file, once per page view.
  */
@@ -50,6 +51,7 @@ export function cleanPostcode(text) {
 async function answerAt(geo, api, get, signal) {
   const res = await get(`${api}/v1/environment?lat=${geo.latitude}&lon=${geo.longitude}`, { signal });
   if (res.status === 404) return { kind: 'no-postcode' };
+  if (res.status === 429) return { kind: 'busy' };
   if (!res.ok) return { kind: 'failed' };
   const env = await res.json();
   return devAnswer(env) ? { kind: 'answer', geo, env } : { kind: 'no-figures' };
@@ -98,9 +100,10 @@ export function sayProblem(kind, pc, shown) {
     invalid: 'That is not a UK postcode. Try one like SW5 9HP.',
     unknown: `We could not find ${pc}. Check it and send it again.`,
     'no-point': `${pc} has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none.`,
-    'no-postcode': `The API could not match ${pc} to a postcode just now. Send it again in a moment, or try another.`,
+    'no-postcode': `The API found no postcode near the map reference for ${pc}. Try another.`,
     'no-figures': `We hold no noise or NO₂ figure for ${pc}.`,
-    failed: 'The request did not finish. The API may be busy: wait a moment and send it again.',
+    busy: 'The API is busy just now: this route answers a few requests a second for everyone. Wait a moment and send it again.',
+    failed: 'The request did not finish. Wait a moment and send it again.',
   }[kind];
   return shown ? `${said} Still showing ${shown}.` : said;
 }

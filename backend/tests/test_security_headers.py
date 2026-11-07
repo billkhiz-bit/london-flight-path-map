@@ -94,6 +94,10 @@ class SecurityHeaderTests(unittest.TestCase):
                 chunk.append(ln.strip())
             for name, value in REQUIRED.items():
                 self.assertIn(f"{name}: \"'{value}'\"", chunk, f'{kind} lacks {name}')
+            # The same origin every Lambda allows (2026-11-07): without it a browser cannot read a throttle's 429
+            # or a missing key's 403, and js/api-demo.mjs words those two by their status.
+            self.assertIn("Access-Control-Allow-Origin: \"'*'\"", chunk,
+                          f'{kind} lacks Access-Control-Allow-Origin, so a browser cannot read it')
             # Omitted, SAM writes `responseTemplates: {}`; customised, the 429
             # bodies demo-key-scope.mjs classifies on change. Either way, red.
             self.assertIn(f"application/json: '{GATEWAY_DEFAULT_TEMPLATE}'", chunk,

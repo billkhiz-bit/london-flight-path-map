@@ -63,11 +63,19 @@ Resources:
       # QUOTA_EXCEEDED inherit from DEFAULT_4XX. tests/demo-key-scope.mjs reads
       # that body to tell 'Too Many Requests' (method throttle) from 'Limit
       # Exceeded' (quota), so never customise it either.
+      #
+      # Access-Control-Allow-Origin (2026-11-07), the same '*' every Lambda
+      # sends: without it a browser cannot READ these responses at all, so a
+      # page saw a throttled 429 or a missing key's 403 as a fetch that simply
+      # failed (checked live 2026-11-05), and /api/ had to word a throttle as a
+      # network failure. Exposes nothing new: the body is the generic message
+      # already sent to any non-browser caller.
       # Guarded by backend/tests/test_security_headers.py.
       GatewayResponses:
         DEFAULT_4XX:
           ResponseParameters:
             Headers:
+              Access-Control-Allow-Origin: "'*'"
               Strict-Transport-Security: "'max-age=31536000'"
               X-Content-Type-Options: "'nosniff'"
           ResponseTemplates:
@@ -75,6 +83,7 @@ Resources:
         DEFAULT_5XX:
           ResponseParameters:
             Headers:
+              Access-Control-Allow-Origin: "'*'"
               Strict-Transport-Security: "'max-age=31536000'"
               X-Content-Type-Options: "'nosniff'"
           ResponseTemplates:

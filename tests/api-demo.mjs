@@ -80,8 +80,10 @@ for (const [label, place, env, kind, calls] of [
   ['postcodes.io cannot be reached', new TypeError('Failed to fetch'), null, 'failed', 1],
   ['the route finds no postcode (404)', geoReply, reply(404, { error: 'No UK postcode found near those coordinates.' }), 'no-postcode', 2],
   ['the route says 500', geoReply, reply(500, {}), 'failed', 2],
-  ['the route says 429', geoReply, reply(429, { message: 'Too Many Requests' }), 'failed', 2],
-  ['a throttled reply, unreadable without a CORS header', geoReply, new TypeError('Failed to fetch'), 'failed', 2],
+  ['the route says 429 (a throttle, readable since its gateway reply carries CORS)', geoReply, reply(429, { message: 'Too Many Requests' }), 'busy', 2],
+  ['the route says 503 (its own postcode lookup failed)', geoReply, reply(503, { error: 'The postcode lookup this route depends on is unavailable just now. Try again shortly.' }), 'failed', 2],
+  ['the route says 502', geoReply, reply(502, { message: 'Internal server error' }), 'failed', 2],
+  ['a reply the browser cannot read', geoReply, new TypeError('Failed to fetch'), 'failed', 2],
   ['the route answers with no figures', geoReply, reply(200, { location: { postcode: 'TW9 3PZ' }, environment: {} }), 'no-figures', 2],
   ['the route answers with no environment', geoReply, reply(200, {}), 'no-figures', 2],
   ['the route answers something unreadable', geoReply, { status: 200, ok: true, json: async () => { throw new SyntaxError('not json'); } }, 'failed', 2],
@@ -99,7 +101,8 @@ ok(sayAnswer('ZE1 0AA', REAL.ZE10AA.env).startsWith('Answered for ZE1 9ZZ, the n
 ok(!/road noise/.test(sayAnswer('NG11 8AH', REAL.NG118AH.env)), 'a quiet road is a reading, so it is never called missing', sayAnswer('NG11 8AH', REAL.NG118AH.env));
 same(answeredFor('TW9 3PZ', { environment: {} }), 'TW9 3PZ', 'an answer naming no postcode stands for the one asked');
 for (const kind of ['unknown', 'no-point', 'no-postcode', 'no-figures']) ok(sayProblem(kind, 'SW5 9XX', null).includes('SW5 9XX'), `${kind} names the postcode`);
-ok(/busy/.test(sayProblem('failed', 'SW5 9HP', null)), 'a failure says the API may be busy, since a throttled reply cannot be told apart');
+ok(/busy/.test(sayProblem('busy', 'SW5 9HP', null)), 'a 429 says the API is busy');
+ok(!/busy/.test(sayProblem('failed', 'SW5 9HP', null)), 'any other failure never guesses it was a throttle');
 ok(sayProblem('unknown', 'SW5 9XX', 'TW9 3PZ').endsWith('Still showing TW9 3PZ.'), 'with an answer still on the page, it says whose');
 ok(!/Still showing|undefined|null/.test(sayProblem('failed', 'SW5 9HP', null)), 'with nothing on the page, it claims nothing');
 
@@ -131,6 +134,8 @@ const MADE_UP = {
   BB11BB: { geo: point(53.7, -2.4), env: { status: 404, body: { error: 'No UK postcode found near those coordinates.' } } },
   CC11CC: { geo: point(54.8, -1.5), env: { status: 500, body: { message: 'Internal server error' } } },
   DD11DD: { geo: point(56.4, -2.9), env: { abort: true } },
+  FF11FF: { geo: point(52.2, 0.1), env: { status: 429, body: { message: 'Too Many Requests' } } },
+  GG11GG: { geo: point(52.6, 1.3), env: { status: 503, body: { error: 'The postcode lookup this route depends on is unavailable just now. Try again shortly.' } } },
   SL11AA: { geo: point(51.5, -0.6), env: { body: REAL.TW93PZ.env }, wait: 900 },
   SL22AA: { geo: point(51.6, -0.7), env: { body: REAL.M11AE.env }, wait: 600 },
   // A whole degree: `-2` read back from a sample would also match the API's host, `eu-west-2`.
@@ -395,11 +400,13 @@ console.log('Nothing to show');
   for (const [typed, words] of [
     ['SW5 9XX', 'We could not find SW5 9XX. Check it and send it again. Still showing TW9 3PZ.'],
     ['AB1 2CD', 'We hold no noise or NO₂ figure for AB1 2CD. Still showing TW9 3PZ.'],
-    ['BB1 1BB', 'The API could not match BB1 1BB to a postcode just now. Send it again in a moment, or try another. Still showing TW9 3PZ.'],
+    ['BB1 1BB', 'The API found no postcode near the map reference for BB1 1BB. Try another. Still showing TW9 3PZ.'],
     ['IM1 1AD', 'IM1 1AD has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none. Still showing TW9 3PZ.'],
     ['CC1 1CC', `${sayProblem('failed', 'CC1 1CC', 'TW9 3PZ')}`],
     ['DD1 1DD', `${sayProblem('failed', 'DD1 1DD', 'TW9 3PZ')}`],
     ['EE1 1EE', `${sayProblem('failed', 'EE1 1EE', 'TW9 3PZ')}`],
+    ['FF1 1FF', 'The API is busy just now: this route answers a few requests a second for everyone. Wait a moment and send it again. Still showing TW9 3PZ.'],
+    ['GG1 1GG', 'The request did not finish. Wait a moment and send it again. Still showing TW9 3PZ.'],
   ]) {
     const s = await send(page, typed);
     ok(s.status === words && unchanged(s) && s.busy === null, `${typed}: said in words, the answer on show untouched`, s.status);

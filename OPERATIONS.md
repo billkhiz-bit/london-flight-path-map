@@ -886,6 +886,17 @@ other two.
   unstubbed API calls live): bursts of six within two seconds, threes 14 s apart. Fixed on `map-fixes`
   (the Lambda answers 400 for a non-postcode; the map asks only with a full one). Read it again a
   week after that deploy: what remains is the real rate.
+  SECOND READ (2026-11-07, 4 Nov 00:00 to 7 Nov 16:00 UTC): 58 of 16,271 calls answered 5xx (0.36%). The
+  EPC fix held (2 left). 17 are `[5XX]` lines (sold_prices 15 x `503 Sold-prices upstream temporarily
+  unavailable`, 13 of them on 6 Nov: Land Registry; epc 2), and the other **41 are Lambda THROTTLES**
+  (`AWS/Lambda Throttles`: score 5, sold_prices 11, epc 9, nhs 10, transport 6): 17 + 41 = 58 exactly. A
+  throttled invocation never runs, so it writes no `[5XX]` line. Account-wide `ConcurrentExecutions` peaks
+  at exactly **10** (26 five-minute windows) and never above: the account's concurrency LIMIT is 10, AWS's
+  default for new accounts, so a burst of 11 overlapping calls throttles. Fix (console, Bill: `flightmap-dev`
+  is denied `lambda:GetAccountSettings` and `servicequotas:*`): Service Quotas > AWS Lambda > Concurrent
+  executions (eu-west-2) > request 1000 (free). This also answers audit I3's open half: the reserve for
+  `/v1/score` can be sized once the limit is raised. NOTE: Logs Insights `StartQuery` is DENIED to
+  `flightmap-dev`; read `[5XX]` lines with `filter-log-events --filter-pattern '"[5XX]"'` per log group.
   API Gateway's `5XXError` beyond these lines is the gateway's own (throttled
   invocations, malformed proxy responses).
 - API Gateway access logs disabled (cost reasons). Enabling them needs more than

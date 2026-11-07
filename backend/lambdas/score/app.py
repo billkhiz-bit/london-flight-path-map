@@ -10096,8 +10096,24 @@ def _fetch_postcode(clean):
 _reverse_cache_get, _reverse_cache_put = _make_lru(1024)
 
 
+class PostcodeLookupFailed(Exception):
+    """postcodes.io could not answer a reverse lookup: NOT "there is no postcode here".
+
+    Until 2026-11-07 reverse_geocode returned None for both, so /v1/environment answered a failed lookup with the
+    404 it gives the sea, and a caller could not tell "try again" from "nothing here" (/api/'s words had to cover
+    both). `status` is what the route answers, as sold_prices does for Land Registry: 503 when the service could not
+    be reached, timed out or refused (a 429 or a 5xx), 502 when it answered with something we cannot read.
+    """
+
+    def __init__(self, status, reason):
+        super().__init__(reason)
+        self.status = status
+
+
 def reverse_geocode(lat, lon):
-    """Nearest UK location to a coordinate, or None.
+    """Nearest UK location to a coordinate, or None when there is no postcode near it.
+
+    Raises PostcodeLookupFailed when postcodes.io itself could not answer: a failure is never a None.
 
     Returns a dict of `postcode`, `ladCode` and `adminDistrict` — the last two
     so the caller can derive a city. It returned the bare postcode string until
@@ -10128,12 +10144,17 @@ def reverse_geocode(lat, lon):
     try:
         with urlopen(req, timeout=5) as resp:
             payload = json.loads(resp.read().decode())
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except HTTPError as exc:
+        # HTTPError before URLError: it is a subclass. A 429 or a 5xx is the service being unavailable; any other
+        # status for a lat/lon already checked in range is an answer we did not expect, so ours to call a bad gateway.
         logger.warning('postcodes.io reverse lookup failed for %s: %s', _log_coarse(lat, lon), exc)
-        return None
+        raise PostcodeLookupFailed(503 if exc.code == 429 or exc.code >= 500 else 502, f'HTTP {exc.code}') from exc
+    except (URLError, TimeoutError) as exc:
+        logger.warning('postcodes.io reverse lookup failed for %s: %s', _log_coarse(lat, lon), exc)
+        raise PostcodeLookupFailed(503, type(exc).__name__) from exc
     except json.JSONDecodeError as exc:
         logger.warning('postcodes.io returned non-JSON for %s: %s', _log_coarse(lat, lon), exc)
-        return None
+        raise PostcodeLookupFailed(502, 'non-JSON') from exc
 
     # A coordinate in the sea returns status 200 with result: null. That is a
     # legitimate "no postcode here", not an error, and must not be cached as
@@ -11607,7 +11628,18 @@ def handle_environment(event):
     if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
         return response(400, {'error': 'lat/lon out of range.'})
 
-    location = reverse_geocode(lat, lon)
+    try:
+        location = reverse_geocode(lat, lon)
+    except PostcodeLookupFailed as exc:
+        # Not the sea: the lookup this route depends on failed, so say so and keep 404 for "no postcode here".
+        return response(
+            exc.status,
+            {
+                'error': 'The postcode lookup this route depends on is unavailable just now. Try again shortly.',
+                'location': {'lat': lat, 'lon': lon},
+            },
+            headers={'Retry-After': '10'} if exc.status == 503 else None,
+        )
     if not location:
         return response(
             404,

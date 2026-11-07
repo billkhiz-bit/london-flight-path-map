@@ -1339,9 +1339,17 @@ async function search(raw, { example = false } = {}) {
     // screen is how the live site once told a Norwich reader about Stansted.
     if (city && city !== state.city) await show(city, { lat, lon }); else if (city) draw({ lat, lon });
     if (stale()) return;
-    const env = example ? ex.env : await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
+    const res = example ? null : await fetch(`${ENV}?lat=${lat}&lon=${lon}`);
+    const env = example ? ex.env : await res.json();
     if (stale()) return;
-    if (!env.environment) { if (!example) say(env.error || 'No figures for that spot.'); return; }
+    // Only our Lambda's answers carry `error` (its 404, its 503 when its postcode lookup fails). API Gateway's own carry
+    // `message`, and since 2026-11-07 a browser can read them (template.yaml GatewayResponses): a throttle or a gateway
+    // failure is not a place with no figures, so it must never read as "No figures for that spot".
+    const failed = res && !res.ok && !env.error;
+    if (!env.environment) {
+      if (!example) say(failed ? (res.status === 429 ? 'The data is busy just now. Try again in a moment.' : 'Could not reach the data just now. Try again in a moment.') : env.error || 'No figures for that spot.');
+      return;
+    }
     if (example) {
       render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance);
       if (label) label.hidden = false;
