@@ -149,10 +149,38 @@
       #ans-tiles .ans-tile b { animation: figure-in 0.25s ease-out; }
       @keyframes figure-in { from { opacity: 0; } }
       .panel h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 3.9vw, 56px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 12px; text-wrap: balance; }
-      /* Once there is a visitor's own answer or a card, the question makes way for it so the result stays on one screen.
-         The example does not: it is a line of tiles, and the question is still the page's. */
-      .panel.has-result:not(.is-example) h1 { font-size: 22px; margin-bottom: 8px; }
-      .panel.has-result:not(.is-example) .lead, .panel.has-result:not(.is-example) .promises, .panel.has-result:not(.is-example) .news { display: none; }
+      /* A council area's card takes the panel: the question makes way for it so the card stays on one screen. A postcode's
+         answer no longer does (option C, Bill 2026-11-07: a visitor's own headline has the example's size and treatment, so
+         the lead, the promises and the pill stay with it, and a search moves nothing above the answer). */
+      .panel:has(#borough.is-open) h1 { font-size: 22px; margin-bottom: 8px; }
+      .panel:has(#borough.is-open) .lead, .panel:has(#borough.is-open) .promises, .panel:has(#borough.is-open) .news { display: none; }
+      /* OPTION C, the answer as the headline (review prototype, 2026-11-07). The question and the answer's lead share one
+         grid cell, each its own height (align-self: start), so the heading is as tall as the taller and never moves what is
+         under it when one gives way to the other: the question, unseen once there is a lead, still holds its room. */
+      .panel h1 { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+      .panel h1 > .h1-q, .panel h1 > .h1-a { grid-area: 1 / 1; align-self: start; min-width: 0; }
+      .panel h1.has-lead > .h1-q { visibility: hidden; }
+      .panel h1 > .h1-a[hidden] { display: none; }
+      .panel h1 > .h1-a { animation: figure-in 0.25s ease-out; }
+      .h1-a .h1-ex { display: block; margin: 0 0 8px; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange-ink); }
+      /* While a lead is on its way (the example arriving, or a visitor's search), the room under the question holds a
+         skeleton line in the example frame's colours (Bill, 2026-11-07: "so it reads as loading, not empty"). Absolutely
+         placed at the foot of the kept room, which always leaves at least the "Example:" line's 25 px under the question, so
+         it moves nothing; hidden from assistive technology; gone once the lead lands. Ends by itself if the engine never runs. */
+      .panel h1 > .h1-wait { display: none; position: absolute; left: 0; bottom: 6px; width: min(62%, 13em); height: clamp(10px, 0.3em, 16px); border-radius: 999px; background: var(--tint); box-shadow: inset 0 0 0 1px var(--line); }
+      /* The room the lead is fitted into (fitLead): the "Example:" line and three lines of the heading (two where a stacked
+         column is wide), kept from the first frame on the postcode tab whatever the answer, so neither arriving nor a search
+         moves what is under the heading. Only with scripts, so a reader without them gets no gap; never on the Find tab or
+         under a card, where the heading is the question at 22 px. */
+      @media (scripting: enabled) {
+        .panel:not(.is-find):not(:has(#borough.is-open)) h1 { min-height: calc(25px + 3.12em); }
+        .panel.is-loading:not(.is-find):not(:has(#borough.is-open)) h1:not(.has-lead) > .h1-wait,
+        .panel:not(.is-find):not(:has(#borough.is-open)) h1.is-waiting:not(.has-lead) > .h1-wait { display: block; }
+        .panel.is-loading h1 > .h1-wait { animation: skeleton-gone 0s linear 8s forwards; }
+      }
+      @media (scripting: enabled) and (min-width: 600px) and (max-width: 1279px), (scripting: enabled) and (min-width: 600px) and (max-height: 500px) {
+        .panel:not(.is-find):not(:has(#borough.is-open)) h1 { min-height: calc(25px + 2.08em); }
+      }
       .panel p.lead { margin: 0 0 18px; color: var(--mid); font-size: 17px; line-height: 1.5; max-width: 46ch; }
       /* The "New" pill: written by build_planes_pages.py between PLANES-PILL markers, so it goes with the consultation. */
       .news { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; margin: 0 0 16px; padding: 5px 12px 5px 5px; font-size: 13px; line-height: 1.3; color: var(--dark); text-decoration: none; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; }
@@ -676,7 +704,7 @@
         /* The map is below the list on a stacked layout: a way down to it. */
         .find-mapjump { display: block; }
       }
-      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .mapwrap > svg { transition: none; } #ans-tiles .ans-tile b { animation: none; } }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .mapwrap > svg { transition: none; } #ans-tiles .ans-tile b, .panel h1 > .h1-a { animation: none; } }
       /* The answer under the request (js/dev-demo.mjs): at rest everything shows; a run hides it and brings it back. */
       .dev-wire { display: flex; align-items: center; gap: 10px; height: 30px; margin: 0 0 0 20px; font: 500 12px var(--font-mono); color: #b9b6ae; }
       .dev-wire::before { content: ''; width: 2px; height: 100%; background: var(--orange); transform-origin: top; transition: transform 0.25s; }
@@ -744,7 +772,11 @@
           <!-- PLANES-PILL:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->
           <a class="news" href="#planes-band"><b>New</b>Heathrow&rsquo;s consultation: the planes over your council <i aria-hidden="true">&rarr;</i></a>
           <!-- PLANES-PILL:END -->
-          <h1>How loud are the planes where you want to live?</h1>
+          <!-- OPTION C (review prototype, 2026-11-07): the question is the page's heading for search engines and readers
+               without scripts. Once an answer is on show, the engine writes its lead finding into the same h1, in .h1-a
+               beside it (js/home-sections.mjs answerLead), and the question stays in place unseen, holding the box. -->
+          <h1><span class="h1-q">How loud are the planes where you want to live?</span><span class="h1-wait" aria-hidden="true"></span></h1>
+          <p class="vh" id="lead-said" aria-live="polite"></p>
           <p class="lead">Aircraft and road noise and air quality for your street, and flood risk for your area, from official data.</p>
           <!-- Two tabs (2026-10-14): the postcode check, and Find areas, which shades the council areas
                that fit your choices on the map beside it. Hidden until the engine has the open-data

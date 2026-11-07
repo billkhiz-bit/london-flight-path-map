@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-07 (night) - The answer as the headline; About fits a narrow window
+
+- **The front page leads with the answer.** Once a place's answer is on show, the headline says its plainest finding: how many planes pass over it on most days, or that it sees fewer than 10 a day, or where its aircraft noise is over the WHO guideline. A place we hold nothing for keeps the question. Without JavaScript the headline is the question, and the page does not move when it changes.
+- **About's section links fit a narrow window.** Below 900 px they read Why, How it grew, Questions, Talks, Who it's for and Contact, so a mouse can reach every one.
+
 ## 2026-11-07 - Clearer API errors
 
 - **`/v1/environment` says when its postcode lookup fails.** It answered 404, its answer for a point with no postcode near it, when its own call to postcodes.io failed too. It now answers 503 with `Retry-After` when that lookup cannot be reached, and 502 when the lookup's answer cannot be read; 404 means only "no postcode here".

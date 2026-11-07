@@ -17,7 +17,7 @@
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
 import { districtOf, planesLinks, planesModel, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
 import { EXAMPLE, bindPlaceBox, postcodeCompletions } from '/js/place-box.mjs';
-import { airFigure, airPanel, exampleFigures } from '/js/home-sections.mjs';
+import { airFigure, airPanel, answerLead, exampleFigures, layerSteps } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
 import {
   DEFRA_LDEN_SCALE,
@@ -321,7 +321,8 @@ async function load() {
   if (plain) {
     const pc = byId('ans-example')?.dataset.pc || '';
     exampleAnswer();
-    Promise.all([loadPlanes(pc), loadPlanesIndex()]).catch(() => {});
+    // The planes layer's steps too: the example's heading may lead with its planes only where the layer colours them.
+    Promise.all([loadPlanes(pc), loadPlanesIndex(), layerSteps()]).catch(() => {});
   }
   const [extra, proc, rasters, csv, nycDoc, crossings] = await Promise.all([
     d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
@@ -1017,6 +1018,8 @@ function openCard(html, { announce = true } = {}) {
   card.setAttribute('aria-live', announce ? 'polite' : 'off');
   card.innerHTML = html;
   card.classList.add('is-open');
+  // Option C: a card takes the answer's place, so no lead is on its way for this heading any more.
+  waitLead(false);
   panelState();
   card.querySelector('#borough-close')?.addEventListener('click', () => closeBorough(true));
 }
@@ -1062,6 +1065,8 @@ function panelState() {
   const panel = byId('answer')?.closest('.panel') || byId('borough')?.closest('.panel');
   if (!panel) return;
   panel.classList.toggle('has-result', Boolean(byId('answer')?.classList.contains('is-open') || byId('borough')?.classList.contains('is-open')));
+  // Option C: the heading says the answer's lead only while that answer is what the panel shows.
+  syncLead();
 }
 const closeButton = '<button type="button" id="borough-close" class="close" aria-label="Close">&times;</button>';
 function boroughCardHtml(row, f) {
@@ -1255,6 +1260,87 @@ function clearExampleTiles() {
   if (tiles) { tiles.hidden = true; tiles.replaceChildren(); }
   if (show) show.hidden = true;
 }
+
+// ---- OPTION C: the answer as the headline (review prototype, 2026-11-07; ROADMAP "answer first", option C) ----
+// Once an answer is on show (the example on arriving, or the visitor's own search), the hero's h1 says that answer's lead
+// finding, written from the answer by answerLead() (js/home-sections.mjs), never typed; with nothing true to lead with it
+// keeps the question. The h1 holds both in one grid cell (home/index.html): the question stays in place, unseen, so the
+// heading never shrinks, and the example's room is kept from the first frame and its lead fitted into it, so it never
+// grows either (tests/front-page.mjs measures the shift). The lead shows only while its answer does: a card, the Find tab
+// or a new search gives the heading back to the question. A visitor's own lead is said in #lead-said, politely; the
+// example's is not, as the example says nothing in the live region.
+const lead = { text: null, example: false, shown: '' };
+let headlineEls = null;
+function headline() {
+  if (headlineEls?.h1.isConnected) return headlineEls;
+  const h1 = document.querySelector('.panel h1');
+  if (!h1) return null;
+  // The front page writes the question in its span; a layout that does not (design/) has it wrapped here.
+  let q = h1.querySelector(':scope > .h1-q');
+  if (!q) {
+    q = document.createElement('span');
+    q.className = 'h1-q';
+    q.append(...h1.childNodes);
+    h1.append(q);
+  }
+  let a = h1.querySelector(':scope > .h1-a');
+  if (!a) {
+    a = document.createElement('span');
+    a.className = 'h1-a';
+    a.hidden = true;
+    h1.append(a);
+  }
+  headlineEls = { h1, q, a };
+  // A wider or narrower column, or the heading's font arriving, changes the room: the example's lead is fitted again.
+  if ('ResizeObserver' in window) new ResizeObserver(() => fitLead()).observe(q);
+  return headlineEls;
+}
+// Every lead, the example's and a visitor's alike (Bill, 2026-11-07: one size and treatment), fits the room the page keeps
+// for it, or its arrival would move the page: the heading's kept height (its min-height) or the question's, whichever is
+// taller. A long lead steps down in size until it fits, never below 0.7 of the heading's.
+function fitLead() {
+  const p = headlineEls;
+  if (!p || p.a.hidden) return;
+  p.a.style.fontSize = '';
+  const room = Math.max(parseFloat(getComputedStyle(p.h1).minHeight) || 0, p.q.getBoundingClientRect().height);
+  for (let size = 0.95; size >= 0.69 && p.a.getBoundingClientRect().height > room + 0.5; size -= 0.05) p.a.style.fontSize = `${size.toFixed(2)}em`;
+}
+function syncLead() {
+  const p = headline();
+  if (!p) return;
+  const on = Boolean(lead.text && answer?.classList.contains('is-open') && !byId('borough')?.classList.contains('is-open')
+    && !p.h1.closest('.panel')?.classList.contains('is-find'));
+  const key = on ? `${lead.example ? 'example' : 'own'}\n${lead.text}` : '';
+  if (key !== lead.shown) {
+    lead.shown = key;
+    p.h1.classList.toggle('has-lead', on);
+    p.a.hidden = !on;
+    p.a.replaceChildren();
+    if (on && lead.example) p.a.append(Object.assign(document.createElement('span'), { className: 'h1-ex', textContent: 'Example: ' }));
+    if (on) p.a.append(lead.text);
+  }
+  fitLead();
+}
+// While a lead is on its way the heading's room shows a skeleton line (home/index.html .h1-wait; Bill, 2026-11-07). Set when
+// a postcode's lookup starts; ended by the lead landing (or proving to be none), or by the search ending without an answer.
+function waitLead(on) {
+  headline()?.h1.classList.toggle('is-waiting', on);
+}
+function writeLead(text, { example = false } = {}) {
+  Object.assign(lead, { text: text || null, example });
+  syncLead();
+  // Only the answer on show ends the wait: a slower, earlier answer landing during a newer search leaves it waiting.
+  if (answer?.classList.contains('is-open')) waitLead(false);
+  const said = byId('lead-said');
+  if (said && !example && lead.shown) said.textContent = `${lead.text}.`;
+}
+function clearLead() {
+  lead.text = null;
+  waitLead(false);
+  syncLead();
+  const said = byId('lead-said');
+  if (said) said.textContent = '';
+}
 for (const fold of document.querySelectorAll('.ans-fold[data-fold]')) {
   fold.addEventListener('toggle', () => { if (fold.open) engaged(`fold-${fold.dataset.fold}`); });
 }
@@ -1281,6 +1367,8 @@ async function search(raw, { example = false } = {}) {
   if (label) label.hidden = true;
   clearExampleTiles();
   answer?.classList.remove('is-open');
+  // Option C: an earlier answer's lead never sits over a new search; until this one has its own, the question.
+  clearLead();
   clearPin();
   hideWant();
   // A place name first: a borough, a Bay Area city or a city region.
@@ -1326,6 +1414,9 @@ async function search(raw, { example = false } = {}) {
   if (/^\d{5}$/.test(pc)) { await searchZip(pc, stale); return; }
   if (!example) say('Looking it up...');
   closeBorough(false);
+  // Option C: the heading's skeleton line shows until this answer's lead lands; if no answer comes, the wait ends here.
+  waitLead(true);
+  let rendered = false;
   try {
     // The example's lookup is exampleAnswer()'s, shared with the walkthrough below the map (one request for both); a
     // visitor's own search makes its own.
@@ -1351,7 +1442,8 @@ async function search(raw, { example = false } = {}) {
       return;
     }
     if (example) {
-      render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance);
+      render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance, { example: true });
+      rendered = true;
       if (label) label.hidden = false;
       // The heading says it too: "Example: TW9 3PZ, Kew". render() wrote the bare postcode, and the visitor's own
       // search writes theirs over it, so the prefix can only ever sit on the example.
@@ -1371,10 +1463,15 @@ async function search(raw, { example = false } = {}) {
     // heard nothing when the figures arrived (audit 2026-10-05 M-14).
     say(city ? `Showing the figures for ${geo.result.postcode}.` : `${geo.result.postcode} is outside the cities on the map. Here are the figures we hold for it.`);
     render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance);
+    rendered = true;
     setQuery({ city: city || state.city, postcode: geo.result.postcode });
   } catch {
     // A stale search's failure is not this one's: say nothing over the newer answer. Nor the example's own.
     if (!stale() && !example) say('Could not reach the data just now. Try again in a moment.');
+  } finally {
+    // No answer, so no lead is coming. A newer search owns the wait; an example given way to a visitor's other action
+    // (a city, a tab) does not, so it ends here too.
+    if (!rendered && seq === searchSeq) waitLead(false);
   }
 }
 // ---- a US ZIP: the Census's ZIP areas for the four Bay Area counties ----
@@ -1523,8 +1620,14 @@ function routeFacts(text) {
   });
 }
 
-function render(postcode, district, city, e, lat, lon, prov = {}) {
+function render(postcode, district, city, e, lat, lon, prov = {}, { example = false } = {}) {
   const title = byId('ans-title'), where = byId('ans-where');
+  // Option C: this answer's lead, written once its planes are known (they may lead it), so the heading changes once. Never
+  // a throw into the planes block's chain: a fault here keeps the question and is said in the console.
+  lead.text = null;
+  const leadFrom = (model, steps = []) => {
+    try { writeLead(answerLead(e, postcode, model, steps), { example }); } catch (err) { console.error('The headline keeps the question: its lead could not be written.', err); }
+  };
   if (title) title.textContent = postcode;
   if (where) where.textContent = district + (city ? '' : ' (not yet on the map: figures only)');
   const bar = (v, who) => { const max = who * 2; return `<span class="bar"><i style="width:${Math.min(100, (v / max) * 100)}%"></i><b style="left:${(who / max) * 100}%" title="WHO guideline ${who}"></b></span>`; };
@@ -1572,9 +1675,11 @@ function render(postcode, district, city, e, lat, lon, prov = {}) {
     // As for the station and the air: a later search owns the block. Not tied to the map's cities: the files
     // cover every council the score covers (Nottingham's are under East Midlands' flights), and say who is in.
     const seq = ++planesSeq;
-    Promise.all([loadPlanes(postcode), loadPlanesIndex()]).then(([[file, info], index]) => {
+    // The layer's steps (option C's heading) never fail: without them it is [] and the planes do not lead.
+    Promise.all([loadPlanes(postcode), loadPlanesIndex(), layerSteps()]).then(([[file, info], index, steps]) => {
       if (seq !== planesSeq) return;
       const model = planesModel(file, info, postcode);
+      leadFrom(model, steps);
       if (!model) return;
       planes.append(...planesNodes(model, document, planesLinks(index, postcode, model)));
       planes.hidden = false;
@@ -1592,7 +1697,12 @@ function render(postcode, district, city, e, lat, lon, prov = {}) {
       if (seq !== planesSeq) return;
       planes.hidden = true;
       planes.replaceChildren();
+      // The block is hidden, so the heading may not lead with what it would have said.
+      leadFrom(null);
     });
+  } else {
+    // After this answer opens, as the planes' lead would land.
+    Promise.resolve().then(() => leadFrom(null));
   }
 
   const routes = byId('ans-routes');
@@ -1917,6 +2027,8 @@ function setTab(name, { focus = false, counted = true, keepCard = false } = {}) 
   const card = byId('borough'), home = byId(`panel-${name}`);
   if (card && home && card.parentElement !== home) home.appendChild(card);
   panel?.classList.toggle('is-find', name === 'find');
+  // Option C: on Find areas the heading is the question; back on the check tab, the answer's lead returns with the answer.
+  syncLead();
   // The address says which tab is open, so a reload or a shared link comes back to it.
   history.replaceState(null, '', location.pathname + location.search + (name === 'find' ? '#find' : ''));
   if (name === 'find') {

@@ -11,7 +11,9 @@
 
 import assert from 'node:assert/strict';
 import { devAnswer } from '../js/dev-demo.mjs';
-import { airPanel, exampleFigures, noiseRows } from '../js/home-sections.mjs';
+import { readFileSync } from 'node:fs';
+import { airPanel, answerLead, exampleFigures, noiseRows } from '../js/home-sections.mjs';
+import { planesModel } from '../js/planes.mjs';
 
 // /v1/environment for TW9 3PZ, as captured 2026-11-03 (trimmed to what the page reads).
 const ENV = {
@@ -114,6 +116,65 @@ check('developers band: a value the answer lacks is no line and no tile, never a
   assert.deepEqual(JSON.parse(dev.lines.join('\n')), { environment: { no2AnnualMeanUgm3: 17 } });
   assert.equal(devAnswer({ environment: {} }), null);
   assert.equal(devAnswer(null), null);
+});
+
+// OPTION C, THE ANSWER AS THE HEADLINE (review prototype, 2026-11-07): what the hero's h1 says once an answer is on show,
+// held on real answers (tests/fixtures/api-demo-env.json, saved from the live route 2026-11-05). The planes lead when they
+// may (js/planes.mjs planesLead, held in tests/planes-model.mjs); then DEFRA's aircraft noise; then the planes as the layer's
+// blank band (planesBandLead); then road noise, only with no planes data at all; air and the routes' estimate never;
+// nothing true to lead with keeps the question (null).
+const REAL = JSON.parse(readFileSync(new URL('./fixtures/api-demo-env.json', import.meta.url), 'utf8'));
+const real = (key) => [REAL[key].env.environment, REAL[key].geo.postcode];
+const LEAD_INFO = {
+  classes: ['westerly', 'easterly', 'mixed'], bar_full: 629,
+  airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } },
+  definition: 'Overhead means more than halfway up the sky.', direction_rule: '', credits: [],
+};
+// The full map's planes layer steps (data/planes-layer/index.json, scripts/build_planes_layer.py), as built 2026-11-02.
+const LAYER = [{ step: 1, from: 10, colour: '#dc8a4a' }, { step: 2, from: 50, colour: '#c2622a' }, { step: 3, from: 100, colour: '#9a4316' }, { step: 4, from: 200, colour: '#662809' }];
+const planesAt = (pc, figs) => planesModel({ postcodes: { [pc]: { LHR: figs } }, none: [], approx: [], other: [] }, LEAD_INFO, pc, { LHR: 'Heathrow' });
+const kewPlanes = planesAt('TW9 3PZ', [310, 4, 168]);
+
+check('headline: the example leads with its planes; without them, with DEFRA\'s aircraft noise against the WHO guideline', () => {
+  const [e, pc] = real('TW93PZ');
+  assert.equal(answerLead(e, pc, kewPlanes, LAYER), 'On most days, about 310 Heathrow planes a day pass over TW9 3PZ');
+  assert.equal(answerLead(e, pc, null, LAYER), 'Aircraft noise at TW9 3PZ is over the WHO guideline');
+  assert.equal(answerLead(e, pc, kewPlanes, []), 'Aircraft noise at TW9 3PZ is over the WHO guideline', 'no layer steps: the planes never lead');
+});
+
+check('headline: the planes question before road noise: SW5 9HP\'s few planes lead as the layer\'s blank band', () => {
+  // SW5 9HP's real district file: 4, under 1 and 3 a day (2026-11-07); road 71.8 dB against 53. Bill, 2026-11-07.
+  const [e, pc] = real('SW59HP');
+  assert.equal(answerLead(e, pc, planesAt(pc, [4, '<1', 3]), LAYER), 'Fewer than 10 Heathrow planes a day pass over SW5 9HP');
+  assert.equal(answerLead(e, pc, planesAt(pc, [4, '<1', 3]), []), null, 'no layer steps: no band to say, and the roads still wait for the planes');
+});
+
+check('headline: DEFRA\'s aircraft noise comes before the quiet band, so a postcode off a flight path is never headlined as quiet', () => {
+  const [e, pc] = real('TW93PZ');
+  assert.equal(answerLead(e, pc, planesAt(pc, [4, 2, 3]), LAYER), 'Aircraft noise at TW9 3PZ is over the WHO guideline');
+});
+
+check('headline: road noise leads only where we hold no planes data at all', () => {
+  const [e, pc] = real('SW59HP');
+  assert.equal(answerLead(e, pc, planesAt(pc, [[5, 40], 3, 2]), LAYER), null, 'planes held but none can lead (a range reaching the step): the question, never the roads');
+  assert.equal(answerLead(e, pc, planesAt(pc, [4, null, 3]), LAYER), null, 'a kind of day not measured is not "fewer than"');
+});
+
+check('headline: no planes data, no aircraft figure, so road noise leads; a surveyed-quiet road is under the guideline, never missing', () => {
+  assert.equal(answerLead(...real('SW59HP')), 'Road noise at SW5 9HP is over the WHO guideline', 'the routes\' estimate never leads');
+  assert.equal(answerLead(...real('NG118AH')), 'Road noise at NG11 8AH is under the WHO guideline');
+  assert.equal(answerLead({ roadNoiseLdenDb: 53, roadNoiseWhoGuidelineDb: 53 }, 'SW1A 1AA'), 'Road noise at SW1A 1AA is level with the WHO guideline');
+});
+
+check('headline: outside our city regions, with only air figures, it keeps the question; so does no answer', () => {
+  assert.equal(answerLead(...real('EX11HS')), null, 'air never leads, and the outside estimate is no finding');
+  assert.equal(answerLead({ roadNoiseBelowDb: 60, roadNoiseWhoGuidelineDb: 53 }, 'SW1A 1AA'), null, 'a bound above the guideline says nothing either way');
+  assert.equal(answerLead(null, 'TW9 3PZ'), null);
+  assert.equal(answerLead({}, 'TW9 3PZ'), null);
+  for (const key of ['TW93PZ', 'SW59HP', 'M11AE', 'NG118AH']) {
+    const [e, pc] = real(key);
+    assert.doesNotMatch(answerLead(e, pc).replace(pc, ''), /measured|\d/, 'words, never a figure of its own (the postcode aside)');
+  }
 });
 
 console.log(`home sections: ${passed} checks passed`);

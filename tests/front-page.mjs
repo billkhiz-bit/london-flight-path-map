@@ -111,6 +111,8 @@ const GEO = {
   NW17PJ: { postcode: 'NW1 7PJ', latitude: 51.539, longitude: -0.1426, admin_district: 'Camden' },
   TW33QL: { postcode: 'TW3 3QL', latitude: 51.462735, longitude: -0.372535, admin_district: 'Hounslow' },
   EX11HS: { postcode: 'EX1 1HS', latitude: 50.722209, longitude: -3.530574, admin_district: 'Exeter' },
+  // Option C's quiet planes band (2026-11-07), from tests/fixtures/api-demo-env.json (saved 2026-11-05).
+  SW59HP: { postcode: 'SW5 9HP', latitude: 51.489125, longitude: -0.190676, admin_district: 'Kensington and Chelsea' },
   M225RX: { postcode: 'M22 5RX', latitude: 53.3677, longitude: -2.2644, admin_district: 'Manchester' },
   // CONSTRUCTED, not a real postcode: a point 5 km out on Gatwick 26L's extended centreline,
   // given a London district so the page answers it. Every runway of Gatwick's record lacks a
@@ -122,6 +124,7 @@ const GEO = {
 const ENV = {
   '51.476982': { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
   '51.539': { environment: { roadNoiseLdenDb: 74.7, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 23.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.5, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 9.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
+  '51.489125': { environment: { roadNoiseLdenDb: 71.8, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 24.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.6, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 6.5, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   '50.722209': { environment: { no2AnnualMeanUgm3: 8.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 5.6, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 10.0, aircraftQuietCoverage: 'outside' }, notices: [] },
   '51.16029': { environment: { no2AnnualMeanUgm3: 9.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 6.0, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 6.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   // Captured 2026-10-27 (section 1z's planes retry).
@@ -726,7 +729,9 @@ const airBlock = async () => {
     JSON.stringify(edge)
   );
 }
-ok(await page.locator('.promises').isHidden() && await page.locator('.covers').isVisible(), 'the promises step aside once an answer shows; the coverage line stays under the map');
+// Option C (Bill, 2026-11-07): a visitor's own answer has the example's treatment, so the promises stay with it (they
+// stepped aside until then); a council area's card still takes the panel (section 1z).
+ok(await page.locator('.promises').isVisible() && await page.locator('.covers').isVisible(), 'the promises stay with a visitor\'s own answer, as with the example; the coverage line stays under the map');
 // HAVE YOUR SAY and SPOTTED SOMETHING WRONG? (Bill, 2026-10-19). Kew's nearest airport is Heathrow, whose
 // pages were verified: its two links and the CAA's portal, exactly as js/street_report.mjs holds them, so a
 // link edited in one place and not the other reds here. The correction goes to support@ with the postcode.
@@ -2600,6 +2605,22 @@ const makeReport = async (pc) => {
     box: document.getElementById('pc').value,
     counted: window.__gc.slice(),
   }));
+  // OPTION C (review prototype, 2026-11-07): what the heading says, as a reader meets it, and whether the lead fits the
+  // room the page kept for it (its min-height, or the question's height, whichever is taller).
+  const headlineOf = () => ep.evaluate(() => {
+    const h1 = document.querySelector('.panel h1');
+    const q = h1?.querySelector('.h1-q');
+    const a = h1?.querySelector('.h1-a');
+    const shown = Boolean(a && !a.hidden);
+    return {
+      lead: shown ? a.textContent : null,
+      question: q ? getComputedStyle(q).visibility : 'missing',
+      h1s: document.querySelectorAll('h1').length,
+      said: document.getElementById('lead-said')?.textContent ?? null,
+      waiting: getComputedStyle(h1.querySelector('.h1-wait')).display !== 'none',
+      fits: shown ? a.getBoundingClientRect().height <= Math.max(parseFloat(getComputedStyle(h1).minHeight) || 0, q.getBoundingClientRect().height) + 1 : null,
+    };
+  });
 
   // PLANES OVERHEAD (2026-10-26): the district files are a gitignored build (scripts/build_planes_overhead.py),
   // so they are stubbed here in their written shape: TW9 is listed and holds Kew; NW1 is not listed, so a
@@ -2607,7 +2628,7 @@ const makeReport = async (pc) => {
   const planesAsked = [];
   const PLANES = {
     'airports.json': {
-      classes: ['westerly', 'easterly', 'mixed'], districts: ['TW3', 'TW9'], bar_full: 400,
+      classes: ['westerly', 'easterly', 'mixed'], districts: ['SW5', 'TW3', 'TW9'], bar_full: 400,
       definition: 'Overhead means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA\'s definition of an overflight (CAP 1498).',
       direction_rule: 'A day counts as one way when 80% of its flights used that way.',
       airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } },
@@ -2615,15 +2636,54 @@ const makeReport = async (pc) => {
     },
     'TW9.json': { district: 'TW9', postcodes: { 'TW9 3PZ': { LHR: [310, 4, 168] } }, none: [], approx: [], other: [] },
     'TW3.json': { district: 'TW3', postcodes: { 'TW3 3QL': { LHR: [[7, 339], 0, 3] } }, none: [], approx: [], other: [] },
+    // SW5 9HP's real figures (2026-11-07): under the planes layer's first step on every kind of day.
+    'SW5.json': { district: 'SW5', postcodes: { 'SW5 9HP': { LHR: [4, '<1', 3] } }, none: [], approx: [], other: [] },
   };
   const planesFailOnce = new Set(['TW3.json']);
-  await ep.route('**/data/planes/*.json', (route) => {
+  const planesRoute = (route) => {
     const name = new URL(route.request().url()).pathname.split('/').pop();
     planesAsked.push(name);
     if (planesFailOnce.delete(name)) return route.fulfill({ status: 503, body: 'try again' });
     return PLANES[name]
       ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PLANES[name]) })
       : route.fulfill({ status: 404, body: 'not found' });
+  };
+  await ep.route('**/data/planes/*.json', planesRoute);
+  // Option C: the heading leads with the planes only where the full map's planes layer would colour them, and says the
+  // band it leaves blank from its first step, read from the layer's index (a gitignored build, so stubbed too, in its
+  // written shape: scripts/build_planes_layer.py).
+  const layerRoute = (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+    steps: [{ step: 1, from: 10, to: 49, colour: '#dc8a4a' }, { step: 2, from: 50, to: 99, colour: '#c2622a' }, { step: 3, from: 100, to: 199, colour: '#9a4316' }, { step: 4, from: 200, to: null, colour: '#662809' }],
+  }) });
+  await ep.route('**/data/planes-layer/index.json', layerRoute);
+  // Option C (Bill, 2026-11-07): what moved ABOVE the answer, from the browser's own layout-shift entries, whatever the input:
+  // the pill, the heading, the lead, the tabs, the box, the promises. Only the answer may grow, with its status line (the
+  // live region that says it is coming); the map and the bands below are its consequence, not the heading's. An init
+  // script, so it watches from the first frame.
+  const watchAbove = () => {
+    window.__above = [];
+    new PerformanceObserver((l) => {
+      for (const x of l.getEntries()) {
+        const moved = (x.sources || []).map((s) => (s.node?.nodeType === 1 ? s.node : s.node?.parentElement)).filter(Boolean)
+          .filter((n) => n.closest('.panel') && !n.closest('#answer, #borough, #panel-find, .ans-skeleton, #want-country, #status'));
+        if (moved.length) window.__above.push({ value: x.value, recent: x.hadRecentInput, what: moved.map((n) => n.id || n.className || n.tagName).join(' ') });
+      }
+    }).observe({ type: 'layout-shift', buffered: true });
+  };
+  await ep.addInitScript(watchAbove);
+  // The heading's box and the search box's place, to the half pixel, and what the heading says.
+  const headBox = (p) => p.evaluate(() => {
+    const h1 = document.querySelector('.panel h1');
+    const a = h1.querySelector('.h1-a');
+    return {
+      h1: Math.round(h1.getBoundingClientRect().height * 2) / 2,
+      box: Math.round(document.getElementById('pc').getBoundingClientRect().top * 2) / 2,
+      size: parseFloat(getComputedStyle(h1).fontSize),
+      lead: a && !a.hidden ? a.textContent : null,
+      waiting: getComputedStyle(h1.querySelector('.h1-wait')).display !== 'none',
+      above: (window.__above || []).map((x) => x.value).reduce((t, v) => t + v, 0),
+      moved: (window.__above || []).map((x) => x.what).join(' | '),
+    };
   });
   const planesBlock = () => ep.evaluate(() => {
     const b = document.getElementById('ans-planes');
@@ -2649,13 +2709,46 @@ const makeReport = async (pc) => {
       window.__cls = 0;
       new PerformanceObserver((l) => { for (const x of l.getEntries()) if (!x.hadRecentInput) window.__cls += x.value; }).observe({ type: 'layout-shift', buffered: true });
     });
+    await held.addInitScript(watchAbove);
     await held.route((u) => u.pathname.endsWith('/v1/environment'), async (route) => { await new Promise((r) => setTimeout(r, 700)); return stubOffsite(route); });
+    await held.route('**/data/planes/*.json', planesRoute);
+    await held.route('**/data/planes-layer/index.json', layerRoute);
     await held.goto(BASE, { waitUntil: 'domcontentloaded' });
     const frame = await held.waitForFunction(() => getComputedStyle(document.querySelector('.ans-skeleton')).display === 'block', null, { timeout: 3000 }).then(() => true).catch(() => false);
+    // Option C (Bill, 2026-11-07): the room kept under the question reads as loading, a skeleton line hidden from assistive
+    // technology, and the question still names the heading.
+    const loadingHead = await held.evaluate(() => {
+      const w = document.querySelector('.panel h1 .h1-wait');
+      const q = document.querySelector('.panel h1 .h1-q').getBoundingClientRect();
+      const r = w.getBoundingClientRect();
+      return { shown: getComputedStyle(w).display !== 'none' && getComputedStyle(w).visibility === 'visible' && r.height >= 8, hidden: w.getAttribute('aria-hidden') === 'true', clear: r.top >= q.bottom };
+    });
+    const loadingName = await held.getByRole('heading', { level: 1, name: 'How loud are the planes where you want to live?', exact: true }).count();
+    ok(frame && loadingHead.shown && loadingHead.hidden && loadingHead.clear && loadingName === 1,
+      'option C: while the example loads, the room under the question shows a skeleton line, under the question and out of the heading\'s name', JSON.stringify({ ...loadingHead, loadingName }));
     await held.waitForFunction(() => document.querySelectorAll('#ans-tiles .ans-tile:not(.is-waiting)').length >= 2, null, { timeout: 10000 }).catch(() => {});
     await held.waitForTimeout(800);
-    const arrived = await held.evaluate(() => ({ cls: +window.__cls.toFixed(4), loading: document.querySelector('.panel').classList.contains('is-loading'), frameGone: getComputedStyle(document.querySelector('.ans-skeleton')).display === 'none' }));
+    const arrived = await held.evaluate(() => ({ cls: +window.__cls.toFixed(4), loading: document.querySelector('.panel').classList.contains('is-loading'), frameGone: getComputedStyle(document.querySelector('.ans-skeleton')).display === 'none',
+      lead: (() => { const a = document.querySelector('.panel h1 .h1-a'); return a && !a.hidden ? a.textContent : null; })() }));
     ok(frame && arrived.cls < 0.02 && !arrived.loading && arrived.frameGone, 'on a phone the example arrives in its frame and the page does not move', JSON.stringify(arrived));
+    // Option C: the heading changed in that same arrival, so the shift above includes it.
+    ok(/^Example: \S/.test(arrived.lead || ''), 'option C: on a phone the example\'s lead takes the heading within that unmoving arrival', JSON.stringify(arrived));
+    const landed = await headBox(held);
+    ok(!landed.waiting && landed.lead !== null, 'option C: on a phone the skeleton line is gone once the lead lands', JSON.stringify(landed));
+    // A SEARCH moves nothing above the answer either (Bill, 2026-11-07): from the press to the visitor's own lead, the
+    // reply held back 700 ms so the wait is seen. Their lead has the example's size, fitted to the same room.
+    await held.evaluate(() => { window.__above = []; });
+    await held.fill('#pc', 'SW5 9HP');
+    const before = await headBox(held);
+    await held.press('#pc', 'Enter');
+    const waited = await held.waitForFunction(() => getComputedStyle(document.querySelector('.panel h1 .h1-wait')).display !== 'none', null, { timeout: 2000 }).then(() => true).catch(() => false);
+    await held.waitForFunction(() => document.getElementById('lead-said')?.textContent !== '', null, { timeout: 10000 }).catch(() => {});
+    await held.waitForTimeout(400);
+    const after = await headBox(held);
+    ok(waited && after.lead === 'Fewer than 10 Heathrow planes a day pass over SW5 9HP' && !after.waiting && after.h1 === before.h1 && after.box === before.box
+      && after.size === before.size && after.above === 0,
+      'option C: on a phone a search keeps the heading\'s room and the box in place, the skeleton line while it waits, then the visitor\'s lead at the example\'s size',
+      JSON.stringify({ waited, before, after }));
     await held.close();
   }
   // The point is held (Bill's yes, 2026-11-05): privacy s2b covers a search, not a lookup nobody asked for.
@@ -2689,6 +2782,13 @@ const makeReport = async (pc) => {
   ok(compact.tiles.length === 3 && /^[\d.]+ dBaircraft noise$/.test(compact.tiles[0]) && /µg\/m³NO₂ in the air$/.test(compact.tiles[1])
     && compact.tiles[2] === '310planes a day, flying west' && compact.rows === 'none' && compact.h1 > 30 && compact.lead !== 'none' && compact.promises !== 'none',
     'the example opens compact: three tiles from the answer, the rest folded, the question and the promises still there', JSON.stringify(compact));
+  // OPTION C: the example's heading is its lead finding, written from the answer (its planes here), labelled as the example
+  // and said to nobody; the question keeps its place unseen, out of the heading's name, and the lead fits the room kept.
+  const kewHead = await headlineOf();
+  const kewNamed = await ep.getByRole('heading', { level: 1, name: /^Example: On most days, about 310 Heathrow planes a day pass over TW9 3PZ$/i }).count();
+  ok(kewHead.lead === 'Example: On most days, about 310 Heathrow planes a day pass over TW9 3PZ' && kewNamed === 1 && kewHead.question === 'hidden'
+    && kewHead.h1s === 1 && kewHead.said === '' && kewHead.fits === true,
+    'option C: the example\'s heading is its planes, from the answer, labelled as the example, unannounced, inside its room', JSON.stringify({ ...kewHead, kewNamed }));
   await ep.click('#ans-more');
   const opened = await ep.evaluate(() => ({
     rows: getComputedStyle(document.getElementById('ans-rows')).display,
@@ -2850,6 +2950,10 @@ const makeReport = async (pc) => {
   await ep.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 
   await ep.fill('#pc', 'NW1 7PJ');
+  // Option C on a wide screen (Bill, 2026-11-07): the search moves nothing above the answer, and the visitor's lead has the
+  // example's size, fitted to the same room.
+  await ep.evaluate(() => { window.__above = []; });
+  const ownBefore = await headBox(ep);
   await ep.press('#pc', 'Enter');
   await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'NW1 7PJ', null, { timeout: 10000 }).catch(() => {});
   const own = await look();
@@ -2857,6 +2961,15 @@ const makeReport = async (pc) => {
     'answer first: the visitor\'s own search replaces the example, and is theirs (in the address, no example label)', JSON.stringify(own));
   ok(await ep.locator('#ans-tiles').isHidden() && await ep.locator('#ans-show').isHidden() && (await ep.locator('#answer .rows').isVisible()),
     'a visitor\'s own search has no tiles and no "full example": the answer is whole');
+  await ep.waitForFunction(() => document.getElementById('lead-said')?.textContent !== '', null, { timeout: 5000 }).catch(() => {});
+  const ownHead = await headlineOf();
+  ok(ownHead.lead === 'Road noise at NW1 7PJ is over the WHO guideline' && ownHead.said === 'Road noise at NW1 7PJ is over the WHO guideline.' && ownHead.question === 'hidden',
+    'option C: a visitor\'s own answer leads its heading (no aircraft figure here, so road noise), no "Example", said politely', JSON.stringify(ownHead));
+  const ownAfter = await headBox(ep);
+  ok(ownAfter.lead === ownHead.lead && ownAfter.h1 === ownBefore.h1 && ownAfter.box === ownBefore.box && ownAfter.size === ownBefore.size && ownAfter.size > 30
+    && ownAfter.above === 0 && !ownAfter.waiting && ownHead.fits === true,
+    'option C: on a wide screen a search keeps the heading\'s room and the box in place, and the visitor\'s lead has the example\'s size',
+    JSON.stringify({ ownBefore, ownAfter }));
   // A card takes the example's place: the question steps aside for it, and a reader scrolled down the column is
   // brought back to it, because the card is shorter than the answer it replaces.
   await ep.evaluate(() => window.scrollTo({ top: 500, behavior: 'instant' }));
@@ -2868,6 +2981,8 @@ const makeReport = async (pc) => {
     return { top: Math.round(r.top), h1: parseFloat(getComputedStyle(document.querySelector('.panel h1')).fontSize), example: document.querySelector('.panel').classList.contains('is-example') };
   });
   ok(carded.top >= 0 && carded.top < 820 && carded.h1 <= 22 && !carded.example, 'a card opened from the map, after scrolling, is on screen and the question has stepped aside', JSON.stringify(carded));
+  const cardHead = await headlineOf();
+  ok(cardHead.lead === null && cardHead.question === 'visible', 'option C: a card gives the heading back to the question', JSON.stringify(cardHead));
   await ep.evaluate(() => { document.getElementById('borough-close')?.click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
   await ep.waitForTimeout(500);
   const nw1 = await planesBlock();
@@ -2888,6 +3003,17 @@ const makeReport = async (pc) => {
   ok(blip.seen.title === 'TW3 3QL' && blip.hidden && !retried.hidden && retried.rows.length === 3
     && planesAsked.filter((n) => n === 'TW3.json').length === 2,
     'planes overhead: a district file that fails once is fetched again on the next search, not kept as nothing', JSON.stringify({ blip, retried, planesAsked }));
+  const edgeHead = await headlineOf();
+  ok(edgeHead.lead === 'Aircraft noise at TW3 3QL is over the WHO guideline' && edgeHead.question === 'hidden',
+    'option C: a range is never the heading: on a flight path\'s edge it leads with DEFRA\'s aircraft noise', JSON.stringify(edgeHead));
+  // Outside our city regions there is nothing true to lead with: the question comes back, and nothing is said.
+  await ep.fill('#pc', 'EX1 1HS');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'EX1 1HS', null, { timeout: 10000 }).catch(() => {});
+  await ep.waitForTimeout(500);
+  const outHead = await headlineOf();
+  ok(outHead.lead === null && outHead.question === 'visible' && outHead.said === '' && !outHead.waiting,
+    'option C: outside our city regions the heading keeps the question, says nothing, and its skeleton line is gone', JSON.stringify(outHead));
 
   for (const [url, why] of [[`${BASE}?city=teesside`, 'a link to a city'], [`${BASE}#find`, 'a link to Find areas'], [`${BASE}?postcode=NW1+7PJ`, 'a link to a postcode']]) {
     await ep.goto(url, { waitUntil: 'domcontentloaded' });

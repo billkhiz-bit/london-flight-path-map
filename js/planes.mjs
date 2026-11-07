@@ -156,6 +156,19 @@ export function stepColour(v, steps = []) {
   for (const s of steps || []) if (typeof s?.from === 'number' && n >= s.from && /^#[0-9a-f]{6}$/i.test(s.colour || '')) colour = s.colour;
   return colour;
 }
+const DIR = { westerly: 'west', easterly: 'east' };
+const said = (w) => w && w !== 'none' && w !== 'under 1';
+/**
+ * The airport to tell (the busiest, by its top figure) and its commonest one-way kind of day, in words: shared by the
+ * walkthrough's sentence and option C's headline (planesLead), so the two always pick the same day and figure.
+ */
+function leadDay(model) {
+  const a = model.airports.reduce((best, x) => (Math.max(...x.rows.map((r) => mostOf(r.value))) > Math.max(...best.rows.map((r) => mostOf(r.value))) ? x : best));
+  const by = Object.fromEntries(a.rows.map((r) => [r.kind, r]));
+  const lead = ['westerly', 'easterly'].map((k) => by[k]).filter(Boolean).sort((x, y) => (y.sharePct ?? 0) - (x.sharePct ?? 0))[0];
+  const other = lead && by[lead.kind === 'westerly' ? 'easterly' : 'westerly'];
+  return { a, lead, other, leadWords: lead && inWords(lead.value), otherWords: other && inWords(other.value) };
+}
 /**
  * Step 04's content from a planesModel(): { sentence: [{ text, strong }], rows, foot, how }, or null when the model has
  * no airport to tell (then the step shows no figure). With several airports it tells the busiest, by its top figure.
@@ -164,13 +177,7 @@ export function stepColour(v, steps = []) {
  */
 export function planesWalk(model, steps = []) {
   if (!model?.airports?.length) return null;
-  const a = model.airports.reduce((best, x) => (Math.max(...x.rows.map((r) => mostOf(r.value))) > Math.max(...best.rows.map((r) => mostOf(r.value))) ? x : best));
-  const by = Object.fromEntries(a.rows.map((r) => [r.kind, r]));
-  const DIR = { westerly: 'west', easterly: 'east' };
-  const lead = ['westerly', 'easterly'].map((k) => by[k]).filter(Boolean).sort((x, y) => (y.sharePct ?? 0) - (x.sharePct ?? 0))[0];
-  const other = lead && by[lead.kind === 'westerly' ? 'easterly' : 'westerly'];
-  const [leadWords, otherWords] = [lead && inWords(lead.value), other && inWords(other.value)];
-  const said = (w) => w && w !== 'none' && w !== 'under 1';
+  const { a, lead, other, leadWords, otherWords } = leadDay(model);
   const sentence = lead && (lead.sharePct ?? 0) > 50 && said(leadWords) && otherWords
     ? [{ text: 'On most days, ' }, { text: `${leadWords} planes a day`, strong: true },
       { text: ` pass over ${model.postcode}: the days ${a.name} flies ${DIR[lead.kind]}. On a day it flies ${DIR[other.kind]}, ` },
@@ -185,6 +192,47 @@ export function planesWalk(model, steps = []) {
     foot: `Planes a day over ${model.postcode} from ${a.name}, ${a.period}. Never an average of the three: no day is average.`,
     how: model.how,
   };
+}
+
+/**
+ * OPTION C, the answer as the headline (review prototype, 2026-11-07): the front page's h1 for this answer, when the
+ * planes are what to lead with, or null. One clause, on planesWalk()'s own rule: "On most days" only where one way is over
+ * half of all days and its figure is a single one (never a range); the busiest airport, NAMED, so a postcode under two
+ * airports never reads as the sum of them. Only where the full map's planes layer would colour that figure (`steps`, the
+ * layer's index.json, through stepColour()): under its first step the layer leaves a postcode blank, and a few planes a day
+ * must not out-rank, say, a road far over its guideline; without the steps, never. Never with a caveat that changes what
+ * the figure means, because a headline cannot carry one: a position ONS only estimates, or other flying the count cannot
+ * see (the answer below keeps both, on their rows). Null in every such case, and the headline leads with something else.
+ */
+export function planesLead(model, steps = []) {
+  if (!model?.airports?.length || model.approx || model.other) return null;
+  const { a, lead, leadWords } = leadDay(model);
+  if (!lead || (lead.sharePct ?? 0) <= 50 || !said(leadWords) || !stepColour(lead.value, steps)) return null;
+  return `On most days, ${leadWords} ${a.name} planes a day pass over ${model.postcode}`;
+}
+
+/**
+ * OPTION C, the quiet side (Bill, 2026-11-07: "answer the planes question before road noise"): where the postcode sits
+ * in the band the full map's planes layer leaves blank, the heading says so AS THAT BAND ("Fewer than N", N the layer's
+ * first step, read from `steps`, never typed), never a single figure. Only when it is true on every kind of day for every
+ * airport the file lists: a kind not measured, or a range whose top reaches the step, is not "fewer than" and claims
+ * nothing. The airports are only those airports.json publishes (the year rule's passers); a postcode with other flying
+ * the count cannot see, or a position ONS only estimates, claims nothing. Per airport, never a sum: one airport is named,
+ * several are each held to the band and said so; a postcode measured with nothing reaching 1 a day says it of each airport
+ * we count. Null otherwise.
+ */
+export function planesBandLead(model, steps = []) {
+  if (!model || model.approx || model.other) return null;
+  const firsts = (steps || []).map((s) => s?.from).filter((n) => typeof n === 'number' && n > 0);
+  if (!firsts.length) return null;
+  const floor = Math.min(...firsts);
+  if (!model.airports.length) return model.none ? `Fewer than ${floor} planes a day from each airport we count pass over ${model.postcode}` : null;
+  const under = (a) => a.rows.length > 0 && a.rows.every((r) => r.value !== null && r.value !== undefined && mostOf(r.value) < floor);
+  if (!model.airports.every(under)) return null;
+  const names = model.airports.map((a) => a.name);
+  return names.length === 1
+    ? `Fewer than ${floor} ${names[0]} planes a day pass over ${model.postcode}`
+    : `Fewer than ${floor} planes a day from each of ${listOf(names)} pass over ${model.postcode}`;
 }
 
 /** The block's nodes for a model, written with textContent only; `links` (planesLinks) go just above "How the planes are counted". */
