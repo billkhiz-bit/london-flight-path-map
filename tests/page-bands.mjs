@@ -280,6 +280,20 @@ for (const [width, height] of [[1366, 900], [1000, 800], [390, 844], [320, 640]]
   ok(top < 0, 'a short window keeps its height: the links stay at the top of the page', String(top));
   await page.close();
 }
+// A mouse cannot swipe the bar sideways, so on a desktop window every link must be in view (Bill's pick D, 2026-11-07:
+// at 820 px two of six ran past the edge, reachable only by Tab or Shift+wheel). Full names wherever they fit.
+for (const [width, words] of [[1366, 'long'], [1000, 'long'], [900, 'short'], [820, 'short'], [720, 'short']]) {
+  const page = await open('/about/', width, 800);
+  const fit = await page.evaluate(() => {
+    const n = document.querySelector('nav.jump'), edge = n.getBoundingClientRect().right;
+    const names = [...n.querySelectorAll('a')].map((a) => a.innerText.trim());
+    return { spill: n.scrollWidth - n.clientWidth, lastRight: [...n.querySelectorAll('a')].at(-1).getBoundingClientRect().right, edge, names };
+  });
+  ok(fit.spill <= 0 && fit.lastRight <= fit.edge, `${width}: every section link is in view, none past the bar's edge`, JSON.stringify(fit));
+  const long = fit.names.includes('Why I built it') && fit.names.includes('Get in touch');
+  ok(words === 'long' ? long : (fit.names.join() === "Why,How it grew,Questions,Talks,Who it's for,Contact"), `${width}: ${words === 'long' ? 'the full names' : 'the short names'}`, fit.names.join());
+  await page.close();
+}
 
 // ---- How it works ----
 
