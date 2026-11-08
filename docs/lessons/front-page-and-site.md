@@ -934,3 +934,30 @@ screen, else the example on a plain visit the visitor has not touched. `search()
 acted`, before it changes anything. Why not have `search()` await a ready promise: `bootFromQuery()` awaits `search()`
 from inside `load()`, so a search waiting for `load()` to finish deadlocks every `?postcode=` link. The test sends each
 search with `#map .boro` provably empty (a state reached on purpose, not by luck).
+
+## The full map's answer card (2026-11-08)
+
+Bill read the findings-first panel (4 Nov) for SW11 1AA and asked for it simpler: "keep to road noise is high or aircraft
+noise is high and then add the detailed explanation in more detail", then "we want any user to understand it, and choose
+visuals where applicable". Five rounds followed: three mock-ups of my own (A, a line per finding, picked), two rounds of
+Stitch (S1-S4, V1-V4, F1-F4; V3 picked, F3 with F2's edges recommended), then a working mock-up the build copied.
+
+What the rounds found, kept as rules: the site has NO green tint (my V3 brief invented one; F1/F2 stay in the palette);
+"Road noise: moderate" alone reads as the postcode's level, so a council's rating says "<council>-wide", once per section
+where every tile is the council's; Growth showed as a 2.6 bar while counting 0 for Balanced, now "not counted for this
+buyer"; a score needs a comparison to mean anything, so the city's council areas sit under it on one scale (recomputing
+them from the open-data CSV's ROUNDED parts moved Tower Hamlets 6.0 -> 5.9: compare against calcScores(), never rounded
+parts); a tie names every council on it (Barking and Sutton at 7.1); SW11 1AA lies past the modelled final approach
+(FINAL_TOP_FT 3,000; the nearest point would be 3,217 ft), which is why planeAltitude() says "Not under a final approach"
+and the tile gives no height; the old fold contradicted the new verdicts ("unlikely to be a significant factor" beside 318
+planes a day; a hand-typed council blurb saying noise "is a real factor ... use as negotiation leverage"), so the fold
+keeps only its tools. Tests caught three real faults during the build: a New York road tile credited DEFRA (sources now
+come from the caller), the City of London's estimated crime rate labelled "recorded" by the chart's unit, and a tile flag
+named `council` breaking New York's wording rule (now `shared`). On a phone the sheet's sticky close button covered the
+card's corner and Save: the card starts below its 36 px band there.
+
+The first full preflight on the card failed on two tests that read the map's own code, both right to: one anchored on
+`function crimeNote(extra)` whole, so an added option hid the thresholds it holds (anchor a parser on a function's name
+and first argument, never its full signature); the other is the New York ratchet (`tests/test_us_city_branches.py`),
+which caught `currentCity === 'nyc'` added for the word "boroughs". The answer was the panel's existing area rule (council
+for the UK, borough otherwise), not a new declared branch. The run's third red was a DEFRA read timeout that passed alone.

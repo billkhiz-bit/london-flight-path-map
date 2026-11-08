@@ -560,17 +560,18 @@ console.log('Distances agree with the front page');
         const alt = read('Plane altitude');
         // The altitude resolving means the geometry has loaded and the panel was redrawn from it.
         if (!alt || alt === 'N/A' || !/TW3 1ES/i.test(document.getElementById('sidebar-content')?.textContent || '')) return false;
-        const note = [...document.querySelectorAll('.property-note')].map((n) => n.textContent).find((t) => /km away/.test(t)) || '';
-        return { airport: read('Nearest airport'), path: read('Path distance'), note };
+        const tile = document.querySelector('[data-find="path"] .t-level')?.textContent.trim() || '';
+        return { airport: read('Nearest airport'), path: read('Path distance'), tile };
       },
       { timeout: 25000 },
     )
     .then((h) => h.jsonValue())
-    .catch(() => ({ airport: 'never resolved', path: 'never resolved', note: '' }));
+    .catch(() => ({ airport: 'never resolved', path: 'never resolved', tile: '' }));
   const gotLine = parseFloat(rows.path);
   check(`TW3 1ES: nearest airport is the front page's runway-strip figure, Heathrow (${wantAirport} km)`, rows.airport === `Heathrow (${wantAirport} km)`, `row: "${rows.airport}"`);
   check(`TW3 1ES: path distance is to the drawn line, about ${wantLine.toFixed(1)} km`, Math.abs(gotLine - wantLine) <= 0.1, `row: "${rows.path}"`);
-  check('TW3 1ES: the noise summary says the same two figures', rows.note.includes(`${wantAirport}km away`) && rows.note.includes(`within ${gotLine.toFixed(1)}km`), `summary: "${rows.note.slice(0, 160)}"`);
+  // The noise summary that repeated these went with the fold's repeats (2026-11-08); the path tile says the distance now.
+  check('TW3 1ES: the nearest flight path tile says the same distance', rows.tile === `${gotLine.toFixed(1)} km away`, `tile: "${rows.tile}"`);
   console.log('');
 }
 
@@ -831,8 +832,10 @@ console.log('');
 }
 console.log('');
 
-// THE PANEL LEADS WITH ITS FINDINGS (Bill's pick, 2026-11-04: Stitch's draft). This page does NOT keep the fold open: it
-// reads what a visitor sees before opening anything. Every lookup is stubbed, so each road case is reached on purpose.
+// THE PANEL LEADS WITH ITS FINDINGS (Bill's pick, 2026-11-04: Stitch's draft), as an answer card and tiles closed until
+// tapped since 2026-11-08 (Bill: "keep to road noise is high", then the explanation in plain words). This page does NOT
+// keep the fold open: it reads each tile's face as a visitor first sees it, then opens the tiles to read what they explain.
+// Every lookup is stubbed, so each road case is reached on purpose.
 console.log('Findings first');
 {
   const fp = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -865,7 +868,15 @@ console.log('Findings first');
 
   const readPanel = () =>
     fp.evaluate(() => {
-      const text = (k) => (document.querySelector(`[data-find="${k}"]`)?.innerText || '').replace(/\s+/g, ' ').trim();
+      const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+      const text = (k) => norm(document.querySelector(`[data-find="${k}"]`)?.innerText);
+      // Each tile's explanation, read opened as a reader who tapped it would, then closed again.
+      const tiles = [...document.querySelectorAll('#sidebar-content details.tile')];
+      const wasOpen = tiles.map((t) => t.open);
+      tiles.forEach((t) => { t.open = true; });
+      const full = Object.fromEntries(['road', 'aircraft', 'planes', 'path', 'air', 'flood', 'crime', 'transport', 'healthcare', 'schools', 'price', 'sold', 'epc']
+        .map((k) => [k, norm(document.querySelector(`[data-find="${k}"]`)?.innerText)]));
+      tiles.forEach((t, i) => { t.open = wasOpen[i]; });
       const fold = document.getElementById('panel-all');
       const groups = [...document.querySelectorAll('.find-group')];
       const notify = document.querySelector('.notify-block');
@@ -873,16 +884,19 @@ console.log('Findings first');
         road: text('road'), aircraft: text('aircraft'), planes: text('planes'), path: text('path'), air: text('air'), flood: text('flood'),
         crime: text('crime'), transport: text('transport'), healthcare: text('healthcare'), schools: text('schools'),
         price: text('price'), sold: text('sold'), epc: text('epc'),
-        roadBar: Boolean(document.querySelector('[data-find="road"] .find-track')),
+        full,
+        anyOpen: wasOpen.some(Boolean),
+        head: norm(document.getElementById('ac-head')?.textContent),
+        pills: [...document.querySelectorAll('#ac-pills .ac-pill')].map((x) => x.textContent),
+        roadBar: Boolean(document.querySelector('[data-find="road"] .t-track')),
         foldOpen: Boolean(fold && fold.open),
         foldHides: ![...document.querySelectorAll('.noise-detail-label')].some((l) => l.getClientRects().length > 0),
         shown: groups.filter((g) => getComputedStyle(g).display !== 'none').map((g) => g.querySelector('h3').textContent.trim()),
         order: Boolean(fold && notify) && Boolean(groups.at(-1).compareDocumentPosition(fold) & Node.DOCUMENT_POSITION_FOLLOWING) && Boolean(fold.compareDocumentPosition(notify) & Node.DOCUMENT_POSITION_FOLLOWING),
         airInGroup: Boolean(document.getElementById('postcode-air-section')?.closest('.find-group')),
-        note: [...document.querySelectorAll('.find-group .find-note')].map((n) => n.textContent.trim()),
+        note: [...document.querySelectorAll('.find-group .sec-wide:not([hidden])')].map((n) => n.textContent.trim()),
         shownText: groups.map((g) => g.innerText).join(' '),
         favImpact: document.querySelector('.fav-btn')?.dataset.favImpact,
-        foldImpact: document.querySelector('.noise-indicator')?.textContent.trim(),
         all: document.getElementById('sidebar-content').innerText,
       };
     });
@@ -898,43 +912,52 @@ console.log('Findings first');
   const loaded = () => /\S/.test(document.querySelector('[data-find="sold"]')?.innerText || '') && /\S/.test(document.querySelector('[data-find="epc"]')?.innerText || '') && /m$/.test((document.querySelector('[data-find="healthcare"]')?.innerText || '').trim()) && /\S/.test(document.querySelector('[data-find="road"]')?.innerText || '') && /\S/.test(document.querySelector('[data-find="planes"]')?.innerText || '');
 
   const over = await search('SW5 9HP', environmentWith({ roadNoiseLdenDb: 71.8 }), loaded);
-  check('the rating leads, explained by the postcode\'s own figure', /Road noise is high 71\.8 dB\. The WHO guideline is 53 dB\. This is a modelled figure for 2021\./.test(over.road), over.road);
+  check('every tile starts closed', !over.anyOpen);
+  check('the rating leads, explained by the postcode\'s own figure beside the WHO level', /^Road noise High Kensington and Chelsea-wide$/.test(over.road)
+    && /This postcode 71\.8 dB The WHO recommends at most 53 dB/.test(over.full.road)
+    && /The rating is for Kensington and Chelsea as a whole; the bars are for this postcode\./.test(over.full.road)
+    && /Source: DEFRA noise map \(modelled\), 2021/.test(over.full.road), `${over.road} | ${over.full.road}`);
   check('all four groups show, the fold starts closed and hides its sections', over.shown.length === 4 && !over.foldOpen && over.foldHides, JSON.stringify([over.shown, over.foldOpen, over.foldHides]));
   check('the findings come first, then the fold, then the notify form', over.order);
   check('the air charts sit in their group, ahead of the fold', over.airInGroup);
-  check('the note says whose rating it is', over.note.some((n) => n === 'The road noise rating is for all of Kensington and Chelsea. The figures are for this postcode.'), JSON.stringify(over.note));
-  check('aircraft says its figure, as an estimate', /^Aircraft noise is (low|moderate|high) \d+\.\d out of 10/.test(over.aircraft), over.aircraft);
-  check('planes come from the postcode\'s own file', /^Heathrow planes overhead/.test(over.planes) && /Flying west: /.test(over.planes) && /56% of days/.test(over.planes), over.planes);
+  check('whose rating it is: said once for Air and flood and Living here, and on the road and price tiles, whose sections mix in this postcode\'s own', JSON.stringify(over.note) === JSON.stringify(['Kensington and Chelsea-wide', 'Kensington and Chelsea-wide'])
+    && /Kensington and Chelsea-wide$/.test(over.road) && /Kensington and Chelsea-wide$/.test(over.price), JSON.stringify([over.note, over.road, over.price]));
+  check('aircraft says its figure, as an estimate', /^Aircraft noise (Low|Moderate|High) \d+\.\d out of 10$/.test(over.aircraft) && /Our estimate from the published flight routes/.test(over.full.aircraft), `${over.aircraft} | ${over.full.aircraft}`);
+  check('planes come from the postcode\'s own file', /^Heathrow planes overhead \S+ a day flying (west|east)$/.test(over.planes) && /Flying west · 56% of days/.test(over.full.planes), `${over.planes} | ${over.full.planes}`);
+  check('the headline is the front page\'s sentence for this place (js/answer-lead.mjs)', /^Fewer than \d+ Heathrow planes a day pass over SW5 9HP$|^On most days, about \d+ Heathrow planes a day pass over SW5 9HP$/.test(over.head), over.head);
   check('the planes notes keep their credits', /adsb\.lol/.test(await fp.evaluate(() => document.querySelector('[data-find="planes"] details')?.textContent || '')));
-  check('crime is set against the London median', /^Crime is \w+ /.test(over.crime) && /London median/.test(over.crime) && /This council/.test(over.crime), over.crime);
-  check('station and doctor are the lists\' own first rows', /Earl's Court 376 m$/.test(over.transport) && /Brompton Medical Centre 49 m$/.test(over.healthcare), `${over.transport} | ${over.healthcare}`);
+  check('crime is set against a typical London borough, in words', /^Crime \w+/.test(over.crime) && /A typical London borough/.test(over.full.crime) && /Kensington and Chelsea has [\d.]+ recorded crimes a year for every 1,000 people\./.test(over.full.crime), over.full.crime);
+  check('the crime note says no figure twice', !/recorded offences per 1,000 residents/.test(over.full.crime), over.full.crime);
+  check('station and doctor are the lists\' own first rows', /Earl's Court is 376 m away\./.test(over.full.transport) && /Brompton Medical Centre is 49 m away\./.test(over.full.healthcare), `${over.full.transport} | ${over.full.healthcare}`);
   check('the last sale passes the shop', /£1,810,000 January 2025$/.test(over.sold), over.sold);
-  check('energy reads plainly', /^Energy rating D 67 out of 100, from 32 certificates\./.test(over.epc), over.epc);
+  check('energy reads plainly', /^Energy rating Band D 67 out of 100$/.test(over.epc) && /The average of 32 energy certificates/.test(over.full.epc), `${over.epc} | ${over.full.epc}`);
   check('nothing reads undefined, null or NaN', !/\bundefined\b|\bNaN\b|\bnull\b/.test(over.all));
   const notifyLabel = await fp.evaluate(() => document.querySelector('label[for="notify-email"]').getBoundingClientRect().width);
   check('the email label is for screen readers only (a class with no rule showed it, live, until 2026-11-04)', notifyLabel <= 1, String(notifyLabel));
 
-  check('the fold and a saved favourite use the finding\'s own word', new RegExp(`^${over.favImpact} AIRCRAFT NOISE$`, 'i').test(over.foldImpact) && new RegExp(`^Aircraft noise is ${over.favImpact}`, 'i').test(over.aircraft), JSON.stringify([over.aircraft, over.foldImpact, over.favImpact]));
+  check('a saved favourite uses the finding\'s own word', new RegExp(`^Aircraft noise ${over.favImpact} `, 'i').test(over.aircraft), JSON.stringify([over.aircraft, over.favImpact]));
 
   const under = await search('SW5 9JZ', environmentWith({ roadNoiseLdenDb: 49.9 }, 'SW5 9JZ'), loaded);
-  check('a figure under the guideline keeps the council\'s rating, as Bill chose, and its own true number', /Road noise is high 49\.9 dB\./.test(under.road), under.road);
+  check('a figure under the guideline keeps the council\'s rating, as Bill chose, and its own true number', /^Road noise High /.test(under.road) && /This postcode 49\.9 dB/.test(under.full.road), `${under.road} | ${under.full.road}`);
 
   const quiet = await search('SW5 9HP', environmentWith({ roadNoiseBelowDb: 45 }), loaded);
-  check('a surveyed-quiet postcode gets no rating, no reading, no bar and no note about a rating', /^Road noise is under the WHO guideline DEFRA surveyed/.test(quiet.road) && !quiet.roadBar && !quiet.note.some((n) => /road noise rating/.test(n)), quiet.road);
+  check('a surveyed-quiet postcode gets no rating, no reading, no bar and no council\'s name', /^Road noise Under the WHO level$/.test(quiet.road) && /DEFRA’s map shows no road noise here at 45 dB or above/.test(quiet.full.road) && !quiet.roadBar, `${quiet.road} | ${quiet.full.road}`);
 
   const neighbour = await search('SW5 9HP', environmentWith({ roadNoiseLdenDb: 49.9 }, 'SW5 9JZ'), loaded);
-  check('a reading the API gives for a neighbouring postcode never passes as this one', /^Road noise in Kensington and Chelsea is high/.test(neighbour.road) && !/49\.9/.test(neighbour.road), neighbour.road);
+  check('a reading the API gives for a neighbouring postcode never passes as this one', /^Road noise High Kensington and Chelsea-wide$/.test(neighbour.road) && !/49\.9/.test(neighbour.full.road) && !/49\.9/.test(neighbour.head), `${neighbour.full.road} | ${neighbour.head}`);
 
   const failed = await search('SW5 9HP', null, loaded);
-  check('with no figure the rating names its council, and says so', /^Road noise in Kensington and Chelsea is high A rating for the whole council: \d+% of its postcodes are over the WHO guideline\. There is no figure for this postcode\./.test(failed.road) && !failed.roadBar && !failed.note.some((n) => /figures are for this postcode/.test(n)), failed.road);
+  check('with no figure the rating names its council, and says so', /^Road noise High Kensington and Chelsea-wide$/.test(failed.road)
+    && /\d+ in every 100 Kensington and Chelsea postcodes louder than the World Health Organization \(WHO\) recommends/.test(failed.full.road)
+    && /We have no reading for this street, so this is for Kensington and Chelsea as a whole\./.test(failed.full.road) && !failed.roadBar, failed.full.road);
 
   const area = await search('SW5', environmentWith({ roadNoiseLdenDb: 71.8 }), () => /\S/.test(document.querySelector('[data-find="road"]')?.innerText || ''));
-  check('an area search asks for no postcode figure', /^Road noise in /.test(area.road), area.road);
+  check('an area search asks for no postcode figure', /^Road noise \w+/.test(area.road) && /so this is for .+ as a whole/.test(area.full.road), area.full.road);
   // Outside London the list is NaPTAN's, in rows of its own: the finding must find those too.
   await fp.evaluate((city) => window.switchCity(city), 'manchester');
   await fp.waitForTimeout(1200);
   const north = await search('M1 1AE', environmentWith({ roadNoiseLdenDb: 60 }, 'M1 1AE'), () => /\d/.test(document.querySelector('[data-find="transport"]')?.innerText || ''));
-  check('outside London the station comes from the NaPTAN list', /\d(\.\d)? ?k?m$/.test(north.transport), north.transport);
+  check('outside London the station comes from the NaPTAN list', /is \d+(\.\d+)? ?k?m away\./.test(north.full.transport), north.full.transport);
   check('no page errors in the findings', fpErrors.length === 0, fpErrors.slice(0, 2).join(' | '));
   await fp.close();
 
@@ -963,8 +986,11 @@ console.log('Findings first');
   await ny.waitForFunction(() => /\S/.test(document.querySelector('[data-find="crime"]')?.innerText || ''), null, { timeout: 20000 }).catch(() => {});
   const nyCrime = await ny.evaluate(() => document.querySelector('[data-find="crime"]')?.innerText || '');
   const nyAll = await ny.evaluate(() => document.getElementById('sidebar-content').innerText);
-  const nyShown = await ny.evaluate(() => [...document.querySelectorAll('.find-group')].map((g) => g.innerText).join(' '));
-  check('New York\'s findings say borough and ZIP code, never council or postcode', /borough/i.test(nyShown) && !/\bcouncil\b|\bpostcode/i.test(nyShown), nyShown.slice(0, 160));
+  const nyShown = await ny.evaluate(() => {
+    document.querySelectorAll('#sidebar-content details.tile').forEach((t) => { t.open = true; });
+    return [...document.querySelectorAll('.find-group')].map((g) => g.innerText).join(' ');
+  });
+  check('New York\'s findings say borough and ZIP code, never council or postcode', /borough|ZIP code/i.test(nyShown) && !/\bcouncil\b|\bpostcode/i.test(nyShown) && !/\bcouncil\b|\bpostcode/i.test(nyAll), nyShown.slice(0, 200));
   check('New York\'s crime is never set against London\'s', nyCrime !== '' && !/London/.test(nyCrime), nyCrime);
   check('New York\'s panel reads nothing undefined', !/\bundefined\b|\bNaN\b/.test(nyAll));
   await ny.close();

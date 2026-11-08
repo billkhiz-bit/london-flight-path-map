@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-08 (night) - The map's postcode panel answers first, in plain words
+
+- **The full map's postcode panel opens on an answer card.** A headline says what the place is like in one sentence (the same sentence the front page gives it), pills show what stands out to watch for and what is good, and the score sits beside them.
+- **Each finding is one line until you tap it**: "Road noise · Moderate", "Crime · Medium". Tapping opens a plain explanation with a picture where an honest one exists: the rating among its own words, a share of postcodes as 100 squares, or figures side by side from zero. Then a sentence or two with the number inside, a tip where one helps, and the source.
+- **The score says whose it is and how it compares**: "Score for a balanced buyer", where it sits among the city's council areas, and the points each part earns. A part a buyer profile does not count says so, and the profile can be changed right there; the whole map follows it.
+- **"Weak" scores are now called "Low".**
+- **"All the detail" keeps its tools** (stations, NHS services, listings, sold prices, the badge) and loses the sections that repeated the findings, including a summary that called aircraft noise "unlikely to be a significant factor" beside hundreds of planes a day.
+
 ## 2026-11-08 (evening) - A search sent while the front page loads
 
 - **A search typed before the front page has finished loading now gets its answer.** It used to say "Could not reach the data just now", which was not true, or "not found" for a council area; and the example answer, arriving after it, could leave the page showing neither. The search is now said to be heard straight away and answered as soon as the map is drawn, and the example no longer steps in once you have searched.

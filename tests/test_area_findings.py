@@ -48,7 +48,7 @@ def test_school_bands_are_the_maps():
 
 
 def test_crime_thresholds_are_the_maps():
-    body = between('function crimeNote(extra)', 'const distinctive')
+    body = between('function crimeNote(extra', 'const distinctive')  # its options follow (2026-11-08)
     assert 'ratio >= 1.15' in body and 'ratio <= 0.85' in body
     median = pages.london_crime_median()
     assert pages.crime_against_london(median) == 'close to the London median'

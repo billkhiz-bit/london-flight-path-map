@@ -2367,7 +2367,521 @@
         min-height: 64px;
       }
       /* A group with nothing true to say is not shown, rather than a heading over nothing. */
-      .find-group:not(:has(.find, .is-waiting, #postcode-air-section:not([hidden]))) {
+      /* THE ANSWER CARD (Bill, 2026-11-08; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). Every colour is the site's:
+         the front page's dark band (home .band-dark), scoreColor()'s fills for edges and bars, scoreTextColor()'s inks for
+         words; Geist is the site's headline face (/fonts/fonts.css). The full map keeps its 4 px corners. */
+      .answer-card {
+        --card-head: #ffffff;
+        --card-text: #f3f1ec;
+        --card-lede: #d9d7d0;
+        --card-label: #b9b6ae;
+        --card-line: #55554f;
+        margin: 16px 24px 4px;
+        padding: 16px;
+        border-radius: 4px;
+        background: var(--dark);
+        color: var(--card-text);
+        display: grid;
+        gap: 12px;
+        font-family: var(--font-sans);
+      }
+      .ac-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .ac-where {
+        font-size: 12.5px;
+        line-height: 1.4;
+        color: var(--card-label);
+      }
+      .answer-card .fav-btn {
+        color: var(--card-text);
+        border-color: var(--card-line);
+        flex-shrink: 0;
+      }
+      .answer-card .fav-btn:hover,
+      .answer-card .fav-btn.saved {
+        color: var(--card-head);
+        border-color: var(--orange);
+      }
+      .answer-card .fav-btn svg {
+        fill: currentColor;
+      }
+      .ac-head {
+        margin: 0;
+        font-family: 'Geist', var(--font-sans);
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.18;
+        letter-spacing: -0.02em;
+        text-transform: none;
+        color: var(--card-head);
+        text-wrap: balance;
+      }
+      .ac-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .ac-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 30px;
+        padding: 4px 11px 4px 9px;
+        font: 500 13px var(--font-sans);
+        color: var(--card-text);
+        background: transparent;
+        border: 1px solid var(--card-line);
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .ac-pill::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #26f27d;
+      }
+      .ac-pill.watch::before {
+        background: var(--orange);
+      }
+      .ac-pill:hover {
+        border-color: var(--card-text);
+      }
+      .ac-pill:focus-visible,
+      .ac-score > summary:focus-visible,
+      .ac-prof:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .ac-score {
+        border-top: 1px solid var(--card-line);
+        padding-top: 12px;
+      }
+      .ac-score > summary {
+        display: grid;
+        gap: 6px;
+        list-style: none;
+        cursor: pointer;
+      }
+      .ac-score > summary::-webkit-details-marker {
+        display: none;
+      }
+      .ac-for {
+        font-size: 12.5px;
+        color: var(--card-lede);
+      }
+      .ac-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .answer-card .summary-verdict {
+        margin: 0;
+        font-family: 'Geist', var(--font-sans);
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--card-head);
+      }
+      .answer-card .summary-verdict small {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--card-lede);
+      }
+      .ac-chev {
+        width: 7px;
+        height: 7px;
+        margin: 0 4px;
+        border-right: 1.5px solid var(--card-lede);
+        border-bottom: 1.5px solid var(--card-lede);
+        transform: rotate(45deg);
+      }
+      .ac-score[open] .ac-chev {
+        transform: rotate(-135deg);
+      }
+      .ac-track,
+      .ac-pts-track {
+        display: block;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--card-line);
+        overflow: hidden;
+      }
+      .ac-pts-track {
+        height: 7px;
+        min-width: 6px;
+      }
+      .ac-track i,
+      .ac-pts-track i {
+        display: block;
+        height: 100%;
+      }
+      .ac-body {
+        display: grid;
+        gap: 9px;
+        padding-top: 10px;
+      }
+      .ac-sent {
+        margin: 0;
+        font-size: 13.5px;
+        line-height: 1.45;
+        color: var(--card-head);
+      }
+      .ac-key {
+        font-size: 11.5px;
+        color: var(--card-label);
+      }
+      .ac-cmp {
+        display: grid;
+        gap: 4px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--card-line);
+      }
+      .ac-cmp svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .ac-axis {
+        stroke: var(--card-line);
+      }
+      .ac-dot {
+        fill: var(--card-label);
+        opacity: 0.8;
+      }
+      .ac-mark {
+        stroke: var(--card-head);
+      }
+      .ac-mark-t {
+        fill: var(--card-head);
+        font: 700 11px var(--font-sans);
+      }
+      .ac-end {
+        fill: var(--card-label);
+        font: 400 10px var(--font-sans);
+      }
+      .ac-cmp-say,
+      .ac-whose {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: var(--card-lede);
+      }
+      .answer-card .score-breakdown {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+      }
+      .answer-card .score-row {
+        display: grid;
+        gap: 3px;
+        margin: 0;
+      }
+      .answer-card .ac-cap,
+      .answer-card .ac-skip {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .answer-card .score-row-label,
+      .answer-card .score-row-value {
+        width: auto;
+        font-size: 12.5px;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--card-text);
+      }
+      .answer-card .score-row-value small,
+      .answer-card .ac-skip .score-row-value {
+        font-weight: 400;
+        color: var(--card-label);
+      }
+      .ac-profs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .ac-prof {
+        min-height: 28px;
+        padding: 4px 10px;
+        font: 500 12px var(--font-sans);
+        color: var(--card-text);
+        background: transparent;
+        border: 1px solid var(--card-line);
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .ac-prof.on {
+        font-weight: 600;
+        color: var(--dark);
+        background: var(--card-text);
+        border-color: var(--card-text);
+      }
+      /* The findings as tiles, closed until tapped; an open one takes the row. */
+      .sec-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .sidebar-section .sec-head h3 {
+        margin: 0;
+      }
+      .sec-wide {
+        font-size: 12px;
+        color: #555;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .tile-slot {
+        display: contents;
+      }
+      .tile-slot.is-waiting::before {
+        content: '';
+        display: block;
+        min-height: 64px;
+        border: 1px dashed var(--light);
+        border-radius: 4px;
+      }
+      details.tile {
+        position: relative;
+        min-width: 0;
+        border: 1px solid var(--light);
+        border-radius: 4px;
+        background: var(--white);
+        font-family: var(--font-sans);
+      }
+      details.tile.lone,
+      details.tile[open] {
+        grid-column: 1 / -1;
+      }
+      /* The edge only where the card's pills name the tile: the two never disagree. scoreColor()'s fills. */
+      details.tile.stands[data-stand='watch'] {
+        border-top: 4px solid var(--orange);
+      }
+      details.tile.stands[data-stand='good'] {
+        border-top: 4px solid #26f27d;
+      }
+      details.tile > summary {
+        display: grid;
+        align-content: start;
+        gap: 2px;
+        min-height: 64px;
+        padding: 11px 24px 11px 12px;
+        list-style: none;
+        cursor: pointer;
+      }
+      details.tile:not([open]) > summary {
+        height: 100%;
+      }
+      details.tile > summary::-webkit-details-marker {
+        display: none;
+      }
+      details.tile > summary::after {
+        content: '';
+        position: absolute;
+        top: 16px;
+        right: 11px;
+        width: 6px;
+        height: 6px;
+        border-right: 1.5px solid var(--mid);
+        border-bottom: 1.5px solid var(--mid);
+        transform: rotate(45deg);
+      }
+      details.tile[open] > summary::after {
+        top: 19px;
+        transform: rotate(-135deg);
+      }
+      details.tile > summary:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .t-name {
+        font-size: 12.5px;
+        color: var(--mid);
+      }
+      .t-level {
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .t-sub {
+        margin-top: 2px;
+        font-size: 11.5px;
+        color: var(--mid);
+      }
+      .all-shared .t-wide {
+        display: none;
+      }
+      .t-ink-good {
+        color: var(--green-text);
+      }
+      .t-ink-mid {
+        color: var(--yellow-text);
+      }
+      .t-ink-bad {
+        color: var(--orange-text);
+      }
+      .t-ink-plain {
+        color: var(--dark);
+      }
+      .t-body {
+        display: grid;
+        gap: 10px;
+        margin: 0 12px;
+        padding: 10px 0 14px;
+        border-top: 1px solid var(--bg);
+      }
+      .t-say {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--dark);
+      }
+      .t-note,
+      .t-tip {
+        margin: 0;
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: #555;
+      }
+      .t-tip b {
+        color: var(--dark);
+      }
+      .t-src {
+        margin: 0;
+        font-size: 11.5px;
+        color: var(--mid);
+      }
+      .t-strip {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 3px;
+      }
+      .t-strip span {
+        padding: 5px 2px;
+        font-size: 11.5px;
+        text-align: center;
+        white-space: nowrap;
+        color: #555;
+        background: var(--bg);
+        border-radius: 3px;
+      }
+      .t-strip span.on {
+        font-weight: 700;
+        color: #fff;
+      }
+      .t-strip .t-bg-good {
+        background: var(--green-text);
+      }
+      .t-strip .t-bg-mid {
+        background: var(--yellow-text);
+      }
+      .t-strip .t-bg-bad {
+        background: var(--orange-text);
+      }
+      .t-strip .t-bg-plain {
+        background: var(--dark);
+      }
+      .t-share {
+        display: grid;
+        gap: 6px;
+        margin: 0;
+      }
+      .t-squares {
+        display: grid;
+        grid-template-columns: repeat(25, 1fr);
+        gap: 2px;
+      }
+      .t-squares i {
+        aspect-ratio: 1;
+        background: var(--bg);
+        border-radius: 1px;
+      }
+      .t-squares i.on {
+        background: var(--dark);
+      }
+      .t-share figcaption {
+        font-size: 12.5px;
+        line-height: 1.4;
+        color: #555;
+      }
+      .t-share figcaption b {
+        color: var(--dark);
+      }
+      .t-bars {
+        display: grid;
+        gap: 8px;
+      }
+      .t-bar {
+        display: grid;
+        gap: 3px;
+      }
+      .t-cap {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        color: #555;
+      }
+      .t-cap b {
+        font-weight: 600;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        color: var(--dark);
+      }
+      .t-cap small,
+      .t-unit {
+        font-size: 11.5px;
+        color: var(--mid);
+      }
+      .t-unit {
+        margin: 0;
+      }
+      .t-track {
+        height: 7px;
+        background: var(--bg);
+        border-radius: 4px;
+      }
+      .t-track i {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+      }
+      .t-track i.here {
+        background: var(--dark);
+      }
+      .t-track i.yard {
+        background: var(--light);
+      }
+      .t-ruler {
+        display: block;
+        width: 100%;
+        height: auto;
+        color: var(--dark);
+      }
+      .t-ruler text {
+        fill: currentColor;
+        font-family: var(--font-sans);
+      }
+      @media (max-width: 900px), (max-height: 500px) {
+        /* On a phone the sheet's sticky close button takes its first 36 px band (.result-close): a full-width card under
+           it lost its corner and its Save button to the button, so the card starts below the band. */
+        .app[data-mview='search'] #tab-analysis .answer-card {
+          margin-top: 40px;
+        }
+      }
+      .find-group:not(:has(.find, .tile, .is-waiting, #postcode-air-section:not([hidden]))) {
         display: none;
       }
       #postcode-air-section {
@@ -10796,7 +11310,9 @@
         return rates.length % 2 ? rates[m] : (rates[m - 1] + rates[m]) / 2;
       }
 
-      function crimeNote(extra) {
+      // `figures: false` (the answer card's crime tile, 2026-11-08): the breakdown and the source only, because the tile's
+      // own sentences already say the rate and the London comparison, and a figure is never said twice.
+      function crimeNote(extra, { figures = true } = {}) {
         if (currentCity === 'nyc') {
           return 'Borough-level rate derived from NYPD CompStat with New York population denominators. Not comparable with the London figures - different collection methodology.';
         }
@@ -10870,7 +11386,7 @@
         const attribution = extra.crimeVintage
           ? `Source: ${extra.crimeVintage}, on mid-2024 population.`
           : 'Sky Score estimate - ONS publishes no recorded-crime rate for this area, so this figure is our own and is not attributable to them.';
-        return `${rate} recorded offences per 1,000 residents${scale}.${why} ${attribution}`;
+        return figures ? `${rate} recorded offences per 1,000 residents${scale}.${why} ${attribution}` : `${why} ${attribution}`.trim();
       }
 
       function ratingBadgeClass(rating) {
@@ -13174,7 +13690,7 @@
       function scoreLabel(v) {
         if (v >= 7) return { glyph: '▲', word: 'Strong' }; // ▲
         if (v >= 4) return { glyph: '●', word: 'Mixed' }; // ●
-        return { glyph: '▼', word: 'Weak' }; // ▼
+        return { glyph: '▼', word: 'Low' }; // ▼ ("Weak" until 2026-11-08: Bill, harsh for someone's home)
       }
 
       function announceResult(message) {
@@ -13426,28 +13942,6 @@
       function noiseBand(score) {
         return score >= 7 ? 'High' : score >= 4 ? 'Moderate' : 'Low';
       }
-      function postcodeNoiseSummary(analysis) {
-        // The SHOWN figures (shownDistances), the ones the front page prints too.
-        const d = analysis.pathShown.dist;
-        const ap = analysis.airportsShown[0];
-        // A CITY WITH NO AIRPORT IS A REAL CASE. South Yorkshire has none -
-        // Doncaster Sheffield closed to commercial flights in 2022 - so
-        // airportDists is empty and `ap.dist` threw, taking the whole result
-        // panel down on every South Yorkshire area search. The score Lambda hit
-        // the identical case as min() over an empty sequence and 500'd every
-        // South Yorkshire postcode when postcode scoring was un-gated; this is
-        // that bug's twin on the front end, found the same way, by searching.
-        if (!ap) {
-          return 'There is <strong>no commercial airport</strong> in this area, so aircraft noise is not a significant factor. Road noise and air quality are the measurements to look at here.';
-        }
-        if (analysis.noiseEstimate === 'High') {
-          return `This area is <strong>heavily affected by aircraft noise</strong>. ${ap.name} is only ${ap.dist.toFixed(1)}km away${d < 2 ? ', and you are within ' + d.toFixed(1) + 'km of a flight path' : ''}. ${analysis.altClause ? analysis.altClause + ', low enough to be clearly audible.' : ''} <strong>Visit during peak flying hours before making any offer.</strong>`;
-        }
-        if (analysis.noiseEstimate === 'Moderate') {
-          return `This area has <strong>moderate aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away. ${analysis.altClause ? analysis.altClause + ' - audible outdoors on quiet days but typically manageable indoors.' : ''} <strong>Worth checking on a calm day with windows open.</strong>`;
-        }
-        return `This area has <strong>low aircraft noise</strong>. ${ap.name} is ${ap.dist.toFixed(1)}km away${d > 5 ? ' and flight paths are ' + d.toFixed(1) + 'km away' : ''}. Aircraft noise is unlikely to be a significant factor here.`;
-      }
 
       // Audit F-A11Y-4: bottom-sheet reveal policy. Called whenever a
       // result lands in the sidebar. Auto-open chosen for discoverability -
@@ -13558,12 +14052,170 @@
           if (m && isCurrentSearch(req)) fn(m);
         });
       }
+      // THE ANSWER CARD AND ITS TILES (Bill, 2026-11-08; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). The module words
+      // and draws each tile; this places it, then tidyCard() brings the card up to date from what is placed: the pills of
+      // what stands out, each section's "-wide" note, the lone last tile, and the air readings inside the air tile.
       function placeFinding(m, slot, findings) {
         const el = document.querySelector(`#sidebar-content [data-find="${slot}"]`);
         if (!el) return null;
         el.classList.remove('is-waiting');
-        el.innerHTML = [].concat(findings).map((f) => m.findingHtml(f)).join('');
+        el.innerHTML = [].concat(findings).map((f) => m.tileHtml(f, { scoreColour: scoreColor })).join('');
+        tidyCard(m);
         return el;
+      }
+      function openTile(tile) {
+        if (!tile) return;
+        tile.open = true;
+        tile.querySelector('summary')?.focus({ preventScroll: true });
+        tile.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      }
+      // What people open, by name only, never a postcode (Bill, 2026-11-08): each tile, the score, a pill, a profile;
+      // once per name per page view, as the front page counts its controls.
+      const _cardCounted = new Set();
+      function countCard(name) {
+        if (_cardCounted.has(name)) return;
+        _cardCounted.add(name);
+        trackEvent(name);
+      }
+      let _cardWired = false;
+      function wireCard() {
+        const root = document.getElementById('sidebar-content');
+        if (_cardWired || !root) return;
+        _cardWired = true;
+        // 'toggle' does not bubble; a capturing listener on the panel still hears every <details> in it.
+        root.addEventListener(
+          'toggle',
+          (e) => {
+            const d = e.target;
+            if (!(d instanceof HTMLDetailsElement) || !d.open) return;
+            if (d.matches('details.tile')) countCard(`panel-open-${d.dataset.finding}`);
+            else if (d.id === 'ac-score') countCard('panel-open-score');
+          },
+          true,
+        );
+        root.addEventListener('click', (e) => {
+          const chip = e.target.closest('[data-persona-chip]');
+          if (!chip) return;
+          const key = chip.dataset.personaChip;
+          countCard(`panel-profile-${key}`);
+          setPersona(key);
+          // The panel was drawn again for the new buyer: keep the score open where the choice was made.
+          const score = document.getElementById('ac-score');
+          if (score) score.open = true;
+          document.querySelector(`[data-persona-chip="${key}"]`)?.focus();
+        });
+      }
+      function tidyCard(m) {
+        const root = document.getElementById('sidebar-content');
+        if (!root) return;
+        wireCard();
+        const tiles = [...root.querySelectorAll('details.tile')];
+        const pills = m.pillsFor(tiles.map((t) => ({ key: t.dataset.finding, stand: t.dataset.stand || null, pill: t.dataset.pill || null, el: t })));
+        // A tile's edge only where a pill names it, so the card and the tiles never disagree.
+        for (const t of tiles) t.classList.toggle('stands', pills.some((p) => p.el === t));
+        const box = document.getElementById('ac-pills');
+        if (box) {
+          box.replaceChildren(
+            ...pills.map((p) => {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.className = `ac-pill ${p.stand}`;
+              b.textContent = p.pill;
+              b.addEventListener('click', () => {
+                countCard(`panel-pill-${p.key}`);
+                openTile(p.el);
+              });
+              return b;
+            }),
+          );
+          box.hidden = pills.length === 0;
+        }
+        for (const sec of root.querySelectorAll('.find-group')) {
+          const own = [...sec.querySelectorAll('details.tile')];
+          // Said once for the section where every finding in it is the council's, else on the tiles that are.
+          const all = own.length > 0 && own.every((t) => t.hasAttribute('data-shared'));
+          sec.classList.toggle('all-shared', all);
+          const note = sec.querySelector('.sec-wide');
+          if (note) {
+            note.textContent = all ? own[0].querySelector('.t-wide')?.textContent || '' : '';
+            note.hidden = !note.textContent;
+          }
+          own.forEach((t, i) => t.classList.toggle('lone', own.length % 2 === 1 && i === own.length - 1));
+        }
+        const air = document.getElementById('postcode-air-section');
+        const airBody = root.querySelector('details.tile[data-finding="air"] .t-body');
+        if (air && airBody && air.parentElement !== airBody) airBody.appendChild(air);
+      }
+
+      // THE SCORE, IN THE CARD (Bill, 2026-11-08): whose score it is, how it compares, the points each part earns out of
+      // the points it can give, and the profile switch in place. `.summary-verdict` and `.score-breakdown .score-row` keep
+      // their names: tests/site-api-parity.mjs reads the total from the one, four render gates count the other.
+      const PERSONA_FOR = { balanced: 'a balanced buyer', family: 'a family', investor: 'an investor', firsttime: 'a first-time buyer', quietlife: 'a quiet life', renter: 'a renter', commuter: 'a commuter', laterlife: 'later life' };
+      function answerScoreHtml({ pcScore, parts, weights, boroughName, place }) {
+        const persona = PERSONAS[currentPersona];
+        const label = scoreLabel(pcScore);
+        // Weights rescaled over what is counted, as combineWeighted() does: the parts' points add up to the score.
+        const counted = parts.filter(([k, , v]) => weights[k] > 0 && v !== null && v !== undefined);
+        const scale = counted.reduce((t, [k]) => t + weights[k], 0) || 1;
+        const pts = counted.map(([k, name, v]) => ({ k, name, v, possible: (weights[k] / scale) * 10, earned: (weights[k] / scale) * v }));
+        const most = Math.max(...pts.map((x) => x.possible), 0.0001);
+        const top = [...pts].sort((x, y) => y.earned - x.earned)[0];
+        const weak = [...pts].sort((x, y) => x.v - y.v)[0];
+        const rest = !weak || !top || weak.k === top.k ? '' : weak.v >= 7 ? '; every part scores 7 or more' : `; ${weak.name.toLowerCase()} ${weak.v < 3 ? 'earns almost nothing' : 'holds it back'}`;
+        const sentence = top ? `${top.name} earns the most of the ${show1(pcScore)}${rest}.` : '';
+        const rows = parts
+          .map(([k, name, v]) => {
+            if (!(weights[k] > 0)) return `<div class="score-row ac-skip"><span class="score-row-label">${name}</span><span class="score-row-value">not counted for this buyer</span></div>`;
+            if (v === null || v === undefined) return `<div class="score-row ac-skip"><span class="score-row-label">${name}</span><span class="score-row-value">no data here</span></div>`;
+            const x = pts.find((q) => q.k === k);
+            return `<div class="score-row"><div class="ac-cap"><span class="score-row-label">${name}</span><span class="score-row-value">${x.earned.toFixed(1)} <small>of ${x.possible.toFixed(1)}</small></span></div>`
+              + `<div class="ac-pts-track" style="width:${(x.possible / most) * 100}%" aria-hidden="true"><i style="width:${x.possible ? (x.earned / x.possible) * 100 : 0}%;background:${scoreColor(v)}"></i></div></div>`;
+          })
+          .join('');
+        const chips = Object.entries(PERSONAS)
+          .map(([k, p]) => `<button type="button" class="ac-prof${k === currentPersona ? ' on' : ''}" data-persona-chip="${k}" aria-pressed="${k === currentPersona}">${escapeHtml(p.label)}</button>`)
+          .join('');
+        return `<details class="ac-score" id="ac-score">
+        <summary>
+          <span class="ac-for">Score for ${PERSONA_FOR[currentPersona] || `a ${persona.label.toLowerCase()} buyer`}</span>
+          <span class="ac-line"><span class="summary-verdict" aria-label="${label.word} score: ${pcScore} out of 10 for ${persona.label} buyer profile"><span aria-hidden="true">${label.glyph}</span> ${pcScore}<small>/10</small> · ${label.word}</span><span class="ac-chev" aria-hidden="true"></span></span>
+          <span class="ac-track" aria-hidden="true"><i style="width:${pcScore * 10}%;background:${scoreColor(pcScore)}"></i></span>
+        </summary>
+        <div class="ac-body">
+          <p class="ac-sent">${escapeHtml(sentence)}</p>
+          ${scoreCompareHtml(pcScore, place)}
+          <div class="ac-key">Points this place earns, out of the points each part can give</div>
+          <div class="score-breakdown">${rows}</div>
+          <div class="ac-profs" role="group" aria-label="Score it for">${chips}</div>
+          <p class="ac-whose">Quiet skies is this ${isUkCity(currentCity) ? 'postcode' : 'ZIP code'}’s own; the other parts are ${escapeHtml(boroughName)}’s.</p>
+        </div>
+      </details>`;
+      }
+      // "IS 5.1 GOOD?" (Bill, 2026-11-08): every council area of this city on the same 0-10 scale, scored for the same buyer
+      // by the map's own calcScores() (each rounded once, as the Rankings tab and the API publish them; never re-derived from
+      // rounded parts, which moved Tower Hamlets by 0.1), with this postcode marked. A tie names every place on it.
+      function scoreCompareHtml(pcScore, place) {
+        const all = Object.entries(getActiveBoroughData() || {})
+          .map(([n, d]) => [n, d && d.score])
+          .filter(([, v]) => typeof v === 'number' && Number.isFinite(v));
+        if (all.length < 3) return '';
+        // The panel's own area rule (fillFindings: council for the UK, borough otherwise), never a city by name.
+        const unit = isUkCity(currentCity) ? 'council areas' : 'boroughs';
+        const lower = all.filter(([, v]) => v < pcScore).length;
+        const higher = all.filter(([, v]) => v > pcScore).length;
+        const minV = Math.min(...all.map(([, v]) => v));
+        const maxV = Math.max(...all.map(([, v]) => v));
+        const named = (v) => all.filter(([, x]) => x === v).map(([n]) => n).join(', ');
+        const x = (v) => 10 + (Math.max(0, Math.min(10, v)) / 10) * 280;
+        const anchor = x(pcScore) < 60 ? 'start' : x(pcScore) > 240 ? 'end' : 'middle';
+        const dots = all.map(([n, v]) => `<circle class="ac-dot" cx="${x(v)}" cy="22" r="3.2"><title>${escapeHtml(n)} ${show1(v)}</title></circle>`).join('');
+        const svg = `<svg viewBox="0 0 300 58" role="img" aria-label="${escapeHtmlAttr(`${cityOf(currentCity).label}'s ${unit} score from ${show1(minV)} to ${show1(maxV)}; ${place} ${show1(pcScore)}`)}">`
+          + `<line class="ac-axis" x1="10" y1="22" x2="290" y2="22" stroke-width="2"/>${dots}`
+          + `<line class="ac-mark" x1="${x(pcScore)}" y1="6" x2="${x(pcScore)}" y2="38" stroke-width="2.5"/>`
+          + `<text class="ac-mark-t" x="${x(pcScore)}" y="52" text-anchor="${anchor}">${escapeHtml(place)} ${show1(pcScore)}</text>`
+          + `<text class="ac-end" x="10" y="52">0</text><text class="ac-end" x="290" y="52" text-anchor="end">10</text></svg>`;
+        return `<div class="ac-cmp"><div class="ac-key">How it compares: ${escapeHtml(cityOf(currentCity).label)}’s ${all.length} ${unit}</div>${svg}`
+          + `<p class="ac-cmp-say">${lower} ${unit} score lower and ${higher} higher. They run from ${show1(minV)} (${escapeHtml(named(minV))}) to ${show1(maxV)} (${escapeHtml(named(maxV))}).</p></div>`;
       }
       // The first row a panel list shows, read from that list, so a finding cannot disagree with it.
       function nearestListed(containerId) {
@@ -13572,8 +14224,13 @@
         const dist = row && row.querySelector('.station-dist');
         return name ? { name: name.textContent.trim(), dist: dist ? dist.textContent.trim() : '' } : null;
       }
-      function showNearest(req, slot, label, rating, containerId) {
-        withFindings(req, (m) => placeFinding(m, slot, m.nearestFinding(slot, label, rating, nearestListed(containerId))));
+      function showNearest(req, slot, label, rating, containerId, extra) {
+        const ctx = {
+          council: extra && extra.name,
+          area: isUkCity(currentCity) ? 'council' : 'borough',
+          source: slot === 'transport' ? (isUkCity(currentCity) ? 'Stations: NaPTAN' : null) : isUkCity(currentCity) ? 'GP practices: NHS' : null,
+        };
+        withFindings(req, (m) => placeFinding(m, slot, m.nearestFinding(slot, label, rating, nearestListed(containerId), ctx)));
       }
       let _planesInfoLoad = null;
       async function loadPanelPlanes(postcode) {
@@ -13595,50 +14252,124 @@
         }
       }
       function fillFindings(analysis, boroughData, extra, aircraft, environment, req) {
-        const fullUkPostcode = isUkCity(currentCity) && !analysis.isOutcode;
-        const area = isUkCity(currentCity) ? 'council' : 'borough';
-        const spot = isUkCity(currentCity) ? 'postcode' : 'ZIP code';
+        const uk = isUkCity(currentCity);
+        const fullUkPostcode = uk && !analysis.isOutcode;
+        const area = uk ? 'council' : 'borough';
+        const spot = uk ? 'postcode' : 'ZIP code';
+        const council = extra && extra.name;
+        // The nearest path as KEY FACTS names it, its airport by name, and whether the map's own planeAltitude() says a
+        // landing route is not overhead: the tile repeats that word and never guesses a height (2026-11-08: SW11 1AA lies
+        // past the modelled final, where a height would be an extrapolation).
+        const shown = analysis.pathShown && analysis.pathShown.path;
+        const pathName = !shown ? '' : shown.name.startsWith(shown.airport + ' ') ? shown.name : shown.airport + ' ' + shown.name;
+        const airportName = shown ? (FLIGHT_GEO && FLIGHT_GEO.mod && FLIGHT_GEO.mod.AIRPORT_NAME[shown.airport]) || shown.airport : null;
+        const schoolText = extra ? schoolBadge(extra).text : null;
+        const hasP8 = Boolean(extra) && extra.p8 !== undefined && extra.p8 !== null;
+        const progress = !hasP8
+          ? null
+          : /above/.test(schoolText)
+            ? 'more progress between 11 and 16 than'
+            : /below/.test(schoolText)
+              ? 'less progress between 11 and 16 than'
+              : 'about as much progress between 11 and 16 as';
+        // The planes model and the planes layer's steps feed both the planes tile and the headline: each fetched once.
+        const planes = fullUkPostcode ? loadPanelPlanes(analysis.postcode) : Promise.resolve(null);
+        const steps = fullUkPostcode
+          ? loadPlanesLayerIndex().then((idx) => (idx && Array.isArray(idx.steps) ? idx.steps : []))
+          : Promise.resolve([]);
         withFindings(req, (m) => {
-          placeFinding(m, 'aircraft', m.aircraftFinding(aircraft));
-          placeFinding(m, 'path', m.pathFinding(analysis.pathShown.dist));
-          placeFinding(m, 'air', m.ratingFinding('air', 'Air quality', extra && extra.airQuality));
-          placeFinding(m, 'flood', m.ratingFinding('flood', 'Flood risk', extra && extra.flood));
+          placeFinding(m, 'aircraft', m.aircraftFinding({ ...aircraft, source: uk && aircraft.modelled ? 'DEFRA noise map (modelled)' : null }));
+          placeFinding(
+            m,
+            'path',
+            m.pathFinding(analysis.pathShown.dist, {
+              airport: airportName,
+              name: pathName,
+              under: /final approach/i.test(pathName) && analysis.altEstimate === 'Not under a final approach' ? false : undefined,
+              record: uk ? 'UK AIP (NATS)' : 'FAA',
+            }),
+          );
+          placeFinding(m, 'air', m.ratingFinding('air', 'Air quality', extra && extra.airQuality, { council, area, source: uk ? 'DEFRA air quality model' : null }));
+          placeFinding(
+            m,
+            'flood',
+            m.ratingFinding('flood', 'Flood risk', extra && extra.flood, {
+              council,
+              area,
+              tip: uk ? 'Check the exact address on GOV.UK’s long term flood risk service.' : null,
+              source: uk ? 'Environment Agency' : null,
+            }),
+          );
           placeFinding(m, 'crime', m.crimeFinding({
             band: extra && extra.crime,
             rate: extra && extra.crimeRate,
             median: londonCrimeMedian(),
-            comparable: isUkCity(currentCity),
+            comparable: uk,
             area,
             // A UK rate with no ONS vintage is our own figure (the City of London: crimeNote's attribution rule).
-            estimated: isUkCity(currentCity) && Boolean(extra) && !extra.crimeVintage,
+            estimated: uk && Boolean(extra) && !extra.crimeVintage,
+            council,
+            note: extra ? crimeNote(extra, { figures: false }) : null,
           }));
-          placeFinding(m, 'schools', extra ? m.ratingFinding('schools', 'Schools', schoolBadge(extra).text) : null);
+          placeFinding(
+            m,
+            'schools',
+            extra
+              ? m.ratingFinding('schools', 'Schools', schoolText, {
+                council,
+                area,
+                say: progress ? [`Pupils in ${council} make ${progress} similar pupils across England.`] : undefined,
+                notes: extra.schoolNote ? [extra.schoolNote] : [],
+                source: hasP8 ? 'Department for Education (Progress 8)' : null,
+              })
+              : null,
+          );
           placeFinding(m, 'price', boroughData
-            ? m.priceFinding({ price: formatPrice(boroughData.avg_price, currentCity), trend: boroughData.trend_pct, area })
+            ? m.priceFinding({
+              price: formatPrice(boroughData.avg_price, currentCity),
+              trend: boroughData.trend_pct,
+              area,
+              council: boroughData.name,
+              afford: boroughData.scoresRaw?.afford ?? boroughData.scores?.afford,
+              source: uk ? 'UK House Price Index' : null,
+            })
             : null);
         });
-        showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data');
-        showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data');
+        showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data', extra);
+        showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data', extra);
         environment.then((d) =>
           withFindings(req, (m) =>
             placeFinding(m, 'road', m.roadFinding({
               ...roadReadingFrom(d, analysis.postcode),
-              council: extra && extra.name,
+              council,
               band: extra && extra.roadNoise,
               abovePct: extra && extra.roadNoiseAboveWhoPct,
               area,
               spot,
+              source: uk ? 'DEFRA noise map (modelled)' : null,
             })),
           ),
         );
         if (fullUkPostcode) {
-          loadPanelPlanes(analysis.postcode).then((model) =>
+          Promise.all([planes, steps]).then(([model, layer]) =>
             withFindings(req, (m) => {
-              const el = placeFinding(m, 'planes', m.planesFindings(model));
-              if (el) el.insertAdjacentHTML('beforeend', m.planesNotesHtml(model));
+              const el = placeFinding(m, 'planes', m.planesFindings(model, { steps: layer }));
+              const body = el && el.querySelector('details.tile:last-of-type .t-body');
+              if (body && model) body.insertAdjacentHTML('beforeend', m.planesNotesHtml(model));
             }),
           );
         }
+        // THE HEADLINE (Bill, 2026-11-08): the front page's own sentence for this place (js/answer-lead.mjs), so the site
+        // never words one place two ways. Its environment figures only where the answer is for THIS postcode (as
+        // roadReadingFrom() holds them); with nothing true to lead with, the card keeps the postcode.
+        Promise.all([environment, planes, steps, import('/js/answer-lead.mjs').catch(() => null)]).then(([d, model, layer, lead]) => {
+          if (!lead || !isCurrentSearch(req)) return;
+          const key = (pc) => String(pc || '').replace(/\s+/g, '').toUpperCase();
+          const here = d && d.location && key(d.location.postcode) === key(analysis.postcode) ? d.environment : null;
+          const text = lead.answerLead(here, analysis.label || analysis.postcode, model, layer);
+          const head = document.getElementById('ac-head');
+          if (head && text) head.textContent = text;
+        });
       }
 
       function updateSidebarPostcode(analysis, boroughData, search) {
@@ -13663,9 +14394,6 @@
         const shownNoise = typeof rasterQuiet === 'number' ? 10 - rasterQuiet : Math.max(0, Math.min(10, analysis.noiseScore));
         const shownEstimate = noiseBand(shownNoise);
         const aircraft = { score: shownNoise, word: shownEstimate, modelled: typeof rasterQuiet === 'number' };
-        const noiseClass = shownEstimate === 'High' ? 'noise-high' : shownEstimate === 'Moderate' ? 'noise-moderate' : 'noise-low';
-        const noiseCol = shownEstimate === 'High' ? '#F27D26' : shownEstimate === 'Moderate' ? '#F2B826' : '#26F27D';
-        const noisePct = shownNoise * 10;
         const top3 = analysis.airportsShown.slice(0, 3);
         // Every flight-path name already starts with its airport's code ("LHR 27R final
         // approach"), so prefixing the code again printed "LHR LHR ..." on every city.
@@ -13678,7 +14406,6 @@
             : shownPath.airport + ' ' + shownPath.name;
 
         let scoreHtml = '';
-        let boroughStatsHtml = '';
         const extra = getExtraData(analysis.borough);
         // Hoisted out of the if-block below on 2026-08-03. The favourites button
         // near the end of this function reads it, and that button is OUTSIDE the
@@ -13687,7 +14414,6 @@
         // the same FUNCTION is not the same as being in the same BLOCK.
         let pcScore = 0;
         if (boroughData) {
-          const priceFull = formatPrice(boroughData.avg_price, currentCity);
           // Read the UNROUNDED components, not `scores`. Fixed 2026-08-04.
           //
           // This read `boroughData.scores`, which calcScores rounds to one
@@ -13743,154 +14469,76 @@
             Math.round(
               combineWeighted({ quiet: pcQuiet, afford: a, growth: gr, live: lv, env: ev }, pw) * 10,
             ) / 10;
-          // Generate postcode-specific verdict
-          const pcVerdict = (() => {
-            if (pcScore >= 7.5) {
-              if (pcQuiet < 5)
-                return `<strong>Great value despite noise.</strong> This location scores highly on affordability${a >= 7 ? ' and growth' : ''}, but aircraft noise is significant. Visit before committing.`;
-              return `<strong>Excellent pick.</strong> This location combines quiet skies with affordable prices${a >= 7 ? ' and strong growth' : ''}.`;
-            }
-            if (pcScore >= 6) {
-              if (pcQuiet >= 7 && a < 5)
-                return `<strong>Quiet but pricey.</strong> This location has peaceful skies, but property prices are above average.`;
-              if (pcQuiet < 5 && a >= 5)
-                return `<strong>Affordable but noisy.</strong> Good prices, but aircraft noise is a real factor here. Visit before committing.`;
-              if (pcQuiet < 5)
-                return `<strong>Noisy area.</strong> Aircraft noise is significant at this location. Check the noise overlay and visit at peak times before buying.`;
-              return `<strong>Solid option.</strong> This location offers a reasonable balance of quiet skies, affordability, and growth.`;
-            }
-            if (pcScore >= 4) {
-              if (pcQuiet < 3)
-                return `<strong>Noise is a concern here.</strong> Aircraft regularly fly over this location. Check the noise overlay and visit at peak times before buying.`;
-              if (pcQuiet < 5)
-                return `<strong>Mixed picture.</strong> This location scores well on some factors but aircraft noise is a drawback.`;
-              return `<strong>Mixed picture.</strong> This location scores well on some factors but is held back by ${a < 5 ? 'high prices' : 'some trade-offs'}.`;
-            }
-            return `<strong>Think carefully.</strong> This location scores low due to ${pcQuiet < 3 ? 'significant aircraft noise' : 'very high prices'}${pcQuiet < 3 && a < 3 ? ' combined with high prices' : ''}. Only buy here if you have specific reasons.`;
-          })();
-          scoreHtml = `
-      <div class="sidebar-section">
-        <h3>${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} SCORE - THIS LOCATION</h3>
-        <div class="summary-card">
-          <div class="summary-verdict" style="color:${scoreTextColor(pcScore)}" aria-label="${scoreLabel(pcScore).word} score: ${pcScore} out of 10 for ${PERSONAS[currentPersona].label} buyer profile"><span aria-hidden="true">${scoreLabel(pcScore).glyph}</span> ${pcScore}/10 - ${scoreLabel(pcScore).word} · ${PERSONAS[currentPersona].label}</div>
-          ${pcVerdict}
-        </div>
-        ${boroughDataNotice()}
-        <div class="score-breakdown" style="margin-top:14px;">
-          <div class="score-row"><span class="score-row-label">Quiet Skies</span>
-            <div class="score-bar-track"><div class="score-bar-fill" style="width:${pcQuiet * 10}%;background:${scoreColor(pcQuiet)};"></div></div>
-            <span class="score-row-value">${show1(pcQuiet)}/10</span></div>
-          <div class="score-row"><span class="score-row-label">Affordability</span>
-            <div class="score-bar-track"><div class="score-bar-fill" style="width:${a * 10}%;background:${scoreColor(a)};"></div></div>
-            <span class="score-row-value">${show1(a)}/10</span></div>
-          <div class="score-row"><span class="score-row-label">Growth</span>
-            <div class="score-bar-track"><div class="score-bar-fill" style="width:${gr * 10}%;background:${scoreColor(gr)};"></div></div>
-            <span class="score-row-value">${show1(gr)}/10</span></div>
-          <div class="score-row"><span class="score-row-label">Liveability</span>
-            ${
-              lv === null
-                ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
-                : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
-            <span class="score-row-value">${show1(lv)}/10</span>`
-            }</div>
-          <div class="score-row"><span class="score-row-label">Environment</span>
-            ${
-              ev === null
-                ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
-                : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${ev * 10}%;background:${scoreColor(ev)};"></div></div>
-            <span class="score-row-value">${show1(ev)}/10</span>`
-            }</div>
-        </div>
-        <p class="info-note" style="margin-top:8px;">Quiet Skies uses your location's noise data. Other scores are ${boroughData.name} borough averages. Change buyer profile in Rankings tab.</p>
-      </div>`;
-          boroughStatsHtml = `
-      <div class="sidebar-section">
-        <h3>BOROUGH: ${boroughData.name.toUpperCase()}</h3>
-        <div class="stat-grid">
-          <div class="stat"><div class="stat-value">${priceFull}</div><div class="stat-label">AVG PRICE</div></div>
-          <div class="stat"><div class="stat-value">${boroughData.trend_pct}</div><div class="stat-label">ANNUAL GROWTH</div></div>
-        </div>
-        ${
-          /* GUARDED (2026-09-13, audit C1). `property` exists on 38 of 91
-             records - London and NYC - so this line printed the literal
-             word `undefined` on every postcode result in nine cities. It is
-             the 11 Sep F1 defect in the SIBLING of the function that fix
-             reached: updateSidebar() guards the same four fields 300 lines
-             above and this function, which renders the primary "type a
-             postcode" flow, was never revisited. Mirrors :11745 exactly. */
-          boroughData.property ? `<p class="property-note" style="margin-top:12px;">${escapeHtml(boroughData.property)}</p>` : ''
-        }
-      </div>`;
+          // THE SCORE IN THE ANSWER CARD (Bill, 2026-11-08): whose score it is, how it compares, and where it comes from.
+          scoreHtml = answerScoreHtml({
+            pcScore,
+            parts: [['quiet', 'Quiet skies', pcQuiet], ['live', 'Everyday living', lv], ['env', 'Environment', ev], ['afford', 'Affordability', a], ['growth', 'Price growth', gr]],
+            weights: pw,
+            boroughName: boroughData.name,
+            place: analysis.label || analysis.postcode,
+          });
         }
 
+        // THE ANSWER CARD FIRST (Bill, 2026-11-08; the score first since 2026-08-24, when it sat 157 px under the fold on a
+        // phone). The card holds the place, the headline (filled from js/answer-lead.mjs once its answers land), the pills of
+        // what stands out (tidyCard(), from the tiles as they land) and the score. Then each finding as a tile, closed until
+        // tapped. LOCATION's name and Save moved into the card.
         document.getElementById('sidebar-content').innerHTML = `
-    ${
-      /* THE SCORE COMES FIRST (2026-08-24). The product's one promise is "is
-         THIS address noisy, liveable, affordable", and this panel used to
-         answer it at y=1001 of an 844px viewport - the verdict sat 157px below
-         the fold, under LOCATION (141px), the noise narrative (180px) and KEY
-         FACTS (281px). Measured, not guessed: a phone user searching their own
-         postcode had to scroll past 602px of preamble to reach the number they
-         asked for. The preamble all still exists - it follows the answer
-         instead of ransoming it. */
-      scoreHtml
-    }
-    <div class="sidebar-section">
-      <h3>LOCATION</h3>
-      <div class="postcode-result">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="margin-bottom:4px;font-weight:600;font-size:14px;">${escapeHtml(analysis.label || analysis.postcode)}</div>
-            <div style="font-size:12px;color:var(--mid);">${escapeHtml(analysis.ward)}, ${escapeHtml(analysis.borough)}</div>
-          </div>
-          <button class="fav-btn ${isFavourite(analysis.postcode) ? 'saved' : ''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(shownEstimate)}" data-fav-score="${boroughData ? pcScore : 0}">
-            <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(analysis.postcode) ? 'SAVED' : 'SAVE'}
-          </button>
-        </div>
+    <section class="answer-card" aria-labelledby="ac-head">
+      <div class="ac-top">
+        <span class="ac-where">${escapeHtml(analysis.label || analysis.postcode)} · ${escapeHtml(analysis.ward)}, ${escapeHtml(analysis.borough)}</span>
+        <button class="fav-btn ${isFavourite(analysis.postcode) ? 'saved' : ''}" data-fav-postcode="${escapeHtmlAttr(analysis.postcode)}" data-fav-borough="${escapeHtmlAttr(analysis.borough)}" data-fav-impact="${escapeHtmlAttr(shownEstimate)}" data-fav-score="${boroughData ? pcScore : 0}">
+          <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(analysis.postcode) ? 'SAVED' : 'SAVE'}
+        </button>
       </div>
-      ${analysis.isOutcode ? '<p class="info-note" style="margin-top:8px;"><strong>Area-level results.</strong> For street-level crime, EPC and sold price data, try a full postcode e.g. ' + escapeHtml(analysis.postcode) + ' 1AA.</p>' : ''}
-    </div>
-    <div class="sidebar-section find-group">
-      <h3>NOISE AND PLANES</h3>
-      <div data-find="road" class="is-waiting"></div>
-      <div data-find="aircraft"></div>
-      <div data-find="planes"></div>
-      <div data-find="path"></div>
-    </div>
-    <div class="sidebar-section find-group">
-      <h3>AIR AND FLOOD</h3>
-      ${extra && (extra.airQuality || extra.flood) ? `<p class="find-note">Ratings are for all of ${escapeHtml(extra.name)}.</p>` : ''}
-      <div data-find="air"></div>
+      <h3 class="ac-head" id="ac-head">${escapeHtml(analysis.label || analysis.postcode)}</h3>
+      <div class="ac-pills" id="ac-pills" role="group" aria-label="What stands out here" hidden></div>
+      ${scoreHtml}
+    </section>
+    ${boroughData ? boroughDataNotice() : ''}
+    ${analysis.isOutcode ? '<p class="info-note" style="margin:8px 24px 0;"><strong>Area-level results.</strong> For street-level crime, EPC and sold price data, try a full postcode e.g. ' + escapeHtml(analysis.postcode) + ' 1AA.</p>' : ''}
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>NOISE AND PLANES</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="road" class="tile-slot is-waiting"></div>
+        <div data-find="aircraft" class="tile-slot"></div>
+        <div data-find="planes" class="tile-slot"></div>
+        <div data-find="path" class="tile-slot"></div>
+      </div>
+    </section>
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>AIR AND FLOOD</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="air" class="tile-slot"></div>
+        <div data-find="flood" class="tile-slot"></div>
+      </div>
       ${
         // Filled by renderAirNearby(); left hidden when nothing is in reach, so the panel never says "no monitor nearby".
+        // tidyCard() moves it into the air tile's explanation once that tile is placed.
         isUkCity(currentCity) && !analysis.isOutcode
           ? `<div id="postcode-air-section" hidden><div id="postcode-air-data"></div></div>`
           : ''
       }
-      <div data-find="flood"></div>
-    </div>
-    <div class="sidebar-section find-group">
-      <h3>LIVING HERE</h3>
-      ${extra ? `<p class="find-note">Ratings are for all of ${escapeHtml(extra.name)}.</p>` : ''}
-      <div data-find="crime"></div>
-      <div data-find="transport"></div>
-      <div data-find="healthcare"></div>
-      <div data-find="schools"></div>
-    </div>
-    <div class="sidebar-section find-group">
-      <h3>PROPERTY</h3>
-      <div data-find="price"></div>
-      <div data-find="sold"></div>
-      <div data-find="epc"></div>
-    </div>
+    </section>
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>LIVING HERE</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="crime" class="tile-slot"></div>
+        <div data-find="transport" class="tile-slot"></div>
+        <div data-find="healthcare" class="tile-slot"></div>
+        <div data-find="schools" class="tile-slot"></div>
+      </div>
+    </section>
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>PROPERTY</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="price" class="tile-slot"></div>
+        <div data-find="sold" class="tile-slot"></div>
+        <div data-find="epc" class="tile-slot"></div>
+      </div>
+    </section>
     <details class="panel-all" id="panel-all">
     <summary>All the detail</summary>
-    <div class="sidebar-section">
-      <h3>WHAT YOU NEED TO KNOW ABOUT NOISE HERE</h3>
-      <span class="noise-indicator ${noiseClass}" style="margin-bottom:8px;">${escapeHtml(shownEstimate)} AIRCRAFT NOISE</span>
-      <div class="noise-bar" style="margin-bottom:12px;"><div class="noise-bar-fill" style="width:${noisePct}%;background:${noiseCol};"></div></div>
-      <p class="property-note" style="margin-top:0;">${postcodeNoiseSummary({ ...analysis, noiseEstimate: shownEstimate })}</p>
-    </div>
     <div class="sidebar-section">
       <h3>KEY FACTS</h3>
       <div class="noise-detail-row"><span class="noise-detail-label">Nearest airport</span>
@@ -13910,36 +14558,6 @@
         )
         .join('')}
     </div>
-    ${boroughStatsHtml}
-    ${
-      extra
-        ? `
-    <div class="sidebar-section">
-      <h3>CRIME</h3>
-      ${
-        /* `crime` is a London/NYC-only curated band. On the 53 records
-           without it, ratingBadgeClass(undefined) returns `rating-high` -
-           the WORST-crime ink - around an EMPTY pill, directly above a
-           correct rate. Same guard as :11755 (2026-09-13, audit C1). */
-        extra.crime ? `<span class="rating-badge ${ratingBadgeClass(extra.crime)}">${escapeHtml(extra.crime)}</span>` : ''
-      }
-      <div style="margin-top:8px;">
-        <div class="crime-stat"><div class="crime-stat-value">${escapeHtml(String(extra.crimeRate))}</div><div class="crime-stat-label">Per 1,000 residents/yr (${escapeHtml(extra.name)} borough)</div></div>
-      </div>
-      <p class="info-note" style="margin-top:8px;">${escapeHtml(crimeNote(extra))}</p>
-    </div>`
-        : ''
-    }
-    ${
-      extra
-        ? `
-    <div class="sidebar-section">
-      <h3>SCHOOLS</h3>
-      <span class="rating-badge ${schoolBadge(extra).cls}">${escapeHtml(schoolBadge(extra).text)}</span>
-      ${extra.schoolNote ? `<p class="info-note" style="margin-top:6px;">${escapeHtml(extra.schoolNote)}</p>` : ''}
-    </div>`
-        : ''
-    }
     ${
       currentCity === 'london'
         ? `<div class="sidebar-section">
@@ -13996,7 +14614,6 @@
       <div id="postcode-transport-data"><span class="info-note">NYC subway data coming soon. Check <a href="https://new.mta.info" target="_blank" style="color:var(--orange);">MTA.info</a> for schedules.</span></div>
     </div>`
     }
-    ${buildOptionalSections(extra, 'pc')}
     ${buildPropertyLinks(analysis.postcode, analysis.borough)}
     ${
       analysis.postcode && !analysis.isOutcode
@@ -14082,12 +14699,12 @@
           fetchTransportData(analysis.lat, analysis.lon, signal).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderTransportData('postcode-transport-data', data);
-            showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data');
+            showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data', extra);
           });
           fetchNhsData(analysis.lat, analysis.lon, signal).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderNhsData('postcode-nhs-data', data);
-            showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data');
+            showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data', extra);
           });
         } else if (isUkCity(currentCity)) {
           // No fetch: NaPTAN is already on the page for the map, so this is a
@@ -14101,7 +14718,7 @@
               tEl.innerHTML =
                 '<p class="info-note">No rail, metro or tram station in the NaPTAN register near this postcode.</p>';
           }
-          showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data');
+          showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data', extra);
         }
         // Air nearby, for a full UK postcode (an outcode's centre is not a place to measure from). The council's
         // DEFRA figures ride along for when the postcode's own 1 km figure cannot load.
@@ -15262,37 +15879,46 @@
         document.getElementById('persona-desc').textContent = PERSONAS[currentPersona].desc;
         bar.addEventListener('click', (e) => {
           const btn = e.target.closest('.persona-btn');
-          if (!btn) return;
-          currentPersona = btn.dataset.persona;
-          bar.querySelectorAll('.persona-btn').forEach((b) => {
-            const on = b.dataset.persona === currentPersona;
-            b.classList.toggle('active', on);
-            b.setAttribute('aria-pressed', String(on));
-          });
-          document.getElementById('persona-desc').textContent = PERSONAS[currentPersona].desc;
-          recalcAllScores();
-          renderBoroughRanking();
-          // Refresh the sidebar for WHATEVER it is showing (stay on Rankings
-          // tab). A postcode result is re-rendered as a postcode result, with
-          // the borough record recalculated for the new persona - it was the
-          // borough panel that replaced it before (I19).
-          if (panelSubject.kind === 'postcode') {
-            const a = panelSubject.analysis;
-            const activeTab = document.querySelector('.tab.active')?.dataset.tab;
-            updateSidebarPostcode(a, matchBorough(a.borough) || null);
-            if (activeTab) switchTab(activeTab);
-          } else if (panelSubject.bay && selectedBorough) {
-            // A Bay Area card keeps its ZIP or neighbourhood and takes the new persona's score (a city's record
-            // is read again; a neighbourhood has no score to change). selectedBorough is cleared by switchCity(),
-            // so a card left behind by another city is never redrawn over the new one.
-            const { p, ...opts } = panelSubject.bay;
-            const fresh = opts.tier === 'city' ? getActiveBoroughData()[p.name] : null;
-            renderPlaceFacts(fresh || p, { ...opts, switchToAnalysis: false });
-          } else if (selectedBorough) {
-            const data = getActiveBoroughData()[selectedBorough];
-            if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false });
-          }
+          if (btn) setPersona(btn.dataset.persona);
         });
+      }
+
+      // ONE PROFILE, EVERYWHERE (Bill, 2026-11-08). The Rankings tab's buttons and the answer card's chips both land here, so
+      // the map's colours, the ranking and the panel always score for the same buyer: a card that said "Family" over a map
+      // coloured for "Balanced" would disagree with itself about the same place.
+      function setPersona(key) {
+        if (!PERSONAS[key]) return;
+        currentPersona = key;
+        const bar = document.getElementById('persona-bar');
+        bar?.querySelectorAll('.persona-btn').forEach((b) => {
+          const on = b.dataset.persona === currentPersona;
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-pressed', String(on));
+        });
+        const desc = document.getElementById('persona-desc');
+        if (desc) desc.textContent = PERSONAS[currentPersona].desc;
+        recalcAllScores();
+        renderBoroughRanking();
+        // Refresh the sidebar for WHATEVER it is showing (stay on Rankings
+        // tab). A postcode result is re-rendered as a postcode result, with
+        // the borough record recalculated for the new persona - it was the
+        // borough panel that replaced it before (I19).
+        if (panelSubject.kind === 'postcode') {
+          const a = panelSubject.analysis;
+          const activeTab = document.querySelector('.tab.active')?.dataset.tab;
+          updateSidebarPostcode(a, matchBorough(a.borough) || null);
+          if (activeTab) switchTab(activeTab);
+        } else if (panelSubject.bay && selectedBorough) {
+          // A Bay Area card keeps its ZIP or neighbourhood and takes the new persona's score (a city's record
+          // is read again; a neighbourhood has no score to change). selectedBorough is cleared by switchCity(),
+          // so a card left behind by another city is never redrawn over the new one.
+          const { p, ...opts } = panelSubject.bay;
+          const fresh = opts.tier === 'city' ? getActiveBoroughData()[p.name] : null;
+          renderPlaceFacts(fresh || p, { ...opts, switchToAnalysis: false });
+        } else if (selectedBorough) {
+          const data = getActiveBoroughData()[selectedBorough];
+          if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false });
+        }
       }
 
       let rankingView = 'neighbourhood'; // 'borough' or 'neighbourhood'

@@ -1,6 +1,8 @@
 // The panel's findings, as plain facts in and plain words out (Bill, 2026-11-04). No browser: every branch is reached on
 // purpose here, because a finding only some cities reach would otherwise be proven by chance.
 import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { planesModel } from '../js/planes.mjs';
 import {
   aircraftFinding, crimeFinding, epcFinding, findingHtml, nearestFinding, planesFindings, planesNotes, priceFinding,
   pathFinding, planesNotesHtml, ratingFinding, roadFinding, soldFinding,
@@ -256,5 +258,143 @@ check('no finding ever prints undefined, null or NaN', () => {
 });
 check('a bar is decoration: the words carry it', () => assert.match(findingHtml(aircraftFinding({ score: 3.5, word: 'Low' })), /find-track" aria-hidden="true"/));
 check('a unit is never set in capitals by the markup', () => assert.match(findingHtml(roadFinding({ ...WHO, db: 71.8 })), /71\.8 dB/));
+
+// ---- THE ANSWER CARD'S TILES (Bill, 2026-11-08): plain words, a picture where one is honest, closed until tapped ----
+const T = await import('../js/panel-findings.mjs');
+const INDEX = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+// The map's own rules, READ from index.html (never run): which words each badge class takes, and each school band's class.
+const bodyOf = (name) => {
+  const m = new RegExp(`function ${name}\\([^)]*\\) \\{([\\s\\S]*?)\\n      \\}`).exec(INDEX);
+  assert.ok(m, `${name}() found in index.html`);
+  return m[1];
+};
+check("a rating's tone is the map's own: toneOf() matches ratingBadgeClass() and the school bands, word for word", () => {
+  const asTone = { 'rating-low': 'good', 'rating-medium': 'mid', 'rating-high': 'bad' };
+  const badge = {};
+  for (const [, cond, cls] of bodyOf('ratingBadgeClass').matchAll(/if \(([^)]*)\) return '([a-z-]+)';/g)) {
+    for (const [, w] of cond.matchAll(/r === '([^']+)'/g)) badge[w] = cls;
+  }
+  const fallback = /\n\s*return '([a-z-]+)';\s*$/.exec(bodyOf('ratingBadgeClass'))[1];
+  assert.ok(Object.keys(badge).length >= 5, 'the badge rules were read');
+  for (const [scale, list] of Object.entries(T.SCALES)) {
+    if (scale === 'schools' || scale === 'epc') continue;
+    for (const w of list) assert.equal(T.toneOf(w), asTone[badge[w] || fallback], `${scale}: ${w}`);
+  }
+  const bands = [...bodyOf('schoolBandFromP8').matchAll(/label: '([^']+)', cls: '([a-z-]+)'/g)];
+  assert.equal(bands.length, 5, 'all five school bands were read');
+  for (const [, label, cls] of bands) assert.equal(T.toneOf(label), asTone[cls], `school band: ${label}`);
+  assert.equal(T.toneOf('not recorded'), null, 'an unknown word is no reading, never "bad"');
+  assert.equal(T.toneOf(undefined), null);
+});
+check('road noise, rated for the council with no postcode figure: a strip, 100 squares, and the council named', () => {
+  const t = roadFinding({ council: 'Wandsworth', band: 'moderate', abovePct: 58, source: 'DEFRA noise map (modelled)' }).tile;
+  assert.deepEqual([t.name, t.level, t.sub, t.shared, t.tone, t.stand], ['Road noise', 'Moderate', 'Wandsworth-wide', true, 'mid', null]);
+  assert.deepEqual(t.visual.map((v) => v.kind), ['strip', 'share']);
+  assert.equal(t.visual[1].pct, 58);
+  assert.deepEqual(t.say, ['We have no reading for this street, so this is for Wandsworth as a whole.']);
+  assert.equal(t.source, 'DEFRA noise map (modelled)');
+  const html = T.tileHtml({ key: 'road', tile: t });
+  assert.equal((html.match(/<i class="on"><\/i>/g) || []).length, 58, '58 of the 100 squares filled');
+  assert.equal((html.match(/<i( class="on")?><\/i>/g) || []).length, 100);
+  assert.doesNotMatch(html, /<details[^>]*\bopen\b/, 'closed until tapped');
+});
+check('road noise with its own figure: the figure beside the WHO level, from zero; a high band is a watch item', () => {
+  const t = roadFinding({ ...WHO, db: 71.8, source: 'DEFRA noise map (modelled)' }).tile;
+  assert.deepEqual([t.level, t.stand, t.source], ['High', 'watch', 'DEFRA noise map (modelled), 2021']);
+  const bars = t.visual.find((v) => v && v.kind === 'bars');
+  assert.deepEqual(bars.rows.map((r) => r.text), ['71.8 dB', '53 dB']);
+  assert.match(t.say[0], /^The rating is for Kensington and Chelsea as a whole; the bars are for this postcode\.$/);
+  const plain = roadFinding({ db: 60, who: 53 }).tile;
+  assert.deepEqual([plain.level, plain.tone, plain.stand, plain.source], ['Over the WHO level', null, null, null], 'no band: no stand-out, no source invented');
+});
+check("New York's tiles name the borough and never borrow DEFRA", () => {
+  const f = roadFinding({ council: 'Queens', band: 'moderate', abovePct: 40, area: 'borough', spot: 'ZIP code' });
+  assert.equal(f.tile.source, null, 'no source given: none printed, never a UK one');
+  assert.match(f.tile.say[0], /this ZIP code, so this is for Queens/);
+  assert.doesNotMatch(T.tileHtml(f), /council|postcode|DEFRA/i);
+});
+check('aircraft noise: a yearly average says so, and a high one is not softened', () => {
+  const low = aircraftFinding({ score: 3.6, word: 'Low', modelled: true, source: 'DEFRA noise map (modelled)' }).tile;
+  assert.deepEqual([low.level, low.sub, low.stand], ['Low', '3.6 out of 10', 'good']);
+  assert.match(low.say[1], /some days are much louder/);
+  const high = aircraftFinding({ score: 8, word: 'High', modelled: true }).tile;
+  assert.equal(high.say[1], null);
+  assert.equal(high.source, null, 'modelled with no source given prints none');
+  assert.equal(aircraftFinding({ score: 2, word: 'Low' }).tile.source, 'Sky Score estimate from published flight routes');
+});
+const LAYER = [{ step: 1, from: 10 }, { step: 2, from: 50 }, { step: 3, from: 100 }, { step: 4, from: 200 }];
+const planesFile = (figs) => planesModel(
+  { district: 'SW11', postcodes: { 'SW11 1AA': { LHR: figs } }, none: [], approx: [], other: [] },
+  { classes: ['westerly', 'easterly', 'mixed'], bar_full: 400, definition: 'D.', direction_rule: 'R.', credits: ['Flight tracks: adsb.lol (ODbL 1.0)'],
+    airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } } },
+  'SW11 1AA',
+);
+check("planes: the commonest one-way day on the face, a watch item from the layer's third step, every bar in the layer's colour", () => {
+  const [f] = planesFindings(planesFile([318, 2, 188]), { steps: LAYER.map((s, i) => ({ ...s, colour: ['#dc8a4a', '#c2622a', '#9a4316', '#662809'][i] })) });
+  assert.deepEqual([f.tile.level, f.tile.sub, f.tile.stand, f.tile.pill], ['318 a day', 'flying west', 'watch', 'Heathrow planes']);
+  assert.deepEqual(f.tile.visual[0].rows.map((r) => r.colour), ['#662809', '#9a4316', null], '318 and 188 in the colours of their steps (data/planes-layer/index.json); 2 is under the first');
+  assert.match(f.tile.source, /^Flight tracks: adsb\.lol \(ODbL 1\.0\), January to August 2026$/);
+  assert.equal(planesFindings(planesFile([90, 2, 40]), { steps: LAYER })[0].tile.stand, null, 'under the third step: not a watch item');
+  assert.equal(planesFindings(planesFile([318, 2, 188]))[0].tile.stand, null, 'no layer steps: never a watch item');
+});
+check('pills: watch first, then good; aircraft noise is never "good" beside planes that are a watch item', () => {
+  const pills = T.pillsFor([
+    { key: 'aircraft', stand: 'good', pill: 'Aircraft noise' }, { key: 'planes', stand: 'watch', pill: 'Heathrow planes' },
+    { key: 'price', stand: 'watch', pill: 'High prices' }, { key: 'transport', stand: 'good', pill: 'Transport' }, { key: 'path', stand: null, pill: null },
+  ]).map((e) => e.pill);
+  assert.deepEqual(pills, ['Heathrow planes', 'High prices', 'Transport']);
+  assert.deepEqual(T.pillsFor([{ key: 'aircraft', stand: 'good', pill: 'Aircraft noise' }]).map((e) => e.pill), ['Aircraft noise']);
+});
+check('the nearest flight path: a ruler, the way planes fly from its runway, and "not under it" only when the map says so', () => {
+  const t = pathFinding(1.27, { airport: 'Heathrow', name: 'LHR 27L final approach', under: false, record: 'UK AIP (NATS)' }).tile;
+  assert.deepEqual([t.level, t.sub, t.say[0], t.say[1]], ['1.3 km away', 'not directly under it', 'Planes landing at Heathrow on days it flies west use this route.', 'You are not directly under it.']);
+  const unsure = pathFinding(0.4, { airport: 'Heathrow', name: 'LHR 27L final approach' }).tile;
+  assert.deepEqual([unsure.sub, unsure.say[1]], [null, null], 'no word from the map: nothing said about being under it');
+  assert.match(pathFinding(2, { airport: 'Manchester', name: 'MAN 23R departure' }).tile.say[0], /^Planes taking off from Manchester on days it flies south-west/);
+  assert.equal(pathFinding(2, {}).tile.say[0], 'This is the nearest published flight route.');
+  assert.deepEqual([T.runwayHeading('LCY 09 final approach'), T.runwayHeading('no runway'), T.runwayHeading('XX 40')], ['east', null, null]);
+  assert.match(T.tileHtml(pathFinding(1.27, { name: 'LHR 27L final approach' })), /<svg class="t-ruler"[^>]*aria-label="Landing route, 1\.3 km away"/);
+});
+check('crime in plain words, against a typical London borough only where the figures compare', () => {
+  const t = crimeFinding({ band: 'medium', rate: 76.6, median: 87.6, council: 'Wandsworth' }).tile;
+  assert.deepEqual(t.say, ['Wandsworth has 76.6 recorded crimes a year for every 1,000 people.', 'That is close to a typical London borough.']);
+  assert.match(crimeFinding({ band: 'high', rate: 142.4, median: 87.6, council: 'K' }).tile.say[1], /^That is 1\.6 times a typical London borough\.$/);
+  assert.equal(crimeFinding({ band: 'low', rate: 50, median: 87.6, council: 'K' }).tile.say[1], 'That is lower than a typical London borough.');
+  const ny = crimeFinding({ band: 'medium', rate: 78, comparable: false, area: 'borough', council: 'Queens' }).tile;
+  assert.equal(ny.say.length, 1, 'New York: no London yardstick');
+  assert.doesNotMatch(JSON.stringify(crimeFinding({ band: 'high', rate: 190, median: 87.6, estimated: true })), /recorded/i);
+});
+check('price: a watch item under 3 of 10 affordability, and the change said in words', () => {
+  const t = priceFinding({ price: '£694,210', trend: '-5.3%', council: 'Wandsworth', afford: 0.3, source: 'UK House Price Index' }).tile;
+  assert.deepEqual([t.level, t.sub, t.stand, t.pill], ['£694,210', 'Wandsworth-wide', 'watch', 'High prices']);
+  assert.deepEqual(t.say, ['The average price of a home in Wandsworth, 5.3% less than a year ago.', 'That gives it an affordability score of 0.3 out of 10.']);
+  assert.equal(priceFinding({ price: '£1', afford: 3 }).tile.stand, null);
+  assert.equal(priceFinding({ price: '£1' }).tile.visual[0], null, 'no affordability: no bar, never a zero');
+});
+check('a rating outside its own scale draws no strip: never a wrong picture', () => {
+  const legacy = ratingFinding('schools', 'Schools', 'good', { council: 'Queens', area: 'borough' }).tile;
+  assert.deepEqual(legacy.visual, [null]);
+  assert.doesNotMatch(T.tileHtml({ key: 'schools', tile: legacy }), /t-strip/);
+  const p8 = ratingFinding('schools', 'Schools', 'above average', { council: 'Wandsworth' }).tile;
+  assert.equal(p8.visual[0].current, 'above average');
+  assert.match(T.tileHtml({ key: 'schools', tile: p8 }), /<span class="on t-bg-good">Above<\/span>/);
+});
+check('nearest places: the list\'s own first row, said once', () => {
+  const t = nearestFinding('transport', 'Transport', 'good', { name: 'Clapham Junction', dist: '416m' }, { council: 'Wandsworth' }).tile;
+  assert.deepEqual(t.say, ['Clapham Junction is 416 m away.']);
+  assert.equal(nearestFinding('transport', 'Transport', null, { name: 'A', dist: '1.2 km' }).tile.level, '1.2 km');
+});
+check('the energy rating draws its band among A to G; the last sale names its month', () => {
+  const e = epcFinding({ available: true, count: 3, summary: { averageBand: 'D', averageRating: 67 } }).tile;
+  assert.deepEqual([e.level, e.sub, e.visual[0].current], ['Band D', '67 out of 100', 'D']);
+  const s = soldFinding([{ price: 1810000, type: 'flat-maisonette', category: 'A', date: '2025-01-10' }], (v) => `£${v}`).tile;
+  assert.deepEqual([s.level, s.sub], ['£1810000', 'January 2025']);
+});
+check('every tile escapes what it is given', () => {
+  const html = T.tileHtml(nearestFinding('t', 'Transport', 'good', { name: 'A "B" <c>', dist: '1m' }, { council: '<x>' }));
+  assert.match(html, /A &quot;B&quot; &lt;c&gt;/);
+  assert.match(html, /&lt;x&gt;-wide/);
+  assert.equal(T.tileHtml(null), '');
+});
 
 console.log(`PASS ${passed} of ${passed}`);

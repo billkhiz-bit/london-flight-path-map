@@ -224,6 +224,16 @@ Or just describe what you need, I have full context of this project.
   a surveyed-quiet bound (`roadNoiseBelowDb`) is no reading and takes no rating. Station and doctor read the panel's own first row, so they cannot disagree
   with it. "Last home sold" skips `other` and category B: SW5 9HP's January 2025 sale is not a home. A test of a folded section calls `keepPanelOpen()`
   (`tests/panel-fold.mjs`); what shows before anything is opened is `tests/uk-city-panel.mjs` "Findings first". If the module fails, the fold opens.
+  **Since 2026-11-08 it is an ANSWER CARD, then TILES closed until tapped** (Bill: "keep to road noise is high", "any user to understand it", visuals where
+  honest; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). The card: the headline is `answerLead()` (`js/answer-lead.mjs`, ONE holder, re-exported by
+  home-sections: the front page's sentence for the same place), only with environment figures the API gave for THIS postcode; pills from `pillsFor()`
+  (watch first; aircraft noise is never "good" beside planes that are a watch item); the score, keeping `.summary-verdict` and five `.score-breakdown
+  .score-row`s (parity and render gates read them), as points earned of points possible, a part with weight 0 "not counted for this buyer", the city's
+  council areas from `calcScores()` (never re-derived from rounded parts), the profile chips calling `setPersona()` (one profile everywhere). Each finding
+  carries `tile` (face, tone, explanation as data: pictures, short sentences, tip, source) and `tileHtml()` draws it: a picture only of the honest kinds
+  (rating strip, 100 squares, bars from zero, ruler, score); a word outside its scale draws none; a source only from the caller (New York is not DEFRA);
+  a figure never said twice (`crimeNote(extra, { figures: false })`). `toneOf()` mirrors `ratingBadgeClass()`/`schoolBandFromP8()`, held by reading them.
+  The path tile never gives a height: only planeAltitude()'s "Not under a final approach" (past FINAL_TOP_FT a height is an extrapolation). "Weak" is "Low".
 - **/pricing has a colour for each audience** (Bill's pick B, 2026-11-04): `#reports` tint, `#councils` water, `#platforms` dark. His "no highlighted card, one
   button style" (2026-10-06) now holds WITHIN a section, measured by `tests/front-page.mjs` 16b. Words and `data-event`s are untouched by a restyle: diff them.
 - **Area pages say findings, not a table** (Bill's yes, 2026-11-04: Stitch's layout): `gather()`'s facts are unchanged; `findings_html()` places each fact, a label with no place stops the build. A bare figure gets
