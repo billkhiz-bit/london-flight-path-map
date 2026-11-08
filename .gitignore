@@ -316,3 +316,7 @@ design/vendor/
 # the EA service and when. Content-keyed, hard-expires at 7 days, and never
 # records a failure - see the comment on CACHE_PATH.
 .flood-georef-cache.json
+
+# Written by scripts/preflight.sh on every run: its whole output (last.log), its
+# exit code (last.exit) and how long it took (last.ms). Local only.
+.preflight/

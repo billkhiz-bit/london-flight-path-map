@@ -916,3 +916,21 @@ A second review found ten more, all on `/api/`, and three were one defect. `ask(
 A code review before preflight found ten points 141 green checks could not see. The page looked up the example on postcodes.io at every load, so a visitor's address went to a third party before they did anything, which the privacy policy
 does not cover: the example is now a held point, and only the API is asked. A surveyed-quiet road was called missing, because no fixture carried the bound (NG11 8AH does now). "Copied" stayed beside a request that had changed. A press
 cost two calls against a route throttled for the whole site. Reading the previous point back out of the page was fragile: a whole degree, `-2`, also matches `eu-west-2`. And the accessibility scan met /api/ mid-run, as it once met the front page.
+
+## A search sent while the front page loads (2026-11-08)
+
+The search box is bound at module level, and `<script type="module">` runs before `DOMContentLoaded`, so the box works
+from the first frame while `load()` is still fetching the map's data. Recorded on 7 Nov as "a search sent before the map
+loads can be blanked by the example's lookup"; a probe on 8 Nov (borough-extra.json held 3 s, NW1 7PJ searched at
+once) found it worse: the search never reached the example at all. `cityOf()` read `state.extra` while it was
+undefined, threw inside `search()`'s try, and the catch said "Could not reach the data just now", which was false; a
+council name fell through `rowFor()` (no rows yet) to "not found". Behind that, the defect on record: the example's
+`search()` took the newest `searchSeq` and cleared the answer, lead and pin BEFORE `stale()` asked `example && acted`,
+so a visitor's search on its way went stale and the example stood down too: neither showed.
+
+Fix: the submit handler holds the latest early search (`early`) until `load()` sets `booted`, says "Looking it up..."
+and ends the example's frame; `load()` then runs it after any deep link's own search, so it is the answer left on
+screen, else the example on a plain visit the visitor has not touched. `search()` returns at once for `example &&
+acted`, before it changes anything. Why not have `search()` await a ready promise: `bootFromQuery()` awaits `search()`
+from inside `load()`, so a search waiting for `load()` to finish deadlocks every `?postcode=` link. The test sends each
+search with `#map .boro` provably empty (a state reached on purpose, not by luck).

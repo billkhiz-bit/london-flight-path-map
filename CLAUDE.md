@@ -350,6 +350,7 @@ Or just describe what you need, I have full context of this project.
   address, never engagement, silent on failure. Its point is HELD (`EXAMPLE`, `js/place-box.mjs`, one holder for `/` and `/api/`; Bill's yes, 2026-11-05), so
   arriving asks our API and postcodes.io nothing, and no `<link>` may open a connection to it either (a preconnect reaches it as surely as a request, and no request event shows it): privacy s2b covers a search, not a lookup nobody asked for. A page naming another example has no point, so no example, silently:
   `data-pc` and `EXAMPLE` move together (`tests/place-box.mjs`). `stubLiveApi` answers that lookup; scans wait for it. To hold the example back in a test, hold `/v1/environment`: holding postcodes.io now holds nothing.
+  **A search sent before `load()` has drawn the map is HELD** (`booted`/`early` by the submit handler, 2026-11-08): `search()` reads what `load()` fetches, and an early postcode said "Could not reach the data". `load()` runs the latest early search after a deep link's, in place of the example; the example gives way BEFORE it takes a search number or clears anything (`example && acted`). To test it, hold `/data/borough-extra.json` and prove the map undrawn when the search is sent (`tests/front-page.mjs` 1z).
 - **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without
   imposing on privacy concerns"): fixed rules, no server, no model, nothing typed sent, stored or counted (front-page.mjs
   checks no request or address carries the words). It only sets Find areas' own controls and says what it read and
@@ -358,7 +359,9 @@ Or just describe what you need, I have full context of this project.
 ### Gates and verification
 - **Run preflight before every commit**: `sh scripts/preflight.sh` (== `npm run preflight`). Read the EXIT
   CODE; never pipe it (`| tail` is always 0). `INCONCLUSIVE` and `PASS (INCOMPLETE ...)` are not PASS.
-  Change what blocks in `scripts/preflight.sh`, not in the skill.
+  Change what blocks in `scripts/preflight.sh`, not in the skill. Every run writes `.preflight/last.log` (and
+  `last.exit`, `last.ms`) and points Bill's progress panel at it where `~/.claude/progress` exists (2026-11-08): no
+  need to write `job.json` by hand. Never edit `preflight.sh` in a clone while a run is going: sh reads it as it runs.
 - **Count `check` / `advise` / `net_check` call sites in `scripts/preflight.sh`**; never trust a count in prose.
 - **A keyed request spends its key's quota on ANY route, open ones too.** `tests/stub-live-api.mjs` answers
   `/v1/score` and sends every other API request on WITHOUT the demo key (2026-10-31: ~13 keyed `/v1/regions` calls per

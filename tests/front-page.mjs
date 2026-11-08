@@ -3045,6 +3045,29 @@ const makeReport = async (pc) => {
   await ep.waitForTimeout(3000);
   const yielded = await look();
   ok(!yielded.label && yielded.counted.includes('event/front-city'), 'answer first: a visitor who acts before the example arrives keeps what they did', JSON.stringify(yielded));
+
+  // A SEARCH SENT BEFORE THE PAGE IS READY (2026-11-08): the map's own data held back 2.5 s, and the visitor searches at
+  // once. A postcode said "Could not reach the data just now" (cityOf() read the councils before they came) and a place
+  // name fell through to "not found"; and the example, starting after, cleared what was on its way. Now the search is
+  // held, said to be heard, and run once the map is drawn, and the example never steps in.
+  const holdMap = async (route) => { await new Promise((r) => setTimeout(r, 2500)); await route.continue(); };
+  await ep.route('**/data/borough-extra.json', holdMap);
+  for (const [text, arrived, what] of [
+    ['NW1 7PJ', () => document.getElementById('answer').classList.contains('is-open') && document.getElementById('ans-title').textContent === 'NW1 7PJ', 'a postcode'],
+    ['Camden', () => document.querySelector('#borough.is-open h2')?.textContent === 'Camden', 'a council area'],
+  ]) {
+    await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await ep.fill('#pc', text);
+    await ep.press('#pc', 'Enter');
+    const heard = await ep.evaluate(() => ({ status: document.getElementById('status').textContent, drawn: document.querySelectorAll('#map .boro').length }));
+    const came = await ep.waitForFunction(arrived, null, { timeout: 15000 }).then(() => true, () => false);
+    // The example's time to step in, were it going to: it starts as soon as the map is drawn.
+    await ep.waitForTimeout(2000);
+    const after = { ...(await look()), stillThere: await ep.evaluate(arrived), answerOpen: await ep.evaluate(() => document.getElementById('answer').classList.contains('is-open')) };
+    ok(heard.drawn === 0 && heard.status === 'Looking it up...' && came && after.stillThere && !after.label && !/Could not reach|not found/.test(after.status),
+      `a visitor who searches ${what} before the map has loaded is told it was heard, then gets their answer, and the example never replaces it`, JSON.stringify({ heard, came, after }));
+  }
+  await ep.unroute('**/data/borough-extra.json', holdMap);
   await ep.close();
   exampleOn = false;
 }

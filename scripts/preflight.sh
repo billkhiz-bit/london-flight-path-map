@@ -45,6 +45,45 @@ done
 
 cd "$(dirname "$0")/.." || exit 2
 
+# ONE LOG FOR EVERY RUN (2026-11-08). A run also writes its whole output to
+# .preflight/last.log (gitignored), so a run started by hand can be followed,
+# or read afterwards, without the caller choosing a file. The script runs
+# itself again through tee. tee alone would hide the verdict - a pipeline exits
+# with its LAST stage, the very lie at the top of this file - so the inner run
+# writes its exit code to .preflight/last.exit and the outer run exits with it;
+# no code there (the run was killed) exits 2, never 0.
+#
+# Where a local progress panel is installed (~/.claude/progress, Bill's
+# job-progress plugin), the run also points it at this log, with the stage
+# count and the time the last finished run took, read from that run's own
+# log, so neither is a number typed here to go stale.
+if [ -z "${PREFLIGHT_INNER:-}" ]; then
+  mkdir -p .preflight
+  if [ -f .preflight/last.log ]; then
+    stages=$(grep -E '^  [^ ]' .preflight/last.log | grep -vE '^  (failed:|!|inconclusive:|advisory:)' \
+      | grep -cE '(PASS|FAIL)\b|  (ok|deviates|INCONCLUSIVE|SKIPPED|INCOMPLETE)')
+  else
+    stages=0
+  fi
+  last_ms=$(cat .preflight/last.ms 2>/dev/null || echo 0)
+  started=$(date +%s%3N)
+  rm -f .preflight/last.exit
+  if [ -d "$HOME/.claude/progress" ]; then
+    log_path="$(pwd -W 2>/dev/null || pwd)/.preflight/last.log"
+    {
+      printf '{ "title": "Preflight", "log": "%s", "format": "preflight"' "$log_path"
+      [ "$stages" -gt 0 ] && printf ', "total": %s' "$stages"
+      printf ', "startedAt": %s' "$started"
+      [ "$last_ms" -gt 0 ] && printf ', "expectedMs": %s' "$last_ms"
+      printf ' }\n'
+    } > "$HOME/.claude/progress/job.json"
+  fi
+  { PREFLIGHT_INNER=1 sh scripts/preflight.sh "$@"; echo $? > .preflight/last.exit; } 2>&1 | tee .preflight/last.log
+  code=$(cat .preflight/last.exit 2>/dev/null || echo 2)
+  [ -f .preflight/last.exit ] && echo $(( $(date +%s%3N) - started )) > .preflight/last.ms
+  exit "$code"
+fi
+
 # Load .env so checks that need a credential can find one (added 2026-08-07).
 # `score sanity` is the first: it used to hard-code the demo API key, which put
 # a blocking gate on the same public 2,000/month quota as score-demo/index.html,

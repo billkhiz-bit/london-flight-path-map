@@ -347,9 +347,19 @@ async function load() {
   // /#find opens the Find areas tab (the card's link, or a link sent to someone). Not engagement:
   // nobody has done anything yet.
   if (wantFind && !document.querySelector('.tabs[role="tablist"]')?.hidden) setTab('find', { counted: false, keepCard: true });
-  // Not awaited: the page is ready now, and the example arrives when its two lookups do.
-  // However the example ends (shown, failed, or overtaken by the visitor), its frame gives way.
-  if (plain) search(byId('ans-example')?.dataset.pc || '', { example: true }).finally(endLoading);
+  // The map is drawn: from here a search runs at once (the submit handler), and this decides what runs now.
+  booted = true;
+  const exampleText = byId('ans-example')?.dataset.pc || '';
+  // What runs now. A search the visitor sent while the page loaded is their latest wish: it runs, after a deep link's own
+  // (bootFromQuery, above), so it is the answer left on screen, and the example does not come. Otherwise a plain visit
+  // opens on the example, unless the visitor has already done something else (search() refuses it then too). Not
+  // awaited: the example arrives when its two lookups do, and however it ends (shown, failed, or overtaken by the
+  // visitor) its frame gives way.
+  if (early !== null) {
+    const text = early;
+    early = null;
+    search(text);
+  } else if (plain && !acted) search(exampleText, { example: true }).finally(endLoading);
   else endLoading();
 }
 
@@ -1230,10 +1240,22 @@ const form = byId('check');
 const status = byId('status');
 const answer = byId('answer');
 const say = (s) => { if (status) status.textContent = s; };
+// A SEARCH SENT BEFORE THE PAGE IS READY (2026-11-08). The box works from the first frame, but search() reads what load()
+// fetches (the map's councils, the CSV's rows, the routes): sent before them, a postcode threw in cityOf() and said "Could
+// not reach the data just now", which was not true, and a place name fell through to "not found". So until load() has
+// drawn the map (`booted`), a search is held, the latest one only, and load() decides what runs once it can.
+let booted = false;
+let early = null;
 form?.addEventListener('submit', (ev) => {
   ev.preventDefault();
   engaged('search');
-  search(byId('pc')?.value || '');
+  const text = byId('pc')?.value || '';
+  if (booted) { search(text); return; }
+  if (!text.trim()) return;
+  early = text;
+  // The example will not come now (its frame gives way), and the live region says the search was heard.
+  endLoading();
+  say('Looking it up...');
 });
 
 // A search has up to four awaits (the Bay Area names, postcodes.io, a city's outlines,
@@ -1383,6 +1405,10 @@ byId('ans-more')?.addEventListener('click', (ev) => {
 async function search(raw, { example = false } = {}) {
   const text = raw.trim();
   if (!text) return;
+  // The example gives way to anything the visitor has done, and must do so BEFORE it takes a number or clears a thing:
+  // it once took the newest number and cleared the answer first, so a visitor's search on its way became stale, the
+  // example stood down too, and the page showed neither (2026-11-08).
+  if (example && acted) return;
   const seq = ++searchSeq;
   const stale = () => seq !== searchSeq || (example && acted);
   if (!example) endLoading();

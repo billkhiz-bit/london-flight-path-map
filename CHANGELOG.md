@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-08 (evening) - A search sent while the front page loads
+
+- **A search typed before the front page has finished loading now gets its answer.** It used to say "Could not reach the data just now", which was not true, or "not found" for a council area; and the example answer, arriving after it, could leave the page showing neither. The search is now said to be heard straight away and answered as soon as the map is drawn, and the example no longer steps in once you have searched.
+
 ## 2026-11-08 - The Bay Area is scored on the site
 
 - **The Bay Area's 50 cities now show their scores** on the full map, the Bay Area page, the front page and 50 new area pages, equal to the API's. Every score says it is built on US scales and cannot be compared with a UK score; growth is not scored there, and a city missing an input is marked and says why.
