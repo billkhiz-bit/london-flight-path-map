@@ -34,7 +34,7 @@ def _page(city, borough):
 def test_every_column_is_a_label_some_page_prints():
     printed = set()
     for city, cfg in pages.app.CITIES.items():
-        if city in pages.app.SITE_FACTS_ONLY_CITIES:
+        if city in pages.app.SITE_FACTS_ONLY_CITIES or city in pages.app.AREA_PAGES_PENDING:
             continue
         for borough in cfg['boroughs']:
             data = pages.gather(city, borough)

@@ -331,7 +331,7 @@ ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !b
   const total = covers ? covers.regions.reduce((s, [, n]) => s + n, 0) : 0;
   ok(
     Boolean(covers && fig) && covers.visible && covers.regions.length === Number(fig[2]) && total === Number(fig[1]) &&
-      covers.regions.some(([name]) => name === 'Cardiff') && /plus New York's \d+ boroughs and \d+ Bay Area cities \(facts only\)/.test(covers.text),
+      covers.regions.some(([name]) => name === 'Cardiff') && /plus New York's \d+ boroughs and \d+ Bay Area cities\./.test(covers.text),
     "before any search one line offers where it covers, and opens to every UK region adding up to the page's own figure, then New York and the Bay Area",
     JSON.stringify(covers && { regions: covers.regions.length, total, figure: covers.figure.slice(0, 50) })
   );
@@ -986,6 +986,17 @@ const fact = (label) => page.locator('#borough .facts div', { has: page.locator(
 const paloField = await fact('Nearest airfield');
 ok(/^Palo Alto \(KPAO\), [\d.]+ km to the/.test(paloField), 'Palo Alto card names its own airfield as the nearest (audit I-2: it named SJC)', paloField);
 ok(/^SJC 12R, [\d.]+ km to the/.test(await fact('Nearest of SFO, OAK and SJC')), 'and SJC 12R as the nearest of the three airports whose routes are drawn', await fact('Nearest of SFO, OAK and SJC'));
+{
+  // 2026-11-07 (Bill): the Bay Area's cards are scored, from data/us-bayarea-front.json, the engine's own rows,
+  // with the US-scales line and each input's source and year. Read from the file, never a typed score.
+  const front = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-front.json'), 'utf8'));
+  const palo = front.rows.find((r) => r.borough === 'Palo Alto');
+  const crime = palo.facts.find(([label]) => label === 'Crime');
+  const card = (await page.locator('#borough').innerText()).replace(/\s+/g, ' ');
+  const scoreShown = (await page.locator('#borough .score strong').textContent()).trim();
+  ok(scoreShown === Number(palo.score).toFixed(1) && card.includes(front.us_scales) && (await fact('Crime')).includes(crime[2]) && !/Not scored/.test(card),
+    "Palo Alto's card carries the engine's score, the US-scales line, and each input with its source and year", `${scoreShown} / ${card.slice(0, 160)}`);
+}
 // The Bay Area's lines are the GENERATED routes file's (2026-10-07), the same records the live map
 // draws: so the map draws one path per record of each kind, arrivals included, and nothing from the
 // raw FAA record (which drew finals as <line> elements and whole departures, and no arrivals).
@@ -1373,7 +1384,8 @@ const frontText = await page.locator('body').textContent();
   // places, unincorporated, which are outlines on the map and never 'cities'.
   const bayPlaces = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-places.json'), 'utf8')).places.filter((x) => x.kind === 'city' || x.kind === 'town').length;
   // THE coverage sentence (CLAUDE.md), word for word, in the Questions band since front-page-v3 (2026-11-03).
-  const want = `${csvRows} council areas in ${csvRegions} UK city regions, plus New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities (facts only).`;
+  // "(facts only)" left it on 2026-11-07, when the site began to score the Bay Area (Bill's sentence).
+  const want = `${csvRows} council areas in ${csvRegions} UK city regions, plus New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities.`;
   const fig = (await page.locator('#cover-figure').textContent()).trim();
   ok(fig === want, 'the coverage figure is recounted from the data: UK council areas and city regions, New York boroughs, Bay Area cities', `page "${fig}" vs data "${want}"`);
 }

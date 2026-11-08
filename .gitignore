@@ -138,6 +138,9 @@ data/*
 !data/us-bayarea-routes.json
 # New York's front-page lines, from the same derivation, by scripts/build_nyc_front.py (2026-10-07).
 !data/us-nyc-routes.json
+# The Bay Area's scores on the front page (2026-11-07): one row per city from the score engine, its inputs in
+# words with their sources and years, by scripts/build_bayarea_front.py (--check is a BLOCKING stage).
+!data/us-bayarea-front.json
 # The tiers beneath a Bay Area city: San Francisco's neighbourhoods (DataSF, PDDL) and
 # the 165 ZIP areas (Census ZCTA), from scripts/build_bayarea_areas.py (--check is blocking).
 !data/us-sf-neighbourhoods.json

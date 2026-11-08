@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-08 - The Bay Area is scored on the site
+
+- **The Bay Area's 50 cities now show their scores** on the full map, the Bay Area page, the front page and 50 new area pages, equal to the API's. Every score says it is built on US scales and cannot be compared with a UK score; growth is not scored there, and a city missing an input is marked and says why.
+- **The coverage sentence drops "(facts only)"**: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.
+- **The Bay Area ranking orders cities by score**, as every other city's does.
+
 ## 2026-11-07 (night) - The answer as the headline; About fits a narrow window
 
 - **The front page leads with the answer.** Once a place's answer is on show, the headline says its plainest finding: how many planes pass over it on most days, or that it sees fewer than 10 a day, or where its aircraft noise is over the WHO guideline. A place we hold nothing for keeps the question. Without JavaScript the headline is the question, and the page does not move when it changes.

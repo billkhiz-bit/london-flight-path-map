@@ -129,9 +129,11 @@ console.log(`\nArea page freshness\n===================\n`);
 // build_area_pages.py writes it no page. The list is read from its one holder,
 // the Lambda, never retyped. Until Bay Area release 2 went live the API served
 // no such city, and the day it did this floor read 102 pages against 152
-// boroughs and hid the staleness check behind it.
+// boroughs and hid the staleness check behind it. Less, too, a city the map
+// scores whose pages are not built yet (app.AREA_PAGES_PENDING, 2026-11-07: the
+// Bay Area left the facts-only list with the map's scores; both lists are empty since its 50 pages were built).
 const FACTS_ONLY = new Set(JSON.parse(execFileSync('python', ['-c',
-  "import json, sys; sys.path.insert(0, 'backend/lambdas/score'); import app; print(json.dumps(sorted(app.SITE_FACTS_ONLY_CITIES)))",
+  "import json, sys; sys.path.insert(0, 'backend/lambdas/score'); import app; print(json.dumps(sorted(app.SITE_FACTS_ONLY_CITIES | app.AREA_PAGES_PENDING)))",
 ], { encoding: 'utf-8', cwd: ROOT })));
 const regions = await fetch(`${API}/v1/regions`).then((r) => r.json());
 const expected = (regions.regions || regions.cities || [])
@@ -151,7 +153,7 @@ if (pages.length !== expected) {
   console.error('      survives for a borough the API no longer serves.');
   process.exit(1);
 }
-console.log(`  ${pages.length} pages to check (matches ${expected} boroughs on /v1/regions, less facts-only ${[...FACTS_ONLY].join(', ') || 'none'}), in ${Math.ceil(pages.length / CHUNK)} batch request(s)\n`);
+console.log(`  ${pages.length} pages to check (matches ${expected} boroughs on /v1/regions, less facts-only or pages-pending ${[...FACTS_ONLY].join(', ') || 'none'}), in ${Math.ceil(pages.length / CHUNK)} batch request(s)\n`);
 
 // --- what the API says today ------------------------------------------------
 const live = new Map();

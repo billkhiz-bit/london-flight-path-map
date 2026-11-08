@@ -143,7 +143,7 @@ def coverage() -> str:
     nyc = len(app.CITIES['nyc']['boroughs'])
     bay = len(json.loads(BAY_AREA.read_text(encoding='utf-8'))['features'])
     return (f'<p>Sky Score covers {areas} council areas in {regions} UK city regions, plus New York\'s {nyc} boroughs '
-            f'and {bay} Bay Area cities (facts only, with no score on the site yet).</p>\n')
+            f'and {bay} Bay Area cities.</p>\n')
 
 
 RENDER = {'EXAMPLE': example, 'WEIGHTS': weights_table, 'PRICES': prices, 'COVERAGE': coverage}

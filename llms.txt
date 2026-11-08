@@ -1,6 +1,6 @@
 # Sky Score
 
-> Property noise and liveability data for UK postcodes, as scores from 0 to 10 with every source named: aircraft noise estimated from published flight routes, road noise, air quality, flood risk, affordability, price growth, crime, schools, transport and healthcare. Sky Score covers 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only).
+> Property noise and liveability data for UK postcodes, as scores from 0 to 10 with every source named: aircraft noise estimated from published flight routes, road noise, air quality, flood risk, affordability, price growth, crime, schools, transport and healthcare. Sky Score covers 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.
 
 How to read the figures:
 

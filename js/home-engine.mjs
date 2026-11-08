@@ -169,7 +169,9 @@ const hero = document.querySelector('.hero');
 // cut at the page's 30 km, and the coded arrivals. They used to be re-derived
 // here from the raw FAA record, with whole departures and no arrivals at all.
 const US = {
-  bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', routes: '/data/us-bayarea-routes.json', noiseDir: '/bay-area/' },
+  // `front`: each city's score from the score engine, its inputs in words with their sources and years, and the
+  // US-scales line (scripts/build_bayarea_front.py, 2026-11-07). Optional: without it a card says so, never "not scored".
+  bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', routes: '/data/us-bayarea-routes.json', noiseDir: '/bay-area/', front: '/data/us-bayarea-front.json' },
   // New York (Bill, 2026-10-06: "show on the main screen instead of going to the full map"):
   // the map's own outlines, the FAA's routes for JFK, LaGuardia, Newark and Teterboro, and
   // scripts/build_nyc_front.py's file - the US noise picture's frame and one row per borough
@@ -445,8 +447,11 @@ async function loadNyc() {
 }
 
 async function loadBayArea() {
-  const [places, proc, routes] = await Promise.all([d3.json(US.bayarea.places), d3.json(US.bayarea.proc), d3.json(US.bayarea.routes)]);
+  const [places, proc, routes, front] = await Promise.all([
+    d3.json(US.bayarea.places), d3.json(US.bayarea.proc), d3.json(US.bayarea.routes), d3.json(US.bayarea.front).catch(() => null),
+  ]);
   state.usProc = proc;
+  state.bayFront = front;
   state.usRoutes = routes;
   state.usPlaces = places;
   state.usNoise = { png: US.bayarea.noiseDir + places.noise.file, bbox: frameBox(places.frame) };
@@ -1069,15 +1074,19 @@ function panelState() {
   syncLead();
 }
 const closeButton = '<button type="button" id="borough-close" class="close" aria-label="Close">&times;</button>';
-function boroughCardHtml(row, f) {
-  const cityName = row.city_name || CITY_NAME[row.city] || '';
-  const onMap = Boolean(f);
-  const bars = COMPONENTS.map(([k, label]) => {
+// The five component rows of a card, one holder for the council-area card and the Bay Area's.
+function scoreBarsHtml(row) {
+  return COMPONENTS.map(([k, label]) => {
     const v = fmt1(row[k]);
     return v == null
       ? `<div class="row"><span>${label}</span><span class="bar"></span><span class="val">not scored</span></div>`
       : `<div class="row"><span>${label}</span><span class="bar"><i style="width:${Number(v) * 10}%"></i></span><span class="val">${v} / 10</span></div>`;
   }).join('');
+}
+function boroughCardHtml(row, f) {
+  const cityName = row.city_name || CITY_NAME[row.city] || '';
+  const onMap = Boolean(f);
+  const bars = scoreBarsHtml(row);
   const facts = CARD_FACTS.filter(([, col]) => col in row).map(([label, col, print]) => {
     const v = row[col];
     return `<div><dt>${label}</dt><dd>${v === '' || v == null ? 'not published for this area' : esc(print(v, row))}</dd></div>`;
@@ -1096,16 +1105,30 @@ function boroughCardHtml(row, f) {
     ${row.note ? `<p class="where">${esc(row.note)}</p>` : ''}
     <p class="more">${links}</p>`;
 }
+// A Bay Area city's card (2026-11-07: scored, Bill's call): the engine's score and its five components, the
+// US-scales line, then each input in words with its source and year, all from data/us-bayarea-front.json (never
+// typed here), then the flight-path facts it always had.
+function bayScoreHtml(row, zip) {
+  const score = fmt1(row.score);
+  const scoredAs = zip?.cityMajority ? `<p class="where">ZIP ${esc(zip.code)} is scored as ${esc(row.borough)}, where half or more of its residents live.</p>` : '';
+  return `<p class="score"><strong>${score}</strong><span>Sky Score out of 10, balanced weighting, method ${esc(row.methodology_version)}</span></p>
+    <p class="where">${esc(state.bayFront.us_scales)}</p>${scoredAs}
+    <div class="rows">${scoreBarsHtml(row)}</div>`;
+}
+const bayInputsHtml = (row) =>
+  row.facts.map(([label, figure, source]) => `<div><dt>${esc(label)}</dt><dd>${esc(figure)} <small>${esc(source)}</small></dd></div>`).join('');
 function placeCardHtml(f, zip) {
   const name = featureName(f);
   const ring = mainRing(f);
   const lat = d3.mean(ring, (p) => p[1]), lon = d3.mean(ring, (p) => p[0]);
   const near = nearestRunway(state.usProc, lat, lon);
+  const row = state.bayFront?.rows.find((r) => r.borough === name);
   return `${closeButton}
     <h2 tabindex="-1">${esc(name)}</h2>
-    <p class="where">${esc(f.properties.county)} County, California. Not scored: the Bay Area page shows where the routes are, not a score.</p>
-    <dl class="facts">${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div>${routesFactHtml(f)}</dl>
-    <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
+    <p class="where">${esc(f.properties.county)} County, California.${row ? '' : ' Its score could not be loaded just now.'}</p>
+    ${row ? bayScoreHtml(row, zip) : ''}
+    <dl class="facts">${row ? bayInputsHtml(row) : ''}${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div>${routesFactHtml(f)}</dl>
+    <p class="more">${row ? `<a href="${esc(row.area_page)}">Full scorecard</a> &middot; ` : ''}<a href="${MAP_PATH}?city=bayarea&amp;borough=${encodeURIComponent(name)}">Open on the full map</a> &middot; <a href="/bay-area/">The Bay Area page</a></p>`;
 }
 // The routes on the map are SFO's, OAK's and SJC's, but the FAA holds 23 more
 // airfields round the bay, and a card that named only the three told Livermore
@@ -1152,7 +1175,7 @@ function zipFactsHtml(zip) {
 function zipCardHtml(zip) {
   return `${closeButton}
     <h2 tabindex="-1">ZIP ${esc(zip.code)}</h2>
-    <p class="where">${esc(zip.county)} County, California. Not scored.</p>
+    <p class="where">${esc(zip.county)} County, California. No city holds half of its residents, so it takes no city's score.</p>
     <dl class="facts">${zipFactsHtml(zip)}</dl>
     <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
 }

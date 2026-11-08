@@ -306,6 +306,9 @@ check "Bay Area ZIPs == Census, site == API" python scripts/build_bayarea_zips.p
 # New York on the front page (2026-10-06): its borough rows are the score engine's, and
 # its noise picture the one the file names. Offline: reads the Lambda and the files only.
 check "New York front page == engine"  python scripts/build_nyc_front.py --check
+# The Bay Area's front-page cards (2026-11-07): each city's score is the engine's, its inputs in the records
+# builder's own words with their sources and years. Offline: reads the Lambda and the committed readers' files.
+check "Bay Area front page == engine"  python scripts/build_bayarea_front.py --check
 # The Bay Area on the LIVE map (2026-10-05): its outlines, facts, airports and
 # routes, re-derived from the /bay-area/ page builder's own functions and
 # compared with data/us-bayarea-cities.json and the BAYAREA-MAP block.
@@ -316,7 +319,8 @@ check "Bay Area map data == page"     python scripts/build_bayarea_map_data.py -
 check "Bay Area tiers == page"        python scripts/build_bayarea_areas.py --check
 # The Bay Area's 50 city records in the score Lambda (2026-10-22, release 2): the BAYAREA-BOROUGHS block and the
 # California anchors, joined by GEOID from the readers' committed files. Offline and exact, so blocking: a hand
-# edit, or a reader re-run without --write here, reds. Inert until CITIES['bayarea'] reads the block.
+# edit, or a reader re-run without --write here, reds. Since 2026-11-07 the same records are the site's too
+# (index.html BAYAREA-RECORDS, which the full map scores from), held by the same check.
 check "Bay Area records == readers"   python scripts/build_bayarea_records.py --check
 # Each city's DEFRA aircraft PNG must exist, paint pixels, and be positioned at
 # the box it was rendered for (2026-09-26). A transparent PNG would be marked
@@ -637,9 +641,10 @@ check "selector tiers do not overlap" node tests/selector-widths.mjs
 # Deliberately data-driven, unlike the stage above: no count to keep in step,
 # so city ten is covered the day it is added. Both defects re-proven red.
 check "every city switches"           node tests/city-switch.mjs
-# The first city whose records are FACTS, not scores: card, ranking, ZIP and
-# name search, on screen, at desktop and phone width (2026-10-05).
-check "Bay Area: facts, no score"     node tests/bayarea-map.mjs
+# The first city whose records were FACTS, not scores: card, ranking, ZIP and
+# name search, on screen, at desktop and phone width (2026-10-05); since
+# 2026-11-07 the card and the ranking carry the API's score on US scales.
+check "Bay Area: facts and scores"    node tests/bayarea-map.mjs
 # The legal pages must be reachable from the homepage on a phone. From
 # 2026-08-28 to 2026-09-07 the mobile web homepage rendered exactly ONE
 # visible link - the skip link - because `.is-tabbed .sheet-footer` was

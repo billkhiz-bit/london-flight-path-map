@@ -58,6 +58,11 @@ sys.path.insert(0, str(REPO / 'backend' / 'lambdas' / 'score'))
 
 import app  # noqa: E402  pylint: disable=wrong-import-position
 
+sys.path.insert(0, str(REPO / 'scripts'))
+# The Bay Area's inputs in words, each with its source and year, and its US-scales line: ONE holder, read by the
+# full map's card (through index.html's generated block), the front page's card and these pages (2026-11-07).
+import build_bayarea_records as bay_records  # noqa: E402  pylint: disable=wrong-import-position
+
 # The map's holder. Loaded eagerly and NOT guarded: if this file moves, the
 # right outcome is a crash, not 99 quietly thinner pages.
 _BOROUGH_EXTRA = json.loads(
@@ -324,12 +329,18 @@ def gather(city: str, borough: str) -> dict | None:
     # Derived from the response, never recomputed here: a second implementation
     # of the same rank is a second thing to keep in step.
     rank = (body.get('context') or {}).get('priceRankInCity') or {}
-    # Per CURRENCY (audit 2026-10-06, I6): the sterling pool is every UK area covered; New York's is
-    # its own five boroughs, and the page said "the whole country" for both.
+    # Per POOL (audit 2026-10-06, I6; per pool since 2026-11-07): the sterling pool is every UK area covered; a US
+    # city's is its own areas (app.pool_of: one pool per US metro). It said "New York's five boroughs, the only US
+    # prices held" for every US city, false of the Bay Area's pages and of New York's once the Bay Area was priced.
     if app.CITIES[city].get('country') == 'United Kingdom':
         afford_note = 'Scored against the prices of every UK area we cover, not just this city'
     else:
-        afford_note = "Scored against New York's five boroughs, the only US prices held: not comparable with UK scores"
+        pool = app.pool_of(city)
+        members = [c for c in app.CITIES if app.pool_of(c) == pool]
+        n = sum(len(app.CITIES[c]['boroughs']) for c in members)
+        afford_note = (f"Scored among the {n} areas of {CITY_LABEL.get(city, city)} alone, never with another city's "
+                       'prices: not comparable with UK scores' if members == [city] else
+                       f'Scored among {n} areas in the same price pool: not comparable with UK scores')
     if rank.get('rank') and rank.get('of', 0) > 1:
         afford_note += f' - {rank["rank"]} of {rank["of"]} here by price, cheapest first'
 
@@ -369,9 +380,21 @@ def gather(city: str, borough: str) -> dict | None:
     def uk_note(text):
         return text if uk else None
 
+    # A city scored on the US SCALES (a California-anchored record, the Bay Area) says its inputs in the records
+    # builder's own words, each with its source and year, the same words its front-page and map cards use, and the
+    # UK rows below find nothing of theirs in its record. Its price is a Census median, its trend county-wide.
+    us_scaled = bool(app.CITIES[city].get('usAnchors'))
+    if us_scaled:
+        anchors, rows = bay_records.records()
+        if dict(rows).get(borough) != scoring:
+            raise SystemExit(f"{city}/{borough}: the Lambda's record is not what the readers' files give: "
+                             'run scripts/build_bayarea_records.py --write')
+        for label, figure, source in bay_records.input_facts(borough, scoring, anchors, bay_records.input_sources(),
+                                                             app.US_PRICE_TOP_CODE, ctx.get('crimeNote')):
+            add(label, figure, source)
     add('Average price', fmt_price(ctx.get('avgPriceGbp')), uk_note('HM Land Registry HPI'))
     trend = ctx.get('priceTrendPct')
-    if isinstance(trend, (int, float)):
+    if isinstance(trend, (int, float)) and not us_scaled:
         add('Price trend', f'{trend:+.1f}% year on year', uk_note('HM Land Registry HPI'))
     # THE BAND IS AN ESTIMATE, AND THE CAPTION SAID IT WAS A DEFRA SURVEY
     # (2026-09-13 audit, I24). `noiseImpactBand` is the geometry distance
@@ -387,10 +410,13 @@ def gather(city: str, borough: str) -> dict | None:
         'unmapped': "Estimated from the distance to the airport and its routes; DEFRA's noise maps do not cover this airport",
         'none': 'No commercial airport in this city region',
     }.get(contour)
+    if us_scaled:
+        aircraft_note = ("Estimated from the FAA's published routes over the city's residents, fitted to the noise "
+                         'monitors of San Francisco and San Jose airports; not a measurement')
     add('Aircraft noise band', (ctx.get('noiseImpactBand') or '').title() or None,
-        uk_note(aircraft_note))
+        aircraft_note if us_scaled else uk_note(aircraft_note))
 
-    merged = {**painted, **{k: v for k, v in scoring.items() if v is not None}}
+    merged = {} if us_scaled else {**painted, **{k: v for k, v in scoring.items() if v is not None}}
     for key, label, note in (
         ('crimeRate', 'Recorded crime', 'ONS Table C4, per 1,000 residents per year'),
         ('p8', 'Progress 8', 'DfE KS4 2023/24 revised, 0.0 is the national average'),
@@ -426,6 +452,8 @@ def gather(city: str, borough: str) -> dict | None:
         'uk': uk,
         'borough': borough,
         'score': body['score'],
+        # Said on a US-scaled city's page, under its score (Bill's rule): its scales are not the UK's.
+        'us_scales': bay_records.us_scales(len(app.CITIES[city]['boroughs'])) if us_scaled else '',
         'facts': facts,
         'sources': body.get('sources') or [],
         'methodology': body.get('methodologyVersion'),
@@ -572,7 +600,7 @@ PAGE = """<!doctype html>
 
 <div class="headline" data-fact><span class="n">{score}</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
 <div class="bar big" aria-hidden="true"><i style="width:{score_width}%;background:{score_colour}"></i></div>
-
+{us_scales}
 <dl class="scores">
 {scores}
 </dl>
@@ -586,7 +614,7 @@ PAGE = """<!doctype html>
 {planes}<h2>Where these numbers come from</h2>
 <p class="sources">{sources}</p>
 <p class="sources">Methodology version {methodology}. Full method: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">the methodology</a> (and the <a href="/score-demo/api-docs.html">API reference</a>).
-Figures are for the whole borough; a single address can differ{map_note}.</p>
+Figures are for the whole {unit}; a single address can differ{map_note}.</p>
 </main>
 
 <footer>
@@ -607,7 +635,9 @@ def topics(facts) -> str:
     for label, word in (
         ('Progress 8', 'schools'),
         ('Recorded crime', 'crime'),
+        ('Crime', 'crime'),
         ('Transport access', 'transport'),
+        ('Rail access', 'rail access'),
         ('Air quality', 'air quality'),
         ('Flood risk', 'flood risk'),
     ):
@@ -622,8 +652,10 @@ def topics(facts) -> str:
 SCORE_ROWS = ('Quiet skies', 'Affordability', 'Growth', 'Liveability', 'Environment')
 COLUMNS = (
     (('Noise and planes', ('Aircraft noise band', 'Road noise')), ('Air and flood', ('Air quality', 'Flood risk'))),
-    (('Living here', ('Recorded crime', 'Progress 8', 'Transport access', 'Healthcare access')),
-     ('Property', ('Average price', 'Price trend'))),
+    # Crime, Rail access, Median home value and County price trend: the Bay Area's inputs, in the records builder's
+    # words (2026-11-07), placed where the UK's like-for-like rows sit.
+    (('Living here', ('Recorded crime', 'Crime', 'Progress 8', 'Transport access', 'Rail access', 'Healthcare access')),
+     ('Property', ('Average price', 'Median home value', 'Price trend', 'County price trend'))),
 )
 SAID_AS = {'Aircraft noise band': 'Aircraft noise'}
 
@@ -803,7 +835,9 @@ def render(data: dict) -> str:
     # fix, because it is built here and not there. Found by the gate written for
     # the notes, which is the argument for writing the gate.
     uk_city = app.CITIES[data['city']].get('country') == 'United Kingdom'
-    source_clause = 'from official public data' if uk_city else 'from public New York City sources'
+    source_clause = ('from official public data' if uk_city
+                     else 'from public US federal and California sources' if data.get('us_scales')
+                     else 'from public New York City sources')
     # "Cardiff, Cardiff" (audit I7): a borough that shares its city's name is named once.
     place = data['borough'] if data['borough'] == city_label else f"{data['borough']}, {city_label}"
     shown = topics(data['facts'])
@@ -828,16 +862,20 @@ def render(data: dict) -> str:
         )
         map_note = ''
     else:
+        # The Bay Area's map holds cities, ZIPs and San Francisco's neighbourhoods, never a postcode (2026-11-07).
+        on_map = (f'The published routes, the federal noise map and every city\'s score in {e(city_label)}.'
+                  if data.get('us_scales') else
+                  f'Noise contours, flight corridors and every neighbourhood in {e(city_label)}.')
         cta = (
             '<div class="cta">\n'
-            '  <p style="margin:0 0 8px;"><strong>See it on the map.</strong> Noise contours, flight corridors '
-            f'and every neighbourhood in {e(city_label)}.</p>\n'
+            f'  <p style="margin:0 0 8px;"><strong>See it on the map.</strong> {on_map}</p>\n'
             # /map/ since 2026-10-06, when the front page took / and the full map moved.
             f'  <a href="/map/?city={e(data["city"])}&amp;borough={e(data["borough"].replace(" ", "+"))}">'
             f'Open {e(data["borough"])} on the Sky Score map</a>\n'
             '</div>'
         )
-        map_note = ', and the map shows postcode-level detail'
+        map_note = (', and the map shows the routes over each ZIP' if data.get('us_scales')
+                    else ', and the map shows postcode-level detail')
     return PAGE.format(
         title=e(f"{data['borough']} noise & liveability score | Sky Score"),
         description=e(desc),
@@ -856,7 +894,9 @@ def render(data: dict) -> str:
         # byte-identical to before (its sitemap date does not move).
         planes=planes_section(data['city'], data['borough']),
         map_note=map_note,
+        unit='city' if data.get('us_scales') else 'borough',
         score=e(data['score']),
+        us_scales=f'<p class="sub">{e(data["us_scales"])}</p>\n' if data.get('us_scales') else '',
         score_width=f"{max(0.0, min(100.0, float(data['score']) * 10)):g}",
         score_colour=score_colour(float(data['score'])),
         scores=scores,
@@ -895,7 +935,7 @@ INDEX = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Every area Sky Score covers | Sky Score</title>
-<meta name="description" content="Noise and liveability scores for {coverage}, from published UK government and New York City sources." />
+<meta name="description" content="Noise and liveability scores for {coverage}, from published UK government and US sources." />
 <link rel="canonical" href="{site}/area/" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
@@ -974,7 +1014,7 @@ INDEX = """<!doctype html>
 <p class="sub">{coverage}. Each page carries the published measurements behind that area's score.</p>
 <p class="sub">Each city's areas side by side: the Sky Score and its five parts are out of 10, and 10 is best. A dash means that area's page publishes no figure for it.</p>
 <p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
-<p class="sub">In the United States: <a href="/bay-area/">flight paths over 50 San Francisco Bay Area cities</a>.</p>
+<p class="sub">The Bay Area's flight paths, city by city: <a href="/bay-area/">the Bay Area page</a>.</p>
 {body}
 <p class="sub" style="margin-top:32px;"><a href="/map/">Back to the map</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/terms">Terms</a></p>
 </main>
@@ -992,8 +1032,10 @@ NONE_PUBLISHED = '<td><span aria-hidden="true">&ndash;</span><span class="visual
 
 
 def compare_cell(label, facts):
-    """One cell: the figure that area's page publishes under `label`, or a dash that says it publishes none."""
-    value = next((f['value'] for f in facts if f['label'] == label), None)
+    """One cell: the figure that area's page publishes under `label`, or a dash that says it publishes none.
+    The price column takes a US-scaled city's Census median (its page's 'Median home value') under the same cell."""
+    labels = (label, 'Median home value') if label == 'Average price' else (label,)
+    value = next((f['value'] for f in facts if f['label'] in labels), None)
     if value is None:
         return NONE_PUBLISHED
     value = str(value).removesuffix(' / 10')
@@ -1003,7 +1045,10 @@ def compare_cell(label, facts):
 def compare_table(city, entries) -> str:
     """One city's areas in one table: the figures their own pages publish, alphabetical."""
     label = CITY_LABEL.get(city, city.title())
-    head = ''.join(f'<th scope="col">{e(c)}</th>' for c in COMPARE_COLUMNS)
+    # A US-scaled city's price is a Census MEDIAN, so its column says so (its pages' own label).
+    median = any(f['label'] == 'Median home value' for _, d in entries for f in d['facts'])
+    head = ''.join(f'<th scope="col">{e("Median home value" if median and c == "Average price" else c)}</th>'
+                   for c in COMPARE_COLUMNS)
     rows = '\n'.join(
         f'<tr><th scope="row"><a href="/area/{p}/">{e(d["borough"])}</a></th>'
         + ''.join(compare_cell(c, d['facts']) for c in COMPARE_COLUMNS) + '</tr>'
@@ -1011,15 +1056,25 @@ def compare_table(city, entries) -> str:
     )
     # Affordability and growth are scored within a currency pool: the US pages say so row by row, and the table
     # says it once, so nobody sets a New York figure beside a UK one.
-    note = ('' if app.CITIES[city].get('country') == 'United Kingdom' else
-            f'<p class="key">Affordability and growth are scored among {e(label)}\'s own areas: not comparable '
-            'with UK scores.</p>\n')
+    if app.CITIES[city].get('country') == 'United Kingdom':
+        note = ''
+    elif app.CITIES[city].get('growthNotScored'):
+        # The Bay Area (2026-11-07): growth is not scored, and its inputs are on US scales.
+        note = (f'<p class="key">Affordability is scored among {e(label)}\'s own areas, and growth is not scored here. '
+                f'{e(bay_records.us_scales(len(app.CITIES[city]["boroughs"])))}</p>\n')
+    else:
+        note = (f'<p class="key">Affordability and growth are scored among {e(label)}\'s own areas: not comparable '
+                'with UK scores.</p>\n')
     return (
         f'<div class="tw" role="region" aria-label="{e(label)}: areas compared" tabindex="0">\n'
         f'<table class="compare">\n<caption class="visually-hidden">{e(label)}: each area\'s Sky Score, its five '
         f'parts and its average price</caption>\n<thead><tr><th scope="col">Area</th>{head}</tr></thead>\n'
         f'<tbody>\n{rows}\n</tbody>\n</table>\n</div>\n{note}'
     )
+
+
+# How the coverage sentence names each city outside the UK, in its order (the counts come from the pages).
+ABROAD_WORDS = {'nyc': "New York's {n} boroughs", 'bayarea': '{n} Bay Area cities'}
 
 
 def render_index(pages) -> str:
@@ -1036,7 +1091,12 @@ def render_index(pages) -> str:
     uk = [c for c in by_city if app.CITIES[c].get('country') == 'United Kingdom']
     abroad = [c for c in by_city if c not in uk]
     uk_n = sum(len(by_city[c]) for c in uk)
-    us = ' and '.join(f"{CITY_LABEL.get(c, c.title())}'s {len(by_city[c])} boroughs" for c in sorted(abroad))
+    # THE coverage sentence, word for word (CLAUDE.md; Bill, 2026-11-07: "plus New York's 5 boroughs and 50 Bay
+    # Area cities"): each US city's words here, its count from the pages. A city with no words stops the build.
+    unknown = sorted(set(abroad) - set(ABROAD_WORDS))
+    if unknown:
+        raise SystemExit(f'no coverage words for {unknown}: add them to ABROAD_WORDS')
+    us = ' and '.join(ABROAD_WORDS[c].format(n=len(by_city[c])) for c in sorted(abroad, key=list(ABROAD_WORDS).index))
     coverage = f'{uk_n} council areas in {len(uk)} UK city regions' + (f', plus {us}' if us else '')
     return INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body))
 
@@ -1053,7 +1113,9 @@ def main() -> int:
     for city, cfg in app.CITIES.items():
         # The API scores these and the site shows FACTS (app.SITE_FACTS_ONLY_CITIES, Bill 2026-10-22): an area
         # page is a published SCORE, so none is written until the city's site release crosses the one-way door.
-        if city in app.SITE_FACTS_ONLY_CITIES:
+        # Nor for a city the map scores whose pages are not built yet (app.AREA_PAGES_PENDING: the Bay Area,
+        # 2026-11-07, whose US inputs need their own findings and notes here before a page can say them).
+        if city in app.SITE_FACTS_ONLY_CITIES or city in app.AREA_PAGES_PENDING:
             continue
         for borough in sorted(cfg['boroughs']):
             data = gather(city, borough)

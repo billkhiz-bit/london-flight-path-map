@@ -25,6 +25,7 @@ import importlib.util
 import json
 import math
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -590,11 +591,39 @@ def test_the_page_carries_the_faa_disclaimer_its_licence_requires(page):
     assert 'not for navigation' in page
 
 
-def test_the_page_prints_no_decibel_figure_and_no_score(page):
+def test_the_page_prints_no_decibel_figure(page):
     # The 2022 tile service publishes no legend, so the band values are unverified.
     text = re.sub(r'<[^>]+>', ' ', page)
     assert not re.search(r'\bdB\b|decibel', text)
-    assert not re.search(r'\d(\.\d)?\s*/\s*10\b', text)
+
+
+# THE API'S SCORES (2026-11-07, built for review): until then this page printed no score at all (the test
+# above also refused any "N / 10"). Now every city carries the score /v1/score answers with balanced weights,
+# read from the Lambda's own calc_score, and no other figure out of 10 appears anywhere on the page.
+def test_every_city_carries_the_apis_score_and_nothing_else_is_out_of_ten(page):
+    sys.path.insert(0, str(REPO_ROOT / 'backend' / 'lambdas' / 'score'))
+    import app  # noqa: PLC0415
+
+    rows = dict(re.findall(r'<tr><th scope="row">([^<]*)<span class="co">.*?<span class="sc">Sky Score <b>([\d.]+)</b> / 10', page))
+    want = {name: f"{app.calc_score(name, 'bayarea', app.PERSONAS['balanced'])['score']:.1f}"
+            for name in app.CITIES['bayarea']['boroughs']}
+    assert rows == want
+    text = re.sub(r'<[^>]+>', ' ', page)
+    assert len(re.findall(r'\d(\.\d)?\s*/\s*10\b', text)) == len(want), 'a figure out of 10 that is not a city score'
+    # The mark where an input is withheld, for exactly the cities whose record withholds one.
+    marked = set(re.findall(r'<tr><th scope="row">([^<]*)<span class="co">[^\n]*?/ 10<span aria-hidden="true">\*</span>', page))
+    assert marked == {n for n, r in app.CITIES['bayarea']['boroughs'].items() if r.get('withheld')}
+
+
+def test_the_scores_say_their_scales_and_carry_their_credits(page):
+    text = re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', page))
+    assert "not comparable with a UK score" in text and "Price growth is not scored here" in text
+    assert 'an estimate from these routes' in text and 'not a measurement' in text
+    # LICENSING.md: BTS's transit map is CC BY 3.0 US, the runway counts ODbL, and FHFA never implies endorsement.
+    for credit in ('Bureau of Transportation Statistics, National Transit Map (CC BY 3.0 US)',
+                   'aircraft positions via adsb.lol (ODbL 1.0)', 'no FHFA endorsement implied',
+                   'California DOJ OpenJustice', 'FEMA National Flood Hazard Layer'):
+        assert credit in text, credit
 
 
 def test_the_page_repeats_what_bts_says_its_map_is_not_for(page):

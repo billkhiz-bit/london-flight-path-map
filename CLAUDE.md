@@ -84,12 +84,14 @@ Or just describe what you need, I have full context of this project.
 - **Sky Score**: property noise and liveability data. The consumer site is the marketing engine; the B2B
   `/v1/score` API is the product. Pivoted May 2026 from "AI-powered" to data-first.
 - **THE public coverage sentence, the only one to quote**: "97 council areas in 13 UK city regions, plus New
-  York's 5 boroughs and 50 Bay Area cities (facts only)".
+  York's 5 boroughs and 50 Bay Area cities" ("(facts only)" left it 2026-11-07, when the site began to score the Bay
+  Area; `tests/test_llms_txt.py` holds the sentence ending at "cities.").
 - **Surfaces**: `/v1/score` serves 15 cities LIVE, the 15th the Bay Area's 50 cities (live 2026-10-29), by name
-  (`city=bayarea`) or by ZIP (scored as the city where half or more of its residents live); the site keeps their facts
-  (`SITE_FACTS_ONLY_CITIES`, held both ways by both parity gates). The site SCORES 11 (London 33, NYC 5, Greater Manchester 10,
-  West Midlands 7, West Yorkshire 5, South Yorkshire 4, Merseyside 5, Tyne and Wear 5, Bristol 4, Leicester 8,
-  Teesside 5 = 91 boroughs) and shows the **Bay Area's 50 cities as facts with no score**. API-only, declared
+  (`city=bayarea`) or by ZIP (scored as the city where half or more of its residents live). The site SCORES 12 (London
+  33, NYC 5, Greater Manchester 10, West Midlands 7, West Yorkshire 5, South Yorkshire 4, Merseyside 5, Tyne and Wear 5,
+  Bristol 4, Leicester 8, Teesside 5 = 91 boroughs, plus the **Bay Area's 50 cities on US scales** since 2026-11-07:
+  the full map, its front-page cards, `/bay-area/` and 50 area pages, each equal to the API). `SITE_FACTS_ONLY_CITIES`
+  and `AREA_PAGES_PENDING` (the Lambda) are EMPTY and kept, both parity gates reading them. API-only, declared
   in `BACKEND_ONLY_CITIES`: Cardiff (cannot leave: no Progress 8 in Wales) and Nottingham (judgement). Greater
   Norwich (3) is an API-only preview. Uncovered spot-check postcode: **`EX1 1HS`** (must say NOT COVERED YET,
   no link).
@@ -128,6 +130,12 @@ Or just describe what you need, I have full context of this project.
 - **Derive, never copy.** Anything between generated markers (`FLIGHT-PATHS-LONDON`, `RUNWAY-AXES`,
   `<CITY>-NEIGHBOURHOODS`, `BACKEND-ONLY-PRICES`, `US-QUIET-NYC`, `US-QUIET-BAYAREA`, `AREA_SCORECARDS`, `COVERAGE-STRIP`, `HOW-IT-WORKS-*` ...)
   is rewritten by its builder; never hand-edit it. Each builder's `--check` is the gate.
+- **The Bay Area's records have one builder and two holders**: `scripts/build_bayarea_records.py --write` writes the
+  Lambda's `BAYAREA-BOROUGHS` and `index.html`'s `BAYAREA-RECORDS` (the records, the California anchors, the top code,
+  the few-residents note, each input's source and YEAR read from its reader's file, the US-scales sentence); its
+  `input_facts()` words every input for the front page (`data/us-bayarea-front.json`, `build_bayarea_front.py`) and the
+  area pages. Never `borough-extra.json` (its ~30 readers are UK-shaped). The map ranks them by score with `*` on a
+  withheld input, the rule `scoresTooCloseNote()` shared with the borough ranking (`docs/lessons/us-cities.md`).
 - **Scoring inputs live in BOTH holders** (Lambda registry + `data/borough-extra.json` / `index.html`),
   held by `tests/test_borough_data_parity.py`. Use `build_borough_bands.py --write --write-lambda`, never
   `--sync-lambda` (it skips the API-only cities).

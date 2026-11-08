@@ -1,0 +1,2388 @@
+{
+ "generator": "scripts/build_bayarea_front.py",
+ "weighting": "balanced",
+ "us_scales": "On US scales: crime, road noise and flood risk are scored against California's own figures, and prices among the Bay Area's 50 cities alone. Not comparable with a UK score, nor with New York's.",
+ "growth_not_scored": "FHFA's price trend is county-wide, so the Bay Area's 50 cities hold only four values, and scaled against each other they read as extremes they do not have; context.priceTrendPct reports the county's change as a fact",
+ "rows": [
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Alameda",
+   "county": "Alameda",
+   "score": 2.5,
+   "quiet": 1.5,
+   "afford": 5.9,
+   "growth": "",
+   "live": 1.3,
+   "env": 0.2,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,235,700",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "39.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "13.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "7.04% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/alameda/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Albany",
+   "county": "Alameda",
+   "score": 6.5,
+   "quiet": 10.0,
+   "afford": 6.3,
+   "growth": "",
+   "live": 3.1,
+   "env": 5.3,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,202,200",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "25.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "10.2% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/albany/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Atherton",
+   "county": "San Mateo",
+   "score": 5.9,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 5.3,
+   "env": 9.4,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "8.6 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "1.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/atherton/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Belmont",
+   "county": "San Mateo",
+   "score": 4.6,
+   "quiet": 7.5,
+   "afford": 0.0,
+   "growth": "",
+   "live": 4.7,
+   "env": 6.7,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "13.2 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "5.4% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "1.4% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/belmont/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Berkeley",
+   "county": "Alameda",
+   "score": 4.7,
+   "quiet": 7.5,
+   "afford": 4.3,
+   "growth": "",
+   "live": 1.8,
+   "env": 4.8,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,413,900",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "46.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Moderate: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "11.2% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/berkeley/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Brisbane",
+   "county": "San Mateo",
+   "score": 5.5,
+   "quiet": 5.0,
+   "afford": 6.0,
+   "growth": "",
+   "live": 5.1,
+   "env": 6.4,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,232,200",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "9.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "7% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.62% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/brisbane/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Burlingame",
+   "county": "San Mateo",
+   "score": 2.6,
+   "quiet": 3.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 4.7,
+   "env": 2.6,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "20.4 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Moderate: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "11.8% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "3.38% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/burlingame/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Campbell",
+   "county": "Santa Clara",
+   "score": 5.7,
+   "quiet": 10.0,
+   "afford": 2.6,
+   "growth": "",
+   "live": 3.7,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$1,617,000",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "27.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Moderate: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "11.7% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 9% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/campbell/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Colma",
+   "county": "San Mateo",
+   "score": 5.8,
+   "quiet": 5.0,
+   "afford": 7.8,
+   "growth": "",
+   "live": 4.5,
+   "env": 6.2,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,062,000",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "469.3 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more. Few residents: crime is counted where it happens and divided by the people who live here, and this city's shops, offices or cemeteries draw far more people by day than live in it, so its rate per resident reads high. The rate and the score are unchanged by this note.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Excellent: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "8.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/colma/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Cupertino",
+   "county": "Santa Clara",
+   "score": 5.1,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 4.4,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "15.2 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "7.4% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 27% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/cupertino/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Daly City",
+   "county": "San Mateo",
+   "score": 5.6,
+   "quiet": 5.0,
+   "afford": 7.2,
+   "growth": "",
+   "live": 4.3,
+   "env": 6.1,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,115,000",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "16 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "8.5% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/daly-city/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Dublin",
+   "county": "Alameda",
+   "score": 6.8,
+   "quiet": 10.0,
+   "afford": 5.1,
+   "growth": "",
+   "live": 4.4,
+   "env": 7.3,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,317,100",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "15.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "5.5% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.28% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/dublin/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "East Palo Alto",
+   "county": "San Mateo",
+   "score": 6.2,
+   "quiet": 10.0,
+   "afford": 7.3,
+   "growth": "",
+   "live": 3.6,
+   "env": 0.0,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,102,600",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "21.4 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "15% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "32.45% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/east-palo-alto/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Emeryville",
+   "county": "Alameda",
+   "score": 7.7,
+   "quiet": 7.5,
+   "afford": 10.0,
+   "growth": "",
+   "live": "",
+   "env": 3.6,
+   "methodology_version": "5.7",
+   "withheld": [
+    "transport"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$604,800",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "109.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more. Few residents: crime is counted where it happens and divided by the people who live here, and this city's shops, offices or cemeteries draw far more people by day than live in it, so its rate per resident reads high. The rate and the score are unchanged by this note.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Withheld, not estimated: its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put back the city reads good, not poor (measured 2026-10-22)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "24.8% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/emeryville/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Foster City",
+   "county": "San Mateo",
+   "score": 4.1,
+   "quiet": 5.0,
+   "afford": 1.0,
+   "growth": "",
+   "live": 5.3,
+   "env": 5.8,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,838,200",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "8.3 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "6.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "2.15% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/foster-city/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Fremont",
+   "county": "Alameda",
+   "score": 5.6,
+   "quiet": 7.5,
+   "afford": 4.4,
+   "growth": "",
+   "live": 4.1,
+   "env": 6.4,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,403,800",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "18.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "6.9% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.63% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/fremont/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Gilroy",
+   "county": "Santa Clara",
+   "score": 7.4,
+   "quiet": 10.0,
+   "afford": 8.2,
+   "growth": "",
+   "live": 3.4,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$1,027,400",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "23.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "5.9% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 13% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/gilroy/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Half Moon Bay",
+   "county": "San Mateo",
+   "score": 6.0,
+   "quiet": 7.5,
+   "afford": 3.1,
+   "growth": "",
+   "live": "",
+   "env": 8.1,
+   "methodology_version": "5.7",
+   "withheld": [
+    "crimePer1000Us"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$1,549,500",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "Withheld, not estimated: policed by the San Mateo County Sheriff under contract; DOJ counts its crime in the sheriff's county figures, so it has no rate of its own",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "3.8% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.27% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/half-moon-bay/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Hayward",
+   "county": "Alameda",
+   "score": 5.5,
+   "quiet": 5.0,
+   "afford": 10.0,
+   "growth": "",
+   "live": 2.4,
+   "env": 3.7,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$854,400",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "30.7 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "11.1% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "2.02% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/hayward/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Hillsborough",
+   "county": "San Mateo",
+   "score": 5.1,
+   "quiet": 7.5,
+   "afford": 0.0,
+   "growth": "",
+   "live": 5.7,
+   "env": 8.4,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "5.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "3.5% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/hillsborough/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Livermore",
+   "county": "Alameda",
+   "score": 7.2,
+   "quiet": 10.0,
+   "afford": 7.3,
+   "growth": "",
+   "live": 3.8,
+   "env": 7.2,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,105,600",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "19.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "4.8% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "1.06% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/livermore/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Los Altos",
+   "county": "Santa Clara",
+   "score": 5.3,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 5.0,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "10.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "4.6% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 8% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/los-altos/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Los Altos Hills",
+   "county": "Santa Clara",
+   "score": 5.6,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 5.9,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "3.8 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "2.6% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 5% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/los-altos-hills/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Los Gatos",
+   "county": "Santa Clara",
+   "score": 5.2,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 4.6,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "13.7 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "7.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 9% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/los-gatos/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Menlo Park",
+   "county": "San Mateo",
+   "score": 4.7,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 4.2,
+   "env": 2.8,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "17.2 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "7.8% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "14.83% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/menlo-park/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Millbrae",
+   "county": "San Mateo",
+   "score": 1.3,
+   "quiet": 1.5,
+   "afford": 0.4,
+   "growth": "",
+   "live": "",
+   "env": 2.6,
+   "methodology_version": "5.7",
+   "withheld": [
+    "crimePer1000Us"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$1,934,900",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "Withheld, not estimated: policed by the San Mateo County Sheriff under contract; DOJ counts its crime in the sheriff's county figures, so it has no rate of its own",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "12.1% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "3.2% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/millbrae/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Milpitas",
+   "county": "Santa Clara",
+   "score": 5.4,
+   "quiet": 7.5,
+   "afford": 5.8,
+   "growth": "",
+   "live": 2.4,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$1,251,700",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "31.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "10% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 10% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/milpitas/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Monte Sereno",
+   "county": "Santa Clara",
+   "score": 6.1,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 5.8,
+   "env": 9.6,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "4.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "0.9% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/monte-sereno/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Morgan Hill",
+   "county": "Santa Clara",
+   "score": 7.0,
+   "quiet": 10.0,
+   "afford": 6.2,
+   "growth": "",
+   "live": 4.3,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$1,210,200",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "16.3 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "2.6% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 7% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/morgan-hill/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Mountain View",
+   "county": "Santa Clara",
+   "score": 4.9,
+   "quiet": 10.0,
+   "afford": 0.5,
+   "growth": "",
+   "live": 2.9,
+   "env": 6.0,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,927,000",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "26.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "8.6% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.05% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/mountain-view/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Newark",
+   "county": "Alameda",
+   "score": 5.7,
+   "quiet": 7.5,
+   "afford": 6.9,
+   "growth": "",
+   "live": 2.2,
+   "env": 6.0,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,142,800",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "32.4 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "5.7% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "2.36% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/newark/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Oakland",
+   "county": "Alameda",
+   "score": 5.6,
+   "quiet": 7.5,
+   "afford": 9.4,
+   "growth": "",
+   "live": 0.9,
+   "env": 3.2,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$929,900",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "67.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "17% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.81% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/oakland/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Pacifica",
+   "county": "San Mateo",
+   "score": 4.9,
+   "quiet": 3.0,
+   "afford": 5.8,
+   "growth": "",
+   "live": 5.0,
+   "env": 7.1,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,249,800",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "10.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "4.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "1.56% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/pacifica/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Palo Alto",
+   "county": "Santa Clara",
+   "score": 4.4,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 2.5,
+   "env": 3.9,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "30.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "5.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "22.59% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/palo-alto/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Piedmont",
+   "county": "Alameda",
+   "score": 4.6,
+   "quiet": 7.5,
+   "afford": 0.0,
+   "growth": "",
+   "live": 3.7,
+   "env": 8.7,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "20.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "2.8% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/piedmont/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Pleasanton",
+   "county": "Alameda",
+   "score": 6.0,
+   "quiet": 10.0,
+   "afford": 3.2,
+   "growth": "",
+   "live": 4.5,
+   "env": 4.8,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,537,100",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "14.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "6.2% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "4.08% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/pleasanton/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Portola Valley",
+   "county": "San Mateo",
+   "score": 5.6,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": "",
+   "env": 6.6,
+   "methodology_version": "5.7",
+   "withheld": [
+    "crimePer1000Us"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "Withheld, not estimated: policed by the San Mateo County Sheriff under contract; DOJ counts its crime in the sheriff's county figures, so it has no rate of its own",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "1.6% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "4.58% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/portola-valley/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Redwood City",
+   "county": "San Mateo",
+   "score": 4.1,
+   "quiet": 7.5,
+   "afford": 1.3,
+   "growth": "",
+   "live": 4.0,
+   "env": 2.1,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,801,700",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "18.3 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "9.2% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "12.83% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/redwood-city/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "San Bruno",
+   "county": "San Mateo",
+   "score": 3.7,
+   "quiet": 1.5,
+   "afford": 6.2,
+   "growth": "",
+   "live": 4.3,
+   "env": 2.6,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,207,500",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "16.4 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "11% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "3.95% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/san-bruno/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "San Carlos",
+   "county": "San Mateo",
+   "score": 5.8,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": "",
+   "env": 7.5,
+   "methodology_version": "5.7",
+   "withheld": [
+    "crimePer1000Us"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "Withheld, not estimated: policed by the San Mateo County Sheriff under contract; DOJ counts its crime in the sheriff's county figures, so it has no rate of its own",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "3.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "1.63% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/san-carlos/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "San Francisco",
+   "county": "San Francisco",
+   "score": 5.3,
+   "quiet": 7.5,
+   "afford": 4.4,
+   "growth": "",
+   "live": 4.3,
+   "env": 4.2,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,394,500",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Francisco County, +0.5% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "33.7 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Good: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "12.2% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.29% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/san-francisco/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "San Jose",
+   "county": "Santa Clara",
+   "score": 5.5,
+   "quiet": 7.5,
+   "afford": 6.0,
+   "growth": "",
+   "live": 2.7,
+   "env": "",
+   "methodology_version": "5.7",
+   "withheld": [
+    "floodSfhaPct"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$1,233,200",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "28.9 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "7.6% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "Withheld, not estimated: FEMA has not determined the flood risk for 76% of residents (zone D or unmapped)",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/san-jose/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "San Leandro",
+   "county": "Alameda",
+   "score": 3.9,
+   "quiet": 1.5,
+   "afford": 10.0,
+   "growth": "",
+   "live": 2.0,
+   "env": 1.6,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$844,200",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "34.4 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "10.4% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "7.11% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/san-leandro/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "San Mateo",
+   "county": "San Mateo",
+   "score": 4.0,
+   "quiet": 5.0,
+   "afford": 2.6,
+   "growth": "",
+   "live": 5.2,
+   "env": 1.9,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,618,700",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "16.4 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Moderate: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "16.4% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "2.92% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/san-mateo/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Santa Clara",
+   "county": "Santa Clara",
+   "score": 4.6,
+   "quiet": 7.5,
+   "afford": 2.9,
+   "growth": "",
+   "live": 2.8,
+   "env": 5.0,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,582,600",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "27.6 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "4.1% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "5.42% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/santa-clara/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Saratoga",
+   "county": "Santa Clara",
+   "score": 5.7,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": 5.7,
+   "env": 7.1,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "5.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "5.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0.85% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/saratoga/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "South San Francisco",
+   "county": "San Mateo",
+   "score": 3.5,
+   "quiet": 0.0,
+   "afford": 6.4,
+   "growth": "",
+   "live": 4.4,
+   "env": 4.3,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,188,800",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "15.1 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "10.4% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "1.5% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/south-san-francisco/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Sunnyvale",
+   "county": "Santa Clara",
+   "score": 4.2,
+   "quiet": 7.5,
+   "afford": 1.3,
+   "growth": "",
+   "live": 3.8,
+   "env": 3.4,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,801,800",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Santa Clara County, -0.63% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "20.4 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "6.4% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "8.12% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/sunnyvale/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Union City",
+   "county": "Alameda",
+   "score": 5.1,
+   "quiet": 5.0,
+   "afford": 7.3,
+   "growth": "",
+   "live": 3.5,
+   "env": 4.3,
+   "methodology_version": "5.7",
+   "withheld": [],
+   "facts": [
+    [
+     "Median home value",
+     "$1,104,900",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "Alameda County, -1.91% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "22.5 per 1,000 residents a year, scored 10 at none, 5 at California's 21.39, 0 at double or more.",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "7.7% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "3.67% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/union-city/"
+  },
+  {
+   "city": "bayarea",
+   "city_name": "San Francisco Bay Area",
+   "borough": "Woodside",
+   "county": "San Mateo",
+   "score": 5.9,
+   "quiet": 10.0,
+   "afford": 0.0,
+   "growth": "",
+   "live": "",
+   "env": 8.0,
+   "methodology_version": "5.7",
+   "withheld": [
+    "crimePer1000Us"
+   ],
+   "facts": [
+    [
+     "Median home value",
+     "$2M or more (the Census's top code)",
+     "US Census Bureau American Community Survey 5-year estimates, 2020-2024"
+    ],
+    [
+     "County price trend",
+     "San Mateo County, -0.61% in a year (a fact, not scored: county-wide)",
+     "FHFA county house price index, 2025"
+    ],
+    [
+     "Crime",
+     "Withheld, not estimated: policed by the San Mateo County Sheriff under contract; DOJ counts its crime in the sheriff's county figures, so it has no rate of its own",
+     "California DOJ OpenJustice, 2025"
+    ],
+    [
+     "Rail access",
+     "Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)",
+     "BTS National Transit Map, compiled 2026"
+    ],
+    [
+     "Road noise",
+     "4.3% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California's 6.88%, 0 at double or more",
+     "BTS National Transportation Noise Map, 2022"
+    ],
+    [
+     "Flood risk",
+     "0% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California's 3.14%, 0 at double or more",
+     "FEMA National Flood Hazard Layer, as read October 2026"
+    ]
+   ],
+   "area_page": "/area/bayarea/woodside/"
+  }
+ ]
+}

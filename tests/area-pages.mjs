@@ -222,7 +222,7 @@ check(
 // declared in four other places.
 const UK_BODIES =
   /ONS Table|HM Land Registry|DEFRA|Environment Agency|NaPTAN|NHS ODS|NHS Organisation Data Service|DfE KS4/i;
-const NON_UK_PREFIXES = ['/area/nyc/'];
+const NON_UK_PREFIXES = ['/area/nyc/', '/area/bayarea/'];
 
 const ukCredited = pages.filter(
   (p) =>

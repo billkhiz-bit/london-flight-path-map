@@ -1085,7 +1085,7 @@ compares them. The ramps and the floor gained their first direct unit tests in
 only through `resolve_query`.
 
 
-### 4.8 The San Francisco Bay Area (release 2, built 2026-10-22, live in the API 2026-10-29; the site shows facts)
+### 4.8 The San Francisco Bay Area (release 2, built 2026-10-22, live in the API 2026-10-29; on the site 2026-11-07)
 
 The Bay Area's 50 incorporated cities and towns (San Francisco, San Mateo, Santa Clara and Alameda counties) are
 scored by `/v1/score` under `city=bayarea`, asked by city NAME (`borough=Palo Alto`) or by a ZIP of the four
@@ -1097,8 +1097,10 @@ as Castro Valley) is not scored and answers 404 with its places and shares. Resi
 chooses the city and adds no precision: it scores exactly as the city does by name. One table serves the site and
 the API (`scripts/build_bayarea_zips.py`, from the 2020 Census's residents by block joined to ZIP areas: 147 of 165
 ZIPs are scored as a city, and 7 small cities hold no ZIP's majority). The
-consumer site keeps showing the Bay Area as facts with no score until its own release (Bill, 2026-10-22: "API
-first, site second"; `SITE_FACTS_ONLY_CITIES`, held both ways by the parity gates).
+consumer site showed the Bay Area as facts with no score until its own release (Bill, 2026-10-22: "API
+first, site second"); since 2026-11-07 the full map, the front page, `/bay-area/` and 50 area pages show each
+city's API score, computed from the same records (index.html `BAYAREA-RECORDS`), on the US scales above and said
+to be so: not comparable with a UK score.
 
 **Every share is over RESIDENTS** (2020 Census blocks, weighted by population), never area or addresses.
 

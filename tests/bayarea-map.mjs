@@ -1,18 +1,19 @@
-// The San Francisco Bay Area on the live map: drawn, clicked, ranked and searched, with NO score.
+// The San Francisco Bay Area on the live map: drawn, clicked, ranked and searched, with the API's scores.
 //
-// WHY THIS EXISTS. Release 1 (2026-10-05, Bill's ruling) puts the Bay Area on
-// the map with the /bay-area/ page's FACTS and no number, because every UK
-// quiet estimate is fitted against DEFRA and the Bay Area has no yardstick. It
-// is the first city whose records are not scores, so every place that prints
-// a score is a place it could print "undefined/10", and every search route that
-// assumes New York's ZIP table could swallow a Bay Area ZIP.
+// WHY THIS EXISTS. Release 1 (2026-10-05, Bill's ruling) put the Bay Area on
+// the map with the /bay-area/ page's FACTS and no number. Its card and ranking
+// are its own, so every place that prints a score is a place it could print
+// "undefined/10", and every search route that assumes New York's ZIP table
+// could swallow a Bay Area ZIP. Since 2026-11-07 (built for review) the card and
+// the ranking carry the API's score on US scales: tests/borough-score-parity.mjs
+// holds every city and persona to calc_score; this holds what a visitor SEES.
 //
 // WHAT IT ASSERTS, at desktop and phone widths, every off-site request aborted
 // and postcodes.io answering 404 (so a name search has nowhere else to go):
 //   1. The Bay Area chip draws its 50 cities, three airports and the routes.
-//   2. A city opens a facts card ON SCREEN with the page's own text and no
-//      score anywhere in it.
-//   3. The ranking is the noise-map order, with no score column.
+//   2. A city opens its card ON SCREEN with the page's own facts and the API's
+//      score, said to be on US scales, with no placeholder anywhere in it.
+//   3. The ranking is by the API's score, best first, with * on a city whose input is withheld.
 //   4. A Bay Area ZIP typed from London lands on that city's card, with the ZIP.
 //   5. A Bay Area city NAME typed from London does too.
 //   6. A ZIP in no drawn city says so, on screen.
@@ -23,6 +24,7 @@
 //   node tests/bayarea-map.mjs
 
 import { chromium } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, dirname } from 'node:path';
@@ -57,6 +59,20 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((r) => server.listen(PORT, '127.0.0.1', r));
 const BASE = `http://127.0.0.1:${PORT}/`;
+
+// The API's own scores (balanced, the page's default persona), from the score Lambda's calc_score: what the
+// card and the ranking must print. Read, never typed: a score moves with every data roll.
+const API_SCORES = JSON.parse(
+  execFileSync(
+    'python',
+    [
+      '-c',
+      "import json, sys; sys.path.insert(0, 'backend/lambdas/score'); import app; " +
+        "print(json.dumps({b: app.calc_score(b, 'bayarea', app.PERSONAS['balanced'])['score'] for b in app.CITIES['bayarea']['boroughs']}))",
+    ],
+    { cwd: ROOT, encoding: 'utf-8' }
+  )
+);
 
 const failures = [];
 let checks = 0;
@@ -128,16 +144,24 @@ for (const vp of [
   }));
   ok(drawn.outlines === 50 && drawn.airports === 3 && drawn.routes >= 40, `${L} the Bay Area draws 50 cities, 3 airports and its routes`, JSON.stringify(drawn));
 
-  // 2. A city's facts, on screen, with no score.
+  // 2. A city's card, on screen: the page's facts and the API's score, on US scales.
   await page.evaluate(() => selectBoroughByName('San Bruno'));
   await page.waitForTimeout(300);
   const sb = await panel(page);
   ok(
-    sb.title === 'SAN BRUNO' && sb.onScreen && /Not scored/.test(sb.text) && /94% of the city/.test(sb.text) && /SFO 10L/.test(sb.text),
-    `${L} San Bruno opens its facts card on screen, in the page's own words`,
+    sb.title === 'SAN BRUNO' && sb.onScreen && /94% of the city/.test(sb.text) && /SFO 10L/.test(sb.text),
+    `${L} San Bruno opens its card on screen, with the page's own facts`,
     `${sb.title} / on screen ${sb.onScreen} / ${sb.text.slice(0, 140)}`
   );
-  ok(!/\/10|undefined|NaN|null/.test(sb.text), `${L} the facts card prints no score and no placeholder`, sb.text.slice(0, 200));
+  ok(
+    sb.text.includes(`${API_SCORES['San Bruno']}/10`) &&
+      /Not comparable with a UK score/.test(sb.text) &&
+      /without warranty/.test(sb.text) &&
+      /adsb\.lol \(ODbL/.test(sb.text) &&
+      !/undefined|NaN|null|\[object/.test(sb.text),
+    `${L} the card prints the API's score (${API_SCORES['San Bruno']}), on US scales, credited, with no placeholder`,
+    sb.text.slice(0, 260)
+  );
 
   // 2a. Arrivals (2026-10-06): drawn, and named on a card with the FAA's altitude.
   // The subject is taken from the data, not named: a city borrowed by name stops
@@ -167,19 +191,36 @@ for (const vp of [
     ok(false, `${L} some city carries an arrival with a published altitude`, 'none in us-bayarea-cities.json');
   }
 
-  // 3. The ranking: noise-map order, no score column.
+  // 3. The ranking: by the API's score, best first (Bill, 2026-11-07), * explained beside the table.
   const rank = await page.evaluate(() => {
     renderBoroughRanking();
     const head = [...document.querySelectorAll('#borough-ranking thead th')].map((t) => t.textContent.trim());
-    const first = [...document.querySelectorAll('#borough-ranking tbody tr')].map((tr) => tr.dataset.rankName);
-    return { head, first: first.slice(0, 3), n: first.length, text: document.getElementById('borough-ranking').innerText };
+    const rows = [...document.querySelectorAll('#borough-ranking tbody tr')];
+    const first = rows.map((tr) => tr.dataset.rankName);
+    // The cell renders `<span aria-hidden>GLYPH</span> 7.9`, a withheld input adding a `*`: the number in it.
+    const scores = Object.fromEntries(
+      rows.map((tr) => [tr.dataset.rankName, parseFloat((tr.querySelector('td.col-score')?.textContent.match(/[\d.]+/) || [])[0])])
+    );
+    return { head, first, n: first.length, scores, text: document.getElementById('borough-ranking').innerText };
   });
+  const wrongScores = Object.entries(API_SCORES).filter(([name, want]) => rank.scores[name] !== want);
   ok(
-    rank.n === 50 && rank.head.includes('On the noise map') && !rank.head.some((h) => /score/i.test(h)) && /Not scored/.test(rank.text),
-    `${L} the ranking lists 50 cities by noise-map share, with no score column`,
-    JSON.stringify({ head: rank.head, n: rank.n })
+    rank.n === Object.keys(API_SCORES).length &&
+      rank.head.includes('On the noise map') &&
+      rank.head.some((h) => /^Score/.test(h)) &&
+      wrongScores.length === 0 &&
+      /Buyer Score/.test(rank.text) &&
+      /Not comparable with a UK score/.test(rank.text),
+    `${L} the ranking lists the ${Object.keys(API_SCORES).length} cities, each with the API's score`,
+    JSON.stringify({ head: rank.head, n: rank.n, wrong: wrongScores.slice(0, 3) })
   );
-  ok(rank.first[0] === 'Colma', `${L} the ranking starts where the Bay Area page does (Colma, 100%)`, rank.first.join(', '));
+  // The order is the API's scores, best first, ties by name: derived from API_SCORES, never a named city.
+  const wantOrder = Object.entries(API_SCORES).sort((a, b) => b[1] - a[1] || (a[0] > b[0] ? 1 : -1)).map(([n]) => n);
+  ok(
+    rank.first.join('|') === wantOrder.join('|') && /\* An input is withheld, not estimated/.test(rank.text),
+    `${L} the ranking is by the API's score, best first (${wantOrder[0]}), and says what * means`,
+    `${rank.first.slice(0, 3).join(', ')} vs ${wantOrder.slice(0, 3).join(', ')}`
+  );
 
   // 4. A Bay Area ZIP from London.
   await page.evaluate(() => switchCity('london'));
@@ -187,7 +228,12 @@ for (const vp of [
   await page.evaluate(() => triggerSearch('94301'));
   await page.waitForFunction(() => /PALO ALTO/i.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
   const zip = await panel(page);
-  ok(/PALO ALTO/i.test(zip.title) && zip.onScreen && /ZIP 94301[\s\S]*In Palo Alto\./i.test(zip.text), `${L} ZIP 94301 typed on London's map opens Palo Alto with its ZIP line`, `${zip.title} / ${zip.text.slice(0, 160)}`);
+  ok(
+    /PALO ALTO/i.test(zip.title) && zip.onScreen && /ZIP 94301[\s\S]*In Palo Alto\./i.test(zip.text) &&
+      /ZIP 94301 is scored as Palo Alto/.test(zip.text) && zip.text.includes(`${API_SCORES['Palo Alto']}/10`),
+    `${L} ZIP 94301 typed on London's map opens Palo Alto with its ZIP line, scored as the city`,
+    `${zip.title} / ${zip.text.slice(0, 160)}`
+  );
 
   // 4a. The ZIP tier: its own AREA's facts and outline, then its city's (layer 1, 2026-10-05).
   await page.evaluate(() => switchCity('london'));
@@ -212,8 +258,9 @@ for (const vp of [
   const nh = await panel(page);
   const nhOutline = await page.evaluate(() => document.querySelectorAll('.tier-outline').length);
   ok(
-    /EXCELSIOR/i.test(nh.title) && nh.onScreen && /A neighbourhood of San Francisco/.test(nh.text) && /60% of the neighbourhood/.test(nh.text) && nhOutline === 1,
-    `${L} "Excelsior" opens a San Francisco neighbourhood card with its own facts and outline`,
+    /EXCELSIOR/i.test(nh.title) && nh.onScreen && /A neighbourhood of San Francisco/.test(nh.text) && /60% of the neighbourhood/.test(nh.text) && nhOutline === 1 &&
+      /Not scored/.test(nh.text) && !/\/10/.test(nh.text),
+    `${L} "Excelsior" opens a San Francisco neighbourhood card with its own facts and outline, and no score of its own`,
     `${nh.title} / outline ${nhOutline} / ${nh.text.slice(0, 160)}`
   );
 
@@ -272,7 +319,11 @@ for (const vp of [
   await page.evaluate(() => triggerSearch('94305'));
   await page.waitForFunction(() => /ZIP 94305/i.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
   const cdp = await panel(page);
-  ok(/ZIP 94305/i.test(cdp.title) && cdp.onScreen && /Santa Clara County/.test(cdp.text) && /Stanford/.test(cdp.text), `${L} a ZIP in no drawn city says so, on screen, and names where it is`, `${cdp.title} / ${cdp.text.slice(0, 160)}`);
+  ok(
+    /ZIP 94305/i.test(cdp.title) && cdp.onScreen && /Santa Clara County/.test(cdp.text) && /Stanford/.test(cdp.text) && !/\/10/.test(cdp.text),
+    `${L} a ZIP in no drawn city says so, on screen, names where it is, and borrows no city's score`,
+    `${cdp.title} / ${cdp.text.slice(0, 160)}`
+  );
 
   // 7. A ZIP in neither table.
   await page.evaluate(() => triggerSearch('90210'));
@@ -385,4 +436,4 @@ if (failures.length) {
   for (const f of failures) console.error('  - ' + f);
   process.exit(1);
 }
-console.log(`\nThe Bay Area is drawn, searched and ranked with no score: ${checks} checks.`);
+console.log(`\nThe Bay Area is drawn, searched and ranked, with the API's scores: ${checks} checks.`);

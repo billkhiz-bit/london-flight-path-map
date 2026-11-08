@@ -2000,6 +2000,17 @@ Bill's rulings: the Bay Area goes live as a flight-path PAGE first (`/bay-area/`
 covering the 50 cities of the four counties round SFO, OAK and SJC; the scored
 city on the map follows. Detail and what was learnt: EXPANSION.md.
 
+**The site scores the Bay Area (2026-11-07, branch `bayarea-site-scores`, BUILT, not yet deployed; Bill reviewed it
+on localhost and ruled the four open points).** The full map, the front-page cards, `/bay-area/` and 50 area pages
+(152 in all) show each city's API score, from the API's own records (`BAYAREA-RECORDS`, written beside the Lambda's
+by `build_bayarea_records.py`; the front file by `build_bayarea_front.py`). Bill's rulings: the map ranks the cities
+by score with `*` on a withheld input, said beside the table; "(facts only)" leaves the coverage sentence everywhere;
+the front-page cards are scored; every input figure carries its source and year (years read from the readers' files).
+`SITE_FACTS_ONLY_CITIES` and `AREA_PAGES_PENDING` are empty. To ship: preflight, then backend (only comments and the
+two empty sets change in app.py) and `data-deploy` (the new `data/us-bayarea-front.json`) before `web-deploy`,
+`home-deploy`, `bay-area-deploy`, `area-deploy`, `meta-deploy` (llms.txt, sitemap); verify with the drift check and
+`area-page-freshness.mjs` (152 pages). Detail: `docs/lessons/us-cities.md`.
+
 - [x] Derive the routes from the FAA's CIFP (`build_us_flight_paths.py`).
 - [x] Build and gate the page (`build_bay_area_page.py --check`, blocking).
 - [x] **DEPLOYED 2026-10-02 (22:05 UTC) and verified from the origin**: every

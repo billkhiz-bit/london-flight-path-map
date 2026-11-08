@@ -2054,8 +2054,9 @@ NORWICH_BOROUGHS = {
     'South Norfolk': {'impact': 'low', 'avgPrice': 307735, 'trend': -0.2, 'crimeRate': 41.8, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 0.56, 'roadNoiseAboveWhoPct': 33.8},
 }
 
-# The San Francisco Bay Area's 50 cities (release 2, 2026-10-22), scored by CITIES['bayarea'] (the API only:
-# the site shows them as facts until its own release, SITE_FACTS_ONLY_CITIES). Every field is joined by Census
+# The San Francisco Bay Area's 50 cities (release 2, 2026-10-22), scored by CITIES['bayarea'], and on the site's
+# full map and its 50 area pages from the same records since 2026-11-07 (index.html BAYAREA-RECORDS, the same
+# builder's second holder). Every field is joined by Census
 # GEOID from the readers' committed files (field-by-field sources in scripts/build_bayarea_records.py), and the
 # US measures carry their own names so no UK ramp can read them: crimePer1000Us, roadNoiseUsSharePct and
 # floodSfhaPct go to us_anchored_to_score against US_CALIFORNIA_ANCHORS. A city missing an input carries the
@@ -2376,11 +2377,12 @@ CITIES = {
         # than return the current set and present a fabricated zero change.
         # 'hasHistory': False,
     },
-    # The San Francisco Bay Area's 50 cities (release 2, 2026-10-22): the API scores them, the site shows
-    # them as facts until its own release (SITE_FACTS_ONLY_CITIES below). Its own POOL (decision 2): pooled
+    # The San Francisco Bay Area's 50 cities (release 2, 2026-10-22): the API scores them, and the site's full
+    # map and area pages since 2026-11-07 from the same records. Its own POOL
+    # (decision 2), mirrored by the site's CITY_DATA.bayarea.pool: pooled
     # with New York by currency, the "$2M+" top code would set the p95 and move New York's published
-    # affordability (Queens 6.5 -> 9.9). Reached by city NAME only for now: the Lambda holds no Bay Area ZIP
-    # table, and a ZIP spans cities (resolve_query says so on a Bay Area ZIP rather than guessing one).
+    # affordability (Queens 6.5 -> 9.9). Reached by city name, or by a ZIP scored as the city holding half or
+    # more of its residents (BAYAREA_ZIPS, 2026-10-23; until then names only).
     # hasHistory omitted, so ?compare=previous declines: no previous vintage was ever held.
     'bayarea': {
         'boroughs': BAYAREA_BOROUGHS,
@@ -2415,7 +2417,21 @@ CITIES = {
 # on the site, and a site city that renders facts while the API scores it must be here. Leaving this set is
 # the same one-way door as leaving BACKEND_ONLY_CITIES: the site must then reproduce the API on every borough.
 # scripts/build_area_pages.py writes no scored page for these.
-SITE_FACTS_ONLY_CITIES = frozenset({'bayarea'})
+#
+# EMPTY SINCE 2026-11-07 (built for review, branch bayarea-site-scores): the Bay Area LEFT through the door.
+# The full map scores its 50 cities from the API's own records (index.html BAYAREA-RECORDS, written beside
+# BAYAREA-BOROUGHS by scripts/build_bayarea_records.py), and tests/borough-score-parity.mjs now compares every
+# city and persona with calc_score. Kept, empty, because both parity gates read it: the next city through the
+# API-first door is declared here again.
+SITE_FACTS_ONLY_CITIES = frozenset()
+
+# Cities the site SCORES whose area pages are not written yet: scripts/build_area_pages.py writes none for
+# these (an area page bakes a score and its findings, and the Bay Area's US inputs need their own findings and
+# notes there), tests/area-page-freshness.mjs and tests/test_area_index_table.py leave them out of their counts,
+# and tests/test_borough_data_parity.py holds the set to cities the site scores. EMPTY since the same release
+# (2026-11-07): build_area_pages.py writes the Bay Area's 50 pages, its inputs in build_bayarea_records.py's words.
+# Kept, empty, for the next city whose map scores land before its pages.
+AREA_PAGES_PENDING = frozenset()
 
 # v5.1: the real-terms trend, attached to every sterling city's records here
 # rather than written into the thirteen borough tables above. IN PLACE, so the
