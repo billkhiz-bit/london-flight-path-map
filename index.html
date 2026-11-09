@@ -2881,6 +2881,23 @@
           margin-top: 40px;
         }
       }
+      /* "ALL THE DETAIL" ON THE TILES' SCALE (Bill, 2026-11-08: "can we make the text bigger in 'all the detail'"). The fold
+         still used the panel's old type: station lines and line badges 9 px, stations and NHS rows 10 px, labels 11 px.
+         Scoped to the fold, so nothing else moves; its new layout (a picture of what is within 1 km, then cards) follows. */
+      #panel-all .sidebar-section h3 { font-size: 13px; }
+      #panel-all .noise-detail-row,
+      #panel-all .noise-detail-value { font-size: 14px; }
+      #panel-all .noise-detail-label { font-size: 13px; }
+      #panel-all .info-note { font-size: 13.5px; line-height: 1.5; }
+      #panel-all .property-note { font-size: 14px; line-height: 1.55; }
+      #panel-all .transport-station,
+      #panel-all .station-name { font-size: 14px; }
+      #panel-all .station-dist { font-size: 13.5px; }
+      #panel-all .station-lines,
+      #panel-all .line-badge { font-size: 12px; }
+      #panel-all .line-status,
+      #panel-all .property-link,
+      #panel-all .crime-loading { font-size: 13px; }
       .find-group:not(:has(.find, .tile, .is-waiting, #postcode-air-section:not([hidden]))) {
         display: none;
       }
@@ -14168,7 +14185,10 @@
             if (!(weights[k] > 0)) return `<div class="score-row ac-skip"><span class="score-row-label">${name}</span><span class="score-row-value">not counted for this buyer</span></div>`;
             if (v === null || v === undefined) return `<div class="score-row ac-skip"><span class="score-row-label">${name}</span><span class="score-row-value">no data here</span></div>`;
             const x = pts.find((q) => q.k === k);
-            return `<div class="score-row"><div class="ac-cap"><span class="score-row-label">${name}</span><span class="score-row-value">${x.earned.toFixed(1)} <small>of ${x.possible.toFixed(1)}</small></span></div>`
+            // The part's OWN score, which no buyer profile changes, and how much it counts for this one (Bill, 2026-11-08:
+            // "2.0 of 3.2" became "0.6 of 0.9" for an investor, and read as the noise itself changing). The bar keeps both:
+            // its fill is the score, its length the weight.
+            return `<div class="score-row"><div class="ac-cap"><span class="score-row-label">${name}</span><span class="score-row-value">${show1(v)} <small>out of 10 · counts for ${Math.round(x.possible * 10)}%</small></span></div>`
               + `<div class="ac-pts-track" style="width:${(x.possible / most) * 100}%" aria-hidden="true"><i style="width:${x.possible ? (x.earned / x.possible) * 100 : 0}%;background:${scoreColor(v)}"></i></div></div>`;
           })
           .join('');
@@ -14184,7 +14204,7 @@
         <div class="ac-body">
           <p class="ac-sent">${escapeHtml(sentence)}</p>
           ${scoreCompareHtml(pcScore, place)}
-          <div class="ac-key">Points this place earns, out of the points each part can give</div>
+          <div class="ac-key">Each part’s own score, and how much it counts for this buyer</div>
           <div class="score-breakdown">${rows}</div>
           <div class="ac-profs" role="group" aria-label="Score it for">${chips}</div>
           <p class="ac-whose">Quiet skies is this ${isUkCity(currentCity) ? 'postcode' : 'ZIP code'}’s own; the other parts are ${escapeHtml(boroughName)}’s.</p>

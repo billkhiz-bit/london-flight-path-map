@@ -144,6 +144,14 @@ test.describe('Accessibility', () => {
     // started, and then races the render — a green wait that guarantees nothing,
     // which is the failure mode this whole test exists to close.
     await expect(page.locator('#sidebar-title')).toHaveText(/SW11/i, { timeout: 30_000 });
+    // Since 2026-11-08 the panel opens on an answer card whose score and findings are closed until tapped: wait for
+    // the card, then open the score and every tile as a reader would, so the scan reaches what they hold.
+    await expect(page.locator('.answer-card .summary-verdict')).toBeVisible({ timeout: 30_000 });
+    await page.locator('#sidebar-content details.tile').first().waitFor({ state: 'attached', timeout: 30_000 });
+    await page.evaluate(() => {
+      document.getElementById('ac-score')?.setAttribute('open', '');
+      for (const d of document.querySelectorAll('#sidebar-content details.tile')) d.open = true;
+    });
     await expect(page.locator('.score-row').first()).toBeVisible({ timeout: 30_000 });
 
     const results = await new AxeBuilder({ page })
