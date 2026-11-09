@@ -297,8 +297,13 @@ async function transportPanelText(body) {
   const read = () =>
     page3
       .evaluate(() => {
-        const el = document.getElementById('postcode-transport-data');
-        return el ? el.innerText.trim() : '';
+        // The line status has its own card since 2026-11-09: read both, stations first, as a reader opening both would.
+        return ['postcode-transport-data', 'postcode-line-status']
+          .map((id) => document.getElementById(id))
+          .filter(Boolean)
+          .map((el) => el.innerText.trim())
+          .filter(Boolean)
+          .join(' ');
       })
       .catch(() => '');
 
@@ -341,7 +346,7 @@ record(
 // assertion and the copy it checks were one edit away from each other.
 // A status ROW is the thing that must not exist.
 const statusRows = await page3.evaluate(
-  () => document.querySelectorAll('#postcode-transport-data .line-status').length
+  () => document.querySelectorAll('#postcode-transport-data .line-status, #postcode-line-status .line-status').length
 );
 record('partial TfL outage renders no status rows', statusRows === 0, `rows=${statusRows}`);
 

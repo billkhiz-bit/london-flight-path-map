@@ -792,6 +792,8 @@ check "walkthrough: noise + air steps"    node tests/home-sections.mjs
 check "API page: try a request"            node tests/api-demo.mjs
 check "postcode box suggestions"        node tests/place-box.mjs
 check "panel findings"                  node tests/panel-findings.mjs
+# "All the detail", option 1 (2026-11-09): the picture of what is within 1 km and the card faces, every branch on purpose.
+check "detail cards"                    node tests/detail-near.mjs
 # The full map's air side by side (2026-11-03, Bill's refined B): js/street_report.mjs airChart() is pure, so its
 # geometry (to scale, beyond the scale, labels at the edge), its shapes, its escaping and the WHO guideline it shares
 # with the API (read from app.py) are held here without a browser; the live panel is tests/uk-city-panel.mjs.

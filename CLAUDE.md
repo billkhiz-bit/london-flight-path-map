@@ -234,6 +234,11 @@ Or just describe what you need, I have full context of this project.
   (rating strip, 100 squares, bars from zero, ruler, score); a word outside its scale draws none; a source only from the caller (New York is not DEFRA);
   a figure never said twice (`crimeNote(extra, { figures: false })`). `toneOf()` mirrors `ratingBadgeClass()`/`schoolBandFromP8()`, held by reading them.
   The path tile never gives a height: only planeAltitude()'s "Not under a final approach" (past FINAL_TOP_FT a height is an extrapolation). "Weak" is "Low".
+- **"All the detail" is option 1** (Bill's pick, 2026-11-08; live 2026-11-09): the 1 km picture (a full postcode only), then `details.dcard`s, then `details.drow`s.
+  `js/detail-near.mjs` words it, pure (`tests/detail-near.mjs`); `fillDetail()` takes each loader's answer as it lands. Every loader's container keeps its id in a card
+  body, line status in `#postcode-line-status` (`renderTransportData` writes there when it exists). An unasked kind has no line and no card; asked and none within 1 km
+  is an empty line (a reading); a card names the nearest even past 1 km. The routes send their nearest 5 (`ROUTE_CAP`, NaPTAN 4, both read from their holders by the
+  test), so a full cap within reach is "N or more", never a count. `keepPanelOpen()` opens the cards and rows, or a test reads closed boxes and proves nothing.
 - **/pricing has a colour for each audience** (Bill's pick B, 2026-11-04): `#reports` tint, `#councils` water, `#platforms` dark. His "no highlighted card, one
   button style" (2026-10-06) now holds WITHIN a section, measured by `tests/front-page.mjs` 16b. Words and `data-event`s are untouched by a restyle: diff them.
 - **Area pages say findings, not a table** (Bill's yes, 2026-11-04: Stitch's layout): `gather()`'s facts are unchanged; `findings_html()` places each fact, a label with no place stops the build. A bare figure gets
@@ -282,6 +287,8 @@ Or just describe what you need, I have full context of this project.
   planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
+- **A sitemap never lists a page that asks not to be indexed** (2026-11-09, Search Console): `write_sitemap()` refuses one, `tests/test_sitemap_noindex.py` holds
+  `sitemap.xml`. `/score-demo/status.html` and `/talks/` stay noindex and unlisted.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
   page; 2026-11-02): every item but the last is a link the visible breadcrumb shows, the last is the page's canonical
   (`tests/test_breadcrumb_ld.py`, every built page). `/llms.txt` (`meta-deploy`) is read by the wording gate and held

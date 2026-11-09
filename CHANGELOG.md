@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-09 - "All the detail" at a glance
+
+- **The full map's "All the detail" opens on a picture of what is within 1 km of the postcode**: a line each for stations, doctors and clinics, pharmacies and hospitals, every place a dot at its distance.
+- **Then a card for each nearest thing**: the nearest station, doctor, pharmacy and helipad, the airports, how many doctors and clinics are within 1 km, today's line status and the energy rating. Tap a card for its full list. Where a list holds only the nearest five of a kind and all five are close by, the card says "5 or more".
+- **Listings, sold prices, the badge and next steps are now four rows** that open when tapped.
+- **The score shows each part's own score** ("Quiet skies 6.4 out of 10 · counts for 32%"), so changing the buyer profile no longer looks as if the noise changed. The detail's text is on the same scale as the cards above it.
+- **The planes overhead card names its main source** (the flight tracks and their licence) and points to the rest, which stay listed under "About these figures" in the same card.
+- **The sitemap no longer lists the API status page**, which asks search engines not to index it.
+
 ## 2026-11-08 (night) - The map's postcode panel answers first, in plain words
 
 - **The full map's postcode panel opens on an answer card.** A headline says what the place is like in one sentence (the same sentence the front page gives it), pills show what stands out to watch for and what is good, and the score sits beside them.

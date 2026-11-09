@@ -2898,6 +2898,45 @@
       #panel-all .line-status,
       #panel-all .property-link,
       #panel-all .crime-loading { font-size: 13px; }
+      /* "ALL THE DETAIL", OPTION 1 (Bill's pick, 2026-11-08): the picture of what is within 1 km, then cards drawn like the
+         tiles above (the same edge, corners, chevron and type), each opening to its list. An open card takes the row. */
+      .detail-near svg { display: block; width: 100%; height: auto; margin-top: 4px; }
+      .detail-near .near-lab { font: 12px var(--font-sans); fill: var(--dark); }
+      .detail-near .near-tick { font: 10px var(--font-sans); fill: var(--mid); }
+      .detail-near .near-line { stroke: var(--light); stroke-width: 2; }
+      .detail-near .near-tickline { stroke: var(--mid); }
+      .detail-near .near-dot { fill: var(--dark); }
+      .detail-near .near-hollow { fill: var(--white); stroke: var(--dark); stroke-width: 1.7; }
+      .dcards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      details.dcard { position: relative; min-width: 0; border: 1px solid var(--light); border-radius: 4px; background: var(--white); font-family: var(--font-sans); }
+      details.dcard.wide,
+      details.dcard.lone,
+      details.dcard[open] { grid-column: 1 / -1; }
+      details.dcard > summary { display: grid; align-content: start; gap: 2px; min-height: 64px; padding: 11px 24px 11px 12px; list-style: none; cursor: pointer; }
+      details.dcard:not([open]) > summary { height: 100%; }
+      details.dcard > summary::-webkit-details-marker { display: none; }
+      details.dcard > summary::after { content: ''; position: absolute; top: 16px; right: 11px; width: 6px; height: 6px; border-right: 1.5px solid var(--mid); border-bottom: 1.5px solid var(--mid); transform: rotate(45deg); }
+      details.dcard[open] > summary::after { top: 19px; transform: rotate(-135deg); }
+      details.dcard > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+      /* A closed <details> keeps its children's boxes in Chrome: the layout gates read them as there. */
+      details.dcard:not([open]) > .dc-body { display: none; }
+      .dc-v { font-family: 'Geist', var(--font-sans); font-size: 20px; font-weight: 700; line-height: 1.2; color: var(--dark); overflow-wrap: anywhere; }
+      .dc-v small { font-size: 13px; font-weight: 600; }
+      .dc-v.dc-watch { color: var(--yellow-text); }
+      .dc-v.dc-good { color: var(--green-text); }
+      .dc-body { display: grid; gap: 8px; margin: 0 12px; padding: 10px 0 14px; border-top: 1px solid var(--bg); }
+      .dc-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+      .dc-list li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--dark); }
+      .dc-list li b { font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .drows { border-top: 1px solid var(--bg); }
+      details.drow { border-bottom: 1px solid var(--bg); }
+      details.drow > summary { position: relative; display: block; min-height: 44px; padding: 13px 44px 13px 24px; font: 600 15px var(--font-sans); color: var(--dark); list-style: none; cursor: pointer; }
+      details.drow > summary::-webkit-details-marker { display: none; }
+      details.drow > summary::after { content: ''; position: absolute; top: 19px; right: 24px; width: 6px; height: 6px; border-right: 1.5px solid var(--mid); border-bottom: 1.5px solid var(--mid); transform: rotate(-45deg); }
+      details.drow[open] > summary::after { top: 17px; transform: rotate(45deg); }
+      details.drow > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+      details.drow:not([open]) > .drow-body { display: none; }
+      .drow-body { padding: 0 24px 16px; }
       .find-group:not(:has(.find, .tile, .is-waiting, #postcode-air-section:not([hidden]))) {
         display: none;
       }
@@ -12078,8 +12117,11 @@
         // contract), not "unavailable".
         const lineStatusChecked = data.lineStatusAvailable !== false;
         const lineStatusRows = Boolean(data.lineStatus && data.lineStatus.length > 0);
+        // The line status has its own card since 2026-11-09 ("All the detail", option 1): written into
+        // #postcode-line-status when the panel has one, else after the stations as before. Same words, same order.
+        let status = '';
         if (lineStatusRows || !lineStatusChecked) {
-          html +=
+          status +=
             '<h3 style="margin-top:12px;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:8px;">LIVE LINE STATUS</h3>';
         }
         if (!lineStatusChecked) {
@@ -12094,11 +12136,11 @@
           // route which answered, so this is not a whole-panel outage and
           // must not read as one. That is what `available: false` above is
           // for.
-          html +=
-            '<p class="info-note">Line status could not be checked just now: the TfL status feed did not respond. This is not a report of good service. The stations above are unaffected.</p>';
+          status +=
+            '<p class="info-note">Line status could not be checked just now: the TfL status feed did not respond. This is not a report of good service. The stations are unaffected.</p>';
         }
         if (lineStatusRows) {
-          html += data.lineStatus
+          status += data.lineStatus
             .map((l) => {
               const good = l.status === 'Good Service';
               const reason = l.reason
@@ -12113,9 +12155,14 @@
         }
         // The heading is source-neutral, so the content says where it came
         // from - as renderNaptanStations already does for its rows.
-        html +=
-          '<p class="info-note" style="margin-top:6px;font-size:11px;">Source: TfL Unified API, live.</p>';
-        el.innerHTML = html;
+        const source = '<p class="info-note" style="margin-top:6px;font-size:11px;">Source: TfL Unified API, live.</p>';
+        const lineEl = document.getElementById('postcode-line-status');
+        if (lineEl) {
+          el.innerHTML = html + source;
+          lineEl.innerHTML = status ? status + source : '';
+        } else {
+          el.innerHTML = html + status + source;
+        }
       }
 
       // ============================================================
@@ -12448,8 +12495,6 @@
           const zip = zipMatch ? zipMatch[0] : '';
           const searchQ = zip || encodeURIComponent(area + ' New York');
           return `
-    <div class="sidebar-section">
-      <h3>SEARCH PROPERTY LISTINGS</h3>
       <p class="info-note" style="margin-top:0;margin-bottom:8px;">Search pre-filled with your location:</p>
       <div class="property-links">
         <a class="property-link" href="https://www.zillow.com/homes/for_sale/${zip ? zip + '_rb/' : encodeURIComponent(area + ' New York') + '/'}" target="_blank" rel="noopener">
@@ -12467,13 +12512,10 @@
         <a class="property-link" href="https://www.redfin.com/zipcode/${zip || '10001'}" target="_blank" rel="noopener">
           Redfin - Prices &amp; History<span class="link-arrow">&#8599;</span>
         </a>
-      </div>
-    </div>`;
+      </div>`;
         }
 
         return `
-    <div class="sidebar-section">
-      <h3>SEARCH PROPERTY LISTINGS</h3>
       <p class="info-note" style="margin-top:0;margin-bottom:8px;">These links open searches pre-filled with your area:</p>
       <div class="property-links">
         <a class="property-link" href="https://www.onthemarket.com/for-sale/property/${areaSlug}/" target="_blank" rel="noopener">
@@ -12491,10 +12533,7 @@
         <a class="property-link" href="https://www.rightmove.co.uk/house-prices/${pcSlug}.html" target="_blank" rel="noopener">
           Rightmove - House Prices<span class="link-arrow">&#8599;</span>
         </a>
-      </div>
-      <h3 style="margin-top:16px;">SOLD PRICES</h3>
-      <div id="sold-prices-data" class="sold-prices"><span class="crime-loading">Loading from Land Registry...</span></div>
-    </div>`;
+      </div>`;
       }
 
       // Autocomplete
@@ -14069,6 +14108,105 @@
           if (m && isCurrentSearch(req)) fn(m);
         });
       }
+      // "ALL THE DETAIL", OPTION 1 (Bill's pick, 2026-11-08 22:35; js/detail-near.mjs words it). A card is a closed
+      // <details>: its face says the nearest of something, its body holds the full list. A card with no face is hidden
+      // until fillDetail() has something true to put on it, so an unasked kind (doctors outside London) never shows.
+      // The face written here is only the waiting state; the module's faceHtml() replaces it as each answer lands.
+      function detailCard(id, face, body, cls) {
+        const unit = face && face.unit ? ` <small>${escapeHtml(face.unit)}</small>` : '';
+        const summary = face
+          ? `<span class="t-name">${escapeHtml(face.k)}</span><span class="dc-v">${escapeHtml(face.v)}${unit}</span>${face.l ? `<span class="t-sub">${escapeHtml(face.l)}</span>` : ''}`
+          : '';
+        return `<details class="dcard${cls ? ' ' + cls : ''}" id="${id}"${face ? '' : ' hidden'}><summary>${summary}</summary><div class="dc-body">${body}</div></details>`;
+      }
+      // An odd card out spans its row, as the tiles' lone last one does: the half-width cards are counted as shown,
+      // since which are shown depends on the city and on what each route answered.
+      function tidyDetailCards() {
+        const half = [...document.querySelectorAll('#panel-all .dcards > details.dcard:not(.wide):not([hidden])')];
+        half.forEach((c, i) => c.classList.toggle('lone', half.length % 2 === 1 && i === half.length - 1));
+      }
+      // The fold's closing rows (option 1): a plain label that opens to what it names (listings, sold prices, the
+      // badge, next steps). Every id inside keeps its place, so the loaders and wireBadgeCopy() find it as before.
+      function detailRow(label, body) {
+        return `<details class="drow"><summary>${escapeHtml(label)}</summary><div class="drow-body">${body}</div></details>`;
+      }
+      // A distance in km as a card says it. Mirrors distanceParts() in js/detail-near.mjs, which takes metres;
+      // tests/detail-near.mjs runs this copy against it.
+      function detailDistance(km) {
+        const m = Math.round(km * 1000);
+        return m < 1000 ? { v: String(m), unit: 'm' } : { v: (m / 1000).toFixed(1), unit: 'km' };
+      }
+      let _detailLoad = null;
+      function loadDetail() {
+        if (!_detailLoad) {
+          _detailLoad = import('/js/detail-near.mjs').catch((e) => {
+            _detailLoad = null; // a failed load is retried on the next search
+            console.warn('[Sky Score] detail cards not worded:', e);
+            return null;
+          });
+        }
+        return _detailLoad;
+      }
+      // Each loader hands its answer here as it lands ('transport', 'nhs', 'epc'); the faces and the picture are redrawn
+      // from everything this search has so far, so a slow route keeps its own card waiting and never holds the others.
+      const _detail = { req: null, answers: {} };
+      function fillDetail(req, analysis, part, data) {
+        // A late answer from an earlier search must not touch the shared state: resetting it to the old search would
+        // drop the answers the current one already has, and the next of its answers would reset it again.
+        if (!isCurrentSearch(req)) return Promise.resolve();
+        if (_detail.req !== req) {
+          _detail.req = req;
+          _detail.answers = {};
+        }
+        if (part) _detail.answers[part] = data;
+        return loadDetail().then((m) => {
+          if (!m || !isCurrentSearch(req)) return;
+          const a = _detail.answers;
+          // NaPTAN stands in where TfL does not answer: always outside London, and in London only once TfL has
+          // answered without stations (an outage or an empty reply), as renderTransportData() does.
+          const naptanReady = isUkCity(currentCity) && STATIONS_STATE === 'ready';
+          const tflEmpty = a.transport && (a.transport.available === false || !(a.transport.stations || []).length);
+          const naptan =
+            naptanReady && (currentCity !== 'london' || tflEmpty) ? nearestStations(analysis.lat, analysis.lon, m.NAPTAN_CAP) : null;
+          const places = m.placesByKind({ transport: a.transport || null, naptan, nhs: a.nhs || null });
+          const setCard = (id, face, body) => {
+            const card = document.getElementById(id);
+            if (!card) return;
+            if (face) card.querySelector('summary').innerHTML = m.faceHtml(face);
+            if (body !== undefined) card.querySelector('.dc-body').innerHTML = body;
+            card.hidden = !face;
+          };
+          // The station card says which absence it is, as the list under it does: a list that could not load is not
+          // "none found" (renderNaptanStations: still loading or failed; renderTransportData: TfL unreachable).
+          const settled = currentCity !== 'london' || 'transport' in a;
+          if (settled && isUkCity(currentCity)) {
+            const unreached =
+              (a.transport && a.transport.available === false && !(places.all.stations && places.all.stations.length)) ||
+              (STATIONS_STATE !== 'ready' && (currentCity !== 'london' || tflEmpty));
+            setCard(
+              'dcard-station',
+              m.nearestFace('stations', places) ||
+                (unreached
+                  ? { k: 'Nearest station', v: 'Not loaded', l: 'The station list is unavailable just now' }
+                  : { k: 'Nearest station', v: 'None found', l: currentCity === 'london' ? 'Within 1.5 km' : 'Near this postcode' })
+            );
+          }
+          if ('nhs' in a) {
+            setCard('dcard-doctor', m.nearestFace('gp', places), places.all.gp ? m.placesListHtml(places.all.gp) + '<p class="info-note">Source: OpenStreetMap (ODbL)</p>' : '');
+            setCard('dcard-pharmacy', m.nearestFace('pharmacies', places), places.all.pharmacies ? m.placesListHtml(places.all.pharmacies) + '<p class="info-note">Source: OpenStreetMap (ODbL)</p>' : '');
+            setCard('dcard-health', m.healthFace(places) || { k: 'Doctors and clinics', v: 'Not loaded', l: 'Healthcare data is unavailable just now' });
+          }
+          if ('transport' in a) setCard('dcard-lines', m.lineStatusFace(a.transport));
+          if ('epc' in a) setCard('dcard-epc', m.epcFace(a.epc));
+          const near = document.getElementById('detail-near');
+          const svg = near && m.lanesSvg(analysis.postcode, places);
+          if (near && svg) {
+            document.getElementById('detail-near-pic').innerHTML = svg;
+            near.hidden = false;
+          }
+          tidyDetailCards();
+        });
+      }
       // THE ANSWER CARD AND ITS TILES (Bill, 2026-11-08; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). The module words
       // and draws each tile; this places it, then tidyCard() brings the card up to date from what is placed: the pills of
       // what stands out, each section's "-wide" note, the lone last tile, and the air readings inside the air tile.
@@ -14559,42 +14697,26 @@
     </section>
     <details class="panel-all" id="panel-all">
     <summary>All the detail</summary>
-    <div class="sidebar-section">
-      <h3>KEY FACTS</h3>
-      <div class="noise-detail-row"><span class="noise-detail-label">Nearest airport</span>
-        <span class="noise-detail-value">${top3[0] ? top3[0].name + ' (' + top3[0].dist.toFixed(1) + ' km)' : 'None in this area'}</span></div>
-      <div class="noise-detail-row"><span class="noise-detail-label">Plane altitude</span>
-        <span class="noise-detail-value">${escapeHtml(analysis.altEstimate)}</span></div>
-      <div class="noise-detail-row"><span class="noise-detail-label">Nearest flight path</span>
-        <span class="noise-detail-value">${shownPath ? escapeHtml(shownPathName) : 'None nearby'}</span></div>
-      <div class="noise-detail-row"><span class="noise-detail-label">Path distance</span>
-        <span class="noise-detail-value">${Number.isFinite(analysis.pathShown.dist) ? analysis.pathShown.dist.toFixed(1) + ' km' : 'No flight path in this area'}</span></div>
-      ${analysis.nearestHeli ? '<div class="noise-detail-row"><span class="noise-detail-label">Nearest heliport</span><span class="noise-detail-value">' + analysis.nearestHeli.name.split('(')[0].trim() + ' (' + analysis.nearestHeli.dist.toFixed(1) + ' km)</span></div>' : ''}
-      ${top3
-        .slice(1)
-        .map(
-          (a) => `<div class="noise-detail-row"><span class="noise-detail-label">${a.code} distance</span>
-        <span class="noise-detail-value">${a.dist.toFixed(1)} km</span></div>`
-        )
-        .join('')}
-    </div>
+    ${
+      /* "ALL THE DETAIL", OPTION 1 (Bill's pick, 2026-11-08 22:35): the picture of what is within 1 km (a full postcode
+         only: a district's or council's middle is not a place to stand), then cards, each the nearest of something and
+         each opening to its full list. Every container the loaders fill keeps its id inside a card body, so the loaders,
+         their outage notices and the tests that read them are unchanged; fillDetail() words the faces as answers land.
+         Which cards a city gets follows the THREE WAYS below: London (TfL, NHS), the other UK cities (NaPTAN), New York. */
+      analysis.postcode && !analysis.isOutcode && isUkCity(currentCity)
+        ? `<div class="sidebar-section detail-near" id="detail-near" hidden>
+      <h3>Within 1 km of ${escapeHtml(analysis.postcode)}</h3>
+      <div id="detail-near-pic"></div>
+    </div>`
+        : ''
+    }
+    <div class="sidebar-section"><div class="dcards">
     ${
       currentCity === 'london'
-        ? `<div class="sidebar-section">
-      <!-- Source-neutral (audit M36): when TfL answers empty the NaPTAN
-           fallback renders under this heading, so "(LIVE TfL DATA)" named a
-           source the rows below were not from. Each renderer names its own. -->
-      <h3>NEAREST STATIONS</h3>
-      <div id="postcode-transport-data"><span class="crime-loading">Loading from TfL API...</span></div>
-    </div>
-    <div class="sidebar-section">
-      <h3>ENERGY PERFORMANCE (EPC)</h3>
-      <div id="postcode-epc-data"><span class="crime-loading">Loading from EPC register...</span></div>
-    </div>
-    <div class="sidebar-section">
-      <h3>NEARBY NHS SERVICES</h3>
-      <div id="postcode-nhs-data"><span class="crime-loading">Loading from NHS API...</span></div>
-    </div>`
+        ? `${detailCard('dcard-station', { k: 'Nearest station', v: '…', l: 'Finding stations' }, '<!-- Source-neutral (audit M36): when TfL answers empty the NaPTAN fallback renders here, so each renderer names its own source. --><div id="postcode-transport-data"><span class="crime-loading">Loading from TfL API...</span></div>')}
+    ${detailCard('dcard-doctor', null, '')}
+    ${detailCard('dcard-pharmacy', null, '')}
+    ${detailCard('dcard-health', { k: 'Doctors and clinics', v: '…', l: 'Finding healthcare' }, '<div id="postcode-nhs-data"><span class="crime-loading">Loading from NHS API...</span></div>')}`
         : isUkCity(currentCity)
         ? // THREE WAYS, NOT TWO (2026-08-21). This was `london ? ... : ...` and
           // the else-branch was NEW YORK'S, so an area search in Manchester,
@@ -14621,35 +14743,61 @@
           // links. Widening a route with a known concurrency fault to nine more
           // cities makes that fault likelier, so it waits for the fix. An
           // absent section is honest; a confidently empty one is not.
-          `<div class="sidebar-section">
-      <h3>NEAREST STATIONS</h3>
-      <div id="postcode-transport-data"><span class="crime-loading">Finding nearest stations...</span></div>
-    </div>
-    <div class="sidebar-section">
-      <h3>ENERGY PERFORMANCE (EPC)</h3>
-      <div id="postcode-epc-data"><span class="crime-loading">Loading from EPC register...</span></div>
-    </div>`
-        : `<div class="sidebar-section">
-      <h3>NEAREST SUBWAY STATIONS</h3>
-      <div id="postcode-transport-data"><span class="info-note">NYC subway data coming soon. Check <a href="https://new.mta.info" target="_blank" style="color:var(--orange);">MTA.info</a> for schedules.</span></div>
-    </div>`
+          detailCard('dcard-station', { k: 'Nearest station', v: '…', l: 'Finding stations' }, '<div id="postcode-transport-data"><span class="crime-loading">Finding nearest stations...</span></div>')
+        : detailCard('dcard-station', { k: 'Subway stations', v: 'Coming soon', l: 'Not in our data yet' }, '<div id="postcode-transport-data"><span class="info-note">NYC subway data coming soon. Check <a href="https://new.mta.info" target="_blank" style="color:var(--orange-text);">MTA.info</a> for schedules.</span></div>')
     }
-    ${buildPropertyLinks(analysis.postcode, analysis.borough)}
+    ${
+      analysis.nearestHeli
+        ? detailCard(
+            'dcard-heli',
+            { k: 'Nearest helipad', ...detailDistance(analysis.nearestHeli.dist), l: analysis.nearestHeli.name.split('(')[0].trim() },
+            '<div class="noise-detail-row"><span class="noise-detail-label">Nearest heliport</span><span class="noise-detail-value">' + escapeHtml(analysis.nearestHeli.name.split('(')[0].trim()) + ' (' + analysis.nearestHeli.dist.toFixed(1) + ' km)</span></div>'
+          )
+        : ''
+    }
+    ${detailCard(
+      'dcard-airport',
+      top3[0]
+        ? { k: 'Nearest airport', ...detailDistance(top3[0].dist), l: [top3[0].name].concat(top3.slice(1).map((a) => `${a.name} ${a.dist.toFixed(1)} km`)).join(' · ') }
+        : { k: 'Nearest airport', v: 'None', l: 'None in this area' },
+      `<div class="noise-detail-row"><span class="noise-detail-label">Nearest airport</span>
+        <span class="noise-detail-value">${top3[0] ? top3[0].name + ' (' + top3[0].dist.toFixed(1) + ' km)' : 'None in this area'}</span></div>
+      <div class="noise-detail-row"><span class="noise-detail-label">Plane altitude</span>
+        <span class="noise-detail-value">${escapeHtml(analysis.altEstimate)}</span></div>
+      <div class="noise-detail-row"><span class="noise-detail-label">Nearest flight path</span>
+        <span class="noise-detail-value">${shownPath ? escapeHtml(shownPathName) : 'None nearby'}</span></div>
+      <div class="noise-detail-row"><span class="noise-detail-label">Path distance</span>
+        <span class="noise-detail-value">${Number.isFinite(analysis.pathShown.dist) ? analysis.pathShown.dist.toFixed(1) + ' km' : 'No flight path in this area'}</span></div>
+      ${top3
+        .slice(1)
+        .map(
+          (a) => `<div class="noise-detail-row"><span class="noise-detail-label">${a.code} distance</span>
+        <span class="noise-detail-value">${a.dist.toFixed(1)} km</span></div>`
+        )
+        .join('')}`
+    )}
+    ${currentCity === 'london' ? detailCard('dcard-lines', null, '<div id="postcode-line-status"></div>', 'wide') : ''}
+    ${
+      isUkCity(currentCity)
+        ? detailCard('dcard-epc', { k: 'Energy rating', v: '…', l: 'Looking up certificates' }, '<div id="postcode-epc-data"><span class="crime-loading">Loading from EPC register...</span></div>', 'wide')
+        : ''
+    }
+    </div></div>
+    <div class="drows">
+    ${detailRow('Homes for sale and to rent', buildPropertyLinks(analysis.postcode, analysis.borough))}
+    ${isUkCity(currentCity) ? detailRow('Sold prices nearby', '<div id="sold-prices-data" class="sold-prices"><span class="crime-loading">Loading from Land Registry...</span></div>') : ''}
     ${
       analysis.postcode && !analysis.isOutcode
-        ? `<div class="sidebar-section">
-      <h3>PUT THIS ON YOUR SITE</h3>
+        ? detailRow('Put this on your site', `
       <p class="info-note" style="margin-top:0;">A badge for ${escapeHtml(analysis.postcode)}, free to embed. It is an image, so it works anywhere HTML does.</p>
       <img class="badge-preview" src="${BADGE_BASE}?postcode=${encodeURIComponent(analysis.postcode)}" width="220" height="64" alt="Sky Score badge for ${escapeHtml(analysis.postcode)}" loading="lazy" />
       <label class="sr-only" for="badge-embed">Embed code for this badge</label>
       <textarea id="badge-embed" class="badge-embed" rows="3" readonly>${escapeHtml(embedSnippet(analysis.postcode))}</textarea>
       <button id="badge-copy" type="button" class="badge-copy">Copy embed code</button>
-      <p id="badge-copy-result" class="info-note" role="status" aria-live="polite" style="margin-top:4px;"></p>
-    </div>`
+      <p id="badge-copy-result" class="info-note" role="status" aria-live="polite" style="margin-top:4px;"></p>`)
         : ''
     }
-    <div class="sidebar-section">
-      <h3>YOUR NEXT STEPS</h3>
+    ${detailRow('Your next steps', `
       <p class="property-note" style="margin-top:0;">
         <strong>1. Check noise overlay</strong> - zoom into the map to see official ${cityOf(currentCity).noiseAuthorityPlain} noise contours at your location.<br><br>
         ${
@@ -14670,7 +14818,7 @@
         }
         <strong>3. Visit at different times</strong> - ${cityOf(currentCity).runwayNote}, so noise changes between morning and afternoon. Visit at least twice.<br><br>
         <strong>4. Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.
-      </p>
+      </p>`)}
     </div>
     </details>
     <div class="sidebar-section notify-block">
@@ -14698,6 +14846,7 @@
         // on the second search.
         wireNotifyForm(analysis.postcode);
         wireBadgeCopy();
+        tidyDetailCards();
 
         // One request serves the road finding and the air chart. An area search has no postcode to ask about.
         const environment =
@@ -14720,11 +14869,13 @@
             if (!isCurrentSearch(req)) return;
             renderTransportData('postcode-transport-data', data);
             showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data', extra);
+            fillDetail(req, analysis, 'transport', data);
           });
           fetchNhsData(analysis.lat, analysis.lon, signal).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderNhsData('postcode-nhs-data', data);
             showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data', extra);
+            fillDetail(req, analysis, 'nhs', data);
           });
         } else if (isUkCity(currentCity)) {
           // No fetch: NaPTAN is already on the page for the map, so this is a
@@ -14739,6 +14890,7 @@
                 '<p class="info-note">No rail, metro or tram station in the NaPTAN register near this postcode.</p>';
           }
           showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data', extra);
+          fillDetail(req, analysis);
         }
         // Air nearby, for a full UK postcode (an outcode's centre is not a place to measure from). The council's
         // DEFRA figures ride along for when the postcode's own 1 km figure cannot load.
@@ -14763,10 +14915,12 @@
               if (!isCurrentSearch(req)) return;
               renderEpcData('postcode-epc-data', data);
               withFindings(req, (m) => placeFinding(m, 'epc', m.epcFinding(data)));
+              fillDetail(req, analysis, 'epc', data);
             });
           } else {
             const epcEl = document.getElementById('postcode-epc-data');
             if (epcEl) epcEl.innerHTML = '<p class="info-note">Enter a full postcode for EPC data.</p>';
+            fillDetail(req, analysis, 'epc', { available: false, fullPostcodeOnly: true });
             const soldEl = document.getElementById('sold-prices-data');
             if (soldEl) soldEl.innerHTML = '<p class="info-note">Enter a full postcode for sold prices.</p>';
           }

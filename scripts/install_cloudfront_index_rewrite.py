@@ -45,29 +45,58 @@ import time
 DISTRIBUTION_ID = 'EGSSPJKLFL33M'
 FUNCTION_NAME = 'sky-score-rewrite-index'
 # CloudFront caps Comment at 64 chars, keep it terse.
-FUNCTION_COMMENT = 'index.html for subdir URIs; 301 old .html names (Sky Score)'
+FUNCTION_COMMENT = 'index.html for subdirs; 301 www and old .html names (Sky Score)'
 # THE OLD .html NAMES (website audit 2026-10-06, I15). These four pages are SOURCE files named
 # <page>.html, uploaded to <page>/index.html because this function serves extensionless paths
 # from there. So /privacy.html, the name in the repo and in old links, was a dead key that
 # answered a raw 403. Each now answers 301 to the address that serves it. An explicit map, not
 # a rule: /score-demo/api-docs.html and /404.html are real .html keys and must pass through.
 # tests/test_cloudfront_function.py runs this code in Node and checks each target is uploaded.
+#
+# WWW GOES TO THE BARE NAME (2026-11-09). www.skyscore.co.uk served every page as a 200 copy, each
+# naming skyscore.co.uk as its canonical, so Search Console listed them as "Alternative page with
+# proper canonical tag" and crawled each twice. A 301 says the same thing once and for all. ONE
+# hop: www + an old name goes straight to the page, never to the old name first. The query string
+# rides along as CloudFront received it (its values arrive unchanged, so already percent-encoded).
+# Only the default behaviour runs this function; /badge has its own and is not redirected.
+CANONICAL_HOST = 'skyscore.co.uk'
 FUNCTION_CODE = """var MOVED = {
     '/privacy.html': '/privacy',
     '/terms.html': '/terms',
     '/pricing.html': '/pricing',
     '/changes.html': '/changes'
 };
+var CANONICAL = 'https://""" + CANONICAL_HOST + """';
+
+function query(q) {
+    var parts = [];
+    for (var key in q) {
+        var values = q[key].multiValue ? q[key].multiValue : [q[key]];
+        for (var i = 0; i < values.length; i++) {
+            parts.push(values[i].value === '' ? key : key + '=' + values[i].value);
+        }
+    }
+    return parts.length ? '?' + parts.join('&') : '';
+}
+
+function moved(location) {
+    return {
+        statusCode: 301,
+        statusDescription: 'Moved Permanently',
+        headers: { location: { value: location } }
+    };
+}
 
 function handler(event) {
     var request = event.request;
     var uri = request.uri;
-    if (Object.prototype.hasOwnProperty.call(MOVED, uri)) {
-        return {
-            statusCode: 301,
-            statusDescription: 'Moved Permanently',
-            headers: { location: { value: MOVED[uri] } }
-        };
+    var host = request.headers && request.headers.host ? request.headers.host.value : '';
+    var target = Object.prototype.hasOwnProperty.call(MOVED, uri) ? MOVED[uri] : null;
+    if (host === 'www.""" + CANONICAL_HOST + """') {
+        return moved(CANONICAL + (target || uri) + query(request.querystring || {}));
+    }
+    if (target) {
+        return moved(target);
     }
     if (uri.endsWith('/')) {
         request.uri = uri + 'index.html';

@@ -4,8 +4,8 @@
 // is opened is held in tests/uk-city-panel.mjs, "Findings first", on a page that does not call this.
 
 /**
- * Keeps the fold, the answer card's score, every finding's tile (2026-11-08: closed until tapped) and the air charts'
- * "About these readings" open on a page or a whole context.
+ * Keeps the fold, the answer card's score, every finding's tile (2026-11-08: closed until tapped), the fold's cards
+ * (2026-11-09) and the air charts' "About these readings" open on a page or a whole context.
  */
 export function keepPanelOpen(target) {
   return target.addInitScript(() => {
@@ -15,6 +15,8 @@ export function keepPanelOpen(target) {
       const score = document.getElementById('ac-score');
       if (score && !score.open) score.open = true;
       for (const tile of document.querySelectorAll('#sidebar-content details.tile:not([open])')) tile.open = true;
+      // "All the detail"'s cards (2026-11-09): each list the loaders fill sits in one, closed until tapped.
+      for (const card of document.querySelectorAll('#panel-all details.dcard:not([open]), #panel-all details.drow:not([open])')) card.open = true;
       for (const about of document.querySelectorAll('#postcode-air-section details:not([open])')) about.open = true;
     }).observe(document, { childList: true, subtree: true });
   });

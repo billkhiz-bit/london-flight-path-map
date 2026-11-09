@@ -137,7 +137,14 @@ export function planesFindings(model, { steps = [] } = {}) {
   // A caveat that changes what a figure means stays with the figure, never in the fold (a range, a place that is only
   // approximate, other flying over a quiet count).
   const caveats = [model.edge, model.approx, model.other].filter(Boolean);
-  const credits = (model.credits || []).join('; ');
+  // THE TILE NAMES ITS MAIN SOURCE; THE FOLD NAMES THEM ALL (Bill, 2026-11-09: "quite a lot of text"). Four credits ran to
+  // five lines under three bars, and planesNotes() already lists every one under "About these figures", which the panel
+  // places in the LAST airport tile, so the tile said them twice. The flight tracks, with their licence, stay in sight on
+  // every airport tile; "Other sources below" points at the fold. With no airport there is no fold, so all stay in sight.
+  const all = model.credits || [];
+  const credits = all.join('; ');
+  const main = all.length ? `${all[0]}` : '';
+  const more = all.length > 1 ? '. Other sources below' : '';
   if (!model.airports.length) {
     return model.none ? [{
       key: 'planes', head: model.heading, detail: model.none, caveats,
@@ -168,7 +175,7 @@ export function planesFindings(model, { steps = [] } = {}) {
         pill: `${a.name} planes`,
         visual: [{ kind: 'bars', room: 1, rows: a.rows.map((r) => ({ label: r.label, sub: r.share, text: r.text, value: most(r.value), colour: stepColour(r.value, steps) || null })) }],
         say: [a.windShort],
-        source: `${credits}${a.period ? `, ${a.period}` : ''}` || null,
+        source: main ? `${main}${a.period ? `, ${a.period}` : ''}${more}` : null,
       },
     };
   });

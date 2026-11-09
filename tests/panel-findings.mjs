@@ -334,6 +334,17 @@ check("planes: the commonest one-way day on the face, a watch item from the laye
   assert.deepEqual([f.tile.level, f.tile.sub, f.tile.stand, f.tile.pill], ['318 a day', 'flying west', 'watch', 'Heathrow planes']);
   assert.deepEqual(f.tile.visual[0].rows.map((r) => r.colour), ['#662809', '#9a4316', null], '318 and 188 in the colours of their steps (data/planes-layer/index.json); 2 is under the first');
   assert.match(f.tile.source, /^Flight tracks: adsb\.lol \(ODbL 1\.0\), January to August 2026$/);
+});
+check('the planes tile names its main source; every other one stays in the fold (Bill, 2026-11-09)', () => {
+  const credits = ['Flight tracks: adsb.lol (ODbL 1.0)', 'Weather at each airport: Iowa Environmental Mesonet',
+    'Ground heights: Contains OS data © Crown copyright and database right', 'Postcode positions: ONS National Statistics Postcode Lookup (OGL)'];
+  const model = { ...planesFile([318, 2, 188]), credits };
+  const [f] = planesFindings(model);
+  assert.equal(f.tile.source, 'Flight tracks: adsb.lol (ODbL 1.0), January to August 2026. Other sources below');
+  const notes = planesNotes(model).at(-1);
+  for (const c of credits) assert.ok(notes.includes(c), `the fold keeps "${c}"`);
+  const none = planesFindings({ ...model, airports: [], none: 'Fewer than 1 a day.' })[0];
+  assert.ok(credits.every((c) => none.tile.source.includes(c)), 'no airport, no fold: every credit stays in sight');
   assert.equal(planesFindings(planesFile([90, 2, 40]), { steps: LAYER })[0].tile.stand, null, 'under the third step: not a watch item');
   assert.equal(planesFindings(planesFile([318, 2, 188]))[0].tile.stand, null, 'no layer steps: never a watch item');
 });

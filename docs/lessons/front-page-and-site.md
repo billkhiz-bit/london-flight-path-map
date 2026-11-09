@@ -935,6 +935,24 @@ acted`, before it changes anything. Why not have `search()` await a ready promis
 from inside `load()`, so a search waiting for `load()` to finish deadlocks every `?postcode=` link. The test sends each
 search with `#map .boro` provably empty (a state reached on purpose, not by luck).
 
+## "All the detail", option 1 (2026-11-09)
+
+Bill picked option 1 of the fold mock-ups on 8 Nov 22:35: the picture of what is within 1 km, then cards each the nearest of
+something, then the four rows. Three things learned building it:
+
+- **A cap is not a count.** `/nhs` and `/transport` send only their nearest five of a kind (`MAX_RESULTS_PER_TYPE`, `[:5]`),
+  NaPTAN's fallback four. At SW11 1AA all five doctors and all five pharmacies sit within 650 m, so the mock-up's "5 doctors
+  and clinics within 600 m" was a floor read as a count. `placesByKind()` marks `mayBeMore` when a source sent its whole cap
+  and all of it is within reach; `countWords()` then says "5 or more" (Bill: "you do it"). The caps are read from the Lambdas
+  by the test, never retyped.
+- **Moving a container moves its test, never blinds it.** Line status got its own card, so its rows left
+  `#postcode-transport-data`. `tests/failure-path.mjs` counted status rows there; left alone it would have passed on an empty
+  box. It now reads both containers. Likewise `keepPanelOpen()` opens the new cards: a closed `<details>` keeps its text out
+  of innerText.
+- **The mock-up's words need checking against the data's.** "Health centres" in the mock was OpenStreetMap's `hospital` tag
+  (Bridge Lane Health Centre is tagged hospital), so the line says "Hospitals"; the mock's airport card led with Heathrow, but
+  the nearest is London City, and the card names the nearest.
+
 ## The full map's answer card (2026-11-08)
 
 Bill read the findings-first panel (4 Nov) for SW11 1AA and asked for it simpler: "keep to road noise is high or aircraft

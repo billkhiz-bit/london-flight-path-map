@@ -1534,8 +1534,29 @@ STATIC_URLS = [
     ('/api/', '0.9', 'monthly'),
     ('/score-demo/', '0.7', 'monthly'),
     ('/score-demo/api-docs.html', '0.6', 'monthly'),
-    ('/score-demo/status.html', '0.3', 'weekly'),
+    # Never /score-demo/status.html: it asks search engines not to index it (a status page), and a sitemap
+    # listing a noindex page is a contradiction Google reports. It was listed until 2026-11-09, when Search
+    # Console emailed "Excluded by 'noindex' tag" for a sitemap page. write_sitemap() now refuses one.
 ]
+
+# A page that asks search engines not to index it, read from its own <meta name="robots"> (or "googlebot"): the
+# only place our pages say it, as CloudFront sends no X-Robots-Tag. Attributes in either order, any case.
+META_TAG = re.compile(r'<meta\b[^>]*>', re.IGNORECASE)
+META_ATTR = re.compile(r'([a-z-]+)\s*=\s*["\']([^"\']*)["\']')
+
+
+def noindex_in(text: str) -> bool:
+    """True when `text` holds a robots meta tag whose content includes noindex."""
+    for tag in META_TAG.findall(text):
+        attrs = dict(META_ATTR.findall(tag.lower()))
+        if attrs.get('name') in ('robots', 'googlebot') and 'noindex' in attrs.get('content', ''):
+            return True
+    return False
+
+
+def asks_noindex(path: str) -> bool:
+    """True when the repo file at `path` asks search engines not to index it."""
+    return noindex_in((REPO / path).read_text(encoding='utf-8'))
 
 
 # URLs whose file is not at the same path in the repo (2026-10-06): the front page
@@ -1615,6 +1636,11 @@ def write_sitemap(paths: list[str]) -> None:
     missing = [f for f in files if not (REPO / f).exists()]
     if missing:
         raise SystemExit(f'sitemap URLs with no file behind them: {missing}')
+    hidden = [f for f in files if asks_noindex(f)]
+    if hidden:
+        # Refuse rather than drop: either the page should be indexed (remove its noindex) or it should not be
+        # listed (remove it from STATIC_URLS). Only a person can say which.
+        raise SystemExit(f'sitemap URLs whose page asks not to be indexed: {hidden}')
     dated = last_changed(files)
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
