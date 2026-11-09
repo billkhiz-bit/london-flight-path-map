@@ -994,6 +994,47 @@ console.log('Findings first');
   check('New York\'s crime is never set against London\'s', nyCrime !== '' && !/London/.test(nyCrime), nyCrime);
   check('New York\'s panel reads nothing undefined', !/\bundefined\b|\bNaN\b/.test(nyAll));
   await ny.close();
+
+  // ON A PHONE, ONE DETAIL CARD A ROW (Bill, 2026-11-09: "do what's best for the phone view"). Two half cards left an
+  // opened card's neighbour alone beside a gap; in one column opening only pushes the rest down. Measured, not read from
+  // the CSS: every closed card fills the row, and an open card's chevron sits on its face, not halfway down its list.
+  const ph = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const phErrors = [];
+  ph.on('pageerror', (e) => phErrors.push(e.message));
+  await ph.route('**/v1/environment**', (r) => r.abort());
+  await ph.route('**/transport?**', (r) => json(r, { stations: [{ name: "Earl's Court Underground Station", distance: 376, lines: ['district'] }], lineStatus: [] }));
+  await ph.route('**/nhs?**', (r) =>
+    json(r, { gp: [{ name: 'Brompton Medical Centre', distance: 49 }], pharmacies: ['Boots', 'Superdrug', 'Rowlands', 'Day Lewis', 'Bliss'].map((name, i) => ({ name, distance: 120 + 90 * i })), hospitals: [] }));
+  await ph.route('**/epc?**', (r) => json(r, { available: true, count: 32, certificates: [], summary: { averageBand: 'D', averageRating: 67, bandDistribution: { D: 16 } } }));
+  await ph.goto(url, { waitUntil: 'domcontentloaded' });
+  await ph.waitForTimeout(2500);
+  await ph.evaluate((city) => window.switchCity(city), 'london');
+  await ph.waitForTimeout(1200);
+  await ph.fill('#search-input', 'SW5 9HP');
+  await ph.press('#search-input', 'Enter');
+  await ph.waitForFunction(() => {
+    const v = (id) => document.querySelector(`#${id} .dc-v`)?.textContent.trim();
+    return v('dcard-station') && v('dcard-station') !== '…' && v('dcard-pharmacy');
+  }, null, { timeout: 20000 }).catch(() => {});
+  const phone = await ph.evaluate(() => {
+    document.getElementById('panel-all').open = true;
+    const box = document.querySelector('#panel-all .dcards');
+    const cards = [...box.querySelectorAll(':scope > details.dcard')].filter((c) => !c.hidden);
+    const row = box.getBoundingClientRect();
+    const narrow = cards.filter((c) => Math.abs(c.getBoundingClientRect().width - row.width) > 1).map((c) => c.id);
+    const card = document.getElementById('dcard-pharmacy');
+    card.open = true;
+    const face = card.querySelector('summary');
+    const mark = getComputedStyle(face, '::after');
+    const markAt = parseFloat(mark.top) + parseFloat(mark.marginTop);
+    return { shown: cards.length, narrow, markAt, faceHeight: face.offsetHeight, cardHeight: card.offsetHeight };
+  });
+  check('on a phone every detail card fills its row', phone.shown >= 4 && phone.narrow.length === 0,
+    `${phone.shown} cards shown; narrower than the row: ${phone.narrow.join(', ') || 'none'}`);
+  check('on a phone an open card\'s chevron sits on its face', phone.cardHeight > phone.faceHeight + 40 && phone.markAt > 0 && phone.markAt < phone.faceHeight,
+    `chevron at ${phone.markAt} px; face ${phone.faceHeight} px; card ${phone.cardHeight} px`);
+  check('no page errors at phone width', phErrors.length === 0, phErrors.slice(0, 2).join(' | '));
+  await ph.close();
   console.log('');
 }
 

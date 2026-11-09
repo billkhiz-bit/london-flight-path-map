@@ -2937,6 +2937,26 @@
       details.drow > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
       details.drow:not([open]) > .drow-body { display: none; }
       .drow-body { padding: 0 24px 16px; }
+      /* ON A PHONE, ONE CARD A ROW (Bill, 2026-11-09: "do what's best for the phone view"). At 390 px a half card is
+         ~170 px, too narrow for its list, so an open card took the row and left its neighbour alone beside a gap. One
+         column means opening a card only pushes the rest down: nothing moves sideways, the order seen is the order
+         read, and the face becomes a row (what and where on the left, the figure on the right) at about the same height. */
+      @media (max-width: 900px), (max-height: 500px) {
+        .dcards { grid-template-columns: 1fr; gap: 6px; }
+        details.dcard > summary {
+          position: relative; /* the chevron centres on the face, not on an open card's whole height */
+          grid-template-columns: minmax(0, 1fr) auto;
+          column-gap: 14px;
+          align-items: center;
+          min-height: 56px;
+          padding: 10px 30px 10px 12px;
+        }
+        details.dcard > summary .t-name { grid-column: 1; grid-row: 1; }
+        details.dcard > summary .t-sub { grid-column: 1; grid-row: 2; }
+        details.dcard > summary .dc-v { grid-column: 2; grid-row: 1 / span 2; text-align: right; overflow-wrap: normal; }
+        details.dcard > summary::after { top: 50%; margin-top: -5px; }
+        details.dcard[open] > summary::after { top: 50%; margin-top: -1px; }
+      }
       .find-group:not(:has(.find, .tile, .is-waiting, #postcode-air-section:not([hidden]))) {
         display: none;
       }

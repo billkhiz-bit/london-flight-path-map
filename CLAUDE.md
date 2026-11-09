@@ -239,6 +239,9 @@ Or just describe what you need, I have full context of this project.
   body, line status in `#postcode-line-status` (`renderTransportData` writes there when it exists). An unasked kind has no line and no card; asked and none within 1 km
   is an empty line (a reading); a card names the nearest even past 1 km. The routes send their nearest 5 (`ROUTE_CAP`, NaPTAN 4, both read from their holders by the
   test), so a full cap within reach is "N or more", never a count. `keepPanelOpen()` opens the cards and rows, or a test reads closed boxes and proves nothing.
+  **On a phone the cards are one column** (Bill, 2026-11-09: "do what's best for the phone view"): two half cards left an open card's neighbour beside a gap, and
+  packing the gap (`dense`) moves cards nobody touched and splits seen order from read order. The face is a row, figure on the right; the summary is positioned so
+  the chevron stays on it. `tests/uk-city-panel.mjs` measures both at 390 (red on each half). Desktop keeps two columns.
 - **/pricing has a colour for each audience** (Bill's pick B, 2026-11-04): `#reports` tint, `#councils` water, `#platforms` dark. His "no highlighted card, one
   button style" (2026-10-06) now holds WITHIN a section, measured by `tests/front-page.mjs` 16b. Words and `data-event`s are untouched by a restyle: diff them.
 - **Area pages say findings, not a table** (Bill's yes, 2026-11-04: Stitch's layout): `gather()`'s facts are unchanged; `findings_html()` places each fact, a label with no place stops the build. A bare figure gets

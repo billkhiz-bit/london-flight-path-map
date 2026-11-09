@@ -4,6 +4,7 @@
 
 - **The full map's "All the detail" opens on a picture of what is within 1 km of the postcode**: a line each for stations, doctors and clinics, pharmacies and hospitals, every place a dot at its distance.
 - **Then a card for each nearest thing**: the nearest station, doctor, pharmacy and helipad, the airports, how many doctors and clinics are within 1 km, today's line status and the energy rating. Tap a card for its full list. Where a list holds only the nearest five of a kind and all five are close by, the card says "5 or more".
+- **On a phone the cards run one to a row**, each figure on the right, so opening one only pushes the rest down, with no gaps beside it.
 - **Listings, sold prices, the badge and next steps are now four rows** that open when tapped.
 - **The score shows each part's own score** ("Quiet skies 6.4 out of 10 · counts for 32%"), so changing the buyer profile no longer looks as if the noise changed. The detail's text is on the same scale as the cards above it.
 - **The planes overhead card names its main source** (the flight tracks and their licence) and points to the rest, which stay listed under "About these figures" in the same card.
