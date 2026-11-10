@@ -151,6 +151,11 @@ Or just describe what you need, I have full context of this project.
 - **Sample a postcode at NSPL's `east1m`/`north1m`** (`scripts/postcode_grid.py grid_ref()`), never a
   re-projection; BT postcodes are Irish Grid. Loaders UPSERT, so a re-placing needs
   `remove_lost_readings.py --apply`.
+- **Planes figures leave out NSPL's large users** (`usrtypind` 1: PO boxes, bulk mail; Bill's rule A, 2026-11-10): they sit
+  at a delivery office, so SW1P read 307 a day from post boxes where its homes read 44. `build_planes_overhead.build(..., skip=)`
+  is REQUIRED (`adsb_postcode_averages.large_users()`); a district page's `live` leaves them out and says how many; every
+  surface carries `POSTCODES_RULE`, How it works word for word (`tests/test_build_planes_overhead.py`). Other postcode SHARES
+  (road, flood, air) still count them: unmeasured, a methodology question (`docs/lessons/in-progress-measurements.md`).
 - **A data roll is done only when every reader of the file has run** (HANDOVER s0 step 7). Area pages BAKE
   scores (the `/area/` index's tables too) AND the planes overhead links (`data/planes-districts-by-council.json`,
   written by `build_planes_pages.py`): rerun `build_area_pages.py --write` after any vintage or planes roll (its

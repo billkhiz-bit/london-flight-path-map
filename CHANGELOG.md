@@ -2,6 +2,8 @@
 
 ## 2026-11-10 - The answer card for everyone
 
+- **Planes overhead leaves out PO boxes and other bulk-mail postcodes**, which sit at a delivery office, not at homes. A district's busiest figure is now its homes': SW1P (Westminster) reads up to 44 a day, not 307, and Earl's Court SW5 5, not 305. Every page says how many it leaves out. Seven district pages whose homes see too few planes for a page are withdrawn; a postcode search still answers for each home.
+
 - **The map's answer card says in words what stands out**: the pills now sit under "Worth a look" and "Good here", each with a mark (! or a tick), so their meaning no longer rests on a dot's colour, and a screen reader hears "Crime, good here".
 - **A card you have opened stays open while the rest of the answer arrives**, and the keyboard stays where it was. Late answers used to shut it and send the focus to the top of the page.
 - **If the front page's map data fails to load, a search says so** ("Reloading the page usually fixes it"), where it used to say "Looking it up..." for ever.

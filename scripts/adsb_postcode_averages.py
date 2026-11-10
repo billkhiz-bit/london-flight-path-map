@@ -295,6 +295,23 @@ def airports_to_publish(verdicts, codes, min_months=MIN_CHECKED_MONTHS):
 # ---------------------------------------------------------------- postcodes
 
 
+def large_users(nspl=NSPL_CSV):
+    """Every LIVE postcode NSPL marks as a large user (`usrtypind` 1): PO boxes and organisations that receive a lot of
+    post. ONS places them at their delivery office or business, so they are not homes, and counting planes "over"
+    them made a district's busiest figure the mail centre's (found 2026-11-10: SW1P read 307 a day from post boxes at
+    one point where its homes read 17; 238 districts' headlines moved). Bill's rule A (2026-11-10): leave ALL of them
+    out of the planes figures, ONS's own definition, no threshold of ours. A missing column stops the build: never a
+    silent skip."""
+    with nspl.open(newline='', encoding='utf-8-sig') as fh:
+        reader = csv.reader(fh)
+        header = next(reader)
+        missing = [c for c in ('pcds', 'doterm', 'usrtypind') if c not in header]
+        if missing:
+            raise SystemExit(f'{nspl.name}: columns {missing} missing: cannot tell large users from homes')
+        pc_i, term_i, user_i = (header.index(c) for c in ('pcds', 'doterm', 'usrtypind'))
+        return frozenset(r[pc_i].strip().upper() for r in reader if not r[term_i].strip() and r[user_i].strip() == '1')
+
+
 def covered_postcodes(lad_map, nspl=NSPL_CSV):
     """(postcodes, {reason: rows left out}) for every live postcode of a covered council: postcodes is a list
     of (postcode, lad, city, easting, northing, gridind) at ONS's grid reference, gridind its position quality

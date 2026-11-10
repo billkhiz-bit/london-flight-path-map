@@ -101,7 +101,9 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
     other: (file.other || []).includes(pc)
       ? 'Other flying passes over here too, from airfields, helicopters and airports we cannot check against official counts, so few planes from the airports we count does not mean a quiet sky.'
       : null,
-    definition: `${info.definition} ${info.direction_rule}`,
+    // The large-user rule (2026-11-10) only when the file carries it: a cached older airports.json mid-deploy never
+    // prints "undefined" (scripts/build_planes_overhead.py POSTCODES_RULE).
+    definition: [info.definition, info.direction_rule, info.postcodes_rule].filter((s) => typeof s === 'string' && s).join(' '),
     counted: `Counted from community flight tracking, checked against the CAA's monthly totals for ${airports.length ? listOf(airports.map((a) => a.name)) : 'each airport'}.`,
     credits: info.credits || [],
     how: HOW_LINK,

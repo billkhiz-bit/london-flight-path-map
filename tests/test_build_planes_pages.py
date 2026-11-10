@@ -40,6 +40,7 @@ META = {
     'airports': {code: {'share_pct': {'westerly': 56, 'easterly': 29, 'mixed': 15}, 'months': ['202601', '202608']}
                  for code in ('LCY', 'LHR')},
     'definition': 'Overhead means more than halfway up the sky.', 'direction_rule': 'A day counts as one way.',
+    'postcodes_rule': 'PO boxes are left out.',
     'credits': ['Flight tracks: adsb.lol (ODbL 1.0)'], 'licence': 'Open Database License (ODbL) 1.0',
 }
 NAMES = {'LHR': 'Heathrow', 'LCY': 'London City'}
@@ -95,7 +96,10 @@ def test_which_districts_get_no_page_and_why():
     assert bpp.verdict(page, (40, 0)) is None
     assert 'busiest postcode 9 a day' in bpp.verdict(_district(n=30, lhr=(9, 1, [2, 9])), (40, 0))
     assert 'in the covered councils' in bpp.verdict(page, (61, 0))  # 30 of 61: under half
-    assert 'large users' in bpp.verdict(page, (40, 21))
+    # Measured postcodes leave the large users out (rule A, 2026-11-10): 30 small users of 61, 31 of them large users.
+    assert 'large users' in bpp.verdict(page, (61, 31))
+    # Its 35 post boxes are not postcodes "outside the covered councils": 30 of its 35 small users is coverage.
+    assert bpp.verdict(page, (70, 35)) is None
     assert 'postcodes measured' in bpp.verdict(_district(n=bpp.MIN_POSTCODES - 1), (bpp.MIN_POSTCODES - 1, 0))
     # An edge whose TOP reaches PAGE_FROM is a postcode shown PAGE_FROM a day (reaches_one's rule).
     assert bpp.verdict(_district(n=30, lhr=([2, 10], 0, 0)), (30, 0)) is None
@@ -108,10 +112,23 @@ def test_more_measured_than_nspl_lists_is_the_wrong_edition():
 
 # ----------------------------------------------------------------- what a page says
 
-def _page(f, live=None, nearby=('TW10',)):
+def _page(f, live=None, nearby=('TW10',), large=0):
     n = len(f['postcodes']) + len(f['none'])
-    m = bpp.model(f['district'], f, META, _ctx(n), (live or n, 0), NAMES, list(nearby), ORDER)
+    m = bpp.model(f['district'], f, META, _ctx(n), ((live or n) + large, large), NAMES, list(nearby), ORDER)
     return m, bpp.render(m)
+
+
+def test_a_page_says_its_left_out_post_boxes_never_as_unmeasured():
+    # SW1P after rule A (2026-11-10): 422 of 752 live postcodes measured, the other 330 large users. The page said
+    # "422 of its 752 postcodes measured, the ones in Westminster and Wandsworth": the post boxes read as elsewhere.
+    m, html = _page(_district(n=30, lhr=(317, 2, 190)), large=33)
+    assert m['live'] == 30 and m['large'] == 33
+    assert 'All 30 of its postcodes measured (33 PO boxes and other large-user postcodes left out)' in html
+    assert 'of its 63 postcodes' not in html
+    _, one = _page(_district(n=30, lhr=(317, 2, 190)), large=1)
+    assert '(1 PO box or other large-user postcode left out)' in one
+    _, none = _page(_district(n=30, lhr=(317, 2, 190)))
+    assert 'large-user' not in none
 
 
 def test_a_quiet_airport_gets_one_line_not_a_table():

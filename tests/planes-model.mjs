@@ -250,4 +250,13 @@ check('band: per airport, never a sum; none reaching 1 says it of each airport; 
   assert.equal(planesBandLead(null, STEPS), null);
 });
 
+check('the large-user rule is said beside the definition, and an older file without it says nothing extra', () => {
+  const rule = 'PO boxes and other postcodes for organisations that receive a lot of post are left out.';
+  const told = planesModel(TW9, { ...INFO, postcodes_rule: rule }, 'TW9 3PZ', NAMES).definition;
+  assert.ok(told.endsWith(rule) && told.includes(INFO.direction_rule), told);
+  const older = planesModel(TW9, INFO, 'TW9 3PZ', NAMES).definition;
+  assert.equal(older, `${INFO.definition} ${INFO.direction_rule}`);
+  assert.doesNotMatch(older, /undefined/);
+});
+
 console.log(`planes model: ${passed} checks passed`);

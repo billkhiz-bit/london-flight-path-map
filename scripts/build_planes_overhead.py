@@ -25,6 +25,11 @@ WHAT A POSTCODE IS TOLD, AND WHAT IT IS NOT
   was not measured (no grid reference, or outside the covered councils): the page then says nothing at all.
 - `approx`: postcodes whose ONS position is imputed or a sector mean (NSPL gridind 5, 6): they can sit hundreds of
   metres out, and the page says so beside the figure.
+- LARGE USERS LEFT OUT (Bill's rule A, 2026-11-10): NSPL's `usrtypind` 1 postcodes (PO boxes, organisations that
+  receive a lot of post) sit at a delivery office or a business, not at homes; they are in no list and in no file, so
+  a district's figures are its homes' (SW1P's busiest read 307 a day from post boxes; its homes, 17). `build()` takes
+  the set as a REQUIRED argument, read from NSPL by adsb_postcode_averages.large_users(); airports.json says so in
+  `postcodes_rule`, which every surface showing the definition shows beside it.
 - `other`: postcodes where flying we cannot count (airfields that are not among the ten, helicopters, transits, the
   airports that failed the check) is a large part of what passes over: a few from the ten is not a quiet sky
   (Biggin Hill, TN16 3GH). Only the flag is published, never that traffic's figure: it is unchecked.
@@ -76,6 +81,8 @@ DEFINITION = (f'Overhead means more than halfway up the sky ({ANGLE:g} degrees o
               f'{ao.CEILING_FT:,} ft, the CAA\'s definition of an overflight (CAP 1498).')
 SHOWN_FROM = 0.5  # a day's average that rounds to 1: below it on every kind of day, an airport is not listed
 COARSE_GRIDIND = (5, 6)  # NSPL: imputed by ONS, or the postcode sector's mean
+POSTCODES_RULE = ('PO boxes and other postcodes for organisations that receive a lot of post are left out: they sit at '
+                  'a delivery office or a business, not at homes.')
 # SET FROM THE RECOUNT ON THE GROUND (2026-10-26), by the postcodes each rule changes (scratch measure_rules.py):
 # a range at gap 10 / ratio 2 on 17,103 postcodes, 4.0% of the 431,678 with a figure (London 6.4%), all on approach
 # edges; gap 5 adds ~4,000 more, gap 20 drops ~3,400 real edges (B23 5BH: 1 to 121 a day from Birmingham).
@@ -132,8 +139,9 @@ def reaches_one(figs):
                for f in figs if f is not None for top in ([f[1]] if isinstance(f, list) else [f]))
 
 
-def build(arrays, meta):
-    """{file name: object} for every district and airports.json, from the averages file's arrays and meta."""
+def build(arrays, meta, *, skip):
+    """{file name: object} for every district and airports.json, from the averages file's arrays and meta. `skip` is
+    the large users to leave out (required: a forgotten skip would put the post boxes back without a word)."""
     airports = [str(a) for a in arrays['airports']]
     if sorted(airports) != sorted(meta['published']):
         raise SystemExit('the averages file lists airports its meta does not publish: refusing to build')
@@ -150,8 +158,12 @@ def build(arrays, meta):
     # Only an airport reaching SHOWN_FROM somewhere within 100 m can be listed: the rest need no figures worked out.
     near = np.nanmax(np.where(np.isfinite(hi), hi, -1.0), axis=2) >= SHOWN_FROM  # [postcode, airport]
     files = {}
+    left_out = 0
     for k, pc in enumerate(arrays['postcode']):
         pc = str(pc)
+        if pc in skip:  # before its district's file is made: a district of post boxes only gets no file at all
+            left_out += 1
+            continue
         district = pc.split()[0]
         f = files.setdefault(f'{district}.json', {'district': district, 'postcodes': {}, 'none': [], 'approx': [],
                                                   'other': []})
@@ -180,6 +192,8 @@ def build(arrays, meta):
         'angle_deg': ANGLE, 'ceiling_ft': ao.CEILING_FT,
         'definition': DEFINITION,
         'direction_rule': f'A day counts as one way when {ao.DIRECTION_DAY_SHARE:.0%} of its flights used that way.',
+        'postcodes_rule': POSTCODES_RULE,
+        'large_users_left_out': left_out,
         'airports': {code: {'days': dict(zip(pa.CLASSES, days[a].tolist(), strict=True)),
                             'share_pct': {c: shown(100 * s) for c, s in zip(pa.CLASSES, share[a].tolist(), strict=True)},
                             'months': [meta['published'][code]['months'][0], meta['published'][code]['months'][-1]]}
@@ -244,7 +258,8 @@ def main():
         print(f'{AVERAGES.relative_to(ROOT)} is missing: scripts/adsb_postcode_averages.py builds it', file=sys.stderr)
         return 1
     arrays, meta = pa.read(AVERAGES)
-    files = build(arrays, meta)
+    skip = pa.large_users()
+    files = build(arrays, meta, skip=skip)
     encoded = {name: encode(obj) for name, obj in files.items()}
     if a.write:
         write(encoded)
@@ -257,6 +272,9 @@ def main():
             return 1
     for want in a.at:
         pc = ' '.join(want.upper().split())
+        if pc in skip:
+            print(f'{pc}: a large user (PO box or bulk mail): left out')
+            continue
         f = files.get(f'{pc.split()[0]}.json')
         if f is None:
             print(f'{pc}: no district file')

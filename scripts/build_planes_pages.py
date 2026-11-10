@@ -386,10 +386,13 @@ def verdict(f: dict, totals: tuple[int, int]) -> str | None:
                   default=0)
     if busiest < PAGE_FROM:
         return f'busiest postcode {busiest} a day (< {PAGE_FROM})'
-    if measured > live:
-        raise SystemExit(f"{f['district']}: {measured} measured, {live} live in NSPL: not the averages' edition")
-    if measured < COVERED_FROM * live:
-        return f'{measured} of {live} postcodes in the covered councils (< {COVERED_FROM:.0%})'
+    # Large users are left out of the figures (rule A, 2026-11-10), so coverage is judged against the rest: counting
+    # them would call a district's PO boxes postcodes outside the covered councils.
+    homes = live - large
+    if measured > homes:
+        raise SystemExit(f"{f['district']}: {measured} measured, {homes} live small users in NSPL: not the averages' edition")
+    if measured < COVERED_FROM * homes:
+        return f'{measured} of {homes} postcodes in the covered councils (< {COVERED_FROM:.0%})'
     if large > LARGE_UNDER * live:
         return f'{large} of {live} postcodes are large users (> {LARGE_UNDER:.0%})'
     if measured < MIN_POSTCODES:
@@ -448,7 +451,7 @@ def model(name: str, f: dict, meta: dict, ctx: dict, totals: tuple[int, int], na
             'days': days,
         })
     measured = len(f['postcodes']) + len(f['none'])
-    live = totals[0]
+    live, large = totals
     # The note explains EDGE only where a reading says it: a range inside one band reads as that band.
     edges = any(EDGE in text for t in tables for text in [*(p for _, _, day in t['days'] for p in day.parts),
                                                             *(p for row in t['rows'] for c in row[2] for p in c)])
@@ -456,12 +459,12 @@ def model(name: str, f: dict, meta: dict, ctx: dict, totals: tuple[int, int], na
         'district': name, 'slug': name.lower(), 'city': ctx['city'],
         'city_label': area.CITY_LABEL.get(ctx['city'], ctx['city'].title()),
         'councils': councils(ctx['lads']),
-        'measured': measured, 'live': live,
+        'measured': measured, 'live': live - large, 'large': large,  # 'live' leaves out the large users, as the figures do
         'periods': sorted({t['period'] for t in tables}),
         'tables': tables, 'also': also,
         'edge': edges, 'approx': len(f['approx']), 'other': len(f['other']),
         'example': next(iter(sectors.values()))[0],
-        'definition': f"{meta['definition']} {meta['direction_rule']}",
+        'definition': f"{meta['definition']} {meta['direction_rule']} {meta['postcodes_rule']}",  # required: the builder writes it
         'credits': meta['credits'], 'licence': meta['licence'],
         'nearby': nearby,
     }
@@ -494,6 +497,9 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
     where = listed(council_names)
     measured = (f"All {m['live']:,} of its postcodes measured" if m['measured'] == m['live']
                 else f"{m['measured']:,} of its {m['live']:,} postcodes measured, the ones in {where}")
+    if m['large']:  # said, never silent: the left-out post boxes are not postcodes we failed to measure
+        measured += (' (1 PO box or other large-user postcode left out)' if m['large'] == 1
+                     else f" ({m['large']:,} PO boxes and other large-user postcodes left out)")
     airports = listed([t['name'] for t in m['tables']])
     sections = []
     for t in m['tables']:
