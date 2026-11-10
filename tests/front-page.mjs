@@ -935,6 +935,11 @@ await page.waitForFunction(() => document.querySelector('#ans-title')?.textConte
     'a home in line with a runway the record holds no glide path for is told so, not pointed at another approach (audit I-5)',
     gapText
   );
+  // Gatwick's routes are not drawn, so routesText() says "Nearest airport", not "Nearest airport on the map", and the
+  // Nearby list filed it under "Flight paths" beside the not-drawn line, with no Airport row (audit M-4, 2026-11-09).
+  const facts = await page.locator('#ans-routes .fact').evaluateAll((rows) => rows.map((r) => [r.querySelector('.k')?.textContent, r.lastElementChild?.textContent]));
+  ok(facts.some(([k, v]) => k === 'Airport' && /^Gatwick, /.test(v)) && !facts.some(([k, v]) => k === 'Flight paths' && /^Nearest airport/.test(v)),
+    'an airport whose routes are not drawn is still listed as the Airport, and the gap stays under Flight paths (audit M-4)', JSON.stringify(facts));
 }
 
 // 11c. A THROTTLE OR A FAILED LOOKUP IS NEVER "NO FIGURES" (2026-11-07). API Gateway's own replies carry a CORS header
@@ -3068,6 +3073,26 @@ const makeReport = async (pc) => {
       `a visitor who searches ${what} before the map has loaded is told it was heard, then gets their answer, and the example never replaces it`, JSON.stringify({ heard, came, after }));
   }
   await ep.unroute('**/data/borough-extra.json', holdMap);
+
+  // IF THE MAP'S DATA NEVER COMES (audit M-2, 2026-11-09): load() failed, `booted` never came, and a held search said
+  // "Looking it up..." for ever, as did every press after. Now the page says the data did not load: at once for the
+  // search it held, and on every press after.
+  const failMap = async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.abort(); };
+  await ep.route('**/data/borough-extra.json', failMap);
+  await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await ep.fill('#pc', 'NW1 7PJ');
+  await ep.press('#pc', 'Enter');
+  const heldWhile = await ep.evaluate(() => document.getElementById('status').textContent);
+  const toldHeld = await ep.waitForFunction(() => /did not load/.test(document.getElementById('status').textContent), null, { timeout: 8000 })
+    .then(() => true, () => false);
+  await ep.evaluate(() => { document.getElementById('status').textContent = ''; });
+  await ep.fill('#pc', 'Camden');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForTimeout(300);
+  const later = await ep.evaluate(() => document.getElementById('status').textContent);
+  ok(heldWhile === 'Looking it up...' && toldHeld && /did not load/.test(later),
+    'a search sent while the map\'s data fails to load is told so, and so is every press after (audit M-2)', JSON.stringify({ heldWhile, toldHeld, later }));
+  await ep.unroute('**/data/borough-extra.json', failMap);
   await ep.close();
   exampleOn = false;
 }

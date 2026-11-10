@@ -226,7 +226,7 @@ Or just describe what you need, I have full context of this project.
   (`tests/panel-fold.mjs`); what shows before anything is opened is `tests/uk-city-panel.mjs` "Findings first". If the module fails, the fold opens.
   **Since 2026-11-08 it is an ANSWER CARD, then TILES closed until tapped** (Bill: "keep to road noise is high", "any user to understand it", visuals where
   honest; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). The card: the headline is `answerLead()` (`js/answer-lead.mjs`, ONE holder, re-exported by
-  home-sections: the front page's sentence for the same place), only with environment figures the API gave for THIS postcode; pills from `pillsFor()`
+  home-sections: the front page's sentence for the same place), only with environment figures the API gave for THIS postcode; pills from `pillsFor()`, under "Worth a look" / "Good here", each with a ! or tick mark and named "Crime, good here" (audit I-3, Bill's pick A, 2026-11-10: never colour alone)
   (watch first; aircraft noise is never "good" beside planes that are a watch item); the score, keeping `.summary-verdict` and five `.score-breakdown
   .score-row`s (parity and render gates read them), as points earned of points possible, a part with weight 0 "not counted for this buyer", the city's
   council areas from `calcScores()` (never re-derived from rounded parts), the profile chips calling `setPersona()` (one profile everywhere). Each finding
@@ -234,6 +234,9 @@ Or just describe what you need, I have full context of this project.
   (rating strip, 100 squares, bars from zero, ruler, score); a word outside its scale draws none; a source only from the caller (New York is not DEFRA);
   a figure never said twice (`crimeNote(extra, { figures: false })`). `toneOf()` mirrors `ratingBadgeClass()`/`schoolBandFromP8()`, held by reading them.
   The path tile never gives a height: only planeAltitude()'s "Not under a final approach" (past FINAL_TOP_FT a height is an extrapolation). "Weak" is "Low".
+- **A late answer never moves the visitor** (audit I-4, 2026-11-10; WCAG 2.4.3): `placeFinding()` leaves a slot drawn the same alone and, when it changes,
+  keeps the open tiles and the tile the focus was in; the pills rebuild only when their list changes (focus kept by `data-pill-key`), and a pill opens its tile
+  as it is NOW (`_pillTile`). `tests/uk-city-panel.mjs` holds TfL and the NHS back to test it.
 - **"All the detail" is option 1** (Bill's pick, 2026-11-08; live 2026-11-09): the 1 km picture (a full postcode only), then `details.dcard`s, then `details.drow`s.
   `js/detail-near.mjs` words it, pure (`tests/detail-near.mjs`); `fillDetail()` takes each loader's answer as it lands. Every loader's container keeps its id in a card
   body, line status in `#postcode-line-status` (`renderTransportData` writes there when it exists). An unasked kind has no line and no card; asked and none within 1 km

@@ -90,6 +90,9 @@ targets (>= 28 px). The uncommitted suggestions fix and DEFRA retry: no new hole
 - Critical: 0
 - Important: 4. I-1 FIXED (committed 10 Nov with the upkeep; `tests/detail-near.mjs` red on the old code). I-2: the
   loader now stores DEFRA's 6 decimals (`tests/test_air_loader_precision.py`); the live table changes only when the air
-  attributes are reloaded (production writes: Bill's word). I-3 and I-4 wait for Bill's go.
+  attributes are reloaded (production writes: Bill's word). I-3 and I-4 FIXED (10 Nov, Bill's go; I-3 as his pick A of
+  claude.ai/artifact/9fizwcmmDp59FWUDtzuCQh: labelled groups, marks, names in words; both held in `tests/uk-city-panel.mjs`).
 - M-16 FIXED (10 Nov): ranks say "joint 10th" (`scripts/rank_place.mjs`, `tests/test_rank_place_ties.py`).
+- M-2 and M-4 FIXED (10 Nov; `tests/front-page.mjs`). M-3 is NOT A DEFECT: the 5 Nov build chose to let a good postcode on
+  its way land after a bad press, and tests it (`tests/api-demo.mjs`: "a bad postcode leaves a good one on its way").
 - Minor: 16

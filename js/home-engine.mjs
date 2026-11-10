@@ -1246,12 +1246,18 @@ const say = (s) => { if (status) status.textContent = s; };
 // drawn the map (`booted`), a search is held, the latest one only, and load() decides what runs once it can.
 let booted = false;
 let early = null;
+// If load() fails, nothing a search reads will ever arrive: a held search waited for ever on "Looking it up..." (audit
+// M-2, 2026-11-09). It is said plainly instead, now and on every press after. Not a retry: load() binds the page's
+// controls, so running it twice would bind them twice.
+let bootFailed = false;
+const NOT_LOADED = 'The map\'s data did not load, so nothing can be looked up. Reloading the page usually fixes it.';
 form?.addEventListener('submit', (ev) => {
   ev.preventDefault();
   engaged('search');
   const text = byId('pc')?.value || '';
   if (booted) { search(text); return; }
   if (!text.trim()) return;
+  if (bootFailed) { say(NOT_LOADED); return; }
   early = text;
   // The example will not come now (its frame gives way), and the live region says the search was heard.
   endLoading();
@@ -1663,7 +1669,10 @@ function factRow(label, text) {
 // routesText() speaks in sentences; the list wants what each is about. A sentence it does not recognise is kept whole.
 function routeFacts(text) {
   return text.split(/(?<=\.)\s+/).filter(Boolean).map((sentence) => {
-    const airport = /^Nearest airport on the map: (.*?)\.?$/.exec(sentence);
+    // Both of routesText()'s airport sentences: one whose routes are not drawn (Gatwick, Stansted, Luton) is "Nearest
+    // airport", and fell through to a second "Flight paths" row with no Airport row (audit M-4, 2026-11-09). Its own
+    // "Routes: ... not drawn here" sentence still says so, under Flight paths.
+    const airport = /^Nearest airport(?: on the map)?: (.*?)\.?$/.exec(sentence);
     const approach = /^Nearest published approach: (.*?)\.?$/.exec(sentence);
     return airport ? factRow('Airport', airport[1]) : approach ? factRow('Flight path', approach[1]) : factRow('Flight paths', sentence);
   });
@@ -2239,4 +2248,11 @@ function bindFit() {
   tablist.hidden = false;
 }
 
-load().catch((e) => say(`The map could not load: ${e.message}`));
+load().catch((e) => {
+  bootFailed = true;
+  // A search held while it loaded is answered now, and the example's frame gives way: nothing is coming to fill it.
+  const held = early !== null;
+  early = null;
+  endLoading();
+  say(held ? NOT_LOADED : `The map could not load: ${e.message}`);
+});

@@ -2420,10 +2420,24 @@
         color: var(--card-head);
         text-wrap: balance;
       }
+      /* What a pill means is said three ways, never by colour alone (audit I-3, WCAG 1.4.1; Bill's pick A, 2026-11-10,
+         mock-up claude.ai/artifact/9fizwcmmDp59FWUDtzuCQh): a group label in words, a mark's shape (! or a tick), and the
+         colour. The labels are hidden from screen readers because each button already says it ("Crime, good here"). */
       .ac-pills {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
         gap: 6px;
+      }
+      .ac-pill-lab {
+        margin-right: 2px;
+        font: 500 12px var(--font-sans);
+        color: var(--card-label);
+      }
+      /* The second group starts its own line. */
+      .ac-pill-break {
+        flex-basis: 100%;
+        height: 0;
       }
       .ac-pill {
         display: inline-flex;
@@ -2438,15 +2452,15 @@
         border-radius: 999px;
         cursor: pointer;
       }
-      .ac-pill::before {
-        content: '';
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #26f27d;
+      /* Drawn in currentColor, so forced-colours mode keeps the shape where it used to remove the dot. */
+      .ac-mark {
+        flex: none;
+        width: 14px;
+        height: 14px;
+        color: #26f27d;
       }
-      .ac-pill.watch::before {
-        background: var(--orange);
+      .ac-pill.watch .ac-mark {
+        color: var(--orange);
       }
       .ac-pill:hover {
         border-color: var(--card-text);
@@ -14240,11 +14254,37 @@
       // THE ANSWER CARD AND ITS TILES (Bill, 2026-11-08; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). The module words
       // and draws each tile; this places it, then tidyCard() brings the card up to date from what is placed: the pills of
       // what stands out, each section's "-wide" note, the lone last tile, and the air readings inside the air tile.
+      // A LATE ANSWER MUST NOT MOVE THE VISITOR (audit I-4, 2026-11-09; WCAG 2.4.3). In London, Transport and Healthcare are
+      // drawn from the council's rating and drawn again when TfL and the NHS answer; every redraw replaced the slot, so a
+      // tile someone had opened shut, and a keyboard user inside it was sent to <body>. A slot drawn the same again is left
+      // alone; a slot that changes keeps what was open and the tile the focus was in. Keyed by the slot ELEMENT, which every
+      // search and every profile draws afresh, so nothing carries over from one place to the next.
+      const _slotHtml = new WeakMap();
+      // Each tile by its finding and its place among those with the same finding (a planes slot holds one per airport).
+      function tilesByKey(el) {
+        const seen = new Map();
+        return [...el.querySelectorAll('details.tile')].map((t) => {
+          const k = t.dataset.finding || '';
+          seen.set(k, (seen.get(k) || 0) + 1);
+          return [`${k}#${seen.get(k)}`, t];
+        });
+      }
       function placeFinding(m, slot, findings) {
         const el = document.querySelector(`#sidebar-content [data-find="${slot}"]`);
         if (!el) return null;
         el.classList.remove('is-waiting');
-        el.innerHTML = [].concat(findings).map((f) => m.tileHtml(f, { scoreColour: scoreColor })).join('');
+        const html = [].concat(findings).map((f) => m.tileHtml(f, { scoreColour: scoreColor })).join('');
+        if (_slotHtml.get(el) !== html) {
+          const before = tilesByKey(el);
+          const open = new Set(before.filter(([, t]) => t.open).map(([k]) => k));
+          const focusIn = before.find(([, t]) => t.contains(document.activeElement))?.[0] ?? null;
+          el.innerHTML = html;
+          _slotHtml.set(el, html);
+          const after = tilesByKey(el);
+          for (const [k, t] of after) if (open.has(k)) t.open = true;
+          // The same tile if it is still there, else the slot's first: never <body>.
+          if (focusIn) (after.find(([k]) => k === focusIn) || after[0])?.[1].querySelector('summary')?.focus({ preventScroll: true });
+        }
         tidyCard(m);
         return el;
       }
@@ -14290,6 +14330,26 @@
           document.querySelector(`[data-persona-chip="${key}"]`)?.focus();
         });
       }
+      const _pillTile = new WeakMap();
+      // The two groups, in pillsFor()'s order (watch first), each with its words and its mark (Bill's pick A, 2026-11-10).
+      const PILL_GROUPS = [
+        { stand: 'watch', words: 'Worth a look', mark: '<circle cx="7" cy="7" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 3.6v4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="7" cy="10.3" r="1" fill="currentColor"/>' },
+        { stand: 'good', words: 'Good here', mark: '<circle cx="7" cy="7" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.3 7.2l1.9 1.9 3.6-3.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' },
+      ];
+      function pillButton(p) {
+        const group = PILL_GROUPS.find((g) => g.stand === p.stand);
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = `ac-pill ${p.stand}`;
+        b.dataset.pillKey = `${p.key}|${p.pill}`;
+        // Named "Crime, good here": the topic first, as it is seen (WCAG 2.5.3), then what it means.
+        b.innerHTML = `<svg class="ac-mark" viewBox="0 0 14 14" aria-hidden="true" focusable="false">${group.mark}</svg>${escapeHtml(p.pill)}<span class="sr-only">, ${group.words.toLowerCase()}</span>`;
+        b.addEventListener('click', () => {
+          countCard(`panel-pill-${p.key}`);
+          openTile(_pillTile.get(b));
+        });
+        return b;
+      }
       function tidyCard(m) {
         const root = document.getElementById('sidebar-content');
         if (!root) return;
@@ -14300,20 +14360,27 @@
         for (const t of tiles) t.classList.toggle('stands', pills.some((p) => p.el === t));
         const box = document.getElementById('ac-pills');
         if (box) {
-          box.replaceChildren(
-            ...pills.map((p) => {
-              const b = document.createElement('button');
-              b.type = 'button';
-              b.className = `ac-pill ${p.stand}`;
-              b.textContent = p.pill;
-              b.addEventListener('click', () => {
-                countCard(`panel-pill-${p.key}`);
-                openTile(p.el);
-              });
-              return b;
-            }),
-          );
-          box.hidden = pills.length === 0;
+          // Rebuilt only when the list itself changes (audit I-4): every late answer used to replace every pill, and a
+          // keyboard user on one lost focus to <body>. A button opens the tile it names as that tile is NOW (`_pillTile`,
+          // set on every tidy), so a redrawn tile is still the one opened.
+          const groups = PILL_GROUPS.map((g) => ({ ...g, pills: pills.filter((p) => p.stand === g.stand) })).filter((g) => g.pills.length);
+          const ordered = groups.flatMap((g) => g.pills);
+          const sig = ordered.map((p) => `${p.key}|${p.stand}|${p.pill}`).join('\n');
+          if (box.dataset.sig !== sig) {
+            const had = box.contains(document.activeElement) ? document.activeElement.dataset.pillKey : null;
+            box.replaceChildren(
+              ...groups.flatMap((g, i) => {
+                const lab = Object.assign(document.createElement('span'), { className: 'ac-pill-lab', textContent: g.words });
+                lab.setAttribute('aria-hidden', 'true');
+                const brk = Object.assign(document.createElement('span'), { className: 'ac-pill-break' });
+                return [...(i ? [brk] : []), lab, ...g.pills.map((p) => pillButton(p))];
+              }),
+            );
+            box.dataset.sig = sig;
+            if (had) (box.querySelector(`[data-pill-key="${CSS.escape(had)}"]`) || box.querySelector('button'))?.focus({ preventScroll: true });
+          }
+          box.querySelectorAll('button').forEach((b, i) => _pillTile.set(b, ordered[i]?.el || null));
+          box.hidden = ordered.length === 0;
         }
         for (const sec of root.querySelectorAll('.find-group')) {
           const own = [...sec.querySelectorAll('details.tile')];

@@ -1087,6 +1087,113 @@ console.log('Findings first');
     !wasHeld ? 'the suggestion request never went out, so this case was not reached' : afterHeld ? 'the late suggestions opened over the answer' : '');
   check('no page errors around the suggestions', sgErrors.length === 0, sgErrors.slice(0, 2).join(' | '));
   await sg.close();
+
+  // THE PILLS SAY WHAT THEY MEAN, AND A LATE ANSWER KEEPS THE VISITOR'S PLACE (audit I-3 and I-4, 2026-11-09).
+  // I-3 (WCAG 1.4.1): a pill to watch and a good one differed only by a dot's colour; now a group label in words, a mark's
+  // shape and the button's own name say it (Bill's pick A, 2026-11-10). I-4 (WCAG 2.4.3): in London, Transport and
+  // Healthcare are drawn from the council's rating, then again when TfL and the NHS answer, and every redraw replaced
+  // the slot and every pill: an opened tile shut and a keyboard user was sent to <body>. Both answers are HELD here, so the
+  // redraw happens on purpose while the focus is where a visitor put it.
+  const lt = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const ltErrors = [];
+  lt.on('pageerror', (e) => ltErrors.push(e.message));
+  const gate = () => {
+    let open = () => {};
+    const shut = new Promise((r) => { open = r; });
+    return { shut, open: () => open() };
+  };
+  const nhsGate = gate();
+  const tflGate = gate();
+  await lt.route('**/v1/environment**', (r) => json(r, environmentWith({ roadNoiseLdenDb: 71.8 })));
+  await lt.route('**/transport?**', async (r) => {
+    await tflGate.shut;
+    await json(r, { stations: [{ name: "Earl's Court Underground Station", distance: 376, lines: ['district'] }], lineStatus: [] }).catch(() => {});
+  });
+  await lt.route('**/nhs?**', async (r) => {
+    await nhsGate.shut;
+    await json(r, { gp: [{ name: 'Brompton Medical Centre', distance: 49 }], pharmacies: [], hospitals: [] }).catch(() => {});
+  });
+  await lt.route('**/sold-prices?**', (r) => json(r, { transactions: [] }));
+  await lt.route('**/epc?**', (r) => json(r, { available: false }));
+  await lt.goto(url, { waitUntil: 'domcontentloaded' });
+  await lt.waitForTimeout(2500);
+  await lt.evaluate((city) => window.switchCity(city), 'london');
+  await lt.waitForTimeout(1200);
+  await lt.fill('#search-input', 'SW5 9HP');
+  await lt.press('#search-input', 'Enter');
+  const drawnEarly = await lt.waitForFunction(() => document.querySelector('#ac-pills:not([hidden]) button')
+    && document.querySelector('[data-find="healthcare"] details.tile') && document.querySelector('[data-find="transport"] details.tile'), null, { timeout: 8000 })
+    .then(() => true, () => false);
+
+  const pills = await lt.evaluate(() => {
+    const box = document.getElementById('ac-pills');
+    let group = null;
+    const out = [];
+    for (const el of box.children) {
+      if (el.classList.contains('ac-pill-lab')) group = { words: el.textContent, hidden: el.getAttribute('aria-hidden') };
+      else if (el.matches('button.ac-pill')) {
+        const mark = el.querySelector('svg.ac-mark');
+        out.push({
+          stand: el.classList.contains('watch') ? 'watch' : el.classList.contains('good') ? 'good' : null,
+          name: el.textContent.replace(/\s+/g, ' ').trim(),
+          // What a sighted reader sees: innerText would keep the clipped .sr-only words, so they are taken out by hand.
+          seen: (() => {
+            const c = el.cloneNode(true);
+            c.querySelectorAll('.sr-only').forEach((s) => s.remove());
+            return c.textContent.replace(/\s+/g, ' ').trim();
+          })(),
+          group,
+          mark: mark ? { d: [...mark.querySelectorAll('path')].map((p) => p.getAttribute('d')).join(' '), w: mark.getBoundingClientRect().width, hidden: mark.getAttribute('aria-hidden') } : null,
+        });
+      }
+    }
+    return out;
+  });
+  const WORDS = { watch: 'Worth a look', good: 'Good here' };
+  const SHAPE = { watch: /^M7 3\.6v4\.3$/, good: /^M4\.3 7\.2/ };
+  check('the card has pills to read (case reached)', drawnEarly && pills.length > 0, drawnEarly ? '' : 'the card, its pills or the two tiles never drew');
+  check('every pill sits under a label that says what it means, in words', pills.every((p) => p.stand && p.group && p.group.words === WORDS[p.stand] && p.group.hidden === 'true'), JSON.stringify(pills));
+  check('every pill\'s name says it too, after what it shows ("Crime, good here")', pills.every((p) => p.name === `${p.seen}, ${WORDS[p.stand].toLowerCase()}`), JSON.stringify(pills.map((p) => [p.seen, p.name])));
+  check('every pill carries its mark, a shape that differs by meaning', pills.every((p) => p.mark && p.mark.w >= 12 && p.mark.hidden === 'true' && SHAPE[p.stand].test(p.mark.d)), JSON.stringify(pills.map((p) => p.mark)));
+
+  // A tile opened, the focus inside it, then the NHS answers and the tile is drawn again from the real list.
+  // textContent, not innerText: a CLOSED tile's innerText is its face alone, and a redraw may change only what it opens to.
+  const tileText = (k) => lt.evaluate((key) => document.querySelector(`[data-find="${key}"]`)?.textContent || '', k);
+  const healthBefore = await tileText('healthcare');
+  await lt.evaluate(() => {
+    const t = document.querySelector('[data-find="healthcare"] details.tile');
+    t.open = true;
+    t.querySelector('summary').focus();
+  });
+  nhsGate.open();
+  const healthRedrawn = await lt.waitForFunction((b) => (document.querySelector('[data-find="healthcare"]')?.textContent || '') !== b, healthBefore, { timeout: 8000 })
+    .then(() => true, () => false);
+  const tileKept = await lt.evaluate(() => {
+    const t = document.querySelector('[data-find="healthcare"] details.tile');
+    return { open: Boolean(t?.open), focus: document.activeElement === t?.querySelector('summary'), on: document.activeElement?.tagName };
+  });
+  check('a tile redrawn by a late answer stays open, with the focus still in it', healthRedrawn && tileKept.open && tileKept.focus,
+    !healthRedrawn ? 'the NHS answer never redrew the tile, so this case was not reached' : JSON.stringify(tileKept));
+
+  // The focus on a pill, then TfL answers: the transport tile is drawn again, and the card tidied with it.
+  const pillKey = await lt.evaluate(() => {
+    const b = document.querySelector('#ac-pills button');
+    b.focus();
+    return b.dataset.pillKey;
+  });
+  const transportBefore = await tileText('transport');
+  tflGate.open();
+  const transportRedrawn = await lt.waitForFunction((b) => (document.querySelector('[data-find="transport"]')?.textContent || '') !== b, transportBefore, { timeout: 8000 })
+    .then(() => true, () => false);
+  const pillKept = await lt.evaluate((key) => {
+    const a = document.activeElement;
+    const same = [...document.querySelectorAll('#ac-pills button')].find((b) => b.dataset.pillKey === key);
+    return { inPills: Boolean(a?.closest('#ac-pills')), same: same ? a === same : null, on: a?.tagName };
+  }, pillKey);
+  check('a late answer leaves the keyboard on the pill it was on', transportRedrawn && pillKept.inPills && pillKept.same !== false,
+    !transportRedrawn ? 'the TfL answer never redrew the tile, so this case was not reached' : JSON.stringify(pillKept));
+  check('no page errors around late answers', ltErrors.length === 0, ltErrors.slice(0, 2).join(' | '));
+  await lt.close();
   console.log('');
 }
 

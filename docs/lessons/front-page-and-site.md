@@ -994,3 +994,31 @@ The first full preflight on the card failed on two tests that read the map's own
 and first argument, never its full signature); the other is the New York ratchet (`tests/test_us_city_branches.py`),
 which caught `currentCity === 'nyc'` added for the word "boroughs". The answer was the panel's existing area rule (council
 for the UK, borough otherwise), not a new declared branch. The run's third red was a DEFRA read timeout that passed alone.
+
+## The answer card's pills, late answers, and the audit's M-3 (2026-11-10)
+
+From `AUDIT_REPORT_2026-11-09.md`. **I-3**: a pill to watch and a good one differed only by a 7 px dot, orange or green
+(1.82:1 apart in lightness), which forced-colours mode removes; a screen reader heard "Crime, button" for Westminster and
+for Richmond. Bill picked A of two mock-ups (claude.ai/artifact/9fizwcmmDp59FWUDtzuCQh): the pills sit under "Worth a look"
+and "Good here" (labels `aria-hidden`, since each button says it), each with a mark drawn in `currentColor` (! or a tick, so
+forced colours keep the shape), and named "Crime, good here" (the visible words first, WCAG 2.5.3). B (marks only) was
+rejected: a reader has to know the convention.
+
+**I-4**: in London, Transport and Healthcare are drawn from the council's rating at once and again when TfL and the NHS
+answer; `placeFinding()` replaced the slot's HTML and `tidyCard()` replaced every pill each time, so a tile someone had
+opened shut and a keyboard user went to `<body>`. Now a slot drawn the same again is left alone (a `WeakMap` keyed by the
+slot ELEMENT, which every search and profile draws afresh, so nothing carries over), a changed slot keeps its open tiles
+and the focused tile (by finding and its place among those with the same finding: a planes slot holds one per airport),
+and the pills rebuild only when their list changes. A pill's tile is looked up when it is pressed (`_pillTile`), because a
+kept button would otherwise open the tile it was made with, detached by the redraw. The test holds `/transport` and
+`/nhs` behind gates and releases them with the focus placed, red on the old code both ways.
+
+**M-3 was not a defect.** The audit said a bad postcode pressed on `/api/` while a good one is on its way should cancel
+it. The 5 Nov build chose otherwise and tests it ("a bad postcode leaves a good one on its way", "and that one still
+lands"): a typo must not throw away a valid request, and when it lands the status line is about it, so the mark goes with
+the words that explained it. Read the tests for a behaviour before calling it a bug: an audit reads the code, the test
+records the decision.
+
+**M-2**: if `load()` rejects, nothing a search reads will come, so the held search and every press after say "The map's
+data did not load... Reloading the page usually fixes it." Not a retry: `load()` binds the page's controls. **M-4**: the
+Nearby list's Airport row matches both of `routesText()`'s airport sentences (ZZ9 9GAP, on Gatwick's centreline, holds it).

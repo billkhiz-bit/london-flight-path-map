@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-10 - The answer card for everyone
+
+- **The map's answer card says in words what stands out**: the pills now sit under "Worth a look" and "Good here", each with a mark (! or a tick), so their meaning no longer rests on a dot's colour, and a screen reader hears "Crime, good here".
+- **A card you have opened stays open while the rest of the answer arrives**, and the keyboard stays where it was. Late answers used to shut it and send the focus to the top of the page.
+- **If the front page's map data fails to load, a search says so** ("Reloading the page usually fixes it"), where it used to say "Looking it up..." for ever.
+- **The front page lists Gatwick, Stansted and Luton as the nearest airport** where they are, where it used to file them under "Flight paths".
+
 ## 2026-11-09 - "All the detail" at a glance
 
 - **The full map's "All the detail" opens on a picture of what is within 1 km of the postcode**: a line each for stations, doctors and clinics, pharmacies and hospitals, every place a dot at its distance.
