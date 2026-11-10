@@ -40,6 +40,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { AIRPORT_NAME, compass, plane, routesNear } from '../js/flight_geometry.mjs';
+import { placeAmong, placeWords } from './rank_place.mjs';
 
 const API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment';
 const WHO = { no2: 10, pm25: 5, road: 53, aircraft: 45 };
@@ -90,11 +91,6 @@ const norm = (s) =>
     .trim();
 const ALIASES = { 'barking and dagenham': 'barking' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const ord = (n) => {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-};
 const fmt = (x) => (typeof x === 'number' ? x.toFixed(1) : '');
 
 async function lookupPostcodes(postcodes) {
@@ -126,8 +122,11 @@ function boroughContext(extra, district) {
     if (!hit) continue;
     const rank = (field) => {
       const vals = names.filter((b) => typeof boroughs[b][field] === 'number');
-      vals.sort((a, b) => boroughs[b][field] - boroughs[a][field]);
-      return { rank: vals.indexOf(hit) + 1, of: vals.length, above: vals.slice(0, vals.indexOf(hit)) };
+      const mine = boroughs[hit][field];
+      if (typeof mine !== 'number') return { rank: 0, tied: false, of: vals.length, above: [] };
+      // Strictly higher, highest first: a borough level with this one is not "above" it (audit M-16).
+      const above = vals.filter((b) => boroughs[b][field] > mine).sort((a, b) => boroughs[b][field] - boroughs[a][field]);
+      return { ...placeAmong(vals.map((b) => boroughs[b][field]), mine), above };
     };
     return { city, name: district, rec: boroughs[hit], no2: rank('no2AnnualMeanUgm3'), pm25: rank('pm25AnnualMeanUgm3') };
   }
@@ -154,9 +153,9 @@ function nationalContext(csvText, district) {
   if (!hit) return null;
   const rank = (field) => {
     const have = all.filter((r) => r[field] !== '' && Number.isFinite(Number(r[field])));
-    have.sort((a, b) => Number(b[field]) - Number(a[field]));
-    const i = have.indexOf(hit);
-    return i < 0 ? null : { value: Number(hit[field]), rank: i + 1, of: have.length };
+    if (!have.includes(hit)) return null;
+    const value = Number(hit[field]);
+    return { value, ...placeAmong(have.map((r) => Number(r[field])), value) };
   };
   return {
     name: hit.borough,
@@ -185,7 +184,7 @@ function page(spec, rows, ctx, vintage, nat, air) {
   }
   if (ctx && ctx.no2.of > 1) {
     tiles.push([
-      ord(ctx.no2.rank),
+      placeWords(ctx.no2),
       `highest nitrogen dioxide of ${esc(CITY_LABEL[ctx.city])}: ${esc(ctx.name)} (${fmt(ctx.rec.no2AnnualMeanUgm3)} &micro;g/m&sup3;)`,
     ]);
   }
@@ -194,14 +193,14 @@ function page(spec, rows, ctx, vintage, nat, air) {
   }
   if (nat && nat.air) {
     tiles.push([
-      ord(nat.air.rank),
+      placeWords(nat.air),
       `highest air pollution of the ${nat.air.of} UK council areas compared: ${esc(nat.name)} (${nat.air.value.toFixed(2)} times the WHO guideline on its worst pollutant)`,
     ]);
   }
   if (nat && nat.road) {
     tiles.push([
       `${Math.round(nat.road.value)}%`,
-      `of ${esc(nat.name)}'s postcodes are above the WHO road-noise guideline (${ord(nat.road.rank)} highest of ${nat.road.of})`,
+      `of ${esc(nat.name)}'s postcodes are above the WHO road-noise guideline (${placeWords(nat.road)} highest of ${nat.road.of})`,
     ]);
   }
 
@@ -255,15 +254,15 @@ function page(spec, rows, ctx, vintage, nat, air) {
   }
   if (ctx && ctx.no2.of > 1) {
     const above = ctx.no2.above.length ? ` (after ${ctx.no2.above.slice(0, 4).map(esc).join(', ')}${ctx.no2.above.length > 4 ? ' and others' : ''})` : '';
-    const pm = ctx.pm25.of > 1 ? `, and the ${ord(ctx.pm25.rank)}-highest fine particles` : '';
-    bullets.push(`${esc(ctx.name)} has the <strong>${ord(ctx.no2.rank)}-highest nitrogen dioxide</strong> of ${esc(CITY_LABEL[ctx.city])}${above}${pm}.`);
+    const pm = ctx.pm25.of > 1 ? `, and the ${placeWords(ctx.pm25)}-highest fine particles` : '';
+    bullets.push(`${esc(ctx.name)} has the <strong>${placeWords(ctx.no2)}-highest nitrogen dioxide</strong> of ${esc(CITY_LABEL[ctx.city])}${above}${pm}.`);
   }
 
   if (nat && nat.air) {
-    const road = nat.road ? `, and ${ord(nat.road.rank)} of ${nat.road.of} for the share of postcodes above the road-noise guideline` : '';
+    const road = nat.road ? `, and ${placeWords(nat.road)} of ${nat.road.of} for the share of postcodes above the road-noise guideline` : '';
     const flood = nat.flood ? ` ${nat.flood.value}% of its postcodes are at medium or high flood risk.` : '';
     bullets.push(
-      `Across the council as a whole, ${esc(nat.name)} ranks <strong>${ord(nat.air.rank)} of ${nat.air.of}</strong> UK council areas for air pollution against WHO guidelines, highest first${road}.${flood}`,
+      `Across the council as a whole, ${esc(nat.name)} ranks <strong>${placeWords(nat.air)} of ${nat.air.of}</strong> UK council areas for air pollution against WHO guidelines, highest first${road}.${flood}`,
     );
   }
 

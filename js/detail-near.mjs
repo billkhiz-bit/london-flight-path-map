@@ -57,8 +57,12 @@ export function placesByKind({ transport = null, naptan = null, nhs = null } = {
   if (nhs && nhs.available !== false) {
     for (const key of ['gp', 'pharmacies', 'hospitals']) {
       const rows = nhs[key];
-      // A fallback row is a search link, sent when Overpass failed: the kind was not measured, so it gets no line.
-      if (Array.isArray(rows) && !rows.some((r) => r && (r.link || r.fallback))) take(key, rows, ROUTE_CAP, (r) => Number(r.distance));
+      if (!Array.isArray(rows)) continue;
+      // Both of /nhs's link rows carry `link`, so it says nothing (audit I-1, 2026-11-09). A FALLBACK row is sent when Overpass
+      // failed: the kind was not measured, so it gets no line. A noneNearby row is a reading, "none within 1.5 km": an empty
+      // line, and the healthcare card says none.
+      if (rows.some((r) => r && r.fallback === true)) continue;
+      take(key, rows.filter((r) => r && !r.noneNearby), ROUTE_CAP, (r) => Number(r.distance));
     }
   }
   return out;

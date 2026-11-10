@@ -1,7 +1,9 @@
 // "All the detail", option 1 (Bill's pick, 2026-11-08): the picture of what is within 1 km and the card faces, as plain
 // answers in and plain text out. No browser: every branch is reached on purpose, from the routes' real shapes.
 import { strict as assert } from 'node:assert';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   KINDS, LANE_M, NAPTAN_CAP, ROUTE_CAP, countWords, distanceParts, epcFace, faceHtml, healthFace, lanesSvg, lineStatusFace,
   nearestFace, placesByKind, placesListHtml, stationName,
@@ -68,10 +70,28 @@ check('a route that failed is not asked', () => {
   const p = placesByKind({ transport: { available: false }, nhs: { available: false } });
   assert.deepEqual([p.stations, p.gp], [null, null]);
 });
-check('fallback search links are not places', () => {
-  const p = placesByKind({ nhs: { ...NHS, gp: [{ name: 'Search NHS GP services', link: true, url: 'https://www.nhs.uk/' }] } });
+// /nhs's two link rows, made by the route itself (backend/lambdas/nhs/app.py), never typed here: a self-written fixture
+// hid that a measured "none within 1.5 km" carries `link` too (audit I-1, 2026-11-09). TW9 3PZ's hospitals answered so live.
+const ROUTE_ROWS = JSON.parse(execFileSync('python', ['-c',
+  "import json, app; print(json.dumps({'none': app.none_nearby('GP'), 'fallback': app.fallback_links('GP')}))"],
+{ cwd: fileURLToPath(new URL('../backend/lambdas/nhs/', import.meta.url)), encoding: 'utf8' }));
+check('the route\'s two link rows are told apart by what the route says, not by `link`', () => {
+  assert.equal(ROUTE_ROWS.none[0].noneNearby, true);
+  assert.equal(ROUTE_ROWS.none[0].fallback, false);
+  assert.equal(ROUTE_ROWS.fallback[0].fallback, true);
+});
+check('fallback search links are not places: Overpass failed, the kind was not measured', () => {
+  const p = placesByKind({ nhs: { ...NHS, gp: ROUTE_ROWS.fallback } });
   assert.equal(p.gp, null);
   assert.ok(Array.isArray(p.pharmacies));
+});
+check('a measured "none within 1.5 km" is a reading: an empty line, and the card says none', () => {
+  const p = placesByKind({ nhs: { ...NHS, hospitals: ROUTE_ROWS.none } });
+  assert.deepEqual(p.hospitals, []);
+  assert.equal(nearestFace('hospitals', p), null);
+  assert.match(lanesSvg('TW9 3PZ', p), /No hospital/);
+  const none = placesByKind({ nhs: { available: true, gp: ROUTE_ROWS.none, pharmacies: ROUTE_ROWS.none, hospitals: ROUTE_ROWS.none } });
+  assert.deepEqual(healthFace(none), { k: 'Doctors and clinics', v: 'None', unit: '', l: 'within 1 km · No pharmacy · No hospital' });
 });
 check('asked and none within 1 km: the line stays, empty; the card still names the nearest, in km', () => {
   const p = placesByKind({ nhs: { ...NHS, hospitals: [{ name: 'St Far', distance: 1300 }] } });

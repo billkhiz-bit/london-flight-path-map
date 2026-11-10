@@ -84,6 +84,17 @@ CELL_M = 1000
 # "not measured" for "measured and fine" is this project's most-repeated defect.
 MISSING_TOKENS = {'MISSING', '', 'NA', 'NODATA'}
 
+# STORED AT DEFRA'S OWN PRECISION, ROUNDED ONCE AT THE EDGE (audit I-2, 2026-11-09). This wrote 2 dp, and /v1/environment
+# rounds to 1 dp, so every value was rounded twice: DEFRA's 3.653998 was stored 3.65 and published 3.6, its 6.445105
+# stored 6.45 and published 6.5. 4.9% of the grid's cells showed 0.1 ug/m3 off, and it reached an outreach sheet. DEFRA
+# writes 6 decimals, so 6 keeps its figure whole (tests/test_air_loader_precision.py).
+STORED_DP = 6
+
+
+def ddb_number(value):
+    """A grid value as the DynamoDB number written for it: DEFRA's own figure, never one already rounded."""
+    return f'{value:.{STORED_DP}f}'
+
 
 def load_grid(path, label):
     """Read a PCM CSV into {(cell_x, cell_y): value}.
@@ -174,7 +185,7 @@ def main():
             names, values, sets = {}, {}, []
             for i, (attr, val) in enumerate(item['attrs'].items()):
                 names[f'#a{i}'] = attr
-                values[f':v{i}'] = {'N': f'{val:.2f}'}
+                values[f':v{i}'] = {'N': ddb_number(val)}
                 sets.append(f'#a{i} = :v{i}')
             ddb.update_item(
                 TableName=TABLE_NAME,

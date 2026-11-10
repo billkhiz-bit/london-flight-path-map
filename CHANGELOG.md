@@ -9,6 +9,8 @@
 - **The score shows each part's own score** ("Quiet skies 6.4 out of 10 · counts for 32%"), so changing the buyer profile no longer looks as if the noise changed. The detail's text is on the same scale as the cards above it.
 - **The planes overhead card names its main source** (the flight tracks and their licence) and points to the rest, which stay listed under "About these figures" in the same card.
 - **The sitemap no longer lists the API status page**, which asks search engines not to index it.
+- **On the full map, pressing Enter before the postcode suggestions arrive no longer leaves the list over the answer.**
+- **"All the detail" says when there is no hospital, doctor or pharmacy within 1.5 km**, where it used to drop the line (TW9 3PZ lost its hospitals line) or say healthcare was unavailable.
 
 ## 2026-11-08 (night) - The map's postcode panel answers first, in plain words
 

@@ -12560,6 +12560,14 @@
       let acDebounceTimer = null;
       let acHighlightIndex = -1;
       let acResults = [];
+      // Which round of suggestions may still open the list. Typing starts a round; closing the list or starting a search
+      // ends it. Without this, Enter closed the list and then the 250 ms pause, or postcodes.io's late answer, opened it
+      // again over the result (2026-11-09; tests/uk-city-panel.mjs reaches both).
+      let acSeq = 0;
+      function cancelAcPending() {
+        clearTimeout(acDebounceTimer);
+        acSeq++;
+      }
 
       async function fetchAutocomplete(partial) {
         const clean = partial.replace(/\s+/g, '').toUpperCase();
@@ -12578,6 +12586,7 @@
       // (aria-expanded=false, clear aria-activedescendant). Used everywhere
       // the dropdown dismisses so screen readers stay in sync.
       function closeAcDropdown() {
+        cancelAcPending();
         const dd = document.getElementById('autocomplete-dropdown');
         const inp = document.getElementById('search-input');
         if (dd) {
@@ -12748,7 +12757,8 @@
         // lands its pin, map flight, EPC panel and sold prices under this
         // search's heading, and nothing ever corrects it.
         let search = beginSearch();
-        // Hide autocomplete dropdown
+        // Hide autocomplete dropdown, and stop any suggestions still on their way from opening it over the result
+        cancelAcPending();
         const dd = document.getElementById('autocomplete-dropdown');
         dd.classList.remove('visible');
         dd.innerHTML = '';
@@ -17512,13 +17522,17 @@
             dropdown.innerHTML = '';
             return;
           }
+          // A newer keystroke, Enter, Escape or a search ends this round, and then nothing it fetched may open the list.
+          const seq = ++acSeq;
           acDebounceTimer = setTimeout(async () => {
             const extra = await bayAreaSuggestions(val);
+            if (seq !== acSeq) return;
             // The postcode suggestions come from postcodes.io, which knows the UK only.
             if (!isUkCity(currentCity)) {
               showAutocomplete([], extra);
             } else {
               const results = await fetchAutocomplete(val);
+              if (seq !== acSeq) return;
               showAutocomplete(results.length > 0 ? results : [], extra);
             }
           }, 250);

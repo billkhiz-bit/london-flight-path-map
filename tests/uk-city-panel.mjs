@@ -1035,6 +1035,58 @@ console.log('Findings first');
     `chevron at ${phone.markAt} px; face ${phone.faceHeight} px; card ${phone.cardHeight} px`);
   check('no page errors at phone width', phErrors.length === 0, phErrors.slice(0, 2).join(' | '));
   await ph.close();
+
+  // ENTER BEATS THE SUGGESTIONS (2026-11-09, a live bug). Typing waits 250 ms, then asks postcodes.io; Enter closed the
+  // list, but the pause or the request still on its way then opened it again, over the answer. Reached on purpose both
+  // ways: Enter inside the pause, and Enter while the request is held. And typing still shows suggestions, so the fix
+  // cannot pass by turning them off.
+  const sg = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const sgErrors = [];
+  sg.on('pageerror', (e) => sgErrors.push(e.message));
+  let holdNext = false;
+  let held = null;
+  let heldArrived = () => {};
+  await sg.route('**/postcodes/*/autocomplete', (r) => {
+    if (holdNext) {
+      held = r;
+      heldArrived();
+    } else json(r, { status: 200, result: ['SW5 9AA', 'SW5 9HP'] });
+  });
+  await sg.route('**/v1/environment**', (r) => r.abort());
+  await sg.route('**/transport?**', (r) => json(r, { stations: [], lineStatus: [] }));
+  await sg.route('**/nhs?**', (r) => json(r, { gp: [], pharmacies: [], hospitals: [] }));
+  await sg.route('**/epc?**', (r) => json(r, { available: false }));
+  await sg.goto(url, { waitUntil: 'domcontentloaded' });
+  await sg.waitForTimeout(2500);
+  await sg.evaluate((city) => window.switchCity(city), 'london');
+  await sg.waitForTimeout(1200);
+  const listOpen = () => sg.evaluate(() => document.getElementById('autocomplete-dropdown').classList.contains('visible'));
+
+  await sg.fill('#search-input', 'SW5 9');
+  const offered = await sg.waitForFunction(() => document.querySelectorAll('#autocomplete-dropdown.visible .autocomplete-item').length > 0, null, { timeout: 8000 })
+    .then(() => true, () => false);
+  check('typing still offers postcode suggestions', offered);
+
+  await sg.fill('#search-input', 'SW5 9HP');
+  await sg.press('#search-input', 'Enter');
+  await sg.waitForTimeout(1200);
+  const afterPause = await listOpen();
+  check('Enter inside the pause: the list stays closed', !afterPause, afterPause ? 'the list opened over the answer' : '');
+
+  await sg.fill('#search-input', '');
+  await sg.waitForTimeout(300);
+  holdNext = true;
+  const arrived = new Promise((r) => { heldArrived = r; });
+  await sg.fill('#search-input', 'SW5 9HP');
+  const wasHeld = await Promise.race([arrived.then(() => true), new Promise((r) => setTimeout(() => r(false), 5000))]);
+  await sg.press('#search-input', 'Enter');
+  if (held) await json(held, { status: 200, result: ['SW5 9HP'] });
+  await sg.waitForTimeout(800);
+  const afterHeld = await listOpen();
+  check('Enter while suggestions are on their way: the list stays closed', wasHeld && !afterHeld,
+    !wasHeld ? 'the suggestion request never went out, so this case was not reached' : afterHeld ? 'the late suggestions opened over the answer' : '');
+  check('no page errors around the suggestions', sgErrors.length === 0, sgErrors.slice(0, 2).join(' | '));
+  await sg.close();
   console.log('');
 }
 

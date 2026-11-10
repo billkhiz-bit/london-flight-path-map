@@ -952,6 +952,21 @@ something, then the four rows. Three things learned building it:
 - **The mock-up's words need checking against the data's.** "Health centres" in the mock was OpenStreetMap's `hospital` tag
   (Bridge Lane Health Centre is tagged hospital), so the line says "Hospitals"; the mock's airport card led with Heathrow, but
   the nearest is London City, and the card names the nearest.
+- **A late answer must not touch shared state.** A low-effort review found `fillDetail()` resetting `_detail` to the
+  request it was handed BEFORE asking `isCurrentSearch(req)`: a late answer from an earlier search wiped the answers the
+  current search already had, and the station card hid. The guard now comes first. `tests/detail-near.mjs` lifts the real
+  `fillDetail()` out of index.html and plays current, earlier, current; red without the guard.
+- **On a phone, one card a row** (Bill, 9 Nov: "do what's best for the phone view"; live 21:25). At 390 a half card is
+  about 170 px, too narrow for its list, so an open card took the row (`[open]` spans both columns) and left its neighbour
+  beside an empty half. Rejected: `grid-auto-flow: dense`, which pulls a later card up into the gap, so cards nobody touched
+  move and the order seen stops being the order read. The face is a row instead, its figure on the right. My first build
+  put an open card's chevron halfway down its list: an absolutely placed `::after` sits against the nearest POSITIONED
+  ancestor, which was the `details`, so `top: 50%` meant half the open card (111 px on a 56 px face, caught in my own
+  screenshot). The summary is now `position: relative`. `tests/uk-city-panel.mjs` measures every visible card against
+  `.dcards` and the chevron against the face at 390, red on each half.
+- **DEFRA's style server times out on preflight days.** `noise legend == publishers` (`check_noise_legend.py --live`, a 30 s
+  read, no retry) failed in three full runs on 8-9 Nov and passed alone every time; one probe answered in 0.2 s and the
+  next hung 90 s. Bill's call each time on 9 Nov: deploy and push. Proposed: one retry, then INCONCLUSIVE rather than FAIL.
 
 ## The full map's answer card (2026-11-08)
 

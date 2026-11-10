@@ -77,7 +77,7 @@ Or just describe what you need, I have full context of this project.
   cross-project state is `%USERPROFILE%\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
-- **Weekly audit**: the current one is `AUDIT_REPORT_2026-10-31.md`; suggest `/audit` when it is >7 days old.
+- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-09.md`; suggest `/audit` when it is >7 days old.
 
 ## The product, in facts safe to repeat
 
