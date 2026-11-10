@@ -308,9 +308,9 @@ east), checked against the CAA's monthly totals, beside the official noise, air 
 
 | Who | What they get | When |
 |---|---|---|
-| Local papers covering Heathrow's footprint (Reach's MyLondon, Newsquest's Richmond & Twickenham Times, the Evening Standard's property pages) | One borough's list: its districts with the most planes overhead, and its quietest | After the ICO fee and DKIM; the loud version after the rename |
-| Residents' associations and amenity societies in Richmond, Hounslow, Ealing, Hammersmith and Fulham, Wandsworth and Hillingdon | A free consultation pack: that borough's measured planes overhead, noise and air, every figure with its source | After the ICO fee and DKIM |
-| Journalists' requests (#journorequest on X) about property, noise or air | A sourced answer from the data | After the ICO fee and DKIM |
+| Local papers covering Heathrow's footprint (Reach's MyLondon, Newsquest's Richmond & Twickenham Times, the Evening Standard's property pages) | One borough's list: its districts with the most planes overhead, and its quietest | After the rename (Bill, 2026-11-10: no press before it) |
+| Residents' associations and amenity societies in Richmond, Hounslow, Ealing, Hammersmith and Fulham, Wandsworth and Hillingdon | A free consultation pack: that borough's measured planes overhead, noise and air, every figure with its source | After the ICO fee, DMARC and legal batch 2, before the rename (Bill, 2026-11-10); only where the group's legal form allows cold email, and after the planes figures leave out PO boxes |
+| Journalists' requests (#journorequest on X) about property, noise or air | A sourced answer from the data | After the ICO fee, DMARC and legal batch 2, before the rename (Bill, 2026-11-10); only where the group's legal form allows cold email, and after the planes figures leave out PO boxes |
 | Buying agents and relocation firms covering south-west London | The Book a demo link and `/badge` | Warm contacts only until the rename (rows 5-10) |
 | London property video creators | The figures, and a clip for their own videos | After the rename |
 

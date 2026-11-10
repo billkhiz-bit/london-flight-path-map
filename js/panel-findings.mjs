@@ -375,28 +375,6 @@ export function epcFinding(data) {
   };
 }
 
-function gaugeHtml(g) {
-  const cap = g.caption ? `<div class="find-cap"><span>${esc(g.caption)}</span><b>${esc(g.text)}</b></div>` : '';
-  const tick = isNum(g.tick) ? `<u style="left:${g.tick}%"></u>` : '';
-  return `${cap}<div class="find-track" aria-hidden="true"><i style="width:${g.value}%"></i>${tick}</div>`;
-}
-
-/** One finding as the panel shows it; '' for nothing, so an absent finding leaves no trace. */
-export function findingHtml(f) {
-  if (!f) return '';
-  const note = f.note ? `<p class="find-note">${esc(f.note)}</p>` : '';
-  const label = f.label ? `<p class="find-d">${esc(f.label)}</p>` : '';
-  const head = f.head ? `<p class="find-h">${esc(f.head)}</p>` : '';
-  const big = f.big ? `<p class="find-h find-big">${esc(f.big)}</p>` : '';
-  const detail = f.detail ? `<p class="find-d">${esc(f.detail)}</p>` : '';
-  const gauge = f.gauge ? gaugeHtml(f.gauge) : '';
-  const amounts = (f.amounts || []).map(([name, text, width, here]) => `<div class="find-cap"><span>${esc(name)}</span><b>${esc(text)}</b></div>`
-    + `<div class="find-track" aria-hidden="true"><i class="${here ? '' : 'find-yardstick'}" style="width:${width}%"></i></div>`).join('');
-  const rows = (f.rows || []).map(([a, b]) => `<div class="find-row${f.strong ? ' find-strong' : ''}"><span>${esc(a)}</span><b>${esc(b)}</b></div>`).join('');
-  const caveats = (f.caveats || []).map((c) => `<p class="find-d find-caveat">${esc(c)}</p>`).join('');
-  return `<div class="find" data-finding="${esc(f.key)}">${note}${label}${head}${big}${detail}${gauge}${amounts}${rows}${caveats}</div>`;
-}
-
 // ---- THE ANSWER CARD'S TILES (Bill, 2026-11-08) ----
 // Bill: "keep to road noise is high", then "make the text simpler... we want any user to understand it, and choose
 // visuals where applicable". Every finding above also carries `tile`: its face (the thing, its level, a short line under

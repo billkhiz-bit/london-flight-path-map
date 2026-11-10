@@ -1046,7 +1046,9 @@ console.log('Findings first');
   let holdNext = false;
   let held = null;
   let heldArrived = () => {};
+  const acAsked = [];
   await sg.route('**/postcodes/*/autocomplete', (r) => {
+    acAsked.push(decodeURIComponent(new URL(r.request().url()).pathname.split('/')[2]));
     if (holdNext) {
       held = r;
       heldArrived();
@@ -1066,6 +1068,20 @@ console.log('Findings first');
   const offered = await sg.waitForFunction(() => document.querySelectorAll('#autocomplete-dropdown.visible .autocomplete-item').length > 0, null, { timeout: 8000 })
     .then(() => true, () => false);
   check('typing still offers postcode suggestions', offered);
+
+  // ONLY THE START OF A POSTCODE GOES TO postcodes.io WHILE TYPING (audit M-6, 2026-11-09): this box sent any 2-8 letters and
+  // digits, so a place name typed here left the page before anyone pressed Enter.
+  const before = acAsked.length;
+  for (const words of ['Hounslow', 'Flat 3', 'kew']) {
+    await sg.fill('#search-input', '');
+    await sg.fill('#search-input', words);
+    await sg.waitForTimeout(700); // past the 250 ms pause and a lookup's time to leave
+  }
+  const sentWords = acAsked.slice(before);
+  check('a place name or "Flat 3" typed into the box is never sent while typing', sentWords.length === 0 && acAsked.includes('SW59'),
+    `sent: ${JSON.stringify(sentWords)}; asked before: ${JSON.stringify(acAsked.slice(0, before))}`);
+  await sg.fill('#search-input', '');
+  await sg.waitForTimeout(300);
 
   await sg.fill('#search-input', 'SW5 9HP');
   await sg.press('#search-input', 'Enter');
@@ -1194,6 +1210,66 @@ console.log('Findings first');
     !transportRedrawn ? 'the TfL answer never redrew the tile, so this case was not reached' : JSON.stringify(pillKept));
   check('no page errors around late answers', ltErrors.length === 0, ltErrors.slice(0, 2).join(' | '));
   await lt.close();
+
+  // A PROFILE CHANGE SAYS ITS SCORE AND KEEPS THE DETAIL; THE SCHOOLS STRIP FITS 320 PX (audit M-12, M-1, M-13, 2026-11-09).
+  // M-12 (WCAG 4.1.3): the redraw announced "Results loaded for SW5 9HP", never the new score. M-1: the redraw is a new
+  // request object for the same search, and a late answer to the first one wiped the answers the redraw had (reached here
+  // by holding the FIRST TfL answer until after the profile change). M-13: five unbroken rating words needed ~266 px in a
+  // ~246 px tile at 320.
+  const nw = await browser.newPage({ viewport: { width: 320, height: 800 } });
+  const nwErrors = [];
+  nw.on('pageerror', (e) => nwErrors.push(e.message));
+  const firstTfl = gate();
+  let tflCalls = 0;
+  await nw.route('**/v1/environment**', (r) => json(r, environmentWith({ roadNoiseLdenDb: 71.8 })));
+  await nw.route('**/transport?**', async (r) => {
+    tflCalls += 1;
+    if (tflCalls === 1) await firstTfl.shut;
+    await json(r, { stations: [{ name: "Earl's Court Underground Station", distance: 376, lines: ['district'] }], lineStatus: [] }).catch(() => {});
+  });
+  await nw.route('**/nhs?**', (r) => json(r, { gp: [{ name: 'Brompton Medical Centre', distance: 49 }], pharmacies: [{ name: 'Boots', distance: 120 }], hospitals: [] }));
+  await nw.route('**/sold-prices?**', (r) => json(r, { transactions: [] }));
+  await nw.route('**/epc?**', (r) => json(r, { available: false }));
+  await nw.goto(url, { waitUntil: 'domcontentloaded' });
+  await nw.waitForTimeout(2500);
+  await nw.evaluate((city) => window.switchCity(city), 'london');
+  await nw.waitForTimeout(1200);
+  await nw.fill('#search-input', 'SW5 9HP');
+  await nw.press('#search-input', 'Enter');
+  const picture = () => nw.evaluate(() => document.querySelector('#detail-near svg')?.getAttribute('aria-label') || '');
+  const nhsDrawn = await nw.waitForFunction(() => /pharmac/i.test(document.querySelector('#detail-near svg')?.getAttribute('aria-label') || '')
+    && document.querySelector('[data-persona-chip][aria-pressed="false"]'), null, { timeout: 15000 }).then(() => true, () => false);
+  const said = await nw.evaluate(() => {
+    document.querySelector('[data-persona-chip][aria-pressed="false"]').click();
+    return new Promise((done) => setTimeout(() => done(document.getElementById('result-status')?.textContent || ''), 400));
+  });
+  check('a profile change says the new score, not "Results loaded"', /out of 10 for .+ buyer profile\.$/.test(said), JSON.stringify(said));
+  firstTfl.open();
+  await nw.waitForTimeout(1500);
+  const after = await picture();
+  check('a late answer to the search before a profile change keeps what the redraw had', nhsDrawn && tflCalls >= 1 && /pharmac/i.test(after),
+    !nhsDrawn ? 'the NHS lane never drew, so this case was not reached' : `${tflCalls} TfL calls; picture now: ${after}`);
+
+  const strip = await nw.evaluate(() => {
+    const tile = document.querySelector('[data-find="schools"] details.tile');
+    if (!tile) return null;
+    tile.open = true;
+    const s = tile.querySelector('.t-strip');
+    if (!s) return { none: true };
+    const body = tile.querySelector('.t-body').getBoundingClientRect();
+    const r = s.getBoundingClientRect();
+    const spans = [...s.querySelectorAll('span')];
+    return {
+      words: spans.map((x) => x.textContent),
+      overStrip: s.scrollWidth - s.clientWidth,
+      pastTile: Math.round(r.right - body.right),
+      overWord: spans.filter((x) => x.scrollWidth > x.clientWidth + 1).map((x) => x.textContent),
+    };
+  });
+  check('at 320 px the Schools strip fits its tile, every word inside its box', strip && !strip.none && strip.words.length === 5
+    && strip.overStrip <= 0 && strip.pastTile <= 0 && strip.overWord.length === 0, JSON.stringify(strip));
+  check('no page errors at 320 px', nwErrors.length === 0, nwErrors.slice(0, 2).join(' | '));
+  await nw.close();
   console.log('');
 }
 

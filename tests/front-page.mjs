@@ -2589,6 +2589,23 @@ const makeReport = async (pc) => {
   await wp.keyboard.press('Escape');
   const shut = await wp.evaluate(() => ({ hidden: document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded') }));
   ok(kb.chosen === 'Camden' && Boolean(kb.active) && shut.hidden && shut.expanded === 'false', 'Down picks a place for a screen reader too, and Escape closes the list', JSON.stringify({ kb, shut }));
+  // A HINT IS SAID, AND IS NOT A LIST (audit M-10, 2026-11-09): "No place by that name yet" sat inside the listbox, where a
+  // screen reader never reads a non-option, and the box said it was expanded with nothing to choose.
+  await wp.fill('#pc', 'zzq');
+  const hintNow = await wp.evaluate(() => ({ shown: !document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded'),
+    hidden: document.querySelector('#pc-list .pc-foot')?.getAttribute('aria-hidden'), said: document.querySelector('#pc-list + .pc-live')?.textContent }));
+  await wp.waitForTimeout(450); // past the pause, when a hint is said
+  const hintSaid = await wp.evaluate(() => document.querySelector('#pc-list + .pc-live')?.textContent);
+  ok(hintNow.shown && hintNow.expanded === 'false' && hintNow.hidden === 'true' && !hintNow.said && /^No place by that name yet/.test(hintSaid || ''),
+    'a hint shows, is not called a list, and is said once typing pauses', JSON.stringify({ ...hintNow, hintSaid }));
+  // THE TYPING CARET STOPS (audit M-11, 2026-11-09; WCAG 2.2.2): it blinked for as long as the page was open.
+  const caret = await wp.evaluate(() => {
+    const s = getComputedStyle(document.querySelector('.walk-caret'));
+    return { count: s.animationIterationCount, seconds: parseFloat(s.animationDuration), reduced: matchMedia('(prefers-reduced-motion: reduce)').matches };
+  });
+  // Reached only where motion is allowed: with reduced motion the caret has no animation at all, and anything would pass.
+  ok(!caret.reduced && caret.seconds > 0 && caret.count !== 'infinite' && Number(caret.count) * caret.seconds <= 5,
+    'the walkthrough\'s caret blinks for under five seconds, then stays still', JSON.stringify(caret));
   await wp.fill('#pc', '');
   await wp.evaluate(() => document.getElementById('pc').blur());
   }

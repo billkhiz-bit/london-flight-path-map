@@ -25,3 +25,17 @@ def test_it_reads_real_policies():
 def test_no_meta_csp_carries_frame_ancestors():
     found = [p.relative_to(ROOT).as_posix() for p in pages() if any('frame-ancestors' in m for m in META_CSP.findall(p.read_text(encoding='utf-8')))]
     assert found == []
+
+
+# /api/ writes typed text and API answers into the page, so it refuses inline script (audit M-8, 2026-11-09). Its one inline
+# script was a click tracker, now js/api-page-events.mjs. Held both ways: the policy, and nothing inline it would refuse.
+INLINE_SCRIPT = re.compile(r'<script(?![^>]*\bsrc=)(?![^>]*application/ld\+json)[^>]*>', re.I)
+
+
+def test_the_api_page_refuses_inline_script():
+    page = (ROOT / 'api' / 'index.html').read_text(encoding='utf-8')
+    policy = META_CSP.search(page).group(0)
+    script_src = re.search(r"script-src([^;]*)", policy).group(1)
+    assert "'unsafe-inline'" not in script_src, script_src
+    assert INLINE_SCRIPT.findall(page) == []
+    assert '/js/api-page-events.mjs' in page

@@ -18,8 +18,12 @@ const PARTLY = /^[a-z]{1,2}\d/i;
 const STARTING = /^[a-z]{1,2}\d[a-z\d]?(\s*\d[a-z]{0,2})?$/i;
 const PAUSE_MS = 250; // the full map's
 
+/** Whether the text is shaped like a postcode or its start, end to end. The full map reads it too (audit M-6, 2026-11-09): its
+ *  box sent any 2-8 letters and digits while typing, so a place name or "Flat 3" went to postcodes.io. */
+export const startsLikePostcode = (text) => STARTING.test(String(text ?? '').trim());
+
 /** Whether the text in the box may be asked about: the start of a postcode, and not yet a whole one. */
-export const askable = (text) => STARTING.test(text.trim()) && !POSTCODE.test(text.trim());
+export const askable = (text) => startsLikePostcode(text) && !POSTCODE.test(text.trim());
 
 /** The postcodes starting with this text. postcodes.io answers 200 with a null result when it knows none. */
 export async function postcodeCompletions(text, signal) {
@@ -71,6 +75,7 @@ export function bindPlaceBox(input, list, examples, onChoose, { lookup = null, p
   let found = { text: '', postcodes: [] }; // what the lookup gave, and for which text
   let waiting = null; // the pause before asking
   let asking = null; // the request on its way
+  let hinting = null; // the pause before a hint is said
   const options = () => [...list.querySelectorAll('[role="option"]')];
   // Ends whatever is waiting or on its way. The status goes too, so the same words are announced again next time.
   const hush = () => {
@@ -79,6 +84,7 @@ export function bindPlaceBox(input, list, examples, onChoose, { lookup = null, p
     live.textContent = '';
   };
   const close = () => {
+    clearTimeout(hinting);
     hush();
     list.hidden = true;
     active = -1;
@@ -100,7 +106,15 @@ export function bindPlaceBox(input, list, examples, onChoose, { lookup = null, p
     active = -1;
     input.removeAttribute('aria-activedescendant');
     const kids = [];
-    if (heading) kids.push(node('p', 'pc-head', heading));
+    // A heading and a hint are not options, and a listbox's other children are never read out (audit M-10, 2026-11-09): they
+    // are hidden from screen readers here, and a hint is said in the box's status instead, once typing pauses, so it is
+    // not spoken at every keystroke.
+    const words = (text, className) => {
+      const p = node('p', className, text);
+      p.setAttribute('aria-hidden', 'true');
+      return p;
+    };
+    if (heading) kids.push(words(heading, 'pc-head'));
     items.forEach((item, i) => {
       const o = node('div', 'pc-opt');
       o.id = `pc-opt-${i}`;
@@ -113,10 +127,17 @@ export function bindPlaceBox(input, list, examples, onChoose, { lookup = null, p
       if (item.note) o.append(node('small', null, item.note));
       kids.push(o);
     });
-    if (foot) kids.push(node('p', 'pc-foot', foot));
+    if (foot) kids.push(words(foot, 'pc-foot'));
     list.replaceChildren(...kids);
     list.hidden = !kids.length;
-    input.setAttribute('aria-expanded', String(kids.length > 0));
+    // Expanded only when there is something to choose: a hint alone is not a list.
+    input.setAttribute('aria-expanded', String(items.length > 0));
+    clearTimeout(hinting);
+    if (!items.length && foot) {
+      hinting = setTimeout(() => {
+        if (!options().length && live.textContent !== foot) live.textContent = foot;
+      }, PAUSE_MS);
+    }
   };
   const move = (by) => {
     const all = options();

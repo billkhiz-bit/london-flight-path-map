@@ -6,6 +6,9 @@
 - **A card you have opened stays open while the rest of the answer arrives**, and the keyboard stays where it was. Late answers used to shut it and send the focus to the top of the page.
 - **If the front page's map data fails to load, a search says so** ("Reloading the page usually fixes it"), where it used to say "Looking it up..." for ever.
 - **Every postcode's NO2 and PM2.5 figure now matches DEFRA's map to the decimal.** About 1 in 20 was 0.1 µg/m³ out, because the figure was rounded twice on its way to you.
+- **The full map no longer sends a place name to postcodes.io while you type**: only the start of a postcode, as the front page already did.
+- **Changing the buyer profile tells a screen reader the new score**, and keeps the 1 km picture complete.
+- **On a 320 px phone, the Schools scale fits its card.** The front page's typing caret stops after a few blinks, and its "no place by that name" hint is read out.
 - **The front page lists Gatwick, Stansted and Luton as the nearest airport** where they are, where it used to file them under "Flight paths".
 
 ## 2026-11-09 - "All the detail" at a glance

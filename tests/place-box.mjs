@@ -4,7 +4,7 @@
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { EXAMPLE, askable, postcodeCompletions, suggest } from '../js/place-box.mjs';
+import { EXAMPLE, askable, postcodeCompletions, startsLikePostcode, suggest } from '../js/place-box.mjs';
 
 const PLACES = [{ name: 'Camden', kind: 'Council area' }, { name: 'Greater Manchester', kind: 'City region' }, { name: 'Manchester', kind: 'Council area' }];
 const EXAMPLES = [{ value: 'TW9 3PZ', note: 'a postcode' }, { value: 'Hounslow', note: 'a council area' }];
@@ -53,6 +53,14 @@ check('only the start of a postcode may be asked about', () => {
 
 check('a whole postcode is not asked about: there is nothing left to suggest', () => {
   for (const text of ['SW5 9HP', 'sw59hp', 'M1 1AE', 'EC1A 1BB']) assert.equal(askable(text), false, text);
+});
+
+// The full map's box reads this one rule while typing (audit M-6, 2026-11-09): it sent any 2-8 letters and digits.
+check('the full map asks only about text shaped like a postcode or its start', () => {
+  for (const text of ['SW5', 'sw5 9', 'SW5 9HP', 'sw59hp', 'EC1A 1BB', 'M1']) assert.equal(startsLikePostcode(text), true, text);
+  for (const text of ['', 'SW', 'Hounslow', 'HOUNSLOW', 'Flat3', 'flat 3', 'kew', '94066', 'palo alto', null, undefined]) {
+    assert.equal(startsLikePostcode(text), false, String(text));
+  }
 });
 
 check('postcodes found are offered, with what was typed picked out, spaced or not', () => {

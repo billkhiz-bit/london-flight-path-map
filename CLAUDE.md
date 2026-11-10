@@ -234,6 +234,7 @@ Or just describe what you need, I have full context of this project.
   (rating strip, 100 squares, bars from zero, ruler, score); a word outside its scale draws none; a source only from the caller (New York is not DEFRA);
   a figure never said twice (`crimeNote(extra, { figures: false })`). `toneOf()` mirrors `ratingBadgeClass()`/`schoolBandFromP8()`, held by reading them.
   The path tile never gives a height: only planeAltitude()'s "Not under a final approach" (past FINAL_TOP_FT a height is an extrapolation). "Weak" is "Low".
+- **/api/ refuses inline script** (audit M-8, 2026-11-10): its click counts are `js/api-page-events.mjs`; `tests/test_meta_csp.py` holds the policy and that nothing inline remains.
 - **A late answer never moves the visitor** (audit I-4, 2026-11-10; WCAG 2.4.3): `placeFinding()` leaves a slot drawn the same alone and, when it changes,
   keeps the open tiles and the tile the focus was in; the pills rebuild only when their list changes (focus kept by `data-pill-key`), and a pill opens its tile
   as it is NOW (`_pillTile`). `tests/uk-city-panel.mjs` holds TfL and the NHS back to test it.
@@ -343,7 +344,7 @@ Or just describe what you need, I have full context of this project.
   page view. Never a postcode or anything typed; `tests/front-page.mjs` holds the shape of every counted path.
 - **The postcode box's suggestions are `js/place-box.mjs`** (Bill's pick B, 2026-11-04; a WAI-ARIA combobox, replacing a
   `<datalist>`), on `/` and `/api/`: places from what the page holds, so a place name is not sent while typing (Check still sends text no row matches). Only text shaped like the START of a postcode (`askable`) goes to
-  postcodes.io while typing, after a pause, as the full map's does and privacy s2b says (Bill's yes, 2026-11-05); nothing typed is stored or counted, and anything newer, Escape or leaving the box cancels what is on its way. `/api/`'s
+  postcodes.io while typing, after a pause, as privacy s2b says (Bill's yes, 2026-11-05), and the full map's box reads the same rule (`startsLikePostcode`, ONE holder; it sent any 2-8 letters and digits until audit M-6, 2026-11-10); nothing typed is stored or counted, and anything newer, Escape or leaving the box cancels what is on its way. `/api/`'s
   box is a `postcodeBox`: real choices or nothing, because at 320 wide a hint would sit in the way of Send (`tests/place-box.mjs`, `tests/api-demo.mjs`).
 - **The front page arrives in place** (2026-11-04: phone layout shift 0.133 to 0.008): `.panel.is-loading` shows `.ans-skeleton`, the
   example's frame, until `endLoading()`; hidden tabs keep their room. Anything that fills in later keeps its place from the first

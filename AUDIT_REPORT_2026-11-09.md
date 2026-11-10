@@ -97,4 +97,6 @@ targets (>= 28 px). The uncommitted suggestions fix and DEFRA retry: no new hole
 - M-16 FIXED (10 Nov): ranks say "joint 10th" (`scripts/rank_place.mjs`, `tests/test_rank_place_ties.py`).
 - M-2 and M-4 FIXED (10 Nov; `tests/front-page.mjs`). M-3 is NOT A DEFECT: the 5 Nov build chose to let a good postcode on
   its way land after a bad press, and tests it (`tests/api-demo.mjs`: "a bad postcode leaves a good one on its way").
+- M-1, M-5, M-6, M-8, M-10, M-11, M-12, M-13, M-15 FIXED (10 Nov, batch A; each new check red on the old code, M-5's by
+  breaking the live renderer twice). M-15 keeps the example's words and stops only their being spoken. Left: M-7, M-9, M-14.
 - Minor: 16

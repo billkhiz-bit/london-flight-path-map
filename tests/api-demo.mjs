@@ -419,6 +419,25 @@ console.log('Nothing to show');
   await context.close();
 }
 
+// THE EXAMPLE ARRIVES IN WORDS, NOT SPOKEN (audit M-15, 2026-11-09): nobody asked for it, and the front page keeps its own
+// example silent. The words stay on the page ("it opens on the example" above holds them); the line is live again from the
+// first press, so every outcome a reader asks for is still said.
+console.log('The example arrives unspoken');
+{
+  const { page, context } = await open(browser, { width: 1366, height: 900 });
+  await settled(page);
+  const line = () => page.evaluate(() => {
+    const s = document.getElementById('try-status');
+    return { live: s.getAttribute('aria-live'), role: s.getAttribute('role'), text: s.textContent };
+  });
+  const arrived = await line();
+  ok(arrived.live === 'off' && arrived.text === 'Answered for TW9 3PZ.', 'the example is on the page in words, and not spoken: nobody asked', JSON.stringify(arrived));
+  await send(page, 'SW5 9XX');
+  const pressed = await line();
+  ok(pressed.live === null && pressed.role === 'status' && pressed.text.startsWith('We could not find SW5 9XX'), 'from the first press, what happens is said', JSON.stringify(pressed));
+  await context.close();
+}
+
 console.log('Two requests in flight');
 {
   const { page, seen, context } = await open(browser, { width: 1366, height: 900 });

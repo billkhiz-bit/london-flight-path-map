@@ -1022,3 +1022,14 @@ records the decision.
 **M-2**: if `load()` rejects, nothing a search reads will come, so the held search and every press after say "The map's
 data did not load... Reloading the page usually fixes it." Not a retry: `load()` binds the page's controls. **M-4**: the
 Nearby list's Airport row matches both of `routesText()`'s airport sentences (ZZ9 9GAP, on Gatwick's centreline, holds it).
+
+## The audit's Minors, batch A (2026-11-10)
+
+M-6: the full map's box sent any 2-8 letters and digits to postcodes.io while typing; it now reads `startsLikePostcode`
+from js/place-box.mjs (one holder with the front page's `askable`), loaded by a dynamic import, so a whole postcode is
+still asked (last night's suggestions tests type one) and a place name never is. M-13: `minmax(0, 1fr)` was the first
+fix and failed its own test at 320 px ("Average" overflowed its equal column); `minmax(min-content, 1fr)` keeps equal
+columns wherever there is room. M-15 keeps the example's words ("it opens on the example" asserts them) and only marks
+the line `aria-live="off"` until the first press. M-5: seven checks read a renderer no page used; pointed at `tileHtml()`
+and proven by breaking its escaping and its notes. A heredoc collapsed `\b` into a backspace in a new test regex
+(the 9 Nov gotcha again): write regexes with the Edit tool, never through a shell heredoc.

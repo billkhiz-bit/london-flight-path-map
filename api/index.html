@@ -6,7 +6,7 @@
 
 <!-- Content Security Policy (enforcing - see comment in /index.html for the rationale).
      Fonts, analytics, and since 2026-11-05 the two lookups "Try a request" makes (js/api-demo.mjs). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src 'self' https://api.postcodes.io https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';">
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -468,30 +468,7 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
 <script type="module" src="/js/count.mjs"></script>
 <script type="module" src="/js/api-demo.mjs"></script>
 
-<!-- Wave 12.7: B2B funnel events. Methodology clicks signal real diligence
-     (someone reading the maths vs just kicking tyres). Demo/spec clicks
-     signal someone wanting to actually try / integrate. UTM parameters
-     in incoming traffic (?utm_source=outreach-landmark) flow through to
-     the GoatCounter referrer log automatically - see OUTREACH_DRAFTS.md
-     for the per-prospect convention. -->
-<script>
-  function trackEvent(name) {
-    try {
-      if (window.goatcounter && typeof window.goatcounter.count === 'function') {
-        window.goatcounter.count({ path: 'event/' + name, title: name, event: true });
-      }
-    } catch (_) { /* never break the UI for analytics */ }
-  }
-  document.addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a');
-    if (!a) return;
-    if (a.hasAttribute('data-event')) { trackEvent(a.getAttribute('data-event')); return; }
-    var href = a.getAttribute('href') || '';
-    if (href.includes('METHODOLOGY.md')) trackEvent('api-methodology-click');
-    else if (href.includes('LICENSING.md')) trackEvent('api-licensing-click');
-    else if (href === '/score-demo/' || href.startsWith('/score-demo/?')) trackEvent('api-demo-click');
-    else if (href.includes('api-docs.html')) trackEvent('api-spec-click');
-  });
-</script>
+<!-- /api/'s own click counts, in a module since 2026-11-10 so script-src needs no 'unsafe-inline' (audit M-8). -->
+<script type="module" src="/js/api-page-events.mjs"></script>
 </body>
 </html>

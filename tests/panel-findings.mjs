@@ -4,8 +4,8 @@ import { strict as assert } from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { planesModel } from '../js/planes.mjs';
 import {
-  aircraftFinding, crimeFinding, epcFinding, findingHtml, nearestFinding, planesFindings, planesNotes, priceFinding,
-  pathFinding, planesNotesHtml, ratingFinding, roadFinding, soldFinding,
+  aircraftFinding, crimeFinding, epcFinding, nearestFinding, planesFindings, planesNotes, priceFinding,
+  pathFinding, planesNotesHtml, ratingFinding, roadFinding, soldFinding, tileHtml,
 } from '../js/panel-findings.mjs';
 
 let passed = 0;
@@ -122,7 +122,7 @@ check('a caveat that changes what a figure means stays with the figure', () => {
   const found = planesFindings(two);
   assert.equal(found[0].caveats, undefined);
   assert.deepEqual(found[1].caveats, ['A range.', 'Approximate.', 'Other flying passes over here too.']);
-  assert.match(findingHtml(found[1]), /Other flying passes over here too/);
+  assert.match(tileHtml(found[1]), /Other flying passes over here too/);
   const none = planesFindings({ ...MODEL, airports: [], none: 'Under 1 a day.', other: 'Other flying.' });
   assert.deepEqual(none[0].caveats, ['Other flying.']);
 });
@@ -240,24 +240,34 @@ check('no energy data says nothing, unavailable or empty', () => {
   assert.equal(epcFinding({ available: true, count: 3, summary: { averageBand: 'N/A', averageRating: null } }), null);
 });
 
-// What the reader sees.
-check('an absent finding leaves no trace', () => assert.equal(findingHtml(null), ''));
+// What the reader sees: drawn by tileHtml(), the one renderer the page uses (audit M-5, 2026-11-09). These checks read a
+// second renderer, findingHtml(), until it was found that no page called it: they proved nothing about the panel.
+const colour = () => '#888';
+check('an absent finding leaves no trace', () => assert.equal(tileHtml(null), ''));
 check('text is escaped', () => {
-  const html = findingHtml(roadFinding({ council: '<b>X</b>', band: 'high' }));
+  const html = tileHtml(roadFinding({ council: '<b>X</b>', band: 'high' }));
   assert.doesNotMatch(html, /<b>X/);
   assert.match(html, /&lt;b&gt;X/);
-  assert.match(findingHtml(nearestFinding('t', 'Transport', 'good', { name: 'A "B" <c>', dist: '1m' })), /A &quot;B&quot; &lt;c&gt;/);
-  assert.match(findingHtml(roadFinding({ db: 60, who: 53, council: '<x>', band: 'high' })), /all of &lt;x&gt;/);
+  assert.match(tileHtml(nearestFinding('t', 'Transport', 'good', { name: 'A "B" <c>', dist: '1m' })), /A &quot;B&quot; &lt;c&gt;/);
+  const own = tileHtml(roadFinding({ db: 60, who: 53, council: '<x>', band: 'high' }));
+  assert.doesNotMatch(own, /<x>/);
+  assert.match(own, /&lt;x&gt;/);
 });
 check('no finding ever prints undefined, null or NaN', () => {
   const all = [roadFinding({ ...WHO, db: 71.8 }), roadFinding({ belowDb: 45 }), roadFinding(WHO), aircraftFinding({ score: 3.5, word: 'Low' }),
     ...planesFindings(MODEL), ratingFinding('f', 'Flood risk', 'low'), crimeFinding({ band: 'medium', rate: 142.4, median: 87.6 }),
     crimeFinding({ band: 'high' }), nearestFinding('t', 'Transport', 'good', { name: 'A' }), priceFinding({ price: '£1', trend: 'x' }),
     soldFinding([{ price: 5, type: 'terraced', category: 'A' }], gbp), epcFinding({ available: true, count: 2, summary: { averageBand: 'B', averageRating: '' } })];
-  for (const f of all) assert.doesNotMatch(findingHtml(f), /undefined|null|NaN/);
+  for (const f of all) assert.doesNotMatch(tileHtml(f, { scoreColour: colour }), /undefined|null|NaN/);
 });
-check('a bar is decoration: the words carry it', () => assert.match(findingHtml(aircraftFinding({ score: 3.5, word: 'Low' })), /find-track" aria-hidden="true"/));
-check('a unit is never set in capitals by the markup', () => assert.match(findingHtml(roadFinding({ ...WHO, db: 71.8 })), /71\.8 dB/));
+check('every picture says in words what it shows', () => {
+  const html = [roadFinding({ ...WHO, db: 71.8 }), aircraftFinding({ score: 3.5, word: 'Low' }), crimeFinding({ band: 'medium', rate: 142.4, median: 87.6 }),
+    ...planesFindings(MODEL)].map((f) => tileHtml(f, { scoreColour: colour })).join('');
+  const pictures = [...html.matchAll(/<[a-z]+ [^>]*role="img"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(pictures.length >= 2, `${pictures.length} pictures drawn`);
+  for (const p of pictures) assert.match(p, /aria-label="[^"]+"/, p);
+});
+check('a unit is never set in capitals by the markup', () => assert.match(tileHtml(roadFinding({ ...WHO, db: 71.8 })), /71\.8 dB/));
 
 // ---- THE ANSWER CARD'S TILES (Bill, 2026-11-08): plain words, a picture where one is honest, closed until tapped ----
 const T = await import('../js/panel-findings.mjs');

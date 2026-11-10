@@ -142,7 +142,10 @@ function init() {
   // `way` is what the reader pressed; none means the example, arriving. Only the newest press may reach the page, so one
   // that needs no request still cancels what is on its way.
   async function ask(text, way) {
-    if (way) count(way);
+    if (way) {
+      count(way);
+      status.removeAttribute('aria-live'); // the reader has acted: from here every outcome is said (role="status")
+    }
     const pc = cleanPostcode(text);
     if (!pc) {
       box.setAttribute('aria-invalid', 'true');
@@ -204,6 +207,10 @@ function init() {
       ask(chip.dataset.try, 'chip');
     });
   }
+  // The example arrives in words on the page but is not spoken (audit M-15, 2026-11-09): nobody asked for it, and the front
+  // page keeps its own example silent. Its words stay ("Answered for TW9 3PZ."), so what is on show is still said in text;
+  // the first press makes the line live again.
+  status.setAttribute('aria-live', 'off');
   ask(EXAMPLE.postcode);
 }
 
