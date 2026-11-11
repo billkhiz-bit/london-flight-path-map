@@ -211,6 +211,49 @@ console.log('Borough tap');
   await ctx.close();
 }
 
+// ---- 5b. The panel before a search (Bill's pick A, 2026-11-11: claude.ai/artifact/8EFboJHqQ1FBvdd6K5pCCv) ----
+console.log('The panel before a search');
+{
+  const { ctx, page } = await visit('');
+  const empty = await page.evaluate(() => ({
+    rows: [...document.querySelectorAll('#sidebar-content .tells-list li')].map((li) => [li.querySelector('b')?.textContent, li.querySelector('span')?.textContent]),
+    disc: (() => { const d = document.querySelector('.disclaimer'); const cs = getComputedStyle(d); return { text: d.textContent.replace(/\s+/g, ' ').trim(), bg: cs.backgroundColor, fg: cs.color }; })(),
+  }));
+  // The rows are the answer card's own groups: read the card's headings from a real answer (TW9 3PZ, stubbed), in order.
+  await page.fill('#search-input', 'TW9 3PZ');
+  await page.press('#search-input', 'Enter');
+  await page.waitForSelector('.find-group .sec-head h3', { timeout: 20000 }).catch(() => {});
+  const card = await page.evaluate(() => [...document.querySelectorAll('.find-group .sec-head h3')].map((h) => h.textContent));
+  ok(empty.rows.length === 4 && JSON.stringify(empty.rows.map((r) => r[0])) === JSON.stringify(card) && empty.rows.every(([, t]) => t && t.length > 10),
+    "London's empty panel says what a search tells you, in the answer card's own four groups, one line each", JSON.stringify({ empty: empty.rows, card }));
+  const lum = (rgb) => { const [r, g, b] = rgb.match(/\d+/g).slice(0, 3).map((v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+  ok(empty.disc.text.startsWith('Disclaimer: This tool is for informational purposes only') && /commission a proper survey/.test(empty.disc.text)
+    && empty.disc.bg === 'rgb(228, 227, 224)' && ratio(empty.disc.bg, empty.disc.fg) >= 4.5,
+    'the disclaimer keeps every word, as a note on the map\'s grey, readable (4.5:1 or more)', JSON.stringify({ ...empty.disc, ratio: ratio(empty.disc.bg, empty.disc.fg).toFixed(2) }));
+  await ctx.close();
+}
+{
+  const { ctx, page } = await visit('?city=nyc');
+  await page.waitForFunction(() => currentCity === 'nyc' && !!document.querySelector('#sidebar-content .no-result-yet p'), null, { timeout: 15000 }).catch(() => {});
+  const nyc = await page.evaluate(() => ({ list: !!document.querySelector('#sidebar-content .tells-list'), p: document.querySelector('#sidebar-content .no-result-yet p')?.textContent, hint: CITY_DATA.nyc.emptyStateHint }));
+  ok(!nyc.list && nyc.p === nyc.hint, "New York's answer is its own, so its panel keeps its own sentence (no UK groups)", JSON.stringify(nyc));
+  await ctx.close();
+}
+{
+  // Closing a result on a phone restores THIS city's panel (it restored a copy taken at boot: London's, in every city).
+  const { ctx, page } = await visit('?city=bristol', { width: 390, height: 844 });
+  await page.waitForFunction(() => currentCity === 'bristol', null, { timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => triggerSearch('Bath'));
+  await page.waitForSelector('#result-close', { state: 'visible', timeout: 15000 }).catch(() => {});
+  await page.locator('#result-close').click().catch(() => {});
+  await page.waitForSelector('#sidebar-content .no-result-yet', { timeout: 10000 }).catch(() => {});
+  const back = await page.evaluate(() => [...document.querySelectorAll('#sidebar-content .quicksearch-chip')].map((b) => b.textContent));
+  const want = await page.evaluate(() => CITY_DATA.bristol.tryExamples);
+  ok(JSON.stringify(back) === JSON.stringify(want), "closing a result on a phone restores this city's own panel, not London's", JSON.stringify({ back, want }));
+  await ctx.close();
+}
+
 // ---- 6. Every city's chips lead to an answer there ----
 console.log("Every city's Try chips");
 {

@@ -1181,6 +1181,53 @@
         font-weight: 600;
         text-decoration: underline;
       }
+      /* WHAT A SEARCH TELLS YOU (Bill's pick A, 2026-11-11; claude.ai/artifact/8EFboJHqQ1FBvdd6K5pCCv): before a search, a UK
+         city's panel names the answer card's four groups (FIND_GROUPS, one holder), one line each, then its Try chips. */
+      .empty-state.tells {
+        padding: 22px 20px 28px;
+        text-align: left;
+        display: grid;
+        gap: 14px;
+      }
+      .tells-h {
+        margin: 0;
+        font: 600 12px var(--font-mono);
+        letter-spacing: 1px;
+        color: var(--mid);
+      }
+      .tells-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+      }
+      .tells-list li {
+        display: grid;
+        gap: 3px;
+        padding: 10px 12px;
+        background: var(--white);
+        border: 1px solid var(--bg);
+        border-left: 3px solid var(--orange);
+        border-radius: 8px;
+      }
+      .tells-list b {
+        font: 600 11px var(--font-mono);
+        letter-spacing: 1px;
+        color: var(--dark);
+      }
+      .tells-list span {
+        font: 13px/1.45 var(--font-sans);
+        color: var(--mid);
+      }
+      .empty-state.tells .tells-how {
+        margin: 0;
+        text-align: left;
+      }
+      .empty-state.tells .quicksearch {
+        margin-top: 0;
+        justify-content: flex-start;
+      }
       /* Retry affordance on the connection-failure empty state. 44px min
          height keeps it at the same tap-target size as the search chips
          below (F-A11Y-8). */
@@ -1223,23 +1270,26 @@
         color: var(--mid);
         font-family: var(--font-mono);
       }
+      /* Like the rows of "what a search tells you" (2026-11-11, Bill: "more consistent with the ... containers"): rounded, a
+         light edge and the sans, where they were square, black-edged and mono. The label inside identifies each as a button. */
       .quicksearch-chip {
         padding: 7px 12px;
         background: var(--white);
-        border: 1px solid var(--dark);
-        font-family: var(--font-mono);
-        font-size: 12px;
-        letter-spacing: 0.5px;
+        border: 1px solid #d6d4cf;
+        border-radius: 8px;
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 500;
         cursor: pointer;
         color: var(--dark);
         min-height: 36px;
         transition:
           background 0.15s ease,
-          color 0.15s ease;
+          border-color 0.15s ease;
       }
       .quicksearch-chip:hover {
-        background: var(--dark);
-        color: var(--white);
+        background: #fbeee3;
+        border-color: var(--orange);
       }
       .quicksearch-chip:focus-visible {
         outline: 2px solid var(--focus);
@@ -1883,18 +1933,20 @@
       }
 
       /* Disclaimer */
+      /* A note, not the loudest thing on the panel (Bill's pick A, 2026-11-11): every word kept, dark text on the map's own
+         grey (about 9:1) where it was white on black. */
       .disclaimer {
         padding: 12px 24px;
-        background: #141414;
-        color: var(--white);
+        background: var(--bg);
+        color: #3c3c3a;
         font-family: var(--font-sans);
         font-size: 11px;
         line-height: 1.5;
         margin-top: auto;
-        border-top: 1px solid #333;
+        border-top: 1px solid var(--light);
       }
       .disclaimer strong {
-        color: var(--orange);
+        color: var(--dark);
       }
 
       /* Optional expandable sections */
@@ -12863,6 +12915,36 @@
         if (!navigator.userActivation || navigator.userActivation.hasBeenActive) writeFlag('flightmap_hint_seen', '1');
       }
 
+      // THE ANSWER CARD'S FOUR GROUPS, one holder (2026-11-11): their headings on the card, and the empty panel's "what a
+      // search tells you" (Bill's pick A). Each line is true in EVERY UK city's answer: planes "where we count them",
+      // because Tyne and Wear, Merseyside and Teesside have no counted airport (data/planes/airports.json).
+      const FIND_GROUPS = [
+        { title: 'NOISE AND PLANES', tells: 'Aircraft and road noise, and the planes overhead where we count them' },
+        { title: 'AIR AND FLOOD', tells: 'Air against the WHO guideline, and flood risk' },
+        { title: 'LIVING HERE', tells: 'Crime, schools, stations and doctors' },
+        { title: 'PROPERTY', tells: 'Prices, recent sales and energy ratings' },
+      ];
+      // The panel before a search: a UK city's says what a search tells you; New York's and the Bay Area's answers are their
+      // own, so they keep their own sentence. Built from constants and the registry, escaped; the chips are filled by
+      // renderTryChips(). ONE builder for boot, a city switch and closing a result on a phone.
+      function emptyStateHtml(city) {
+        const chips = '<div class="quicksearch" role="group" aria-label="Quick search examples"></div>';
+        if (!isUkCity(city)) {
+          return `<div class="empty-state no-result-yet"><div class="icon">&#9678;</div>
+    <p>${escapeHtml(cityOf(city).emptyStateHint)}</p>
+    ${chips}</div>`;
+        }
+        return `<div class="empty-state no-result-yet tells"><h3 class="tells-h">WHAT A SEARCH TELLS YOU</h3>
+    <ul class="tells-list">${FIND_GROUPS.map((g) => `<li><b>${escapeHtml(g.title)}</b><span>${escapeHtml(g.tells)}</span></li>`).join('')}</ul>
+    <p class="tells-how">Search above, or click any area on the map.</p>
+    ${chips}</div>`;
+      }
+      function showEmptyState(city) {
+        const box = document.getElementById('sidebar-content');
+        if (box) box.innerHTML = emptyStateHtml(city);
+        renderTryChips();
+      }
+
       // THE TRY CHIPS, every city's (2026-11-11): from the registry's tryExamples, never typed into the page, so a city switch
       // keeps them. The empty panel shows them all; the phone's search card the first three, while the guide is on. The
       // delegated .quicksearch-chip listener searches them, as it always has.
@@ -14880,7 +14962,7 @@
     ${boroughData ? boroughDataNotice() : ''}
     ${analysis.isOutcode ? '<p class="info-note" style="margin:8px 24px 0;"><strong>Area-level results.</strong> For street-level crime, EPC and sold price data, try a full postcode e.g. ' + escapeHtml(analysis.postcode) + ' 1AA.</p>' : ''}
     <section class="sidebar-section find-group">
-      <div class="sec-head"><h3>NOISE AND PLANES</h3><small class="sec-wide" hidden></small></div>
+      <div class="sec-head"><h3>${FIND_GROUPS[0].title}</h3><small class="sec-wide" hidden></small></div>
       <div class="tiles">
         <div data-find="road" class="tile-slot is-waiting"></div>
         <div data-find="aircraft" class="tile-slot"></div>
@@ -14889,7 +14971,7 @@
       </div>
     </section>
     <section class="sidebar-section find-group">
-      <div class="sec-head"><h3>AIR AND FLOOD</h3><small class="sec-wide" hidden></small></div>
+      <div class="sec-head"><h3>${FIND_GROUPS[1].title}</h3><small class="sec-wide" hidden></small></div>
       <div class="tiles">
         <div data-find="air" class="tile-slot"></div>
         <div data-find="flood" class="tile-slot"></div>
@@ -14903,7 +14985,7 @@
       }
     </section>
     <section class="sidebar-section find-group">
-      <div class="sec-head"><h3>LIVING HERE</h3><small class="sec-wide" hidden></small></div>
+      <div class="sec-head"><h3>${FIND_GROUPS[2].title}</h3><small class="sec-wide" hidden></small></div>
       <div class="tiles">
         <div data-find="crime" class="tile-slot"></div>
         <div data-find="transport" class="tile-slot"></div>
@@ -14912,7 +14994,7 @@
       </div>
     </section>
     <section class="sidebar-section find-group">
-      <div class="sec-head"><h3>PROPERTY</h3><small class="sec-wide" hidden></small></div>
+      <div class="sec-head"><h3>${FIND_GROUPS[3].title}</h3><small class="sec-wide" hidden></small></div>
       <div class="tiles">
         <div data-find="price" class="tile-slot"></div>
         <div data-find="sold" class="tile-slot"></div>
@@ -15986,8 +16068,10 @@
         cancelSearch();
         const searchAtStart = searchSeq;
         currentCity = city;
-        // The Try chips name places in THIS city from now: a tap during a slow outline load must not search the last one.
-        renderTryChips();
+        // The panel names THIS city from now: a tap during a slow outline load must not search the last one, and its sentence
+        // and chips change together (in Bristol they parted for about a second while the outlines loaded, 2026-11-11).
+        if (document.querySelector('#sidebar-content .no-result-yet')) showEmptyState(city);
+        else renderTryChips();
         // Invalidate the aircraft raster cache so updateDefraTiles refetches
         // for the new city's bbox + projection. visual fix-DEFRA-1.
         aircraftRasterLoadedFor = null;
@@ -16056,10 +16140,7 @@
         // (handleUsZipSearch kicks one off mid-switch), in which case wiping
         // it here would throw away the newer, correct result.
         if (searchSeq === searchAtStart) {
-          document.getElementById('sidebar-content').innerHTML =
-            `<div class="empty-state no-result-yet"><div class="icon">&#9678;</div>
-    <p>${escapeHtml(cityOf(city).emptyStateHint)}</p>
-    <div class="quicksearch" role="group" aria-label="Quick search examples"></div></div>`;
+          showEmptyState(city);
           setPanelSubject(null);
         }
         // The chips follow the city (the phone's row whether or not a search took the panel meanwhile).
@@ -17283,7 +17364,9 @@
         // THE SEARCH GUIDE starts on a first visit (no saved "seen"; the first-run banner's flag, so anyone who used the map
         // before is not shown it). readFlag is guarded: a browser that blocks site data gets the guide, never a broken map.
         if (readFlag('flightmap_hint_seen') !== '1') document.querySelector('.search-box')?.classList.add('guide');
-        renderTryChips();
+        // The panel's first words come from the same builder as a city switch's, not from the page's markup.
+        if (document.querySelector('#sidebar-content .no-result-yet')) showEmptyState(currentCity);
+        else renderTryChips();
 
         const container = document.getElementById('map-container');
         svg = d3.select('#map-svg');
@@ -17826,14 +17909,7 @@
         if (!app || !nav) return;
         const TAB_FOR = { search: 'analysis', ranking: 'ranking', saved: 'favourites' };
 
-        // Snapshot the initial empty-state DOM so the close button can
-        // restore it after a result has been rendered. Captured at boot
-        // as a cloned node (NOT an HTML string) so the restore path uses
-        // safe DOM cloning instead of innerHTML - no XSS surface even if
-        // the template later gains dynamic content.
         const sidebarContent = document.getElementById('sidebar-content');
-        const emptyStateNode =
-          sidebarContent && sidebarContent.firstElementChild ? sidebarContent.firstElementChild.cloneNode(true) : null;
 
         window.setMobileView = function (view) {
           // The sole writer of data-mview. Gated on .is-tabbed, which is set on
@@ -17872,7 +17948,7 @@
         // returns to a clean map. The :has(.no-result-yet) CSS rule then
         // re-hides the analysis-card wrapper automatically.
         const closeBtn = document.getElementById('result-close');
-        if (closeBtn && sidebarContent && emptyStateNode) {
+        if (closeBtn && sidebarContent) {
           // ESCAPE DISMISSES TOO (2026-08-31, audit D2). The button is
           // anchored to the result card, so it scrolls away with it; Escape
           // works wherever the panel has been scrolled to. Routed through the
@@ -17887,11 +17963,9 @@
             closeBtn.click();
           });
           closeBtn.addEventListener('click', () => {
-            // replaceChildren + cloneNode keeps the restore on safe DOM
-            // APIs (no innerHTML/parsed strings). The clone is taken from
-            // the boot-time snapshot so future calls still have a pristine
-            // template to copy from.
-            sidebarContent.replaceChildren(emptyStateNode.cloneNode(true));
+            // This city's empty panel, from the one builder (2026-11-11). It restored a copy taken at boot, which was
+            // London's in every city. The builder writes only constants and the registry's words, escaped.
+            showEmptyState(currentCity);
             // The result is gone, so the map is reachable again.
             scheduleMapInertSync();
             // No chip binding here on purpose: the delegated document listener

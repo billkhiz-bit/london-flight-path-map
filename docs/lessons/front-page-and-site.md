@@ -1103,3 +1103,13 @@ about twice its average speed, which is what read as fast). Built on `.search-bo
   could not see: at 320x568 the chip row covered the map's "Flight paths" and "Aircraft noise" buttons (responsive), and at
   320x568 and 844x390 it squeezed the map under its own controls (map-fit). The row now needs 700 px of height; the screenshots
   had been taken at 390x844, where it fits. Check a new phone element at 320x568 and on its side before calling it done.
+
+## The Analysis panel before a search (2026-11-11)
+
+Bill: "the analysis section, could that be changed UI wise?" Picked A (what a search tells you), then asked for the Try chips
+to match the rows. The rows are the answer card's own groups (`FIND_GROUPS`), so the promise and the answer cannot drift; the
+lines were written to be true in every UK city (no planes counts for Tyne and Wear, Merseyside or Teesside: "where we count
+them"), and New York and the Bay Area, whose answers differ, keep their own sentence. Three places rebuilt the empty panel; the
+phone's close button restored a copy taken at boot, London's, in every city: one builder now (`showEmptyState`). A live check
+read Bristol's panel mid-switch (new chips under London's sentence for about a second): the switch now rebuilds the panel at
+its start as well as after the outlines.

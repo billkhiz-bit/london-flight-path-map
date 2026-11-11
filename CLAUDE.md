@@ -369,6 +369,12 @@ Or just describe what you need, I have full context of this project.
   banner is GONE. Try chips are the registry's `tryExamples` (every city: phones at least 700 px tall show three in the card while the guide is on; shorter phones keep the hint,
   because the row covered the layer buttons at 320x568 and squeezed the map at 844x390; desktops all in the empty panel). **Every place a city's hint, not-found message and chips name must be found by the search**:
   `tests/search-guide.mjs` searches each (Bristol's "Bristol" and "Weston" and Teesside's "Stockton" found nothing until it did).
+- **The full map's Analysis panel before a search** (Bill's pick A, 2026-11-11; claude.ai/artifact/8EFboJHqQ1FBvdd6K5pCCv v2): a UK
+  city's says WHAT A SEARCH TELLS YOU, the answer card's four groups from `FIND_GROUPS` (ONE holder for the card's headings and
+  these rows; each line true in every UK city, so planes only "where we count them"), then its Try chips; New York and the Bay
+  Area keep their own sentence. `showEmptyState(city)` is the one builder (boot, a city switch at its start and after the
+  outlines, closing a result on a phone, which restored London's boot-time copy in every city). The chips match the rows:
+  rounded, a light edge, the sans. The disclaimer keeps every word, dark on the map's grey (it was white on black).
 - **Never `text-transform: uppercase` on a unit** (2026-11-04): it turns the micro sign into a capital mu, so µg/m³ read MG/M³.
 - **The front page counts its controls by name** (Bill, 2026-11-04, for the read that starts from the new page): `front-place-pick`,
   `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`, `front-dev-lang`, `front-full-map`, through `engaged()`, once per

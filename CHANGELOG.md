@@ -2,6 +2,8 @@
 
 ## 2026-11-11 - Less text in the answer's folds
 
+- **Before you search, the full map says what a search tells you**: noise and planes, air and flood, living here, property, one line each, then example places to tap. The example buttons are softer and match the cards, and the disclaimer reads as a note rather than a black bar (every word kept).
+
 - **The full map shows you where to start.** On a first visit a light runs twice round the search box, then it keeps a still orange ring until your first search; on a phone, three example places sit under the box to tap. Every area has its own examples now, where only London had them. The dark banner over the map has gone.
 - **Bristol's and Teesside's suggestions now work**: Bristol's said to search "Bristol" or "Weston" and Teesside's "Stockton", and none of the three found anything. They now name City of Bristol, North Somerset and Stockton-on-Tees.
 - **The sample street report is up to date**: fine particles at Kew read 8.6 on it and 8.5 on the site since the air figures were reloaded on 10 November.
