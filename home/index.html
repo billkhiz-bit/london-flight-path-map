@@ -395,6 +395,54 @@
       /* Kept whole: on a phone held sideways "How it is worked out" broke across two lines, and a broken link's box
          spans both, over the button beside it (axe target-size at 844x390). */
       .answer .area button.linkish, .answer .area a { white-space: nowrap; }
+      /* THE ANSWER'S LOWER HALF AS TILES (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): the
+         top's look carried down. Presentation only: every fact keeps its words, ids and order; a tile's big figure is drawn
+         from data-fig (nearbyFigure(), from the fact's own words) as generated content with empty alt text, so it is never
+         read twice and never in a test's text. */
+      .answer .planes .planes-more { margin: 8px 0 0; }
+      .answer .planes .planes-more:first-of-type { margin-top: 14px; }
+      .answer .planes .planes-more a { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 10px 14px; border: 1.5px solid var(--dark); border-radius: 12px; background: var(--paper); color: var(--dark); font: 600 14px/1.3 var(--font-body); text-decoration: none; }
+      .answer .planes .planes-more a::after { content: "\2192" / ""; flex: none; }
+      .answer .planes .planes-more a:hover { background: var(--tint); }
+      /* One column of tiles, figure on the left (measured 10 Nov: the real approach and sensor lines are long, so a two-column
+         grid left the airport and the station each alone on half a row; packing them with `dense` would split seen order
+         from read order, as the full map's cards found on 2026-11-09). */
+      .answer .nearby { display: grid; gap: 8px; }
+      .answer .nearby > h3 { margin-bottom: 0; }
+      .answer #ans-routes, .answer #ans-air-near { display: contents; }
+      .answer .nearby .fact { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); column-gap: 12px; row-gap: 1px; align-items: start; padding: 10px 12px; border-radius: 12px; background: var(--tint); font-size: 13px; line-height: 1.35; }
+      .answer .nearby .fact[hidden] { display: none; }
+      .answer .nearby .fact[data-fig]::before { content: attr(data-fig) / ""; grid-row: 1 / span 2; grid-column: 1; align-self: center; font: 700 19px/1.15 var(--font-display); letter-spacing: -0.01em; color: var(--dark); overflow-wrap: anywhere; }
+      .answer .nearby .fact .k, .answer .nearby .fact > :last-child { grid-column: 2; }
+      .answer .nearby .fact:not([data-fig]) { grid-template-columns: minmax(0, 1fr); }
+      .answer .nearby .fact:not([data-fig]) .k, .answer .nearby .fact:not([data-fig]) > :last-child { grid-column: 1; }
+      .answer .nearby .fact .k { font-weight: 600; color: var(--mid); }
+      .answer .nearby .fact > :last-child { color: var(--dark); }
+      .answer .area { display: grid; gap: 6px; margin: 12px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+      .answer .area:empty { display: none; }
+      .answer .area .area-k { font-size: 12.5px; color: var(--mid); }
+      .answer .area b { font: 600 16px/1.25 var(--font-display); }
+      /* area-chips, never .chips: that is the city switch's absolutely placed list, which took these off the card. */
+      .answer .area .area-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .answer .area .area-chip { padding: 4px 10px; border-radius: 999px; background: var(--tint); color: var(--dark); font: 600 12.5px/1.35 var(--font-body); }
+      .answer .area .area-links { font-size: 13px; }
+      .answer .more:has(#ans-link) { margin-top: 14px; }
+      .answer .more #ans-link { display: flex; justify-content: center; align-items: center; min-height: 48px; padding: 10px 16px; border-radius: 12px; background: var(--dark); color: #fff; font: 600 15px var(--font-body); text-decoration: none; }
+      .answer .more #ans-link:hover { background: #2b2b2b; }
+      .ans-fold summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 10px; list-style: none; }
+      .ans-fold summary::-webkit-details-marker { display: none; }
+      .ans-fold summary[data-hint]::before { content: attr(data-hint) / ""; grid-row: 2; grid-column: 1; font: 400 12.5px/1.3 var(--font-body); color: var(--mid); }
+      /* A chevron drawn with borders: the arrow character fell back to a plain "v" (no glyph in the page's fonts). */
+      .ans-fold summary::after { content: ""; grid-row: 1 / span 2; grid-column: 2; width: 8px; height: 8px; margin: 0 4px 4px; border-right: 2px solid var(--mid); border-bottom: 2px solid var(--mid); transform: rotate(45deg); transition: transform 0.15s; }
+      .ans-fold[open] summary::after { margin: 4px 4px 0; transform: rotate(-135deg); }
+      @media (prefers-reduced-motion: reduce) { .ans-fold summary::after { transition: none; } }
+      .say-links { gap: 6px; }
+      /* Block, not flex: ::first-letter (the capital each link starts with here) applies only to a block box. */
+      .say-links a { display: block; position: relative; min-height: 40px; padding: 10px 34px 10px 12px; border-radius: 10px; background: var(--tint); color: var(--dark); text-decoration: none; }
+      .say-links a::first-letter { text-transform: uppercase; }
+      .say-links a::after { content: "\2192" / ""; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+      /* The air chart in the page's own type: the shared chart reads --font-mono, so only this fold changes. */
+      .answer .air { --font-mono: var(--font-body); }
       /* "Count my vote" (2026-10-13): where a visitor the map does not cover wants it next. */
       .want { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
       .want b { color: var(--dark); font-weight: 600; }
@@ -839,10 +887,10 @@
             <p class="area" id="ans-area"></p>
             <p class="want" id="ans-want" aria-live="polite" hidden></p>
             <p class="more"><a id="ans-link" href="/map/">See the full picture on the map</a></p>
-            <details class="ans-fold" data-fold="planes"><summary>How the planes are counted</summary><div id="ans-planes-notes" hidden></div></details>
-            <details class="ans-fold" data-fold="air"><summary>About the air readings</summary><div class="routes air" id="ans-air" hidden></div></details>
-            <details class="ans-fold" data-fold="say"><summary>Have your say</summary><div class="routes" id="ans-say" hidden></div></details>
-            <details class="ans-fold" data-fold="wrong"><summary>Spotted something wrong?</summary><p class="routes" id="ans-wrong" hidden></p></details>
+            <details class="ans-fold" data-fold="planes"><summary data-hint="Why west days and east days differ">How the planes are counted</summary><div id="ans-planes-notes" hidden></div></details>
+            <details class="ans-fold" data-fold="air"><summary data-hint="DEFRA's model beside the nearest sensor or monitor">About the air readings</summary><div class="routes air" id="ans-air" hidden></div></details>
+            <details class="ans-fold" data-fold="say"><summary data-hint="Respond, complain, or look up a flight">Have your say</summary><div class="routes" id="ans-say" hidden></div></details>
+            <details class="ans-fold" data-fold="wrong"><summary data-hint="Local knowledge is the best check">Spotted something wrong?</summary><p class="routes" id="ans-wrong" hidden></p></details>
           </div>
           </div>
           <div role="tabpanel" id="panel-find" aria-labelledby="tab-find" hidden>

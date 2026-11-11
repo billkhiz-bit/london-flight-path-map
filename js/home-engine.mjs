@@ -1659,10 +1659,25 @@ export const planesFilesFor = (postcode) => loadPlanes(postcode);
 /** [Breathe London sensors, DEFRA monitors], the answer's own files (fetched once, kept). */
 export const airFiles = () => Promise.all([loadSensors(), loadMonitors()]);
 
-// One line of the answer's Nearby list: what it is, then the fact.
+/** A Nearby tile's big figure (Bill's pick A, 2026-11-10: the answer's lower half as tiles, like its top), TAKEN FROM THE
+ *  FACT'S OWN WORDS, never worked out again: the distance to an airport or a station, an approach's height, an air
+ *  reading's first concentration. null when the words hold none (the tile then shows its words alone). */
+export function nearbyFigure(label, text) {
+  const pick = (re) => { const m = re.exec(String(text ?? '')); return m ? m[1] : null; };
+  if (label === 'Airport') return pick(/(\d+(?:\.\d+)? km)/);
+  if (label === 'Station') return pick(/(\d+(?:\.\d+)? k?m) in a straight line/);
+  if (label === 'Flight path' || label === 'Flight paths') { const h = pick(/about ([\d,]+ ft)/); return h ? `~${h}` : null; }
+  if (label === 'Air sensor' || label === 'Air monitor') return pick(/(\d+(?:\.\d+)? µg\/m³)/);
+  return null;
+}
+// One tile of the answer's Nearby list: what it is, then the fact, its words unchanged (the tests and a screen reader
+// read them); the big figure is drawn by CSS from data-fig, so it is never read twice. A long fact spans the row.
+const WIDE_FROM = 60;
 function factRow(label, text) {
   const row = document.createElement('div');
-  row.className = 'fact';
+  row.className = String(text).length > WIDE_FROM ? 'fact is-wide' : 'fact';
+  const fig = nearbyFigure(label, text);
+  if (fig) row.dataset.fig = fig;
   row.append(Object.assign(document.createElement('span'), { className: 'k', textContent: label }), Object.assign(document.createElement('span'), { textContent: text }));
   return row;
 }
@@ -1769,13 +1784,18 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
   if (station) {
     station.hidden = true;
     station.replaceChildren();
+    station.className = 'fact';
+    delete station.dataset.fig;
     // A later search owns the line: an earlier one's list landing late must not write it.
     const seq = ++stationSeq;
     if (city) {
       loadStations().then((list) => {
         const near = list && seq === stationSeq ? nearestStation(list, lat, lon) : null;
         if (!near) return;
-        station.replaceChildren(...factRow('Station', `${near.name}, ${stationDistance(near.km)} in a straight line`).childNodes);
+        const tile = factRow('Station', `${near.name}, ${stationDistance(near.km)} in a straight line`);
+        station.replaceChildren(...tile.childNodes);
+        station.className = tile.className;
+        if (tile.dataset.fig) station.dataset.fig = tile.dataset.fig;
         station.hidden = false;
       });
     }
@@ -1844,7 +1864,8 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
   if (area) {
     const row = city ? rowFor(district) : null;
     area.innerHTML = row
-      ? `Council area: <b>${esc(row.borough)}</b>${row.score !== '' ? `, Sky Score ${esc(row.score)}` : ''}${row.flood_medium_or_high_pct !== '' ? `, ${esc(row.flood_medium_or_high_pct)}% of postcodes at medium or high flood risk` : ''}. <button type="button" class="linkish" id="ans-open-area">Its figures</button> &middot; <a href="/how-it-works/">How it is worked out</a>`
+      // A small card (Bill's pick A, 2026-11-10): the council, its score and flood share as chips, then its two links.
+      ? `<span class="area-k">Council area</span> <b>${esc(row.borough)}</b><span class="area-chips">${row.score !== '' ? `<span class="area-chip">Sky Score ${esc(row.score)} / 10</span> ` : ''}${row.flood_medium_or_high_pct !== '' ? `<span class="area-chip">${esc(row.flood_medium_or_high_pct)}% of postcodes at medium or high flood risk</span>` : ''}</span><span class="area-links"><button type="button" class="linkish" id="ans-open-area">Its figures</button> &middot; <a href="/how-it-works/">How it is worked out</a></span>`
       : '';
     area.querySelector('#ans-open-area')?.addEventListener('click', () => selectBorough(row.borough, { scroll: true, focus: true }));
   }

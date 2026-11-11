@@ -2,6 +2,8 @@
 
 ## 2026-11-10 - The answer card for everyone
 
+- **The front page's answer is easier to scan below the planes.** Each nearby fact is a tile that leads with its figure (10.2 km to Heathrow, about 1,800 ft for the aircraft overhead, 20 m to the station), the council's Sky Score and flood share sit in a small card, the map is one clear button, and each fold says what is inside before you open it.
+
 - **Planes overhead leaves out PO boxes and other bulk-mail postcodes**, which sit at a delivery office, not at homes. A district's busiest figure is now its homes': SW1P (Westminster) reads up to 44 a day, not 307, and Earl's Court SW5 5, not 305. Every page says how many it leaves out. Seven district pages whose homes see too few planes for a page are withdrawn; a postcode search still answers for each home.
 
 - **The map's answer card says in words what stands out**: the pills now sit under "Worth a look" and "Good here", each with a mark (! or a tick), so their meaning no longer rests on a dot's colour, and a screen reader hears "Crime, good here".

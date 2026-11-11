@@ -1033,3 +1033,24 @@ columns wherever there is room. M-15 keeps the example's words ("it opens on the
 the line `aria-live="off"` until the first press. M-5: seven checks read a renderer no page used; pointed at `tileHtml()`
 and proven by breaking its escaping and its notes. A heredoc collapsed `\b` into a backspace in a new test regex
 (the 9 Nov gotcha again): write regexes with the Edit tool, never through a shell heredoc.
+
+## The answer's lower half as tiles (2026-11-10, Bill's pick A)
+
+Bill: "this part on the homepage can improve visually" (the links, Nearby, council line, map link and folds under the planes
+tiles). Mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H: today / A tiles (recommended, picked) / B a cleaner list.
+
+Built as presentation only, because the tests read the facts' exact words (`#ans-station` must read "Station" + name + "m
+in a straight line", `#ans-routes` its sentences, `#ans-area` its three phrases). So the big figure is CSS generated content
+from `data-fig`, set by `nearbyFigure()` from the fact's own words, with empty alt text (`/ ""`).
+
+What the screenshots caught that the mock-up hid:
+- the mock's captions were short; the site's sentences are long, so a two-column grid left the airport and the station each
+  alone on half a row. One column, figure left. `dense` was not used: it splits seen order from read order (2026-11-09);
+- the chips vanished: `.chips` is the city switch's class, `position: absolute`. Renamed `.area-chip(s)`; a test now holds
+  the chips inside the card's box;
+- the fold arrow (U+2304) has no glyph in the page's fonts and fell back to a plain "v": drawn with borders instead;
+- `::first-letter` does nothing on a flex box: "Have your say" rows are blocks with the arrow positioned.
+Kept on purpose: the air fold's sensor sentence. It looks like a repeat of the Nearby tile but carries "roadside, 0.7 m from
+the kerb", which the tile does not.
+Shell gotcha, twice in one evening: a Python heredoc turned `\b` into a backspace and `\2304` into an octal escape. Make
+regex and CSS-escape edits with the Edit tool, then scan the file for control characters.

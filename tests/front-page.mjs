@@ -674,6 +674,30 @@ ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.te
     JSON.stringify(dist)
   );
 }
+// 7z. THE LOWER HALF AS TILES (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): each Nearby
+// tile's big figure is a figure from its OWN words (nearbyFigure(), never worked out again) and is drawn by CSS, so the
+// words above stay what a reader and these tests read; the council line is a card whose chips stay inside it (the city
+// switch's `.chips` once pulled them out, absolutely placed); the map hand-off is the one filled button.
+{
+  const tiles = await page.locator('#ans-nearby .fact:not([hidden])').evaluateAll((els) => els.map((e) => ({
+    label: e.querySelector('.k')?.textContent, fig: e.dataset.fig || null, text: e.lastElementChild?.textContent || '',
+    drawn: getComputedStyle(e, '::before').content,
+  })));
+  const withFig = tiles.filter((t) => t.fig);
+  ok(withFig.length >= 3 && withFig.every((t) => t.text.includes(t.fig.replace(/^~/, ''))),
+    "every Nearby tile's big figure is a figure from its own words", JSON.stringify(tiles));
+  ok(tiles.some((t) => t.label === 'Airport' && /^\d+(\.\d+)? km$/.test(t.fig)) && tiles.some((t) => t.label === 'Station' && /^\d+(\.\d+)? k?m$/.test(t.fig)),
+    'the airport and station tiles lead with their distance', JSON.stringify(tiles));
+  ok(withFig.every((t) => t.drawn.includes(t.fig)), 'each figure is drawn by CSS, never added to the words', JSON.stringify(withFig.map((t) => t.drawn)));
+  const card = await page.locator('#ans-area').evaluate((p) => {
+    const box = p.getBoundingClientRect();
+    return [...p.querySelectorAll('.area-chip')].map((c) => { const r = c.getBoundingClientRect(); return { text: c.textContent, inside: r.top >= box.top && r.bottom <= box.bottom && r.left >= box.left && r.right <= box.right }; });
+  });
+  ok(card.length === 2 && card.every((c) => c.inside) && /^Sky Score [\d.]+ \/ 10$/.test(card[0].text),
+    "the council card's two chips sit inside the card", JSON.stringify(card));
+  const map = await page.locator('#ans-link').evaluate((a) => ({ bg: getComputedStyle(a).backgroundColor, h: Math.round(a.getBoundingClientRect().height) }));
+  ok(map.bg !== 'rgba(0, 0, 0, 0)' && map.bg !== 'transparent' && map.h >= 44, 'the map hand-off is a filled button at least 44 px tall', JSON.stringify(map));
+}
 // Air measured nearby (ROADMAP "The plan for Breathe London", step 3; Bill, 2026-10-19: within 5 km,
 // London shows the sensor AND the official monitor). Worked out HERE over the two data files with this
 // test's own distance maths, as the station is, so the shared functions cannot pass by agreeing with
