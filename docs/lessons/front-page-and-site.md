@@ -1077,3 +1077,29 @@ the air fold the chart, a chip per instrument and its notes as points. 162 words
   screenshot, let that open route reach the live API with any key stripped; never send the demo key from a preview.
 - **Mock-ups of a page around a change come from a screenshot** (the search-guide mock-ups put the map's panel on the wrong
   side): `~/.claude/skills/preflight/checks/frontend.md`.
+
+## The full map's search guide (2026-11-11)
+
+Bill: "should we make it easier for the user to navigate... a nice highlighted glow of the search bar?" Picked C2, a light
+running round the search box, then asked for it slower: two steady laps in 4.6 s (the first draft's 3.2 s eased lap peaked at
+about twice its average speed, which is what read as fast). Built on `.search-box.guide`, with Try chips per city.
+
+- **A light round a rectangle needs an outline, not a conic gradient.** A gradient turned about the centre sweeps the short ends
+  of a long, thin box fast and the long sides slowly; an SVG rect with `pathLength="100"` and animated dash offsets runs evenly.
+- **Under 5 s is a rule, not a taste:** WCAG 2.2.2 wants a pause control for anything moving on its own for longer. The test reads
+  every animation's `endTime` (4,600 ms), and a 5.6 s mutation turned it red.
+- **"Remembered" needs the visitor's own action.** The banner's old rule (a deep link ends it but does not save it) is kept
+  with `navigator.userActivation.hasBeenActive`; a synthetic click is no activation, so the test taps with a real mouse at a
+  point inside a borough's outline and on top there (a centre can sit outside a concave borough).
+- **A hint is a promise.** Searching every place each city's hint, not-found message and chips name found three that led
+  nowhere ("Bristol", "Weston", "Stockton"): the borough is "City of Bristol", and the matcher is prefix-only on purpose
+  (a "City of" alias would also turn "London" into the City of London). The words were changed, not the matcher.
+- **Read the panel after the switch has drawn it:** the Bay Area's outlines load slowly, so a test reading the chips as soon
+  as `currentCity` changed saw London's. The phone's row is now re-rendered the moment the city changes, so a tap during the
+  load never searches the last city's place.
+- **A report script's working file is a public page in waiting.** `address_noise_report.mjs` wrote its .html beside the PDF;
+  in `home/reports/` that is inside home-deploy's `--include "*.html"`. It now removes it (`--keep-html` to keep).
+- **A row that fits a 390 phone may not fit a 320 one.** The first full preflight failed two gates the guide's own test
+  could not see: at 320x568 the chip row covered the map's "Flight paths" and "Aircraft noise" buttons (responsive), and at
+  320x568 and 844x390 it squeezed the map under its own controls (map-fit). The row now needs 700 px of height; the screenshots
+  had been taken at 390x844, where it fits. Check a new phone element at 320x568 and on its side before calling it done.

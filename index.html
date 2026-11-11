@@ -288,91 +288,118 @@
          beneath the score already explains every component with its live
          weight, so nothing is lost by removing the second, invisible copy. */
 
-      /* First-time use hint banner. Sits above the map until the user
-     either dismisses it explicitly or interacts with anything (search
-     submit, borough click, layer toggle). localStorage flag prevents
-     re-show on subsequent visits. */
-      .first-hint {
+      /* THE SEARCH GUIDE (Bill's pick C2, 2026-11-11; mock-ups claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu v5). On a first visit
+         one orange light runs twice round the search box, 4.6 s in all (under WCAG 2.2.2's 5 s, so it needs no pause control),
+         then the box keeps a still orange ring until the visitor's first search, Try chip or borough tap. It replaced a dark
+         banner over the map that repeated the empty panel and three times collided with the controls above it
+         (docs/lessons/architecture.md). The light is an SVG outline drawn with pathLength 100, so it runs at an even pace
+         along the long sides and round the corners. Reduced motion keeps the ring and draws no light. */
+      .search-comet {
         position: absolute;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 11;
-        background: rgba(20, 20, 20, 0.92);
-        color: var(--white);
-        padding: 10px 16px 10px 14px;
-        border-radius: 4px;
-        font-family: var(--font-sans);
-        font-size: 13px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        backdrop-filter: blur(6px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-        animation: hint-in 0.4s ease-out;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+        opacity: 0;
+        filter: drop-shadow(0 0 2.5px rgba(242, 125, 38, 0.95)) drop-shadow(0 0 6px rgba(242, 125, 38, 0.55));
       }
-      .first-hint.dismissed {
-        display: none;
+      .search-comet rect {
+        fill: none;
+        stroke-width: 2.4;
+        stroke-linecap: round;
       }
-      .first-hint .hint-icon {
-        font-size: 16px;
-        line-height: 1;
+      .search-comet .c1 {
+        stroke: var(--orange);
+        stroke-dasharray: 12 88;
+        stroke-dashoffset: 12;
       }
-      .first-hint .hint-text {
-        font-weight: 400;
-        letter-spacing: 0.2px;
+      .search-comet .c2 {
+        stroke: #f7a463;
+        stroke-dasharray: 22 78;
+        stroke-dashoffset: 22;
+        opacity: 0.6;
       }
-      .first-hint button {
-        background: none;
-        border: none;
-        color: var(--white);
-        font-size: 18px;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-        opacity: 0.7;
-        /* 24x24 is the WCAG 2.5.8 minimum and belongs in the BASE rule, not
-           only in a mobile media query. It lived at max-width:900px alone, so
-           this control rendered 17x18 on every desktop: a size fix scoped to
-           the viewport where someone happened to notice it. The mobile block
-           still raises it to 44 for touch. */
-        min-width: 24px;
-        min-height: 24px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+      .search-comet .c3 {
+        stroke: #fbd0ad;
+        stroke-dasharray: 34 66;
+        stroke-dashoffset: 34;
+        opacity: 0.35;
       }
-      .first-hint button:hover {
-        opacity: 1;
+      .search-box.guide input:not(:focus) {
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px rgba(242, 125, 38, 0.28);
       }
-      @keyframes hint-in {
-        from {
+      @media (prefers-reduced-motion: no-preference) {
+        .search-box.guide input:not(:focus) {
+          animation: guide-ring 4.6s linear both;
+        }
+        .search-box.guide .search-comet {
+          animation: guide-fade 4.6s linear both;
+        }
+        .search-box.guide .search-comet .c1 {
+          animation: guide-lap-1 4.6s cubic-bezier(0.4, 0.2, 0.6, 0.8) both;
+        }
+        .search-box.guide .search-comet .c2 {
+          animation: guide-lap-2 4.6s cubic-bezier(0.4, 0.2, 0.6, 0.8) both;
+        }
+        .search-box.guide .search-comet .c3 {
+          animation: guide-lap-3 4.6s cubic-bezier(0.4, 0.2, 0.6, 0.8) both;
+        }
+      }
+      /* The ring arrives as the light goes, so the two never show at once. */
+      @keyframes guide-ring {
+        0%,
+        82% {
+          border-color: var(--dark);
+          box-shadow: 0 0 0 0 rgba(242, 125, 38, 0);
+        }
+        100% {
+          border-color: var(--orange);
+          box-shadow: 0 0 0 3px rgba(242, 125, 38, 0.28);
+        }
+      }
+      @keyframes guide-fade {
+        0% {
           opacity: 0;
-          transform: translate(-50%, -8px);
+        }
+        5%,
+        86% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      /* Two laps: each dash's head runs from the start of the outline round twice (pathLength 100). */
+      @keyframes guide-lap-1 {
+        from {
+          stroke-dashoffset: 12;
         }
         to {
-          opacity: 1;
-          transform: translate(-50%, 0);
+          stroke-dashoffset: -188;
         }
       }
-      @media (max-width: 600px) {
-        .first-hint {
-          font-size: 11px;
-          left: 8px;
-          right: 8px;
-          transform: none;
-          padding: 8px 12px;
+      @keyframes guide-lap-2 {
+        from {
+          stroke-dashoffset: 22;
         }
-        @keyframes hint-in {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: none;
-          }
+        to {
+          stroke-dashoffset: -178;
         }
+      }
+      @keyframes guide-lap-3 {
+        from {
+          stroke-dashoffset: 34;
+        }
+        to {
+          stroke-dashoffset: -166;
+        }
+      }
+      /* Phones only: the city's Try chips sit in the search card while the guide is on, in place of the hint (the desktop
+         keeps them in its empty panel, which phones hide). They go with the guide, at the first search, chip or borough. */
+      .search-try {
+        display: none;
       }
 
       /* F-UX-11: honour prefers-reduced-motion. Vestibular-disorder users
@@ -3626,28 +3653,20 @@
           bottom: var(--sheet-chrome);
           top: auto;
         }
-        /* THE FIRST-RUN HINT SITS BELOW THE NAVIGATION, not on top of it
-           (2026-08-23). At `top: 24px` it spanned y 24-84 across the full
-           width, and the whole top band of this map is controls:
-
-             map-controls column   y   8-148  (three 44px buttons)
-             map title             y  36- 59
-             country tabs          y  70- 94
-             city chip strip       y  96-140
-
-           So the hint covered the title, the UK/USA tabs and the top zoom
-           button - measured as COVERED by elementFromPoint at 320, 375, 390
-           and 414. It had always done that; it stopped being harmless the
-           moment the sheet was changed to boot at peek, because until then
-           the map and its controls were behind a panel anyway and nobody
-           could reach them regardless.
-
-           156px clears the whole band by 8px, and the first thing below is the
-           legend at y=288 on the shortest phone - 72px of clearance. Desktop is
-           left alone: it centres the hint over a 1040px map where none of this
-           collides. */
-        .first-hint {
-          top: 156px;
+        /* Only where a phone has the height for one more row. Below 700 px tall (an iPhone SE or 8, or any phone on its side)
+           the row covered the map's layer buttons (tests/responsive.mjs, 320x568) and squeezed the map under its own controls
+           (tests/map-fit.mjs, 320x568 and 844x390); there the hint stays. The light and the ring run on every screen. */
+        @media (min-height: 700px) {
+          .search-box.guide .search-try:not(:empty) {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+          }
+          .search-box.guide .search-try:not(:empty) ~ .search-hint {
+            display: none;
+          }
         }
         .map-legend {
           bottom: var(--sheet-chrome);
@@ -3728,8 +3747,7 @@
         .fav-btn,
         .city-btn,
         .tab,
-        .metric-card,
-        #first-hint button {
+        .metric-card {
           /* min-width matters as much as min-height and was missing, so this
              dismiss control rendered 17x44 on every phone: the touch target was
              raised to Apple's 44px guideline vertically and left at the glyph's
@@ -4456,11 +4474,7 @@
         .app[data-mview='search'] .sidebar-header,
         .app[data-mview='search'] .install-prompt,
         .app[data-mview='search'] .disclaimer,
-        .app[data-mview='search'] .empty-state.no-result-yet,
-        /* The first-time hint ("type a postcode or click a borough") is
-           redundant on mobile search view - the floating search card
-           shows the same guidance, and the hint banner overlaps it. */
-        .app[data-mview='search'] .first-hint {
+        .app[data-mview='search'] .empty-state.no-result-yet {
           display: none;
         }
 
@@ -4964,21 +4978,6 @@
                applyCityChrome() sets the heading's textContent, which would erase a link inside it. -->
           <a class="map-title-home" href="/"><h1 id="map-title-text">Sky Score</h1></a>
           <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVEABILITY DATA</div>
-        </div>
-        <!-- First-paint hint to teach the search interaction. role="status" was
-         removed (audit N-Front-6): it announced on every page load to
-         screen-reader users, then auto-dismissed at 30s with no way to
-         re-trigger - noisy and unrecoverable. The hint is now visual-only;
-         SR users get the same affordance from the search input's aria-label
-         and the layer toggle group's aria-label. -->
-        <div class="first-hint" id="first-hint">
-          <span class="hint-icon" aria-hidden="true">&#9678;</span>
-          <span class="hint-text">
-            Type a postcode (e.g.
-            <strong>SW11 1AA</strong>
-            ) or click a borough to see its score
-          </span>
-          <button type="button" id="first-hint-dismiss" aria-label="Dismiss hint">&times;</button>
         </div>
         <!-- Country first, then the cities within it. A flat row put New York
              between London and Manchester, which reads as arbitrary and gets
@@ -5519,6 +5518,8 @@
               inputmode="search"
               enterkeyhint="search"
             />
+            <!-- The search guide's light (see .search-comet): drawn over the box's edge, never in the way of a tap. -->
+            <svg class="search-comet" aria-hidden="true" focusable="false"><rect class="c3" width="100%" height="100%" pathLength="100" /><rect class="c2" width="100%" height="100%" pathLength="100" /><rect class="c1" width="100%" height="100%" pathLength="100" /></svg>
             <div
               class="autocomplete-dropdown"
               id="autocomplete-dropdown"
@@ -5537,6 +5538,8 @@
                  repaint; SR users previously got silence (WCAG 4.1.3). -->
             <div id="result-status" class="sr-only" role="status" aria-atomic="true"></div>
           </div>
+          <!-- Filled from the city's tryExamples (renderTryChips); shown on phones while the search guide is on. -->
+          <div class="search-try" id="search-try" role="group" aria-label="Try an example"></div>
           <div id="search-hint" class="search-hint">Start typing for suggestions. Press Enter to analyse.</div>
         </div>
         <!-- PWA install affordance. Sits between search and tabs so it's
@@ -5628,13 +5631,7 @@
                    gives users a one-tap starting point. Buttons (not links)
                    so they're keyboard-activatable; data-quicksearch holds
                    the value passed to triggerSearch on click. -->
-              <div class="quicksearch" role="group" aria-label="Quick search examples">
-                <span class="quicksearch-label">Try:</span>
-                <button type="button" class="quicksearch-chip" data-quicksearch="SW11 1AA">SW11 1AA</button>
-                <button type="button" class="quicksearch-chip" data-quicksearch="Wandsworth">Wandsworth</button>
-                <button type="button" class="quicksearch-chip" data-quicksearch="Camden">Camden</button>
-                <button type="button" class="quicksearch-chip" data-quicksearch="Hounslow">Hounslow</button>
-              </div>
+              <div class="quicksearch" role="group" aria-label="Quick search examples"></div>
             </div>
           </div>
         </div>
@@ -8078,6 +8075,9 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by area (Chelsea, Twickenham), postcode (SW11 1AA) or borough (Hounslow) - or click the map - to get noise analysis, property insights and a value score.',
+          // The Try chips (2026-11-11): places this city's own hint names, so each leads to an answer here
+          // (tests/search-guide.mjs searches every one); phones show the first three.
+          tryExamples: ['SW11 1AA', 'Hounslow', 'Camden', 'Wandsworth'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'HEATHROW FLIGHT PATHS',
           legendPath2: 'LONDON CITY FLIGHT PATHS',
@@ -8140,6 +8140,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.',
+          tryExamples: ['Astoria', 'Williamsburg', 'Queens'],
           contourBadge: 'ZOOM INTO MAP TO SEE CURATED FAA/BTS NOISE CONTOURS',
           legendPath1: 'JFK ROUTES',
           legendPath2: 'LGA, NEWARK AND TETERBORO ROUTES',
@@ -8214,6 +8215,7 @@
           searchPlaceholder: 'Search a Bay Area city or ZIP',
           emptyStateHint:
             'Search a city (San Bruno, Oakland, Palo Alto) or a ZIP (94301) - or click the map - to see its score and which published flight paths pass over it. Bay Area scores are on US scales, not comparable with a UK score.',
+          tryExamples: ['San Bruno', 'Oakland', 'Palo Alto', '94301'],
           contourBadge: 'ZOOM INTO MAP TO SEE THE FEDERAL AIRCRAFT NOISE MAP',
           legendPath1: 'SFO ROUTES',
           legendPath2: 'OAK AND SJC ROUTES',
@@ -8267,6 +8269,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Solihull, Coventry or Dudley) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Solihull', 'Coventry', 'Dudley'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'BIRMINGHAM FLIGHT PATHS',
           legendPath2: '',
@@ -8320,6 +8323,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Leeds, Bradford or Wakefield) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Leeds', 'Bradford', 'Wakefield'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'LEEDS BRADFORD FLIGHT PATHS',
           legendPath2: '',
@@ -8373,6 +8377,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Sheffield, Doncaster or Barnsley) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Sheffield', 'Doncaster', 'Barnsley'],
           contourBadge: 'NO COMMERCIAL AIRPORT IN THIS CITY REGION',
           legendPath1: '',
           legendPath2: '',
@@ -8426,6 +8431,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Liverpool, Wirral or Sefton) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Liverpool', 'Wirral', 'Sefton'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'LIVERPOOL FLIGHT PATHS',
           legendPath2: '',
@@ -8479,6 +8485,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Newcastle, Gateshead or Sunderland) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Newcastle', 'Gateshead', 'Sunderland'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'NEWCASTLE FLIGHT PATHS',
           legendPath2: '',
@@ -8544,6 +8551,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Leicester, Charnwood or Hinckley and Bosworth) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Leicester', 'Charnwood', 'Hinckley and Bosworth'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'EAST MIDLANDS FLIGHT PATHS',
           legendPath2: '',
@@ -8593,7 +8601,7 @@
           scale: 44000,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
-          searchNotFound: 'Borough not found. Try e.g. Middlesbrough, Stockton or Darlington.',
+          searchNotFound: 'Borough not found. Try e.g. Middlesbrough, Stockton-on-Tees or Darlington.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
@@ -8605,6 +8613,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Middlesbrough, Stockton-on-Tees or Redcar and Cleveland) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Middlesbrough', 'Stockton-on-Tees', 'Redcar and Cleveland'],
           contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: 'TEESSIDE FLIGHT PATHS',
           legendPath2: '',
@@ -8646,7 +8655,7 @@
           scale: 47000,
           country: 'United Kingdom',
           healthSource: 'NHS TRUST DATA (NOT SOURCED)',
-          searchNotFound: 'Borough not found. Try e.g. Bristol, Bath or Weston.',
+          searchNotFound: 'Borough not found. Try e.g. City of Bristol, Bath or North Somerset.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
@@ -8657,7 +8666,8 @@
           subtitle: 'BRISTOL · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
-            'Search by borough (Bristol, Bath or Weston) - or click the map - to get noise analysis and a value score.',
+            'Search by borough (City of Bristol, Bath or North Somerset) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['City of Bristol', 'Bath', 'North Somerset'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'BRISTOL AIRPORT FLIGHT PATHS',
           legendPath2: '',
@@ -8721,6 +8731,7 @@
           searchPlaceholder: 'Search a postcode, area or borough',
           emptyStateHint:
             'Search by borough (Trafford, Stockport, Wigan) - or click the map - to get noise analysis and a value score.',
+          tryExamples: ['Trafford', 'Stockport', 'Wigan'],
           contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'MANCHESTER FLIGHT PATHS',
           legendPath2: '',
@@ -12842,19 +12853,35 @@
         }
       }
 
-      // The first-run hint says how to get a result; once one is coming it only covers
-      // the map. It used to go only when the search box took focus, a layer toggle was
-      // clicked or 30 s passed, so a deep link (/map/?postcode=), an example button and a
-      // borough click left "Type a postcode..." over the answer (2026-10-08). Not saved as
-      // seen: a visitor who arrived by a link may still want it next time.
-      function hideFirstHint() {
-        document.getElementById('first-hint')?.classList.add('dismissed');
+      // THE SEARCH GUIDE ENDS when an answer is on its way, by any route: a search, a Try chip, a borough, a deep link
+      // (/map/?postcode=). It pointed at the search, and now there is a result to read (the first-run banner it replaced had
+      // to learn the same on 2026-10-08). Remembered as seen only after the visitor's own tap or keystroke
+      // (navigator.userActivation), so someone who arrived by a link still gets it next time; a browser that cannot say
+      // remembers it. Written on every search, so a later search of their own counts even after a deep link ended it.
+      function endSearchGuide() {
+        document.querySelector('.search-box')?.classList.remove('guide');
+        if (!navigator.userActivation || navigator.userActivation.hasBeenActive) writeFlag('flightmap_hint_seen', '1');
+      }
+
+      // THE TRY CHIPS, every city's (2026-11-11): from the registry's tryExamples, never typed into the page, so a city switch
+      // keeps them. The empty panel shows them all; the phone's search card the first three, while the guide is on. The
+      // delegated .quicksearch-chip listener searches them, as it always has.
+      function tryChipsHtml(city, max = Infinity) {
+        const ex = (cityOf(city).tryExamples || []).slice(0, max);
+        if (!ex.length) return '';
+        return '<span class="quicksearch-label">Try:</span>' + ex
+          .map((e) => `<button type="button" class="quicksearch-chip" data-quicksearch="${escapeHtml(e)}">${escapeHtml(e)}</button>`).join('');
+      }
+      function renderTryChips() {
+        const row = document.getElementById('search-try');
+        if (row) row.innerHTML = tryChipsHtml(currentCity, 3);
+        document.querySelectorAll('#sidebar-content .quicksearch').forEach((q) => { q.innerHTML = tryChipsHtml(currentCity); });
       }
 
       async function triggerSearch(query) {
         let q = query.trim();
         if (!q) return;
-        hideFirstHint();
+        endSearchGuide();
         // The query BEFORE the saved-item suffix is stripped. Kept because the
         // generated cities' area keys legitimately end in a bracketed postcode
         // district - "Altrincham (WA14)", "Acocks Green (B27)" - so the strip
@@ -13963,7 +13990,7 @@
       let panelSubject = { kind: 'none' };
 
       function updateSidebar(data, { switchToAnalysis = true } = {}) {
-        hideFirstHint(); // a borough click or ?borough= link is a result too
+        endSearchGuide(); // a borough click or ?borough= link is a result too
         // The Bay Area's places land on their own card (2026-10-05), which since
         // 2026-11-07 carries the API's score on US scales above the flight-path
         // facts: every route here - a click, a search, a ranking row - goes there.
@@ -15959,11 +15986,8 @@
         cancelSearch();
         const searchAtStart = searchSeq;
         currentCity = city;
-        // The first-visit hint is UK copy - "Type a postcode (e.g. SW11 1AA) or
-        // click a borough to see its score" - wrong for New York and for the
-        // unscored Bay Area (2026-10-05). Off on a US city, and NOT saved as
-        // seen, so a later UK visit can still show it.
-        if (!isUkCity(city)) document.getElementById('first-hint')?.classList.add('dismissed');
+        // The Try chips name places in THIS city from now: a tap during a slow outline load must not search the last one.
+        renderTryChips();
         // Invalidate the aircraft raster cache so updateDefraTiles refetches
         // for the new city's bbox + projection. visual fix-DEFRA-1.
         aircraftRasterLoadedFor = null;
@@ -16034,9 +16058,12 @@
         if (searchSeq === searchAtStart) {
           document.getElementById('sidebar-content').innerHTML =
             `<div class="empty-state no-result-yet"><div class="icon">&#9678;</div>
-    <p>${escapeHtml(cityOf(city).emptyStateHint)}</p></div>`;
+    <p>${escapeHtml(cityOf(city).emptyStateHint)}</p>
+    <div class="quicksearch" role="group" aria-label="Quick search examples"></div></div>`;
           setPanelSubject(null);
         }
+        // The chips follow the city (the phone's row whether or not a search took the panel meanwhile).
+        renderTryChips();
       }
 
       function renderNycBoroughs(features) {
@@ -17253,37 +17280,10 @@
           );
         });
 
-        // First-time hint banner. Hidden once the user has dismissed it (saved
-        // to localStorage) OR once they perform any meaningful action (search,
-        // borough click, layer toggle). Re-shows in private windows.
-        const hintEl = document.getElementById('first-hint');
-        if (hintEl) {
-          // GUARDED, like the setItem six lines below it (2026-08-24).
-          // The two were written together and only one got a try/catch, which
-          // is this repo's mirrored-code class again. Reading localStorage
-          // THROWS - it does not return null - when a browser blocks site data:
-          // a locked-down corporate profile, some embedded WebViews, Safari
-          // with cross-site tracking fully restricted. And this runs inside
-          // init() twenty lines ABOVE `svg = d3.select('#map-svg')`, so the
-          // throw took the whole of map creation with it: a visitor who blocks
-          // site data got a blank page, not a missing hint banner.
-          if (readFlag('flightmap_hint_seen') === '1') {
-            hintEl.classList.add('dismissed');
-          } else {
-            const dismiss = () => {
-              hintEl.classList.add('dismissed');
-              writeFlag('flightmap_hint_seen', '1');
-            };
-            document.getElementById('first-hint-dismiss').addEventListener('click', dismiss);
-            // Auto-dismiss on any of the implicit "I've started using the app"
-            // signals. `once: true` so each listener fires at most once.
-            document.getElementById('search-input').addEventListener('focus', dismiss, { once: true });
-            document.getElementById('layer-toggles').addEventListener('click', dismiss, { once: true });
-            // Auto-dismiss after 30 seconds even if the user doesn't interact -
-            // by that point the banner is just chrome.
-            setTimeout(dismiss, 30_000);
-          }
-        }
+        // THE SEARCH GUIDE starts on a first visit (no saved "seen"; the first-run banner's flag, so anyone who used the map
+        // before is not shown it). readFlag is guarded: a browser that blocks site data gets the guide, never a broken map.
+        if (readFlag('flightmap_hint_seen') !== '1') document.querySelector('.search-box')?.classList.add('guide');
+        renderTryChips();
 
         const container = document.getElementById('map-container');
         svg = d3.select('#map-svg');

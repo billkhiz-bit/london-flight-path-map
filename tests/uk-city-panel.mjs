@@ -505,31 +505,28 @@ console.log('Plane altitude under an approach');
     .catch(async () => `never resolved (row reads: ${await deep.evaluate(() => [...document.querySelectorAll('.noise-detail-label')].find((l) => l.textContent.trim() === 'Plane altitude')?.parentElement?.querySelector('.noise-detail-value')?.textContent.trim() || 'absent')})`);
   const deepFt = Number((deepRow.match(/^About ([\d,]+) ft \(Heathrow 27R final approach\)$/) || [])[1]?.replace(/,/g, ''));
   check('TW9 3PZ from a deep link: the same glide-path altitude, not N/A', deepFt >= 1500 && deepFt <= 2100, `row: "${deepRow}"`);
-  // THE FIRST-RUN HINT GOES WHEN AN ANSWER ARRIVES BY ANY ROUTE (2026-10-08). It went only
-  // when the search box took focus, so a deep link left "Type a postcode..." over the
-  // answer. Read from what is painted, not from the class the fix sets.
-  const deepHint = await deep.evaluate(() => {
-    const h = document.getElementById('first-hint');
-    return h ? getComputedStyle(h).display : 'absent';
-  });
-  check('TW9 3PZ from a deep link: the first-run hint is not painted over the answer', deepHint === 'none' || deepHint === 'absent', `#first-hint display: ${deepHint}`);
+  // THE SEARCH GUIDE ENDS WHEN AN ANSWER ARRIVES BY ANY ROUTE (the first-run banner's rule of 2026-10-08, which the guide
+  // replaced on 2026-11-11): a deep link's answer must not sit under a box still pointing at the search. Read from what is
+  // painted: the box's ring. tests/search-guide.mjs holds the rest (remembered or not, chips, timing).
+  const deepHint = await deep.evaluate(() => ({ guide: !!document.querySelector('.search-box.guide'), banner: !!document.getElementById('first-hint') }));
+  check('TW9 3PZ from a deep link: the search guide has ended, and no first-run banner exists', !deepHint.guide && !deepHint.banner, JSON.stringify(deepHint));
   await deep.close();
   console.log('');
 }
 
-// A BOROUGH CLICK IS AN ANSWER TOO. The hint says "or click a borough", and clicking one
-// left it in place. A fresh page, so no saved "seen" flag: the hint must be painted first.
-console.log('First-run hint after a borough click');
+// A BOROUGH CLICK IS AN ANSWER TOO (the first-run banner's rule, now the search guide's). A fresh page, so no saved
+// "seen" flag: the guide must be on first.
+console.log('Search guide after a borough click');
 {
   const fresh = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await fresh.goto(url, { waitUntil: 'domcontentloaded' });
   await fresh.waitForSelector('path.borough', { timeout: 20000 });
-  const painted = () => fresh.evaluate(() => getComputedStyle(document.getElementById('first-hint')).display);
+  const painted = () => fresh.evaluate(() => (document.querySelector('.search-box.guide') ? 'on' : 'off'));
   const before = await painted();
   await fresh.locator('path.borough').first().dispatchEvent('click');
   await fresh.waitForTimeout(500);
   const after = await painted();
-  check('a borough click takes the first-run hint away (it was showing before)', before !== 'none' && after === 'none', `before: ${before}, after: ${after}`);
+  check('a borough click ends the search guide (it was on before)', before === 'on' && after === 'off', `before: ${before}, after: ${after}`);
   await fresh.close();
   console.log('');
 }

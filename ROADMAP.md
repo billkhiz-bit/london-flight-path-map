@@ -34,10 +34,15 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > word-for-word points + one sources line (162 words to 92), the air fold as chart + chips + `airNoteList()` points (97 to 75), the
 > full map's planes tile on the same chart. How it works' #credits gains Breathe London, DEFRA's monitors and the EPC register
 > (`tests/test_credits_list.py`). Last night's "fix Breathe London's License typo" was WRONG: it is their required spelling.
-> **NEXT: the full map's search guide** (Bill's pick C2, the comet: two steady laps, 4.6 s; Try chips per city on phones; the desktop's
-> dark banner goes; mock-ups claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu v5, drawn from live screenshots), then the street report
-> refresh (mock-up first: planes figures, the air chart, the site's look) with its two fixes (sample PM2.5 8.6 to 8.5 after the
-> 10 Nov reload; the "no measured aircraft noise level" fallback says DEFRA's map is modelled).
+> **FOLDS LIVE** (`1f6e57b7`, drift PASS, checked live at 390/1366).
+> **THE FULL MAP'S SEARCH GUIDE, BUILT** (Bill's pick C2; built-on-the-map videos claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu v6), deploy on his
+> word: the comet (two steady laps, 4.6 s, then the ring; reduced motion = ring), `endSearchGuide()` at any answer, remembered only
+> after a user activation; Try chips from each city's `tryExamples` (phones: three in the card); the dark first-run banner REMOVED.
+> Its test searches every place each city's words name: Bristol's hint ("Bristol, Bath or Weston") and Teesside's "Stockton" found
+> nothing, now fixed. Ships with the street report's two fixes (sample PDF regenerated, PM2.5 8.5; the fallback says DEFRA's map) and
+> `address_noise_report.mjs` no longer leaves its working .html in home/reports/ (home-deploy would have published it).
+> **NEXT: the street report refresh** (mock-up first: planes figures from `planesChart`, the air chart, the site's look).
+> The old "Make search more obvious" row (Tier review, below) is answered by the guide on both layouts.
 >
 > ## START HERE (2026-11-10, night)
 >

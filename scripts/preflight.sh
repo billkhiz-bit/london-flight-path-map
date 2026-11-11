@@ -764,6 +764,9 @@ check "web/native layout split"       node tests/native-sim-render.mjs
 # borough-score-parity compares SCORES. Both passed while nine UK cities
 # answered an area search with "NYC subway data coming soon".
 check "UK cities get UK panel content" node tests/uk-city-panel.mjs
+# The full map's search guide (2026-11-11): the light under 5 s, reduced motion, the phone's chips, when it ends and is
+# remembered, and every place a city's words name found by the search.
+check "map search guide + Try chips"    node tests/search-guide.mjs
 # A postcode no city covers must be TOLD so, never analysed against the city on
 # screen (2026-09-26: a user near Norwich was told Heathrow/Stansted was his
 # nearest airport and that aircraft noise was low). Also holds all 86 covered

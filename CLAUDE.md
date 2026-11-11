@@ -361,6 +361,14 @@ Or just describe what you need, I have full context of this project.
   `tests/front-page.mjs` (word budget 100, each sentence word for word, nothing past a 390 screen with every fold open),
   `tests/planes-model.mjs` (the chart, pure) and `tests/test_credits_list.py` (#credits carries each air file's attribution).
   **Breathe London's credit says "License": their required spelling** (scripts/fetch_breathe_london.py); never "correct" it.
+- **The full map's search guide** (Bill's pick C2, 2026-11-11; claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu): on a first visit
+  `.search-box.guide` runs one light round the search box (an SVG outline, pathLength 100, two laps, 4.6 s: under WCAG 2.2.2's
+  5 s, so no pause control), then a still orange ring; reduced motion shows the ring only. `endSearchGuide()` ends it at any
+  answer (a search, a Try chip, a borough, a deep link) and remembers it (`flightmap_hint_seen`) only after a user activation
+  (`navigator.userActivation.hasBeenActive`), so a visitor who arrived by a link still gets it next time. The dark first-run
+  banner is GONE. Try chips are the registry's `tryExamples` (every city: phones at least 700 px tall show three in the card while the guide is on; shorter phones keep the hint,
+  because the row covered the layer buttons at 320x568 and squeezed the map at 844x390; desktops all in the empty panel). **Every place a city's hint, not-found message and chips name must be found by the search**:
+  `tests/search-guide.mjs` searches each (Bristol's "Bristol" and "Weston" and Teesside's "Stockton" found nothing until it did).
 - **Never `text-transform: uppercase` on a unit** (2026-11-04): it turns the micro sign into a capital mu, so µg/m³ read MG/M³.
 - **The front page counts its controls by name** (Bill, 2026-11-04, for the read that starts from the new page): `front-place-pick`,
   `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`, `front-dev-lang`, `front-full-map`, through `engaged()`, once per

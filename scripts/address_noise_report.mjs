@@ -39,7 +39,7 @@
  */
 import { chromium } from '@playwright/test';
 import { existsSync } from 'node:fs';
-import { readFile, rename, writeFile } from 'node:fs/promises';
+import { readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -68,6 +68,7 @@ function args(argv) {
     else if (k === '--place') ((out.place = v), i++);
     else if (k === '--out') ((out.out = v), i++);
     else if (k === '--sample') out.sample = true;
+    else if (k === '--keep-html') out.keepHtml = true;
     else throw new Error(`unknown argument ${k}`);
   }
   if (!out.postcode) throw new Error('usage: --postcode "TW9 3PZ" [--place "Kew"] [--sample] [--out file.pdf]');
@@ -224,11 +225,14 @@ try {
   }
 } finally {
   await browser.close();
+  // The page the PDF was printed from is a working file. Left beside a PDF written into home/reports/, home-deploy's
+  // `--include "*.html"` would publish it as /reports/<name>.html (2026-11-11, caught before a deploy): gone unless asked for.
+  if (!spec.keepHtml) await unlink(htmlPath).catch(() => {});
 }
 const listed =
   routes.finals.filter((x) => x.dist <= ROUTE_RADIUS_KM).length +
   routes.departures.filter((x) => x.dist <= ROUTE_RADIUS_KM).length;
 console.log(
-  `${loc.postcode} (${loc.admin_district}): aircraft ${typeof env.aircraftNoiseLdenDb === 'number' ? `${env.aircraftNoiseLdenDb} dB measured` : 'not measured'}, ` +
+  `${loc.postcode} (${loc.admin_district}): aircraft ${typeof env.aircraftNoiseLdenDb === 'number' ? `${env.aircraftNoiseLdenDb} dB on DEFRA's map (modelled)` : 'no DEFRA figure'}, ` +
     `${listed} routes within ${ROUTE_RADIUS_KM} km, district comparison ${district ? `${district.n} live postcodes` : 'none'}\n  ${spec.out}`
 );

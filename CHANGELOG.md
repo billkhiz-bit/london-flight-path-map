@@ -2,6 +2,10 @@
 
 ## 2026-11-11 - Less text in the answer's folds
 
+- **The full map shows you where to start.** On a first visit a light runs twice round the search box, then it keeps a still orange ring until your first search; on a phone, three example places sit under the box to tap. Every area has its own examples now, where only London had them. The dark banner over the map has gone.
+- **Bristol's and Teesside's suggestions now work**: Bristol's said to search "Bristol" or "Weston" and Teesside's "Stockton", and none of the three found anything. They now name City of Bristol, North Somerset and Stockton-on-Tees.
+- **The sample street report is up to date**: fine particles at Kew read 8.6 on it and 8.5 on the site since the air figures were reloaded on 10 November.
+
 - **"How the planes are counted" is a chart now, not paragraphs.** Each kind of day is a row with its share of days and a dot at its figure, shaded in the full map's planes colours; the meaning of "overhead" sits beside a small drawing of it, and the day rule, the check against the CAA's figures and the PO-box rule are three short points. About 90 words where there were 160. The full map's planes tile draws the same chart.
 - **"About the air readings" is shorter too**: the chart, where the sensor stands (roadside, 0.7 m from the kerb at Kew), and its caveats as three points.
 - **How it works now credits every source**: Breathe London's sensors, DEFRA's official monitors and the energy performance register join the list the folds link to.

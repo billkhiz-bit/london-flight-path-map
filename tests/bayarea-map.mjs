@@ -351,11 +351,14 @@ for (const vp of [
   // arriving after the switch, and never absent, which is how it shipped on 5 Oct.
   const insetWanted = vp.width > 900;
   ok(insetWanted ? inset.shown && inset.region === 'Contiguous United States' && inset.bay : !inset.shown, `${L} a ?city=bayarea link shows ${insetWanted ? 'the US inset with the Bay Area marked' : 'no inset, as at every phone width'}`, JSON.stringify(inset));
-  const hint = await page.evaluate(() => {
-    const h = document.getElementById('first-hint');
-    return !h || getComputedStyle(h).display === 'none' ? '' : h.textContent.replace(/\s+/g, ' ').trim();
-  });
-  ok(hint === '', `${L} a ?city=bayarea link shows no UK "type a postcode" hint`, hint);
+  // No UK prompt on a Bay Area page (the first-run banner's "Type a postcode (e.g. SW11 1AA)" was the old form of this;
+  // the banner went on 2026-11-11). The Try chips are the Bay Area's own, the phone's row and the empty panel alike.
+  await page.waitForFunction(() => [...document.querySelectorAll('#search-try .quicksearch-chip')].some((b) => b.textContent === 'Palo Alto'), null, { timeout: 15000 }).catch(() => {});
+  const { chips, own } = await page.evaluate(() => ({
+    chips: [...document.querySelectorAll('#search-try .quicksearch-chip, #sidebar-content .quicksearch-chip')].map((b) => b.textContent),
+    own: CITY_DATA.bayarea.tryExamples,
+  }));
+  ok(chips.length > 0 && chips.every((c) => own.includes(c)) && !chips.includes('SW11 1AA'), `${L} a ?city=bayarea link offers the Bay Area's own Try chips, never London's`, JSON.stringify(chips));
 
   // The noise scale's blocks are translucent, as the map paints them. On the phone's
   // dark legend they composited darker than anything on the map (audit 2026-10-05

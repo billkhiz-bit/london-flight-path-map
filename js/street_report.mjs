@@ -514,7 +514,7 @@ export function reportParts(spec, f) {
     // DEFRA's contours, or no contours published at all); do not paraphrase it.
     // Chosen by content, not position: the same array carries road notices.
     const aircraftNotice = (f.notices || []).find((n) => /aircraft/i.test(n));
-    bullets.push(esc(aircraftNotice || 'There is no measured aircraft noise level for this postcode.'));
+    bullets.push(esc(aircraftNotice || "DEFRA's map gives no aircraft noise level for this postcode."));
   }
   if (top) {
     bullets.push(
