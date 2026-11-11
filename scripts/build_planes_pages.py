@@ -501,6 +501,8 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
         measured += (' (1 PO box or other large-user postcode left out)' if m['large'] == 1
                      else f" ({m['large']:,} PO boxes and other large-user postcodes left out)")
     airports = listed([t['name'] for t in m['tables']])
+    # "Heathrow and London City fly", "Heathrow flies" (2026-11-11: 62 two-airport descriptions said "flies").
+    fly = 'fly' if len(m['tables']) > 1 else 'flies'
     sections = []
     for t in m['tables']:
         overall = '\n'.join(day_html(*day) for day in t['days'])
@@ -545,9 +547,16 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
     return PAGE.format(
         extra_style='\n  .respond { font-weight:600; }' if respond else '',
         respond=respond,
-        title=e(f'Planes overhead in {d}: flight paths over {council_names[0]} | Sky Score'),
-        description=e(f'How many planes pass over {d} ({where}) on a day {airports} flies west, east or both ways, '
-                      f'postcode sector by sector. Counted from flight tracking, {first_period}.')[:300],
+        title=e(area.page_title(f'Planes overhead in {d}: flight paths over {council_names[0]}',
+                                f'Planes overhead in {d}, {council_names[0]}', f'Planes overhead in {d}')),
+        description=e(area.fit(
+            f'How many planes pass over {d} ({where}) on a day {airports} {fly} west, east or both ways, '
+            f'postcode sector by sector. Counted from flight tracking, {first_period}.',
+            f'How many planes pass over {d} ({where}) on a day {airports} {fly} west, east or both ways, '
+            f'sector by sector, {first_period}.',
+            f'How many planes pass over {d} ({where}) on a day {airports} {fly} west, east or both ways.',
+            f'Planes over {d} on a day {airports} {fly} west, east or both ways.',
+        )),
         canonical=f'{area.SITE}{URL_ROOT}{m["slug"]}/',
         crumbs_ld=area.breadcrumb_ld([('Sky Score', '/'), ('Planes overhead', URL_ROOT),
                                       (m['district'], f'{URL_ROOT}{m["slug"]}/')]),
@@ -697,6 +706,12 @@ HEAD = """<!doctype html>
 <title>{title}</title>
 <meta name="description" content="{description}" />
 <link rel="canonical" href="{canonical}" />
+<meta property="og:title" content="{title}" />
+<meta property="og:description" content="{description}" />
+<meta property="og:url" content="{canonical}" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Sky Score" />
+<meta name="twitter:card" content="summary" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -986,10 +1001,16 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
     has_area = (REPO / area_path.strip('/') / 'index.html').exists()
     return PACK.format(
         extra_style=EXTRA_STYLE,
-        title=e(f'Planes over {borough} today, for Heathrow\'s consultation | Sky Score'),
-        description=e(f'The planes from Heathrow over each postcode district in {borough}, with its official noise, '
-                      f'air and flood figures: the same for anyone responding to Heathrow\'s expansion '
-                      f'consultation. Counted from flight tracking, {tables[0]["period"]}.')[:300],
+        title=e(area.page_title(f'Planes over {borough} today: Heathrow consultation',
+                                f'Planes over {borough}: Heathrow consultation')),
+        description=e(area.fit(
+            f'The planes from Heathrow over each postcode district in {borough}, with its official noise, '
+            f'air and flood figures: the same for anyone responding to Heathrow\'s expansion '
+            f'consultation. Counted from flight tracking, {tables[0]["period"]}.',
+            f'The planes from Heathrow over each postcode district in {borough}, with its noise, air and flood '
+            f'figures, for anyone responding to Heathrow\'s consultation.',
+            f'Heathrow\'s planes over each postcode district in {borough}, with its noise, air and flood figures.',
+        )),
         canonical=f'{area.SITE}{URL_ROOT}{PACK_DIR}/{area.slug(borough)}/',
         crumbs_ld=area.breadcrumb_ld([('Sky Score', '/'), ('Planes overhead', URL_ROOT),
                                       ('Heathrow consultation', f'{URL_ROOT}{PACK_DIR}/'),
@@ -1015,10 +1036,13 @@ def render_pack_hub(packs: dict[str, list[dict]], c: dict, today: str) -> str:
     periods = sorted({t['period'] for ms in packs.values() for m in ms for t in m['tables'] if t['code'] == PACK_AIRPORT})
     return PACK_HUB.format(
         extra_style=EXTRA_STYLE,
-        title=e("Planes from Heathrow, council by council, for Heathrow's consultation | Sky Score"),
-        description=e(f'The planes from Heathrow over each of the {len(entries)} councils its flights cross, district '
-                      f"by district, with official noise, air and flood figures, for Heathrow's expansion "
-                      'consultation.'),
+        title=e(area.page_title("Heathrow consultation: the planes over each council")),
+        description=e(area.fit(
+            f'The planes from Heathrow over each of the {len(entries)} councils its flights cross, district '
+            f"by district, with official noise, air and flood figures, for Heathrow's expansion consultation.",
+            f'The planes from Heathrow over each of the {len(entries)} councils its flights cross, district by district, '
+            f"with noise, air and flood figures, for Heathrow's consultation.",
+        )),
         canonical=f'{area.SITE}{URL_ROOT}{PACK_DIR}/', state=e(pack_state(c['until'], today)), href=e(c['href']),
         crumbs_ld=area.breadcrumb_ld([('Sky Score', '/'), ('Planes overhead', URL_ROOT),
                                       ('Heathrow consultation', f'{URL_ROOT}{PACK_DIR}/')]),

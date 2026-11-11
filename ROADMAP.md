@@ -43,6 +43,15 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > `address_noise_report.mjs` no longer leaves its working .html in home/reports/ (home-deploy would have published it).
 > **NEXT: the street report refresh** (mock-up first: planes figures from `planesChart`, the air chart, the site's look).
 > The old "Make search more obvious" row (Tier review, below) is answered by the guide on both layouts.
+> **GUIDE LIVE** (`e6ce0417`). **THE ANALYSIS PANEL, OPTION A, LIVE** (`ff96ee42`; Bill's pick, claude.ai/artifact/8EFboJHqQ1FBvdd6K5pCCv v2):
+> before a search a UK city's panel says what a search tells you, the answer card's four groups from `FIND_GROUPS` (one holder),
+> then its Try chips (rounded, to match); `showEmptyState(city)` is the one builder; the disclaimer is dark on the map's grey.
+> **TIDY-UPS + SEO TEMPLATE FIXES, BUILT** (deploy on Bill's word): the map's air fold says each caveat once and drops "Sources:";
+> audit M-14 (the yardstick bar to 3:1 on its track, map and built pages, `tests/test_yardstick_contrast.py`); M-7's comment
+> corrected (the fix, a static fallback for the held example, is Bill's call); every area and planes page's title fits 60
+> characters and description 160, with share tags (`page_title()`/`fit()` in build_area_pages, `tests/test_page_meta.py`);
+> /map/'s heading says "Sky Score: noise and liveability map" to screen readers and search engines, the brand alone on screen.
+> M-9 (html-validate 11) waits: this session's `npm install` was refused by the permission check, so Bill runs it.
 >
 > ## START HERE (2026-11-10, night)
 >

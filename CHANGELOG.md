@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-11 (evening) - Tidier search results and links
+
+- **Every area and planes overhead page reads whole in a search result**: titles fit in 60 characters and descriptions in 160, so search engines stop cutting them off. A link to any of them pasted into a chat or a post now shows its title and description.
+- **The full map's air readings say each caveat once**: the sensor's and the monitor's own rows already say provisional and ratified, so the note under them now keeps only the roadside reading and the hours rule.
+- **The comparison bars are easier to see**: the grey bar for the WHO guideline or a typical borough was faint against its track on the map and the area pages; it is now clearly darker, in light and dark mode.
+- **The full map's heading tells screen readers what the page is**: "Sky Score: noise and liveability map".
+
 ## 2026-11-11 - Less text in the answer's folds
 
 - **Before you search, the full map says what a search tells you**: noise and planes, air and flood, living here, property, one line each, then example places to tap. The example buttons are softer and match the cards, and the disclaimer reads as a note rather than a black bar (every word kept).

@@ -468,9 +468,9 @@ def gather(city: str, borough: str) -> dict | None:
 # area.PALETTE_LIGHT). tests/test_site_palette.py holds the built pages to it.
 PALETTE_LIGHT = (
     "--bg:#f4f3ef; --paper:#fbfaf8; --dark:#141414; --mid:#55554f; --line:#dedcd6; --orange:#f27d26; --orange-ink:#a85416; "
-    "--focus:#d35a12; --track:#e4e3e0; --yard:#c4c1b8;\n    --font-display:'Geist',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;"
+    "--focus:#d35a12; --track:#e4e3e0; --yard:#807e79;\n    --font-display:'Geist',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;"
 )
-PALETTE_DARK = '--dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#141414; --paper:#1c1c1c; --orange:#fb923c; --orange-ink:#fb923c; --track:#3a3a3a; --yard:#6e6e6a;'
+PALETTE_DARK = '--dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#141414; --paper:#1c1c1c; --orange:#fb923c; --orange-ink:#fb923c; --track:#3a3a3a; --yard:#8c8a85;'
 
 # COUNTED SINCE 2026-10-22. The three templates below (an area page, the area index, open data) carried no
 # analytics, so the pages most likely to arrive from a search were the ones GoatCounter could not see. Each now
@@ -489,6 +489,8 @@ PAGE = """<!doctype html>
 <meta property="og:description" content="{description}" />
 <meta property="og:url" content="{canonical}" />
 <meta property="og:type" content="article" />
+<meta property="og:site_name" content="Sky Score" />
+<meta name="twitter:card" content="summary" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -627,23 +629,48 @@ Figures are for the whole {unit}; a single address can differ{map_note}.</p>
 """
 
 
-def topics(facts) -> str:
+def topics(facts, compact: bool = False) -> str:
     """What this page actually shows, in words (audit 2026-10-06, I7): 22 of 102 pages promised
-    schools and showed no schools figure, and Cardiff's promised road noise it does not hold."""
+    schools and showed no schools figure, and Cardiff's promised road noise it does not hold. `compact` says the same
+    topics in shorter words, for a description that must fit a search result (2026-11-11)."""
     have = {f['label'] for f in facts}
-    words = ['aircraft and road noise' if 'Road noise' in have else 'aircraft noise', 'affordability']
-    for label, word in (
-        ('Progress 8', 'schools'),
-        ('Recorded crime', 'crime'),
-        ('Crime', 'crime'),
-        ('Transport access', 'transport'),
-        ('Rail access', 'rail access'),
-        ('Air quality', 'air quality'),
-        ('Flood risk', 'flood risk'),
+    noise = ('aircraft and road noise' if 'Road noise' in have else 'aircraft noise') if not compact else 'noise'
+    words = [noise, 'prices' if compact else 'affordability']
+    for label, word, short in (
+        ('Progress 8', 'schools', 'schools'),
+        ('Recorded crime', 'crime', 'crime'),
+        ('Crime', 'crime', 'crime'),
+        ('Transport access', 'transport', 'transport'),
+        ('Rail access', 'rail access', 'rail'),
+        ('Air quality', 'air quality', 'air'),
+        ('Flood risk', 'flood risk', 'flood'),
     ):
         if label in have:
-            words.append(word)
+            words.append(short if compact else word)
     return ', '.join(words[:-1]) + ' and ' + words[-1]
+
+
+# SEARCH RESULTS SHOW ABOUT 60 CHARACTERS OF A TITLE AND 160 OF A DESCRIPTION (the SEO audit of 2026-11-10: 395 of 498
+# planes titles and nearly every description ran past them). ONE rule for the area and planes pages: a title keeps
+# " | Sky Score" only where it fits; a description is the first of its versions, longest first, that fits, never cut
+# mid-word. tests/test_page_meta.py holds every built page to them.
+TITLE_MAX, DESC_MAX = 60, 160
+
+
+def page_title(*cores: str) -> str:
+    for core in cores:
+        if len(f'{core} | Sky Score') <= TITLE_MAX:
+            return f'{core} | Sky Score'
+        if len(core) <= TITLE_MAX:
+            return core
+    return cores[-1]
+
+
+def fit(*versions: str) -> str:
+    for v in versions:
+        if len(v) <= DESC_MAX:
+            return v
+    return versions[-1]
 
 
 # FINDINGS FIRST (Bill's pick, 2026-11-04: Stitch's layout). gather() is untouched: the same facts, said as findings.
@@ -841,10 +868,14 @@ def render(data: dict) -> str:
     # "Cardiff, Cardiff" (audit I7): a borough that shares its city's name is named once.
     place = data['borough'] if data['borough'] == city_label else f"{data['borough']}, {city_label}"
     shown = topics(data['facts'])
-    desc = (
-        f"{data['borough']} scores {data['score']} out of 10 on Sky Score. "
-        f"{shown[0].upper() + shown[1:]} for {place}, {source_clause}."
-    )[:300]
+    lead = f"{data['borough']} scores {data['score']} out of 10 on Sky Score"
+    short = topics(data['facts'], compact=True)
+    desc = fit(
+        f"{lead}. {shown[0].upper() + shown[1:]} for {place}, {source_clause}.",
+        f"{lead}. {shown[0].upper() + shown[1:]}, {source_clause}.",
+        f"{lead}: {short}, {source_clause}.",
+        f"{lead}: {short}.",
+    )
     # A PREVIEW CITY HAS NO MAP, SO ITS PAGE MUST NOT OFFER ONE (2026-09-30).
     #
     # Every page linked to /?city=<city>, and the site IGNORES a city that
@@ -877,7 +908,7 @@ def render(data: dict) -> str:
         map_note = (', and the map shows the routes over each ZIP' if data.get('us_scales')
                     else ', and the map shows postcode-level detail')
     return PAGE.format(
-        title=e(f"{data['borough']} noise & liveability score | Sky Score"),
+        title=e(page_title(f"{data['borough']} noise & liveability score")),
         description=e(desc),
         canonical=f"{SITE}/area/{slug(data['city'])}/{slug(data['borough'])}/",
         crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Areas', '/area/'),
@@ -935,8 +966,14 @@ INDEX = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Every area Sky Score covers | Sky Score</title>
-<meta name="description" content="Noise and liveability scores for {coverage}, from published UK government and US sources." />
+<meta name="description" content="{description}" />
 <link rel="canonical" href="{site}/area/" />
+<meta property="og:title" content="Every area Sky Score covers | Sky Score" />
+<meta property="og:description" content="{description}" />
+<meta property="og:url" content="{site}/area/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Sky Score" />
+<meta name="twitter:card" content="summary" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -1098,7 +1135,10 @@ def render_index(pages) -> str:
         raise SystemExit(f'no coverage words for {unknown}: add them to ABROAD_WORDS')
     us = ' and '.join(ABROAD_WORDS[c].format(n=len(by_city[c])) for c in sorted(abroad, key=list(ABROAD_WORDS).index))
     coverage = f'{uk_n} council areas in {len(uk)} UK city regions' + (f', plus {us}' if us else '')
-    return INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body))
+    # The coverage sentence word for word (tests/test_llms_txt.py's holder); the source clause goes when it will not fit.
+    description = fit(f'Noise and liveability scores for {coverage}, from published UK government and US sources.',
+                      f'Noise and liveability scores for {coverage}.')
+    return INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body), description=e(description))
 
 
 def main() -> int:

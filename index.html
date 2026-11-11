@@ -3041,8 +3041,10 @@
       .t-track i.here {
         background: var(--dark);
       }
+      /* The yardstick (the WHO level, a typical borough) at 3.16:1 on its track, and 4.5:1 from the "here" bar (audit M-14,
+         2026-11-11): it was --light, 1.32:1, and the comparison is the picture's point. */
       .t-track i.yard {
-        background: var(--light);
+        background: #807e79;
       }
       .t-ruler {
         display: block;
@@ -5028,7 +5030,9 @@
         <div class="map-title">
           <!-- The brand goes home, as on every other page (Bill, 2026-10-19). The link WRAPS the heading:
                applyCityChrome() sets the heading's textContent, which would erase a link inside it. -->
-          <a class="map-title-home" href="/"><h1 id="map-title-text">Sky Score</h1></a>
+          <!-- The page's one heading says what the page is (the SEO audit, 2026-11-11): the brand shows, the rest is for
+               screen readers and search engines. True in every city, so no coverage claim (that is the coverage sentence's). -->
+          <a class="map-title-home" href="/"><h1 id="map-title-text">Sky Score<span class="sr-only">: noise and liveability map</span></h1></a>
           <div class="subtitle" id="map-subtitle">INDEPENDENT NOISE + LIVEABILITY DATA</div>
         </div>
         <!-- Country first, then the cities within it. A flat row put New York
@@ -12203,8 +12207,10 @@
             (monitor ? keyRow('monitor', named(monitor), monitorNote) : '') +
             `</ul>` +
             `<p class="info-note">They measure in different ways, places and periods, so expect them to differ.</p>` +
-            `<p class="info-note" style="font-size:11px;">${escapeHtml(m.airNotes(sensor, monitor))}</p></details>` +
-            `<p class="info-note" style="font-size:11px;">Sources: ${credits}</p>`;
+            // Only what the rows above do not say already (2026-11-11, the credits audit): each instrument's row names it
+            // low-cost and provisional, or ratified, so the paragraph keeps the roadside note and the hours rule.
+            `<p class="info-note" style="font-size:11px;">${escapeHtml(m.airNoteList(sensor, monitor).filter((n) => n.key === 'roadside' || n.key === 'capture').map((n) => n.text).join(' '))}</p></details>` +
+            `<p class="info-note" style="font-size:11px;">${credits}</p>`;
           section.hidden = false;
         } catch (e) {
           // A module from an older cache without these functions: say nothing rather than half a line.
@@ -15956,7 +15962,8 @@
           if (el) el.textContent = text;
         };
 
-        document.getElementById('map-title-text').textContent = 'Sky Score';
+        // The heading is the same in every city and is written in the markup: setting its textContent here erased the
+        // words after the brand (2026-11-11).
         set('map-subtitle', cfg.subtitle);
         document.getElementById('search-input').placeholder = cfg.searchPlaceholder;
 

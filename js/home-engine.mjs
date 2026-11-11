@@ -1643,7 +1643,9 @@ async function loadPlanes(postcode) {
 // example, so then the walkthrough asks for it itself when it comes near the screen.
 let exampleLoad = null;
 export function exampleAnswer() {
-  // The point is held, so arriving asks our own API and postcodes.io nothing. A page naming another example has no point here.
+  // The point is held, so arriving asks postcodes.io nothing; it asks OUR API once, at that point (audit M-7, 2026-11-09:
+  // the route's one shared bucket, 5 a second, can be emptied, and then the example is not shown). A page naming another
+  // example has no point here.
   if (byId('ans-example')?.dataset.pc !== EXAMPLE.postcode) return Promise.resolve(null);
   exampleLoad ??= (async () => {
     const env = await (await fetch(`${ENV}?lat=${EXAMPLE.latitude}&lon=${EXAMPLE.longitude}`)).json();

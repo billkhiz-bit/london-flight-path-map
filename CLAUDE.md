@@ -299,6 +299,10 @@ Or just describe what you need, I have full context of this project.
   planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
+- **A built page's title fits 60 characters and its description 160, with share tags** (the SEO audit, 2026-11-11):
+  `build_area_pages.page_title()` keeps " | Sky Score" only where it fits, `fit()` takes the longest of a description's
+  versions that fits, never a cut; both builders use them, `tests/test_page_meta.py` reads every built page. /map/'s one
+  heading is the brand on screen and "Sky Score: noise and liveability map" to a reader: `applyCityChrome` must not set it.
 - **A sitemap never lists a page that asks not to be indexed** (2026-11-09, Search Console): `write_sitemap()` refuses one, `tests/test_sitemap_noindex.py` holds
   `sitemap.xml`. `/score-demo/status.html` and `/talks/` stay noindex and unlisted.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
@@ -427,6 +431,9 @@ Or just describe what you need, I have full context of this project.
 - **A keyed request spends its key's quota on ANY route, open ones too.** `tests/stub-live-api.mjs` answers
   `/v1/score` and sends every other API request on WITHOUT the demo key (2026-10-31: ~13 keyed `/v1/regions` calls per
   preflight had been most of the public demo key's October use; `docs/lessons/quality-gates.md`).
+- **`tests/e2e/` reads the LIVE site** (`playwright.config.js` baseURL): an e2e assertion must hold before AND after
+  the deploy it waits for; a check of an undeployed change goes in a local test (2026-11-11: the map heading's
+  name reddened preflight; `docs/lessons/quality-gates.md`).
 - **Prove every new gate red on the defect itself** before trusting it green. Assert SETS, not counts.
 - **Measure the DOM, not the flag that should change it**; poll for the state you want, never one already true;
   reach edge states on purpose (a state reached by chance is not gated).

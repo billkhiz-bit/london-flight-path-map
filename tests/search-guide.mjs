@@ -238,6 +238,19 @@ console.log('The panel before a search');
   await page.waitForFunction(() => currentCity === 'nyc' && !!document.querySelector('#sidebar-content .no-result-yet p'), null, { timeout: 15000 }).catch(() => {});
   const nyc = await page.evaluate(() => ({ list: !!document.querySelector('#sidebar-content .tells-list'), p: document.querySelector('#sidebar-content .no-result-yet p')?.textContent, hint: CITY_DATA.nyc.emptyStateHint }));
   ok(!nyc.list && nyc.p === nyc.hint, "New York's answer is its own, so its panel keeps its own sentence (no UK groups)", JSON.stringify(nyc));
+  // THE PAGE'S ONE HEADING SAYS WHAT THE PAGE IS (the SEO audit, 2026-11-11), after a city's chrome has run: applyCityChrome
+  // set its textContent to the brand and erased the rest. On screen it is the brand alone; the rest is clipped to a pixel.
+  const heading = await page.locator('#map-title-text').ariaSnapshot().catch((err) => String(err));
+  const shown = await page.evaluate(() => {
+    const h = document.getElementById('map-title-text');
+    return { text: h.textContent, brand: [...h.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim(),
+      hidden: [...h.children].length > 0 && [...h.children].every((c) => c.getBoundingClientRect().width <= 1) };
+  });
+  // What a search engine indexes is the text, exactly; the accessible name may carry a space before the colon, because
+  // the clipped span is positioned and Chromium joins a positioned child's name with a space (heard the same).
+  ok(shown.text === 'Sky Score: noise and liveability map' && /heading "Sky Score ?: noise and liveability map" \[level=1\]/.test(heading)
+    && shown.brand === 'Sky Score' && shown.hidden,
+    'the heading says "Sky Score: noise and liveability map" after the city chrome has run, and shows the brand alone', JSON.stringify({ heading, shown }));
   await ctx.close();
 }
 {

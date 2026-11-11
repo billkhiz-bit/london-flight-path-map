@@ -354,6 +354,14 @@ for (const c of CASES) {
       air ? `${JSON.stringify(air.names)} | ${air.text.slice(0, 160)}` : 'no air section',
     );
     if (wantNames.length) {
+      // Each caveat said once (2026-11-11): the rows name a sensor provisional and a monitor ratified, so the paragraph
+      // under them does not say it again; the credit line carries the publishers' own words with no "Sources:" before them.
+      const times = (re) => (air.text.match(re) || []).length;
+      check(`  ${c.city}: the air fold says each caveat once, and its credit line is the publishers' words alone`,
+        times(/provisional/g) <= 1 && times(/ratified/g) <= 1 && !/Sources: /.test(air.text),
+        `provisional x${times(/provisional/g)}, ratified x${times(/ratified/g)}`);
+    }
+    if (wantNames.length) {
       // SIDE BY SIDE (2026-11-03, refined B): one chart per pollutant something measures; DEFRA's model for the
       // postcode's own 1 km square first (the API's figure, asked for above), then the sensor and the monitor, each
       // printing ITS OWN figure and drawn to scale on the axis the chart draws.

@@ -99,4 +99,8 @@ targets (>= 28 px). The uncommitted suggestions fix and DEFRA retry: no new hole
   its way land after a bad press, and tests it (`tests/api-demo.mjs`: "a bad postcode leaves a good one on its way").
 - M-1, M-5, M-6, M-8, M-10, M-11, M-12, M-13, M-15 FIXED (10 Nov, batch A; each new check red on the old code, M-5's by
   breaking the live renderer twice). M-15 keeps the example's words and stops only their being spoken. Left: M-7, M-9, M-14.
+- M-14 FIXED (11 Nov): the yardstick is #807e79 on the map and the built pages' light palette (3.16:1 on its track, 4.5:1
+  from the "here" bar), #8c8a85 dark (3.3:1); `tests/test_yardstick_contrast.py`, red on all three old values (1.32, 1.40,
+  2.22). M-7: the comment now says arriving asks our API; the fix (a static fallback for the held example) is Bill's call.
+  M-9: the html-validate 11 upgrade's `npm install` was refused by this session's permission check; Bill to run it.
 - Minor: 16

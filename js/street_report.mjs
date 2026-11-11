@@ -179,11 +179,11 @@ export const correctionHref = (place) => `mailto:support@skyscore.co.uk?subject=
  */
 export function airNoteList(sensor, monitor) {
   const notes = [];
-  if (sensor) notes.push({ mark: '~', text: 'Breathe London sensors are low-cost: their figures are provisional and are recalibrated over time.' });
+  if (sensor) notes.push({ key: 'provisional', mark: '~', text: 'Breathe London sensors are low-cost: their figures are provisional and are recalibrated over time.' });
   if (sensor && sensor.classification !== 'Urban Background')
-    notes.push({ mark: '↑', text: "A sensor by a road can read higher than DEFRA's background figure: it measures the traffic beside it, where DEFRA's is the average across a 1 km square." });
-  if (monitor) notes.push({ mark: '✓', text: "Official monitors are DEFRA's reference instruments, and their figures are ratified." });
-  notes.push({ mark: '✓', text: `Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.` });
+    notes.push({ key: 'roadside', mark: '↑', text: "A sensor by a road can read higher than DEFRA's background figure: it measures the traffic beside it, where DEFRA's is the average across a 1 km square." });
+  if (monitor) notes.push({ key: 'ratified', mark: '✓', text: "Official monitors are DEFRA's reference instruments, and their figures are ratified." });
+  notes.push({ key: 'capture', mark: '✓', text: `Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.` });
   return notes;
 }
 export const airNotes = (sensor, monitor) => airNoteList(sensor, monitor).map((n) => n.text).join(' ');
