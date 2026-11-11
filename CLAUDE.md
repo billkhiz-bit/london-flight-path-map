@@ -342,7 +342,7 @@ Or just describe what you need, I have full context of this project.
 - **The answer after a search is summary first** (Bill's pick B, 2026-11-04: it ran to 495 words): the rows, the planes as tiles
   (`planesNodes`), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
   say, nothing deleted; a caveat that changes what a figure means stays on the row. A fold with nothing to say hides itself
-  (`.ans-fold:has(> [hidden])`). The overhead drawing reads its two figures from the file's `definition`.
+  (`.ans-fold:has(> [hidden])`). The overhead drawing reads its angle from the file's `definition` (`overheadConeSvg`).
 - **The answer's lower half is TILES** (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): presentation only.
   Each Nearby fact keeps its words; `nearbyFigure()` (js/home-engine.mjs) takes its big figure FROM THOSE WORDS, drawn by CSS from
   `data-fig` (`content: attr(data-fig) / ""`, so never read twice, never in a test's text). One column, figure left: the real
@@ -350,6 +350,17 @@ Or just describe what you need, I have full context of this project.
   `.area-chip`s (NEVER `.chips`: the city switch's, absolutely placed); `#ans-link` is the one filled button; fold summaries carry
   `data-hint`; a border-drawn chevron (the arrow glyph fell back to "v"); the air fold's chart takes the page font via `--font-mono`.
   `tests/front-page.mjs` 7z, red on each fault.
+- **The answer's folds are pictures and points, not paragraphs** (Bill, 2026-11-11: "still text heavy"; mock-up
+  claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2; planes fold 162 words to 92, air 97 to 75). Planes: `planesChart()` (js/planes.mjs,
+  the air chart's twin, banded and coloured by the planes layer's index.json steps), the overhead rule beside `overheadConeSvg()`
+  (its angle read from the sentence), then `rules.direction`, `counted` and `rules.postcodes` as points, each WORD FOR WORD from
+  airports.json (never shortened: every surface says what How it works says), then ONE sources line: the flight tracks' credit
+  (ODbL, beside the figures) and links to the method and `/how-it-works/#credits`. Air: the chart, a chip per instrument (where it
+  stands: a kerb distance changes what it reads), `airNoteList()` as points (`airNotes()` joins the same list for the report and
+  the map), the credit. The full map's planes tile draws the same chart, its fold the same rule and points. Held by
+  `tests/front-page.mjs` (word budget 100, each sentence word for word, nothing past a 390 screen with every fold open),
+  `tests/planes-model.mjs` (the chart, pure) and `tests/test_credits_list.py` (#credits carries each air file's attribution).
+  **Breathe London's credit says "License": their required spelling** (scripts/fetch_breathe_london.py); never "correct" it.
 - **Never `text-transform: uppercase` on a unit** (2026-11-04): it turns the micro sign into a capital mu, so µg/m³ read MG/M³.
 - **The front page counts its controls by name** (Bill, 2026-11-04, for the read that starts from the new page): `front-place-pick`,
   `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`, `front-dev-lang`, `front-full-map`, through `engaged()`, once per

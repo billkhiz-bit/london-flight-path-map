@@ -22,16 +22,16 @@ import { readWords } from '/js/find-words.mjs';
 import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
-  airNotes,
+  airNoteList,
   correctionHref,
   haveYourSay,
   monitorFact,
-  monitorLine,
+  monitorSetting,
   nearestMonitor,
   nearestSensor,
   nearestStation,
   sensorFact,
-  sensorLine,
+  sensorSetting,
   stationDistance,
 } from '/js/street_report.mjs';
 
@@ -1758,7 +1758,7 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
       planes.hidden = false;
       const notes = byId('ans-planes-notes');
       if (notes) {
-        notes.replaceChildren(...planesNotes(model));
+        notes.replaceChildren(...planesNotes(model, document, steps));
         notes.hidden = false;
       }
       addPlanesTile(model);
@@ -1817,12 +1817,27 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
         const para = (className, text) => Object.assign(document.createElement('p'), { className, textContent: text });
         const chart = airPanel(e, prov, sensor, monitor);
         if (chart) air.append(airFigure(chart));
-        if (sensor) air.append(para('', sensorLine(sensor)));
-        if (monitor) air.append(para('', monitorLine(monitor)));
+        // Less text (Bill, 2026-11-11: "still text heavy"): the readings are the chart and the Nearby tiles above, so the
+        // fold keeps what neither says: where each instrument stands (a sensor's kerb distance changes what it reads), and
+        // the notes as points, from the one holder the report and the full map read as a paragraph (airNoteList).
+        const chips = document.createElement('p');
+        chips.className = 'fold-chips';
+        if (sensor) chips.append(Object.assign(document.createElement('span'), { textContent: `${sensor.name} sensor: ${sensorSetting(sensor)}` }));
+        if (monitor) chips.append(Object.assign(document.createElement('span'), { textContent: `${monitor.name} monitor: ${monitorSetting(monitor)}` }));
+        air.append(chips);
         if (sensor) airNear?.append(factRow('Air sensor', sensorFact(sensor)));
         if (monitor) airNear?.append(factRow('Air monitor', monitorFact(monitor)));
-        air.append(para('air-note', airNotes(sensor, monitor)));
-        const credit = para('air-credit', '');
+        const keys = document.createElement('ul');
+        keys.className = 'fold-keys air-note';
+        for (const n of airNoteList(sensor, monitor)) {
+          const li = document.createElement('li');
+          const mark = Object.assign(document.createElement('b'), { textContent: n.mark });
+          mark.setAttribute('aria-hidden', 'true');
+          li.append(mark, Object.assign(document.createElement('span'), { textContent: n.text }));
+          keys.append(li);
+        }
+        air.append(keys);
+        const credit = para('air-credit fold-src', '');
         for (const c of [sensor?.credit, monitor?.credit].filter(Boolean)) {
           if (credit.childNodes.length) credit.append(' ');
           credit.append(Object.assign(document.createElement('a'), { href: c.href, textContent: c.text }));

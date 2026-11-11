@@ -172,16 +172,21 @@ export function haveYourSay(routes, today = new Date()) {
 /** The correction address, as the full map's "Spotted something wrong?" has used since before 2026-10-13. */
 export const correctionHref = (place) => `mailto:support@skyscore.co.uk?subject=${encodeURIComponent(`Correction: ${place}`)}`;
 
-/** What kind of measurement each line is, and why a sensor by a road reads above DEFRA's background figure. */
-export function airNotes(sensor, monitor) {
+/**
+ * What kind of measurement each line is, and why a sensor by a road reads above DEFRA's background figure, one note
+ * each, with a mark for a list: the front page's air fold sets them as points (2026-11-11), the report and the full map
+ * as one paragraph (airNotes). One holder, so the two can never say different things.
+ */
+export function airNoteList(sensor, monitor) {
   const notes = [];
-  if (sensor) notes.push('Breathe London sensors are low-cost: their figures are provisional and are recalibrated over time.');
+  if (sensor) notes.push({ mark: '~', text: 'Breathe London sensors are low-cost: their figures are provisional and are recalibrated over time.' });
   if (sensor && sensor.classification !== 'Urban Background')
-    notes.push("A sensor by a road can read higher than DEFRA's background figure: it measures the traffic beside it, where DEFRA's is the average across a 1 km square.");
-  if (monitor) notes.push("Official monitors are DEFRA's reference instruments, and their figures are ratified.");
-  notes.push(`Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.`);
-  return notes.join(' ');
+    notes.push({ mark: '↑', text: "A sensor by a road can read higher than DEFRA's background figure: it measures the traffic beside it, where DEFRA's is the average across a 1 km square." });
+  if (monitor) notes.push({ mark: '✓', text: "Official monitors are DEFRA's reference instruments, and their figures are ratified." });
+  notes.push({ mark: '✓', text: `Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.` });
+  return notes;
 }
+export const airNotes = (sensor, monitor) => airNoteList(sensor, monitor).map((n) => n.text).join(' ');
 
 // ---- Air side by side (Bill, 2026-11-03: "refined B" of claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc) ----
 // The full map sets DEFRA's model for the postcode's own 1 km square beside the nearest sensor and monitor, ONE scale

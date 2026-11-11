@@ -13,7 +13,7 @@
  * the rating names its council. A surveyed-quiet bound keeps its own words: it says the postcode is quiet, not a rating.
  */
 
-import { shortFigure, stepColour } from './planes.mjs';
+import { overheadConeSvg, planesChart, shortFigure, stepColour } from './planes.mjs';
 
 const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
@@ -173,7 +173,8 @@ export function planesFindings(model, { steps = [] } = {}) {
         tone: null,
         stand: isNum(watchFrom) && isNum(top) && top >= watchFrom ? 'watch' : null,
         pill: `${a.name} planes`,
-        visual: [{ kind: 'bars', room: 1, rows: a.rows.map((r) => ({ label: r.label, sub: r.share, text: r.text, value: most(r.value), colour: stepColour(r.value, steps) || null })) }],
+        // The front page's chart (Bill's pick, 2026-11-10: the air chart's twin), so planes and air read alike on both pages.
+        visual: [{ kind: 'chart', svg: planesChart(a, steps) }],
         say: [a.windShort],
         source: main ? `${main}${a.period ? `, ${a.period}` : ''}${more}` : null,
       },
@@ -184,20 +185,28 @@ export function planesFindings(model, { steps = [] } = {}) {
   return found;
 }
 
-/** What sits behind the planes figures, from the same model: the wind, the definition, the credits. */
+/**
+ * What sits behind the planes figures, from the same model, as the front page's fold says it (2026-11-11): the overhead
+ * rule, then the day rule, the CAA check and the PO-box rule as points, each word for word from airports.json. The
+ * credits are not repeated: the tile names the flight tracks beside its figures, and "All sources" links the rest.
+ */
 export function planesNotes(model) {
-  if (!model) return [];
-  const notes = [...model.airports.map((a) => a.wind), model.definition];
-  return [...notes, `${model.counted} ${(model.credits || []).join('; ')}.`].filter(Boolean);
+  if (!model) return null;
+  const rules = model.rules || {};
+  const points = [['%', rules.direction], ['\u2713', model.counted], ['\u2212', rules.postcodes]]
+    .filter(([, text]) => text).map(([mark, text]) => ({ mark, text }));
+  return rules.overhead || points.length ? { over: rules.overhead || null, points } : null;
 }
 
-/** Those notes, folded, with the way to the full method. Nothing for a postcode with no figures. */
+/** Those notes, folded, with the way to the method and to every source. Nothing for a postcode with no figures. */
 export function planesNotesHtml(model) {
   const notes = planesNotes(model);
-  if (!notes.length) return '';
-  const body = notes.map((n) => `<p class="info-note">${esc(n)}</p>`).join('');
-  return `<details class="legend-disclosure air-about"><summary>About these figures</summary>${body}`
-    + `<p class="info-note"><a href="${esc(model.how)}">More on how it works</a></p></details>`;
+  if (!notes) return '';
+  const over = notes.over ? `<div class="planes-over">${overheadConeSvg(notes.over)}<p class="info-note">${esc(notes.over)}</p></div>` : '';
+  const points = notes.points.length
+    ? `<ul class="fold-keys">${notes.points.map((p) => `<li><b aria-hidden="true">${esc(p.mark)}</b><span>${esc(p.text)}</span></li>`).join('')}</ul>` : '';
+  return `<details class="legend-disclosure air-about"><summary>About these figures</summary>${over}${points}`
+    + `<p class="info-note"><a href="${esc(model.how)}">How it is counted</a> \u00b7 <a href="/how-it-works/#credits">All sources</a></p></details>`;
 }
 
 /** The nearest published flight path, from the same analysis as the panel's key facts. */
@@ -483,7 +492,9 @@ export function tileHtml(f, opts = {}) {
   const ink = t.tone ? `t-ink-${t.tone}` : 't-ink-plain';
   const sub = t.sub ? `<span class="t-sub${t.shared ? ' t-wide' : ''}">${esc(t.sub)}</span>` : '';
   const pictures = (t.visual || []).filter(Boolean).map((v) => (v.kind === 'strip' ? stripHtml(v) : v.kind === 'share' ? shareHtml(v)
-    : v.kind === 'bars' ? barsHtml(v) : v.kind === 'ruler' ? rulerHtml(v) : v.kind === 'score' ? scoreHtml(v, opts.scoreColour) : '')).join('');
+    : v.kind === 'bars' ? barsHtml(v) : v.kind === 'ruler' ? rulerHtml(v) : v.kind === 'score' ? scoreHtml(v, opts.scoreColour)
+    // A chart is SVG text from a pure builder that escapes every name (planesChart): set as it comes, never from free text.
+    : v.kind === 'chart' && typeof v.svg === 'string' && v.svg.startsWith('<svg') ? `<div class="t-chart">${v.svg}</div>` : '')).join('');
   const say = (t.say || []).filter(Boolean).map((s) => `<p class="t-say">${esc(s)}</p>`).join('');
   const notes = (t.notes || []).filter(Boolean).map((s) => `<p class="t-note">${esc(s)}</p>`).join('');
   const tip = t.tip ? `<p class="t-tip"><b>Tip:</b> ${esc(t.tip)}</p>` : '';

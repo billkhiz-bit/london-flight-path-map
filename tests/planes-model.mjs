@@ -11,7 +11,7 @@
 //   node tests/planes-model.mjs
 
 import assert from 'node:assert/strict';
-import { districtOf, period, perDay, planesBandLead, planesLead, planesLinks, planesModel, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
+import { districtOf, overheadConeSvg, period, perDay, planesBandLead, planesChart, planesLead, planesLinks, planesModel, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
 
 const NAMES = { LHR: 'Heathrow', LCY: 'London City', MAN: 'Manchester' };
 const INFO = {
@@ -257,6 +257,56 @@ check('the large-user rule is said beside the definition, and an older file with
   const older = planesModel(TW9, INFO, 'TW9 3PZ', NAMES).definition;
   assert.equal(older, `${INFO.definition} ${INFO.direction_rule}`);
   assert.doesNotMatch(older, /undefined/);
+});
+
+// ---- the planes chart (2026-11-11): the air chart's twin, from the model, banded and coloured by the layer's steps ----
+const rowsOf = (svg) => [...svg.matchAll(/<g data-kind="([^"]+)" data-value="([^"]*)">/g)].map((m) => [m[1], m[2]]);
+const fillsOf = (svg) => [...svg.matchAll(/data-mark="planes" cx="([\d.]+)"[^>]*fill="(#[0-9a-f]{6})"/g)].map((m) => [Number(m[1]), m[2]]);
+check('chart: Kew, each kind of day at its figure on one scale, coloured and banded as the layer', () => {
+  const svg = planesChart(planesModel(TW9, INFO, 'TW9 3PZ', NAMES).airports[0], STEPS);
+  assert.deepEqual(rowsOf(svg), [['westerly', '310'], ['mixed', '168'], ['easterly', '4']]);
+  assert.match(svg, /data-max="400"/, '310 with a little room rounds to 400');
+  assert.deepEqual([...svg.matchAll(/data-band="(\d+)"/g)].map((m) => Number(m[1])), [10, 50, 100, 200]);
+  const x = (v) => +(176 + (v / 400) * 158).toFixed(2);
+  assert.deepEqual(fillsOf(svg), [[x(310), '#662809'], [x(168), '#9a4316'], [x(4), '#9a9893']], 'dots at their figures, in their steps; under the first step neutral');
+  assert.match(svg, /56% of days/);
+});
+check('chart: a range is a bar from fewest to most with its label above; none is a figure, at zero', () => {
+  const svg = planesChart(planesModel(TW3, INFO, 'TW3 3QL', NAMES).airports[0], STEPS);
+  assert.deepEqual(rowsOf(svg), [['westerly', '7 to 339'], ['mixed', '3'], ['easterly', 'none']]);
+  const x = (v) => +(176 + (v / 400) * 158).toFixed(2);
+  assert.match(svg, new RegExp(`data-range="1" x1="${x(7)}" x2="${x(339)}"`));
+});
+check('chart: a kind of day with no figure says "not measured", never 0', () => {
+  const lcy = planesModel(E16, INFO, 'E16 2QD', NAMES).airports.find((a) => a.code === 'LCY');
+  const svg = planesChart(lcy, STEPS);
+  assert.deepEqual(rowsOf(svg).find(([k]) => k === 'easterly'), ['easterly', '']);
+  assert.match(svg, />not measured</);
+  assert.equal(fillsOf(svg).length, 2, 'no dot for the day not measured');
+});
+check('chart: without the layer steps, no bands and no guessed colour', () => {
+  const svg = planesChart(planesModel(TW9, INFO, 'TW9 3PZ', NAMES).airports[0], []);
+  assert.doesNotMatch(svg, /data-band/);
+  assert.ok(fillsOf(svg).every(([, c]) => c === '#9a9893'));
+});
+check('chart: every name is escaped, and a colour that is not a colour is never drawn', () => {
+  const svg = planesChart({ name: 'A<b>', code: 'Q"x', rows: [{ kind: 'westerly', label: 'L<i>', share: 's&t', value: 120 }] },
+    [{ from: 10, colour: 'red" onload="x' }, { from: 100, colour: '#9a4316' }]);
+  assert.doesNotMatch(svg, /<b>|<i>|onload/);
+  assert.match(svg, /L&lt;i&gt;/);
+  assert.deepEqual(fillsOf(svg).map(([, c]) => c), ['#9a4316']);
+});
+check('rules: the three sentences apart, word for word, null where the file has none', () => {
+  const rule = 'PO boxes and other postcodes for organisations that receive a lot of post are left out.';
+  assert.deepEqual(planesModel(TW9, { ...INFO, postcodes_rule: rule }, 'TW9 3PZ', NAMES).rules, { overhead: INFO.definition, direction: INFO.direction_rule, postcodes: rule });
+  assert.equal(planesModel(TW9, INFO, 'TW9 3PZ', NAMES).rules.postcodes, null);
+});
+check("cone: the drawing's angle is the rule's own, and no angle means no drawing", () => {
+  const svg = overheadConeSvg(INFO.definition);
+  const [, ax, ay] = /L([\d.]+) ([\d.]+)/.exec(svg);
+  assert.ok(Math.abs(Math.atan2(62 - Number(ay), 60 - Number(ax)) * 180 / Math.PI - 48.5) < 0.2, svg);
+  assert.match(svg, /aria-hidden="true"/);
+  assert.equal(overheadConeSvg('Overhead means close by.'), '');
 });
 
 console.log(`planes model: ${passed} checks passed`);

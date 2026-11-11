@@ -1054,3 +1054,26 @@ Kept on purpose: the air fold's sensor sentence. It looks like a repeat of the N
 the kerb", which the tile does not.
 Shell gotcha, twice in one evening: a Python heredoc turned `\b` into a backspace and `\2304` into an octal escape. Make
 regex and CSS-escape edits with the Edit tool, then scan the file for control characters.
+
+## The folds, less text (2026-11-11)
+
+Bill, after the tiles went live: "better but it's still text heavy here", pasting both folds. The planes fold became the
+chart in the air chart's style (`planesChart()`), the overhead rule beside a small cone, three points and one sources line;
+the air fold the chart, a chip per instrument and its notes as points. 162 words to 92, and 97 to 75.
+
+- **Word for word beats short.** The mock-up paraphrased the PO-box rule ("PO boxes are left out: they sit at a delivery
+  office, not at homes"). The builder's docstring says every surface showing the definition shows `postcodes_rule` beside it,
+  and How it works says it in full, so the points are the file's own sentences (`model.rules`). The fold is ~90 words, not the
+  mock-up's ~45; the alternative was a second wording of the same rule.
+- **A stub can be older than the shape it stands for.** The front-page test's `airports.json` stub predated `postcodes_rule`,
+  so the page showed two points and the check, reading the REAL file, wanted three. The page was right (a sentence the file
+  lacks is left out, never "undefined"). The stub gained the rule, and the check now reads what the page was served.
+- **`white-space: nowrap` on a class reaches every holder of the class.** Keeping the planes line's two short links whole
+  with `.fold-src a` also caught the air fold's credit, one long sentence, which ran to 472 px on a 390 screen. Scoped to
+  `#ans-planes-notes`; a new check opens every fold at 390 and fails on anything past the screen (red on the fault: 117 px).
+- **Breathe London's "License" is not a typo.** Their developer terms require that exact wording, their spelling
+  (scripts/fetch_breathe_london.py). A credits audit the night before listed it as a fix; it was checked before anyone did.
+- **The test stub's `/v1/environment` has no provenance**, so a local preview drops the air chart's DEFRA row. For a
+  screenshot, let that open route reach the live API with any key stripped; never send the demo key from a preview.
+- **Mock-ups of a page around a change come from a screenshot** (the search-guide mock-ups put the map's panel on the wrong
+  side): `~/.claude/skills/preflight/checks/frontend.md`.

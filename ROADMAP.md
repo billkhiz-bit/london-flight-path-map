@@ -26,6 +26,19 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-11)
+>
+> **TILES LIVE** (`e8849ae0`; preflight PASS 46 min, drift PASS, live shots at 390/1366 on claude.ai/artifact/JbmPxQXsgP71RJA1zzbYTt).
+> **THE FOLDS, LESS TEXT** (Bill: "still text heavy"; his pick, mock-up claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2), BUILT, screenshots to
+> Bill before any deploy: `planesChart()` + `overheadConeSvg()` in js/planes.mjs, the planes fold as chart + overhead row + three
+> word-for-word points + one sources line (162 words to 92), the air fold as chart + chips + `airNoteList()` points (97 to 75), the
+> full map's planes tile on the same chart. How it works' #credits gains Breathe London, DEFRA's monitors and the EPC register
+> (`tests/test_credits_list.py`). Last night's "fix Breathe London's License typo" was WRONG: it is their required spelling.
+> **NEXT: the full map's search guide** (Bill's pick C2, the comet: two steady laps, 4.6 s; Try chips per city on phones; the desktop's
+> dark banner goes; mock-ups claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu v5, drawn from live screenshots), then the street report
+> refresh (mock-up first: planes figures, the air chart, the site's look) with its two fixes (sample PM2.5 8.6 to 8.5 after the
+> 10 Nov reload; the "no measured aircraft noise level" fallback says DEFRA's map is modelled).
+>
 > ## START HERE (2026-11-10, night)
 >
 > **THE FRONT PAGE ANSWER'S LOWER HALF AS TILES (Bill's pick A; his "do tiles and deploy", and "deploy tonight" after he logs off).** Nearby facts led by their figure (`nearbyFigure()`, drawn by CSS from `data-fig`), the council line a card with chips, one filled map button, fold summaries with hints. Front-page suite 438/438 (section 7z, each check proved red); the full preflight was STOPPED at 22:40 because Bill switched the PC off (no failures up to the full map's panel checks); the tiles are UNCOMMITTED on master in the working tree; next session: re-run the full preflight, then commit by name, push, `web-deploy` + `home-deploy`, drift check, live screenshots (Bill's deploy word stands) on claude.ai/artifact/JbmPxQXsgP71RJA1zzbYTt. Uncommitted with them: CHANGELOG, CLAUDE.md, ROADMAP, docs/lessons/front-page-and-site.md.

@@ -2844,6 +2844,86 @@
         display: grid;
         gap: 8px;
       }
+      /* The planes chart (2026-11-11): the front page's, in the air chart's style (js/planes.mjs planesChart), its names in
+         the sans as the air charts' are. Under it, "About these figures" sets the overhead rule beside a small drawing of
+         it and the other rules as short points, as the front page's fold does. */
+      .t-chart svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .t-chart svg text {
+        font-family: var(--font-sans);
+      }
+      .planes-over {
+        display: grid;
+        grid-template-columns: 96px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        margin: 6px 0;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(242, 125, 38, 0.1);
+      }
+      .planes-over .info-note {
+        margin: 0;
+      }
+      .planes-cone {
+        display: block;
+        width: 96px;
+        height: auto;
+      }
+      .cone-fill {
+        fill: #fff;
+        fill-opacity: 0.6;
+        stroke: #e5b48c;
+      }
+      .cone-top {
+        stroke: var(--mid);
+        stroke-dasharray: 3 2;
+      }
+      .cone-ground {
+        stroke: var(--dark);
+        stroke-width: 1.5;
+      }
+      .cone-home {
+        fill: var(--dark);
+      }
+      .cone-in {
+        fill: var(--orange);
+        stroke: var(--dark);
+      }
+      .cone-out {
+        fill: #fff;
+        stroke: var(--mid);
+      }
+      .fold-keys {
+        list-style: none;
+        margin: 6px 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        font-family: var(--font-sans);
+      }
+      .fold-keys li {
+        display: grid;
+        grid-template-columns: 20px minmax(0, 1fr);
+        gap: 8px;
+        align-items: start;
+        font-size: 12px;
+        line-height: 1.45;
+        color: #555;
+      }
+      .fold-keys b {
+        display: grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+        background: rgba(242, 125, 38, 0.12);
+        color: var(--orange-ink);
+        font-size: 11px;
+      }
       .t-bar {
         display: grid;
         gap: 3px;

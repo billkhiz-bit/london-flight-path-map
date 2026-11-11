@@ -15,6 +15,7 @@
  */
 
 import { AIRPORT_NAME } from './flight_geometry.mjs';
+import { esc } from './street_report.mjs';
 
 /** The rows, in the mock-up's order: the file's own order is westerly, easterly, mixed (airports.json classes). */
 const KINDS = [['westerly', 'Flying west', 'west'], ['mixed', 'Both ways', null], ['easterly', 'Flying east', 'east']];
@@ -104,6 +105,10 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
     // The large-user rule (2026-11-10) only when the file carries it: a cached older airports.json mid-deploy never
     // prints "undefined" (scripts/build_planes_overhead.py POSTCODES_RULE).
     definition: [info.definition, info.direction_rule, info.postcodes_rule].filter((s) => typeof s === 'string' && s).join(' '),
+    // The same three sentences apart, for the fold that sets each on its own line (2026-11-11): word for word, never
+    // shortened, so every surface still says what How it works says. A sentence the file lacks is null, never "undefined".
+    rules: Object.fromEntries([['overhead', info.definition], ['direction', info.direction_rule], ['postcodes', info.postcodes_rule]]
+      .map(([k, s]) => [k, typeof s === 'string' && s ? s : null])),
     counted: `Counted from community flight tracking, checked against the CAA's monthly totals for ${airports.length ? listOf(airports.map((a) => a.name)) : 'each airport'}.`,
     credits: info.credits || [],
     how: HOW_LINK,
@@ -269,88 +274,149 @@ export function planesNodes(model, doc = document, links = []) {
   return out;
 }
 
-/** What the block's figures rest on, for the fold under the answer: why the days differ, what overhead means, who counted. */
-export function planesNotes(model, doc = document) {
-  const para = (text, className = 'planes-note') => {
-    const n = doc.createElement('p');
-    n.className = className;
-    n.textContent = text;
-    return n;
-  };
-  const how = para('', 'planes-how');
-  const link = doc.createElement('a');
-  link.textContent = 'More on how it works';
-  link.href = model.how;
-  how.append(link);
-  const out = [];
-  for (const a of model.airports) out.push(para(a.wind), daysBar(a, doc));
-  const cone = overheadCone(model.definition, doc);
-  if (cone) out.push(cone);
-  out.push(para(model.definition), para(`${model.counted} ${model.credits.join('; ')}.`), how);
-  return out;
+// ---- the planes chart (Bill's pick, 2026-11-10: "less text, like the air readings"; claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2) ----
+// The air chart's twin (js/street_report.mjs airChart): one row per kind of day, its share of days under its name, a dot
+// at its figure, the same row height, label column and axis, so planes and air read alike. Behind the rows, the full map's
+// planes layer steps (its index.json), so "100 or more a day" here is the colour it is on the map. Pure: SVG text, every
+// name escaped, so the front page and the full map's tile set the same picture.
+
+/** The scale's end: the first of these at or above the top figure plus a little room, so the busiest dot never sits on the edge. */
+const CHART_ENDS = [10, 20, 50, 100, 200, 300, 400, 500, 600, 800, 1000, 1500, 2000];
+/** Where a figure's dot goes: a range at its top (as the layer judges an edge), under 1 just off zero. */
+const chartAt = (v) => (Array.isArray(v) ? chartAt(v[1]) : v === '<1' ? 0.5 : typeof v === 'number' ? v : null);
+const NEUTRAL = '#9a9893';
+
+/**
+ * One airport's kinds of day on one scale, as SVG text, from a planesModel() airport. `steps` ([{from, colour}], the
+ * layer's index.json) shade the bands and colour the dots; without them every dot is neutral and no band is drawn, never
+ * a guessed colour. A kind with no figure says "not measured", never 0. A range is a bar from its fewest to its most,
+ * its label above it. Every row carries data-kind and data-value for the tests.
+ */
+export function planesChart(airport, steps = []) {
+  const rows = airport?.rows || [];
+  const tops = rows.map((r) => chartAt(r.value)).filter((n) => typeof n === 'number');
+  const max = CHART_ENDS.find((n) => n >= Math.max(10, ...tops) * 1.08) ?? CHART_ENDS.at(-1);
+  const W = 352, L = 176, R = 18, rowH = 30, top = 16;
+  const x0 = L, x1 = W - R;
+  const x = (u) => +(x0 + (Math.min(Math.max(u, 0), max) / max) * (x1 - x0)).toFixed(2);
+  const axisY = top + rows.length * rowH + 4;
+  const H = axisY + 18;
+  const bandSteps = (steps || []).filter((s) => typeof s?.from === 'number' && /^#[0-9a-f]{6}$/i.test(s.colour || '') && s.from < max)
+    .sort((a, b) => a.from - b.from);
+  const bands = bandSteps.map((s, i) => {
+    const a = x(s.from), b = x(i + 1 < bandSteps.length ? bandSteps[i + 1].from : max);
+    return `<rect data-band="${s.from}" x="${a}" y="${top - 4}" width="${(b - a).toFixed(2)}" height="${rows.length * rowH + 8}" fill="${s.colour}" fill-opacity="0.14"/>`;
+  }).join('');
+  const ink = 'fill:var(--air-ink, #141414)';
+  const ink3 = 'fill:var(--air-ink-3, #636363)';
+  const body = rows.map((r, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    const head = `<text x="0" y="${cy - 2}" font-size="11.5" font-weight="600" style="${ink}">${esc(r.label ?? '')}</text>`
+      + `<text x="0" y="${cy + 11}" font-size="10" style="${ink3}">${esc(r.share || '')}</text>`;
+    const v = r.value;
+    if (v == null) {
+      return `<g data-kind="${esc(r.kind ?? '')}" data-value="">${head}<text x="${x1}" y="${cy + 4}" font-size="11" text-anchor="end" style="${ink3}">not measured</text></g>`;
+    }
+    const label = shortFigure(v);
+    const cx = x(chartAt(v));
+    const colour = stepColour(v, steps) || NEUTRAL;
+    const range = Array.isArray(v);
+    const textW = label.length * 6.5; // about 6.5 px a character at 11 px
+    const left = cx > W - 52;
+    // A range's label rides above its bar (on it, the two collide); one that would run into the name column starts at the bar.
+    const rangeAnchor = cx - textW < x0 ? 'start' : 'end';
+    const lead = !range && (left ? cx - 14 - textW : cx - 9) > x0
+      ? `<line x1="${x0}" x2="${(left ? cx - 14 - textW : cx - 9).toFixed(2)}" y1="${cy}" y2="${cy}" stroke-width="2" style="stroke:var(--air-rule, #c8c7c4)"/>` : '';
+    const bar = range ? `<line data-range="1" x1="${x(chartAt(v[0]))}" x2="${cx}" y1="${cy}" y2="${cy}" stroke-width="6" stroke-linecap="round" stroke="${colour}" stroke-opacity="0.45"/>` : '';
+    const [tx, ty, anchor] = range ? [rangeAnchor === 'end' ? cx : x(chartAt(v[0])), cy - 9, rangeAnchor] : [left ? cx - 10 : cx + 10, cy + 4, left ? 'end' : 'start'];
+    return `<g data-kind="${esc(r.kind ?? '')}" data-value="${esc(label)}"><title>${esc(`${r.label} (${r.share}): ${perDay(v)}`)}</title>${head}${lead}${bar}`
+      + `<circle data-mark="planes" cx="${cx}" cy="${cy}" r="6" fill="${colour}"/>`
+      + `<text x="${tx}" y="${ty}" font-size="11" font-weight="600" text-anchor="${anchor}" style="${ink};font-family:var(--font-mono, monospace)">${esc(label)}</text></g>`;
+  }).join('');
+  const ticks = [...new Set([0, ...bandSteps.map((s) => s.from).filter((f) => f >= max * 0.2), max])];
+  const aria = `Planes overhead a day from ${airport?.name || ''}: ${rows.map((r) => `${r.label}${r.share ? ` (${r.share})` : ''}, ${perDay(r.value)}`).join('; ')}.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(aria)}" data-planes-chart="${esc(airport?.code || airport?.name || '')}" data-max="${max}">`
+    + bands + body
+    + `<line data-axis="1" x1="${x0}" x2="${x1}" y1="${axisY}" y2="${axisY}" stroke-width="1" style="stroke:var(--air-ink-3, #636363)"/>`
+    + ticks.map((t) => `<text x="${x(t)}" y="${axisY + 13}" font-size="9.5" text-anchor="${t === max ? 'end' : t === 0 ? 'start' : 'middle'}" style="${ink3};font-family:var(--font-mono, monospace)">${t}</text>`).join('')
+    + '</svg>';
 }
 
-// How an airport's days split, as one bar: each kind of day its true share, every share also said in words.
-function daysBar(airport, doc) {
-  const box = doc.createElement('div');
-  box.className = 'planes-days';
-  const cap = doc.createElement('p');
-  cap.className = 'planes-days-h';
-  cap.textContent = `How ${airport.name}'s days split`;
-  const bar = doc.createElement('div');
-  bar.className = 'planes-days-bar';
-  bar.setAttribute('role', 'img');
-  bar.setAttribute('aria-label', airport.rows.map((r) => `${r.label}, ${r.share}`).join('; '));
-  airport.rows.forEach((r, i) => {
-    const part = doc.createElement('span');
-    part.className = `planes-day-${i}`;
-    part.style.width = `${r.sharePct ?? 0}%`;
-    part.textContent = `${r.sharePct ?? 0}%`;
-    bar.append(part);
-  });
-  const key = doc.createElement('p');
-  key.className = 'planes-days-key';
-  key.setAttribute('aria-hidden', 'true');
-  airport.rows.forEach((r, i) => {
-    const item = doc.createElement('span');
-    const swatch = doc.createElement('i');
-    swatch.className = `planes-day-${i}`;
-    item.append(swatch, r.label);
-    key.append(item);
-  });
-  box.append(cap, bar, key);
-  return box;
-}
-
-// The overhead rule, drawn: a cone over a home, its angle true to the rule. The two figures are read from the definition the
-// page already holds, so a change to the rule cannot leave a stale drawing: no figures found, no drawing.
-function overheadCone(definition, doc) {
-  const angle = /([\d.]+) degrees/.exec(definition || '')?.[1];
-  const ceiling = /below ([\d,]+) ft/.exec(definition || '')?.[1];
-  if (!angle || !ceiling) return null;
-  const NS = 'http://www.w3.org/2000/svg';
-  const draw = (tag, attrs, text) => {
-    const n = doc.createElementNS(NS, tag);
-    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+/**
+ * What the block's figures rest on, for the fold under the answer (2026-11-11, Bill: "still text heavy"): each airport's
+ * chart, the overhead rule beside a small drawing of it, the day rule, the CAA check and the PO-box rule as three short
+ * points (each sentence word for word from airports.json, as How it works says it), then one sources line. The flight
+ * tracks' credit stays in sight beside the figures (ODbL 4.3); every other source is one link away, on How it works.
+ * `steps` (the layer's index.json) colour the chart; without them it is drawn in one neutral colour.
+ */
+export function planesNotes(model, doc = document, steps = []) {
+  const el = (tag, className, text) => {
+    const n = doc.createElement(tag);
+    if (className) n.className = className;
     if (text != null) n.textContent = text;
     return n;
   };
-  const baseX = 170;
-  const groundY = 134;
-  const topY = 22;
-  const spread = (groundY - topY) / Math.tan((Number(angle) * Math.PI) / 180);
-  const svg = draw('svg', { viewBox: '0 0 340 150', class: 'planes-cone', role: 'img', 'aria-label': `Overhead means inside this cone: at least ${angle} degrees up the sky from your home, and below ${ceiling} ft.` });
-  svg.append(
-    draw('path', { d: `M${baseX} ${groundY} L${baseX - spread} ${topY} L${baseX + spread} ${topY} Z`, class: 'cone-fill' }),
-    draw('line', { x1: baseX - spread - 26, y1: topY, x2: baseX + spread + 26, y2: topY, class: 'cone-top' }),
-    draw('line', { x1: 8, y1: groundY, x2: 332, y2: groundY, class: 'cone-ground' }),
-    draw('path', { d: `M${baseX - 9} ${groundY} v-11 l9 -8 l9 8 v11 Z`, class: 'cone-home' }),
-    draw('text', { x: baseX + spread + 4, y: topY - 6, class: 'cone-label', 'text-anchor': 'end' }, `${ceiling} ft`),
-    draw('text', { x: baseX + 24, y: groundY - 6, class: 'cone-label' }, `${angle}\u00b0`),
-    draw('circle', { cx: baseX - 22, cy: 58, r: 5, class: 'cone-in' }),
-    draw('text', { x: baseX - 22, y: 76, class: 'cone-label', 'text-anchor': 'middle' }, 'counted'),
-    draw('circle', { cx: baseX + spread + 22, cy: 58, r: 5, class: 'cone-out' }),
-    draw('text', { x: baseX + spread + 22, y: 76, class: 'cone-label', 'text-anchor': 'middle' }, 'not counted'),
-  );
-  return svg;
+  const link = (text, href) => Object.assign(el('a', null, text), { href });
+  const out = [];
+  for (const a of model.airports) {
+    const fig = el('figure', 'walk-air planes-fig');
+    fig.append(el('figcaption', null, `Planes overhead a day, from ${a.name}`));
+    // planesChart() escapes every name; parsed by the HTML parser (a template), which gives an <svg> its namespace.
+    const t = doc.createElement('template');
+    t.innerHTML = planesChart(a, steps);
+    const svg = t.content.querySelector('svg');
+    if (svg) fig.append(svg);
+    out.push(fig);
+  }
+  const rules = model.rules || {};
+  if (rules.overhead) {
+    const over = el('div', 'planes-over');
+    const t = doc.createElement('template');
+    t.innerHTML = overheadConeSvg(rules.overhead);
+    const cone = t.content.querySelector('svg');
+    if (cone) over.append(cone);
+    over.append(el('p', null, rules.overhead));
+    out.push(over);
+  }
+  const points = [['%', rules.direction], ['✓', model.counted], ['−', rules.postcodes]].filter(([, s]) => s);
+  if (points.length) {
+    const ul = el('ul', 'fold-keys');
+    for (const [mark, text] of points) {
+      const li = el('li');
+      const b = el('b', null, mark);
+      b.setAttribute('aria-hidden', 'true');
+      li.append(b, el('span', null, text));
+      ul.append(li);
+    }
+    out.push(ul);
+  }
+  const src = el('p', 'planes-how fold-src');
+  if (model.credits?.[0]) src.append(`${model.credits[0]} · `);
+  src.append(link('How it is counted', model.how), ' · ', link('All sources', '/how-it-works/#credits'));
+  out.push(src);
+  return out;
+}
+
+/**
+ * The overhead rule, drawn small beside its sentence, as SVG text (the front page's fold and the full map's set the same
+ * picture): a cone over a home, its angle true to the rule, a plane inside it counted and one outside it not. The angle is
+ * read from the sentence it sits beside, so a change to the rule cannot leave a stale drawing: no angle found, ''. Hidden
+ * from screen readers: the sentence beside it says all it shows. Only numbers go into it, never text.
+ */
+export function overheadConeSvg(sentence) {
+  const angle = Number(/([\d.]+) degrees/.exec(sentence || '')?.[1]);
+  if (!(angle > 0 && angle < 90)) return '';
+  const baseX = 60, groundY = 62, topY = 10;
+  const half = (y) => (groundY - y) / Math.tan((angle * Math.PI) / 180);
+  const spread = half(topY);
+  // The plane not counted sits just outside the cone's edge at its height; where the cone fills the picture, none is drawn.
+  const outX = baseX + half(26) + 10;
+  return '<svg viewBox="0 0 120 70" class="planes-cone" aria-hidden="true" focusable="false">'
+    + `<line x1="4" y1="${topY}" x2="116" y2="${topY}" class="cone-top"/>`
+    + `<path d="M${baseX} ${groundY} L${(baseX - spread).toFixed(1)} ${topY} L${(baseX + spread).toFixed(1)} ${topY} Z" class="cone-fill"/>`
+    + `<circle cx="${baseX - 8}" cy="28" r="4.5" class="cone-in"/>`
+    + `<path d="M${baseX - 6} ${groundY} v-6 l6 -5 l6 5 v6 Z" class="cone-home"/>`
+    + `<line x1="2" y1="${groundY}" x2="118" y2="${groundY}" class="cone-ground"/>`
+    + (outX <= 115 ? `<circle cx="${outX.toFixed(1)}" cy="26" r="4" class="cone-out"/>` : '')
+    + '</svg>';
 }

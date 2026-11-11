@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-11 - Less text in the answer's folds
+
+- **"How the planes are counted" is a chart now, not paragraphs.** Each kind of day is a row with its share of days and a dot at its figure, shaded in the full map's planes colours; the meaning of "overhead" sits beside a small drawing of it, and the day rule, the check against the CAA's figures and the PO-box rule are three short points. About 90 words where there were 160. The full map's planes tile draws the same chart.
+- **"About the air readings" is shorter too**: the chart, where the sensor stands (roadside, 0.7 m from the kerb at Kew), and its caveats as three points.
+- **How it works now credits every source**: Breathe London's sensors, DEFRA's official monitors and the energy performance register join the list the folds link to.
+
 ## 2026-11-10 - The answer card for everyone
 
 - **The front page's answer is easier to scan below the planes.** Each nearby fact is a tile that leads with its figure (10.2 km to Heathrow, about 1,800 ft for the aircraft overhead, 20 m to the station), the council's Sky Score and flood share sit in a small card, the map is one clear button, and each fold says what is inside before you open it.

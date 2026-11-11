@@ -711,7 +711,18 @@ const monitorFile = JSON.parse(await readFile(join(ROOT, 'data', 'aurn-sites.jso
 const nearestTo = (sites, lat, lon) => sites.reduce((a, s) => (kmBetween(lat, lon, s.lat, s.lon) < kmBetween(lat, lon, a.lat, a.lon) ? s : a));
 const airBlock = async () => {
   await page.waitForFunction(() => !document.getElementById('ans-air').hidden, null, { timeout: 10000 }).catch(() => {});
-  return page.locator('#ans-air').evaluate((d) => ({ hidden: d.hidden, text: [...d.querySelectorAll(':scope > p')].map((x) => x.textContent).join(' '), links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]) }));
+  // Since 2026-11-11 the fold says where each instrument stands as a chip and its notes as points; the readings
+  // themselves are the chart and the Nearby tiles (#ans-air-near), so the place and distance are read from there.
+  return page.evaluate(() => {
+    const d = document.getElementById('ans-air');
+    return {
+      hidden: d.hidden,
+      chips: [...d.querySelectorAll('.fold-chips span')].map((x) => x.textContent),
+      notes: [...d.querySelectorAll('.fold-keys li span')].map((x) => x.textContent),
+      near: document.getElementById('ans-air-near').textContent,
+      links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]),
+    };
+  });
 };
 {
   const sensor = nearestTo(sensorFile.sites, 51.476982, -0.285639);
@@ -719,16 +730,19 @@ const airBlock = async () => {
   const sensorKm = kmBetween(51.476982, -0.285639, sensor.lat, sensor.lon);
   const air = await airBlock();
   ok(
-    !air.hidden && sensorKm <= 5 && air.text.startsWith(`Nearest Breathe London sensor: ${sensor.name}, ${sensorKm.toFixed(1)} km away (${sensor.classification.toLowerCase()}`),
-    'Kew names its nearest Breathe London sensor, as worked out independently from the sensor file',
-    `${air.text.slice(0, 160)} | expected ${sensor.name}, ${sensorKm.toFixed(1)} km`
+    !air.hidden && sensorKm <= 5 && air.chips.length === 1
+      && air.chips[0].startsWith(`${sensor.name} sensor: ${sensor.classification.toLowerCase()}, ${Number(sensor.kerbDistanceM.toFixed(1))} m from the kerb`)
+      && air.near.includes(`${sensor.name}, ${sensorKm.toFixed(1)} km`),
+    'Kew names its nearest Breathe London sensor, as worked out independently from the sensor file: where it stands in the fold, how far in Nearby',
+    `${JSON.stringify(air.chips)} ${air.near.slice(0, 120)} | expected ${sensor.name}, ${sensorKm.toFixed(1)} km`
   );
   ok(
-    kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon) > 5 && !air.text.includes('Nearest official monitor'),
+    kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon) > 5 && !air.chips.some((c) => c.includes(' monitor: ')) && !air.near.includes(monitor.name),
     'the nearest official monitor is over 5 km from Kew, so it is not mentioned at all (never "none nearby")',
     `${monitor.name} ${kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon).toFixed(1)} km`
   );
-  ok(/can read higher than DEFRA's background figure/.test(air.text) && /at least 75% of the hours/.test(air.text), 'a roadside sensor carries why it can read above the background, and the capture floor is stated', air.text.slice(-320));
+  ok(air.notes.some((n) => /can read higher than DEFRA's background figure/.test(n)) && air.notes.some((n) => /at least 75% of the hours/.test(n)),
+    'a roadside sensor carries why it can read above the background, and the capture floor is stated, each as its own point', JSON.stringify(air.notes));
   ok(
     air.links.length === 1 && air.links[0][0] === sensorFile.attribution && air.links[0][1] === sensorFile.attributionLink,
     "the reading carries Breathe London's credit word for word, linked to breathelondon.org",
@@ -905,11 +919,11 @@ ok(/Airport\s*Manchester/.test(await page.locator('#ans-routes').textContent()),
   const km = kmBetween(53.3677, -2.2644, monitor.lat, monitor.lon);
   const air = await airBlock();
   ok(
-    !air.hidden && !/Breathe London/.test(air.text) && km <= 5 &&
-      air.text.startsWith(`Nearest official monitor: ${monitor.name}, ${km.toFixed(1)} km away (${monitor.type.toLowerCase()}): `) &&
-      air.text.includes(` in ${monitorFile.year}.`),
+    !air.hidden && !air.chips.some((c) => / sensor: /.test(c)) && !air.notes.some((n) => /Breathe London/.test(n)) && km <= 5 &&
+      JSON.stringify(air.chips) === JSON.stringify([`${monitor.name} monitor: ${monitor.type.toLowerCase()}`]) &&
+      air.near.includes(`${monitor.name}, ${km.toFixed(1)} km`) && air.near.includes(` in ${monitorFile.year}`),
     'a Manchester postcode names its nearest official monitor, and no Breathe London sensor',
-    `${air.text.slice(0, 200)} | expected ${monitor.name}, ${km.toFixed(1)} km`
+    `${JSON.stringify(air.chips)} ${air.near.slice(0, 160)} | expected ${monitor.name}, ${km.toFixed(1)} km`
   );
   ok(air.links.length === 1 && air.links[0][0] === monitorFile.attribution && air.links[0][1] === monitorFile.licence, "the monitor's reading carries UK-AIR's credit word for word, linked to the OGL", JSON.stringify(air.links));
   // Manchester's airport pages have not been verified: no "have your say" line at all, never a guessed link;
@@ -2689,6 +2703,8 @@ const makeReport = async (pc) => {
       classes: ['westerly', 'easterly', 'mixed'], districts: ['SW5', 'TW3', 'TW9'], bar_full: 400,
       definition: 'Overhead means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA\'s definition of an overflight (CAP 1498).',
       direction_rule: 'A day counts as one way when 80% of its flights used that way.',
+      // The builder's POSTCODES_RULE (2026-11-10), as it writes it: the fold sets it as a point, word for word.
+      postcodes_rule: 'PO boxes and other postcodes for organisations that receive a lot of post are left out: they sit at a delivery office or a business, not at homes.',
       airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } },
       credits: ['Flight tracks: adsb.lol (ODbL 1.0)'],
     },
@@ -2710,9 +2726,8 @@ const makeReport = async (pc) => {
   // Option C: the heading leads with the planes only where the full map's planes layer would colour them, and says the
   // band it leaves blank from its first step, read from the layer's index (a gitignored build, so stubbed too, in its
   // written shape: scripts/build_planes_layer.py).
-  const layerRoute = (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-    steps: [{ step: 1, from: 10, to: 49, colour: '#dc8a4a' }, { step: 2, from: 50, to: 99, colour: '#c2622a' }, { step: 3, from: 100, to: 199, colour: '#9a4316' }, { step: 4, from: 200, to: null, colour: '#662809' }],
-  }) });
+  const LAYER_STEPS = [{ step: 1, from: 10, to: 49, colour: '#dc8a4a' }, { step: 2, from: 50, to: 99, colour: '#c2622a' }, { step: 3, from: 100, to: 199, colour: '#9a4316' }, { step: 4, from: 200, to: null, colour: '#662809' }];
+  const layerRoute = (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ steps: LAYER_STEPS }) });
   await ep.route('**/data/planes-layer/index.json', layerRoute);
   // Option C (Bill, 2026-11-07): what moved ABOVE the answer, from the browser's own layout-shift entries, whatever the input:
   // the pill, the heading, the lead, the tabs, the box, the promises. Only the answer may grow, with its status line (the
@@ -2861,23 +2876,48 @@ const makeReport = async (pc) => {
     && JSON.stringify(kew.rows) === JSON.stringify(['310 a dayFlying west56% of days', '168 a dayBoth ways15% of days', '4 a dayFlying east29% of days'])
     && kew.link === '/how-it-works/#planes-overhead',
     'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, as three tiles', JSON.stringify(kew));
-  // The folds say it in pictures: the days as one bar of true shares, the overhead rule as a cone, the air on one scale.
+  // The planes fold, less text (2026-11-11, Bill: "still text heavy"): the chart in the air chart's style, the overhead rule
+  // beside a drawing of it, three points, one sources line. Everything it says is read here from the files, independently.
   await ep.evaluate(() => document.querySelectorAll('.ans-fold').forEach((d) => { d.open = true; }));
+  // What the page was served (the stubs above), so the check compares like with like and needs no gitignored build.
+  const info = PLANES['airports.json'];
+  const layerSteps = LAYER_STEPS;
   const folds = await ep.evaluate(() => {
-    const parts = [...document.querySelectorAll('.planes-days-bar span')];
-    const box = document.querySelector('.planes-days-bar')?.getBoundingClientRect();
+    const n = document.getElementById('ans-planes-notes');
+    const svg = n.querySelector('svg[data-planes-chart]');
+    const words = [...n.querySelectorAll('p, li')].map((x) => x.textContent).join(' ').split(/\s+/).filter(Boolean).length;
     return {
-      shares: parts.map((p) => p.textContent),
-      widths: parts.map((p) => Math.round((p.getBoundingClientRect().width / box.width) * 100)),
-      cone: document.querySelector('.planes-cone')?.getAttribute('aria-label') || '',
-      coneAngle: [...document.querySelectorAll('.planes-cone text')].map((t) => t.textContent),
+      caption: n.querySelector('.planes-fig figcaption')?.textContent,
+      kinds: [...(svg?.querySelectorAll('g[data-kind]') || [])].map((g) => [g.dataset.kind, g.dataset.value, g.querySelectorAll('text')[1]?.textContent, g.querySelector('circle[data-mark]')?.getAttribute('fill')]),
+      bands: [...(svg?.querySelectorAll('rect[data-band]') || [])].map((r) => [Number(r.dataset.band), r.getAttribute('fill')]),
+      max: Number(svg?.dataset.max),
+      cone: n.querySelector('.planes-over .cone-fill')?.getAttribute('d') || '',
+      coneHidden: n.querySelector('.planes-cone')?.getAttribute('aria-hidden'),
+      over: n.querySelector('.planes-over p')?.textContent,
+      points: [...n.querySelectorAll('.fold-keys li span')].map((x) => x.textContent),
+      src: n.querySelector('.fold-src')?.textContent,
+      srcLinks: [...n.querySelectorAll('.fold-src a')].map((a) => a.getAttribute('href')),
+      words,
+      oldBits: n.querySelectorAll('.planes-days, .planes-days-bar').length,
       says: document.querySelectorAll('#ans-say .say-links a').length,
     };
   });
-  ok(JSON.stringify(folds.shares) === JSON.stringify(['56%', '15%', '29%']) && JSON.stringify(folds.widths) === JSON.stringify([56, 15, 29]),
-    'the days bar draws each kind of day at its true share', JSON.stringify(folds));
-  ok(folds.coneAngle.includes('48.5\u00b0') && folds.coneAngle.includes('7,000 ft') && /48\.5 degrees/.test(folds.cone),
-    'the overhead drawing takes its two figures from the definition the page holds', JSON.stringify(folds));
+  const colourFor = (v) => layerSteps.filter((st) => v >= st.from).sort((a, b) => a.from - b.from).at(-1)?.colour;
+  ok(folds.caption === 'Planes overhead a day, from Heathrow'
+    && JSON.stringify(folds.kinds.map((k) => k.slice(0, 3))) === JSON.stringify([['westerly', '310', '56% of days'], ['mixed', '168', '15% of days'], ['easterly', '4', '29% of days']])
+    && folds.kinds.every(([, v, , fill]) => fill === (colourFor(Number(v)) || '#9a9893'))
+    && JSON.stringify(folds.bands) === JSON.stringify(layerSteps.filter((st) => st.from < folds.max).map((st) => [st.from, st.colour]))
+    && folds.max >= 310 && folds.oldBits === 0,
+    "the planes fold charts each kind of day with its share, coloured and banded as the full map's planes layer, from its index.json", JSON.stringify(folds));
+  const [, ax, ay] = /L([\d.]+) ([\d.]+)/.exec(folds.cone) || [];
+  const coneAngle = Math.atan2(62 - Number(ay), 60 - Number(ax)) * 180 / Math.PI;
+  ok(folds.over === info.definition && Math.abs(coneAngle - Number(/([\d.]+) degrees/.exec(info.definition)[1])) < 0.2 && folds.coneHidden === 'true',
+    "the overhead rule sits word for word beside a drawing whose angle is the rule's own", `${folds.over} | ${coneAngle.toFixed(2)}`);
+  ok(JSON.stringify(folds.points) === JSON.stringify([info.direction_rule, "Counted from community flight tracking, checked against the CAA's monthly totals for Heathrow.", info.postcodes_rule]),
+    'the day rule, the CAA check and the PO-box rule are three points, each word for word as How it works says it', JSON.stringify(folds.points));
+  ok(folds.src?.startsWith(info.credits[0]) && JSON.stringify(folds.srcLinks) === JSON.stringify(['/how-it-works/#planes-overhead', '/how-it-works/#credits']),
+    "the flight tracks' credit stays beside the figures (ODbL), every other source one link away", `${folds.src} ${JSON.stringify(folds.srcLinks)}`);
+  ok(folds.words <= 100, 'the planes fold says it in at most 100 words (it ran to about 160)', String(folds.words));
   await ep.waitForTimeout(100);
   const foldCounts = await ep.evaluate(() => window.__gc.slice());
   ok(['planes', 'air', 'say', 'wrong'].every((f) => foldCounts.includes(`event/front-fold-${f}`)) && foldCounts.every((c) => /^event\/front-[a-z-]+$/.test(c)),
@@ -2900,6 +2940,15 @@ const makeReport = async (pc) => {
       .map((v) => v.textContent);
   });
   ok(clipped.length === 0, 'planes overhead: no figure is cut off on a phone, "1 to 316 a day" and "under 1 to 191 a day" included', clipped.join(' | '));
+  // Every fold open on a phone, nothing past the screen (2026-11-11): the folds' sources lines keep short links whole, and a
+  // rule that kept every link whole made the air fold's Breathe London credit, one long sentence, run to 472 px.
+  const wide = await ep.evaluate(() => {
+    document.querySelectorAll('.ans-fold').forEach((d) => { d.open = true; });
+    const w = document.documentElement.clientWidth;
+    return { page: document.documentElement.scrollWidth - w,
+      over: [...document.querySelectorAll('#answer *')].filter((e) => e.getBoundingClientRect().right > w + 1).map((e) => `${e.tagName.toLowerCase()}.${e.getAttribute('class') || ''}`).slice(0, 5) };
+  });
+  ok(wide.page <= 0 && wide.over.length === 0, 'on a phone, with every fold open, nothing in the answer runs past the screen (the long air credit wraps)', JSON.stringify(wide));
   await ep.setViewportSize({ width: 1366, height: 820 });
 
   // THE DEVELOPERS BAND (Bill's pick C, 2026-11-04): on arriving, the request types itself and its answer's figures land as

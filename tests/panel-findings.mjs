@@ -94,6 +94,7 @@ check('no aircraft score says nothing, and zero is a reading', () => {
 // Planes: only ever what the model holds.
 const MODEL = {
   heading: 'Planes overhead', none: null, edge: null, approx: null, other: null, definition: 'Overhead means this.',
+  rules: { overhead: 'Overhead means 48.5 degrees or more.', direction: 'A day counts one way at 80%.', postcodes: 'PO boxes are left out.' },
   counted: 'Counted from tracking.', credits: ['Tracks: adsb.lol'],
   airports: [{ name: 'Heathrow', period: 'January to August 2026', wind: 'The wind decides.', rows: [
     { label: 'Flying west', text: '4 a day', share: '56% of days' }, { label: 'Both ways', text: '3 a day', share: '15% of days' },
@@ -110,12 +111,14 @@ check('a counted postcode with no planes says what the model says', () => {
   assert.equal(f.length, 1);
   assert.match(f[0].detail, /Under 1 a day/);
 });
-check('the notes keep the credits, and leave the caveats on the row', () => {
+check('the notes are the overhead rule and three points, word for word; the caveats stay on the row (2026-11-11)', () => {
   const n = planesNotes({ ...MODEL, edge: 'A range means this.' });
-  assert.equal(n.length, 3);
-  assert.match(n.at(-1), /adsb\.lol/);
-  assert.doesNotMatch(n.join(' '), /A range means this/);
-  assert.deepEqual(planesNotes(null), []);
+  assert.equal(n.over, MODEL.rules.overhead);
+  assert.deepEqual(n.points.map((p) => p.text), [MODEL.rules.direction, MODEL.counted, MODEL.rules.postcodes]);
+  assert.doesNotMatch(JSON.stringify(n), /A range means this|adsb/, 'no caveat, and no credit said twice: the tile names the tracks');
+  assert.deepEqual(planesNotes({ ...MODEL, rules: { overhead: null, direction: 'R.', postcodes: null } }).points.map((p) => p.text), ['R.', MODEL.counted],
+    'a rule the file lacks is left out, never "undefined"');
+  assert.equal(planesNotes(null), null);
 });
 check('a caveat that changes what a figure means stays with the figure', () => {
   const two = { ...MODEL, airports: [MODEL.airports[0], { ...MODEL.airports[0], name: 'Gatwick' }], other: 'Other flying passes over here too.', approx: 'Approximate.', edge: 'A range.' };
@@ -127,13 +130,15 @@ check('a caveat that changes what a figure means stays with the figure', () => {
   assert.deepEqual(none[0].caveats, ['Other flying.']);
 });
 
-check('the notes fold, escaped, with the way to the method', () => {
-  const html = planesNotesHtml({ ...MODEL, how: '/how-it-works/#planes-overhead', definition: 'A <b> c' });
+check('the notes fold, escaped: the rule beside its drawing, the points, the way to the method and to every source', () => {
+  const html = planesNotesHtml({ ...MODEL, how: '/how-it-works/#planes-overhead', rules: { ...MODEL.rules, postcodes: 'A <b> c' } });
   assert.match(html, /^<details/);
   assert.match(html, /About these figures/);
-  assert.match(html, /adsb\.lol/);
-  assert.match(html, /href="\/how-it-works\/#planes-overhead"/);
+  assert.match(html, /<div class="planes-over"><svg [^>]*class="planes-cone"[^>]*aria-hidden="true"/);
+  assert.match(html, /href="\/how-it-works\/#planes-overhead">How it is counted<\/a>/);
+  assert.match(html, /href="\/how-it-works\/#credits">All sources<\/a>/);
   assert.doesNotMatch(html, /<b> c/);
+  assert.match(html, /A &lt;b&gt; c/);
   assert.equal(planesNotesHtml(null), '');
 });
 check('the flight path row, and none when no path is near', () => {
@@ -342,7 +347,10 @@ const planesFile = (figs) => planesModel(
 check("planes: the commonest one-way day on the face, a watch item from the layer's third step, every bar in the layer's colour", () => {
   const [f] = planesFindings(planesFile([318, 2, 188]), { steps: LAYER.map((s, i) => ({ ...s, colour: ['#dc8a4a', '#c2622a', '#9a4316', '#662809'][i] })) });
   assert.deepEqual([f.tile.level, f.tile.sub, f.tile.stand, f.tile.pill], ['318 a day', 'flying west', 'watch', 'Heathrow planes']);
-  assert.deepEqual(f.tile.visual[0].rows.map((r) => r.colour), ['#662809', '#9a4316', null], '318 and 188 in the colours of their steps (data/planes-layer/index.json); 2 is under the first');
+  assert.equal(f.tile.visual[0].kind, 'chart', "the front page's chart, not bars (2026-11-11)");
+  assert.deepEqual([...f.tile.visual[0].svg.matchAll(/data-mark="planes" [^>]*fill="(#[0-9a-f]{6})"/g)].map((m) => m[1]), ['#662809', '#9a4316', '#9a9893'],
+    '318 and 188 in the colours of their steps (data/planes-layer/index.json); 2 is under the first, neutral');
+  assert.match(T.tileHtml(f), /<div class="t-chart"><svg [^>]*data-planes-chart="LHR"/);
   assert.match(f.tile.source, /^Flight tracks: adsb\.lol \(ODbL 1\.0\), January to August 2026$/);
 });
 check('the planes tile names its main source; every other one stays in the fold (Bill, 2026-11-09)', () => {
@@ -351,8 +359,7 @@ check('the planes tile names its main source; every other one stays in the fold 
   const model = { ...planesFile([318, 2, 188]), credits };
   const [f] = planesFindings(model);
   assert.equal(f.tile.source, 'Flight tracks: adsb.lol (ODbL 1.0), January to August 2026. Other sources below');
-  const notes = planesNotes(model).at(-1);
-  for (const c of credits) assert.ok(notes.includes(c), `the fold keeps "${c}"`);
+  assert.match(planesNotesHtml(model), /href="\/how-it-works\/#credits">All sources</, 'every other source is one link away (tests/test_credits_list.py holds the list)');
   const none = planesFindings({ ...model, airports: [], none: 'Fewer than 1 a day.' })[0];
   assert.ok(credits.every((c) => none.tile.source.includes(c)), 'no airport, no fold: every credit stays in sight');
   assert.equal(planesFindings(planesFile([90, 2, 40]), { steps: LAYER })[0].tile.stand, null, 'under the third step: not a watch item');
