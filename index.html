@@ -11251,13 +11251,34 @@
           const outData = await outResp.json();
           if (outData.status === 200 && outData.result) {
             const r = outData.result;
+            // THE COUNCIL AT THE DISTRICT'S CENTRE (audit I-1, 2026-11-12). postcodes.io lists a district's councils in
+            // alphabetical order, so `[0]` gave TW15 Ashford Hounslow's figures (it is Spelthorne's) and called UB8 Uxbridge
+            // "not covered" (Hillingdon's): 36 of 60 city-edge districts. Where it lists more than one, the postcode nearest
+            // the district's centre names the council, from the same service (privacy s4 lists lat/lon for postcodes.io),
+            // and only one of the councils it listed counts. A failed second lookup keeps the old answer, never a failed search.
+            const districts = Array.isArray(r.admin_district) ? r.admin_district.filter(Boolean) : [];
+            let council = districts[0] || 'Unknown';
+            let ward = r.admin_ward?.[0] || r.outcode + ' area';
+            if (districts.length > 1 && Number.isFinite(r.latitude) && Number.isFinite(r.longitude)) {
+              try {
+                const nearResp = await fetch(`https://api.postcodes.io/postcodes?lon=${r.longitude}&lat=${r.latitude}&limit=1&radius=2000`, { signal });
+                const near = await nearResp.json();
+                const hit = near && near.status === 200 && Array.isArray(near.result) ? near.result[0] : null;
+                if (hit && districts.includes(hit.admin_district)) {
+                  council = hit.admin_district;
+                  if (hit.admin_ward) ward = hit.admin_ward;
+                }
+              } catch (e) {
+                if (isAbortError(e) || isTimeoutError(e)) throw e;
+              }
+            }
             return {
               result: {
                 postcode: r.outcode,
                 latitude: r.latitude,
                 longitude: r.longitude,
-                admin_district: r.admin_district?.[0] || 'Unknown',
-                admin_ward: r.admin_ward?.[0] || r.outcode + ' area',
+                admin_district: council,
+                admin_ward: ward,
                 _isOutcode: true,
               },
               failure: null,
@@ -11753,7 +11774,12 @@
           extra.healthcare,
           extra.healthcare === 'excellent' ? 'low' : extra.healthcare === 'good' ? 'medium' : 'high',
           extra.healthcareNote,
-          `SOURCE: ${cityOf(currentCity).healthSource}`
+          // The record's own source, as the air card reads its own (audit I-12, 2026-11-12): every UK record carries
+          // healthcareVintage (the NHS Organisation Data Service) and the share it rates, while the registry's typed label
+          // said "NOT SOURCED" in nine cities. The registry's line stands only where a record names no source (New York).
+          extra.healthcareVintage
+            ? `SHARE OF POSTCODES WITHIN 500 M OF A GP PRACTICE · SOURCE: ${extra.healthcareVintage}`
+            : `SOURCE: ${cityOf(currentCity).healthSource}`
         );
 
         // A borough with none of these gets no section at all, rather than an
@@ -13918,10 +13944,15 @@
         const s = data.score;
         const q = data.scores?.quiet ?? 5;
         const a = data.scores?.afford ?? 5;
+        // Growth is said only from the GROWTH score, and only where there is one (audit I-2, 2026-11-12): the clauses below
+        // read the affordability score, so 19 councils scoring under 5 on growth were told "and strong growth" (Redcar and
+        // Cleveland 3.2, prices down 3%). The Bay Area has no growth score at all: it says nothing of growth.
+        const g = data.scores?.growth;
+        const growthAt = (n) => typeof g === 'number' && Number.isFinite(g) && g >= n;
         if (s >= 7.5) {
           if (q < 5)
-            return `<strong>Great value despite noise.</strong> ${data.name} scores highly on affordability${a >= 7 ? ' and growth' : ''}, but aircraft noise is significant. Visit before committing.`;
-          return `<strong>Excellent pick.</strong> ${data.name} combines quiet skies with affordable prices${a >= 7 ? ' and strong growth' : ''}.`;
+            return `<strong>Great value despite noise.</strong> ${data.name} scores highly on affordability${growthAt(7) ? ' and growth' : ''}, but aircraft noise is significant. Visit before committing.`;
+          return `<strong>Excellent pick.</strong> ${data.name} combines quiet skies with affordable prices${growthAt(7) ? ' and strong growth' : ''}.`;
         }
         if (s >= 6) {
           if (q >= 7 && a < 5)
@@ -13930,7 +13961,7 @@
             return `<strong>Affordable but noisy.</strong> ${data.name} has competitive prices, but aircraft noise is a real factor. Visit before committing.`;
           if (q < 5)
             return `<strong>Noisy area.</strong> Aircraft noise is significant in ${data.name}. Check the noise overlay and visit at peak times before buying.`;
-          return `<strong>Solid option.</strong> ${data.name} offers a reasonable balance of quiet skies, affordability, and growth.`;
+          return `<strong>Solid option.</strong> ${data.name} offers a reasonable balance of quiet skies${growthAt(5) ? ', affordability, and growth' : ' and affordability'}.`;
         }
         if (s >= 4) {
           if (q < 3)

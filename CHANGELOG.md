@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-12 (evening) - Four corrections from the audit
+
+- **A postcode district search finds the right council**: searching a district that spans two councils, such as TW15 Ashford, used the first council in alphabetical order, so Ashford was shown Hounslow's figures and Uxbridge (UB8) was called not covered. It now takes the council at the district's centre.
+- **The full map's summary no longer promises growth it has not checked**: "and strong growth" was said from the affordability score, so 19 council areas with weak price growth were told otherwise. It now reads the growth score.
+- **The planes pages name a district's councils from its homes**: the counts already left out PO boxes, but the list of councils did not, so SW1P was listed under Wandsworth through a mail centre's post boxes. Four council pages lose a link that came only from PO boxes.
+- **The Healthcare card says where its rating comes from**: it read "not sourced" in nine city regions, though every rating comes from the NHS register of GP practices. It now says so.
+
 ## 2026-11-12 (afternoon) - The street report, three pages, the answer first
 
 - **Page 1 is the answer**: the one-line answer, then a card for each topic (aircraft noise, planes overhead, road noise, air) saying in a word whether it is worth a look, good here or there for context, with the figure, a next step and the page its detail is on. Then the key figures, the map and a box saying when the report was made, how current each source is, and how to check it.

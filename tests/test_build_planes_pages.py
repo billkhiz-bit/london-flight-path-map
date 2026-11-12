@@ -58,6 +58,30 @@ def _ctx(n):
     return {'lads': Counter({'E09000027': n}), 'city': 'london', 'at': (0.0, 0.0)}
 
 
+def test_a_districts_councils_come_from_the_postcodes_its_figures_count(tmp_path):
+    """Audit I-3 (2026-11-12): PO boxes are left out of the figures (rule A), so they must not name a district's councils
+    either. SW1P listed Wandsworth through the Nine Elms mail centre's boxes; every postcode its figures count is
+    Westminster's. The large users move the district's centre too, so `at` is taken from homes only."""
+    np = pytest.importorskip('numpy')
+    homes = [f'SW1P {k}AA' for k in range(1, 5)]
+    boxes = [f'SW1P {k}XX' for k in range(1, 4)]
+    path = tmp_path / 'averages.npz'
+    np.savez(path, postcode=np.array(homes + boxes), lad=np.array(['E09000033'] * 4 + ['E09000032'] * 3),
+             city=np.array(['london'] * 7), easting=np.array([100.0] * 4 + [900.0] * 3), northing=np.array([0.0] * 7))
+    plain = bpp.district_context(path)
+    assert set(plain['SW1P']['lads']) == {'E09000033', 'E09000032'}, 'without the rule, the boxes name Wandsworth'
+    ruled = bpp.district_context(path, skip=frozenset(boxes))
+    assert dict(ruled['SW1P']['lads']) == {'E09000033': 4}, 'with it, only the councils of counted postcodes'
+    assert ruled['SW1P']['at'] == (100.0, 0.0), "the district's centre is its homes'"
+
+
+def test_the_build_reads_the_large_users_from_nspl():
+    """inputs() passes rule A's own list (adsb_postcode_averages.large_users), never a copy of it."""
+    src = (REPO / 'scripts' / 'build_planes_pages.py').read_text(encoding='utf-8')
+    body = src[src.index('def inputs('):src.index('MANIFEST = ')]
+    assert 'skip=pa.large_users(' in body and 'import adsb_postcode_averages as pa' in body
+
+
 # ----------------------------------------------------------------- the reading (option C)
 
 def test_a_sector_is_counted_in_bands():

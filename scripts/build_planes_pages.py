@@ -331,13 +331,20 @@ def read_planes(planes: Path = PLANES):
     return meta, files
 
 
-def district_context(path: Path = AVERAGES) -> dict:
-    """{district: {'lads': Counter, 'city': str, 'at': (easting, northing)}}: councils and positions, no figures."""
+def district_context(path: Path = AVERAGES, skip: frozenset = frozenset()) -> dict:
+    """{district: {'lads': Counter, 'city': str, 'at': (easting, northing)}}: councils and positions, no figures.
+
+    `skip` is NSPL's large users (rule A, adsb_postcode_averages.large_users()): a district's councils are counted from
+    the postcodes its figures count, never from PO boxes (audit I-3, 2026-11-12: Wandsworth's consultation pack listed
+    SW1P through the Nine Elms mail centre's 280 boxes, though all 422 measured postcodes are Westminster's; 43 district
+    pages named a council only through left-out boxes)."""
     with np.load(path, allow_pickle=False) as z:
         pcs, lads, cities = z['postcode'], z['lad'], z['city']
         east, north = z['easting'].astype(float), z['northing'].astype(float)
     by, sums = {}, {}
     for k, pc in enumerate(pcs):
+        if str(pc).strip().upper() in skip:
+            continue
         d = str(pc).split()[0]
         c = by.setdefault(d, {'lads': Counter(), 'cities': Counter()})
         c['lads'][str(lads[k])] += 1
@@ -1314,7 +1321,8 @@ def missing_inputs(root: Path = REPO) -> list[str]:
 def inputs(root: Path = REPO):
     """Everything a build reads that is not tracked; `root` is another clone with --inputs-from (read only)."""
     meta, files = read_planes(root / 'data' / 'planes')
-    ctx = district_context(root / 'data' / 'adsb' / 'postcode-averages.npz')
+    import adsb_postcode_averages as pa  # rule A's one holder of the large-user list  # pylint: disable=import-outside-toplevel
+    ctx = district_context(root / 'data' / 'adsb' / 'postcode-averages.npz', skip=pa.large_users(root / 'data' / 'nspl.csv'))
     return meta, files, ctx, district_totals(files, root / 'data' / 'nspl.csv'), airport_names(), kinds()
 
 

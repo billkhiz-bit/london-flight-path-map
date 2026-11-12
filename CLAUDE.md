@@ -151,6 +151,10 @@ Or just describe what you need, I have full context of this project.
 - **Sample a postcode at NSPL's `east1m`/`north1m`** (`scripts/postcode_grid.py grid_ref()`), never a
   re-projection; BT postcodes are Irish Grid. Loaders UPSERT, so a re-placing needs
   `remove_lost_readings.py --apply`.
+- **A district search takes the council at the district's centre** (audit I-1, 2026-11-12): postcodes.io lists a district's
+  councils alphabetically, so `[0]` is never the answer; `lookupPostcode()` asks for the postcode nearest the centre and takes
+  its council if the district lists it. **The planes pages count a district's councils without the large users too** (I-3:
+  `district_context(skip=large_users())`; SW1P had listed Wandsworth through Nine Elms' PO boxes).
 - **Planes figures leave out NSPL's large users** (`usrtypind` 1: PO boxes, bulk mail; Bill's rule A, 2026-11-10): they sit
   at a delivery office, so SW1P read 307 a day from post boxes where its homes read 44. `build_planes_overhead.build(..., skip=)`
   is REQUIRED (`adsb_postcode_averages.large_users()`); a district page's `live` leaves them out and says how many; every

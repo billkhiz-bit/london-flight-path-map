@@ -425,4 +425,89 @@ check('every tile escapes what it is given', () => {
   assert.equal(T.tileHtml(null), '');
 });
 
+// The map's verdict line (audit I-2, 2026-11-12): growth is said only from the GROWTH score. getVerdict() is lifted from
+// index.html and run on its own, so the words tested are the words served; its claims read affordability until that day.
+{
+  const src = INDEX.match(/\r?\n( *)function getVerdict\(data\) \{[\s\S]*?\r?\n\1\}\r?\n/); // CRLF in a Windows checkout
+  assert.ok(src, 'getVerdict() found in index.html');
+  const getVerdict = new Function(`${src[0]}; return getVerdict;`)();
+  const say = (scores, score) => getVerdict({ name: 'Here', score, scores });
+  check('"strong growth" only with a strong growth score, never from affordability', () => {
+    assert.doesNotMatch(say({ quiet: 8, afford: 9, growth: 3.2 }, 8), /growth/);
+    assert.match(say({ quiet: 8, afford: 9, growth: 7.4 }, 8), /and strong growth/);
+    assert.doesNotMatch(say({ quiet: 8, afford: 9 }, 8), /growth/, 'no growth score (the Bay Area): nothing said of growth');
+  });
+  check('"scores highly on affordability and growth" only with a high growth score', () => {
+    assert.doesNotMatch(say({ quiet: 3, afford: 9, growth: 4 }, 8), /and growth/);
+    assert.match(say({ quiet: 3, afford: 9, growth: 8 }, 8), /affordability and growth/);
+  });
+  check('"a balance of ... growth" only with a middling growth score or better', () => {
+    assert.match(say({ quiet: 6, afford: 6, growth: 2 }, 6.5), /balance of quiet skies and affordability\./);
+    assert.match(say({ quiet: 6, afford: 6, growth: 5.5 }, 6.5), /quiet skies, affordability, and growth\./);
+    assert.match(say({ quiet: 6, afford: 6 }, 6.5), /balance of quiet skies and affordability\./);
+  });
+}
+
+// The full map's district search (audit I-1, 2026-11-12): the council at the district's centre, never postcodes.io's
+// alphabetical first. lookupPostcode() is lifted from index.html and run with a stand-in fetch holding the live answers of
+// 12 Nov (TW15: Hounslow, Spelthorne; its centre's nearest postcode, TW15 2NT, is Spelthorne's).
+{
+  const src = INDEX.match(/\r?\n( *)async function lookupPostcode\(postcode, search\) \{[\s\S]*?\r?\n\1\}\r?\n/);
+  assert.ok(src, 'lookupPostcode() found in index.html');
+  const make = (answers) => {
+    const asked = [];
+    const fetch = async (url) => {
+      asked.push(url);
+      const hit = answers.find(([pattern]) => pattern.test(url));
+      if (!hit) throw new TypeError('network');
+      return { json: async () => hit[1] };
+    };
+    const fn = new Function('fetch', 'POSTCODE_SHAPE', 'searchSignal', 'SEARCH_TIMEOUT_MS', 'isAbortError', 'isTimeoutError',
+      `${src[0]}; return lookupPostcode;`)(fetch, /^[A-Z]{1,2}\d[A-Z\d]?(\d[A-Z]{2})?$/, () => undefined, 1, (e) => e && e.name === 'AbortError', (e) => e && e.name === 'TimeoutError');
+    return { fn, asked };
+  };
+  const NOT_FULL = [/\/postcodes\/TW15$/, { status: 404 }];
+  const TW15 = [/\/outcodes\/TW15$/, { status: 200, result: { outcode: 'TW15', latitude: 51.43, longitude: -0.46, admin_district: ['Hounslow', 'Spelthorne'], admin_ward: ['Ashford East', 'Feltham North'] } }];
+  const NEAR = [/\/postcodes\?lon=/, { status: 200, result: [{ postcode: 'TW15 2NT', admin_district: 'Spelthorne', admin_ward: 'Ashford Town' }] }];
+  // A district spanning councils takes the council at its centre (top-level await: check() runs synchronously).
+  const { fn, asked } = make([NOT_FULL, TW15, NEAR]);
+  const got = await fn('TW15');
+  assert.equal(got.result.admin_district, 'Spelthorne', 'TW15 is Spelthorne\'s, never the alphabetical Hounslow');
+  assert.equal(got.result.admin_ward, 'Ashford Town');
+  assert.ok(asked.some((u) => /\/postcodes\?lon=-0\.46&lat=51\.43/.test(u)), 'asked for the postcode nearest the centre');
+  // A nearest postcode in a council the district does not list (over a boundary) is not taken.
+  const off = await make([NOT_FULL, TW15, [/\/postcodes\?lon=/, { status: 200, result: [{ admin_district: 'Runnymede' }] }]]).fn('TW15');
+  assert.equal(off.result.admin_district, 'Hounslow', 'only a council the district lists counts');
+  // The second lookup failing keeps the search working, on the old answer.
+  const failed = await make([NOT_FULL, TW15]).fn('TW15');
+  assert.ok(failed.result && failed.failure === null, 'a failed centre lookup never fails the search');
+  // One council: no second request.
+  const one = make([[/\/postcodes\/SW5$/, { status: 404 }], [/\/outcodes\/SW5$/, { status: 200, result: { outcode: 'SW5', latitude: 51.49, longitude: -0.19, admin_district: ['Kensington and Chelsea'], admin_ward: ['Earl\'s Court'] } }]]);
+  assert.equal((await one.fn('SW5')).result.admin_district, 'Kensington and Chelsea');
+  assert.ok(!one.asked.some((u) => /\?lon=/.test(u)), 'a district in one council asks nothing more');
+  passed += 4; // centre taken, a listed council only, failure kept working, one council asks nothing more
+}
+
+// The Healthcare card names the record's own source (audit I-12, 2026-11-12): it printed the registry's "NOT SOURCED" in
+// nine UK cities while every record named the NHS Organisation Data Service. Both halves held: the data, and the card.
+check('every rated UK healthcare record names its source, and the card reads it', () => {
+  const extra = JSON.parse(readFileSync(new URL('../data/borough-extra.json', import.meta.url), 'utf8'));
+  const missing = Object.entries(extra).filter(([city]) => city !== 'nyc').flatMap(([city, block]) =>
+    Object.entries(block || {}).filter(([, r]) => r && typeof r === 'object' && r.healthcare && !r.healthcareVintage).map(([name]) => `${city}/${name}`));
+  assert.deepEqual(missing, [], 'a UK record rated for healthcare without its source');
+  // The card as drawn: buildOptionalSections() lifted from index.html and run on real records (a text match on the source
+  // passed with the line broken, 2026-11-12).
+  const src = INDEX.match(/\r?\n( *)function buildOptionalSections\(extra, sectionId\) \{[\s\S]*?\r?\n\1\}\r?\n/);
+  assert.ok(src, 'buildOptionalSections() found in index.html');
+  const REGISTRY = { westmidlands: 'NHS TRUST DATA (NOT SOURCED)', nyc: 'NYC HEALTH+HOSPITALS DATA (CURATED)' };
+  const build = (city) => new Function('metricColor', 'ratingBadgeClass', 'cityOf', 'currentCity', `${src[0]}; return buildOptionalSections;`)(
+    () => '#000', () => '', (c) => ({ healthSource: REGISTRY[c] }), city);
+  const healthLine = (html) => (html.match(/id="[^"]*-nhs">[\s\S]*?<div class="defra-badge"[^>]*>([^<]*)<\/div>/) || [])[1] || '';
+  const brum = Object.values(extra.westmidlands).find((r) => r && r.healthcare);
+  const line = healthLine(build('westmidlands')(brum, 'test'));
+  assert.ok(/NHS Organisation Data Service/.test(line) && !/NOT SOURCED/.test(line), `a West Midlands card names the NHS register: ${line}`);
+  const nyc = Object.values(extra.nyc).find((r) => r && r.healthcare);
+  assert.equal(healthLine(build('nyc')(nyc, 'test')), 'SOURCE: NYC HEALTH+HOSPITALS DATA (CURATED)', 'New York, with no source of its own, keeps its line');
+});
+
 console.log(`PASS ${passed} of ${passed}`);

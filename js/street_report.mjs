@@ -895,6 +895,7 @@ export function reportParts(spec, f) {
   table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
   th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: top; }
   th { font-weight: 600; color: var(--muted); font-size: 9.5pt; }
+  td:nth-child(4) { white-space: nowrap; } /* the height: "about 1,800 ft" wrapped to two lines at 10.5 pt (2026-11-12) */
   .cols { display: grid; grid-template-columns: ${planesBlock && district ? '300pt 1fr' : '1fr'}; gap: 16px; align-items: start; }
   .planes svg { max-width: 300pt; } .planes .from { font-size: 10.5pt; font-weight: 600; margin: 6px 0 0; } .district svg { max-width: 300pt; }
   ul { margin: 0; padding-left: 17px; } li { margin: 3px 0; }
