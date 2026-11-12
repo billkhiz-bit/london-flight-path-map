@@ -11,6 +11,7 @@ import { plane, routesNear } from '/js/flight_geometry.mjs';
 import {
   DEFRA_LDEN_SCALE,
   SCOPE_KM,
+  checkLink,
   districtComparison,
   mapSvg,
   nearestMonitor,
@@ -18,6 +19,7 @@ import {
   nearestStation,
   rasterFor,
   reportDocument,
+  reportReference,
 } from '/js/street_report.mjs';
 // MIT, Kazuhiko Arase; vendored unmodified, version in the name (LICENSING.md, code shipped to browsers).
 import { districtOf, planesModel } from '/js/planes.mjs';
@@ -36,31 +38,11 @@ const sheet = byId('sheet');
 // Every free copy carries a watermark, a reference and a link (with a QR code) that reopens the
 // genuine figures. The reference is a hash of the figures the copy states, the postcode and the day
 // it was made, so anyone handed a screenshot can check it in seconds. Nothing is stored: the check
-// re-makes the report from today's official data and recomputes the hash with the original date.
-const SITE = 'https://skyscore.co.uk';
-const STATED = [
-  'aircraftQuiet',
-  'aircraftQuietEstimated',
-  'aircraftNoiseLdenDb',
-  'roadNoiseLdenDb',
-  'roadNoiseBelowDb',
-  'no2AnnualMeanUgm3',
-  'pm25AnnualMeanUgm3',
-];
-const REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I to misread
+// re-makes the report from today's official data and recomputes the hash with the original date. The reference and the
+// check link live in js/street_report.mjs since 2026-11-12, unchanged, so the printed report states the same reference.
 const MADE = /^\d{4}-\d{2}-\d{2}$/;
 const REF = /^[A-HJ-NP-Z2-9]{4}-?[A-HJ-NP-Z2-9]{4}$/;
-
-/** The reference for a copy: 8 characters of a SHA-256 over what the copy states. */
-export async function reportReference(postcode, made, airac, env) {
-  const text = JSON.stringify([postcode, made, airac ?? null, ...STATED.map((k) => (typeof env[k] === 'number' ? env[k] : null))]);
-  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
-  let out = '';
-  for (let i = 0; i < 8; i++) out += REF_ALPHABET[d[i] & 31];
-  return `${out.slice(0, 4)}-${out.slice(4)}`;
-}
-const checkLink = (postcode, made, ref) =>
-  `${SITE}/reports/street/?postcode=${encodeURIComponent(postcode)}&made=${made}&ref=${ref.replace('-', '')}`;
+export { reportReference };
 const longDate = (iso) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
@@ -190,8 +172,10 @@ async function make(raw, check = null) {
     // out BEFORE the report, which prints it as "Prepared", so the two can never disagree
     // (audit 2026-10-09 M-6: the report read the local clock, this the UTC one).
     const made = new Date().toISOString().slice(0, 10);
+    // Worked out before the report too, which states it in its details (the check block below says it again, with the link).
+    const ref = await reportReference(loc.postcode, made, proc.airac, env);
     const html = reportDocument(
-      { postcode: loc.postcode, made },
+      { postcode: loc.postcode, made, ref },
       {
         postcode: loc.postcode,
         council: loc.admin_district,
@@ -220,7 +204,6 @@ async function make(raw, check = null) {
       },
       '/fonts/geist.woff2'
     );
-    const ref = await reportReference(loc.postcode, made, proc.airac, env);
     const link = checkLink(loc.postcode, made, ref);
 
     sheet.srcdoc = html;
@@ -245,8 +228,8 @@ async function make(raw, check = null) {
         // crispEdges: no anti-aliasing, so each module edge lands on a device pixel (see below).
         '.free-copy-check svg { flex: 0 0 auto; shape-rendering: crispEdges; }' +
         '.free-copy-check p { margin: 0; }' +
-        // On screen there is no page to break: page 2 (the air, the links, the notes) opens under a rule instead.
-        '@media screen { .page2 { margin-top: 18px; padding-top: 2px; border-top: 2px solid var(--rule); } }' +
+        // On screen there is no page to break: pages 2 and 3 each open under a rule instead.
+        '@media screen { .page + .page { margin-top: 18px; padding-top: 10px; border-top: 2px solid var(--rule); } }' +
         // REFLOW ON A NARROW SCREEN (audit 2026-10-09 I-6, WCAG 1.4.10). The frame is fluid below
         // A4 width, and under 600 px the report reads top to bottom: two tiles a row, one column,
         // the routes table as a list whose lines carry their column's heading (set below), larger
@@ -254,7 +237,7 @@ async function make(raw, check = null) {
         // that needs two dimensions, and at the frame's width its labels were a few pixels high.
         '@media screen and (max-width: 600px) {' +
         ' body { padding: 16px 14px; font-size: 11pt; } h1 { font-size: 16pt; }' +
-        ' .keys { grid-template-columns: 1fr 1fr; } .cols { grid-template-columns: 1fr; }' +
+        ' .keys { grid-template-columns: 1fr 1fr; } .cols, .cards { grid-template-columns: 1fr; }' +
         ' table, tbody, tr, td { display: block; } thead { display: none; }' +
         ' tr { padding: 7px 0; border-bottom: 1px solid var(--rule); } td { border: 0; padding: 1px 0; }' +
         ' td:first-child { font-weight: 600; }' +

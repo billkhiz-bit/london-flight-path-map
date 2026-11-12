@@ -35,7 +35,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > councils from PO boxes, I-21 "2% below 2019" (annual against summer; the Leicester fact-check), I-8/I-9 `/nhs` (SAM, Bill's word).
 > N65 reviewed the same day (branch `n65`): the Doc 29 core is sound, the gate is wired to nothing; Bill said yes to the five
 > method rules (12 Nov), so next is the "freeze and wire" session (no download).
-> **Report build COMMITTED `08ec87c6`** (pushed; not deployed). Then, Bill's yes: I-21 the "2% below 2019" wording and I-8/I-9
+> **LIVE 12 Nov:** the two-page report (`08ec87c6`) and the "2%"/`/nhs` fixes (`63820a53`): web, home and meta deployed, the SAM
+> changeset (NhsFunction code only) executed, drift PASS, Paris now 400 in 0.5 s. **THREE-PAGE REPORT BUILT** (Bill's "go with
+> recommended and deploy"): `glanceCards()` (one verdict rule), three fixed pages, bigger text, the reference on every page;
+> eight postcodes print three pages, nothing under 8 pt. Then preflight, commit, deploy.
+> **Report build COMMITTED `08ec87c6`** (pushed; deployed later the same day). Then, Bill's yes: I-21 the "2% below 2019" wording and I-8/I-9
 > the `/nhs` fixes, built and tested (red on the old code); after their preflight and commit, the web deploy and the SAM
 > changeset wait on his word.
 >

@@ -1,6 +1,7 @@
 /**
- * Aircraft-noise report for ONE postcode, as a two-page PDF (one page until 2026-11-11, when Bill picked C: page 1
- * the noise, with the site's planes chart and road bars; page 2 the air, the links and the notes, in bigger type).
+ * Aircraft-noise report for ONE postcode, as a three-page PDF, the answer first (Bill's pick 2026-11-11 v2, built
+ * 2026-11-12): page 1 the cards, key figures, map and details; page 2 the aircraft and road detail; page 3 the air and the
+ * notes, in bigger type. One page until 2026-11-11, two (Bill's pick C) for a day. A fourth page is refused.
  *
  *   node scripts/address_noise_report.mjs --postcode "TW9 3PZ" --place "Kew" \
  *     --sample --out ~/OneDrive/Desktop/aircraft-noise-report.pdf
@@ -52,6 +53,7 @@ import {
   LONDON_RASTER,
   ROUTE_RADIUS_KM,
   SCOPE_KM,
+  checkLink,
   districtComparison,
   mapSvg,
   nearestMonitor,
@@ -59,6 +61,7 @@ import {
   nearestStation,
   rasterFor,
   reportDocument,
+  reportReference,
 } from '../js/street_report.mjs';
 import { districtOf, planesModel } from '../js/planes.mjs';
 
@@ -183,8 +186,12 @@ const planesFile = resolve(`data/planes/${districtOf(loc.postcode)}.json`);
 const planesHere = existsSync(planesFile) ? planesModel(await readJson(planesFile), planesInfo, loc.postcode) : null;
 const layerSteps = (await readJson('data/planes-layer/index.json')).steps || [];
 
+// THE REFERENCE AND CHECK LINK the free copy carries (js/street_report.mjs, one holder), for the day in UTC as the free
+// copy takes it, so a firm's copy can be checked at /reports/street/ exactly as a resident's can (2026-11-12).
+const made = new Date().toISOString().slice(0, 10);
+const ref = await reportReference(loc.postcode, made, proc.airac, env);
 const html = reportDocument(
-  spec,
+  { ...spec, made, ref, check: checkLink(loc.postcode, made, ref) },
   {
     postcode: loc.postcode,
     council: loc.admin_district,
@@ -227,18 +234,21 @@ try {
   await pg.goto(pathToFileURL(htmlPath).href, { waitUntil: 'load' });
   const tmp = spec.out.replace(/\.pdf$/i, '.NEW.pdf');
   const pdf = await pg.pdf({ path: tmp, format: 'A4', printBackground: true, preferCSSPageSize: true, tagged: true });
-  // It is sold as two pages at most (Bill's pick C, 2026-11-11): the sections flow, each kept whole, so a busy postcode
-  // moves one to page 2 by itself. Count the page objects rather than trusting the layout.
+  // It is sold as three fixed pages (Bill's pick, 2026-11-11 v2; built 2026-11-12): the answer, the noise detail, the air
+  // and the notes. Count the page objects rather than trusting the layout. A fourth page is REFUSED: the new file is
+  // removed and the last good one left where it was (audit M-8, 2026-11-12: it used to be written over it, then exit 1).
   const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
-  if (pages > 2) {
-    console.error(`the report ran to ${pages} pages, not 2 - fit it before sending`);
+  if (pages > 3) {
+    console.error(`the report ran to ${pages} pages, not 3 - fit it before sending; ${spec.out} was left as it was`);
     process.exitCode = 1;
-  }
-  try {
-    await rename(tmp, spec.out);
-  } catch (e) {
-    console.error(`Could not replace ${spec.out} - close it in any PDF viewer and re-run. (${e.code})`);
-    process.exitCode = 1;
+    await unlink(tmp).catch(() => {});
+  } else {
+    try {
+      await rename(tmp, spec.out);
+    } catch (e) {
+      console.error(`Could not replace ${spec.out} - close it in any PDF viewer and re-run. (${e.code})`);
+      process.exitCode = 1;
+    }
   }
 } finally {
   await browser.close();

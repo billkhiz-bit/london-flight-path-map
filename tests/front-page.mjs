@@ -1930,10 +1930,14 @@ const makeReport = async (pc) => {
     // Read INSIDE the frame: hiding the page's #result hides the frame too, so a
     // visibility check would pass with the frame's own rule gone (tried 2026-10-06).
     // The frame's rule is what covers printing the frame alone ("Print Frame").
+    // The frame's OWN rule, read on the body child that holds the heading (2026-11-12): since the three-page build the h1
+    // sits inside a page section, which the rule hides, so the h1 keeps `display: block`. Whether it is DRAWN cannot be the
+    // test: the page's rule hides the whole frame, so "not drawn" held with the frame's rule removed (tried 2026-11-12).
     frameHeading: await page.evaluate(() => {
       const d = document.getElementById('sheet').contentDocument;
       const h1 = d?.querySelector('h1');
-      return !h1 || d.defaultView.getComputedStyle(h1).display !== 'none';
+      const top = h1 && [...d.body.children].find((el) => el.contains(h1));
+      return !h1 || !top || d.defaultView.getComputedStyle(top).display !== 'none';
     }),
   };
   await page.emulateMedia({ media: 'screen' });
@@ -2009,6 +2013,20 @@ const makeReport = async (pc) => {
     return { frame: f.clientHeight, checkBottom: Math.ceil(box.bottom) };
   });
   ok(clip.checkBottom <= clip.frame, 'the whole report shows in its frame, the check block included, once the fonts have arrived', JSON.stringify(clip));
+  // THE THREE-PAGE BUILD (2026-11-12): the free copy is the same three sections as the printed report, and its details box
+  // states the reference its check block gives (one holder, js/street_report.mjs reportReference).
+  const three = ready
+    ? await page.evaluate(() => {
+        const d = document.getElementById('sheet').contentDocument;
+        return {
+          pages: d.querySelectorAll('section.page').length,
+          cards: d.querySelectorAll('.cards .card').length,
+          detailsRef: (d.querySelector('.details')?.textContent.match(/reference ([A-Z2-9]{4}-[A-Z2-9]{4})/) || [])[1] || '',
+        };
+      })
+    : {};
+  ok(three.pages === 3 && three.cards >= 3 && three.detailsRef && three.detailsRef === free.ref,
+    'the free copy is the three-page report, with its cards, and its details state the same reference as its check block', JSON.stringify({ ...three, checkRef: free.ref }));
   ok(
     free.marks === 1 && free.line.startsWith('Personal use only · TW9 3PZ · ') && free.hidden === 'true' && free.events === 'none',
     'the free copy is watermarked with its postcode and date, out of the way of screen readers and the pointer',

@@ -57,8 +57,8 @@ None.
 | M-4 | A free copy's reference hash leaves out the planes figures, so after a planes roll the check says "matches" while the figures differ. | `js/street_report_page.mjs` | Correctness | Open |
 | M-5 | The report's `aria-label` now sits on a footer inside a section, which is no longer a landmark. | `js/street_report.mjs` | Accessibility | Open |
 | M-6 | "Nothing under 8 pt" has no check; four chart labels sit within 0.25 pt of the floor. | `scripts/address_noise_report.mjs` | Gate | Open |
-| M-7 | 5,722 postcodes have three counted airports, and none has been printed to check the two-page fit. | `js/street_report.mjs` | Test coverage | Open |
-| M-8 | An over-long PDF is still written over the previous file: the script exits 1 rather than refusing before it writes. | `scripts/address_noise_report.mjs` | Correctness | Open |
+| M-7 | 5,722 postcodes have three counted airports, and none has been printed to check the two-page fit. | `js/street_report.mjs` | Test coverage | **Fixed 12 Nov**: N3 1JN (Heathrow, Luton, Stansted) printed in the three-page build, 3 pages, nothing under 8 pt; now on the check list |
+| M-8 | An over-long PDF is still written over the previous file: the script exits 1 rather than refusing before it writes. | `scripts/address_noise_report.mjs` | Correctness | **Fixed 12 Nov**: a fourth page removes the new file and leaves the last good one (seen working on TW6 2GA before its fit) |
 | M-9 | The search guide's orange border is 2.6:1 against the panel, under WCAG 1.4.11's 3:1. | `index.html` (`.search-box.guide`) | Accessibility | Open |
 | M-10 | A line meant to be guarded by the `try` for an older cached module sits outside it. | `index.html:12119` | Correctness | Open |
 | M-11 | `/v1/signup` answers 500 for a body that is not a JSON object or has a non-string field (9 bodies tested); `DELETE /favourites` gives 503 for a postcode over 1,024 bytes. Either lets anyone write 5xx lines and trip the 5xx alarm. | `backend/lambdas/signup/app.py:406-418`; `backend/lambdas/favourites/app.py:271-281` | Robustness | Open |

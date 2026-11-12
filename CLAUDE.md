@@ -299,13 +299,21 @@ Or just describe what you need, I have full context of this project.
   planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
-- **The street report is two pages, drawn as the site draws it** (Bill's pick C with the small print bigger, 2026-11-11;
-  mock-up claude.ai/artifact/1HZDc4VDRGxVUL791DMewp v5): the headline is `answerLead()`, the planes `planesChart()` (busiest
-  airport first, the overhead rule once), the road `roadFinding()` + `pictureHtml()` (the postcode against the WHO; the council's
-  rating stays on the map), the air the map's charts and key (`airSquare`, `airModelOf`, `airRows`, `sensorKeyNote`, moved from
-  index.html into js/street_report.mjs: one holder). "What this shows" keeps only what no tile says. Sections flow, each whole;
-  `address_noise_report.mjs` refuses a third page. Notes 10 pt, captions 9, sources 8, and NO text under 8 pt, chart labels
-  included (pdfium reports CSS px: x0.75 for pt). Check a layout change on SW1P 3JA and E16 2PX (two airports), TW6 2GA (16 routes).
+- **The street report is THREE FIXED PAGES, the answer first, drawn as the site draws it** (Bill's pick 2026-11-11 v2
+  claude.ai/artifact/1GAXwXEyNJBxVJCtG1hx38, v3 claude.ai/artifact/PETRJg3HpWznos2MV8TLuL, built 2026-11-12): page 1 the headline
+  (`answerLead()`), four cards, the key figures, the map and a details box (reference, how current, check link); page 2 the routes,
+  the planes `planesChart()` (busiest airport first, the overhead rule once), the district chart, the road `roadFinding()` +
+  `pictureHtml()` (the postcode against the WHO; the council's rating stays on the map) and "Have your say"; page 3 the air (the
+  map's charts and key, `airSquare`/`airModelOf`/`airRows`/`sensorKeyNote` in js/street_report.mjs: one holder), the station, the
+  reading notes and the sources. **The cards' verdict has ONE rule, `glanceCards()`**: a postcode's own figure against its WHO
+  guideline (road; aircraft where DEFRA gives one), the planes from the map's watch step, air and estimates "For context", never
+  aircraft "Good here" beside a planes watch; a card can differ from a map pill (the map bands aircraft noise and rates road by
+  council). "What this shows" is GONE: its lines sit under the key figures (why no DEFRA figure) and the routes table (beside a
+  runway). The reference (`reportReference`, `checkLink`) moved here from the free copy, unchanged: a test pins TW9 3PZ's live
+  HCH7-V2UJ. Every printed page carries the reference and "Page x of 3" (@page margin boxes). Body and table 10.5 pt, labels and
+  captions 9.5, notes 10.5, sources 8.5, and NO text under 8 pt, chart labels included (pdfium reports CSS px: x0.75 for pt);
+  `address_noise_report.mjs` refuses a fourth page and leaves the last good file. Check a layout change on TW9 3PZ, SW1P 3JA,
+  E16 2PX, TW6 2GA (16 routes; page 3 is the tight one), NW1 4RY, M22 5RX, LS1 4DY and N3 1JN (three airports; page 2 95%).
   A neighbour's road reading (`resolvedAs`) is never this postcode's, as on the map; "Under 1 a day" carries the planes' rules
   and credit like a chart; no "Have your say" label without verified links (audit I-4 to I-6, 2026-11-12, `tests/street-report.mjs` 6).
 - **A built page's title fits 60 characters and its description 160, with share tags** (the SEO audit, 2026-11-11):

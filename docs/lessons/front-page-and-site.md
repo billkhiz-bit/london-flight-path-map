@@ -1140,6 +1140,26 @@ keeps it on page 1, as the mock-up drew it. Two airports still overflowed until 
 first (SW1P's headline named Heathrow while London City's chart came first), and the overhead rule was said once. Checked on
 TW9 3PZ, SW1P 3JA, E16 2PX, TW6 2GA, NW1 4RY, M22 5RX and LS1 4DY: all two pages, none under 8 pt.
 
+**Three fixed pages, the answer first (built 2026-11-12, Bill's v2 then v3).** The two-page build was committed (`08ec87c6`) and
+deployed, then rebuilt as three fixed pages: page 1 the answer (headline, four cards, key figures, the why-no-DEFRA line, map,
+details box), page 2 the aircraft and road detail ending with "Have your say", page 3 the air, station, reading notes and
+sources. Three things learned on the way:
+- **The mock-up's cards were typed; the build's are derived, and the first rule tried disagreed with the map.** The map's
+  aircraft pill comes from `noiseBand(10 - quiet)` (Kew's 57 dB reads "Moderate", no pill) and its road pill from the COUNCIL's
+  rating, which the report leaves out by design. Copying those left most cards with no verdict; inventing a band would have
+  mirrored code. So the report has its own stated rule, held in one function (`glanceCards()`): the postcode's own figure
+  against its WHO guideline, as `answerLead()` already compares; the planes from the map's own watch step; air and estimates
+  none. Say so to Bill wherever a card differs from a map pill.
+- **TW6 2GA ran to four pages**: its air has a sensor AND a monitor, so the sources spilled two lines, while page 2 was 60% full.
+  "Have your say" (the airport's links) moved to the end of page 2, where it belongs anyway. The refusal (audit M-8) removed the
+  four-page file and left the last good one, as built. Page 3 is the one to watch (TW6 90%); N3 1JN, three airports, fills
+  page 2 to 95%.
+- **One figure, one form per page**: the aircraft card said 61.8 dB above a key figure saying 62 dB. The card now rounds as the
+  key figure does; the verdict is decided on the figure itself.
+The reference moved into js/street_report.mjs so the printed copy states it too; the moved recipe reproduced the live free
+copy's HCH7-V2UJ for TW9 3PZ on the day, and `tests/street-report.mjs` pins that value: a new recipe would void every copy
+already handed out.
+
 **What moved.** The air's reading of the API (`airSquare`), the model's row (`airModelOf`), the key's sentences
 (`sensorKeyNote`, `monitorKeyNote`) and the rows (`airRows`) moved from index.html into js/street_report.mjs, so the full map and
 the report read them one way; `pictureHtml()` came out of `tileHtml()` in js/panel-findings.mjs so the report draws the map's

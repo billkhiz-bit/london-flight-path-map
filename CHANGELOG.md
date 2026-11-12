@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-12 (afternoon) - The street report, three pages, the answer first
+
+- **Page 1 is the answer**: the one-line answer, then a card for each topic (aircraft noise, planes overhead, road noise, air) saying in a word whether it is worth a look, good here or there for context, with the figure, a next step and the page its detail is on. Then the key figures, the map and a box saying when the report was made, how current each source is, and how to check it.
+- **Page 2 is the noise in detail** (the flight routes, the planes overhead, how the postcode compares with its district, road noise and where to have your say); **page 3 is the air** and how to read the report.
+- **Bigger text throughout**, and every page carries the report's reference and "Page 1 of 3".
+- **A printed report can be checked like a free one**: it now states its reference and the link that re-makes it from today's data.
+- **"What this shows" is gone**: its lines now sit beside what they explain.
+
 ## 2026-11-12 - Heathrow's traffic, compared like for like, and a healthcare lookup that says when it could not check
 
 - **Heathrow's 2025 traffic matched 2019's**: the full map, the API page and the methodology said 2025's flights were 2% below 2019's. That figure is in the CAA's own report, but it sets 2025's whole-year average against 2019's summer average, and summers are busier. Year against year, 2025 had as many flights as 2019, so the CAA's 2025 noise footprint being 19% smaller than 2019's is on the same traffic.
