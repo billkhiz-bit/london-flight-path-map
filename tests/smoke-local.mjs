@@ -125,6 +125,14 @@ const nycNames = await page.evaluate(() => {
 });
 const NYC_EXPECTED = ['Queens', 'Brooklyn', 'Manhattan', 'Bronx', 'Staten Island'];
 const nycNamesOk = NYC_EXPECTED.every((n) => nycNames.includes(n));
+// New York turns its Labels layer on by itself (autoLabels): the button must say so in words, not only by its class
+// (audit I-19, 2026-11-12, WCAG 4.1.2: a screen reader heard "not pressed" over labels drawn on).
+const nycLabels = await page.evaluate(() => {
+  const b = document.querySelector('[data-layer="labels"]');
+  return b ? { active: b.classList.contains('active'), pressed: b.getAttribute('aria-pressed') } : null;
+});
+const nycLabelsOk = Boolean(nycLabels) && nycLabels.active === true && nycLabels.pressed === 'true';
+console.log('New York Labels button:', JSON.stringify(nycLabels), nycLabelsOk ? '(on, and says so)' : '(MUST be on and pressed)');
 
 // --- Greater Manchester, added 2026-08-09 ---
 // The reason written above for NYC applied again, unchanged: nothing that
@@ -382,6 +390,7 @@ const ok =
   !renderedNames.includes('Brentwood') &&
   nycBoroughCount === 5 &&
   nycNamesOk &&
+  nycLabelsOk &&
   nycAskedLocalGeo &&
   !nycAskedGithub &&
   manBoroughCount === 10 &&

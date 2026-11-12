@@ -16003,7 +16003,12 @@
         if (cfg.autoLabels && !layers.labels) {
           layers.labels = true;
           const btn = document.querySelector('[data-layer="labels"]');
-          if (btn) btn.classList.add('active');
+          // The state in words too (audit I-19, 2026-11-12, WCAG 4.1.2): the class alone drew it on while a screen reader
+          // heard "Labels, toggle button, not pressed".
+          if (btn) {
+            btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
+          }
         }
       }
       function getActiveAirports() {

@@ -6,6 +6,7 @@
 - **The full map's summary no longer promises growth it has not checked**: "and strong growth" was said from the affordability score, so 19 council areas with weak price growth were told otherwise. It now reads the growth score.
 - **The planes pages name a district's councils from its homes**: the counts already left out PO boxes, but the list of councils did not, so SW1P was listed under Wandsworth through a mail centre's post boxes. Four council pages lose a link that came only from PO boxes.
 - **The Healthcare card says where its rating comes from**: it read "not sourced" in nine city regions, though every rating comes from the NHS register of GP practices. It now says so.
+- **Two fixes for screen reader users**: in New York the map's Labels button now says it is on, as it is; and the API demo page now says in one line when it is fetching, what the score is, or what went wrong.
 
 ## 2026-11-12 (afternoon) - The street report, three pages, the answer first
 

@@ -1682,6 +1682,41 @@ ok(JSON.stringify(bareBars.sort()) === JSON.stringify(['/404.html', '/privacy', 
   'the bars that count no clicks are the five pages that load no analytics, and only those', JSON.stringify(bareBars));
 await page.setViewportSize(was);
 ok(statusStub.count > 0, 'the status page\'s API probes were answered by the stub, never the live API', `${statusStub.count} stubbed: ${statusStub.paths.slice(0, 3).join(', ')}`);
+// /score-demo/ SAYS WHAT CHANGED (audit I-20, 2026-11-12, WCAG 4.1.3): an example run is announced in one line by a status
+// region (the stub answers /v1/score, so no demo quota), and "Try an example" names the examples' group, not a label of
+// nothing. The card itself is no live region: a screen reader would read the raw JSON.
+{
+  await page.goto(`http://127.0.0.1:${PORT}/score-demo/index.html`, { waitUntil: 'load' });
+  const group = await page.evaluate(() => {
+    const g = document.querySelector('.examples');
+    const name = g && document.getElementById(g.getAttribute('aria-labelledby') || '')?.textContent.trim();
+    const lonely = [...document.querySelectorAll('label')].filter((l) => !l.control).map((l) => l.textContent.trim());
+    return { role: g?.getAttribute('role'), name, lonely };
+  });
+  const statusNow = () => page.evaluate(() => {
+    const s = document.getElementById('result-status');
+    return { text: s?.textContent || '', role: s?.getAttribute('role'), live: document.getElementById('result')?.getAttribute('aria-live'),
+      error: document.querySelector('#result .error')?.textContent || '' };
+  });
+  // 1. The shared stub's answer is shaped for status.html (no `context`), so the page shows an error: the line says it.
+  await page.locator('.examples button').first().click();
+  await page.waitForFunction(() => (document.getElementById('result-status')?.textContent || '').length > 0
+    && !/^Getting/.test(document.getElementById('result-status').textContent), null, { timeout: 10000 }).catch(() => {});
+  const failed = await statusNow();
+  // 2. A whole response, answered here for one request (still no live call, no quota), then back to the shared stub.
+  const WHOLE = { score: 6.2, persona: 'balanced', location: { borough: 'Hackney', postcode: 'N1 7SX' },
+    components: { quiet: 7.1, afford: 4.2, growth: 5.0, live: 6.8, env: 5.5 }, weights: { quiet: 0.3, afford: 0.2, growth: 0.1, live: 0.25, env: 0.15 },
+    context: { avgPriceGbp: 650000, priceTrendPct: 1.2, noiseImpactBand: 'low' }, methodologyVersion: '5.7', apiVersion: '1', methodologyUrl: 'https://skyscore.co.uk/how-it-works/' };
+  const whole = (url) => new URL(url).pathname.includes('/v1/score');
+  await page.route(whole, (r) => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(WHOLE) }));
+  await page.locator('.examples button').first().click();
+  await page.waitForFunction(() => /out of 10/.test(document.getElementById('result-status')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
+  const scored = await statusNow();
+  await page.unroute(whole);
+  ok(group.role === 'group' && group.name === 'Try an example' && group.lonely.length === 0 && scored.role === 'status' && scored.live === null
+      && failed.error && failed.text === failed.error && scored.text === 'Hackney scores 6.2 out of 10 for the Balanced persona.',
+    '/score-demo/ announces an error and a score in one line each, and "Try an example" names its group', JSON.stringify({ group, failed, scored }));
+}
 
 // 16e. THE EMAIL BUTTONS ARE COUNTED (2026-10-23, Bill: count them before deciding on a "book a demo" page), by
 // js/count.mjs as `email-<page>-<what>`, the what from an ALLOW-LIST of our own subjects, so the full map's
