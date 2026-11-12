@@ -91,7 +91,17 @@ const CANNED_SCORE = {
 // point. Only those two requests are answered here, with the real shapes front-page.mjs uses (captured 2026-10-03);
 // every other postcode and coordinate goes to the network exactly as before, as this helper's narrowing above asks.
 const EXAMPLE_GEO = API_PAGE_EXAMPLE;
-const EXAMPLE_ENV = { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] };
+// With the provenance the live API sends (audit I-22, 2026-11-12): without it the front page's air fold never drew
+// DEFRA's model row in a browser, and a postcode with no sensor nearby said nothing about air while every test passed.
+const EXAMPLE_ENV = {
+  environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 },
+  provenance: {
+    'environment.roadNoiseLdenDb': { sources: ['defra-noise-r4'], method: 'modelled', period: '2021' },
+    'environment.no2AnnualMeanUgm3': { sources: ['defra-pcm'], method: 'modelled', resolution: '1 km grid', period: '2024' },
+    'environment.pm25AnnualMeanUgm3': { sources: ['defra-pcm'], method: 'modelled', resolution: '1 km grid', period: '2024' },
+  },
+  notices: [],
+};
 const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
 
 export async function stubLiveApi(page) {

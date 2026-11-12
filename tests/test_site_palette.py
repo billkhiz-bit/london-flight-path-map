@@ -64,7 +64,7 @@ def undeclared(pages):
 
 
 def site_pages():
-    out = subprocess.run(['git', 'ls-files', '*.html'], cwd=REPO, capture_output=True,  # noqa: S603, S607  (git, fixed args)
+    out = subprocess.run(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '*.html'], cwd=REPO, capture_output=True,  # noqa: S603, S607  (git, fixed args)
                          text=True, encoding='utf-8', check=True).stdout.split()
     return [p for p in out if not p.startswith(NOT_THE_SITE)]
 

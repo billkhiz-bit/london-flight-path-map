@@ -13,7 +13,7 @@ META_CSP = re.compile(r'<meta\b[^>]*Content-Security-Policy[^>]*>', re.I)
 
 
 def pages():
-    listed = subprocess.run(['git', 'ls-files', '*.html'], cwd=ROOT, capture_output=True,  # noqa: S603, S607  (git, fixed arguments)
+    listed = subprocess.run(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '*.html'], cwd=ROOT, capture_output=True,  # noqa: S603, S607  (git, fixed arguments)
                             text=True, check=True).stdout
     return [ROOT / name for name in listed.splitlines() if not name.startswith('tests/')]
 

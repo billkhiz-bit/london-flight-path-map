@@ -131,6 +131,18 @@ const ENV = {
   '51.462735': { environment: { roadNoiseLdenDb: 54.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 19.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.9, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 61.8, aircraftQuiet: 0.7, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
   '53.3677': { environment: { roadNoiseLdenDb: 60.2, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 14.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 7.2, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 64.0, aircraftQuiet: 2.0, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
 };
+// WITH THE PROVENANCE THE LIVE API SENDS (audit I-22, 2026-11-12). These shapes were captured on 3 Oct, before the API
+// sent `provenance`, so no browser test ever drew the air fold's DEFRA model row (it joins only where the provenance calls
+// the figure modelled). Each figure present gets the entry the live API gives it today; none is added for a figure absent.
+for (const body of Object.values(ENV)) {
+  const e = body.environment;
+  const p = {};
+  if (typeof e.roadNoiseLdenDb === 'number') p['environment.roadNoiseLdenDb'] = { sources: ['defra-noise-r4'], method: 'modelled', period: '2021' };
+  for (const k of ['no2AnnualMeanUgm3', 'pm25AnnualMeanUgm3']) {
+    if (typeof e[k] === 'number') p[`environment.${k}`] = { sources: ['defra-pcm'], method: 'modelled', resolution: '1 km grid', period: '2024' };
+  }
+  body.provenance = p;
+}
 
 const failures = [];
 let checks = 0;
@@ -736,6 +748,14 @@ const airBlock = async () => {
     'Kew names its nearest Breathe London sensor, as worked out independently from the sensor file: where it stands in the fold, how far in Nearby',
     `${JSON.stringify(air.chips)} ${air.near.slice(0, 120)} | expected ${sensor.name}, ${sensorKm.toFixed(1)} km`
   );
+  // DEFRA'S MODEL ROW, DRAWN (audit I-22, 2026-11-12): the fixtures now carry the provenance the live API sends, so every
+  // chart the fold draws (one per pollutant an instrument nearby measures) must carry the model's own row at the API's
+  // figure for that pollutant (NO2 16.3, PM2.5 8.4). Until then no browser test ever drew it.
+  const modelRows = await page.evaluate(() => [...document.querySelectorAll('#ans-air svg[data-air-chart]')].map((s) =>
+    [s.dataset.airChart, s.querySelector('g[data-kind="model"]')?.dataset.value ?? null]));
+  const KEW_MODEL = { no2: '16.3', pm25: '8.4' };
+  ok(modelRows.length > 0 && modelRows.every(([p, v]) => v === KEW_MODEL[p]),
+    "every chart in the air fold draws DEFRA's model row at the API's figure, as the provenance calls it modelled", JSON.stringify(modelRows));
   ok(
     kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon) > 5 && !air.chips.some((c) => c.includes(' monitor: ')) && !air.near.includes(monitor.name),
     'the nearest official monitor is over 5 km from Kew, so it is not mentioned at all (never "none nearby")',

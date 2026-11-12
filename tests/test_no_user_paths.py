@@ -20,7 +20,7 @@ SHARED = re.compile(r'[\\/]Users[\\/]+(Public|Default)\b', re.I)
 
 class NoUserPathTests(unittest.TestCase):
     def test_no_tracked_file_names_a_user_folder(self):
-        out = subprocess.run(['git', 'grep', '-n', '-I', '-E', PATTERN, '--', '.'],  # noqa: S603, S607  (git, fixed arguments)
+        out = subprocess.run(['git', 'grep', '--untracked', '-n', '-I', '-E', PATTERN, '--', '.'],  # noqa: S603, S607  (git, fixed arguments)
                              cwd=REPO, capture_output=True, text=True)
         self.assertIn(out.returncode, (0, 1), out.stderr)  # 1 is "no match"; anything else is git failing
         hits = [line for line in out.stdout.splitlines() if not SHARED.search(line)]

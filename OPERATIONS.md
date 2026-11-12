@@ -895,7 +895,10 @@ other two.
   default for new accounts, so a burst of 11 overlapping calls throttles. Fix (console, Bill: `flightmap-dev`
   is denied `lambda:GetAccountSettings` and `servicequotas:*`): Service Quotas > AWS Lambda > Concurrent
   executions (eu-west-2) > request 1000 (free). This also answers audit I3's open half: the reserve for
-  `/v1/score` can be sized once the limit is raised. NOTE: Logs Insights `StartQuery` is DENIED to
+  `/v1/score` can be sized once the limit is raised. **RAISED by 11 Nov** (audit M-12, 2026-11-12): CloudWatch shows
+  `ConcurrentExecutions` peaking at 13 on 11 Nov with no throttles, so the limit is above 10; its value still cannot be
+  read with `flightmap-dev`. Read it in the console before sizing the `/v1/score` reserve (and an `/nhs` cap: audit I-9).
+  NOTE: Logs Insights `StartQuery` is DENIED to
   `flightmap-dev`; read `[5XX]` lines with `filter-log-events --filter-pattern '"[5XX]"'` per log group.
   API Gateway's `5XXError` beyond these lines is the gateway's own (throttled
   invocations, malformed proxy responses).
