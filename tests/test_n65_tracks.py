@@ -4,6 +4,7 @@ Every trace here is MADE UP on a flat grid: a runway pair shaped like Heathrow's
 apart, the easterly ends' landing thresholds displaced 300 m into the runway), aircraft lining up, rolling, climbing,
 turning and landing at speeds typed for the test. Offline only.
 """
+import dataclasses
 import math
 import sys
 from pathlib import Path
@@ -78,6 +79,11 @@ def test_a_rolling_start_starts_where_it_joined_and_an_unheard_start_is_the_thre
     assert tr.start_of_roll(rolling, RUNWAYS['09R'], 40.0) == (100.0, 0.0, 'roll-entered')
     unheard = [pt(t, 1500 + 70 * t, 0.0, True, 100 + t) for t in range(0, 20, 5)]
     assert tr.start_of_roll(unheard, RUNWAYS['09R'], 20.0) == (0.0, None, 'roll-at-threshold')
+    # Bill's 3 Nov ruling: where the runway's take-off run starts behind a displaced landing threshold (Heathrow 09R,
+    # ~308 m), an unheard start is the TORA start, said, never the threshold.
+    displaced = dataclasses.replace(RUNWAYS['09R'], tora_start_m=-308.0)
+    assert tr.start_of_roll(unheard, displaced, 20.0) == (-308.0, None, 'roll-at-tora-start')
+    assert tr.start_of_roll([], displaced, 20.0) == (-308.0, None, 'roll-at-tora-start')
     # A stop on the runway BEFORE a backtrack is not this take-off's start: the run is cut where it goes backwards.
     backtrack = [pt(-300, 3000, 0.0, True, 5), *(pt(-280 + 20 * k, 3000 - 140 * k, 0.0, True, 18) for k in range(1, 11)),
                  pt(-60, 200, 0.0, True, 10), *(pt(t, 200 + t * t, 0.0, True, 2 * t / KT) for t in range(5, 45, 5))]

@@ -41,8 +41,13 @@ def _run(code, scale=None, population=1.0, **override):
     return run
 
 
+def _pair(run):
+    """Rule 3 (2026-11-12): a run is the bracket, both stage ends; here both ends read the same."""
+    return {end: dict(run, areas_km2=dict(run['areas_km2'])) for end in gate.STAGE_ENDS}
+
+
 def _both(**lhr):
-    return {'LHR': _run('LHR', **lhr), 'LGW': _run('LGW')}
+    return {'LHR': _pair(_run('LHR', **lhr)), 'LGW': _pair(_run('LGW'))}
 
 
 def test_the_caas_own_figures_pass_on_the_deciding_database():
@@ -54,8 +59,52 @@ def test_the_caas_own_figures_pass_on_the_deciding_database():
 def test_each_area_band_edge(factor, passes):
     for level in (50, 100, 200):
         assert gate.publish_verdict(_both(scale={level: factor}), FULL)[0] is passes, (level, factor)
-    runs = {'LHR': _run('LHR'), 'LGW': _run('LGW', scale={500: factor})}  # Gatwick: AREA_BAND at every level
+    runs = {'LHR': _pair(_run('LHR')), 'LGW': _pair(_run('LGW', scale={500: factor}))}  # Gatwick: AREA_BAND everywhere
     assert gate.publish_verdict(runs, FULL)[0] is passes
+
+
+def test_the_caas_own_figures_still_pass_after_a_json_round_trip():
+    # The day files and the runner write JSON, whose keys are strings: '50' must still be the 50-event level.
+    import json
+    runs = json.loads(json.dumps(_both()))
+    ok, lines = gate.publish_verdict(runs, FULL)
+    assert ok, lines
+
+
+def test_both_stage_ends_must_pass():
+    # Rule 3: the lightest stage reads within the band, the heaviest misses at one level: no pass.
+    runs = _both()
+    runs['LHR']['heavy']['areas_km2'][100] *= 0.85
+    ok, lines = gate.publish_verdict(runs, FULL)
+    assert not ok and any(line.startswith('[heavy] LHR >100') and line.endswith('MISS') for line in lines)
+    # One end alone is a choice of stage: not measured.
+    runs = _both()
+    del runs['LHR']['light']
+    ok, lines = gate.publish_verdict(runs, FULL)
+    assert not ok and 'LHR [light]: not measured (rule 3: both stage ends must pass)' in lines
+
+
+def test_a_missing_day_fails_unless_the_source_never_published_it():
+    runs = _both()
+    for end in gate.STAGE_ENDS:
+        runs['LHR'][end]['missing_days'] = ['2025-12-31']
+    ok, lines = gate.publish_verdict(runs, FULL)
+    assert ok and any('never published, said, not filled: 2025-12-31' in line for line in lines), lines
+    runs['LHR']['heavy']['missing_days'] = ['2025-12-31', '2025-07-04']
+    ok, lines = gate.publish_verdict(runs, FULL)
+    assert not ok and any('1 day(s) of the period missing: 2025-07-04' in line for line in lines)
+
+
+def test_missing_days_are_every_date_of_the_period_without_a_file():
+    assert gate.missing_days(('2025-12-30', '2026-01-02'), ['2025-12-30', '2026-01-02']) == ['2025-12-31', '2026-01-01']
+    assert gate.missing_days(('2025-03-30', '2025-03-30'), ['2025-03-30']) == []
+
+
+def test_only_a_known_full_fingerprint_is_the_deciding_database(monkeypatch):
+    assert gate.database_label('abc') == gate.BUILDING_DATABASE
+    assert gate.database_label(None) == gate.BUILDING_DATABASE
+    monkeypatch.setattr(gate, 'FULL_DATABASE_FINGERPRINTS', frozenset({'abc'}))
+    assert gate.database_label('abc') == FULL
 
 
 def test_reading_under_the_caa_gets_the_tighter_side():
@@ -76,11 +125,12 @@ def test_population_inside_the_50_event_contour(factor, passes):
 def test_anything_not_measured_fails():
     run = _run('LHR')
     del run['areas_km2'][200]
-    ok, lines = gate.publish_verdict({'LHR': run, 'LGW': _run('LGW')}, FULL)
-    assert not ok and 'LHR >200: not measured' in lines
-    ok, lines = gate.publish_verdict({'LHR': _run('LHR', population_above_50=None), 'LGW': _run('LGW')}, FULL)
-    assert not ok and 'LHR population >50: not measured' in lines
-    ok, lines = gate.publish_verdict({'LHR': _run('LHR')}, FULL)
+    ok, lines = gate.publish_verdict({'LHR': _pair(run), 'LGW': _pair(_run('LGW'))}, FULL)
+    assert not ok and '[light] LHR >200: not measured' in lines
+    ok, lines = gate.publish_verdict({'LHR': _pair(_run('LHR', population_above_50=None)), 'LGW': _pair(_run('LGW'))},
+                                     FULL)
+    assert not ok and '[light] LHR population >50: not measured' in lines
+    ok, lines = gate.publish_verdict({'LHR': _pair(_run('LHR'))}, FULL)
     assert not ok and 'LGW: no run' in lines
 
 

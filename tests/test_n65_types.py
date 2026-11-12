@@ -172,6 +172,24 @@ def test_phase0_substitution_csv_reads_as_proxies_with_engine_conditions(tmp_pat
     assert rows[0].engine_match == t.ENGINE_MAKERS[0][1] and rows[2].engine_match == ''
 
 
+@pytest.mark.parametrize('header, row, says', [
+    ('AIRFRAME_MANUFACTURER,ICAO_CODE,AIRCRAFT_VARIANT,ANP_PROXY,Delta_dep_dB,DELTA_APP_dB', 'MADEUP,ZZ07,,PROXY-A,-5.0,-1.0',
+     'no DELTA_DEP_dB column'),
+    ('AIRFRAME_MANUFACTURER,ICAO_CODE,AIRCRAFT_VARIANT,ANP_PROXY,DELTA_DEP_dB', 'MADEUP,ZZ07,,PROXY-A,-5.0',
+     'no DELTA_APP_dB column'),
+    ('AIRFRAME_MANUFACTURER,ICAO_CODE,AIRCRAFT_VARIANT,ANP_PROXY,DELTA_DEP_dB,DELTA_APP_dB', 'MADEUP,ZZ07,,PROXY-A,,-1.0',
+     'line 2: a blank delta'),
+    ('ICAO_CODE,ANP_ID,DELTA_DEP_dB,DELTA_APP_dB,ENGINE_MATCH,SOURCE', 'ZZ07,OWN-C,0,,IAE|PW,own', 'line 2: a blank delta'),
+], ids=['misspelt-header', 'no-approach-column', 'blank-proxy-delta', 'blank-own-delta'])
+def test_a_candidate_file_without_its_deltas_is_refused(tmp_path, header, row, says):
+    # 12 Nov review: a misspelt delta header read as 0 dB, so every proxy flew unadjusted (here -5 dB lost), unsaid.
+    # Each refusal names its reason: the header check and the row check are held apart.
+    p = tmp_path / 'cands.csv'
+    p.write_text(f'{header}\n{row}\n', encoding='utf-8')
+    with pytest.raises(ValueError, match=says):
+        t.read_candidates(p)
+
+
 def test_a_hand_kept_own_row_names_its_engine_maker_and_groups_with_easas_proxy(tmp_path, anp):
     own = tmp_path / 'own.csv'
     own.write_text('ICAO_CODE,ANP_ID,DELTA_DEP_dB,DELTA_APP_dB,ENGINE_MATCH,SOURCE,NOTE\n'

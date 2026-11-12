@@ -64,12 +64,25 @@ def _clean(v) -> str:
     return '' if v is None else str(v).strip()
 
 
+DELTA_COLUMNS = ('DELTA_DEP_dB', 'DELTA_APP_dB')
+
+
 def read_candidates(path: Path) -> list[Candidate]:
     """One candidate per row. The phase 0 substitution CSV names its proxy ANP_PROXY and has no ENGINE_MATCH/SOURCE:
-    it is read as proxies, its AIRCRAFT_VARIANT text kept for engine_match_from_variant()."""
+    it is read as proxies, its AIRCRAFT_VARIANT text kept for engine_match_from_variant().
+
+    Both delta columns must be in the header and every row must give both (12 Nov review): a misspelt header read as
+    0 dB, so every proxy would fly unadjusted, loud or quiet by its whole delta, with nothing said. Own data gives 0
+    where it needs no substitution delta, written, never left blank."""
     out = []
     with open(path, encoding='utf-8-sig', newline='') as fh:
-        for r in csv.DictReader(fh):
+        reader = csv.DictReader(fh)
+        missing = [c for c in DELTA_COLUMNS if c not in (reader.fieldnames or [])]
+        if missing:
+            raise ValueError(f'{Path(path).name}: no {" or ".join(missing)} column (headers: {reader.fieldnames})')
+        for line, r in enumerate(reader, 2):
+            if any(not _clean(r.get(c)) for c in DELTA_COLUMNS) and _clean(r.get('ICAO_CODE')):
+                raise ValueError(f'{Path(path).name} line {line}: a blank delta (write 0 where none applies)')
             anp_id = _clean(r.get('ANP_ID') or r.get('ANP_PROXY'))
             icao = _clean(r.get('ICAO_CODE')).upper()
             if not icao or not anp_id:
@@ -80,7 +93,7 @@ def read_candidates(path: Path) -> list[Candidate]:
             # A maker's NAME stands for its regex, so a hand-kept row and EASA's proxy row for the same engine group
             # together in _collapse() (they must be the identical string).
             match = dict(ENGINE_MAKERS).get(match, match)
-            out.append(Candidate(icao, anp_id, float(r.get('DELTA_DEP_dB') or 0), float(r.get('DELTA_APP_dB') or 0),
+            out.append(Candidate(icao, anp_id, float(r['DELTA_DEP_dB']), float(r['DELTA_APP_dB']),
                                  match, _clean(r.get('SOURCE')) or 'proxy'))
     return out
 

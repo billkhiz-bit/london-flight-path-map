@@ -6,6 +6,7 @@ cell), where it matters (every cell that reaches the threshold) and where it doe
 lifted to it). Offline only.
 """
 import csv
+import json
 import math
 import random
 import sys
@@ -208,6 +209,101 @@ def test_noise_tables_read_lamax_whole_and_the_v9_mount_column_by_its_values(tmp
     # A later release replaces an NPD id's curves whole: NZ1's departure is v9's one power, never mixed with v2.3's.
     assert [p for p, _ in t['curves'][('NZ1', 'D')]] == [30000.0]
     assert [p for p, _ in t['curves'][('NZ1', 'A')]] == [3000.0]
+
+
+def test_rule_2_is_doc29s_5_12_with_5_11s_median():
+    # Hand-worked (S = 2): L0 = L - 4 ln10 / 20 = L - 0.4605; the share at or above 65 is 1 - Phi((65 - L0) / 2), read
+    # from a printed normal table: 1 - Phi(1.2303) = 0.1093, 1 - Phi(0.2303) = 0.4089, 1 - Phi(-0.7697) = 0.7793.
+    assert nd.SPREAD_MEDIAN_SHIFT_DB == pytest.approx(0.460517, abs=1e-6)
+    got = nd.exceed_probability([63.0, 65.0, 67.0])
+    assert got.tolist() == pytest.approx([0.1093, 0.4089, 0.7793], abs=1e-4)
+    # The table level is the DECIBEL average, above the median: half the events reach 65 only at 65.46 dB.
+    assert float(nd.exceed_probability(65.0 + nd.SPREAD_MEDIAN_SHIFT_DB)) == pytest.approx(0.5, abs=1e-12)
+    # Levels are computed down to where a share is under 3e-7 (five standard deviations), said in the module.
+    assert nd.SPREAD_FLOOR_DB == pytest.approx(55.4605, abs=1e-4)
+    assert float(nd.exceed_probability(nd.SPREAD_FLOOR_DB)) < 3e-7
+    assert float(nd.exceed_probability(nd.SPREAD_FLOOR_DB + 1.0)) > 3e-7
+
+
+def test_rule_4s_hybrid_flies_the_default_power_at_the_observed_heights():
+    # Path nodes (x, y, z, power, bank, roll, speed, s); the track (s, x, y, gs, h) heard from s = 1,000 to 9,000 m.
+    path = [(0, 0, 1.0, 9000.0, 0, True, 0, 0.0), (1500, 0, 1.0, 9000.0, 0, True, 150, 1500.0),
+            (3000, 0, 300.0, 8000.0, 0, False, 170, 3000.0), (6000, 0, 900.0, 7000.0, 5, False, 200, 6000.0),
+            (12000, 0, 2000.0, 6000.0, 0, False, 250, 12000.0)]
+    track = [(1000.0, 1000, 0, 140, None), (2000.0, 2000, 0, 160, 50.0), (4000.0, 4000, 0, 180, 250.0),
+             (9000.0, 9000, 0, 220, 600.0)]
+    got = nd.hybrid_heights(path, track)
+    assert got[0] == path[0] and got[1] == path[1]  # the take-off roll keeps its own height
+    assert got[2][2] == pytest.approx(150.0) and got[3][2] == pytest.approx(250.0 + 2000 / 5000 * 350.0)
+    assert got[4] == path[4]  # beyond the heights heard: the default's
+    assert [n[3] for n in got] == [n[3] for n in path]  # the default's power, never touched
+    assert nd.hybrid_heights(path, [(0.0, 0, 0, 0, None)]) == path  # nothing heard: the default path
+
+
+@pytest.mark.parametrize('field, how, refused', [
+    (None, 'too few aircraft', True),
+    (-200.0, 'p10 of 380 in-zone minima (no surface reports)', True),
+    (-200.0, 'touchdown median of 421 aircraft', True),  # the month's METAR not cached: the fallback
+    (-200.0, 'touchdown median of 421 aircraft, shaped by METAR', False),
+])
+def test_a_day_whose_field_level_is_not_shaped_by_metar_is_refused(field, how, refused):
+    assert (nd.field_refusal(field, how) is not None) is refused
+
+
+def _caa_month(tmp_path, period, heathrow):
+    import adsb_movements as am
+    p = tmp_path / f'table_03_{period}.csv'
+    with open(p, 'w', encoding='utf-8', newline='') as fh:
+        w = csv.writer(fh)
+        w.writerow(['rundate', 'reporting_period', 'reporting_airport_name', 'grand_total'])
+        for name, code in am.CAA_NAMES.items():
+            w.writerow(['01/01/2027 00:00', period, name, heathrow if code == 'LHR' else 1000])
+    return p
+
+
+def test_rule_1s_yardstick_is_the_caas_month_over_its_days_times_ercds_16_hour_share(tmp_path):
+    import datetime as dt
+    movements, how = nd.caa_day_movements(_caa_month(tmp_path, '202607', 31000), 'LHR', dt.date(2026, 7, 8))
+    assert movements == pytest.approx(31000 / 31 * 1232.0 / 1315.0)
+    assert how['grand_total'] == 31000 and how['days_in_month'] == 31
+    with pytest.raises(ValueError, match='not 202608'):  # another month's table is never used
+        nd.caa_day_movements(_caa_month(tmp_path, '202607', 31000), 'LHR', dt.date(2026, 8, 3))
+    with pytest.raises(ValueError, match='no 16-hour share'):
+        nd.caa_day_movements(_caa_month(tmp_path, '202607', 31000), 'LGW', dt.date(2026, 7, 8))
+
+
+def _day_file(path, **meta):
+    m = {'airport': 'LHR', 'day': path.stem[4:14], 'grid': {'x0': 0, 'y0': 0, 'nx': 2, 'ny': 1}, 'cell_m': 100.0,
+         'threshold_db': 65.0, 'window_local': '07:00-23:00', 'code': 'c0de', 'anp_fingerprint': 'f00d',
+         'spread': {'s_db': 2.0}, 'variant': 'default', 'computed_share': 0.97, 'movements': 10}
+    m.update(meta)
+    z = np.array([60, 0], np.int32)
+    np.savez_compressed(path, meta=json.dumps(m), arrivals=z, departures_light=z, departures_heavy=z)
+    return str(path)
+
+
+@pytest.mark.parametrize('key, value', [('code', 'other'), ('anp_fingerprint', 'other'), ('threshold_db', 70.0),
+                                        ('window_local', '00:00-24:00'), ('variant', 'hybrid'), ('spread', None)])
+def test_combine_refuses_days_made_differently(tmp_path, key, value, capsys):
+    a = _day_file(tmp_path / 'LHR-2026-07-08-n65.npz')
+    b = _day_file(tmp_path / 'LHR-2026-07-15-n65.npz', **{key: value})
+    assert nd.main(['combine', '--day', f'{a}=0.63', '--day', f'{b}=0.37', '--out', str(tmp_path / 'c')]) == 2
+    assert f'{key} differs' in capsys.readouterr().out
+    c = _day_file(tmp_path / 'LHR-2026-07-15-n65.npz')
+    assert nd.main(['combine', '--day', f'{a}=0.63', '--day', f'{c}=0.37', '--out', str(tmp_path / 'c')]) == 0
+
+
+def test_the_code_fingerprint_moves_with_any_n65_script(tmp_path):
+    import shutil
+    for name in nd.N65_SCRIPTS:
+        shutil.copy(nd.REPO / 'scripts' / name, tmp_path / name)
+    before = nd.code_version(tmp_path)
+    assert before == nd.code_version(nd.REPO / 'scripts')
+    (tmp_path / 'n65_grid.py').write_bytes((tmp_path / 'n65_grid.py').read_bytes().replace(b'\r\n', b'\n'))
+    assert nd.code_version(tmp_path) == before  # line endings are not code
+    with open(tmp_path / 'n65_grid.py', 'ab') as fh:
+        fh.write(b'\n# changed\n')
+    assert nd.code_version(tmp_path) != before
 
 
 def test_an_output_inside_the_repo_must_be_one_git_ignores(tmp_path):

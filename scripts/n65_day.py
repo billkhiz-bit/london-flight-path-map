@@ -33,10 +33,25 @@ NOTHING HERE MAY BE PUBLISHED: scripts/n65_gate.py decides that, and only on EAS
 enter the repo; the per-flight rows (types, levels) go only to a path OUTSIDE it, and the day's grid only outside it or
 to a gitignored folder (refused otherwise).
 
+THE FROZEN METHOD (Bill's rulings, 2026-11-12; docs/lessons/n65.md), each variant written beside the other:
+- Rule 1, movements we cannot compute: each day carries `scale`, the CAA's movements for that day (caa_day_movements())
+  over the movements computed; scripts/n65_gate_run.py multiplies by it (and reports the unscaled run beside). A day
+  without the CAA's monthly table is refused, never scaled by a guess.
+- Rule 2, Doc 29's distribution of levels (5th edition, Vol 2 s5.4): beside the plain count, every flight adds to each
+  cell the share of a Gaussian (S = SPREAD_S_DB, "around 2 dB") at or above 65 dB, its median the table level less
+  S^2 ln10 / 20 (5-11; 0.46 dB at S = 2), exceed_probability(), 5-12's integral. Levels are computed down to
+  SPREAD_FLOOR_DB for it, where a share is under 3e-7 (five standard deviations), said.
+- Rule 4, `--variant hybrid`: the default profile's power flown at each flight's OBSERVED heights (hybrid_heights()), an
+  UPPER BOUND only, never the model; its files carry the variant and never combine with the default's.
+- A day's field level must be shaped by METAR (an uncached month reads stormy mornings low): refused otherwise.
+- Each day file carries the code that made it and its noise tables' fingerprint; combine() and the gate runner refuse
+  days that differ in either, or in grid, threshold, window, spread or variant.
+
     python -I -B scripts/n65_day.py day --extract <main clone>/data/adsb/extract/2026-07-15.jsonl.gz --airport LHR \
         --anp <v2.3 tables> --anp <v9 dir> --candidates <subs csv> --candidates <own-data csv> \
         --registry <faa-engines.csv> --operator-engines <airline-engines.csv> --metar-dir <main clone>/data/metar \
-        --air data/metar/EGLL-2026-07-air.csv --out <outside the repo> [--workers 4]
+        --air data/metar/EGLL-2026-07-air.csv --caa-month data/caa/table_03_aircraft_movements_2026-07.csv \
+        --out <outside the repo> [--variant hybrid] [--workers 4]
     python -I -B scripts/n65_day.py combine --day <west.npz>=0.63 --day <east.npz>=0.37 --out <outside the repo>
 
 Run with the system Python (adsb_movements needs tzdata, numpy and pyproj); `-I -B` keeps it from importing or writing
@@ -46,8 +61,10 @@ from __future__ import annotations
 
 import argparse
 import bisect
+import calendar
 import csv
 import datetime as dt
+import hashlib
 import itertools
 import json
 import math
@@ -66,6 +83,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(REPO / 'scripts'))
 import n65_doc29 as d29  # noqa: E402
+import n65_gate as gate  # noqa: E402
 import n65_grid as grid  # noqa: E402
 import n65_path as pa  # noqa: E402
 import n65_profiles as pr  # noqa: E402
@@ -83,6 +101,29 @@ AIR_MAX_GAP_S = 2 * 3600  # a movement more than two hours from any weather repo
 INHG_HPA = 33.8639
 # Aerodrome elevation, ft (EGLL AD 2.2, AIRAC 2026-10-29: "83 FT"). Another airport needs its row: refused without.
 ELEVATION_FT = {'LHR': 83.0}
+# Where each runway's take-off run starts, metres past its landing threshold (negative behind it): AD 2.13's TORA
+# start, the fallback for an unheard start of roll (Bill's ruling, 3 Nov). Heathrow's 09L and 09R landing thresholds
+# are displaced 309 and 308 m (AD 2.13, as read 3 Nov, docs/lessons/n65.md step 5); 27L and 27R are taken as not
+# displaced, a reading to confirm against AD 2.13. Another airport needs its row: refused without.
+TORA_START_M = {'LHR': {'09L': -309.0, '09R': -308.0, '27L': 0.0, '27R': 0.0}}
+
+# Rule 2 (Bill, 2026-11-12): Doc 29 5th edition, Vol 2 s5.4. S "around 2 dB" (the text after 5-11), never fitted.
+SPREAD_S_DB = 2.0
+SPREAD_Z_CUT = 5.0  # a cell where an event's share is under 2.9e-7 is left out of the spread count: said
+SPREAD_MEDIAN_SHIFT_DB = SPREAD_S_DB ** 2 * math.log(10) / 20  # 5-11: L = L0 + S^2 ln10 / 20 (0.4605 dB at S = 2)
+SPREAD_FLOOR_DB = THRESHOLD_DB + SPREAD_MEDIAN_SHIFT_DB - SPREAD_Z_CUT * SPREAD_S_DB  # 55.46 dB: levels computed down to
+
+# Rule 1 (Bill, 2026-11-12): the CAA's movements for a day are its Table 03 GRAND TOTAL for the day's month (the count
+# ERCD's averages use: 2025's table gives Heathrow 479,996, and ERCD 2601's 1,315.0 a day x 365 is 479,975) over the
+# month's days, times the 16-hour day's share of the 24 hours. The share is ERCD 2601's ANNUAL one (the deciding run is
+# Heathrow's annual average day): 1,232.0 (para 3.74) over 1,315.0 (para 3.56). Another airport needs its row.
+SHARE_16H = {'LHR': (1232.0 / 1315.0, 'ERCD 2601 paras 3.74 and 3.56: 2025 annual average 16-hour 1,232.0 and '
+                                      '24-hour 1,315.0 movements')}
+N65_SCRIPTS = ('n65_day.py', 'n65_doc29.py', 'n65_grid.py', 'n65_path.py', 'n65_profiles.py', 'n65_tracks.py',
+               'n65_type_mix.py', 'n65_types.py')
+# What every day of one run or combination must share (incompatible()).
+SAME_IN_EVERY_DAY = ('airport', 'grid', 'cell_m', 'threshold_db', 'window_local', 'code', 'anp_fingerprint', 'spread',
+                     'variant')
 OP_OF_KIND = {'take-off': 'D', 'landing': 'A'}
 MOUNTS = {'wing': 'wing', 'fuselage': 'fuselage', 'prop': 'prop', 'propeller': 'prop'}
 
@@ -218,6 +259,44 @@ def areas_km2(counts: np.ndarray, cell: float = CELL_M, levels=LEVELS) -> dict:
     return {k: float((counts >= k).sum()) * cell * cell / 1e6 for k in levels}
 
 
+def _erfc(x):
+    try:
+        from scipy.special import erfc
+    except ImportError:  # pragma: no cover  (the system Python has scipy; the formula is the same)
+        erfc = np.vectorize(math.erfc, otypes=[float])
+    return erfc(x)
+
+
+def exceed_probability(level_db, threshold_db: float = THRESHOLD_DB, s_db: float = SPREAD_S_DB) -> np.ndarray:
+    """Doc 29 Vol 2 5-12: the share of one event's levels at or above `threshold_db`, its levels a Gaussian of
+    standard deviation `s_db` (5-10) about the median L0 = L - S^2 ln10 / 20, where L is the noise table's (decibel
+    averaged) level (5-11). For S = 2: a table level of exactly 65 dB counts 0.409 of an event, 63 dB 0.109, 67 dB 0.779."""
+    l0 = np.asarray(level_db, dtype=float) - s_db ** 2 * math.log(10) / 20
+    return 0.5 * _erfc((threshold_db - l0) / (s_db * math.sqrt(2.0)))
+
+
+def hybrid_heights(path: list[tuple], track: list[tuple]) -> list[tuple]:
+    """Rule 4's UPPER BOUND (Bill, 2026-11-12): the path with each airborne node's height replaced by the height the
+    flight was OBSERVED at (the track's h, metres above the field, linear in s between observed points), its power,
+    speed and bank the default profile's. Departures really fly lower than ANP's default BECAUSE they use reduced
+    thrust and weigh more, so full default thrust at those heights is louder than either: a bound, never the model.
+    Nodes on the ground (a take-off roll, or the default at or below the field) and beyond the observed heights keep
+    the default's height. Path nodes as n65_path.merge() returns them: (x, y, z, power, bank, roll, speed, s)."""
+    obs = sorted((p[0], p[4]) for p in track if p[4] is not None)
+    if len(obs) < 2:
+        return list(path)
+    ss = np.array([s for s, _ in obs])
+    hs = np.array([h for _, h in obs])
+    out = []
+    for n in path:
+        x, y, z, power, bank, roll, v, s = n
+        if roll or z <= pa.SOURCE_MIN_M or not ss[0] <= s <= ss[-1]:
+            out.append(n)
+            continue
+        out.append((x, y, max(float(np.interp(s, ss, hs)), pa.SOURCE_MIN_M), power, bank, roll, v, s))
+    return out
+
+
 # ----------------------------------------------------------------- the day's air
 
 
@@ -288,6 +367,71 @@ def _outside_repo(path: Path) -> bool:
         return True
 
 
+def field_refusal(field, how: str) -> str | None:
+    """Why a day may not be run on this field level, or None. Only a field level shaped by the day's METAR QNH: the
+    counter's fallbacks (no METAR month cached, or the p10 of in-zone minima) read stormy mornings low (CLAUDE.md, the
+    plane counter's field level; the 12 Nov review)."""
+    if field is None:
+        return f'no field level ({how})'
+    if 'shaped by METAR' not in how:
+        return (f'the field level is not shaped by METAR ({how}): cache the month with scripts/fetch_metar.py, '
+                'then run the day again')
+    return None
+
+
+def caa_day_movements(table_path: Path, airport: str, day: dt.date) -> tuple[float, dict]:
+    """(the CAA's movements in the 16-hour day for `day`, how it was made): rule 1's yardstick. Refused (ValueError)
+    when the table is not the day's month or has no row for the airport, or the airport has no SHARE_16H row."""
+    import adsb_movements as am
+
+    if airport not in SHARE_16H:
+        raise ValueError(f'no 16-hour share for {airport} (add its ERCD figures to SHARE_16H)')
+    period, totals = am.caa_table(Path(table_path))
+    want = day.strftime('%Y%m')
+    if period != want:
+        raise ValueError(f'{Path(table_path).name} is the CAA table for {period}, not {want}')
+    if airport not in totals:
+        raise ValueError(f'{Path(table_path).name} has no row for {airport}')
+    days = calendar.monthrange(day.year, day.month)[1]
+    share, source = SHARE_16H[airport]
+    movements = totals[airport] / days * share
+    return movements, {'table': Path(table_path).name, 'month': want, 'grand_total': totals[airport],
+                       'days_in_month': days, 'share_16h': round(share, 6), 'share_source': source,
+                       'day_movements_16h': round(movements, 2)}
+
+
+def code_version(scripts_dir: Path = REPO / 'scripts') -> str:
+    """A fingerprint of the N65 code that made a day: its scripts' text, line endings made one, so a day made by other
+    code is never averaged with this one's."""
+    h = hashlib.sha256()
+    for name in sorted(N65_SCRIPTS):
+        h.update(name.encode())
+        h.update((scripts_dir / name).read_bytes().replace(b'\r\n', b'\n'))
+    return h.hexdigest()[:16]
+
+
+def anp_fingerprint(*dirs: Path) -> str:
+    """A fingerprint of the noise tables a day was made with (every file's name and bytes, in order): what
+    n65_gate.database_label() reads. EASA's data is read to hash it and never kept."""
+    h = hashlib.sha256()
+    for d in dirs:
+        for f in sorted(p for p in Path(d).rglob('*') if p.is_file()):
+            h.update(f.relative_to(d).as_posix().encode())
+            h.update(hashlib.sha256(f.read_bytes()).digest())
+    return h.hexdigest()
+
+
+def incompatible(metas: list[dict]) -> list[str]:
+    """What the days of one run or combination do not share (SAME_IN_EVERY_DAY), each as a line: days made by other
+    code, other noise tables, another grid, threshold, window, spread or variant must never be averaged together."""
+    out = []
+    for key in SAME_IN_EVERY_DAY:
+        seen = sorted({json.dumps(m.get(key), sort_keys=True) for m in metas})
+        if len(seen) > 1:
+            out.append(f'{key} differs: {", ".join(seen)}')
+    return out
+
+
 _W: dict = {}  # each worker's loaded tables
 
 
@@ -303,15 +447,17 @@ def _init_worker(cfg: dict):
 
 
 def _fly(job: dict) -> dict:
-    """One movement's levels on the grid, as {'row': ..., 'reached': {label: flat cells reaching the threshold}}."""
+    """One movement's levels on the grid, as {'row': ..., 'reached': {label: flat cells reaching the threshold},
+    'spread': {label: (flat cells at or above SPREAD_FLOOR_DB, each one's 5-12 share)}}."""
     cfg, g = _W['cfg'], _W['grid']
     db, noise, runways = _W['profiles'], _W['noise'], _W['runways']
     row = {k: job[k] for k in ('time', 'op', 'icao', 'how', 'anp_id', 'airline')}
     reached: dict = {}
+    spread: dict = {}
 
     def stop(reason):
         row['not_computed'] = reason
-        return {'row': row, 'reached': reached}
+        return {'row': row, 'reached': reached, 'spread': spread}
 
     acft, op = job['anp_id'], job['op']
     rw = runways.get(job['runway'])
@@ -376,14 +522,20 @@ def _fly(job: dict) -> dict:
                 path = pa.merge(sub, nodes, op, lift, power)
             except ValueError as e:
                 return stop(f'path-failed: {e}')
-            lv = flight_levels(path, g, curves, mount, impedance + job['delta'], THRESHOLD_DB)
-            done[stage] = np.nonzero(lv >= THRESHOLD_DB)[0].astype(np.int32)
+            if cfg.get('variant') == 'hybrid':
+                path = hybrid_heights(path, track)
+            # Levels down to the spread floor (rule 2); the pruning is exact at and above it, so the plain count's
+            # cells (at or above THRESHOLD_DB) are the same cells the threshold alone would give.
+            lv = flight_levels(path, g, curves, mount, impedance + job['delta'], SPREAD_FLOOR_DB)
+            near = np.nonzero(lv >= SPREAD_FLOOR_DB)[0]
+            done[stage] = (np.nonzero(lv >= THRESHOLD_DB)[0].astype(np.int32),
+                           (near.astype(np.int32), exceed_probability(lv[near]).astype(np.float32)))
             top = float(np.max(lv))
             row[f'max_db_{label}'] = round(top, 2) if math.isfinite(top) else None
             if label in ('approach', 'light'):
                 row.update(_height_check(track, sub, op))
-        reached[label] = done[stage]
-    return {'row': row, 'reached': reached}
+        reached[label], spread[label] = done[stage]
+    return {'row': row, 'reached': reached, 'spread': spread}
 
 
 HEIGHT_BANDS_KM = ((3, 6), (6, 12), (12, 25))
@@ -403,9 +555,10 @@ def _height_check(track, profile_pts, op) -> dict:
     return out
 
 
-def runway_geometry(ap_json: dict, to_grid) -> dict:
+def runway_geometry(ap_json: dict, to_grid, tora_start: dict | None = None) -> dict:
     """{designator: Runway kwargs} in grid metres from the procedure file's thresholds and TRUE bearings (each turned
-    onto the grid by projecting a point 1 km along it: grid north is ~1.2 degrees off true at Heathrow)."""
+    onto the grid by projecting a point 1 km along it: grid north is ~1.2 degrees off true at Heathrow), with each end's
+    take-off run start from `tora_start` (TORA_START_M's row for the airport)."""
     import pyproj
 
     geod = pyproj.Geod(ellps='WGS84')
@@ -417,7 +570,8 @@ def runway_geometry(ap_json: dict, to_grid) -> dict:
         x2, y2 = to_grid(lon2, lat2)
         d = math.hypot(x2 - x, y2 - y)
         out[des] = {'designator': des, 'threshold': (x, y), 'direction': ((x2 - x) / d, (y2 - y) / d),
-                    'length_m': 0.0, 'true_bearing': r['true_brg'], 'glide_deg': r.get('glide_deg', 3.0)}
+                    'length_m': 0.0, 'true_bearing': r['true_brg'], 'glide_deg': r.get('glide_deg', 3.0),
+                    'tora_start_m': (tora_start or {}).get(des)}
     for des, r in out.items():
         other = out.get(tr.reciprocal(des))
         if other:
@@ -441,13 +595,26 @@ def day(a) -> int:
     if a.airport not in ELEVATION_FT:
         print(f'REFUSED: no aerodrome elevation for {a.airport} (add its AD 2.2 figure to ELEVATION_FT)')
         return 2
+    if a.airport not in TORA_START_M:
+        print(f'REFUSED: no take-off run starts for {a.airport} (add its AD 2.13 figures to TORA_START_M)')
+        return 2
+    day_name = Path(a.extract).name.split('.')[0]
+    try:
+        caa_movements, caa_how = caa_day_movements(Path(a.caa_month), a.airport, dt.date.fromisoformat(day_name))
+    except ValueError as e:
+        print(f'REFUSED: rule 1 needs the CAA monthly table for the day: {e}')
+        return 2
     if a.metar_dir:
         am.METAR_DIR = Path(a.metar_dir)
     t0 = time.time()
     ap = am.load_airports()[a.airport]
     ap_json = json.loads(am.PROCEDURE_FILES[0].read_text(encoding='utf-8'))['airports'][a.airport]
     to_grid = pyproj.Transformer.from_crs('EPSG:4326', 'EPSG:27700', always_xy=True).transform
-    runways = runway_geometry(ap_json, to_grid)
+    runways = runway_geometry(ap_json, to_grid, TORA_START_M[a.airport])
+    missing_tora = sorted(d for d, r in runways.items() if r['tora_start_m'] is None)
+    if missing_tora:
+        print(f'REFUSED: no take-off run start for {a.airport} {", ".join(missing_tora)} (TORA_START_M)')
+        return 2
     rw_objects = {d: tr.Runway(**r) for d, r in runways.items()}
     cx, cy = to_grid(ap['centre'][1], ap['centre'][0])
     g = Grid.around(cx, cy, a.half_x_km * 1000, a.half_y_km * 1000, a.cell)
@@ -457,8 +624,9 @@ def day(a) -> int:
     operator_engines = nt.read_operator_engines(a.operator_engines) if a.operator_engines else {}
     traces = tm.near_traces(Path(a.extract), ap)
     field, how_field = am.field_level(traces, ap)
-    if field is None:
-        print(f'REFUSED: no field level ({how_field})')
+    why = field_refusal(field, how_field)
+    if why:
+        print(f'REFUSED: {why}')
         return 2
     zone = zoneinfo.ZoneInfo('Europe/London')
     elev_ft = ELEVATION_FT[a.airport]
@@ -505,10 +673,12 @@ def day(a) -> int:
     print(f'{a.airport} {Path(a.extract).name}: field {float(field):.0f} ft ({how_field}); {len(traces)} traces; '
           f'{len(jobs)} movements 07:00-23:00 local ({outside} outside); read in {time.time() - t0:.0f} s')
     cfg = {'anp': [str(p) for p in a.anp], 'grid': (g.x0, g.y0, g.nx, g.ny, g.cell), 'air': str(a.air),
-           'runways': runways, 'elevation_ft': elev_ft}
+           'runways': runways, 'elevation_ft': elev_ft, 'variant': a.variant}
     labels = ('light', 'heavy')
     counts = {'arrivals': np.zeros(g.size, np.int32), 'departures_light': np.zeros(g.size, np.int32),
               'departures_heavy': np.zeros(g.size, np.int32)}
+    # Rule 2's counts beside the plain ones: each flight's 5-12 share at each cell (float).
+    shares = {f'{k}_p': np.zeros(g.size, np.float64) for k in counts}
     rows, reasons = [], Counter()
     typed = [j for j in jobs if j['anp_id']]
     for j in jobs:
@@ -526,19 +696,29 @@ def day(a) -> int:
                 continue
             if row['op'] == 'A':
                 counts['arrivals'][res['reached']['approach']] += 1
+                cells, p = res['spread']['approach']
+                shares['arrivals_p'][cells] += p  # one event per flight per cell: the cells are distinct
             else:
                 for label in labels:
                     counts[f'departures_{label}'][res['reached'][label]] += 1
+                    cells, p = res['spread'][label]
+                    shares[f'departures_{label}_p'][cells] += p
             if k % 100 == 0:
                 print(f'  {k}/{len(typed)} flown, {time.time() - t1:.0f} s')
     computed = sum(1 for r in rows if 'not_computed' not in r)
     n65 = {label: counts['arrivals'] + counts[f'departures_{label}'] for label in labels}
+    n65_spread = {label: shares['arrivals_p'] + shares[f'departures_{label}_p'] for label in labels}
+    fingerprint = anp_fingerprint(*a.anp)
     summary = {
-        'airport': a.airport, 'day': Path(a.extract).name.split('.')[0], 'window_local': '07:00-23:00',
+        'airport': a.airport, 'day': day_name, 'window_local': '07:00-23:00',
         'threshold_db': THRESHOLD_DB, 'cell_m': g.cell, 'grid': {'x0': g.x0, 'y0': g.y0, 'nx': g.nx, 'ny': g.ny},
         'field': {'pressure_altitude_ft': round(float(field)), 'how': how_field},
         'movements': len(jobs), 'outside_window': outside, 'computed': computed,
         'computed_share': round(computed / len(jobs), 4) if jobs else None,
+        # Rule 1: the CAA's movements for this day over the movements computed, applied by scripts/n65_gate_run.py.
+        'caa': caa_how, 'scale': round(caa_movements / computed, 6) if computed else None,
+        'spread': {'s_db': SPREAD_S_DB, 'z_cut': SPREAD_Z_CUT, 'floor_db': round(SPREAD_FLOOR_DB, 4)},
+        'variant': a.variant, 'code': code_version(), 'anp_fingerprint': fingerprint,
         'by_op': {op: {'movements': sum(1 for j in jobs if j['op'] == op),
                        'computed': sum(1 for r in rows if r['op'] == op and 'not_computed' not in r)} for op in 'AD'},
         'type_how': dict(by_how),
@@ -547,15 +727,17 @@ def day(a) -> int:
         'winds': dict(Counter(r.get('wind') for r in rows if r.get('wind'))),
         'bank_capped_nodes': sum(r.get('bank_capped', 0) for r in rows),
         'areas_km2': {label: areas_km2(n65[label], g.cell) for label in labels},
+        'areas_km2_spread': {label: areas_km2(n65_spread[label], g.cell) for label in labels},
         'max_n65': {label: int(n65[label].max()) for label in labels},
         'height_check_m': {op: {band: _median([r.get(band) for r in rows if r['op'] == op]) for band in
                                 (f'dz_{lo}_{hi}km' for lo, hi in HEIGHT_BANDS_KM)} for op in 'AD'},
-        'database': 'easa-anp-2.3+v9 (a building run; n65_gate decides only on the full database)',
+        'database': gate.database_label(fingerprint),
         'seconds': round(time.time() - t0),
     }
     out.mkdir(parents=True, exist_ok=True)
-    stem = f"{a.airport}-{summary['day']}"
-    np.savez_compressed(out / f'{stem}-n65.npz', meta=json.dumps(summary), **counts)
+    stem = f"{a.airport}-{summary['day']}" + ('' if a.variant == 'default' else f'-{a.variant}')
+    np.savez_compressed(out / f'{stem}-n65.npz', meta=json.dumps(summary), **counts,
+                        **{k: v.astype(np.float32) for k, v in shares.items()})
     (out / f'{stem}-summary.json').write_text(json.dumps(summary, indent=1), encoding='utf-8')
     if a.flights_out:
         keys = sorted({k for r in rows for k in r})
@@ -563,8 +745,9 @@ def day(a) -> int:
             w = csv.DictWriter(fh, keys)
             w.writeheader()
             w.writerows(rows)
-    print(json.dumps({k: summary[k] for k in ('movements', 'computed', 'computed_share', 'not_computed',
-                                              'areas_km2', 'max_n65', 'height_check_m', 'seconds')}, indent=1))
+    print(json.dumps({k: summary[k] for k in ('movements', 'computed', 'computed_share', 'scale', 'not_computed',
+                                              'areas_km2', 'areas_km2_spread', 'max_n65', 'height_check_m',
+                                              'seconds')}, indent=1))
     return 0
 
 
@@ -587,8 +770,9 @@ def combine(a) -> int:
             days.append({k: z[k] for k in z.files if k != 'meta'})
             metas.append(json.loads(str(z['meta'])))
         weights.append(float(w))
-    if len({json.dumps(m['grid'], sort_keys=True) for m in metas}) != 1:
-        print('REFUSED: the days are on different grids')
+    problems = incompatible(metas)
+    if problems:
+        print('REFUSED: these days cannot be averaged together:\n  ' + '\n  '.join(problems))
         return 2
     cell = metas[0]['cell_m']
     result = {'days': [{'day': m['day'], 'weight': w, 'computed_share': m['computed_share'],
@@ -596,6 +780,9 @@ def combine(a) -> int:
     for label in ('light', 'heavy'):
         avg = sum(w * (d['arrivals'] + d[f'departures_{label}']) for d, w in zip(days, weights, strict=True))
         result[label] = areas_km2(avg, cell)
+        if all(f'departures_{label}_p' in d for d in days):
+            avg_p = sum(w * (d['arrivals_p'] + d[f'departures_{label}_p']) for d, w in zip(days, weights, strict=True))
+            result[f'{label}_spread'] = areas_km2(avg_p, cell)
     out.mkdir(parents=True, exist_ok=True)
     name = '+'.join(m['day'] for m in metas)
     (out / f'combined-{name}.json').write_text(json.dumps(result, indent=1), encoding='utf-8')
@@ -615,6 +802,10 @@ def main(argv=None) -> int:
     d.add_argument('--operator-engines', type=Path)
     d.add_argument('--metar-dir', help="the counter's QNH cache, for the field level (default the repo's data/metar)")
     d.add_argument('--air', type=Path, required=True, help="fetch_metar.py --air's file for the day's month")
+    d.add_argument('--caa-month', type=Path, required=True,
+                   help="the CAA's Table 03 CSV for the day's month (rule 1's yardstick; data/caa/)")
+    d.add_argument('--variant', choices=('default', 'hybrid'), default='default',
+                   help="'hybrid' flies the default power at the observed heights: rule 4's UPPER BOUND, never the model")
     d.add_argument('--out', required=True)
     d.add_argument('--flights-out', help='per-flight rows (EASA-derived): a path outside the repo')
     d.add_argument('--half-x-km', type=float, default=32.0)

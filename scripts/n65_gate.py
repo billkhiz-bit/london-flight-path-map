@@ -27,16 +27,33 @@ THE RULE (Bill, 27 Oct, "yes to both"; project memory n65-phase0)
 The population check counts people with ONS figures where the CAA uses CACI's 2025 update of the 2021 Census
 (ERCD 2601, note to Table 16): POPULATION_BAND is wide enough for that difference and no wider.
 
+THE FROZEN METHOD (Bill's rulings, 2026-11-12; docs/lessons/n65.md). Rule 3: the stage length is unknown, so a run is
+the BRACKET, the lightest and the heaviest stage, and BOTH ends must pass at every level (bracket_verdict()). A run's
+input is made by code from the day files (scripts/n65_gate_run.py), never typed: its period and missing days are read
+from the files; a day missing from the period fails unless it is a KNOWN_SOURCE_GAP (said, never filled); its levels
+are read as integers whatever a JSON round trip made of them; its database label comes from the noise tables'
+fingerprint (database_label()), and only a fingerprint in FULL_DATABASE_FINGERPRINTS is the deciding database.
+
 Nothing here reads EASA's tables, and nothing published may: their terms forbid reproducing the data or benchmarking
 types. The targets below are the CAA's published figures, each held by a test against the reports' own text.
 """
 from __future__ import annotations
+
+import datetime as dt
 
 # (least, most) of ours / CAA's - 1. Exact edges pass.
 AREA_BAND = (-0.10, 0.15)
 SMALL_AREA_BAND = (-0.30, 0.30)
 POPULATION_BAND = (-0.20, 0.20)
 DECIDING_DATABASE = 'easa-anp-full'  # what EASA sends on request; 'easa-anp-2.3' (the free legacy tables) never decides
+BUILDING_DATABASE = 'easa-anp-building'  # any other set of noise tables: a building run, never a deciding one
+# The noise tables' fingerprints (scripts/n65_day.anp_fingerprint) that ARE EASA's whole current database. Empty until
+# EASA says what its whole database is (the open question of 29 Oct: are v2.3 + v9 all of it?); adding one is Bill's call.
+FULL_DATABASE_FINGERPRINTS: frozenset[str] = frozenset()
+STAGE_ENDS = ('light', 'heavy')  # rule 3: the bracket, both ends judged
+# Days the track source never published, said in every verdict and never filled (adsb.lol's globe_history_2025 has no
+# 31 Dec 2025 release: docs/lessons/n65.md step 6). Any other day missing from a run's period fails it.
+KNOWN_SOURCE_GAPS = frozenset({'2025-12-31'})
 _EPS = 1e-9  # 184.8 x 0.9 is not exactly 166.32 in floating point: an exact edge must pass
 
 # The CAA's published N65 contours. Each figure is held against the report's text by tests/test_n65_gate.py.
@@ -68,9 +85,33 @@ def _band_words(band):
     return f'{band[0]:+.0%} to {band[1]:+.0%}'
 
 
+def levels_of(areas) -> dict[int, float]:
+    """{events (int): km2}. A run saved as JSON comes back keyed by STRINGS ('50'), which no integer level matches: the
+    CAA's own figures read 'not measured' after one round trip (the 12 Nov review). Every reading goes through here."""
+    return {int(k): float(v) for k, v in (areas or {}).items()}
+
+
+def database_label(fingerprint: str | None) -> str:
+    """The database a run was made with, from its noise tables' fingerprint, never a label typed by hand."""
+    return DECIDING_DATABASE if fingerprint in FULL_DATABASE_FINGERPRINTS else BUILDING_DATABASE
+
+
+def missing_days(period: tuple[str, str], days: list[str]) -> list[str]:
+    """Every date in the period (inclusive) that `days` lacks, in order."""
+    first, last = dt.date.fromisoformat(period[0]), dt.date.fromisoformat(period[1])
+    have = set(days)
+    out = []
+    for k in range((last - first).days + 1):
+        d = (first + dt.timedelta(days=k)).isoformat()
+        if d not in have:
+            out.append(d)
+    return out
+
+
 def airport_verdict(code: str, run: dict | None) -> tuple[bool, list[str]]:
-    """(passes, a line per check) for one airport's run: {'period': (first, last), 'day', 'window',
-    'areas_km2': {events: km2}, 'population_above_50': people or None}. A check that cannot be made fails."""
+    """(passes, a line per check) for ONE stage end's run at one airport: {'period': (first, last), 'day', 'window',
+    'areas_km2': {events: km2}, 'population_above_50': people or None, 'missing_days': [...]}. A check that cannot be
+    made fails."""
     target = TARGETS[code]
     if run is None:
         return False, [f'{code}: no run']
@@ -80,8 +121,19 @@ def airport_verdict(code: str, run: dict | None) -> tuple[bool, list[str]]:
         if have != target[key]:
             ok = False
             lines.append(f"{code}: not like for like: {key} {have!r}, the CAA's is {target[key]!r}")
+    gaps = list(run.get('missing_days') or ())
+    if gaps:
+        unknown = [d for d in gaps if d not in KNOWN_SOURCE_GAPS]
+        known = [d for d in gaps if d in KNOWN_SOURCE_GAPS]
+        if known:
+            lines.append(f'{code}: {len(known)} day(s) the track source never published, said, not filled: {", ".join(known)}')
+        if unknown:
+            ok = False
+            lines.append(f'{code}: not like for like: {len(unknown)} day(s) of the period missing: '
+                         f'{", ".join(unknown[:10])}{" ..." if len(unknown) > 10 else ""}')
+    areas = levels_of(run.get('areas_km2'))
     for level, theirs in target['areas_km2'].items():
-        ours = run.get('areas_km2', {}).get(level)
+        ours = areas.get(level)
         band = target['bands'][level]
         if ours is None:
             ok = False
@@ -104,12 +156,31 @@ def airport_verdict(code: str, run: dict | None) -> tuple[bool, list[str]]:
     return ok, lines
 
 
+def bracket_verdict(code: str, bracket: dict | None) -> tuple[bool, list[str]]:
+    """(passes, every line) for one airport's BRACKET {'light': run, 'heavy': run}: rule 3, both ends at every level.
+    A bracket missing an end fails: one stage alone is a choice of stage, which only a ruled trip-length source makes."""
+    if bracket is None:
+        return False, [f'{code}: no run']
+    ok, lines = True, []
+    for end in STAGE_ENDS:
+        run = bracket.get(end)
+        if run is None:
+            ok = False
+            lines.append(f'{code} [{end}]: not measured (rule 3: both stage ends must pass)')
+            continue
+        good, said = airport_verdict(code, run)
+        ok &= good
+        lines += [f'[{end}] {line}' for line in said]
+    return ok, lines
+
+
 def publish_verdict(runs: dict, database: str) -> tuple[bool, list[str]]:
-    """(may N65 be published, every line behind the answer) for {airport: run} made with `database`. Both
-    airports must pass on the deciding database; a run on anything else reports its result and decides nothing."""
+    """(may N65 be published, every line behind the answer) for {airport: {'light': run, 'heavy': run}} made with
+    `database`. Both airports, both stage ends, must pass on the deciding database; a run on anything else reports its
+    result and decides nothing."""
     ok, lines = True, []
     for code in TARGETS:
-        good, said = airport_verdict(code, runs.get(code))
+        good, said = bracket_verdict(code, runs.get(code))
         ok &= good
         lines += said
     if database != DECIDING_DATABASE:

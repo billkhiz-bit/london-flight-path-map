@@ -16,7 +16,9 @@ THE RULES, each a reading where Doc 29 leaves it to the user:
   centreline (within ON_RUNWAY_M) the aircraft ran along, in its direction, near the movement's time.
 - The START OF ROLL (start_of_roll()): the last point at most ROLL_START_KT on that runway's centreline in the run
   that ends the take-off; else, for a rolling start, where that run joined the centreline; when neither was heard,
-  the runway's landing threshold, said by its label, never a guessed intersection.
+  the start of the TAKE-OFF RUN (AD 2.13's TORA, Runway.tora_start_m; Bill's ruling of 3 Nov, built 12 Nov), said by
+  its label, never a guessed intersection. The landing threshold stands in, said, only for a runway with no TORA start:
+  at Heathrow 09L/09R it is displaced ~309 m, which started those rolls late.
 - The take-off and landing rolls run on the centreline (the runway is straight); the airborne track is the observed
   positions resampled every SPACING_M along their own length, which also smooths the few metres of position noise.
 - The BANK from the track's curvature over BANK_WINDOW_M either side of a node, B-14 with the observed ground speed,
@@ -52,7 +54,8 @@ APPROACH_BEFORE_S = 1800.0  # ... and before a landing
 class Runway:
     """One runway end, in grid metres: its landing threshold, the unit vector of the direction aircraft move along it
     (from the true bearing, turned onto the grid by the caller), its length to the opposite threshold, its true bearing
-    (for the headwind) and its ILS glide angle (for the touchdown point)."""
+    (for the headwind), its ILS glide angle (for the touchdown point) and where its take-off run starts, metres past
+    the landing threshold (negative behind it; AD 2.13's TORA start), or None where that is not known."""
 
     designator: str
     threshold: tuple[float, float]
@@ -60,6 +63,7 @@ class Runway:
     length_m: float
     true_bearing: float
     glide_deg: float
+    tora_start_m: float | None = None
 
     def along_across(self, x: float, y: float) -> tuple[float, float]:
         """(along, across): metres past the threshold in the direction of movement, and to the left (+) or right."""
@@ -156,14 +160,15 @@ def start_of_roll(pts: list[Pt], rw: Runway, t_takeoff: float) -> tuple[float, f
     far end, in the 15 minutes before the take-off) that ends the take-off, cut where the points go backwards or fall
     silent for two minutes. 'roll-seen': its last point at most ROLL_START_KT (lining up, or holding on the runway).
     'roll-entered': none was that slow but the run's first point was under ENTRY_MAX_KT (a rolling start from where it
-    joined the centreline). 'roll-at-threshold': neither (the start was not heard): the landing threshold, said."""
+    joined the centreline). Neither (the start was not heard): 'roll-at-tora-start', where the runway's take-off run
+    starts (rw.tora_start_m, AD 2.13), or 'roll-at-threshold', the landing threshold, for a runway that has none."""
     on = []
     for p in pts:
         a, c = rw.along_across(p.x, p.y)
         if t_takeoff - 900 <= p.t <= t_takeoff and abs(c) <= CENTRELINE_M and -500 <= a <= rw.length_m:
             on.append((p.t, a, p.gs_kt))
     if not on:
-        return 0.0, None, 'roll-at-threshold'
+        return _unheard(rw)
     run = [on[-1]]
     for prev in reversed(on[:-1]):
         if run[0][0] - prev[0] > 120 or prev[1] > run[0][1] + 50:
@@ -174,6 +179,13 @@ def start_of_roll(pts: list[Pt], rw: Runway, t_takeoff: float) -> tuple[float, f
         return slow[-1][1], slow[-1][0], 'roll-seen'
     if run[0][2] is not None and run[0][2] <= ENTRY_MAX_KT:
         return run[0][1], run[0][0], 'roll-entered'
+    return _unheard(rw)
+
+
+def _unheard(rw: Runway) -> tuple[float, None, str]:
+    """An unheard start of roll: the take-off run's start where the runway has one, else the landing threshold."""
+    if rw.tora_start_m is not None:
+        return rw.tora_start_m, None, 'roll-at-tora-start'
     return 0.0, None, 'roll-at-threshold'
 
 
