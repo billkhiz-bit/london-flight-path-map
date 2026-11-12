@@ -4,7 +4,10 @@ Every day file here is MADE UP (shaped like scripts/n65_day.py's), so it runs an
 missing days come from the files; the average day is named from the period; rule 1 multiplies each day by its own
 scale and refuses a day without one; rule 2 reads the 5-12 shares and refuses a day without them; rule 3 judges both
 stage ends; days made by other code are refused; the CAA's own areas pass every level, and still do after the verdict
-file's JSON round trip; a hybrid run decides nothing; the CLI writes the verdict beside the days. Offline only.
+file's JSON round trip; a hybrid run decides nothing; the CLI writes the verdict beside the days. Item 3: the people
+inside each end's 50-event contour are counted from a population file and judged; a contour at the grid's edge refuses
+the count; the CLI refuses a Heathrow run without the file unless --no-population (then "not measured"), and never asks
+for it on Gatwick's. Offline only.
 """
 import datetime as dt
 import json
@@ -127,7 +130,7 @@ def test_the_caas_own_areas_pass_every_level_and_still_do_after_the_files_round_
     result = gr.verdict(days)
     levels = [line for line in result['lines'] if ' km2 against ' in line]
     assert len(levels) == 8 and all(line.endswith('pass') for line in levels), levels
-    # Not yet a pass: no population count (not built), and the made-up tables are no deciding database.
+    # Not a pass: no population given (the gate says "not measured"), and the made-up tables are no deciding database.
     assert not result['ok']
     assert '[light] LHR population >50: not measured' in result['lines']
     assert any('a building run, never a deciding one' in line for line in result['lines'])
@@ -142,13 +145,78 @@ def test_a_hybrid_run_is_a_bound_and_decides_nothing():
     assert any('a bound, never the model' in line for line in gr.verdict(days)['lines'])
 
 
-def test_the_cli_writes_the_verdict_beside_the_days(tmp_path):
+def _interior_target_counts():
+    """_target_counts()'s areas, every cell away from the grid's edge (a population count refuses an edge)."""
+    nx, ny = 200, 100
+    inner = [j * nx + i for j in range(1, ny - 1) for i in range(1, nx - 1)]
+    c = np.zeros(N)
+    for share, value in ((18480, 60), (11100, 150), (5970, 300), (730, 600)):
+        c[inner[:share]] = value
+    return c, inner
+
+
+def _population_file(path, points):
+    """A made-up n65_population file: [(east, north, residents)] on _meta()'s grid (100 m cells from 0, 0)."""
+    e, n, r = zip(*points, strict=True)
+    np.savez_compressed(path, meta=json.dumps({'kind': gr.pop.KIND, 'source': gr.pop.SOURCE, 'census_sha256': 'x'}),
+                        east=np.asarray(e, float), north=np.asarray(n, float), residents=np.asarray(r, np.int32),
+                        large_user=np.zeros(len(e), bool), retired=np.zeros(len(e), bool))
+    return path
+
+
+def test_the_people_inside_the_50_event_contour_are_counted_and_judged(tmp_path):
+    counts, inner = _interior_target_counts()
+    i, j = inner[0] % 200, inner[0] // 200  # a cell inside the 50-event contour
+    people = gr.pop.load(_population_file(tmp_path / 'p.npz', [
+        (i * 100 + 50, j * 100 + 50, 528_800),  # the CAA's own figure, inside
+        (19_950, 9_950, 999_999)]))  # a far corner cell at 0: outside
+    days = [(_meta(d), _arrays(counts, heavy=np.zeros(N))) for d in _days('2025-03-30', 365)]
+    result = gr.verdict(days, population=people)
+    for end in gate.STAGE_ENDS:
+        assert result['runs'][end]['population_above_50'] == 528_800
+        assert result['about']['population'][end]['postcodes'] == 1
+    assert '[light] LHR population >50: 528,800 against 528,800 (+0.0%; -20% to +20%) pass' in result['lines']
+    judged = [line for line in result['lines'] if ' km2 against ' in line or 'population >50' in line]
+    assert len(judged) == 10 and all(line.endswith('pass') for line in judged), judged
+    assert not result['ok']  # the made-up tables are no deciding database
+    # Without the file the run says "not measured" and the gate fails it: never a guess.
+    assert gr.verdict(days)['runs']['light']['population_above_50'] is None
+
+
+def test_a_contour_at_the_grids_edge_refuses_the_count(tmp_path):
+    people = gr.pop.load(_population_file(tmp_path / 'p.npz', [(150, 150, 10)]))
+    days = [(_meta(d), _arrays(_target_counts())) for d in _days('2025-03-30', 2)]  # starts at cell 0: the edge
+    with pytest.raises(gr.Refused, match="population \\(light\\): the 50-event contour reaches the grid's edge"):
+        gr.build_runs(days, population=people)
+
+
+def _write_days(tmp_path, counts):
     for d in ('2025-03-30', '2025-03-31'):
         np.savez_compressed(tmp_path / f'LHR-{d}-n65.npz', meta=json.dumps(_meta(d)),
-                            **{k: v.astype(np.float32) for k, v in _arrays(np.full(N, 40.0)).items()})
-    assert gr.main(['--day', str(tmp_path / 'LHR-*-n65.npz')]) == 0
+                            **{k: v.astype(np.float32) for k, v in _arrays(counts).items()})
+
+
+def test_the_cli_writes_the_verdict_beside_the_days(tmp_path):
+    _write_days(tmp_path, np.full(N, 40.0))
+    people = _population_file(tmp_path / 'p.npz', [(150, 150, 10)])
+    assert gr.main(['--day', str(tmp_path / 'LHR-*-n65.npz'), '--population', str(people)]) == 0
     written = list(tmp_path.glob('gate-LHR-2025-03-30_2025-03-31-default-scaled-spread.json'))
     assert len(written) == 1
     result = json.loads(written[0].read_text(encoding='utf-8'))
     assert result['about']['days'][0]['scale'] == 1.0 and result['runs']['light']['day'] == '2-day average'
+    assert result['runs']['light']['population_above_50'] == 0  # counted: nothing reaches 50 here
     assert gr.main(['--day', str(tmp_path / 'nothing-*.npz')]) == 2
+
+
+def test_the_cli_refuses_without_the_population_file_unless_asked(tmp_path, capsys):
+    _write_days(tmp_path, np.full(N, 40.0))
+    days = ['--day', str(tmp_path / 'LHR-*-n65.npz')]
+    assert gr.main([*days, '--population', str(tmp_path / 'missing.npz')]) == 2
+    assert 'REFUSED: no population file' in capsys.readouterr().out
+    assert gr.main([*days, '--population', str(tmp_path / 'missing.npz'), '--no-population']) == 0
+    assert 'LHR population >50: not measured' in capsys.readouterr().out
+    # Gatwick's rule has no population check, so its run never asks for the file.
+    for d in ('2025-06-16', '2025-06-17'):
+        np.savez_compressed(tmp_path / f'LGW-{d}-n65.npz', meta=json.dumps(_meta(d, airport='LGW')),
+                            **{k: v.astype(np.float32) for k, v in _arrays(np.full(N, 40.0)).items()})
+    assert gr.main(['--day', str(tmp_path / 'LGW-*-n65.npz'), '--population', str(tmp_path / 'missing.npz')]) == 0

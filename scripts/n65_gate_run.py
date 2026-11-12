@@ -41,6 +41,10 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import n65_day as nd  # noqa: E402
 import n65_gate as gate  # noqa: E402
+import n65_population as pop  # noqa: E402
+
+# The gate's population check is the 50-event contour's (n65_gate.TARGETS 'population_above_50').
+POPULATION_LEVEL = 50
 
 
 class Refused(ValueError):
@@ -65,8 +69,11 @@ def day_kind(period: tuple[str, str]) -> str:
     return f'{span}-day average'
 
 
-def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bool = True) -> tuple[str, dict, dict]:
-    """(airport, {'light': run, 'heavy': run}, about) from loaded day files, or Refused."""
+def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bool = True,
+               population: dict | None = None) -> tuple[str, dict, dict]:
+    """(airport, {'light': run, 'heavy': run}, about) from loaded day files, or Refused. `population` is
+    n65_population.load()'s file: with it, each stage end counts the people inside its 50-event contour (item 3);
+    without it the run carries None and the gate says "not measured" (a fail, never a guess)."""
     if not days:
         raise Refused('no day files')
     metas = [m for m, _ in days]
@@ -94,7 +101,8 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
     missing = gate.missing_days(period, names)
     levels = list(gate.TARGETS[airport]['areas_km2'])
     cell = metas[0]['cell_m']
-    runs = {}
+    counted = population is not None and gate.TARGETS[airport]['population_above_50'] is not None
+    runs, inside = {}, {}
     for end in gate.STAGE_ENDS:
         total = None
         for meta, arrays in days:
@@ -102,10 +110,16 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
             n = n * (meta['scale'] if scaled else 1.0)
             total = n if total is None else total + n
         mean = total / len(days)
+        if counted:
+            try:
+                inside[end] = pop.people_inside(mean, metas[0]['grid'], cell, population, POPULATION_LEVEL)
+            except pop.Refused as e:
+                raise Refused(f'population ({end}): {e}') from e
         runs[end] = {
             'period': period, 'day': day_kind(period), 'window': metas[0]['window_local'],
             'areas_km2': {int(k): v for k, v in nd.areas_km2(mean, cell, levels).items()},
-            'population_above_50': None,  # not built yet (the lesson's step 5, item 3): the gate says so
+            # Item 3: Census 2021 people at NSPL grid references inside the 50-event contour; None = not measured.
+            'population_above_50': inside[end]['people'] if counted else None,
             'missing_days': missing,
         }
     about = {
@@ -115,13 +129,16 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
         'rule_1_scaled': scaled, 'rule_2_spread': spread,
         'database': gate.database_label(metas[0].get('anp_fingerprint')),
         'code': metas[0].get('code'),
+        'population': ({'source': population['meta']['source'], 'census_sha256': population['meta']['census_sha256'],
+                        **{end: inside[end] for end in inside}} if counted else None),
     }
     return airport, runs, about
 
 
-def verdict(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bool = True) -> dict:
+def verdict(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bool = True,
+            population: dict | None = None) -> dict:
     """{'ok': this airport passes on the deciding database, 'lines': every line, 'runs', 'about'}."""
-    airport, runs, about = build_runs(days, scaled=scaled, spread=spread)
+    airport, runs, about = build_runs(days, scaled=scaled, spread=spread, population=population)
     ok, lines = gate.bracket_verdict(airport, runs)
     if about['variant'] != 'default':
         ok = False
@@ -143,12 +160,19 @@ def main(argv=None) -> int:
     p.add_argument('--unscaled', action='store_true', help='rule 1 off: the variant reported beside')
     p.add_argument('--no-spread', action='store_true', help='rule 2 off: the variant reported beside')
     p.add_argument('--out', help='where the verdict goes (default: beside the first day file)')
+    p.add_argument('--population', default=str(pop.DEFAULT_FILE),
+                   help='the people file (n65_population.py build); missing = refused, unless --no-population')
+    p.add_argument('--no-population', action='store_true',
+                   help='no population count: the gate then says "not measured", which fails it')
     a = p.parse_args(argv)
     paths = sorted({Path(f) for spec in a.day for f in (glob.glob(spec) or [spec])})
     try:
         days = [load_day(f) for f in paths]
-        result = verdict(days, scaled=not a.unscaled, spread=not a.no_spread)
-    except (Refused, OSError, KeyError) as e:
+        needs = bool(days) and (gate.TARGETS.get(days[0][0].get('airport'), {}).get('population_above_50')
+                                is not None)
+        people = pop.load(Path(a.population)) if needs and not a.no_population else None
+        result = verdict(days, scaled=not a.unscaled, spread=not a.no_spread, population=people)
+    except (Refused, pop.Refused, OSError, KeyError) as e:
         print(f'REFUSED: {e}')
         return 2
     out = Path(a.out) if a.out else paths[0].parent
