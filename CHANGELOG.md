@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12 - Heathrow's traffic, compared like for like, and a healthcare lookup that says when it could not check
+
+- **Heathrow's 2025 traffic matched 2019's**: the full map, the API page and the methodology said 2025's flights were 2% below 2019's. That figure is in the CAA's own report, but it sets 2025's whole-year average against 2019's summer average, and summers are busier. Year against year, 2025 had as many flights as 2019, so the CAA's 2025 noise footprint being 19% smaller than 2019's is on the same traffic.
+- **The healthcare lookup no longer says "no GP nearby" when it could not check**: when the free map service it asks is busy, it can send back an error that looks like an empty answer, and that was shown as "no GP, pharmacy or hospital within 1.5 km". It now shows the NHS search links, as it does for any other failure.
+- **The healthcare lookup answers only for places in the UK**: nothing on the site or the extension asks about anywhere else, and a request for a point abroad could keep the service busy for 26 seconds.
+
 ## 2026-11-11 (night) - The street report, as the site shows it
 
 - **The street report now reads like the site**: it opens with the same one-line answer as the map and the front page, then shows the planes overhead as the site's chart, road noise as the map's bars against the WHO guideline, and the air as the map's charts with their key. The repeated summary lines are gone, and the district comparison's one new fact now sits under its chart.

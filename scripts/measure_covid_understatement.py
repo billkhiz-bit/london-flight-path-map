@@ -8,8 +8,10 @@ says shows "a highly anomalous situation". The caveat used to say the contours w
 normal year", a hand-wave. The CAA's own annual report for Heathrow publishes
 Lden contour AREAS for a normal year, so the gap can be measured instead of
 described. The current edition is ERCD Report 2601 (August 2026): 2025, when
-annual 24-hour movements were 1% above 2024's and 2% below 2019's (the report's own figures; "2024 was 0.5%
-below 2019", said here until 2026-11-03, was the SUMMER-day comparison). Rolled from ERCD
+annual 24-hour movements (1,315.0 a day) were 1% above 2024's and level with 2019's (1,312.9, ERCD 2101 Table C6).
+ERCD 2601's own "2% below the 2019 level (1347.1)" sets 2025's annual figure against 2019's SUMMER one (its para
+2.15), and the pages repeated it until 2026-11-12; "2024 was 0.5% below 2019", said here until 2026-11-03, was the
+summer-day comparison too. Rolled from ERCD
 2501's 2024 figures on 2026-11-01; the 55 dB area fell 148.4 -> 142.4 km2 (the
 CAA puts it down to quieter types and 10 points more easterly operation).
 

@@ -39,6 +39,18 @@ OVERPASS_URL = os.environ.get('OVERPASS_URL', 'https://overpass-api.de/api/inter
 SEARCH_RADIUS_M = 1500
 MAX_RESULTS_PER_TYPE = 5
 
+# Only UK places are ever asked for: the full map asks for London postcodes, the extension for UK listings. Anything
+# outside this box is refused before it reaches Overpass, a free service other people run: one request for central
+# Paris took 26.8 s and answered 200 (audit I-9, 2026-11-12), so an anonymous loop of foreign points could hold dozens
+# of Lambdas at our cost and Overpass's. The box (Scilly to Shetland, County Fermanagh to Lowestoft) is a coarse
+# refusal, never a claim of coverage: a point inside it still gets a real answer or the honest fallback.
+UK_LAT = (49.8, 60.95)
+UK_LON = (-8.7, 1.8)
+
+
+class OverpassUnusable(ValueError):
+    """An Overpass reply that is not an answer: no `elements` list, or a `remark` (its runtime errors)."""
+
 # Reworded 2026-08-06. The previous string claimed results were "verified
 # against NHS service-search where available". No such verification happens —
 # nothing in this file contacts NHS Digital, and the NHS Service Search API has
@@ -234,7 +246,21 @@ def query_overpass(lat, lon):
     # sat above the ceiling, so a slow Overpass killed the whole invocation
     # instead of degrading to search links.
     with urlopen(req, timeout=26) as resp:
-        return json.loads(resp.read().decode()).get('elements', [])
+        return elements_of(json.loads(resp.read().decode()))
+
+
+def elements_of(body):
+    """The elements of an Overpass reply, or OverpassUnusable when the reply is not an answer.
+
+    Overpass reports its own runtime errors (its [timeout:25] budget, a memory limit) with HTTP 200 and a `remark`,
+    sometimes beside the elements it had found so far. `.get('elements', [])` read those as a complete answer, so a
+    busy Overpass told the visitor "No GP services within 1.5 km" (audit I-8, 2026-11-12): absence published as a
+    reading. Any remark, or no elements list, is now the outage fallback; a partial list is never taken as complete."""
+    if not isinstance(body, dict) or not isinstance(body.get('elements'), list):
+        raise OverpassUnusable('no elements list in the reply')
+    if body.get('remark'):
+        raise OverpassUnusable(f"remark: {str(body['remark'])[:160]}")
+    return body['elements']
 
 
 def element_coords(el):
@@ -359,6 +385,9 @@ def handler(event, context):
         if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
             return response(400, {'error': 'lat/lon out of range.'})
 
+        if not (UK_LAT[0] <= lat <= UK_LAT[1] and UK_LON[0] <= lon <= UK_LON[1]):
+            return response(400, {'error': 'Only places in the UK can be looked up.'})
+
         # Every UK area we cover is served from the bundled snapshot: no network
         # call, so no shared-IP lottery and no fallback. See the block above
         # _load_bundle.
@@ -407,7 +436,7 @@ def handler(event, context):
 
         try:
             elements = query_overpass(lat, lon)
-        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, OverpassUnusable) as exc:
             logger.warning(
                 'Overpass unavailable, using fallback links. near=%s err=%s',
                 _log_coarse(lat, lon),

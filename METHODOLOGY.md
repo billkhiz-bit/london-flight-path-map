@@ -1183,12 +1183,14 @@ with how hard each airport was hit, and sound energy sums logarithmically:
 | airport | 2019 movements | 2021 movements | implied deficit |
 |---|---|---|---|
 | London City | 80,751 | **12,921** (16%) | **≈ −8.0 dB** |
-| Heathrow | 1,347.1 a day (ERCD 2601) | **535.0 a day** (40%; ERCD 2201) | see the measurement below |
+| Heathrow | 1,312.9 a day (ERCD 2101, Table C6) | **535.0 a day** (41%; ERCD 2201) | see the measurement below |
 
 **Measured at Heathrow (2026-09-26), replacing "a few dB".** The CAA publishes Heathrow's Lden
 contours annually. The current edition is ERCD Report 2601 (August 2026, Table 12): 2025, when annual 24-hour
-movements (1,315.0 a day) were 1% above 2024's and 2% below 2019's (1,347.1), the report's own figures, so it is
-a near-normal year to compare against
+movements (1,315.0 a day) were 1% above 2024's and level with 2019's (1,312.9 a day, ERCD 2101 Table C6, calendar
+2019), so it is a normal year for traffic to compare against. (ERCD 2601's summary says "2% below the 2019 level
+(1347.1)", but 1,347.1 is 2019's average SUMMER 24-hour figure, as its para 2.15 says; summer against summer, 2025
+was 0.2% lower. This page repeated the 2% until 2026-11-12.)
 (rolled 2026-11-01 from ERCD 2501's 2024 figures, which put the 55 dB area at 148.4 km²). `scripts/measure_covid_understatement.py` measures DEFRA's
 2021 areas from its Heathrow GeoTIFF (every contour lies wholly inside the raster, so none is clipped)
 and holds them in `data/covid-understatement.json`; `--verify-caa` re-parses the CAA table:
@@ -1201,9 +1203,9 @@ and holds them in `data/covid-understatement.json`; `--verify-caa` re-parses the
 | ≥ 70 dB | 3.2 km² | 7.0 km² | 2.2x |
 | ≥ 75 dB | 1.5 km² | 2.7 km² | 1.8x |
 
-So the map this product rests on shows Heathrow's noise footprint at about **half** its size in 2025, when annual
-movements were 2% below 2019's. That does not make 2025 a normal year for area: 2019's 55 dB contour was 176.2 km²
-(Heathrow's Noise Action Plan, Table 7.1), larger again on near-equal traffic.
+So the map this product rests on shows Heathrow's noise footprint at about **half** its size in 2025, a year with
+as many movements as 2019. That does not make 2025 a normal year for area: 2019's 55 dB contour was 176.2 km²
+(Heathrow's Noise Action Plan, Table 7.1), 24% larger on the same traffic.
 
 The two are **one model on two years, not two models.** Heathrow's Noise Action Plan 2024-2028 says the 2021 Lden contours
 were produced by the CAA's Environment Research Consultancy Department with ANCON version 2.4 (p. 9), and that the CAA is

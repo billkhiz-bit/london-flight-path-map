@@ -33,8 +33,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > `/reports/` wording (I-7, M-1, M-2) FIXED in the uncommitted build, `tests/street-report.mjs` block 6 (red on the old code).
 > Open, in order: I-1 district search council (`index.html:11259`), I-2 "strong growth" from affordability, I-3 planes pages'
 > councils from PO boxes, I-21 "2% below 2019" (annual against summer; the Leicester fact-check), I-8/I-9 `/nhs` (SAM, Bill's word).
-> N65 reviewed the same day (branch `n65`): the Doc 29 core is sound, the gate is wired to nothing; five method choices wait on
-> Bill before a "freeze and wire" session (no download).
+> N65 reviewed the same day (branch `n65`): the Doc 29 core is sound, the gate is wired to nothing; Bill said yes to the five
+> method rules (12 Nov), so next is the "freeze and wire" session (no download).
+> **Report build COMMITTED `08ec87c6`** (pushed; not deployed). Then, Bill's yes: I-21 the "2% below 2019" wording and I-8/I-9
+> the `/nhs` fixes, built and tested (red on the old code); after their preflight and commit, the web deploy and the SAM
+> changeset wait on his word.
 >
 > ## START HERE (2026-11-11)
 >
