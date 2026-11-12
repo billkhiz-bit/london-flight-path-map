@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-11 (night) - The street report, as the site shows it
+
+- **The street report now reads like the site**: it opens with the same one-line answer as the map and the front page, then shows the planes overhead as the site's chart, road noise as the map's bars against the WHO guideline, and the air as the map's charts with their key. The repeated summary lines are gone, and the district comparison's one new fact now sits under its chart.
+- **The small print is bigger**: the notes are 10 pt (they were 7.6), the captions 9 and the sources 8. Nothing on the report prints smaller than 8 pt, the labels inside its charts and map included.
+- **Two pages**: page 1 is the aircraft answer and page 2 the air, the links and how to read the report. A postcode under two airports or beside six routes still fits two pages.
+- **Three fixes from the 12 Nov audit, before it shipped**: where the data answers for a neighbouring postcode, the report no longer shows that neighbour's road noise as yours (neighbours can differ by 20 dB); a postcode with fewer than one plane a day now carries the same rules and flight-tracking credit as one with a chart; and outside London the "Have your say" label no longer sits over nothing.
+- **The reports page says how the planes are counted**: from community flight tracking, checked against the CAA's monthly totals, beside the official sources; and the free report is described as two pages, as it is.
+
 ## 2026-11-11 (evening) - Tidier search results and links
 
 - **Every area and planes overhead page reads whole in a search result**: titles fit in 60 characters and descriptions in 160, so search engines stop cutting them off. A link to any of them pasted into a chat or a post now shows its title and description.

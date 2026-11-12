@@ -1113,3 +1113,37 @@ them"), and New York and the Bay Area, whose answers differ, keep their own sent
 phone's close button restored a copy taken at boot, London's, in every city: one builder now (`showEmptyState`). A live check
 read Bristol's panel mid-switch (new chips under London's sentence for about a second): the switch now rebuilds the panel at
 its start as well as after the outlines.
+
+## The street report as the site draws it (2026-11-11, Bill's pick C, small print bigger)
+
+Bill asked whether the report's text could go the way the site's had (tiles, charts, points). The mock-up
+(claude.ai/artifact/1HZDc4VDRGxVUL791DMewp, v4 then v5) measured the words below the routes table at 395 now, 375 in B and 356
+in C: the visual version is not much shorter, because most of what is left is caveats and credits that stay word for word. Its
+gain is that the page is scanned picture first. He picked C, then asked whether the text should be bigger.
+
+**Bigger, but only the small print, measured on the real report.** `scripts/address_noise_report.mjs --keep-html` keeps the page
+it prints; re-printed with every size raised, page 1 grew by about 107 pt where nothing was hard to read (the routes table's rows
+wrapped to two lines, the tiles' labels ran to five, the map's key spilled a line). So: notes 7.6 -> 10 pt, captions 8 -> 9,
+sources 7.4 -> 8, headings 10.5 -> 12; the tiles and the table as they were.
+
+**No text under 8 pt, chart labels included.** Measured per character with pdfium (`FPDFText_GetFontSize`), which reports CSS px
+here: the 18 pt title reads 24.0, so x0.75 for points. The first build had 40 runs under 8 pt, all inside pictures: the map's
+labels (6.2 pt, as the old report), the TW9 chart (6.9, as the old report) and the new planes and air charts (6.4 to 7.8). The
+charts are the site's, 352 units wide with text from 9 units, so they need about 300 pt of page each: the planes chart takes a
+300 pt column beside a narrower TW9 chart (its own `.dsmall` labels, 18 units), the air charts stack at 320 pt with the key
+beside them, and the map's labels went to 16 units with their plates widened.
+
+**Two pages, flowed, never forced.** A forced break before the air (`break-before: page`) sent SW1P 3JA, E16 2PX and TW6 2GA to
+three pages: page 1 overflowed by a section and the break then opened page 3. The sections now flow, each whole
+(`break-inside: avoid`, headings kept with what follows), so a busy postcode moves the road block to page 2 by itself and Kew
+keeps it on page 1, as the mock-up drew it. Two airports still overflowed until their charts shared one heading, the busiest
+first (SW1P's headline named Heathrow while London City's chart came first), and the overhead rule was said once. Checked on
+TW9 3PZ, SW1P 3JA, E16 2PX, TW6 2GA, NW1 4RY, M22 5RX and LS1 4DY: all two pages, none under 8 pt.
+
+**What moved.** The air's reading of the API (`airSquare`), the model's row (`airModelOf`), the key's sentences
+(`sensorKeyNote`, `monitorKeyNote`) and the rows (`airRows`) moved from index.html into js/street_report.mjs, so the full map and
+the report read them one way; `pictureHtml()` came out of `tileHtml()` in js/panel-findings.mjs so the report draws the map's
+bars. js/street_report.mjs now imports planes.mjs, which imports `esc` from it: an ES module cycle, safe because neither runs
+the other at load (checked by importing each of the four modules first). "What this shows" keeps only what no tile, row or chart
+says: why DEFRA gives no figure, and a postcode beside a runway rather than under its approach. The road block is the
+postcode's own figure against the WHO's; the council's rating, which the map shows, stays off a report about one postcode.

@@ -801,6 +801,10 @@ check "detail cards"                    node tests/detail-near.mjs
 # geometry (to scale, beyond the scale, labels at the edge), its shapes, its escaping and the WHO guideline it shares
 # with the API (read from app.py) are held here without a browser; the live panel is tests/uk-city-panel.mjs.
 check "air side by side: chart"           node tests/air-chart.mjs
+# The street report as the site draws it (Bill's pick C, 2026-11-11): reportParts() is pure, so every branch C added (the
+# headline, the planes chart busiest first, the road bars or bound, the air key, the district's caption, the flowed pages,
+# the bigger small print) and the import cycle through planes.mjs are held here; the free copy in tests/front-page.mjs.
+check "street report: as the site draws it" node tests/street-report.mjs
 # The approach strip on /how-it-works/ (2026-10-26): the site's first interactive picture outside the map. The
 # page-wide gates read it; only this moves its slider: no sideways scroll at 390 and 1366, the keyboard flies the
 # plane and aria-valuetext follows, reduced motion stills it, tiles load as they come into view, and every picture

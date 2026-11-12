@@ -486,15 +486,22 @@ function scoreHtml(v, colourOf) {
  * One finding as a tile the reader opens; '' for nothing. `opts.scoreColour` is the panel's scoreColor(), so a score's
  * bar is coloured as every score on the site is. The explanation is closed until tapped.
  */
+/**
+ * One of a finding's pictures as HTML: the tile's, and since 2026-11-11 the street report's road bars (Bill's pick C),
+ * so the report draws the bars the full map draws, from the same finding.
+ */
+export function pictureHtml(v, opts = {}) {
+  return v.kind === 'strip' ? stripHtml(v) : v.kind === 'share' ? shareHtml(v)
+    : v.kind === 'bars' ? barsHtml(v) : v.kind === 'ruler' ? rulerHtml(v) : v.kind === 'score' ? scoreHtml(v, opts.scoreColour)
+    // A chart is SVG text from a pure builder that escapes every name (planesChart): set as it comes, never from free text.
+    : v.kind === 'chart' && typeof v.svg === 'string' && v.svg.startsWith('<svg') ? `<div class="t-chart">${v.svg}</div>` : '';
+}
 export function tileHtml(f, opts = {}) {
   const t = f && f.tile;
   if (!t) return '';
   const ink = t.tone ? `t-ink-${t.tone}` : 't-ink-plain';
   const sub = t.sub ? `<span class="t-sub${t.shared ? ' t-wide' : ''}">${esc(t.sub)}</span>` : '';
-  const pictures = (t.visual || []).filter(Boolean).map((v) => (v.kind === 'strip' ? stripHtml(v) : v.kind === 'share' ? shareHtml(v)
-    : v.kind === 'bars' ? barsHtml(v) : v.kind === 'ruler' ? rulerHtml(v) : v.kind === 'score' ? scoreHtml(v, opts.scoreColour)
-    // A chart is SVG text from a pure builder that escapes every name (planesChart): set as it comes, never from free text.
-    : v.kind === 'chart' && typeof v.svg === 'string' && v.svg.startsWith('<svg') ? `<div class="t-chart">${v.svg}</div>` : '')).join('');
+  const pictures = (t.visual || []).filter(Boolean).map((v) => pictureHtml(v, opts)).join('');
   const say = (t.say || []).filter(Boolean).map((s) => `<p class="t-say">${esc(s)}</p>`).join('');
   const notes = (t.notes || []).filter(Boolean).map((s) => `<p class="t-note">${esc(s)}</p>`).join('');
   const tip = t.tip ? `<p class="t-tip"><b>Tip:</b> ${esc(t.tip)}</p>` : '';

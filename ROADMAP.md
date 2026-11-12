@@ -26,6 +26,16 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-12)
+>
+> **AUDIT 12 NOV** (`AUDIT_REPORT_2026-11-12.md`): 0 Critical, 22 Important, 30 Minor. The street report build's three defects
+> (I-4 neighbour road reading, I-5 "under 1 a day" without its rules and credit, I-6 "Have your say" over nothing) and the
+> `/reports/` wording (I-7, M-1, M-2) FIXED in the uncommitted build, `tests/street-report.mjs` block 6 (red on the old code).
+> Open, in order: I-1 district search council (`index.html:11259`), I-2 "strong growth" from affordability, I-3 planes pages'
+> councils from PO boxes, I-21 "2% below 2019" (annual against summer; the Leicester fact-check), I-8/I-9 `/nhs` (SAM, Bill's word).
+> N65 reviewed the same day (branch `n65`): the Doc 29 core is sound, the gate is wired to nothing; five method choices wait on
+> Bill before a "freeze and wire" session (no download).
+>
 > ## START HERE (2026-11-11)
 >
 > **TILES LIVE** (`e8849ae0`; preflight PASS 46 min, drift PASS, live shots at 390/1366 on claude.ai/artifact/JbmPxQXsgP71RJA1zzbYTt).
@@ -46,7 +56,21 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **GUIDE LIVE** (`e6ce0417`). **THE ANALYSIS PANEL, OPTION A, LIVE** (`ff96ee42`; Bill's pick, claude.ai/artifact/8EFboJHqQ1FBvdd6K5pCCv v2):
 > before a search a UK city's panel says what a search tells you, the answer card's four groups from `FIND_GROUPS` (one holder),
 > then its Try chips (rounded, to match); `showEmptyState(city)` is the one builder; the disclaimer is dark on the map's grey.
-> **TIDY-UPS + SEO TEMPLATE FIXES, BUILT** (deploy on Bill's word): the map's air fold says each caveat once and drops "Sources:";
+> **STREET REPORT C + BIGGER SMALL PRINT, BUILT 11 Nov night** (Bill's pick, mock-up claude.ai/artifact/1HZDc4VDRGxVUL791DMewp v5): two
+> pages flowed, the site's headline, planes chart, road bars and air charts; no text under 8 pt (seven postcodes checked); the
+> sample PDF and the front page's still regenerated; deploy on Bill's word (web-deploy for js/, home-deploy for the sample and /reports/, then /pricing).
+> **Then, Bill's yes (11 Nov, after comparing 8 established reports, claude.ai/artifact/WXjyPUmF9H5pQExNeK5hRp):** (a) a verdict word per
+> topic on page 1 (the site's words, never Pass/Fail), (b) a next step per topic, (c) a footer with reference, date and page x of 2,
+> (d) "desktop only, no site visit" near the top, (e) "not a conveyancing search under the Search Code" + complaints route. Mock-up
+> first. **No trust marks** (Search Code/CoPSO/TPO): needed only to sell as a conveyancing search (PI cover per search, PCCB
+> inspection); revisit after insurance and the rename, or when a conveyancer asks.
+> **NEXT BUILD, Bill's yes 11 Nov 22:55: THREE FIXED PAGES, ANSWER FIRST** (printed mock-up v2 claude.ai/artifact/1GAXwXEyNJBxVJCtG1hx38):
+> p1 headline + four topic cards (verdict word, figure, next step, page of the detail) + the four figure tiles + a taller map +
+> "Report details / How current"; p2 routes, planes, TW9, road; p3 air, station, links, reading notes ("not a conveyancing
+> search under the Search Code", no complaints line), sources. Footer "Page x of 3". AND BIGGER TEXT: body and table 10.5 pt,
+> tile labels, captions 9.5, notes 10.5, sources 8.5, measured on the 7 postcodes (page 3 is the constraint: move the station
+> and links to page 2 if it overflows). Then /, /pricing and /reports/ say three pages; the script refuses a fourth.
+> **TIDY-UPS + SEO TEMPLATE FIXES, LIVE 11 Nov** (`741aa88c`; drift PASS, 152/152 area pages = API, checked live at 1366 and 390): the map's air fold says each caveat once and drops "Sources:";
 > audit M-14 (the yardstick bar to 3:1 on its track, map and built pages, `tests/test_yardstick_contrast.py`); M-7's comment
 > corrected (the fix, a static fallback for the held example, is Bill's call); every area and planes page's title fits 60
 > characters and description 160, with share tags (`page_title()`/`fit()` in build_area_pages, `tests/test_page_meta.py`);

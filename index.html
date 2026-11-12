@@ -12088,28 +12088,6 @@
           .then((r) => (r.ok ? r.json() : null))
           .catch(() => null);
       }
-      function airSquareFrom(d) {
-        const e = d && d.environment;
-        const pv = (d && d.provenance) || {};
-        const meta = pv['environment.no2AnnualMeanUgm3'] || pv['environment.pm25AnnualMeanUgm3'];
-        if (!e || !meta || meta.method !== 'modelled') return null;
-        const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-        const no2 = num(e.no2AnnualMeanUgm3);
-        const pm25 = num(e.pm25AnnualMeanUgm3);
-        if (no2 === null && pm25 === null) return null;
-        // "1 km grid" -> "1 km square". One quantifier and a number check (a nested one is what the security
-        // lint calls unsafe: catastrophic backtracking on a crafted string).
-        const res = /^([0-9.]{1,8}) ?km grid$/.exec(String(meta.resolution || ''));
-        const km = res && Number.isFinite(Number(res[1])) ? res[1] : null;
-        return {
-          no2,
-          pm25,
-          period: /^\d{4}$/.test(String(meta.period)) ? String(meta.period) : null,
-          square: km ? `${km} km square` : 'grid square',
-          background: /background/i.test(String(e.airQualitySource || '')),
-          who: { no2: num(e.no2WhoGuidelineUgm3), pm25: num(e.pm25WhoGuidelineUgm3) },
-        };
-      }
       // The postcode's own road noise, for its finding: a modelled reading with its period, or the surveyed-quiet bound,
       // which is no reading (js/panel-findings.mjs roadFinding). Nothing usable leaves the council's rating to speak.
       // /v1/environment takes a point and answers for the NEAREST postcode, which is fine for a 1 km air square and wrong
@@ -12135,8 +12113,10 @@
       // under "About these readings"; the sources stay visible. Still hidden when no sensor or monitor is in 5 km.
       async function renderAirNearby(lat, lon, stillCurrent, council, environment) {
         const [loaded, env] = await Promise.all([loadAirNearby(), environment]);
-        const square = airSquareFrom(env);
         if (!loaded || !stillCurrent()) return;
+        // Read, worded and built by js/street_report.mjs (airSquare, airModelOf, the key notes, airRows) since 2026-11-11,
+        // when the street report took the same charts: one reading of the API's answer for both.
+        const square = loaded[0].airSquare(env);
         const [m, sensors, monitors] = loaded;
         const section = document.getElementById('postcode-air-section');
         const el = document.getElementById('postcode-air-data');
@@ -12145,16 +12125,9 @@
           const sensor = sensors ? m.nearestSensor(sensors, lat, lon) : null;
           const monitor = monitors ? m.nearestMonitor(monitors, lat, lon) : null;
           if (!sensor && !monitor) return;
-          const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
           const haveCouncil = council && council.name && (council.no2 !== null || council.pm25 !== null);
           const model = square
-            ? {
-                label: "DEFRA's model",
-                sub: `this ${square.square}${square.period ? ` · ${square.period}` : ''}`,
-                no2: square.no2,
-                pm25: square.pm25,
-                detail: `DEFRA's ${square.background ? 'background ' : ''}model for this postcode's ${square.square}${square.period ? `, ${square.period}` : ''}.`,
-              }
+            ? m.airModelOf(square)
             : haveCouncil
               ? {
                   label: `${council.name} average`,
@@ -12164,19 +12137,13 @@
                   detail: `DEFRA's model averaged over ${council.name}. This postcode's own 1 km figure did not load.`,
                 }
               : null;
-          const sensorNote = sensor && `Breathe London sensor, low-cost, provisional. ${cap(m.sensorSetting(sensor))}. Over the ${m.sensorPeriod(sensor)}.`;
-          const monitorNote = monitor && `Official DEFRA monitor, ratified. ${cap(m.monitorSetting(monitor))}. In ${m.monitorPeriod(monitor)}.`;
+          const sensorNote = sensor && m.sensorKeyNote(sensor);
+          const monitorNote = monitor && m.monitorKeyNote(monitor);
           const keyRow = (kind, title, detail) =>
             `<li data-air-source="${kind}">${m.airKeyMark(kind)}<span>${title}<span class="air-key-detail">${escapeHtml(detail)}</span></span></li>`;
           const named = (r) =>
             `<span class="station-name">${escapeHtml(r.name)}</span> <span class="station-dist">${escapeHtml(m.stationDistance(r.km))}</span>`;
-          const reading = (r, p) => (r && r[p] && typeof r[p].mean === 'number' ? r[p].mean : null);
-          const rowsFor = (p) =>
-            [
-              model && { kind: 'model', label: model.label, sub: model.sub, v: model[p] },
-              sensor && { kind: 'sensor', label: sensor.name, sub: `sensor · ${m.stationDistance(sensor.km)}`, v: reading(sensor, p) },
-              monitor && { kind: 'monitor', label: monitor.name, sub: `monitor · ${m.stationDistance(monitor.km)}`, v: reading(monitor, p) },
-            ].filter(Boolean);
+          const rowsFor = (p) => m.airRows(p, { model, sensor, monitor });
           // A pollutant gets a chart only when something in it has a figure; the guideline is the API's own when it
           // answered, else the module's (held equal to the API's by tests/air-chart.mjs).
           const charts = ['no2', 'pm25']

@@ -1,5 +1,6 @@
 /**
- * Aircraft-noise report for ONE postcode, as a one-page PDF.
+ * Aircraft-noise report for ONE postcode, as a two-page PDF (one page until 2026-11-11, when Bill picked C: page 1
+ * the noise, with the site's planes chart and road bars; page 2 the air, the links and the notes, in bigger type).
  *
  *   node scripts/address_noise_report.mjs --postcode "TW9 3PZ" --place "Kew" \
  *     --sample --out ~/OneDrive/Desktop/aircraft-noise-report.pdf
@@ -26,8 +27,10 @@
  *     keep terminated ones;
  *   - the 2021-vs-a-normal-year caveat (the CAA's latest Heathrow contours): data/covid-understatement.json.
  *
- * WHAT IT DELIBERATELY DOES NOT SAY. How OFTEN aircraft pass: that is N65,
- * which this product does not hold. Any adjective for the level ("severe",
+ * WHAT IT DELIBERATELY DOES NOT SAY. How OFTEN aircraft pass, except through
+ * js/planes.mjs from data/planes/ (since 2026-11-11, the planes chart every surface
+ * draws), never a figure of its own; not N65, which this product does not hold.
+ * Any adjective for the level ("severe",
  * "acceptable"): the page compares with the WHO guideline and stops there.
  * A height for departures: the AIP record carries none.
  * No em dashes in the output, matching the site's rule.
@@ -57,6 +60,7 @@ import {
   rasterFor,
   reportDocument,
 } from '../js/street_report.mjs';
+import { districtOf, planesModel } from '../js/planes.mjs';
 
 const API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment';
 
@@ -168,6 +172,16 @@ const quiet = {
   ...(await readJson('data/aircraft-quiet-regions.json')).quiet,
 };
 const district = await districtComparison(quiet, loc.outcode, env.aircraftQuiet, livePostcodes);
+// PLANES OVERHEAD (Bill's pick C, 2026-11-11), read through js/planes.mjs as every surface reads them. The airports'
+// rules and the layer's steps must be here (planes-deploy builds them): without them the report would drop its chart
+// in silence, so it refuses. A district with no file of its own is not counted, and the report says nothing of planes.
+for (const need of ['data/planes/airports.json', 'data/planes-layer/index.json']) {
+  if (!existsSync(resolve(need))) throw new Error(`${need} is missing: build the planes files before printing a report`);
+}
+const planesInfo = await readJson('data/planes/airports.json');
+const planesFile = resolve(`data/planes/${districtOf(loc.postcode)}.json`);
+const planesHere = existsSync(planesFile) ? planesModel(await readJson(planesFile), planesInfo, loc.postcode) : null;
+const layerSteps = (await readJson('data/planes-layer/index.json')).steps || [];
 
 const html = reportDocument(
   spec,
@@ -178,6 +192,8 @@ const html = reportDocument(
     resolvedAs,
     notices: envBody.notices,
     env,
+    provenance: envBody.provenance,
+    planes: { model: planesHere, steps: layerSteps },
     routes,
     district,
     covid: await readJson('data/covid-understatement.json'),
@@ -211,10 +227,11 @@ try {
   await pg.goto(pathToFileURL(htmlPath).href, { waitUntil: 'load' });
   const tmp = spec.out.replace(/\.pdf$/i, '.NEW.pdf');
   const pdf = await pg.pdf({ path: tmp, format: 'A4', printBackground: true, preferCSSPageSize: true, tagged: true });
-  // It is sold as ONE page. Count the page objects rather than trusting the layout.
+  // It is sold as two pages at most (Bill's pick C, 2026-11-11): the sections flow, each kept whole, so a busy postcode
+  // moves one to page 2 by itself. Count the page objects rather than trusting the layout.
   const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
-  if (pages !== 1) {
-    console.error(`the report ran to ${pages} pages, not 1 - shorten it before sending`);
+  if (pages > 2) {
+    console.error(`the report ran to ${pages} pages, not 2 - fit it before sending`);
     process.exitCode = 1;
   }
   try {

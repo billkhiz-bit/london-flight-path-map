@@ -1940,16 +1940,41 @@ const makeReport = async (pc) => {
   ok(!printed.report && printed.note && !printed.frameHeading, 'printing the page or the report frame gives the firms note, not the report', JSON.stringify(printed));
   const foot = ready ? await sheetDoc().locator('footer').textContent() : '';
   ok(/Free copy for personal use, not for use with clients/.test(foot), 'the free copy says on its face that it is for personal use, not for clients', foot.slice(-140));
-  const alsoLine = ready ? await sheetDoc().locator('p.note', { hasText: 'Also at this postcode' }).textContent() : '';
-  ok(/nearest station [^,]+, \d+ m in a straight line/.test(alsoLine), 'the report names the nearest station, from the same function as the front page', alsoLine.slice(-120));
-  const airNote = ready ? await sheetDoc().locator('p.note', { hasText: 'Air measured nearby' }).textContent() : '';
+  const stationLine = ready ? await sheetDoc().locator('p.note', { hasText: 'Nearest station:' }).textContent() : '';
+  ok(/^Nearest station: [^,]+, \d+ m in a straight line\.$/.test(stationLine), 'the report names the nearest station, from the same function as the front page', stationLine.slice(-120));
+  // THE REPORT AS THE SITE SHOWS IT (Bill's pick C, 2026-11-11): the air is the full map's charts and key, the planes the
+  // front page's chart, the road the map's bars, the headline the answer card's sentence, the district's shares the
+  // caption of its chart; each read here from the page the free copy draws.
   const kewSensor = nearestTo(sensorFile.sites, 51.476982, -0.285639);
-  ok(airNote.startsWith(`Air measured nearby. Nearest Breathe London sensor: ${kewSensor.name}, `), 'the report names the nearest Breathe London sensor, from the same function as the front page', airNote.slice(0, 140));
+  const airKey = ready ? (await sheetDoc().locator('ul.air-key li').allTextContents()).map((t) => t.replace(/\s+/g, ' ').trim()) : [];
+  ok(airKey.some((t) => t.startsWith(`${kewSensor.name} `) && t.includes('Breathe London sensor, low-cost, provisional.')), 'the report names the nearest Breathe London sensor in the air key, in the full map\'s words', JSON.stringify(airKey));
+  const drawn = ready
+    ? await page.evaluate(() => {
+        const d = document.getElementById('sheet').contentDocument;
+        return {
+          lead: d.querySelector('p.lead')?.textContent || '',
+          planes: d.querySelectorAll('.planes svg[data-planes-chart]').length,
+          air: [...d.querySelectorAll('svg[data-air-chart]')].map((s) => s.dataset.airChart),
+          road: d.querySelectorAll('.road .t-bars .t-bar').length,
+          // The district chart needs postcodes.io's bulk lookup, which this file's stub answers 404, so the free copy
+          // draws none here: its caption is held by tests/street-report.mjs, and here only where a chart is drawn.
+          district: d.querySelectorAll('.district').length,
+          fact: d.querySelector('.district .cap.fact')?.textContent || '',
+          shows: [...d.querySelectorAll('h2')].some((h) => h.textContent === 'What this shows'),
+        };
+      })
+    : {};
+  ok(
+    /^On most days, about \d+ Heathrow planes a day pass over TW9 3PZ$/.test(drawn.lead) && drawn.planes === 1 && drawn.air.join() === 'no2,pm25' &&
+      drawn.road === 2 && (drawn.district ? /^Of the [\d,]+ postcodes in TW9 on DEFRA's map, \d+% are quieter than this one and \d+% are louder\.$/.test(drawn.fact) : drawn.fact === '') && !drawn.shows,
+    "the report leads with the site's headline and draws the site's planes, air and road pictures, its district's shares under the chart, and no line a tile already says",
+    JSON.stringify(drawn)
+  );
   ok(foot.includes(sensorFile.attribution), "the report's sources carry Breathe London's credit word for word", foot.slice(-300));
   const reportSay = ready
-    ? await sheetDoc().locator('p.note', { hasText: 'Have your say.' }).evaluate((p) => [...p.querySelectorAll('a')].map((a) => a.getAttribute('href')))
+    ? await sheetDoc().locator('p.say').evaluate((p) => [...p.querySelectorAll('a.chip')].map((a) => a.getAttribute('href')))
     : [];
-  const reportWrong = ready ? await sheetDoc().locator('p.note', { hasText: 'Spotted something wrong?' }).evaluate((p) => p.querySelector('a')?.getAttribute('href')) : '';
+  const reportWrong = ready ? await sheetDoc().locator('p.say .wrong').evaluate((p) => p.querySelector('a')?.getAttribute('href')) : '';
   ok(
     reportSay.includes('https://webtrak.emsbk.com/lhr6') && reportSay.includes('https://airspacechange.caa.co.uk/having-your-say/') &&
       reportWrong === `mailto:support@skyscore.co.uk?subject=${encodeURIComponent('Correction: TW9 3PZ')}`,

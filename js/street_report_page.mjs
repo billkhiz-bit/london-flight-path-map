@@ -20,6 +20,7 @@ import {
   reportDocument,
 } from '/js/street_report.mjs';
 // MIT, Kazuhiko Arase; vendored unmodified, version in the name (LICENSING.md, code shipped to browsers).
+import { districtOf, planesModel } from '/js/planes.mjs';
 import qrcode from '/js/vendor/qrcode-generator-2.0.4.mjs';
 
 const byId = (id) => document.getElementById(id);
@@ -142,7 +143,7 @@ async function make(raw, check = null) {
     }
     const resolvedAs = envBody.location && envBody.location.postcode !== loc.postcode ? envBody.location.postcode : null;
 
-    const [proc, regions, covid, stations, sensors, monitors] = await Promise.all([
+    const [proc, regions, covid, stations, sensors, monitors, planesInfo, planesFile, layer] = await Promise.all([
       getJson('/data/flight-procedures.json', 'The route file'),
       getJson('/data/aircraft-noise-rasters.json', 'The noise map index'),
       getJson('/data/covid-understatement.json', 'The 2021 comparison'),
@@ -150,6 +151,11 @@ async function make(raw, check = null) {
       maybeJson('/data/stations.json'),
       maybeJson('/data/breathe-london-sensors.json'),
       maybeJson('/data/aurn-sites.json'),
+      // Planes overhead (Bill's pick C, 2026-11-11), through js/planes.mjs as every surface: a district with no file
+      // is not counted, so its report says nothing of planes.
+      maybeJson('/data/planes/airports.json'),
+      maybeJson(`/data/planes/${encodeURIComponent(districtOf(loc.postcode))}.json`),
+      maybeJson('/data/planes-layer/index.json'),
     ]);
     const pl = plane(loc.latitude, loc.longitude);
     const routes = routesNear(proc, pl, SCOPE_KM);
@@ -193,6 +199,8 @@ async function make(raw, check = null) {
         resolvedAs,
         notices: envBody.notices,
         env,
+        provenance: envBody.provenance,
+        planes: { model: planesModel(planesFile, planesInfo, loc.postcode), steps: (layer && Array.isArray(layer.steps) && layer.steps) || [] },
         routes,
         district,
         covid,
@@ -237,6 +245,8 @@ async function make(raw, check = null) {
         // crispEdges: no anti-aliasing, so each module edge lands on a device pixel (see below).
         '.free-copy-check svg { flex: 0 0 auto; shape-rendering: crispEdges; }' +
         '.free-copy-check p { margin: 0; }' +
+        // On screen there is no page to break: page 2 (the air, the links, the notes) opens under a rule instead.
+        '@media screen { .page2 { margin-top: 18px; padding-top: 2px; border-top: 2px solid var(--rule); } }' +
         // REFLOW ON A NARROW SCREEN (audit 2026-10-09 I-6, WCAG 1.4.10). The frame is fluid below
         // A4 width, and under 600 px the report reads top to bottom: two tiles a row, one column,
         // the routes table as a list whose lines carry their column's heading (set below), larger
@@ -249,7 +259,9 @@ async function make(raw, check = null) {
         ' tr { padding: 7px 0; border-bottom: 1px solid var(--rule); } td { border: 0; padding: 1px 0; }' +
         ' td:first-child { font-weight: 600; }' +
         ' td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); }' +
-        ' .note, .legend, .cap { font-size: 9.5pt; } footer { font-size: 9pt; }' +
+        // The notes are 10 pt on the page since 2026-11-11 (Bill: bigger small print), so a phone takes them up, never down.
+        ' .legend, .cap { font-size: 9.5pt; } .note, ul.pts, .say { font-size: 10.5pt; } footer { font-size: 9pt; }' +
+        ' .air-two, .road-row { grid-template-columns: 1fr; }' +
         ' .free-copy-check { flex-direction: column; align-items: flex-start; }' +
         ' .map-scroll { overflow-x: auto; } .map-scroll > svg { width: 720px; max-width: none; }' +
         '}' +

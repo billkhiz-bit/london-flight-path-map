@@ -77,7 +77,7 @@ Or just describe what you need, I have full context of this project.
   cross-project state is `%USERPROFILE%\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
-- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-09.md`; suggest `/audit` when it is >7 days old.
+- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-12.md`; suggest `/audit` when it is >7 days old.
 
 ## The product, in facts safe to repeat
 
@@ -299,6 +299,15 @@ Or just describe what you need, I have full context of this project.
   planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
+- **The street report is two pages, drawn as the site draws it** (Bill's pick C with the small print bigger, 2026-11-11;
+  mock-up claude.ai/artifact/1HZDc4VDRGxVUL791DMewp v5): the headline is `answerLead()`, the planes `planesChart()` (busiest
+  airport first, the overhead rule once), the road `roadFinding()` + `pictureHtml()` (the postcode against the WHO; the council's
+  rating stays on the map), the air the map's charts and key (`airSquare`, `airModelOf`, `airRows`, `sensorKeyNote`, moved from
+  index.html into js/street_report.mjs: one holder). "What this shows" keeps only what no tile says. Sections flow, each whole;
+  `address_noise_report.mjs` refuses a third page. Notes 10 pt, captions 9, sources 8, and NO text under 8 pt, chart labels
+  included (pdfium reports CSS px: x0.75 for pt). Check a layout change on SW1P 3JA and E16 2PX (two airports), TW6 2GA (16 routes).
+  A neighbour's road reading (`resolvedAs`) is never this postcode's, as on the map; "Under 1 a day" carries the planes' rules
+  and credit like a chart; no "Have your say" label without verified links (audit I-4 to I-6, 2026-11-12, `tests/street-report.mjs` 6).
 - **A built page's title fits 60 characters and its description 160, with share tags** (the SEO audit, 2026-11-11):
   `build_area_pages.page_title()` keeps " | Sky Score" only where it fits, `fit()` takes the longest of a description's
   versions that fits, never a cut; both builders use them, `tests/test_page_meta.py` reads every built page. /map/'s one
