@@ -215,6 +215,11 @@ Or just describe what you need, I have full context of this project.
 - **One registry, `CITY_DATA`.** No `if (city === 'x')`; add a registry field to ALL cities
   (`tests/smoke-local.mjs` asserts key parity). New `=== 'nyc'` tests must be declared in
   `tests/test_us_city_branches.py`.
+- **The full map's state is read when it is used, never captured** (audit I-13 to I-17, 2026-11-12): a click reads
+  `getActiveBoroughData()` at click time; an empty panel clears `panelSubject` (`showEmptyState`), or a profile change redraws an
+  old postcode in a new city; a late redraw passes the card's own options and checks it is still on screen. A covered council's
+  WHOLE name opens it from any city (`councilElsewhere`), never a prefix. `LONDON_AREA_MAP` postcodes must be LIVE in NSPL
+  (`tests/test_london_area_postcodes.py`: nine had been retired). Each is reached on purpose in `tests/search-guide.mjs` 7.
 - **The map's source is `index.html`, served at `/map/`; the front page is `home/index.html` at `/`.**
   Locally, `/` is still the map. `js/api-base.js` is loaded by an ABSOLUTE path.
 - **Phone vs desktop is `PHONE_LAYOUT = '(max-width: 900px), (max-height: 500px)'`**, stated by every @media
@@ -303,6 +308,9 @@ Or just describe what you need, I have full context of this project.
   planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
+- **The public sample street report's FIGURES are gated** (audit I-10, 2026-11-12): `scripts/check_sample_report.mjs`
+  (preflight `net_check`) recomputes its printed reference and headline from today's API, AIRAC and planes counts; red means
+  regenerate the sample with `address_noise_report.mjs --sample`, then `build_report_still.py --write`, then `home-deploy`.
 - **The street report is THREE FIXED PAGES, the answer first, drawn as the site draws it** (Bill's pick 2026-11-11 v2
   claude.ai/artifact/1GAXwXEyNJBxVJCtG1hx38, v3 claude.ai/artifact/PETRJg3HpWznos2MV8TLuL, built 2026-11-12): page 1 the headline
   (`answerLead()`), four cards, the key figures, the map and a details box (reference, how current, check link); page 2 the routes,

@@ -1167,3 +1167,32 @@ bars. js/street_report.mjs now imports planes.mjs, which imports `esc` from it: 
 the other at load (checked by importing each of the four modules first). "What this shows" keeps only what no tile, row or chart
 says: why DEFRA gives no figure, and a postcode beside a runway rather than under its approach. The road block is the
 postcode's own figure against the WHO's; the council's rating, which the map shows, stays off a report about one postcode.
+
+## The audit's full-map faults and the sample's figures (2026-11-12, I-10, I-13 to I-17)
+
+Reviewer C read the full map's state handling and found five faults, each a value captured at one moment and used at
+another. Each is now reached on purpose in `tests/search-guide.mjs` section 7, which went 80 of 86 against the last
+commit's `index.html` (six red, one per fault plus Hendon) and 86 of 86 after.
+
+- **I-13, a captured table.** `renderNycBoroughs` (every city but London) took `getActiveBoroughData()` once, when the
+  outlines were drawn; the profile and the late `borough-extra.json` both build a NEW table, so Trafford clicked after
+  choosing Investor showed 5.6 under "Investor" where the ranking said 6.6. The click now reads the table itself.
+- **I-14, postcodes rot.** Nine `LONDON_AREA_MAP` postcodes were retired (Mill Hill's in 2005, Hendon's in April 2026),
+  so "Mayfair" said NOT FOUND. Each took the nearest live postcode in the same district from postcodes.io's reverse
+  lookup, checked in NSPL as live AND not a large user: the nearest to Southall and Wallington were large users, so the
+  next residential one was taken. The gate holds LIVE only: 14 of the existing entries are town-centre offices (Canary
+  Wharf E14 5AB) that place the area correctly, and rule A is about planes counts, not a place's point.
+- **I-15, whole names only.** `councilElsewhere()` opens a covered council typed from another city's view, after every
+  UK route has failed (as the Bay Area branch does). Whole names, "City of X" answering to "X": a prefix rule would have
+  sent "north" to North Tyneside (the test holds that it stays NOT FOUND on London).
+- **I-16, the panel's subject outlived its contents.** `showEmptyState()` now clears `panelSubject`, so a city switch,
+  a phone's close and the not-found ZIP message leave nothing for a profile change to redraw.
+- **I-17, a redraw is not a result.** The neighbourhood list's late redraw called `renderPlaceFacts(p)` bare, so the
+  first San Francisco ZIP of a visit lost its ZIP a second later. It passes the card's own options, only while
+  `panelSubject.bay` is still that card, and `redraw: true` announces nothing and moves no phone view.
+- **I-10, the sample's figures.** The picture gate held the PNG to the PDF, and the wording gate its words; nothing
+  re-derived the figures, so two data rolls left them stale while preflight stayed green. `check_sample_report.mjs`
+  reads the sample's printed reference and "Prepared" day with pdfium, asks `/v1/environment` for TW9 3PZ (open route,
+  no key spent), and recomputes `reportReference()` for that day and `answerLead()` with today's planes counts. Proven
+  red by nudging one figure (road 50.5 to 50.6 dB): the reference moved HCH7-V2UJ to 2CR6-KWXC. An older sample with no
+  reference fails too, but that proves the parse, not the figures: red was proven on the figure itself.

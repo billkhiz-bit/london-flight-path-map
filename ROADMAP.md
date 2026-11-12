@@ -35,10 +35,12 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > councils from PO boxes, I-21 "2% below 2019" (annual against summer; the Leicester fact-check), I-8/I-9 `/nhs` (SAM, Bill's word).
 > N65 reviewed the same day (branch `n65`): the Doc 29 core is sound, the gate is wired to nothing; Bill said yes to the five
 > method rules (12 Nov), so next is the "freeze and wire" session (no download).
-> **LIVE 12 Nov:** the two-page report (`08ec87c6`) and the "2%"/`/nhs` fixes (`63820a53`): web, home and meta deployed, the SAM
-> changeset (NhsFunction code only) executed, drift PASS, Paris now 400 in 0.5 s. **THREE-PAGE REPORT BUILT** (Bill's "go with
-> recommended and deploy"): `glanceCards()` (one verdict rule), three fixed pages, bigger text, the reference on every page;
-> eight postcodes print three pages, nothing under 8 pt. Then preflight, commit, deploy.
+> **LIVE 12 Nov (evening), drift PASS, 152/152 area pages = API:** the three-page street report (`0cdec370`), "a year with as
+> many Heathrow flights as 2019" and the `/nhs` fix (`63820a53`, reviewed changeset), audit I-1, I-2, I-3, I-12 (`e6631533`).
+> **Also LIVE (late):** `0b98838b` (I-19 New York's Labels button, I-20 /score-demo/ announcements), drift PASS. Gate fixes
+> `d7dd3cfc` (I-11, I-22, M-25, M-28). **Built, to commit after preflight, deploy on Bill's word (`web-deploy`):** I-13 to I-17
+> (full-map state faults, `tests/search-guide.mjs` 7) and I-10 (`check_sample_report.mjs`). **N65** built on its worktree,
+> uncommitted: merge master into n65 first. **Audit left:** I-18 (a phone's view on a profile change; look at 390), 20 Minors.
 > **Report build COMMITTED `08ec87c6`** (pushed; deployed later the same day). Then, Bill's yes: I-21 the "2% below 2019" wording and I-8/I-9
 > the `/nhs` fixes, built and tested (red on the old code); after their preflight and commit, the web deploy and the SAM
 > changeset wait on his word.

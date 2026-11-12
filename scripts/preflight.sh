@@ -394,6 +394,9 @@ check "who it is for == one list"     python scripts/build_who_for.py --check
 # The front page's picture of the sample street report (2026-11-03): made from the PDF by its builder, never by hand;
 # offline, the PDF and the picture are the ones it recorded, and the page sizes the picture as it is.
 check "report picture == the sample PDF" python scripts/build_report_still.py --check
+# The sample's FIGURES (audit I-10, 2026-11-12): its printed reference and headline recomputed from today's API answer,
+# AIRAC and planes counts, so a data roll that leaves the public sample stale goes red here. Network: INCONCLUSIVE offline.
+net_check "sample report == today's figures" node scripts/check_sample_report.mjs
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the

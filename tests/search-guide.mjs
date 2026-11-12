@@ -309,6 +309,69 @@ console.log("Every city's Try chips");
   }
 }
 
+// ---- 7. The 12 Nov audit's map-state faults, each reached on purpose (I-13 to I-17) ----
+console.log('The audit\'s map-state faults');
+{
+  // I-15: a covered council typed from another city's view opens it there; a prefix ("north") never jumps.
+  const { ctx, page } = await visit('');
+  await page.evaluate(() => triggerSearch('Birmingham'));
+  const title = await answered(page);
+  const city = await page.evaluate(() => currentCity);
+  ok(/BIRMINGHAM/.test(title) && city === 'westmidlands', '"Birmingham" typed on London\'s map opens it in the West Midlands', `${title} in ${city}`);
+  await page.evaluate(() => switchCity('london'));
+  await page.evaluate(() => triggerSearch('north'));
+  const north = await answered(page);
+  ok(/NOT FOUND/.test(north) && (await page.evaluate(() => currentCity)) === 'london', '"north" is no council\'s whole name: not found, and the map stays put', north);
+  // I-14: the area names that pointed at retired postcodes answer.
+  for (const q of ['Mayfair', 'Hendon']) {
+    await page.evaluate((s) => triggerSearch(s), q);
+    const t = await answered(page);
+    ok(!FAILS.test(t) && t !== 'no answer in 15 s', `"${q}" leads to an answer (its postcode was retired)`, t);
+  }
+  await ctx.close();
+}
+{
+  // I-16: after a city switch the empty panel has no subject, so a profile change brings no postcode back.
+  const { ctx, page } = await visit('');
+  await page.evaluate(() => triggerSearch('Hounslow'));
+  await answered(page);
+  await page.evaluate(() => switchCity('manchester'));
+  await page.waitForSelector('#tab-analysis .no-result-yet', { timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => setPersona('family'));
+  await page.waitForTimeout(500);
+  const after = await page.evaluate(() => ({ title: document.getElementById('sidebar-title')?.textContent.trim(), empty: !!document.querySelector('#tab-analysis .no-result-yet') }));
+  ok(after.empty && after.title === 'PROPERTY INTELLIGENCE', 'a profile change after a city switch keeps the empty panel: the old result never comes back', JSON.stringify(after));
+  await ctx.close();
+}
+{
+  // I-13: outside London, a click after a profile change shows the NEW profile's score (the table is read at click time).
+  const { ctx, page } = await visit('?city=manchester');
+  await page.waitForFunction(() => currentCity === 'manchester' && document.querySelectorAll('path.borough').length === 10, null, { timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => setPersona('investor'));
+  const want = await page.evaluate(() => getActiveBoroughData().Trafford?.score);
+  await page.evaluate(() => {
+    const el = [...document.querySelectorAll('path.borough')].find((p) => p.__data__?.properties?.name === 'Trafford');
+    el?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  });
+  await page.waitForFunction(() => /TRAFFORD/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
+  const panel = await page.evaluate(() => document.getElementById('sidebar-content')?.innerText || '');
+  ok(typeof want === 'number' && panel.includes(`${want.toFixed(1)}/10`) && /Investor/.test(panel),
+    'Trafford clicked after choosing Investor shows the Investor score, as the ranking has it', `want ${want} | ${panel.slice(0, 160).replace(/\s+/g, ' ')}`);
+  await ctx.close();
+}
+{
+  // I-17: the first San Francisco ZIP of a session keeps its ZIP once the neighbourhood list arrives.
+  const { ctx, page } = await visit('?city=bayarea');
+  await page.waitForFunction(() => currentCity === 'bayarea' && document.querySelectorAll('path.borough').length > 20, null, { timeout: 20000 }).catch(() => {});
+  await page.evaluate(() => triggerSearch('94103'));
+  await page.waitForFunction(() => /ZIP 94103/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForFunction(() => typeof bayTiers !== 'undefined' && !!bayTiers.loaded, null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  const zipNow = await page.evaluate(() => ({ title: document.getElementById('sidebar-title')?.textContent.trim(), card: /ZIP 94103/.test(document.getElementById('sidebar-content')?.innerText || ''), loaded: typeof bayTiers !== 'undefined' && !!bayTiers.loaded }));
+  ok(zipNow.loaded && /ZIP 94103/.test(zipNow.title) && zipNow.card, 'the first San Francisco ZIP keeps its ZIP card after the neighbourhood list arrives', JSON.stringify(zipNow));
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 ok(errors.length === 0, 'no page errors', errors.join(' | '));

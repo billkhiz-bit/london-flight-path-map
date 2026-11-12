@@ -6170,6 +6170,9 @@
       // reads the generated postcode districts merged into this object below
       // (LONDON-NEIGHBOURHOODS), and an entry here with no detail row is skipped
       // there. Typing "Chelsea" still offers Chelsea, and now "Chelsea (SW3)".
+      // EVERY POSTCODE HERE MUST BE LIVE (audit I-14, 2026-11-12): nine pointed at postcodes Royal Mail had retired
+      // (Hendon's in April 2026), so typing "Mayfair" answered NOT FOUND. Each took the nearest live residential postcode
+      // in its district; tests/test_london_area_postcodes.py holds the list to the NSPL edition the repo loads.
       const LONDON_AREA_MAP = {
         // West London
         Chelsea: 'SW3 5RZ',
@@ -6182,7 +6185,7 @@
         Acton: 'W3 6UP',
         'Ealing Broadway': 'W5 2HL',
         Hanwell: 'W7 1JD',
-        Southall: 'UB1 1QA',
+        Southall: 'UB1 1QB',
         Greenford: 'UB6 0AA',
         Northolt: 'UB5 4AA',
         Hayes: 'UB3 1HH',
@@ -6214,11 +6217,11 @@
         Isleworth: 'TW7 6BD',
         Brentford: 'TW8 0GP',
         // Central
-        Mayfair: 'W1K 1BJ',
+        Mayfair: 'W1K 1BD',
         Soho: 'W1D 4TW',
         'Covent Garden': 'WC2E 8HD',
         Marylebone: 'W1U 1PJ',
-        Fitzrovia: 'W1T 5HE',
+        Fitzrovia: 'W1T 5HF',
         Bloomsbury: 'WC1B 3QJ',
         Holborn: 'WC1V 6DR',
         Victoria: 'SW1V 1QA',
@@ -6240,8 +6243,8 @@
         Cricklewood: 'NW2 6QG',
         'Golders Green': 'NW11 8EL',
         Finchley: 'N3 1BH',
-        Hendon: 'NW4 3HF',
-        'Mill Hill': 'NW7 1PG',
+        Hendon: 'NW4 3DG',
+        'Mill Hill': 'NW7 1RR',
         Edgware: 'HA8 7EJ',
         Stanmore: 'HA7 3BQ',
         Wembley: 'HA9 0WS',
@@ -6249,7 +6252,7 @@
         Pinner: 'HA5 3AA',
         Northwood: 'HA6 1BL',
         Kingsbury: 'NW9 8UA',
-        Neasden: 'NW10 1QD',
+        Neasden: 'NW10 1QG',
         Willesden: 'NW10 2JR',
         // North
         Angel: 'N1 0PS',
@@ -6262,7 +6265,7 @@
         Tottenham: 'N17 8NN',
         'Wood Green': 'N22 6BH',
         Southgate: 'N14 6BP',
-        'Palmers Green': 'N13 5RB',
+        'Palmers Green': 'N13 5HE',
         'Enfield Town': 'EN1 1TH',
         Edmonton: 'N9 0TZ',
         'Winchmore Hill': 'N21 1PH',
@@ -6275,7 +6278,7 @@
         'Mile End': 'E3 4AX',
         Bow: 'E3 2SE',
         'Canary Wharf': 'E14 5AB',
-        Limehouse: 'E14 7EQ',
+        Limehouse: 'E14 7EG',
         Poplar: 'E14 0AE',
         Stratford: 'E15 1BG',
         'West Ham': 'E13 9BT',
@@ -6328,7 +6331,7 @@
         Sutton: 'SM1 1EA',
         Cheam: 'SM3 8BD',
         Carshalton: 'SM5 2HW',
-        Wallington: 'SM6 0HB',
+        Wallington: 'SM6 0DZ',
         Purley: 'CR8 1AA',
         Coulsdon: 'CR5 2NH',
       };
@@ -12939,6 +12942,9 @@
     ${chips}</div>`;
       }
       function showEmptyState(city) {
+        // An empty panel has no subject (audit I-16, 2026-11-12): kept, a profile change after a city switch or a phone's
+        // close redrew the OLD postcode in the NEW city (Manchester's stations for a London point, ~260 km off).
+        panelSubject = { kind: 'none' };
         const box = document.getElementById('sidebar-content');
         if (box) box.innerHTML = emptyStateHtml(city);
         renderTryChips();
@@ -12991,7 +12997,9 @@
           const handled = await handleUsZipSearch(q);
           if (handled) return;
           if (!isCurrentSearch(search)) return;
-          // Not a NYC ZIP, fall through to "NOT FOUND" with a US-specific note.
+          // Not a NYC ZIP, fall through to "NOT FOUND" with a US-specific note. The panel's subject goes with its contents
+          // (audit I-16): a profile change brought the previous postcode back over this message.
+          panelSubject = { kind: 'none' };
           document.getElementById('sidebar-title').textContent = 'NOT FOUND';
           announceResult('No results. Sky Score covers New York and San Francisco Bay Area ZIP codes, and UK postcodes.');
           document.getElementById('sidebar-content').innerHTML = `
@@ -13158,6 +13166,17 @@
           return;
         }
         if (!result) {
+          // A COVERED UK COUNCIL TYPED FROM ANOTHER CITY'S VIEW (audit I-15, 2026-11-12): "Birmingham" on London's map
+          // answered NOT FOUND, though a postcode there switches the map to its city. Its WHOLE name only ("Bristol" for
+          // "City of Bristol"), never a prefix: "north" must not open North Tyneside. Asked once every UK route has failed.
+          if (!/\d/.test(q)) {
+            const held = councilElsewhere(q);
+            if (held) {
+              await switchCity(held.city);
+              selectBoroughByName(held.key);
+              return;
+            }
+          }
           // A Bay Area city typed from another city: asked only now, once every
           // UK route has failed, so it can never shadow a UK place of that name.
           if (!/\d/.test(q) && currentCity !== 'bayarea') {
@@ -16039,6 +16058,22 @@
       // boroughNameMatches - the boundary rule - not a substring. Returns null
       // for a borough no city holds, which callers must treat as "leave the
       // city alone": an uncovered postcode is not a reason to move the map.
+      // The UK city, other than the one on screen, whose council has exactly this name (audit I-15): { city, key }, or null.
+      // Whole names only, full stops dropped as in deriveCityFromBorough, and "City of X" answers to "X".
+      function councilElsewhere(typed) {
+        const norm = (s) => String(s).toLowerCase().trim().replace(/\./g, '').replace(/\s+/g, ' ');
+        const q = norm(typed);
+        if (!q) return null;
+        for (const cityKey of Object.keys(CITY_DATA)) {
+          if (!isUkCity(cityKey) || cityKey === currentCity) continue;
+          for (const key of Object.keys(cityOf(cityKey).boroughData())) {
+            const k = norm(key);
+            if (k === q || k.replace(/^city of /, '') === q) return { city: cityKey, key };
+          }
+        }
+        return null;
+      }
+
       function deriveCityFromBorough(adminDistrict) {
         if (!adminDistrict) return null;
         // Full stops are dropped: postcodes.io writes "St. Helens", the
@@ -16158,7 +16193,9 @@
       }
 
       function renderNycBoroughs(features) {
-        const nycData = getActiveBoroughData();
+        // The scored table is read AT CLICK TIME (audit I-13, 2026-11-12): captured here, a profile change or a late
+        // borough-extra.json built a new table the outlines never saw, so a click showed the old profile's score under the
+        // new profile's name (and a deep link could hold the table from before the data landed). London asks matchBorough().
         const bg = g.append('g').attr('class', 'layer-boroughs');
         bg.selectAll('path.borough')
           .data(features)
@@ -16177,7 +16214,7 @@
           })
           .on('click', function (e, d) {
             const n = d.properties.name;
-            const data = nycData[n];
+            const data = getActiveBoroughData()[n];
             if (!data) return;
             selectedBorough = n;
             paintBoroughSelection();
@@ -16966,20 +17003,24 @@
 
       // tier: 'city' (the default), 'neighbourhood'. A ZIP is shown ON its
       // city's card: its own area first, then the city's.
-      function renderPlaceFacts(p, { switchToAnalysis = true, zip = null, zipArea = null, tier = 'city' } = {}) {
+      function renderPlaceFacts(p, { switchToAnalysis = true, zip = null, zipArea = null, tier = 'city', redraw = false } = {}) {
         // What the card shows, kept so a persona change re-renders THIS card (a ZIP, a neighbourhood) with the
         // new persona's score, rather than the bare city card.
         panelSubject = { kind: 'borough', bay: { p, zip, zipArea, tier } };
         setPanelSubject(zip ? `${p.name} · ZIP ${zip.code}` : p.name);
         // A city carries the API's score; a neighbourhood has none of its own.
         const scored = tier === 'city' && typeof p.score === 'number';
-        announceResult(
-          scored
-            ? `Score and flight-path facts loaded for ${zip ? `ZIP ${zip.code}, ` : ''}${p.name}: ${p.score} out of 10, on US scales.`
-            : 'Flight-path facts loaded for ' + (zip ? `ZIP ${zip.code}, ` : '') + p.name + '. Not scored.'
-        );
-        if (switchToAnalysis) switchTab('analysis');
-        revealSheetIfMobile();
+        // A REDRAW of the card on screen (the neighbourhood list arriving) is not a new result: it says nothing again and
+        // moves no phone view (audit I-17, 2026-11-12).
+        if (!redraw) {
+          announceResult(
+            scored
+              ? `Score and flight-path facts loaded for ${zip ? `ZIP ${zip.code}, ` : ''}${p.name}: ${p.score} out of 10, on US scales.`
+              : 'Flight-path facts loaded for ' + (zip ? `ZIP ${zip.code}, ` : '') + p.name + '. Not scored.'
+          );
+          if (switchToAnalysis) switchTab('analysis');
+          revealSheetIfMobile();
+        }
         if (tier === 'city' && !zipArea) showTierOutline(null);
         const row = (label, value) =>
           value ? `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>` : '';
@@ -17039,7 +17080,12 @@
           loadBayTier('neighbourhoods')
             .then((fc) => {
               bayTiers.loaded = fc;
-              if (selectedBorough === 'San Francisco' && currentCity === 'bayarea') renderPlaceFacts(p, { switchToAnalysis: false });
+              // The SAME card, with the same options, and only while it is still the one on screen (audit I-17): the bare
+              // redraw replaced the first San Francisco ZIP of a session with the city card, its ZIP and rows gone.
+              const shown = panelSubject.bay;
+              if (currentCity === 'bayarea' && shown && shown.p === p && shown.zip === zip && shown.tier === tier) {
+                renderPlaceFacts(p, { switchToAnalysis: false, zip, zipArea, tier, redraw: true });
+              }
             })
             .catch(() => {});
         }

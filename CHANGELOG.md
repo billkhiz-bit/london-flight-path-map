@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-12 (late) - Five fixes on the full map, and a check on the sample report
+
+- **Nine London place names answer again**: Mayfair, Southall, Hendon, Fitzrovia, Mill Hill, Neasden, Palmers Green, Limehouse and Wallington each looked up a postcode Royal Mail had retired, so the search said "not found". Each now uses a live postcode nearby in the same district, and a check holds every place name to a live postcode.
+- **A council's name opens it from any city's map**: typing "Birmingham" on London's map said "not found"; it now opens Birmingham on the West Midlands map. Only a council's whole name does this, never part of one.
+- **A click shows the profile you chose**: outside London, clicking a council after changing the buyer profile showed the old profile's score under the new profile's name.
+- **Changing the profile no longer brings back an old result**: after switching city or closing a result, a profile change could redraw the last postcode in the new city, with the new city's stations.
+- **A San Francisco ZIP keeps its card**: the first San Francisco ZIP looked up in a visit lost its ZIP details about a second later, when the neighbourhood list arrived.
+- **The sample street report is checked against today's figures**: its reference and headline are recomputed from today's data before every release, so a data update can no longer leave the public sample out of date unnoticed.
+
 ## 2026-11-12 (evening) - Four corrections from the audit
 
 - **A postcode district search finds the right council**: searching a district that spans two councils, such as TW15 Ashford, used the first council in alphabetical order, so Ashford was shown Hounslow's figures and Uxbridge (UB8) was called not covered. It now takes the council at the district's centre.
