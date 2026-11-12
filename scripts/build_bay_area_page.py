@@ -14,7 +14,10 @@ product's niche is about. It shows the 50 cities of the four counties that
 hold the three airports, the routes the FAA has coded for those airports, and
 BTS's noise map, and it says of each city what the routes and the map say.
 
-It publishes NO score. A score would need the inputs this page does not have.
+It published NO score until 2026-11-07, when the API had scored the 50 cities for a week (release 2, live
+2026-10-29): since then (BUILT FOR REVIEW) each city's row carries the API's own balanced score, read from the
+score Lambda's calc_score at build time, never computed here, and the page says it is on US scales, that growth is
+not scored, and which cities rest on a withheld input. The routes and the shading remain facts, not the score.
 
 THREE INPUTS, AND WHAT EACH IS TRUSTED FOR
 ------------------------------------------
@@ -1166,6 +1169,34 @@ def routes_cell(c):
             + ''.join(span for _, span in held) + '</details>')
 
 
+# THE API'S SCORES (2026-11-07, built for review). Read from the score Lambda at build time, so the page prints
+# what /v1/score answers for each city, with the default (balanced) weights, and --check reds when they move.
+SCORE_PERSONA = 'balanced'
+
+
+def city_scores():
+    """{city: (score, withheld)} from the score Lambda's own calc_score, and its price top code.
+
+    Imported here, not at module level: build_bayarea_flood.py loads this module for inside(), and has no use
+    for the Lambda."""
+    sys.path.insert(0, str(ROOT / 'backend' / 'lambdas' / 'score'))
+    import app  # noqa: E402, PLC0415
+
+    weights = app.PERSONAS[SCORE_PERSONA]
+    out = {
+        name: (app.calc_score(name, 'bayarea', weights)['score'], bool(rec.get('withheld')))
+        for name, rec in app.CITIES['bayarea']['boroughs'].items()
+    }
+    return out, app.US_PRICE_TOP_CODE
+
+
+def score_line(name, scores):
+    """The city's score under its name: the API's, out of 10, marked where an input is withheld."""
+    score, withheld = scores[name]
+    mark = '<span aria-hidden="true">*</span><span class="vh"> (an input withheld)</span>' if withheld else ''
+    return f'<span class="sc">Sky Score <b>{score:.1f}</b> / 10{mark}</span>'
+
+
 def order(cities):
     # Any shading ranks above none: rounded to 1 dp, Hillsborough's 0.04% tied
     # with 0.0, and the tie fell to route distance, so 'Under 1%' sat below two
@@ -1262,17 +1293,19 @@ PAGE_HTML = """<!doctype html>
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
-  :root {{ color-scheme: light; --dark:#141414; --mid:#55554f; --line:#dcdbd6; --bg:#fafaf9; --link:#b03a0b; }}
+  /* The site's palette (tests/test_site_palette.py), 2026-11-05. The map keeps its own inks: they carry meaning. */
+  :root {{ color-scheme: light; --bg:#f4f3ef; --paper:#fbfaf8; --dark:#141414; --mid:#55554f; --line:#dedcd6; --orange:#f27d26; --orange-ink:#a85416; --focus:#d35a12; }}
   * {{ box-sizing:border-box; }}
-  body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
+  body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:var(--bg); line-height:1.6; }}
   .wrap {{ max-width:980px; margin:0 auto; padding:24px 20px 64px; }}
-  a {{ color:var(--link); }}
+  a {{ color:var(--orange-ink); }}
+  :focus-visible {{ outline:3px solid var(--focus); outline-offset:2px; }}
   nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}
   h1 {{ font-size:32px; line-height:1.15; letter-spacing:-0.02em; margin:0 0 8px; }}
   h2 {{ font-size:20px; margin:40px 0 8px; }}
   .sub {{ color:var(--mid); margin:0 0 24px; max-width:68ch; }}
   .figures {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:0 0 28px; padding:0; list-style:none; }}
-  .figures li {{ border:1px solid var(--line); background:var(--bg); padding:14px 16px; }}
+  .figures li {{ border-radius:14px; background:var(--paper); padding:14px 16px; }}
   .figures b {{ display:block; font-size:30px; line-height:1.1; letter-spacing:-0.02em; }}
   .figures span {{ font-size:13px; color:var(--mid); }}
   .map {{ display:block; width:100%; height:auto; border:1px solid var(--line); }}
@@ -1291,7 +1324,6 @@ PAGE_HTML = """<!doctype html>
   .ramp {{ display:inline-flex; border:1px solid var(--line); }}
   .ramp b {{ width:16px; height:12px; }}
   .tw {{ overflow-x:auto; }}
-  .tw:focus-visible {{ outline:2px solid var(--link); outline-offset:2px; }}
   /* Three columns, so the table fits a phone and the city's name stays beside its routes
      (2026-11-01: it was eight columns at a 980px minimum, which scrolled sideways at every width). */
   table {{ width:100%; border-collapse:collapse; font-size:13px; }}
@@ -1300,6 +1332,10 @@ PAGE_HTML = """<!doctype html>
   thead th:nth-child(1) {{ width:28%; }}
   thead th:nth-child(2) {{ width:20%; }}
   .co, .af {{ display:block; font-weight:400; color:var(--mid); }}
+  /* The API's score, under the city's name on every width (2026-11-07). */
+  .sc {{ display:block; font-weight:400; margin-top:2px; }}
+  .sc b {{ font-family:'JetBrains Mono',ui-monospace,monospace; font-weight:600; }}
+  .vh {{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }}
   /* A row on one line where there is room (declutter, 2026-11-03): the county beside the city, the airport beside its
      share; 50 two-line rows were most of the page's 7.7 screens. A phone keeps them stacked. */
   @media (min-width: 760px) {{ .co, .af {{ display:inline; margin-left:8px; }} }}
@@ -1345,6 +1381,7 @@ PAGE_HTML = """<!doctype html>
 
 <h2>City by city</h2>
 <p class="small">Ordered by how much of each city the federal noise map shades. That map is the better guide to what is actually flown, but it covers every airfield the Bureau models, not only these three, so each row names the airfield its shading belongs to. Heights are of landing aircraft on the published glide path, above the runway, to the nearest 100 ft. Arrival altitudes are the ones the FAA publishes at a waypoint inside the city, above sea level.</p>
+<p class="small">Under each city is its <strong>Sky Score</strong>, the one the Sky Score API publishes, with balanced weighting. It is on US scales: crime, road noise and flood risk are scored against California's own figures, and prices among these {n} cities alone, so it is not comparable with a UK score, nor with New York's. Price growth is not scored here, because the only price trend held is county-wide. Its aircraft part is an estimate from these routes, fitted to the noise monitors of San Francisco and San Jose airports, not a measurement. A score marked * rests on fewer inputs, because one is withheld rather than estimated; <a href="/map/?city=bayarea">the map</a> shows every input of every city, and why any is withheld.</p>
 <div class="tw" tabindex="0" role="region" aria-label="City by city table">
 <table>
 <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Flight routes and mapped aircraft noise for {n} Bay Area cities</caption>
@@ -1375,10 +1412,11 @@ PAGE_HTML = """<!doctype html>
 <h2>Sources</h2>
 <p class="small"><strong>Flight procedures:</strong> FAA Coded Instrument Flight Procedures (CIFP), cycle {cycle}, effective {effective}. The FAA supplies the CIFP "as is", without warranty of any kind, and neither the FAA nor its personnel is liable for its content or for any use made of it. This page is not for navigation.<br />
 <strong>Aircraft noise:</strong> US Department of Transportation, Bureau of Transportation Statistics, National Transportation Noise Map 2022.<br />
-<strong>City and county boundaries:</strong> US Census Bureau cartographic boundary files, {vintage}.</p>
+<strong>City and county boundaries:</strong> US Census Bureau cartographic boundary files, {vintage}.<br />
+<strong>Scores:</strong> home values, US Census Bureau American Community Survey 5-year estimates ({top_code} is its top code); crime, California DOJ OpenJustice over US Census Bureau population estimates; rail access, US Department of Transportation, Bureau of Transportation Statistics, National Transit Map (CC BY 3.0 US); road noise, USDOT Bureau of Transportation Statistics, National Transportation Noise Map 2022; flood risk, FEMA National Flood Hazard Layer; residents, US Census Bureau 2020 Census blocks; the county price trend, Federal Housing Finance Agency, with no FHFA endorsement implied. The aircraft estimate is fitted to SFO's noise monitors (DataSF, PDDL 1.0) and San Jose airport's, with runway use counted by Sky Score from aircraft positions via adsb.lol (ODbL 1.0).</p>
 
 <h2>About Sky Score</h2>
-<p class="small">Sky Score shows aircraft noise, air quality and flood risk for homes, from official public data. It covers city regions across England, New York and the Bay Area on <a href="/map/?city=bayarea">the map</a>, where these cities are drawn with their routes. Full scores for each Bay Area city are in progress. If your city is not here, or something on this page looks wrong, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
+<p class="small">Sky Score shows aircraft noise, air quality and flood risk for homes, from official public data. It covers city regions across England, New York and the Bay Area on <a href="/map/?city=bayarea">the map</a>, where these cities are drawn with their routes and every input of their scores. If your city is not here, or something on this page looks wrong, write to <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>.</p>
 </main>
 <footer>
 <p><a href="/">Sky Score</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/open-data/">Open data</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
@@ -1396,8 +1434,12 @@ def render(data, record):
     if fails:
         raise SystemExit('the inputs fail their own checks:\n  ' + '\n  '.join(fails))
     cities = order(f['cities'])
+    scores, top_code = city_scores()
+    if set(scores) != {c['name'] for c in cities}:
+        raise SystemExit('the page and the score Lambda list different cities: '
+                         f'{sorted(set(scores) ^ {c["name"] for c in cities})}')
     rows = '\n'.join(
-        f'<tr><th scope="row">{e(c["name"])}<span class="co">{e(c["county"])}</span></th>'
+        f'<tr><th scope="row">{e(c["name"])}<span class="co">{e(c["county"])}</span>{score_line(c["name"], scores)}</th>'
         f'<td class="n"><span class="pc">{noise_cell(c)}</span>{airfield_line(c)}</td><td class="r">{routes_cell(c)}</td></tr>'
         for c in cities
     )
@@ -1441,6 +1483,7 @@ def render(data, record):
         cycle=e(record['cycle']),
         effective=e(record['effective']),
         vintage=e(data['vintage']),
+        top_code=e(f'${top_code / 1_000_000:g}M+'),
     )
 
 

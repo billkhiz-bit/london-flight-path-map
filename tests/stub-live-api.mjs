@@ -32,6 +32,8 @@
 // never consulted, 2026-08-27). A predicate cannot quietly match nothing, and
 // the hit counter below is what proves it did not.
 
+import { EXAMPLE as API_PAGE_EXAMPLE } from '../js/api-demo.mjs';
+
 const API_HOSTS = ['execute-api.eu-west-2.amazonaws.com'];
 
 // ONLY /v1/score. Narrowed 2026-09-11, having first intercepted the whole API
@@ -83,13 +85,23 @@ const CANNED_SCORE = {
  * end of a run means the interception stopped working - not that the page got
  * quieter.
  */
-// THE FRONT PAGE'S EXAMPLE ANSWER (answer first, 2026-10-23). A plain visit to / looks up TW9 3PZ on
-// postcodes.io and then /v1/environment at its latitude, so without this every gate that audits the front page
-// would reach both services and audit a page that depends on whether they answered. Only those two requests
-// are answered here, with the real shapes front-page.mjs uses (captured 2026-10-03); every other postcode and
-// coordinate goes to the network exactly as before, as this helper's narrowing above asks.
-const EXAMPLE_GEO = { postcode: 'TW9 3PZ', latitude: 51.4713, longitude: -0.2894, admin_district: 'Richmond upon Thames' };
-const EXAMPLE_ENV = { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] };
+// THE EXAMPLE ANSWER (answer first, 2026-10-23). A plain visit to / or /api/ asks /v1/environment at the held point
+// (EXAMPLE, js/place-box.mjs), so without this every gate that audits either page would reach the API and audit a page
+// that depends on whether it answered. A search of that same postcode goes through postcodes.io and lands on the same
+// point. Only those two requests are answered here, with the real shapes front-page.mjs uses (captured 2026-10-03);
+// every other postcode and coordinate goes to the network exactly as before, as this helper's narrowing above asks.
+const EXAMPLE_GEO = API_PAGE_EXAMPLE;
+// With the provenance the live API sends (audit I-22, 2026-11-12): without it the front page's air fold never drew
+// DEFRA's model row in a browser, and a postcode with no sensor nearby said nothing about air while every test passed.
+const EXAMPLE_ENV = {
+  environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 },
+  provenance: {
+    'environment.roadNoiseLdenDb': { sources: ['defra-noise-r4'], method: 'modelled', period: '2021' },
+    'environment.no2AnnualMeanUgm3': { sources: ['defra-pcm'], method: 'modelled', resolution: '1 km grid', period: '2024' },
+    'environment.pm25AnnualMeanUgm3': { sources: ['defra-pcm'], method: 'modelled', resolution: '1 km grid', period: '2024' },
+  },
+  notices: [],
+};
 const json = (body) => ({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
 
 export async function stubLiveApi(page) {
@@ -113,7 +125,8 @@ export async function stubLiveApi(page) {
     (route) => route.fulfill(json({ status: 200, result: EXAMPLE_GEO }))
   );
   await page.route(
-    (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && url.pathname.endsWith('/v1/environment') && url.searchParams.get('lat') === String(EXAMPLE_GEO.latitude),
+    (url) => API_HOSTS.some((h) => url.hostname.endsWith(h)) && url.pathname.endsWith('/v1/environment')
+      && url.searchParams.get('lat') === String(EXAMPLE_GEO.latitude),
     (route) => route.fulfill(json(EXAMPLE_ENV))
   );
 

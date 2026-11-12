@@ -391,6 +391,11 @@ data-deploy:
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-nyc.json \
 		s3://$(S3_BUCKET)/data/us-nyc.json \
 		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
+	# The Bay Area's scores on the front page (2026-11-07): one row per city from the score engine, written by
+	# scripts/build_bayarea_front.py. Before home-deploy, or the cards open with no score file to read.
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/us-bayarea-front.json \
+		s3://$(S3_BUCKET)/data/us-bayarea-front.json \
+		--content-type "application/json" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp data/aircraft-noise-nyc-laeq.png \
 		s3://$(S3_BUCKET)/data/aircraft-noise-nyc-laeq.png \
 		--content-type "image/png" --region $(AWS_REGION)

@@ -104,7 +104,7 @@ REGIONS = {
         'marker': 'US-QUIET-NYC',
         'city': 'nyc',
         # The full map scores New York in the browser, so index.html holds the same fit;
-        # the Bay Area is facts-only on the site and has no site holder.
+        # the Bay Area's site scores (2026-11-07) read its city bands from BAYAREA-RECORDS, so the fit has no site holder.
         'site_var': 'US_QUIET_NYC',
     },
 }

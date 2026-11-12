@@ -359,7 +359,7 @@ in the consultation"; today's flights on today's routes, never a third runway's)
 - THE LINK AND ITS DAY are READ from `js/street_report.mjs` HAVE_YOUR_SAY (`consultation()`: the LHR entry with an
   `until`); none, no pack. The page says "open until 22 December 2026" and, built after that day, "which closed on":
   so `--check` reds on 23 December until `--write`, and the deploy ships the closed wording. Shared links never 404.
-- FIGURES: each district's own, from the same files (`district_cell()`: `overall_reading()`'s words, one per line:
+- FIGURES: each district's own, from the same files (`district_cell()`: `day_lines()`'s words, one per line:
   the busiest, then the postcodes by band); the borough's aircraft noise band, road noise, air and flood are its
   area page's own (`build_area_pages.gather()`), with only those figures' source lines. A figure the area page does
   not publish says "Not published for <council>", never a reading. No price, no score.
@@ -389,3 +389,24 @@ district's counts out in full. Still Bill's option C (bands, never a middle figu
   BR1, SE1 and SK8 (the widest district tables) still fit 390 px.
 - Held by 5 new tests in `tests/test_build_planes_pages.py`, colours by reading both holders; 5 breaks proven red (every
   band shown as text, widths not the counts, the key listing every band, colours swapped, the least busy band leading).
+
+## PO boxes left out of the planes figures (2026-11-10, rule A)
+
+Found while checking Heathrow's consultation pack: Wandsworth's list showed SW1P "up to 307 a day". NSPL's large users
+(`usrtypind` 1: PO boxes and organisations that receive a lot of post) are placed at their delivery office, and 298 of them
+share one point at the Nine Elms mail centre, under a final approach; the district's headline was the post boxes'. `gridind`
+does not catch them (the delivery office IS where the boxes are). Bill chose rule A of two: leave out EVERY large user, ONS's
+own definition, no threshold of ours (B, only those sharing a point with 10+, was offered and not taken).
+
+Built: `adsb_postcode_averages.large_users()` (live rows, `usrtypind` 1; a missing column stops the build) and a REQUIRED
+`skip` in `build_planes_overhead.build()`, applied before a district's file is made, so 74 districts of post boxes only
+(B99, BD97, BS98...) get no file. Measured against the live files: 28,263 left out; the busiest figure fell in 51 districts
+and rose in none (SW5 305 -> 5, SW1P 307 -> 44, W11 187 -> 8, SE24 488 -> 305); every district's bars shrank a little (850
+of 988). Heathrow's homes did not move (SW15 457, TW9 318, TW4 462).
+
+Caught by a phone-width screenshot, not a test: the page model's `live` still counted the large users, so SW1P said "422 of
+its 752 postcodes measured, the ones in Westminster and Wandsworth", the post boxes reading as postcodes outside our councils.
+`live` now leaves them out, COVERED_FROM is judged against it (WA3 gained the page its post boxes had cost it), and the page
+says "(330 PO boxes and other large-user postcodes left out)". Seven pages went with the sync's `--delete` (SW5, W11, W1G,
+W1J, W1T, W1W, WC1A): nothing linked them. NOT done: the other postcode shares (road, flood, air, transport within 800 m)
+still count large users, and they feed the scores; measure per borough before proposing a methodology change.

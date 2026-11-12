@@ -21,7 +21,10 @@ test.describe('Core loading', () => {
 
   test('title shows "Sky Score"', async ({ page }) => {
     await expect(page.locator('#loading')).toBeHidden({ timeout: 15_000 });
-    await expect(page.locator('#map-title-text')).toHaveText('Sky Score');
+    // THIS SUITE READS THE LIVE SITE (playwright.config.js baseURL), so it holds what is true before and after a deploy:
+    // the heading starts with the brand. Its full name, "Sky Score: noise and liveability map" (2026-11-11), is held on
+    // this clone's index.html by tests/search-guide.mjs.
+    await expect(page.locator('#map-title-text')).toHaveText(/^Sky Score/);
   });
 
   test('the layer toggles are exactly the layers that render', async ({ page }) => {

@@ -21,13 +21,13 @@ test.describe('Search', () => {
     const searchInput = page.locator('#search-input');
     const sidebarContent = page.locator('#sidebar-content');
 
-    // Confirm initial state contains the empty-state message
-    await expect(sidebarContent).toContainText('Search by area');
+    // Confirm the initial state is the empty panel, by its marker (its words are each city's own since 2026-11-11)
+    await expect(sidebarContent.locator('.no-result-yet')).toHaveCount(1);
 
     await searchInput.fill('SW11 1AA');
     await searchInput.press('Enter');
 
     // After search, sidebar should no longer show the empty state
-    await expect(sidebarContent).not.toContainText('Search by area', { timeout: 10_000 });
+    await expect(sidebarContent.locator('.no-result-yet')).toHaveCount(0, { timeout: 10_000 });
   });
 });

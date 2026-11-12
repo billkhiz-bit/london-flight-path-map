@@ -780,6 +780,23 @@ destinations linked 3+ times), then each looked at whole: claude.ai/artifact/DKt
   buyer should never have to click for. **API**: the repeats are the hero's three buttons and the numbered "Get
   started" steps, each inline where it is needed. Lesson: before proposing a cut, find the thing on the page.
 
+### The answer, the box and the arrival (2026-11-04, evening)
+
+Bill's five points after the first release, and what each turned out to be:
+- **"I don't see the animation"**: Windows' animation effects were off on his PC (`SPI_GETCLIENTAREAANIMATION` false), so Chrome said
+  `prefers-reduced-motion`, and the page did what it was built to. He had seen it in the mock-up by pressing its own Motion switch.
+  Check the setting before suspecting the code. The gap it exposed was real: such a visitor could not ask for it at all, so Play.
+- **"It doesn't look smooth"**: measured, four stages over a second, and a layout shift of 0.133 on a phone, the example pushing the
+  map down. Reserving the frame took it to 0.008. A desktop-only look said 0.006 and would have called it fine.
+- **The still**: caught mid-fade, it showed no noise at all. The new picture's crop removes the credits the frame carried, so they
+  are a caption now: cropping a film frame is a licensing step as well as a design one.
+- **The answer**: 495 words, most of them the same grey as the findings. Moved, not cut, then drawn.
+- A screenshot found what 405 passing checks could not: `text-transform: uppercase` had made the chart's caption read MG/M³ on the
+  LIVE walkthrough, a unit a thousand times too big.
+- Live-only gates see a release only after it ships: the e2e accessibility scan waited for `#ans-example`, which the compact example
+  hides, so it could not reach the new page until a later preflight. When a selector a live test waits on changes, run that test
+  against the live page straight after the deploy.
+
 ### Front-page-v3 step 2: the two-column hero (2026-11-04)
 
 Bill brought the rework forward ("deploy the frontpage and website changes today"), ending the ~20 Nov read at 12 days: the
@@ -799,7 +816,7 @@ acted since 23 Oct (60%) against 35 of 104 before (34%). Small numbers; read the
   it in the developers band, so `test_the_front_page_quotes_the_enforced_free_quota` is strict again and reads any shape.
 - **The API animation** (mock claude.ai/artifact/VgTpCjGHZHMLhz1zYFPNpM; Bill picked C of three, built the same day). The band's
   samples named a point in Kew and the example a postcode in Kew, with different figures, so an animation of one over the
-  other would have shown an answer the request never got. `showDev()` rewrites the samples to the example's own point
+  other would have shown an answer the request never got. `writeAnswer()` (`showDev()` until 2026-11-05) rewrites the samples to the example's own point
   instead of adding a third lookup. The mock-up's measuring caught two slips before Bill relied on them: version A still
   showing C's tiles, and a note calling C the tallest when B was (608 px against 576).
   Bill then tried it and saw the timing was off: the number lit on leaving and the card only on landing, about half a second
@@ -832,3 +849,350 @@ Also: front-page.mjs's search-tab checks are scoped to `.panel` (the page now ha
 Playwright locator fails strict mode on three selected tabs); an arrow GLYPH in a button's disc is text axe cannot
 judge (incomplete), so the pills draw it in CSS; and a bash heredoc in the agent's shell turned a double backslash into a single one
 inside Python sources, twice: write such edits as a script file, or build the string with `chr(92)`.
+
+## The panel's whose-figure question (2026-11-04)
+
+Reading the panel for the build showed Stitch's "Road noise is high" is the COUNCIL's rating while 71.8 dB is the POSTCODE's. Sampling 19 Kensington and
+Chelsea postcodes found 8 under the guideline, SW5 9JZ at 49.9 dB in the same ward as SW5 9HP. Bill saw both wordings on those real postcodes and kept Stitch's
+("explains it better"), with the fact-free council wording only when there is no figure. A one-line note on the group says whose rating it is. Flood, air and
+transport ratings are council-wide too, and carry the same note.
+
+Real data also corrected the mock-up: its "last sold" £1.81m was a sale Land Registry records as not a home. `soldFinding` skips those, so the live panel reads
+£1,380,000, June 2018, under the label "Last home sold at this postcode". And the map's `.visually-hidden` had no rule (the class here is `.sr-only`), so the
+notify form's label had been showing beside its box, live; only a screenshot showed it.
+
+## Stitch, the palette and when a chart earns its place (2026-11-04)
+
+Four rounds on the full map's panel failed: groups, charts in every group, thin bars, then the Breathe London chart on everything. Bill
+kept Air and flood and called the rest confusing. The air chart works because three sources measure one thing. Forced onto figures with
+nothing to compare it gave one dot for road noise, one for crime and three bunched planes, and restyling could not fix that. Stitch's
+draft, briefed with "understand each finding within five seconds, no legend", put the finding first in plain words, and Bill chose it.
+
+Asked then to match "what we've done so far", an audit found my briefs were wrong, not Stitch: `#f9f8f5` for `#f4f3ef`, an amber that was
+in no file, Inter for Geist headlines, square corners on rounded pages. Only 7 pages shared the palette; the area and planes pages kept
+an older family (`#c2410c`). `tests/test_site_palette.py` now holds the seven and makes every other page declare itself.
+
+Stitch reported redrawing Pricing in the new colours. Its screenshot was byte-identical and its CSS unchanged. Its design system also
+recalculates values (`#f4f3ef` returned as `#faf9f5`, JetBrains Mono as Public Sans). So Stitch gives the layout, the exact values are
+applied by hand as variables, and a draft counts only once its pixels are measured.
+
+## The API page, the shared band and the last pages on the layout (2026-11-05)
+
+Bill's brief of 4 Nov: the API page "animated and interactive, like the front page", and the grey boxes of the About and How it works drafts made real. No overnight run happened, so it was built the next day.
+
+The band moved to `js/dev-demo.mjs`, because a second page needed it and a copy would have drifted. Moving it found a bug that was harmless only because it ran once: the samples took a new latitude and then a new longitude, one
+`replaceAll` after the other, so a new latitude holding the old longitude's digits had its middle rewritten. On the front page that ran once, for one point. A form runs it for every postcode sent.
+
+The brief listed a 429 as a case to handle. It cannot be. API Gateway's error replies carry no `Access-Control-Allow-Origin` (`GatewayResponses` set only HSTS and nosniff; checked live on the 403 for a missing key), so the browser refuses to
+show the status and `fetch` rejects. The failure's words say the API may be busy instead. Read the reply a browser actually gets, not the one the server sends.
+
+Probing the live route before writing a word found what a stub of one postcode never would: ZE1 0AA answers as ZE1 9ZZ, EX1 1HS holds NO2 alone, and the Isle of Man and the Channel Islands come back from postcodes.io as 200 with a null
+latitude. Those real answers are the test's fixtures, so the shapes are the route's and not my idea of it.
+
+The tiles were a fixed three columns, right for the front page's one example and wrong for an answer holding two figures: `24 µg/m³` wrapped at 390. `grid-auto-flow: column` with `grid-auto-columns: minmax(0, 1fr)` makes the columns follow the
+answer, on both pages.
+
+"How it grew" across the page was Bill's question mid-build, and it took four rounds of pictures, each tried in the browser on the real page while preflight held the repo. Seven steps in one row came to about 140 px each, so they alternate above and
+below the rail. He chose cards over more air and over the film in its own row, then added his talks ("an important part of the Sky Score story", reversing his own "product steps only" of 24 Oct), then kept the film in the timeline. Ten steps squeezed the
+film's label into a thin column, so moving it was the obvious fix and the wrong one: he wanted it there. Twelve columns with a wider first card gave it room, made the first step read as the start, and came out shorter than the film underneath (763 px against 931).
+The dates moved the order: the AI Tinkerers talk (22 Sep) came before the routes were redrawn (about 26 Sep). Read the dates, never the order things feel like they happened.
+
+Live, the rail did not last the day. Bill asked for it bigger, and a card could not widen: ten cards share twelve columns, so only the type can grow. Bigger type did not win him over, so Stitch redrafted the section as four shapes, and he picked the three-column grid and asked for arrows, because a grid alone loses the order. A row's end returns under the row to the start of the next, as a line of text does; a snake would have kept the lines short but made the middle row read right to left. Stitch's flight-path draft was reported finished with its text overlapping. Three fresh prompts worked where `generate_variants` timed out. Bill then asked for a link to each section: one per step, on the step's own words, because a second link to `/prototype/` would have pooled two places under the one `about-prototype` count, and broken the exact list in `tests/front-page.mjs` 16f. He meant the page's own section links, which sat at the top and scrolled away, and asked for them to stay in view: the step links stayed too. A sticky bar cannot leave its parent, so it moved from `.opening` to be a child of `main`, and `scroll-padding-top` on `html` keeps a heading and a Tab stop clear of it.
+
+A review on 6 Nov, before the final preflight, found three checks in that gate that could not fail, past 26 deliberate breaks. "With the dashed line" only asserted that arrows were absent, so removing the line passed. "Comes back to point down" read the box and the picture, and the box of a return arrow spans the whole row, so a head at the wrong end passed: where a head sits is `background-position`, which nothing read. "No arrow anywhere else" skipped two steps. Each now reads what it names, proven red six ways. The breaks had been chosen by the same session that wrote the checks, so they tested what it thought of. The review also moved the AIP step's link from `#data`, where those words sit in a closed fold, to `#credits`, where they are open: a test that an id exists cannot see that.
+
+Bill then asked for About's links "filled or orange". On the real page six filled orange pills, which stay on screen the whole way down, were too bright, so orange moved to the hover: the same colour, one pill at a time. Stitch was not used: this was a question of exact colours, and those come from the repo. Plain `--orange` cannot be text here (2.4:1 on the light backgrounds, 3:1 needs a large type size), so text links are `--orange-ink`, which reads 4.67:1 at worst on the warm cards and only 3.46:1 on the dark band, where the links stay white. `a:hover` was already `--orange-ink`, so links already that colour needed a hover of their own or hovering would have changed nothing. A read straight after moving the pointer saw the old state: a hover change lands on a later frame, so the check polls.
+
+The front page stopped reaching postcodes.io on arriving (Bill's yes, 5 Nov; built 6 Nov). The 5 Nov legal note had found the live page looking the example up at every load, before a visitor did anything, where privacy s2b covers a search. `/api/` already held its point, so `EXAMPLE` moved to `js/place-box.mjs`, which both pages load, with the one field more the front page reads: the search reads four fields of postcodes.io's answer, no more, so holding them holds the whole answer. Two tests held the example back by delaying postcodes.io. After the change they would have gone on passing while holding nothing, which no failure would ever have shown, so they now hold `/v1/environment`. The test stubs also held another point (51.4713 against the real 51.476982) that nobody had asked about: a stub's figure is a claim too.
+
+A review then found what every test had passed: `<link rel="preconnect" href="https://api.postcodes.io">`, added for that very lookup, still sat in the page. A browser opens that connection on arriving, so the visitor's address reached postcodes.io with no request to see, and the check written for this change watched requests. When a change removes a dependency, grep its host name, not just its calls. It also found the first wording overclaimed ("a place name never leaves the page": Check sends any text no row matches), and that the outside-our-regions wording keyed on the aircraft field, which is `modelled` whatever the city. Rather than add a branch to tell the two apart, the general sentence stopped naming DEFRA, so it is true in every state.
+
+Suggestions went onto the same two boxes. While typing, only text shaped like the start of a postcode is sent, so "kew" and "b1 flat 3, high street" are not. At 320 wide on `/api/` the Send button wrapped under the box, and a hint would have sat over it, leaving a reader who typed anything else unable to press Send; that was caught reading the test harness before writing the code. The list then showed "SW5 / 9AA" on two lines at 320, with every check green: the word "Postcode" took the room, and only a screenshot showed it. On a box that takes nothing else the word says nothing, so it went. The first check for that could not fail: it guessed at a line height the browser reports as `normal`, two lines fitted under the guess, and only a deliberate break showed it (one miss in thirteen). It now measures the text's own line boxes.
+
+The Bay Area's map keeps its own inks: they carry meaning, and only its page moved to the palette.
+
+A second review found ten more, all on `/api/`, and three were one defect. `ask()` returned for "already on show" before it cancelled anything, so a press that needed no request left an older one running to overwrite it, kept an old problem on the status line, and the sibling test for "already on its way" swallowed a press of the example, which is the only thing that can play for a reader who asks for less motion. A shortcut placed ahead of the cleanup skips the cleanup: the cancel now comes first. The run on arriving stayed armed after a press, so on a phone, where the form stacks over the band, scrolling down to an answer restarted it mid-read; `playDev()` now ends that wait for any run. The band measured 0.10 of layout shift at 1366 and 0.057 on a phone with the reply held 800 ms, in three steps: the tabs and the form when the module ran, then the answer. It sits near the top here, where the front page's is far down, so the same band needed room kept only on this page. The room has to be in CSS, since the shift starts before any script runs, and `@media (scripting: enabled)` keeps a reader without scripts from getting a gap; `.no-answer` gives it back when nothing is coming. The heights are the example's own, measured at eight widths, and `tests/api-demo.mjs` holds the shift at five. The line telling a reader to type a postcode moved into the form, so it goes where the form goes. If the module itself fails to load, nothing can give the room back and the band keeps a blank gap: left knowingly, since nothing false shows and the samples still do.
+
+A code review before preflight found ten points 141 green checks could not see. The page looked up the example on postcodes.io at every load, so a visitor's address went to a third party before they did anything, which the privacy policy
+does not cover: the example is now a held point, and only the API is asked. A surveyed-quiet road was called missing, because no fixture carried the bound (NG11 8AH does now). "Copied" stayed beside a request that had changed. A press
+cost two calls against a route throttled for the whole site. Reading the previous point back out of the page was fragile: a whole degree, `-2`, also matches `eu-west-2`. And the accessibility scan met /api/ mid-run, as it once met the front page.
+
+## A search sent while the front page loads (2026-11-08)
+
+The search box is bound at module level, and `<script type="module">` runs before `DOMContentLoaded`, so the box works
+from the first frame while `load()` is still fetching the map's data. Recorded on 7 Nov as "a search sent before the map
+loads can be blanked by the example's lookup"; a probe on 8 Nov (borough-extra.json held 3 s, NW1 7PJ searched at
+once) found it worse: the search never reached the example at all. `cityOf()` read `state.extra` while it was
+undefined, threw inside `search()`'s try, and the catch said "Could not reach the data just now", which was false; a
+council name fell through `rowFor()` (no rows yet) to "not found". Behind that, the defect on record: the example's
+`search()` took the newest `searchSeq` and cleared the answer, lead and pin BEFORE `stale()` asked `example && acted`,
+so a visitor's search on its way went stale and the example stood down too: neither showed.
+
+Fix: the submit handler holds the latest early search (`early`) until `load()` sets `booted`, says "Looking it up..."
+and ends the example's frame; `load()` then runs it after any deep link's own search, so it is the answer left on
+screen, else the example on a plain visit the visitor has not touched. `search()` returns at once for `example &&
+acted`, before it changes anything. Why not have `search()` await a ready promise: `bootFromQuery()` awaits `search()`
+from inside `load()`, so a search waiting for `load()` to finish deadlocks every `?postcode=` link. The test sends each
+search with `#map .boro` provably empty (a state reached on purpose, not by luck).
+
+## "All the detail", option 1 (2026-11-09)
+
+Bill picked option 1 of the fold mock-ups on 8 Nov 22:35: the picture of what is within 1 km, then cards each the nearest of
+something, then the four rows. Three things learned building it:
+
+- **A cap is not a count.** `/nhs` and `/transport` send only their nearest five of a kind (`MAX_RESULTS_PER_TYPE`, `[:5]`),
+  NaPTAN's fallback four. At SW11 1AA all five doctors and all five pharmacies sit within 650 m, so the mock-up's "5 doctors
+  and clinics within 600 m" was a floor read as a count. `placesByKind()` marks `mayBeMore` when a source sent its whole cap
+  and all of it is within reach; `countWords()` then says "5 or more" (Bill: "you do it"). The caps are read from the Lambdas
+  by the test, never retyped.
+- **Moving a container moves its test, never blinds it.** Line status got its own card, so its rows left
+  `#postcode-transport-data`. `tests/failure-path.mjs` counted status rows there; left alone it would have passed on an empty
+  box. It now reads both containers. Likewise `keepPanelOpen()` opens the new cards: a closed `<details>` keeps its text out
+  of innerText.
+- **The mock-up's words need checking against the data's.** "Health centres" in the mock was OpenStreetMap's `hospital` tag
+  (Bridge Lane Health Centre is tagged hospital), so the line says "Hospitals"; the mock's airport card led with Heathrow, but
+  the nearest is London City, and the card names the nearest.
+- **A late answer must not touch shared state.** A low-effort review found `fillDetail()` resetting `_detail` to the
+  request it was handed BEFORE asking `isCurrentSearch(req)`: a late answer from an earlier search wiped the answers the
+  current search already had, and the station card hid. The guard now comes first. `tests/detail-near.mjs` lifts the real
+  `fillDetail()` out of index.html and plays current, earlier, current; red without the guard.
+- **On a phone, one card a row** (Bill, 9 Nov: "do what's best for the phone view"; live 21:25). At 390 a half card is
+  about 170 px, too narrow for its list, so an open card took the row (`[open]` spans both columns) and left its neighbour
+  beside an empty half. Rejected: `grid-auto-flow: dense`, which pulls a later card up into the gap, so cards nobody touched
+  move and the order seen stops being the order read. The face is a row instead, its figure on the right. My first build
+  put an open card's chevron halfway down its list: an absolutely placed `::after` sits against the nearest POSITIONED
+  ancestor, which was the `details`, so `top: 50%` meant half the open card (111 px on a 56 px face, caught in my own
+  screenshot). The summary is now `position: relative`. `tests/uk-city-panel.mjs` measures every visible card against
+  `.dcards` and the chevron against the face at 390, red on each half.
+- **DEFRA's style server times out on preflight days.** `noise legend == publishers` (`check_noise_legend.py --live`, a 30 s
+  read, no retry) failed in three full runs on 8-9 Nov and passed alone every time; one probe answered in 0.2 s and the
+  next hung 90 s. Bill's call each time on 9 Nov: deploy and push. Proposed: one retry, then INCONCLUSIVE rather than FAIL.
+
+## The full map's answer card (2026-11-08)
+
+Bill read the findings-first panel (4 Nov) for SW11 1AA and asked for it simpler: "keep to road noise is high or aircraft
+noise is high and then add the detailed explanation in more detail", then "we want any user to understand it, and choose
+visuals where applicable". Five rounds followed: three mock-ups of my own (A, a line per finding, picked), two rounds of
+Stitch (S1-S4, V1-V4, F1-F4; V3 picked, F3 with F2's edges recommended), then a working mock-up the build copied.
+
+What the rounds found, kept as rules: the site has NO green tint (my V3 brief invented one; F1/F2 stay in the palette);
+"Road noise: moderate" alone reads as the postcode's level, so a council's rating says "<council>-wide", once per section
+where every tile is the council's; Growth showed as a 2.6 bar while counting 0 for Balanced, now "not counted for this
+buyer"; a score needs a comparison to mean anything, so the city's council areas sit under it on one scale (recomputing
+them from the open-data CSV's ROUNDED parts moved Tower Hamlets 6.0 -> 5.9: compare against calcScores(), never rounded
+parts); a tie names every council on it (Barking and Sutton at 7.1); SW11 1AA lies past the modelled final approach
+(FINAL_TOP_FT 3,000; the nearest point would be 3,217 ft), which is why planeAltitude() says "Not under a final approach"
+and the tile gives no height; the old fold contradicted the new verdicts ("unlikely to be a significant factor" beside 318
+planes a day; a hand-typed council blurb saying noise "is a real factor ... use as negotiation leverage"), so the fold
+keeps only its tools. Tests caught three real faults during the build: a New York road tile credited DEFRA (sources now
+come from the caller), the City of London's estimated crime rate labelled "recorded" by the chart's unit, and a tile flag
+named `council` breaking New York's wording rule (now `shared`). On a phone the sheet's sticky close button covered the
+card's corner and Save: the card starts below its 36 px band there.
+
+The first full preflight on the card failed on two tests that read the map's own code, both right to: one anchored on
+`function crimeNote(extra)` whole, so an added option hid the thresholds it holds (anchor a parser on a function's name
+and first argument, never its full signature); the other is the New York ratchet (`tests/test_us_city_branches.py`),
+which caught `currentCity === 'nyc'` added for the word "boroughs". The answer was the panel's existing area rule (council
+for the UK, borough otherwise), not a new declared branch. The run's third red was a DEFRA read timeout that passed alone.
+
+## The answer card's pills, late answers, and the audit's M-3 (2026-11-10)
+
+From `AUDIT_REPORT_2026-11-09.md`. **I-3**: a pill to watch and a good one differed only by a 7 px dot, orange or green
+(1.82:1 apart in lightness), which forced-colours mode removes; a screen reader heard "Crime, button" for Westminster and
+for Richmond. Bill picked A of two mock-ups (claude.ai/artifact/9fizwcmmDp59FWUDtzuCQh): the pills sit under "Worth a look"
+and "Good here" (labels `aria-hidden`, since each button says it), each with a mark drawn in `currentColor` (! or a tick, so
+forced colours keep the shape), and named "Crime, good here" (the visible words first, WCAG 2.5.3). B (marks only) was
+rejected: a reader has to know the convention.
+
+**I-4**: in London, Transport and Healthcare are drawn from the council's rating at once and again when TfL and the NHS
+answer; `placeFinding()` replaced the slot's HTML and `tidyCard()` replaced every pill each time, so a tile someone had
+opened shut and a keyboard user went to `<body>`. Now a slot drawn the same again is left alone (a `WeakMap` keyed by the
+slot ELEMENT, which every search and profile draws afresh, so nothing carries over), a changed slot keeps its open tiles
+and the focused tile (by finding and its place among those with the same finding: a planes slot holds one per airport),
+and the pills rebuild only when their list changes. A pill's tile is looked up when it is pressed (`_pillTile`), because a
+kept button would otherwise open the tile it was made with, detached by the redraw. The test holds `/transport` and
+`/nhs` behind gates and releases them with the focus placed, red on the old code both ways.
+
+**M-3 was not a defect.** The audit said a bad postcode pressed on `/api/` while a good one is on its way should cancel
+it. The 5 Nov build chose otherwise and tests it ("a bad postcode leaves a good one on its way", "and that one still
+lands"): a typo must not throw away a valid request, and when it lands the status line is about it, so the mark goes with
+the words that explained it. Read the tests for a behaviour before calling it a bug: an audit reads the code, the test
+records the decision.
+
+**M-2**: if `load()` rejects, nothing a search reads will come, so the held search and every press after say "The map's
+data did not load... Reloading the page usually fixes it." Not a retry: `load()` binds the page's controls. **M-4**: the
+Nearby list's Airport row matches both of `routesText()`'s airport sentences (ZZ9 9GAP, on Gatwick's centreline, holds it).
+
+## The audit's Minors, batch A (2026-11-10)
+
+M-6: the full map's box sent any 2-8 letters and digits to postcodes.io while typing; it now reads `startsLikePostcode`
+from js/place-box.mjs (one holder with the front page's `askable`), loaded by a dynamic import, so a whole postcode is
+still asked (last night's suggestions tests type one) and a place name never is. M-13: `minmax(0, 1fr)` was the first
+fix and failed its own test at 320 px ("Average" overflowed its equal column); `minmax(min-content, 1fr)` keeps equal
+columns wherever there is room. M-15 keeps the example's words ("it opens on the example" asserts them) and only marks
+the line `aria-live="off"` until the first press. M-5: seven checks read a renderer no page used; pointed at `tileHtml()`
+and proven by breaking its escaping and its notes. A heredoc collapsed `\b` into a backspace in a new test regex
+(the 9 Nov gotcha again): write regexes with the Edit tool, never through a shell heredoc.
+
+## The answer's lower half as tiles (2026-11-10, Bill's pick A)
+
+Bill: "this part on the homepage can improve visually" (the links, Nearby, council line, map link and folds under the planes
+tiles). Mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H: today / A tiles (recommended, picked) / B a cleaner list.
+
+Built as presentation only, because the tests read the facts' exact words (`#ans-station` must read "Station" + name + "m
+in a straight line", `#ans-routes` its sentences, `#ans-area` its three phrases). So the big figure is CSS generated content
+from `data-fig`, set by `nearbyFigure()` from the fact's own words, with empty alt text (`/ ""`).
+
+What the screenshots caught that the mock-up hid:
+- the mock's captions were short; the site's sentences are long, so a two-column grid left the airport and the station each
+  alone on half a row. One column, figure left. `dense` was not used: it splits seen order from read order (2026-11-09);
+- the chips vanished: `.chips` is the city switch's class, `position: absolute`. Renamed `.area-chip(s)`; a test now holds
+  the chips inside the card's box;
+- the fold arrow (U+2304) has no glyph in the page's fonts and fell back to a plain "v": drawn with borders instead;
+- `::first-letter` does nothing on a flex box: "Have your say" rows are blocks with the arrow positioned.
+Kept on purpose: the air fold's sensor sentence. It looks like a repeat of the Nearby tile but carries "roadside, 0.7 m from
+the kerb", which the tile does not.
+Shell gotcha, twice in one evening: a Python heredoc turned `\b` into a backspace and `\2304` into an octal escape. Make
+regex and CSS-escape edits with the Edit tool, then scan the file for control characters.
+
+## The folds, less text (2026-11-11)
+
+Bill, after the tiles went live: "better but it's still text heavy here", pasting both folds. The planes fold became the
+chart in the air chart's style (`planesChart()`), the overhead rule beside a small cone, three points and one sources line;
+the air fold the chart, a chip per instrument and its notes as points. 162 words to 92, and 97 to 75.
+
+- **Word for word beats short.** The mock-up paraphrased the PO-box rule ("PO boxes are left out: they sit at a delivery
+  office, not at homes"). The builder's docstring says every surface showing the definition shows `postcodes_rule` beside it,
+  and How it works says it in full, so the points are the file's own sentences (`model.rules`). The fold is ~90 words, not the
+  mock-up's ~45; the alternative was a second wording of the same rule.
+- **A stub can be older than the shape it stands for.** The front-page test's `airports.json` stub predated `postcodes_rule`,
+  so the page showed two points and the check, reading the REAL file, wanted three. The page was right (a sentence the file
+  lacks is left out, never "undefined"). The stub gained the rule, and the check now reads what the page was served.
+- **`white-space: nowrap` on a class reaches every holder of the class.** Keeping the planes line's two short links whole
+  with `.fold-src a` also caught the air fold's credit, one long sentence, which ran to 472 px on a 390 screen. Scoped to
+  `#ans-planes-notes`; a new check opens every fold at 390 and fails on anything past the screen (red on the fault: 117 px).
+- **Breathe London's "License" is not a typo.** Their developer terms require that exact wording, their spelling
+  (scripts/fetch_breathe_london.py). A credits audit the night before listed it as a fix; it was checked before anyone did.
+- **The test stub's `/v1/environment` has no provenance**, so a local preview drops the air chart's DEFRA row. For a
+  screenshot, let that open route reach the live API with any key stripped; never send the demo key from a preview.
+- **Mock-ups of a page around a change come from a screenshot** (the search-guide mock-ups put the map's panel on the wrong
+  side): `~/.claude/skills/preflight/checks/frontend.md`.
+
+## The full map's search guide (2026-11-11)
+
+Bill: "should we make it easier for the user to navigate... a nice highlighted glow of the search bar?" Picked C2, a light
+running round the search box, then asked for it slower: two steady laps in 4.6 s (the first draft's 3.2 s eased lap peaked at
+about twice its average speed, which is what read as fast). Built on `.search-box.guide`, with Try chips per city.
+
+- **A light round a rectangle needs an outline, not a conic gradient.** A gradient turned about the centre sweeps the short ends
+  of a long, thin box fast and the long sides slowly; an SVG rect with `pathLength="100"` and animated dash offsets runs evenly.
+- **Under 5 s is a rule, not a taste:** WCAG 2.2.2 wants a pause control for anything moving on its own for longer. The test reads
+  every animation's `endTime` (4,600 ms), and a 5.6 s mutation turned it red.
+- **"Remembered" needs the visitor's own action.** The banner's old rule (a deep link ends it but does not save it) is kept
+  with `navigator.userActivation.hasBeenActive`; a synthetic click is no activation, so the test taps with a real mouse at a
+  point inside a borough's outline and on top there (a centre can sit outside a concave borough).
+- **A hint is a promise.** Searching every place each city's hint, not-found message and chips name found three that led
+  nowhere ("Bristol", "Weston", "Stockton"): the borough is "City of Bristol", and the matcher is prefix-only on purpose
+  (a "City of" alias would also turn "London" into the City of London). The words were changed, not the matcher.
+- **Read the panel after the switch has drawn it:** the Bay Area's outlines load slowly, so a test reading the chips as soon
+  as `currentCity` changed saw London's. The phone's row is now re-rendered the moment the city changes, so a tap during the
+  load never searches the last city's place.
+- **A report script's working file is a public page in waiting.** `address_noise_report.mjs` wrote its .html beside the PDF;
+  in `home/reports/` that is inside home-deploy's `--include "*.html"`. It now removes it (`--keep-html` to keep).
+- **A row that fits a 390 phone may not fit a 320 one.** The first full preflight failed two gates the guide's own test
+  could not see: at 320x568 the chip row covered the map's "Flight paths" and "Aircraft noise" buttons (responsive), and at
+  320x568 and 844x390 it squeezed the map under its own controls (map-fit). The row now needs 700 px of height; the screenshots
+  had been taken at 390x844, where it fits. Check a new phone element at 320x568 and on its side before calling it done.
+
+## The Analysis panel before a search (2026-11-11)
+
+Bill: "the analysis section, could that be changed UI wise?" Picked A (what a search tells you), then asked for the Try chips
+to match the rows. The rows are the answer card's own groups (`FIND_GROUPS`), so the promise and the answer cannot drift; the
+lines were written to be true in every UK city (no planes counts for Tyne and Wear, Merseyside or Teesside: "where we count
+them"), and New York and the Bay Area, whose answers differ, keep their own sentence. Three places rebuilt the empty panel; the
+phone's close button restored a copy taken at boot, London's, in every city: one builder now (`showEmptyState`). A live check
+read Bristol's panel mid-switch (new chips under London's sentence for about a second): the switch now rebuilds the panel at
+its start as well as after the outlines.
+
+## The street report as the site draws it (2026-11-11, Bill's pick C, small print bigger)
+
+Bill asked whether the report's text could go the way the site's had (tiles, charts, points). The mock-up
+(claude.ai/artifact/1HZDc4VDRGxVUL791DMewp, v4 then v5) measured the words below the routes table at 395 now, 375 in B and 356
+in C: the visual version is not much shorter, because most of what is left is caveats and credits that stay word for word. Its
+gain is that the page is scanned picture first. He picked C, then asked whether the text should be bigger.
+
+**Bigger, but only the small print, measured on the real report.** `scripts/address_noise_report.mjs --keep-html` keeps the page
+it prints; re-printed with every size raised, page 1 grew by about 107 pt where nothing was hard to read (the routes table's rows
+wrapped to two lines, the tiles' labels ran to five, the map's key spilled a line). So: notes 7.6 -> 10 pt, captions 8 -> 9,
+sources 7.4 -> 8, headings 10.5 -> 12; the tiles and the table as they were.
+
+**No text under 8 pt, chart labels included.** Measured per character with pdfium (`FPDFText_GetFontSize`), which reports CSS px
+here: the 18 pt title reads 24.0, so x0.75 for points. The first build had 40 runs under 8 pt, all inside pictures: the map's
+labels (6.2 pt, as the old report), the TW9 chart (6.9, as the old report) and the new planes and air charts (6.4 to 7.8). The
+charts are the site's, 352 units wide with text from 9 units, so they need about 300 pt of page each: the planes chart takes a
+300 pt column beside a narrower TW9 chart (its own `.dsmall` labels, 18 units), the air charts stack at 320 pt with the key
+beside them, and the map's labels went to 16 units with their plates widened.
+
+**Two pages, flowed, never forced.** A forced break before the air (`break-before: page`) sent SW1P 3JA, E16 2PX and TW6 2GA to
+three pages: page 1 overflowed by a section and the break then opened page 3. The sections now flow, each whole
+(`break-inside: avoid`, headings kept with what follows), so a busy postcode moves the road block to page 2 by itself and Kew
+keeps it on page 1, as the mock-up drew it. Two airports still overflowed until their charts shared one heading, the busiest
+first (SW1P's headline named Heathrow while London City's chart came first), and the overhead rule was said once. Checked on
+TW9 3PZ, SW1P 3JA, E16 2PX, TW6 2GA, NW1 4RY, M22 5RX and LS1 4DY: all two pages, none under 8 pt.
+
+**Three fixed pages, the answer first (built 2026-11-12, Bill's v2 then v3).** The two-page build was committed (`08ec87c6`) and
+deployed, then rebuilt as three fixed pages: page 1 the answer (headline, four cards, key figures, the why-no-DEFRA line, map,
+details box), page 2 the aircraft and road detail ending with "Have your say", page 3 the air, station, reading notes and
+sources. Three things learned on the way:
+- **The mock-up's cards were typed; the build's are derived, and the first rule tried disagreed with the map.** The map's
+  aircraft pill comes from `noiseBand(10 - quiet)` (Kew's 57 dB reads "Moderate", no pill) and its road pill from the COUNCIL's
+  rating, which the report leaves out by design. Copying those left most cards with no verdict; inventing a band would have
+  mirrored code. So the report has its own stated rule, held in one function (`glanceCards()`): the postcode's own figure
+  against its WHO guideline, as `answerLead()` already compares; the planes from the map's own watch step; air and estimates
+  none. Say so to Bill wherever a card differs from a map pill.
+- **TW6 2GA ran to four pages**: its air has a sensor AND a monitor, so the sources spilled two lines, while page 2 was 60% full.
+  "Have your say" (the airport's links) moved to the end of page 2, where it belongs anyway. The refusal (audit M-8) removed the
+  four-page file and left the last good one, as built. Page 3 is the one to watch (TW6 90%); N3 1JN, three airports, fills
+  page 2 to 95%.
+- **One figure, one form per page**: the aircraft card said 61.8 dB above a key figure saying 62 dB. The card now rounds as the
+  key figure does; the verdict is decided on the figure itself.
+The reference moved into js/street_report.mjs so the printed copy states it too; the moved recipe reproduced the live free
+copy's HCH7-V2UJ for TW9 3PZ on the day, and `tests/street-report.mjs` pins that value: a new recipe would void every copy
+already handed out.
+
+**What moved.** The air's reading of the API (`airSquare`), the model's row (`airModelOf`), the key's sentences
+(`sensorKeyNote`, `monitorKeyNote`) and the rows (`airRows`) moved from index.html into js/street_report.mjs, so the full map and
+the report read them one way; `pictureHtml()` came out of `tileHtml()` in js/panel-findings.mjs so the report draws the map's
+bars. js/street_report.mjs now imports planes.mjs, which imports `esc` from it: an ES module cycle, safe because neither runs
+the other at load (checked by importing each of the four modules first). "What this shows" keeps only what no tile, row or chart
+says: why DEFRA gives no figure, and a postcode beside a runway rather than under its approach. The road block is the
+postcode's own figure against the WHO's; the council's rating, which the map shows, stays off a report about one postcode.
+
+## The audit's full-map faults and the sample's figures (2026-11-12, I-10, I-13 to I-17)
+
+Reviewer C read the full map's state handling and found five faults, each a value captured at one moment and used at
+another. Each is now reached on purpose in `tests/search-guide.mjs` section 7, which went 80 of 86 against the last
+commit's `index.html` (six red, one per fault plus Hendon) and 86 of 86 after.
+
+- **I-13, a captured table.** `renderNycBoroughs` (every city but London) took `getActiveBoroughData()` once, when the
+  outlines were drawn; the profile and the late `borough-extra.json` both build a NEW table, so Trafford clicked after
+  choosing Investor showed 5.6 under "Investor" where the ranking said 6.6. The click now reads the table itself.
+- **I-14, postcodes rot.** Nine `LONDON_AREA_MAP` postcodes were retired (Mill Hill's in 2005, Hendon's in April 2026),
+  so "Mayfair" said NOT FOUND. Each took the nearest live postcode in the same district from postcodes.io's reverse
+  lookup, checked in NSPL as live AND not a large user: the nearest to Southall and Wallington were large users, so the
+  next residential one was taken. The gate holds LIVE only: 14 of the existing entries are town-centre offices (Canary
+  Wharf E14 5AB) that place the area correctly, and rule A is about planes counts, not a place's point.
+- **I-15, whole names only.** `councilElsewhere()` opens a covered council typed from another city's view, after every
+  UK route has failed (as the Bay Area branch does). Whole names, "City of X" answering to "X": a prefix rule would have
+  sent "north" to North Tyneside (the test holds that it stays NOT FOUND on London).
+- **I-16, the panel's subject outlived its contents.** `showEmptyState()` now clears `panelSubject`, so a city switch,
+  a phone's close and the not-found ZIP message leave nothing for a profile change to redraw.
+- **I-17, a redraw is not a result.** The neighbourhood list's late redraw called `renderPlaceFacts(p)` bare, so the
+  first San Francisco ZIP of a visit lost its ZIP a second later. It passes the card's own options, only while
+  `panelSubject.bay` is still that card, and `redraw: true` announces nothing and moves no phone view.
+- **I-10, the sample's figures.** The picture gate held the PNG to the PDF, and the wording gate its words; nothing
+  re-derived the figures, so two data rolls left them stale while preflight stayed green. `check_sample_report.mjs`
+  reads the sample's printed reference and "Prepared" day with pdfium, asks `/v1/environment` for TW9 3PZ (open route,
+  no key spent), and recomputes `reportReference()` for that day and `answerLead()` with today's planes counts. Proven
+  red by nudging one figure (road 50.5 to 50.6 dB): the reference moved HCH7-V2UJ to 2CR6-KWXC. An older sample with no
+  reference fails too, but that proves the parse, not the figures: red was proven on the figure itself.

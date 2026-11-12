@@ -8,6 +8,7 @@ check reds an edited block. Offline.
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -90,3 +91,83 @@ def test_the_check_reds_an_edited_block(tmp_path, monkeypatch, capsys, old, new)
     monkeypatch.setattr(sys, 'argv', ['build_bayarea_records.py', '--check'])
     assert br.main() == 1
     assert 'not what the readers' in capsys.readouterr().out
+
+
+# THE SITE'S HOLDER (2026-11-07, the Bay Area's site scores): the same records, written into index.html's
+# BAYAREA-RECORDS block by the same derivation, with the anchors, the price top code and the few-residents note
+# READ from app.py. The full map scores each city from it, so a hand-edit there is the site and the API
+# publishing two numbers for one city.
+def test_the_site_block_is_the_same_records_and_the_lambdas_own_constants():
+    anchors, rows = br.records()
+    lam = br.LAMBDA.read_text(encoding='utf-8').replace('\r\n', '\n')
+    site = br.SITE.read_text(encoding='utf-8').replace('\r\n', '\n')
+    i, j = br.span(site, br.SITE_START, br.SITE_END, br.SITE)
+    assert site[i:j] == br.render_site(anchors, rows, br.lambda_constants(lam))
+    constants = br.lambda_constants(lam)
+    assert constants['US_PRICE_TOP_CODE'] == app.US_PRICE_TOP_CODE
+    assert constants['_CRIME_FEW_RESIDENTS_NOTE'] == app._CRIME_FEW_RESIDENTS_NOTE
+    for name, rec in rows:
+        assert json.dumps(rec, ensure_ascii=False) in site[i:j], name
+
+
+@pytest.mark.parametrize('old, new', [
+    ('"floodSfhaPct": 7.04}', '"floodSfhaPct": 7.0}'),   # a site value edited by hand
+    ('const US_CALIFORNIA_ANCHORS = {"crimePer1000Us": 21.39', 'const US_CALIFORNIA_ANCHORS = {"crimePer1000Us": 21.4'),
+    ('const US_PRICE_TOP_CODE = 2000000;', 'const US_PRICE_TOP_CODE = 1000000;'),
+])
+def test_the_check_reds_an_edited_site_block(tmp_path, monkeypatch, capsys, old, new):
+    text = br.SITE.read_text(encoding='utf-8')
+    assert text.count(old) == 1
+    stand_in = tmp_path / 'index.html'
+    stand_in.write_text(text.replace(old, new), encoding='utf-8')
+    monkeypatch.setattr(br, 'SITE', stand_in)
+    monkeypatch.setattr(sys, 'argv', ['build_bayarea_records.py', '--check'])
+    assert br.main() == 1
+    assert 'BAYAREA-RECORDS block' in capsys.readouterr().out
+
+
+# EACH FIGURE WITH ITS SOURCE AND YEAR (Bill, 2026-11-07). The year is READ from the reader's own file, so a roll
+# moves the label on the map, the front page and the area pages at once; a typed year would not move.
+def test_every_source_label_carries_the_year_its_file_holds():
+    sources = br.input_sources()
+    assert set(sources) == {'avgPrice', 'trend', 'crimePer1000Us', 'transport', 'roadNoiseUsSharePct', 'floodSfhaPct'}
+    assert sources['crimePer1000Us'].endswith(str(data('us-bayarea-crime.json')['year']))
+    assert sources['avgPrice'].endswith(data('us-bayarea-prices.json')['vintage'])
+    assert sources['trend'].endswith(str(data('us-bayarea-trend.json')['counties'][0]['year']))
+    assert sources['floodSfhaPct'].endswith(data('us-bayarea-flood.json')['fema_fetched_utc'][:4])
+    assert all(re.search(r'\b(19|20)\d\d\b', label) for label in sources.values()), sources
+
+
+def test_a_label_follows_its_file_when_the_year_moves(monkeypatch):
+    real = br._read
+
+    def rolled(name):
+        doc = real(name)
+        if name == 'us-bayarea-crime.json':
+            doc = {**doc, 'year': 2031}
+        return doc
+
+    monkeypatch.setattr(br, '_read', rolled)
+    assert br.input_sources()['crimePer1000Us'] == 'California DOJ OpenJustice, 2031'
+
+
+def test_every_city_says_each_input_with_its_source_and_never_a_placeholder():
+    anchors, rows = br.records()
+    sources = br.input_sources()
+    for name, rec in rows:
+        facts = br.input_facts(name, rec, anchors, sources, app.US_PRICE_TOP_CODE, app._CRIME_FEW_RESIDENTS_NOTE)
+        assert [label for label, _, _ in facts] == ['Median home value', 'County price trend', 'Crime', 'Rail access',
+                                                     'Road noise', 'Flood risk'], name
+        for label, figure, source in facts:
+            assert source in sources.values() and not re.search(r'None|nan|undefined', figure), (name, label, figure)
+        for field, reason in (rec.get('withheld') or {}).items():
+            assert any(reason in figure for _, figure, _ in facts), (name, field)
+        if rec['priceTopCoded']:
+            assert '2000001' not in facts[0][1] and '2,000,001' not in facts[0][1], name
+
+
+def test_the_site_block_carries_the_sources_and_the_us_scales_line():
+    site = br.SITE.read_text(encoding='utf-8')
+    assert f'const BAYAREA_INPUT_SOURCES = {json.dumps(br.input_sources(), ensure_ascii=False)};' in site
+    assert f'const BAYAREA_US_SCALES = {json.dumps(br.us_scales(len(app.BAYAREA_BOROUGHS)), ensure_ascii=False)};' in site
+    assert 'Not comparable with a UK score' in br.us_scales(50)

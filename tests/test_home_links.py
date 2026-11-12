@@ -117,7 +117,7 @@ def test_every_page_of_the_heathrow_pack_on_the_front_page_is_one_the_index_list
 
 
 def test_every_link_back_to_the_front_page_lands():
-    tracked = subprocess.run(['git', 'ls-files', '*.html'], cwd=REPO, capture_output=True, text=True, check=True).stdout.split()  # noqa: S607
+    tracked = subprocess.run(['git', 'ls-files', '--cached', '--others', '--exclude-standard', '*.html'], cwd=REPO, capture_output=True, text=True, check=True).stdout.split()  # noqa: S607
     # design/ holds old mock-ups and preview/ test pages: nothing a visitor reaches.
     pages = [REPO / name for name in tracked if not name.startswith(('design/', 'preview/', 'prototype/', 'mobile/'))]
     home_ids = ids_in(HOME)

@@ -43,6 +43,8 @@ import json
 import math
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 from collections import Counter
 from pathlib import Path
@@ -78,6 +80,13 @@ DEFRA_INVISIBLE = {'#FFFFFF'}
 # cover more than this share of the opaque area to count as painted.
 MIN_SHARE = 0.0005
 UA = {'User-Agent': 'Mozilla/5.0 (Sky Score noise-legend check)'}
+# DEFRA'S STYLE SERVER DOES NOT ALWAYS ANSWER (2026-11-08/09): three full preflights went red here on a 30 s read that
+# passed alone each time; one probe answered in 0.2 s and the next hung 90 s. A server that does not answer says nothing
+# about the legend, so it gets one retry and then INCONCLUSIVE, which preflight names and never calls PASS. Anything that
+# IS an answer still fails: a 404, a lost host, a page without the ColorMap, a different ColorMap. That is how a moved or
+# restyled layer shows (tests/test_noise_legend_unanswered.py holds both sides).
+NO_ANSWER_HTTP = {502, 503, 504}
+RETRY_PAUSE_S = 5
 
 
 def hexcolour(pixel):
@@ -138,6 +147,31 @@ def fetch(url):
     return fetch_bytes(url).decode('utf-8', 'replace')
 
 
+def no_answer(exc):
+    """True when the server did not answer (a timeout, a dropped connection, a gateway error); False for any answer."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code in NO_ANSWER_HTTP
+    if isinstance(exc, urllib.error.URLError):
+        exc = exc.reason
+    return isinstance(
+        exc, (TimeoutError, ConnectionResetError, ConnectionAbortedError)
+    )  # socket.timeout is TimeoutError
+
+
+def read_defra_style():
+    """DEFRA's style text, or None when its server did not answer twice. Any other error is raised: it is an answer."""
+    for attempt in (1, 2):
+        try:
+            return fetch(DEFRA_STYLES)
+        except Exception as exc:  # noqa: BLE001 - sorted below: only "no answer" is retried, the rest re-raised
+            if not no_answer(exc):
+                raise
+            print(f'  live: DEFRA style request {attempt} of 2 got no answer ({exc})')
+            if attempt == 1:
+                time.sleep(RETRY_PAUSE_S)
+    return None
+
+
 def bts_tile_service():
     """The aircraft tile service index.html actually requests."""
     src = INDEX.read_text(encoding='utf-8')
@@ -172,9 +206,12 @@ def bts_painted_colours():
 
 
 def check_live(defra, bts):
-    fails = []
+    """(failures, unchecked): what disagrees, and what could not be compared because its server did not answer."""
+    fails, unchecked = [], []
     try:
-        sld = fetch(DEFRA_STYLES)
+        sld = read_defra_style()
+        if sld is None:
+            raise LookupError('no answer')
         entries = re.findall(r'ColorMapEntry color="(#[0-9A-Fa-f]{6})" opacity="[\d.]+" quantity="(\d+)"', sld)
         # An interval entry's quantity is its UPPER bound, so its lower bound is
         # the previous entry's quantity.
@@ -188,6 +225,11 @@ def check_live(defra, bts):
                 f'DEFRA style differs from NOISE_SCALE_DEFRA_LDEN:\n      DEFRA {published}\n      site  {defra}'
             )
         print(f'  live: DEFRA ColorMap {len(published)} bands compared')
+    except LookupError:
+        unchecked.append(
+            "DEFRA's style server did not answer twice, so the legend was not compared with DEFRA's ColorMap. "
+            'Run it again alone: python scripts/check_noise_legend.py --live'
+        )
     except Exception as exc:  # noqa: BLE001 - reported as a failure, never swallowed
         fails.append(f'could not read DEFRA style ({exc})')
     painted, tiles = bts_painted_colours()
@@ -202,7 +244,7 @@ def check_live(defra, bts):
         for c in sorted(legend - painted):
             fails.append(f'NOISE_SCALE_BTS shows {c} and no sampled BTS tile paints it')
         print(f'  live: BTS tiles {len(painted)} colours painted over {tiles} airports, {len(legend)} legend bands')
-    return fails
+    return fails, unchecked
 
 
 def main():
@@ -210,12 +252,19 @@ def main():
     bts = scale_from_index('NOISE_SCALE_BTS')
     print('Aircraft-noise legend vs what the map paints:')
     fails = check_png(defra)
+    unchecked = []
     if '--live' in sys.argv:
-        fails += check_live(defra, bts)
+        live_fails, unchecked = check_live(defra, bts)
+        fails += live_fails
+    # Printed whatever else happens, and in the form preflight's check() reads: a line starting INCONCLUSIVE.
+    for u in unchecked:
+        print(f'  INCONCLUSIVE: {u}')
     if fails:
         for f in fails:
             print(f'  FAIL {f}')
         sys.exit(1)
+    if unchecked:
+        return
     print('  ok   the legend describes the overlay')
 
 

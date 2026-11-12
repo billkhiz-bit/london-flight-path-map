@@ -680,7 +680,7 @@ check(
 );
 check(
   'aircraftQuietCoverage, when present, is a declared value',
-  envProbe.coverage === null || ['measured', 'city', 'outside'].includes(envProbe.coverage),
+  envProbe.coverage === null || ['modelled', 'city', 'outside'].includes(envProbe.coverage),
   String(envProbe.coverage)
 );
 

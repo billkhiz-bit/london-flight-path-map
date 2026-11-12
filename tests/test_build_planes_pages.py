@@ -40,6 +40,7 @@ META = {
     'airports': {code: {'share_pct': {'westerly': 56, 'easterly': 29, 'mixed': 15}, 'months': ['202601', '202608']}
                  for code in ('LCY', 'LHR')},
     'definition': 'Overhead means more than halfway up the sky.', 'direction_rule': 'A day counts as one way.',
+    'postcodes_rule': 'PO boxes are left out.',
     'credits': ['Flight tracks: adsb.lol (ODbL 1.0)'], 'licence': 'Open Database License (ODbL) 1.0',
 }
 NAMES = {'LHR': 'Heathrow', 'LCY': 'London City'}
@@ -57,11 +58,35 @@ def _ctx(n):
     return {'lads': Counter({'E09000027': n}), 'city': 'london', 'at': (0.0, 0.0)}
 
 
+def test_a_districts_councils_come_from_the_postcodes_its_figures_count(tmp_path):
+    """Audit I-3 (2026-11-12): PO boxes are left out of the figures (rule A), so they must not name a district's councils
+    either. SW1P listed Wandsworth through the Nine Elms mail centre's boxes; every postcode its figures count is
+    Westminster's. The large users move the district's centre too, so `at` is taken from homes only."""
+    np = pytest.importorskip('numpy')
+    homes = [f'SW1P {k}AA' for k in range(1, 5)]
+    boxes = [f'SW1P {k}XX' for k in range(1, 4)]
+    path = tmp_path / 'averages.npz'
+    np.savez(path, postcode=np.array(homes + boxes), lad=np.array(['E09000033'] * 4 + ['E09000032'] * 3),
+             city=np.array(['london'] * 7), easting=np.array([100.0] * 4 + [900.0] * 3), northing=np.array([0.0] * 7))
+    plain = bpp.district_context(path)
+    assert set(plain['SW1P']['lads']) == {'E09000033', 'E09000032'}, 'without the rule, the boxes name Wandsworth'
+    ruled = bpp.district_context(path, skip=frozenset(boxes))
+    assert dict(ruled['SW1P']['lads']) == {'E09000033': 4}, 'with it, only the councils of counted postcodes'
+    assert ruled['SW1P']['at'] == (100.0, 0.0), "the district's centre is its homes'"
+
+
+def test_the_build_reads_the_large_users_from_nspl():
+    """inputs() passes rule A's own list (adsb_postcode_averages.large_users), never a copy of it."""
+    src = (REPO / 'scripts' / 'build_planes_pages.py').read_text(encoding='utf-8')
+    body = src[src.index('def inputs('):src.index('MANIFEST = ')]
+    assert 'skip=pa.large_users(' in body and 'import adsb_postcode_averages as pa' in body
+
+
 # ----------------------------------------------------------------- the reading (option C)
 
 def test_a_sector_is_counted_in_bands():
     figs = [317, 317, [2, 317], [150, 317], '<1', 5, 0, 40, ['<1', 4]]
-    assert bpp.sector_reading(figs) == '3 at 100+, 1 at 10 to 99, 1 on an edge, 4 under 10'
+    assert ', '.join(bpp.sector_parts(figs)) == '3 at 100+, 1 at 10 to 99, 1 on an edge, 4 under 10'
 
 
 def test_a_cell_is_one_band_per_line_and_counts_carry_commas():
@@ -69,16 +94,16 @@ def test_a_cell_is_one_band_per_line_and_counts_carry_commas():
 
 
 def test_an_edge_counts_in_a_band_when_both_its_ends_are_in_it():
-    assert bpp.sector_reading([[150, 317]]) == '1 at 100+'
-    assert bpp.sector_reading([[12, 60]]) == '1 at 10 to 99'
-    assert bpp.sector_reading([[0, 9]]) == '1 under 10'
-    assert bpp.sector_reading([[9, 20], [60, 120]]) == '2 on an edge'
+    assert ', '.join(bpp.sector_parts([[150, 317]])) == '1 at 100+'
+    assert ', '.join(bpp.sector_parts([[12, 60]])) == '1 at 10 to 99'
+    assert ', '.join(bpp.sector_parts([[0, 9]])) == '1 under 10'
+    assert ', '.join(bpp.sector_parts([[9, 20], [60, 120]])) == '2 on an edge'
 
 
 def test_the_line_above_a_table_names_the_busiest_figure():
-    assert bpp.overall_reading([317, [2, 318], '<1']) == \
-        'up to 318 a day; of its 3 postcodes, 1 at 100+, 1 on an edge, 1 under 10'
-    assert bpp.overall_reading(['<1', 0]) == 'under 1 a day at all 2 of its postcodes'
+    assert bpp.day_figure([317, [2, 318], '<1']) == (318, bpp.sector_parts([317, [2, 318], '<1']), 3)
+    assert bpp.day_headline(bpp.day_figure([317, [2, 318], '<1'])) == 'Up to 318'
+    assert bpp.day_headline(bpp.day_figure(['<1', 0])) == 'Under 1'
 
 
 def test_a_postcode_not_listed_under_an_airport_reads_under_one():
@@ -95,7 +120,10 @@ def test_which_districts_get_no_page_and_why():
     assert bpp.verdict(page, (40, 0)) is None
     assert 'busiest postcode 9 a day' in bpp.verdict(_district(n=30, lhr=(9, 1, [2, 9])), (40, 0))
     assert 'in the covered councils' in bpp.verdict(page, (61, 0))  # 30 of 61: under half
-    assert 'large users' in bpp.verdict(page, (40, 21))
+    # Measured postcodes leave the large users out (rule A, 2026-11-10): 30 small users of 61, 31 of them large users.
+    assert 'large users' in bpp.verdict(page, (61, 31))
+    # Its 35 post boxes are not postcodes "outside the covered councils": 30 of its 35 small users is coverage.
+    assert bpp.verdict(page, (70, 35)) is None
     assert 'postcodes measured' in bpp.verdict(_district(n=bpp.MIN_POSTCODES - 1), (bpp.MIN_POSTCODES - 1, 0))
     # An edge whose TOP reaches PAGE_FROM is a postcode shown PAGE_FROM a day (reaches_one's rule).
     assert bpp.verdict(_district(n=30, lhr=([2, 10], 0, 0)), (30, 0)) is None
@@ -108,10 +136,23 @@ def test_more_measured_than_nspl_lists_is_the_wrong_edition():
 
 # ----------------------------------------------------------------- what a page says
 
-def _page(f, live=None, nearby=('TW10',)):
+def _page(f, live=None, nearby=('TW10',), large=0):
     n = len(f['postcodes']) + len(f['none'])
-    m = bpp.model(f['district'], f, META, _ctx(n), (live or n, 0), NAMES, list(nearby), ORDER)
+    m = bpp.model(f['district'], f, META, _ctx(n), ((live or n) + large, large), NAMES, list(nearby), ORDER)
     return m, bpp.render(m)
+
+
+def test_a_page_says_its_left_out_post_boxes_never_as_unmeasured():
+    # SW1P after rule A (2026-11-10): 422 of 752 live postcodes measured, the other 330 large users. The page said
+    # "422 of its 752 postcodes measured, the ones in Westminster and Wandsworth": the post boxes read as elsewhere.
+    m, html = _page(_district(n=30, lhr=(317, 2, 190)), large=33)
+    assert m['live'] == 30 and m['large'] == 33
+    assert 'All 30 of its postcodes measured (33 PO boxes and other large-user postcodes left out)' in html
+    assert 'of its 63 postcodes' not in html
+    _, one = _page(_district(n=30, lhr=(317, 2, 190)), large=1)
+    assert '(1 PO box or other large-user postcode left out)' in one
+    _, none = _page(_district(n=30, lhr=(317, 2, 190)))
+    assert 'large-user' not in none
 
 
 def test_a_quiet_airport_gets_one_line_not_a_table():
@@ -587,3 +628,39 @@ def test_check_home_needs_each_marker_once(tmp_path):
 def test_the_committed_front_page_band_is_todays():
     # The real page against the committed index, as preflight's --check reads it (also when the tracks are missing).
     assert bpp.check_home(bpp.tracked_index(), bpp.datetime.now(bpp.UTC).strftime('%Y-%m-%d')) == []
+
+
+def test_a_kind_of_day_never_shows_a_bare_figure():
+    # The headline of every planes page (Bill's pick, 2026-11-04). A bare 318 reads as every postcode's.
+    html = bpp.day_html('Flying west', 56, bpp.day_figure([318, 150, 12, 3]))
+    assert '<p class="big">Up to 318</p><p class="aday">a day</p>' in html
+    assert 'On a day it flies west, 56% of days' in html
+    assert not re.search(r'class="big">\d', html)
+
+
+def test_the_counts_under_a_figure_say_they_count_postcodes():
+    html = bpp.day_html('Both ways', 15, bpp.day_figure([318, 150, 12, 3]))
+    assert 'Of its 4 postcodes:' in html
+    assert re.findall(r'</i>([^<]+)</dt><dd>(\d+)</dd>', html) == [('100 or more', '2'), ('10 to 99', '1'), ('under 10', '1')]
+    assert html.index('Of its 4 postcodes:') < html.index('class="bands"')
+
+
+def test_a_day_with_nothing_over_it_says_so_with_no_second_figure():
+    day = bpp.day_figure(['<1', 0, '<1'])
+    assert (bpp.day_headline(day), day.total) == ('Under 1', 3)
+    html = bpp.day_html('Flying east', 29, day)
+    assert 'a day, at all 3 of its postcodes' in html
+    assert 'class="bands"' not in html and 'under 10' not in html
+
+
+def test_a_kind_of_day_with_no_figure_is_not_measured_never_zero():
+    day = bpp.day_figure([None, None])
+    assert (bpp.day_headline(day), day.parts, day.total) == ('Not measured', [], 0)
+    html = bpp.day_html('Flying east', 29, day)
+    assert 'Not measured' in html and 'a day' not in html.replace('On a day', '')
+
+
+def test_the_consultation_pack_reads_the_same_figure():
+    assert bpp.district_cell([318, 150])[0] == 'up to 318 a day'
+    assert bpp.district_cell(['<1', 0]) == ['under 1 a day', 'at all 2 postcodes']
+    assert bpp.district_cell([None]) == ['not measured']

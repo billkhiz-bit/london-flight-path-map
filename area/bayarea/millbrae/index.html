@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Millbrae noise &amp; liveability score | Sky Score</title>
+<meta name="description" content="Millbrae scores 1.3 out of 10 on Sky Score: noise, prices, crime, rail and flood, from public US federal and California sources." />
+<link rel="canonical" href="https://skyscore.co.uk/area/bayarea/millbrae/" />
+<meta property="og:title" content="Millbrae noise &amp; liveability score | Sky Score" />
+<meta property="og:description" content="Millbrae scores 1.3 out of 10 on Sky Score: noise, prices, crime, rail and flood, from public US federal and California sources." />
+<meta property="og:url" content="https://skyscore.co.uk/area/bayarea/millbrae/" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="Sky Score" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="stylesheet" href="/fonts/fonts.css" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
+<style>
+  /* `color-scheme` declared 2026-09-02 (audit D11). These pages carry a
+     prefers-color-scheme block below, so they REPAINT for dark mode - but
+     without this the browser still renders its own furniture (scrollbars,
+     and the canvas painted before our CSS applies) in light, so a dark-mode
+     reader gets a white flash and a light scrollbar against a #141414 page.
+     Declaring it is what makes the dark block honest. */
+  :root { color-scheme: light dark;
+    --bg:#f4f3ef; --paper:#fbfaf8; --dark:#141414; --mid:#55554f; --line:#dedcd6; --orange:#f27d26; --orange-ink:#a85416; --focus:#d35a12; --track:#e4e3e0; --yard:#807e79;
+    --font-display:'Geist',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:var(--bg); line-height:1.6; }
+  a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; } /* the site's ring, not the browser's (audit 2026-10-22, M-13) */
+  .wrap { max-width:1100px; margin:0 auto; padding:24px clamp(16px, 4vw, 48px) 64px; }
+  a { color:var(--orange-ink); }
+  nav.crumbs { font-size:12px; color:var(--mid); margin-bottom:20px; }
+  h1 { font-family:var(--font-display); font-weight:700; font-size:clamp(30px, 4.4vw, 44px); line-height:1.12; letter-spacing:-0.02em; margin:0 0 10px; }
+  .sub { color:var(--mid); font-size:16px; margin:0 0 8px; max-width:62ch; }
+  /* FINDINGS FIRST (Bill's pick, 2026-11-04: Stitch's layout, the site's own colours). The score, then each finding in
+     plain words with its figure under it. A score's bar takes the map's own colour for that score. */
+  .headline { display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 12px; margin:28px 0 10px; }
+  .headline .n { font-family:var(--font-display); font-size:clamp(56px, 9vw, 84px); font-weight:700; line-height:1; letter-spacing:-0.03em; }
+  .headline .of { color:var(--mid); font-size:14px; }
+  .bar { height:8px; background:var(--track); border-radius:4px; overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:4px; }
+  .bar.big { max-width:520px; margin-bottom:28px; }
+  dl.scores { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:20px 24px; margin:0; padding:24px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  dl.scores dt { font-size:14px; font-weight:500; }
+  dl.scores dd { margin:0; }
+  dl.scores b { font-family:var(--font-display); font-size:22px; font-weight:700; }
+  dl.scores .of { font-family:var(--font-mono); font-size:12px; color:var(--mid); }
+  dl.scores .bar { margin:6px 0 0; }
+  /* 12px, the site's small print everywhere else; 11px was the one size below it (site audit 2026-11-01). */
+  .note { display:block; color:var(--mid); font-size:12px; margin-top:4px; }
+  .groups { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 48px; margin:8px 0; }
+  @media (max-width: 760px) { .groups { grid-template-columns:minmax(0, 1fr); } }
+  section.group { padding:24px 0 8px; }
+  section.group + section.group { border-top:1px solid var(--line); }
+  section.group h2 { font-family:var(--font-mono); font-size:12px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid); margin:0 0 14px; }
+  .find { margin:0 0 18px; }
+  .find-h { margin:0; font-size:19px; font-weight:600; line-height:1.3; }
+  .find-big { font-family:var(--font-display); font-size:26px; font-weight:700; letter-spacing:-0.02em; }
+  .find-d { margin:2px 0 0; color:var(--mid); font-size:14px; }
+  /* VISUALS (Bill's pick B, 2026-11-04). A bar shows a share of a whole or a figure beside a named yardstick, from a true
+     zero; a strip shows where a rating sits among its own words. Aircraft noise and the price trend have nothing honest to
+     be drawn against, so they stay as words. Bars and strips are hidden from a screen reader; a caption stays readable
+     unless the sentence above it already says the same figures. */
+  .vis { margin-top:8px; max-width:420px; }
+  .vis-h { margin:10px 0 0; font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--mid); }
+  .vis-cap { display:flex; justify-content:space-between; gap:10px; font-size:12.5px; color:var(--mid); margin:6px 0 3px; }
+  .vis-cap b { font-family:var(--font-mono); font-size:12.5px; font-weight:500; color:var(--dark); white-space:nowrap; }
+  .vis .bar i { background:var(--orange); }
+  .vis .bar i.yard { background:var(--yard); }
+  .steps { display:flex; gap:3px; margin-top:8px; max-width:420px; font-size:12px; }
+  .steps span { flex:1; padding:4px 2px; text-align:center; border-radius:4px; background:var(--track); color:var(--dark); }
+  .steps span.on { background:var(--orange); color:#141414; font-weight:600; }
+  h2 { font-family:var(--font-display); font-size:20px; font-weight:600; margin:32px 0 8px; }
+  .sources { font-size:12px; color:var(--mid); }
+  .cta { margin:12px 0 28px; padding:20px 24px; background:var(--paper); border:1px solid var(--line); border-radius:18px; }
+  /* The way to the map is the page's one button: dark, as every button on the site but the front page's search. */
+  .cta a { display:inline-block; padding:10px 18px; border-radius:10px; background:var(--dark); color:var(--bg); font-weight:600; font-size:14px; text-decoration:none; }
+  .cta a:hover { text-decoration:underline; text-underline-offset:3px; }
+  footer { margin-top:40px; font-size:12px; color:var(--mid); }
+  /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
+  .site-top { display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }
+  .site-top .site-brand { font-weight:700; font-size:18px; letter-spacing:-0.01em; text-decoration:none; color:var(--dark); }
+  .site-top .site-nav { display:flex; gap:4px; flex-wrap:wrap; }
+  .site-top .site-nav { align-items:center; }
+  .site-top .site-nav a { font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }
+  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06): --focus, past the 3:1 a state cue needs. */
+  .site-top .site-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }
+  .site-top .site-nav a:hover { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
+  .site-top .site-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }
+  @media (prefers-color-scheme: dark) {
+    :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#141414; --paper:#1c1c1c; --orange:#fb923c; --orange-ink:#fb923c; --track:#3a3a3a; --yard:#8c8a85; }
+  }
+  /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
+     fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
+     pages carry none), and a browser without popovers keeps the plain bar. On a wide screen the closed popover
+     IS the ordinary row of links, so the browser's popover box is undone first. */
+  .menu-btn, .menu-close { display: none; }
+  .site-top .site-nav[popover] { position: static; inset: auto; width: auto; height: auto; margin: 0; padding: 0; border: 0; overflow: visible; background: none; color: inherit; }
+  @supports selector(:popover-open) {
+    @media (max-width: 680px) {
+      .menu-btn, .menu-close { display: inline-block; font: 600 14px/1.5 'Inter', system-ui, sans-serif; color: inherit; background: none; border: 0; border-radius: 8px; padding: 8px 12px; box-shadow: inset 0 0 0 1.5px currentColor; cursor: pointer; }
+      .menu-btn:focus-visible, .menu-close:focus-visible { outline: 3px solid #d35a12; outline-offset: 2px; }
+      .site-top .site-nav[popover]:not(:popover-open) { display: none; }
+      .site-top .site-nav:popover-open { position: fixed; inset: 0 0 auto 0; display: grid; gap: 2px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); background: Canvas; color: CanvasText; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); }
+      .site-top .site-nav:popover-open .menu-close { justify-self: end; }
+      .site-top .site-nav:popover-open a { padding: 12px; font-size: 16px; }
+      .site-top .site-nav::backdrop { background: rgba(0, 0, 0, 0.25); }
+    }
+  }
+</style>
+</head>
+<body>
+<!-- The site bar, the same on every page since 2026-10-06 (the front page's header.top). -->
+<nav class="site-top" aria-label="Site"><a class="site-brand" href="/">Sky Score</a><button type="button" class="menu-btn" popovertarget="site-nav">Menu</button><div class="site-nav" id="site-nav" popover><button type="button" class="menu-close" popovertarget="site-nav" popovertargetaction="hide">Close</button><a class="nav-cta" href="/map/">Full map</a><a href="/reports/">Reports</a><a href="/how-it-works/">How it works</a><a href="/pricing">Pricing</a><a href="/api/">API</a><a href="/about/">About</a></div></nav>
+<div class="wrap">
+<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Score</a> &rsaquo; <a href="/area/">Areas</a> &rsaquo; San Francisco Bay Area</nav>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Sky Score","item":"https://skyscore.co.uk/"},{"@type":"ListItem","position":2,"name":"Areas","item":"https://skyscore.co.uk/area/"},{"@type":"ListItem","position":3,"name":"Millbrae","item":"https://skyscore.co.uk/area/bayarea/millbrae/"}]}</script>
+<main data-city="bayarea" data-borough="Millbrae">
+<h1>Millbrae noise and liveability</h1>
+<p class="sub">San Francisco Bay Area. Aircraft and road noise, affordability, crime, rail access and flood risk, from published sources.</p>
+
+<div class="headline" data-fact><span class="n">1.3</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
+<div class="bar big" aria-hidden="true"><i style="width:13%;background:#f27d26"></i></div>
+<p class="sub">On US scales: crime, road noise and flood risk are scored against California&#x27;s own figures, and prices among the Bay Area&#x27;s 50 cities alone. Not comparable with a UK score, nor with New York&#x27;s.</p>
+
+<dl class="scores">
+<div data-fact><dt>Quiet skies</dt><dd><b>1.5</b> <span class="of">/ 10</span><div class="bar" aria-hidden="true"><i style="width:15%;background:#f27d26"></i></div></dd></div>
+<div data-fact><dt>Affordability</dt><dd><b>0.4</b> <span class="of">/ 10</span><div class="bar" aria-hidden="true"><i style="width:4%;background:#f27d26"></i></div><span class="note">Scored among the 50 areas of San Francisco Bay Area alone, never with another city&#x27;s prices: not comparable with UK scores - 34 of 50 here by price, cheapest first</span></dd></div>
+<div data-fact><dt>Environment</dt><dd><b>2.6</b> <span class="of">/ 10</span><div class="bar" aria-hidden="true"><i style="width:26%;background:#f27d26"></i></div></dd></div>
+</dl>
+
+<div class="groups">
+<div>
+<section class="group"><h2>Noise and planes</h2>
+<div class="find" data-fact><p class="find-h">Aircraft noise is high</p><span class="note">Estimated from the FAA&#x27;s published routes over the city&#x27;s residents, fitted to the noise monitors of San Francisco and San Jose airports; not a measurement</span></div>
+<div class="find" data-fact><p class="find-h">Road noise</p><p class="find-d">12.1% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California&#x27;s 6.88%, 0 at double or more</p><span class="note">BTS National Transportation Noise Map, 2022</span></div>
+</section>
+<section class="group"><h2>Air and flood</h2>
+<div class="find" data-fact><p class="find-h">Flood risk</p><p class="find-d">3.2% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California&#x27;s 3.14%, 0 at double or more</p><span class="note">FEMA National Flood Hazard Layer, as read October 2026</span></div>
+</section>
+</div>
+<div>
+<section class="group"><h2>Living here</h2>
+<div class="find" data-fact><p class="find-h">Crime is withheld, not estimated: policed by the san mateo county sheriff under contract; doj counts its crime in the sheriff&#x27;s county figures, so it has no rate of its own</p><span class="note">California DOJ OpenJustice, 2025</span></div>
+<div class="find" data-fact><p class="find-h">Rail access</p><p class="find-d">Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)</p><span class="note">BTS National Transit Map, compiled 2026</span></div>
+</section>
+<section class="group"><h2>Property</h2>
+<div class="find" data-fact><p class="find-h">Median home value</p><p class="find-d">$1,934,900</p><span class="note">US Census Bureau American Community Survey 5-year estimates, 2020-2024</span></div>
+<div class="find" data-fact><p class="find-h">County price trend</p><p class="find-d">San Mateo County, -0.61% in a year (a fact, not scored: county-wide)</p><span class="note">FHFA county house price index, 2025</span></div>
+</section>
+</div>
+</div>
+
+<div class="cta">
+  <p style="margin:0 0 8px;"><strong>See it on the map.</strong> The published routes, the federal noise map and every city's score in San Francisco Bay Area.</p>
+  <a href="/map/?city=bayarea&amp;borough=Millbrae">Open Millbrae on the Sky Score map</a>
+</div>
+
+<h2>Where these numbers come from</h2>
+<p class="sources">Prices: US Census Bureau, American Community Survey 2020-2024 5-year estimates, table B25077 (median value of owner-occupied homes, USD), public domain; Price trend: Federal Housing Finance Agency, House Price Index for counties (annual, all-transactions), public domain; no FHFA endorsement is implied; Liveability: NOT scored here; only 1 of 4 inputs is held (US Department of Transportation, Bureau of Transportation Statistics, National Transit Map Stops: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (CC BY 3.0 US; buses and ferries not counted)), below the two-input floor; Residents: US Census Bureau, 2020 Census block population (P.L. 94-171), public domain; the frame every Bay Area share and the city aircraft band is taken over; Aviation noise context: ESTIMATED from the FAA routes of San Francisco, Oakland and San Jose airports, fitted to SFO&#x27;s 29 noise monitors (DataSF, PDDL 1.0) and San Jose airport&#x27;s 13 (its quarterly noise report to Caltrans), July 2025-June 2026; NOT a measurement at this address; Licence note: Open Government Licence v3.0 covers UK Crown copyright and does NOT apply to any data in this response; Road noise: USDOT Bureau of Transportation Statistics, National Transportation Noise Map 2022 (road, 24-hour LAeq), a US government work; BTS says it should not be used to evaluate noise levels at individual locations; Flood risk: FEMA National Flood Hazard Layer, Special Flood Hazard Area (1% annual chance), public domain; Flight routes: FAA Coded Instrument Flight Procedures, derived by Sky Score for the aircraft noise estimate; supplied &quot;as is&quot;, without warranty, and not for navigation; Runway use: counted by Sky Score from aircraft positions via adsb.lol (ODbL 1.0), 2026-07-01 to 2026-08-31; the counts are offered under the ODbL</p>
+<p class="sources">Methodology version 5.7. Full method: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">the methodology</a> (and the <a href="/score-demo/api-docs.html">API reference</a>).
+Figures are for the whole city; a single address can differ, and the map shows the routes over each ZIP.</p>
+</main>
+
+<footer>
+<p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/about/">About</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
+</footer>
+</div>
+<script type="module" src="/js/count.mjs"></script>
+</body>
+</html>

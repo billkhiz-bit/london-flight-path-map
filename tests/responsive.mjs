@@ -15,6 +15,7 @@
 
 import { chromium } from '@playwright/test';
 import { stubLiveApi, assertStubFired } from './stub-live-api.mjs';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const stubHits = [];
 
@@ -227,6 +228,7 @@ for (const meta of PAGES) {
   // exists at all (the layers popover has a trigger on phones only).
   for (const vp of (meta.full ? VIEWPORTS : NARROW).filter((v) => !meta.where || meta.where(v))) {
   const page = await browser.newPage({ viewport: { width: vp.w, height: vp.h } });
+  await keepPanelOpen(page);
   // score-demo/status.html probes the live API on load with the PUBLIC
   // DEMO KEY printed in its own source. Unstubbed, this gate spent that
   // quota every run; it was exhausted 2026-09-11 and the public tester

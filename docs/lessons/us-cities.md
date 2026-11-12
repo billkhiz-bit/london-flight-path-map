@@ -387,3 +387,41 @@ screens (the route lists wrap in a narrower column), the desktop page shrank 8.6
 - `routes_cell` drops "Yes: " by exact text and raises on any other shape, so a reworded cell fails the build.
 - Lesson: measure the page's DOM before writing a finding about its structure; a word count cannot tell a table
   from prose.
+
+## The site's Bay Area scores (BUILT 2026-11-07, branch `bayarea-site-scores`; Bill reviewed it on localhost)
+
+Every surface prints the API's score for each of the 50 cities: the full map (card and ranking), the front page's
+cards, `/bay-area/` (balanced, under each city's name) and 50 area pages (`/area/bayarea/<city>/`, 152 pages in all).
+`SITE_FACTS_ONLY_CITIES` and `AREA_PAGES_PENDING` (the score Lambda) are EMPTY, kept for the next API-first city.
+- **The site's holder is a generated block in `index.html` (`BAYAREA-RECORDS`), NOT `data/borough-extra.json`.**
+  `scripts/build_bayarea_records.py` writes the SAME records into it and into the Lambda's `BAYAREA-BOROUGHS`, with
+  the anchors, `US_PRICE_TOP_CODE` and the few-residents note READ from app.py (ast), each input's source label
+  (`input_sources()`: the publisher named, the YEAR read from the reader's own file, so a roll moves the label) and the
+  US-scales sentence (`us_scales()`). `--check` holds both blocks. Why not borough-extra.json: some 30 scripts and
+  tests read it, each built for UK fields, and none should meet a US record. `tests/test_borough_data_parity.py` reads
+  the block back from the page text as a second site holder (US fields in `SHARED_FIELDS`, and the whole record).
+- **One wording holder for the inputs**: `input_facts()` says each input (figure, scale, withheld reason, source and
+  year) for the front page (`data/us-bayarea-front.json`, `scripts/build_bayarea_front.py`, blocking `--check`, its
+  rows from `resolve_query`) and the area pages (`gather()` reads it for any city with `usAnchors`, and gives the
+  Bay Area's own labels a place in `COLUMNS`: Crime, Rail access, Median home value, County price trend). The full
+  map's card words them in JS from the same block. The area pages' affordability note is per POOL (`app.pool_of`):
+  it said "New York's five boroughs, the only US prices held" for every US city, false once the Bay Area was priced.
+- **The engine mirrors the Lambda line for line**: `usAnchoredToScore` (= `us_anchored_to_score`), the US crime slot
+  in `getLiveScore`, `ENV_US_FIELD_OF` in `envComponentScores`, growth `null` where `CITY_DATA[city].growthNotScored`
+  (every city now carries `pool` and `growthNotScored`, the key-parity rule). Offline, lifting the declarations into
+  a Node sandbox, all 400 city x persona pairs equalled `calc_score` on score and every component, and four
+  mutations went red. `borough-score-parity.mjs` is the gate that counts.
+- **A place is listed from the records, never from the outline file** (`bayAreaPlaces()`): the parity gate reads
+  `boroughData()` straight after a switch, before the outlines land. `facts: true` stays as the ROUTING flag (card
+  and ranking are the Bay Area's own), so a record can be scored and still `facts`.
+- **The ranking is by score, the selected persona's (Bill, 2026-11-07)**, with `*` on a city whose input is withheld
+  and its meaning said beside the table; Emeryville (rail access withheld) leads `balanced`, which is the thin-data
+  case release 2 recorded, now disclosed rather than hidden. The "too close to rank" rule is ONE function,
+  `scoresTooCloseNote()`, read by the borough ranking too.
+- **The coverage sentence lost "(facts only)" everywhere on the same day**: builders (`build_coverage_strip.py`,
+  `build_how_it_works.py`, `build_area_pages.py`'s `ABROAD_WORDS`), typed holders (home FAQ, llms.txt, README,
+  OUTREACH_TARGETS, CLAUDE.md, the map's meta), and the tests that hold it (`test_llms_txt.py` now needs "cities.").
+- **A single-quoted JS string in `index.html` cannot carry an unescaped apostrophe**: the first legend edit ("A Bay
+  Area city's ...") made the whole inline script a SyntaxError, which only compiling the script caught. Compile it.
+- **Python heredocs: a backslash before a newline inside a triple-quoted string joins the lines.** A Makefile patch
+  written that way failed to match its continuation lines; write such patches to a file with raw strings.

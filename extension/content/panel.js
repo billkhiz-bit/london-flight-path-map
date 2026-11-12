@@ -565,7 +565,7 @@ function decidePresentation(listing) {
 // geometry we hold rather than from this area's own airports and flight paths.
 //
 // /v1/environment names it by machine since 2026-09-18: `aircraftQuietCoverage`
-// is 'measured', 'city' or 'outside', set in the Lambda branch that also
+// is 'modelled', 'city' or 'outside', set in the Lambda branch that also
 // writes the sentence, so the two cannot disagree. Before that this classifier
 // MATCHED PROSE in `aircraftQuietBasis`, guarded by an e2e probe of the live
 // endpoint - this repo has already paid for one suppression keyed on wording

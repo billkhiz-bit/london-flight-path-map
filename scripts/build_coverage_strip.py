@@ -1,7 +1,7 @@
 """The front page's coverage strip: every region the search covers, with its council areas, derived.
 
 WHY (2026-10-19). The front page's search answers for 13 UK city regions, New York and the Bay Area
-(facts only), but nothing on it said which before you typed: the map's city buttons (`#chips`) list the
+(facts only until 2026-11-07, scored since), but nothing on it said which before you typed: the map's city buttons (`#chips`) list the
 12 cities the front-page map draws, so Cardiff, Nottingham and Greater Norwich were searchable and never
 named, and a visitor from Exeter learnt "not covered" only after searching. Bill agreed the strip after
 looking at another data site's coverage list; its look was not copied.
@@ -60,7 +60,7 @@ def render() -> str:
     # taller, and the list is one click away before anyone types.
     return (f'{INDENT}{BEGIN}\n'
             f'{INDENT}<details class="covers"><summary>Which places does it cover?</summary><ul>{items}</ul> '
-            f"council areas, plus New York's {nyc} boroughs and {bay} Bay Area cities (facts only).</details>\n"
+            f"council areas, plus New York's {nyc} boroughs and {bay} Bay Area cities.</details>\n"
             f'{INDENT}{END}\n')
 
 

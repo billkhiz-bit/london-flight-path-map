@@ -78,19 +78,21 @@ Or just describe what you need, I have full context of this project.
   cross-project state is `%USERPROFILE%\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
-- **Weekly audit**: the current one is `AUDIT_REPORT_2026-10-31.md`; suggest `/audit` when it is >7 days old.
+- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-12.md`; suggest `/audit` when it is >7 days old.
 
 ## The product, in facts safe to repeat
 
 - **Sky Score**: property noise and liveability data. The consumer site is the marketing engine; the B2B
   `/v1/score` API is the product. Pivoted May 2026 from "AI-powered" to data-first.
 - **THE public coverage sentence, the only one to quote**: "97 council areas in 13 UK city regions, plus New
-  York's 5 boroughs and 50 Bay Area cities (facts only)".
+  York's 5 boroughs and 50 Bay Area cities" ("(facts only)" left it 2026-11-07, when the site began to score the Bay
+  Area; `tests/test_llms_txt.py` holds the sentence ending at "cities.").
 - **Surfaces**: `/v1/score` serves 15 cities LIVE, the 15th the Bay Area's 50 cities (live 2026-10-29), by name
-  (`city=bayarea`) or by ZIP (scored as the city where half or more of its residents live); the site keeps their facts
-  (`SITE_FACTS_ONLY_CITIES`, held both ways by both parity gates). The site SCORES 11 (London 33, NYC 5, Greater Manchester 10,
-  West Midlands 7, West Yorkshire 5, South Yorkshire 4, Merseyside 5, Tyne and Wear 5, Bristol 4, Leicester 8,
-  Teesside 5 = 91 boroughs) and shows the **Bay Area's 50 cities as facts with no score**. API-only, declared
+  (`city=bayarea`) or by ZIP (scored as the city where half or more of its residents live). The site SCORES 12 (London
+  33, NYC 5, Greater Manchester 10, West Midlands 7, West Yorkshire 5, South Yorkshire 4, Merseyside 5, Tyne and Wear 5,
+  Bristol 4, Leicester 8, Teesside 5 = 91 boroughs, plus the **Bay Area's 50 cities on US scales** since 2026-11-07:
+  the full map, its front-page cards, `/bay-area/` and 50 area pages, each equal to the API). `SITE_FACTS_ONLY_CITIES`
+  and `AREA_PAGES_PENDING` (the Lambda) are EMPTY and kept, both parity gates reading them. API-only, declared
   in `BACKEND_ONLY_CITIES`: Cardiff (cannot leave: no Progress 8 in Wales) and Nottingham (judgement). Greater
   Norwich (3) is an API-only preview. Uncovered spot-check postcode: **`EX1 1HS`** (must say NOT COVERED YET,
   no link).
@@ -119,6 +121,7 @@ Or just describe what you need, I have full context of this project.
   never a figure typed into a page; prices appear on `/pricing` ONLY, and never a licence figure anywhere public (a
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
+  **DEFRA's Heathrow map and the CAA's yearly contours are ONE model on two years** (ANCON v2.4; read from the PDFs 2026-11-06: Heathrow's Noise Action Plan 2024-2028 pp. 9 and 38, ERCD 2201, ERCD 2601): never "different models". "A highly anomalous situation" is cited to that plan, p. 9: DEFRA's authorship of it was never found.
   **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
   what a visitor sees; a new exception goes in its allow-lists WITH its reason, never a looser pattern.
 
@@ -128,6 +131,12 @@ Or just describe what you need, I have full context of this project.
 - **Derive, never copy.** Anything between generated markers (`FLIGHT-PATHS-LONDON`, `RUNWAY-AXES`,
   `<CITY>-NEIGHBOURHOODS`, `BACKEND-ONLY-PRICES`, `US-QUIET-NYC`, `US-QUIET-BAYAREA`, `AREA_SCORECARDS`, `COVERAGE-STRIP`, `HOW-IT-WORKS-*` ...)
   is rewritten by its builder; never hand-edit it. Each builder's `--check` is the gate.
+- **The Bay Area's records have one builder and two holders**: `scripts/build_bayarea_records.py --write` writes the
+  Lambda's `BAYAREA-BOROUGHS` and `index.html`'s `BAYAREA-RECORDS` (the records, the California anchors, the top code,
+  the few-residents note, each input's source and YEAR read from its reader's file, the US-scales sentence); its
+  `input_facts()` words every input for the front page (`data/us-bayarea-front.json`, `build_bayarea_front.py`) and the
+  area pages. Never `borough-extra.json` (its ~30 readers are UK-shaped). The map ranks them by score with `*` on a
+  withheld input, the rule `scoresTooCloseNote()` shared with the borough ranking (`docs/lessons/us-cities.md`).
 - **Scoring inputs live in BOTH holders** (Lambda registry + `data/borough-extra.json` / `index.html`),
   held by `tests/test_borough_data_parity.py`. Use `build_borough_bands.py --write --write-lambda`, never
   `--sync-lambda` (it skips the API-only cities).
@@ -143,6 +152,15 @@ Or just describe what you need, I have full context of this project.
 - **Sample a postcode at NSPL's `east1m`/`north1m`** (`scripts/postcode_grid.py grid_ref()`), never a
   re-projection; BT postcodes are Irish Grid. Loaders UPSERT, so a re-placing needs
   `remove_lost_readings.py --apply`.
+- **A district search takes the council at the district's centre** (audit I-1, 2026-11-12): postcodes.io lists a district's
+  councils alphabetically, so `[0]` is never the answer; `lookupPostcode()` asks for the postcode nearest the centre and takes
+  its council if the district lists it. **The planes pages count a district's councils without the large users too** (I-3:
+  `district_context(skip=large_users())`; SW1P had listed Wandsworth through Nine Elms' PO boxes).
+- **Planes figures leave out NSPL's large users** (`usrtypind` 1: PO boxes, bulk mail; Bill's rule A, 2026-11-10): they sit
+  at a delivery office, so SW1P read 307 a day from post boxes where its homes read 44. `build_planes_overhead.build(..., skip=)`
+  is REQUIRED (`adsb_postcode_averages.large_users()`); a district page's `live` leaves them out and says how many; every
+  surface carries `POSTCODES_RULE`, How it works word for word (`tests/test_build_planes_overhead.py`). Other postcode SHARES
+  (road, flood, air) still count them: unmeasured, a methodology question (`docs/lessons/in-progress-measurements.md`).
 - **A data roll is done only when every reader of the file has run** (HANDOVER s0 step 7). Area pages BAKE
   scores (the `/area/` index's tables too) AND the planes overhead links (`data/planes-districts-by-council.json`,
   written by `build_planes_pages.py`): rerun `build_area_pages.py --write` after any vintage or planes roll (its
@@ -151,7 +169,7 @@ Or just describe what you need, I have full context of this project.
 - **Quarterly crime roll** (first done 2026-10-23): set `EDITION` + `XLSX_FILE` in `refresh_crime_from_ons.py`
   (copied from the ONS page, never its `current` folder), then `--write-lambda --all`, `--write --all`,
   `--check --all`, `build_area_pages.py --write`, and re-derive METHODOLOGY s6 (`check_worked_example.py`);
-  `CRIME_EDITION_LABEL` must equal `edition_label()` (tests/test_provenance_periods.py).
+  `CRIME_EDITION_LABEL` must equal `edition_label()` (tests/test_crime_edition.py).
 - **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh`; it must move `SNAPSHOT_VINTAGE_LABEL`,
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.
@@ -177,8 +195,9 @@ Or just describe what you need, I have full context of this project.
   `major_airports`); never put US sizes in `AIRPORT_NOISE_SCALE` (it mirrors index.html). A runway lobe
   runs `RUNWAY_LOBE_KM` (15 km), mirrored in index.html. A fit only tests points near its monitors: check
   anything far from every monitor against an independent source (v5.7: the US DOT map caught Manhattan).
-- **`check_flood_georef.py` re-samples a small-sample miss on 16 cells a class before failing** (2026-11-04): at preflight's
-  4 a class one boundary cell is 75%, under the bar, all day (`docs/lessons/flood.md`). The bar stays 80%.
+- **`check_flood_georef.py` re-samples a small-sample miss on 64 cells a class at 92% before failing** (2026-11-05): at preflight's
+  4 a class one boundary cell is 75%, under the 80% bar, all day, and 16 at 90% was too small to say so too (`docs/lessons/flood.md`). Judge a
+  change here per city on the real sampler, never on a formula: the binomial called 48 at 90% an improvement, and three cities' bad edges got easier. Repeat draws in `spread_samples` are on purpose.
 - **A download's 200 is not the product**: test its magic bytes (FEMA's portal answered a missing county
   product with its page template, 2026-10-20; `docs/lessons/us-cities.md`).
 - **A tile service's 404 is "not cached", never "quiet"**: measure which levels a cache holds before reading
@@ -197,11 +216,17 @@ Or just describe what you need, I have full context of this project.
   registry source (`backend/tests/test_provenance.py` names it); a loader roll moves `PROVENANCE_PERIODS` with it
   (`tests/test_provenance_periods.py`); a credit-line pattern names its city's OWN airports (the Bay Area once
   matched New York's); only an instrument's reading is `measured`: DEFRA's and the EA's maps are `modelled`.
+  `aircraftQuietCoverage` follows it (`modelled`/`city`/`outside` since 2026-11-04; every reader tests only `=== 'outside'`).
 
 ### Frontend
 - **One registry, `CITY_DATA`.** No `if (city === 'x')`; add a registry field to ALL cities
   (`tests/smoke-local.mjs` asserts key parity). New `=== 'nyc'` tests must be declared in
   `tests/test_us_city_branches.py`.
+- **The full map's state is read when it is used, never captured** (audit I-13 to I-17, 2026-11-12): a click reads
+  `getActiveBoroughData()` at click time; an empty panel clears `panelSubject` (`showEmptyState`), or a profile change redraws an
+  old postcode in a new city; a late redraw passes the card's own options and checks it is still on screen. A covered council's
+  WHOLE name opens it from any city (`councilElsewhere`), never a prefix. `LONDON_AREA_MAP` postcodes must be LIVE in NSPL
+  (`tests/test_london_area_postcodes.py`: nine had been retired). Each is reached on purpose in `tests/search-guide.mjs` 7.
 - **The map's source is `index.html`, served at `/map/`; the front page is `home/index.html` at `/`.**
   Locally, `/` is still the map. `js/api-base.js` is loaded by an ABSOLUTE path.
 - **Phone vs desktop is `PHONE_LAYOUT = '(max-width: 900px), (max-height: 500px)'`**, stated by every @media
@@ -213,6 +238,48 @@ Or just describe what you need, I have full context of this project.
   postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
   if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
   `airChart()` (pure; `tests/air-chart.mjs`); the model is a hollow ring, never "measured"; `AIR_WHO_2021` equals the API's.
+- **The full map's postcode panel is findings first** (Bill's pick, 2026-11-04: Stitch's draft): four `.find-group`s, then every earlier section unchanged in
+  `#panel-all` ("All the detail"), closed; ids stay, so the loaders fill them there. `js/panel-findings.mjs` words each finding, pure text, null when there is
+  nothing true to say (`tests/panel-findings.mjs`); `fillFindings()` places them. Road noise leads with the council's rating over the postcode's own figure
+  (Bill's call: a rating can sit above a figure under the guideline, so the group's note says whose it is); with no figure the rating names its council;
+  a surveyed-quiet bound (`roadNoiseBelowDb`) is no reading and takes no rating. Station and doctor read the panel's own first row, so they cannot disagree
+  with it. "Last home sold" skips `other` and category B: SW5 9HP's January 2025 sale is not a home. A test of a folded section calls `keepPanelOpen()`
+  (`tests/panel-fold.mjs`); what shows before anything is opened is `tests/uk-city-panel.mjs` "Findings first". If the module fails, the fold opens.
+  **Since 2026-11-08 it is an ANSWER CARD, then TILES closed until tapped** (Bill: "keep to road noise is high", "any user to understand it", visuals where
+  honest; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). The card: the headline is `answerLead()` (`js/answer-lead.mjs`, ONE holder, re-exported by
+  home-sections: the front page's sentence for the same place), only with environment figures the API gave for THIS postcode; pills from `pillsFor()`, under "Worth a look" / "Good here", each with a ! or tick mark and named "Crime, good here" (audit I-3, Bill's pick A, 2026-11-10: never colour alone)
+  (watch first; aircraft noise is never "good" beside planes that are a watch item); the score, keeping `.summary-verdict` and five `.score-breakdown
+  .score-row`s (parity and render gates read them), as points earned of points possible, a part with weight 0 "not counted for this buyer", the city's
+  council areas from `calcScores()` (never re-derived from rounded parts), the profile chips calling `setPersona()` (one profile everywhere). Each finding
+  carries `tile` (face, tone, explanation as data: pictures, short sentences, tip, source) and `tileHtml()` draws it: a picture only of the honest kinds
+  (rating strip, 100 squares, bars from zero, ruler, score); a word outside its scale draws none; a source only from the caller (New York is not DEFRA);
+  a figure never said twice (`crimeNote(extra, { figures: false })`). `toneOf()` mirrors `ratingBadgeClass()`/`schoolBandFromP8()`, held by reading them.
+  The path tile never gives a height: only planeAltitude()'s "Not under a final approach" (past FINAL_TOP_FT a height is an extrapolation). "Weak" is "Low".
+- **/api/ refuses inline script** (audit M-8, 2026-11-10): its click counts are `js/api-page-events.mjs`; `tests/test_meta_csp.py` holds the policy and that nothing inline remains.
+- **A late answer never moves the visitor** (audit I-4, 2026-11-10; WCAG 2.4.3): `placeFinding()` leaves a slot drawn the same alone and, when it changes,
+  keeps the open tiles and the tile the focus was in; the pills rebuild only when their list changes (focus kept by `data-pill-key`), and a pill opens its tile
+  as it is NOW (`_pillTile`). `tests/uk-city-panel.mjs` holds TfL and the NHS back to test it.
+- **"All the detail" is option 1** (Bill's pick, 2026-11-08; live 2026-11-09): the 1 km picture (a full postcode only), then `details.dcard`s, then `details.drow`s.
+  `js/detail-near.mjs` words it, pure (`tests/detail-near.mjs`); `fillDetail()` takes each loader's answer as it lands. Every loader's container keeps its id in a card
+  body, line status in `#postcode-line-status` (`renderTransportData` writes there when it exists). An unasked kind has no line and no card; asked and none within 1 km
+  is an empty line (a reading); a card names the nearest even past 1 km. The routes send their nearest 5 (`ROUTE_CAP`, NaPTAN 4, both read from their holders by the
+  test), so a full cap within reach is "N or more", never a count. `keepPanelOpen()` opens the cards and rows, or a test reads closed boxes and proves nothing.
+  **On a phone the cards are one column** (Bill, 2026-11-09: "do what's best for the phone view"): two half cards left an open card's neighbour beside a gap, and
+  packing the gap (`dense`) moves cards nobody touched and splits seen order from read order. The face is a row, figure on the right; the summary is positioned so
+  the chevron stays on it. `tests/uk-city-panel.mjs` measures both at 390 (red on each half). Desktop keeps two columns.
+- **/pricing has a colour for each audience** (Bill's pick B, 2026-11-04): `#reports` tint, `#councils` water, `#platforms` dark. His "no highlighted card, one
+  button style" (2026-10-06) now holds WITHIN a section, measured by `tests/front-page.mjs` 16b. Words and `data-event`s are untouched by a restyle: diff them.
+- **Area pages say findings, not a table** (Bill's yes, 2026-11-04: Stitch's layout): `gather()`'s facts are unchanged; `findings_html()` places each fact, a label with no place stops the build. A bare figure gets
+  plain words: crime against the London median (`crime_against_london`), Progress 8 as a band (`school_band`), bars in `score_colour`, all three held equal to `index.html` by `tests/test_area_findings.py`. A
+  figure where a band would be stays a figure. `visuals()` (his pick B) draws only what truly compares: a share of postcodes, a figure beside a named yardstick from a true zero, a strip for a rating
+  among its own words. Aircraft noise and the price trend stay words: nothing honest to draw them against. A figure not held draws nothing. Planes pages lead with `day_figure()`'s "Up to N", always with its "Up to": a bare 318 reads as every postcode's. The score span and ` data-fact` are read by tests.
+- **One palette for the pages, held by `tests/test_site_palette.py`** (Bill, 2026-11-04: "ensure the colour scheme is consistent"): a
+  rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink (empty since 2026-11-05, when `/bay-area/` joined). Read a
+  colour from the repo, never from a mock-up (the amber `#f0b429` I called the scores' was in no file). Colours that carry meaning keep
+  their own holders: `scoreColor`, `BAND_COLOURS`, the air marks. The full map keeps its own surfaces.
+- **Stitch gives layouts, never colours or code** (Bill's pick, 2026-11-04): its pages load Google Fonts, some Tailwind from a CDN (the CSP
+  refuses it), its design system recalculates exact values, and it reported a recolour it never made. Apply exact colours yourself and
+  measure the pixels. A chart needs a real comparison; otherwise the finding in plain words, then its number (`docs/lessons/front-page-and-site.md`).
 - **The brand links home on every page** (`tests/test_brand_links_home.py` finds them). **"Have your say" links come
   only from `HAVE_YOUR_SAY`** (verified live; add an airport only after checking its pages; a time-limited link, such as
   a consultation, carries `until: 'YYYY-MM-DD'` and drops out by itself after it).
@@ -240,7 +307,7 @@ Or just describe what you need, I have full context of this project.
   MHCLG (it answered 400, which the Lambda reported as its own 502: 134 of the API's 146 5xx in a day); the map's
   `fetchEpcData` asks only with a full postcode. An upstream 400 for a valid postcode stays a 502: their change, loud.
 - **The front page's lower sections type no figure** (front-page-v3, Bill's mock v8, live 2026-11-04): the walkthrough's steps 02-04 are written by `js/home-sections.mjs` from the hero's own example lookup
-  (`home-engine.mjs` `exampleAnswer()`, one shared pair), the planes step through `planesWalk()` in `js/planes.mjs`
+  (`home-engine.mjs` `exampleAnswer()`, one shared lookup), the planes step through `planesWalk()` in `js/planes.mjs`
   (bar colours from the layer's `index.json` steps); step 05's picture is MADE from the sample PDF by
   `build_report_still.py` (its `--check` reds once the PDF changes: re-run `--write` after any sample regeneration);
   the dark band is written between PLANES-BAND markers by `build_planes_pages.py` (`--write --home` needs no tracks;
@@ -248,11 +315,38 @@ Or just describe what you need, I have full context of this project.
   planes pages with `--check --inputs-from <main clone>` (read only).
 - **The front page's planes answer links a district page only if that index lists it** (`js/planes.mjs` `planesLinks`):
   the index ships with the pages in `planes-pages-deploy` and the drift check compares it; never a guessed page.
+- **The public sample street report's FIGURES are gated** (audit I-10, 2026-11-12): `scripts/check_sample_report.mjs`
+  (preflight `net_check`) recomputes its printed reference and headline from today's API, AIRAC and planes counts; red means
+  regenerate the sample with `address_noise_report.mjs --sample`, then `build_report_still.py --write`, then `home-deploy`.
+- **The street report is THREE FIXED PAGES, the answer first, drawn as the site draws it** (Bill's pick 2026-11-11 v2
+  claude.ai/artifact/1GAXwXEyNJBxVJCtG1hx38, v3 claude.ai/artifact/PETRJg3HpWznos2MV8TLuL, built 2026-11-12): page 1 the headline
+  (`answerLead()`), four cards, the key figures, the map and a details box (reference, how current, check link); page 2 the routes,
+  the planes `planesChart()` (busiest airport first, the overhead rule once), the district chart, the road `roadFinding()` +
+  `pictureHtml()` (the postcode against the WHO; the council's rating stays on the map) and "Have your say"; page 3 the air (the
+  map's charts and key, `airSquare`/`airModelOf`/`airRows`/`sensorKeyNote` in js/street_report.mjs: one holder), the station, the
+  reading notes and the sources. **The cards' verdict has ONE rule, `glanceCards()`**: a postcode's own figure against its WHO
+  guideline (road; aircraft where DEFRA gives one), the planes from the map's watch step, air and estimates "For context", never
+  aircraft "Good here" beside a planes watch; a card can differ from a map pill (the map bands aircraft noise and rates road by
+  council). "What this shows" is GONE: its lines sit under the key figures (why no DEFRA figure) and the routes table (beside a
+  runway). The reference (`reportReference`, `checkLink`) moved here from the free copy, unchanged: a test pins TW9 3PZ's live
+  HCH7-V2UJ. Every printed page carries the reference and "Page x of 3" (@page margin boxes). Body and table 10.5 pt, labels and
+  captions 9.5, notes 10.5, sources 8.5, and NO text under 8 pt, chart labels included (pdfium reports CSS px: x0.75 for pt);
+  `address_noise_report.mjs` refuses a fourth page and leaves the last good file. Check a layout change on TW9 3PZ, SW1P 3JA,
+  E16 2PX, TW6 2GA (16 routes; page 3 is the tight one), NW1 4RY, M22 5RX, LS1 4DY and N3 1JN (three airports; page 2 95%).
+  A neighbour's road reading (`resolvedAs`) is never this postcode's, as on the map; "Under 1 a day" carries the planes' rules
+  and credit like a chart; no "Have your say" label without verified links (audit I-4 to I-6, 2026-11-12, `tests/street-report.mjs` 6).
+- **A built page's title fits 60 characters and its description 160, with share tags** (the SEO audit, 2026-11-11):
+  `build_area_pages.page_title()` keeps " | Sky Score" only where it fits, `fit()` takes the longest of a description's
+  versions that fits, never a cut; both builders use them, `tests/test_page_meta.py` reads every built page. /map/'s one
+  heading is the brand on screen and "Sky Score: noise and liveability map" to a reader: `applyCityChrome` must not set it.
+- **A sitemap never lists a page that asks not to be indexed** (2026-11-09, Search Console): `write_sitemap()` refuses one, `tests/test_sitemap_noindex.py` holds
+  `sitemap.xml`. `/score-demo/status.html` and `/talks/` stay noindex and unlisted.
 - **Breadcrumb JSON-LD comes only from `build_area_pages.breadcrumb_ld()`** (area pages, /open-data/, every planes
   page; 2026-11-02): every item but the last is a link the visible breadcrumb shows, the last is the page's canonical
   (`tests/test_breadcrumb_ld.py`, every built page). `/llms.txt` (`meta-deploy`) is read by the wording gate and held
   to the sitemaps and the coverage sentence (`tests/test_llms_txt.py`); never a price or "AI" in either.
 - **Focus rings use `--focus: #d35a12`**, never the brand orange `#f27d26` (fails 3:1).
+- **`frame-ancestors` never goes in a meta CSP** (removed 2026-11-06, `tests/test_meta_csp.py`): browsers ignore it there and log an error on every load. Framing is refused by CloudFront's `X-Frame-Options: DENY`, which the drift check holds.
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`). The top bar's clicks are counted there too (`nav-<slug>`, `-menu` from the
   phone menu): reorder the bar from them, not from a guess (Bill, 2026-10-23: read them ~20 Nov). Email buttons
@@ -285,31 +379,97 @@ Or just describe what you need, I have full context of this project.
   their holder; tests go through `pickCity`), and `#map-full` follows the city. The "New" pill goes with the consultation
   (PLANES-PILL markers, `build_planes_pages.py`). The map's box rule is `.mapwrap > svg`, never `.hero svg`: that one
   stretched a tick icon over half the page. No plane glides on the hero map (Bill: "isn't clear"; the mock's was dropped).
+- **The answer after a search is summary first** (Bill's pick B, 2026-11-04: it ran to 495 words): the rows, the planes as tiles
+  (`planesNodes`), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
+  say, nothing deleted; a caveat that changes what a figure means stays on the row. A fold with nothing to say hides itself
+  (`.ans-fold:has(> [hidden])`). The overhead drawing reads its angle from the file's `definition` (`overheadConeSvg`).
+- **The answer's lower half is TILES** (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): presentation only.
+  Each Nearby fact keeps its words; `nearbyFigure()` (js/home-engine.mjs) takes its big figure FROM THOSE WORDS, drawn by CSS from
+  `data-fig` (`content: attr(data-fig) / ""`, so never read twice, never in a test's text). One column, figure left: the real
+  sentences are long, so two columns left half rows empty, and `dense` splits seen from read order. The council line is a card with
+  `.area-chip`s (NEVER `.chips`: the city switch's, absolutely placed); `#ans-link` is the one filled button; fold summaries carry
+  `data-hint`; a border-drawn chevron (the arrow glyph fell back to "v"); the air fold's chart takes the page font via `--font-mono`.
+  `tests/front-page.mjs` 7z, red on each fault.
+- **The answer's folds are pictures and points, not paragraphs** (Bill, 2026-11-11: "still text heavy"; mock-up
+  claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2; planes fold 162 words to 92, air 97 to 75). Planes: `planesChart()` (js/planes.mjs,
+  the air chart's twin, banded and coloured by the planes layer's index.json steps), the overhead rule beside `overheadConeSvg()`
+  (its angle read from the sentence), then `rules.direction`, `counted` and `rules.postcodes` as points, each WORD FOR WORD from
+  airports.json (never shortened: every surface says what How it works says), then ONE sources line: the flight tracks' credit
+  (ODbL, beside the figures) and links to the method and `/how-it-works/#credits`. Air: the chart, a chip per instrument (where it
+  stands: a kerb distance changes what it reads), `airNoteList()` as points (`airNotes()` joins the same list for the report and
+  the map), the credit. The full map's planes tile draws the same chart, its fold the same rule and points. Held by
+  `tests/front-page.mjs` (word budget 100, each sentence word for word, nothing past a 390 screen with every fold open),
+  `tests/planes-model.mjs` (the chart, pure) and `tests/test_credits_list.py` (#credits carries each air file's attribution).
+  **Breathe London's credit says "License": their required spelling** (scripts/fetch_breathe_london.py); never "correct" it.
+- **The full map's search guide** (Bill's pick C2, 2026-11-11; claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu): on a first visit
+  `.search-box.guide` runs one light round the search box (an SVG outline, pathLength 100, two laps, 4.6 s: under WCAG 2.2.2's
+  5 s, so no pause control), then a still orange ring; reduced motion shows the ring only. `endSearchGuide()` ends it at any
+  answer (a search, a Try chip, a borough, a deep link) and remembers it (`flightmap_hint_seen`) only after a user activation
+  (`navigator.userActivation.hasBeenActive`), so a visitor who arrived by a link still gets it next time. The dark first-run
+  banner is GONE. Try chips are the registry's `tryExamples` (every city: phones at least 700 px tall show three in the card while the guide is on; shorter phones keep the hint,
+  because the row covered the layer buttons at 320x568 and squeezed the map at 844x390; desktops all in the empty panel). **Every place a city's hint, not-found message and chips name must be found by the search**:
+  `tests/search-guide.mjs` searches each (Bristol's "Bristol" and "Weston" and Teesside's "Stockton" found nothing until it did).
+- **The full map's Analysis panel before a search** (Bill's pick A, 2026-11-11; claude.ai/artifact/8EFboJHqQ1FBvdd6K5pCCv v2): a UK
+  city's says WHAT A SEARCH TELLS YOU, the answer card's four groups from `FIND_GROUPS` (ONE holder for the card's headings and
+  these rows; each line true in every UK city, so planes only "where we count them"), then its Try chips; New York and the Bay
+  Area keep their own sentence. `showEmptyState(city)` is the one builder (boot, a city switch at its start and after the
+  outlines, closing a result on a phone, which restored London's boot-time copy in every city). The chips match the rows:
+  rounded, a light edge, the sans. The disclaimer keeps every word, dark on the map's grey (it was white on black).
+- **Never `text-transform: uppercase` on a unit** (2026-11-04): it turns the micro sign into a capital mu, so µg/m³ read MG/M³.
+- **The front page counts its controls by name** (Bill, 2026-11-04, for the read that starts from the new page): `front-place-pick`,
+  `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`, `front-dev-lang`, `front-full-map`, through `engaged()`, once per
+  page view. Never a postcode or anything typed; `tests/front-page.mjs` holds the shape of every counted path.
+- **The postcode box's suggestions are `js/place-box.mjs`** (Bill's pick B, 2026-11-04; a WAI-ARIA combobox, replacing a
+  `<datalist>`), on `/` and `/api/`: places from what the page holds, so a place name is not sent while typing (Check still sends text no row matches). Only text shaped like the START of a postcode (`askable`) goes to
+  postcodes.io while typing, after a pause, as privacy s2b says (Bill's yes, 2026-11-05), and the full map's box reads the same rule (`startsLikePostcode`, ONE holder; it sent any 2-8 letters and digits until audit M-6, 2026-11-10); nothing typed is stored or counted, and anything newer, Escape or leaving the box cancels what is on its way. `/api/`'s
+  box is a `postcodeBox`: real choices or nothing, because at 320 wide a hint would sit in the way of Send (`tests/place-box.mjs`, `tests/api-demo.mjs`).
+- **The front page arrives in place** (2026-11-04: phone layout shift 0.133 to 0.008): `.panel.is-loading` shows `.ans-skeleton`, the
+  example's frame, until `endLoading()`; hidden tabs keep their room. Anything that fills in later keeps its place from the first
+  frame. Held in `tests/front-page.mjs`, on a phone with the example held back.
 - **The developers band's animation shows only what was answered** (Bill's pick C, 2026-11-04): `devAnswer()` builds the
-  JSON and tiles from the example's own response, and `showDev()` rewrites the three samples to that answer's point, so the
+  JSON and tiles from the example's own response, and `writeAnswer()` rewrites the three samples to that answer's point, so the
   request on show is the one answered and no lookup is added. Once on arriving, about 4 s (under WCAG 2.2.2's five), never a
-  loop; again on a language change or Replay; at rest and with reduced motion everything shows. A number, its card and the
+  loop; again on a language change or Replay; at rest and with reduced motion everything shows, and Play is offered: a press
+  is a request, whatever the setting (Bill's PC has Windows animations off, which is why he saw none). A number, its card and the
   card's figure arrive in one frame, one figure at a time, and the request box never moves (held frame by frame in
   `tests/front-page.mjs`, all three languages and at 390). The caret stays out of the text's flow, or a long URL re-wraps;
   typing keeps the whole text in the node, so Copy is never partial.
+- **The developers band is one module on two pages** (`js/dev-demo.mjs`, moved from `js/home-sections.mjs` 2026-11-05): the front page and `/api/` carry the same ids, and
+  `tests/test_dev_band_parity.py` holds their CSS and starting samples equal (a new band rule goes in its `RULES`). `writeAnswer()` runs for every answer, always from the samples as written (a read-back whole degree, `-2`, also matches the API's host), `armDev()` binds once.
+- **/api/'s "Try a request" asks only the open route** (`js/api-demo.mjs`, Bill's brief of 2026-11-04): postcodes.io, then `/v1/environment`, never `/v1/score` (it would spend the public demo key). Arriving asks only the API, at a held point (`EXAMPLE`): the privacy policy covers a search, not an unprompted lookup. A repeat press costs nothing, and any newer press aborts what is on its way, even one that only replays (the route is 5 a second site-wide). The route's 404 means only "no postcode near this point": a failed postcodes.io call is the Lambda's 503 (502 for an unreadable answer) since 2026-11-07 (`PostcodeLookupFailed`), so never word a 404 as a failure again. The band keeps its room from the first frame under `@media (scripting: enabled)`, `.no-answer` giving it back (shift held under 0.02 at five widths). Every
+  outcome is said in words: a neighbour's answer, a figure missing, a quiet road's bound (`under 40 dB`, a reading and never "missing"), no point (the Isle of Man and the Channel Islands: 200 with a null latitude), unknown, no figures, failed. `tests/api-demo.mjs` reaches each from
+  real answers in `tests/fixtures/api-demo-env.json`; a gap is always said as what WE hold, never what DEFRA maps: outside our city regions DEFRA may map the place, as the API's own notice says, and `aircraftQuietCoverage` cannot see every such place; a late reply never replaces a newer one; a press plays whatever the motion setting (a review queried it, Bill confirmed it 2026-11-05: do not raise it again); counted `api-demo-<way>`, never a postcode.
+- **API Gateway's own errors carry CORS** (`Access-Control-Allow-Origin: '*'` on `DEFAULT_4XX`/`DEFAULT_5XX`, 2026-11-07, held by `backend/tests/test_security_headers.py`): until then a browser could not read them, so a throttled 429 was a rejected `fetch` (checked live 2026-11-05). `/api/` now says "busy" only for a 429 it can read; a rejected fetch is still `failed`, worded true whatever the cause.
+- **About and How it works are on Stitch's layout** (2026-11-05, every word, link and section id kept; `tests/page-bands.mjs` measures them): About's speaker photo is the 16:9 hero, held from the top third so both the
+  speaker and the screen stay; How it works opens on the short version, then the strip (a reversal of Bill's 26 Oct call, one move to undo); its worked example is open, a bar per score from `build_how_it_works.py bar()`.
+  **"How it grew" is a grid from 1000 px** (`ol.grew.grid`; Bill's pick of Stitch's drafts, 2026-11-05, after the ten-card rail read too small: his talks among the steps as `li.talk` on the warm colour, reversing his 24 Oct "product steps only", the film kept in the timeline). The first map is a band, then nine cards in three rows, with CSS arrows in date order: along a row, and from a row's end back under it to the next. Each step links on from its own words, one link a step, no word added (`tests/page-bands.mjs` measures each arrow from step to step, and holds the links; a second link to `/prototype/` would pool two places under one count). Under 1000 px it runs down the page on the dashed line. A new step means the `nth-child` rules and `STORY`. **About's section links stay in view** (`nav.jump`, Bill's pick, 2026-11-05: "easier to navigate"): a child of `main`, or it cannot stick past its parent; one line, sideways in its own bar on a phone; `html`'s `scroll-padding-top` keeps a jump's heading and a Tab stop clear of it (WCAG 2.4.11); a window under 500 px tall leaves it at the top.
+  **About's links** (Bill's pick E, 2026-11-06: six filled orange pills were "too bright"): a section link fills `--orange` only under a pointer, inside `@media (hover: hover)`, because a phone's hover stays on a link after the tap. Links in the text are `--orange-ink`, going dark on hover; plain orange text reads 2.4:1 here. The dark band's stay white: `--orange-ink` reads 3.5:1 there. `tests/page-bands.mjs` holds each, and every link at 4.5:1 on what is really behind it.
 - **`tests/test_home_links.py` holds every link the front page makes and every link back to it** (Bill, 2026-11-04):
   each reaches a tracked file or a page the planes index lists, each fragment an id there (a fragment that misses opens
   the page at the top, with no error). Links to other sites are checked from the live page after a deploy, never there.
 - **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
-  address, never engagement, silent on failure. `stubLiveApi` answers its two lookups; scans wait for it.
+  address, never engagement, silent on failure. Its point is HELD (`EXAMPLE`, `js/place-box.mjs`, one holder for `/` and `/api/`; Bill's yes, 2026-11-05), so
+  arriving asks our API and postcodes.io nothing, and no `<link>` may open a connection to it either (a preconnect reaches it as surely as a request, and no request event shows it): privacy s2b covers a search, not a lookup nobody asked for. A page naming another example has no point, so no example, silently:
+  `data-pc` and `EXAMPLE` move together (`tests/place-box.mjs`). `stubLiveApi` answers that lookup; scans wait for it. To hold the example back in a test, hold `/v1/environment`: holding postcodes.io now holds nothing.
+  **A search sent before `load()` has drawn the map is HELD** (`booted`/`early` by the submit handler, 2026-11-08): `search()` reads what `load()` fetches, and an early postcode said "Could not reach the data". `load()` runs the latest early search after a deep link's, in place of the example; the example gives way BEFORE it takes a search number or clears anything (`example && acted`). To test it, hold `/data/borough-extra.json` and prove the map undrawn when the search is sent (`tests/front-page.mjs` 1z).
 - **"Describe what you want" (Find areas) is read IN THE BROWSER** (`js/find-words.mjs`, 2026-11-02, Bill: "without
   imposing on privacy concerns"): fixed rules, no server, no model, nothing typed sent, stored or counted (front-page.mjs
   checks no request or address carries the words). It only sets Find areas' own controls and says what it read and
-  what it did not; never a figure of its own. The postcode box's place list is a native `<datalist>` from the page's rows.
+  what it did not; never a figure of its own. The postcode box's place list comes from the page's rows (`js/place-box.mjs`).
 
 ### Gates and verification
 - **Run preflight before every commit**: `sh scripts/preflight.sh` (== `npm run preflight`). Read the EXIT
   CODE; never pipe it (`| tail` is always 0). `INCONCLUSIVE` and `PASS (INCOMPLETE ...)` are not PASS.
-  Change what blocks in `scripts/preflight.sh`, not in the skill.
+  Change what blocks in `scripts/preflight.sh`, not in the skill. Every run writes `.preflight/last.log` (and
+  `last.exit`, `last.ms`) and points Bill's progress panel at it where `~/.claude/progress` exists (2026-11-08): no
+  need to write `job.json` by hand. Never edit `preflight.sh` in a clone while a run is going: sh reads it as it runs.
 - **Count `check` / `advise` / `net_check` call sites in `scripts/preflight.sh`**; never trust a count in prose.
 - **A keyed request spends its key's quota on ANY route, open ones too.** `tests/stub-live-api.mjs` answers
   `/v1/score` and sends every other API request on WITHOUT the demo key (2026-10-31: ~13 keyed `/v1/regions` calls per
   preflight had been most of the public demo key's October use; `docs/lessons/quality-gates.md`).
+- **`tests/e2e/` reads the LIVE site** (`playwright.config.js` baseURL): an e2e assertion must hold before AND after
+  the deploy it waits for; a check of an undeployed change goes in a local test (2026-11-11: the map heading's
+  name reddened preflight; `docs/lessons/quality-gates.md`).
 - **Prove every new gate red on the defect itself** before trusting it green. Assert SETS, not counts.
 - **Measure the DOM, not the flag that should change it**; poll for the state you want, never one already true;
   reach edge states on purpose (a state reached by chance is not gated).

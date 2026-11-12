@@ -13,10 +13,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # the wording gate, read as a module
 SITE = 'https://skyscore.co.uk'
-# The numbers and "facts only" must match; how-it-works goes on inside the bracket ("facts only, with no score on the
-# site yet"), llms.txt closes it there.
+# The numbers must match, and the sentence ends at "cities." (Bill, 2026-11-07): "(facts only)" left it the day the
+# site began to score the Bay Area, so a bracket coming back after "cities" no longer matches.
 COVERAGE = re.compile(r'(\d+) council areas in (\d+) UK city regions, plus New York\'s (\d+) boroughs and (\d+) Bay Area '
-                      r'cities \(facts only')
+                      r'cities\.')
 OUTSIDE_LINKS_ALLOWED = {
     # The methodology the site's footer links ("METHODOLOGY V5.7"); it lives in the public repo.
     'https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md',

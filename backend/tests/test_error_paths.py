@@ -193,6 +193,73 @@ class NhsEmptyBucketTests(unittest.TestCase):
         self.assertFalse(body['gp'][0]['fallback'])
 
 
+class NhsUnusableReplyTests(unittest.TestCase):
+    """Audit I-8 and I-9 (2026-11-12): an Overpass reply that is not an answer is the outage fallback, never "none
+    nearby"; a point outside the UK never reaches Overpass. Driven through `handler`, with the HTTP layer stubbed, so
+    the shape check inside query_overpass is the thing tested (patching query_overpass itself would skip it)."""
+
+    EVENT = {'httpMethod': 'GET', 'queryStringParameters': {'lat': '53.4809', 'lon': '-2.2427'}}
+
+    def _handle_with_reply(self, reply):
+        app = load_lambda('nhs', 'nhs_app_unusable')
+        resp = MagicMock()
+        resp.read.return_value = json.dumps(reply).encode()
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        with patch.object(app, 'in_bundle_area', return_value=False), \
+             patch.object(app, 'urlopen', return_value=resp) as opened:
+            result = app.handler(self.EVENT, None)
+        return json.loads(result['body']), opened
+
+    def test_a_runtime_error_remark_is_the_fallback_not_none_nearby(self):
+        body, _ = self._handle_with_reply({
+            'elements': [],
+            'remark': 'runtime error: Query timed out in "query" at line 1 after 26 seconds.',
+        })
+        self.assertFalse(body['available'])
+        self.assertTrue(body['gp'][0]['fallback'])
+        self.assertNotIn('noneNearby', body['gp'][0])
+
+    def test_a_partial_answer_with_a_remark_is_not_taken_as_complete(self):
+        body, _ = self._handle_with_reply({
+            'elements': [{'type': 'node', 'id': 1, 'lat': 53.4809, 'lon': -2.2427,
+                          'tags': {'amenity': 'pharmacy', 'name': 'Test Pharmacy'}}],
+            'remark': 'runtime error: Query run out of memory using about 2048 MB of RAM.',
+        })
+        self.assertFalse(body['available'])
+        self.assertTrue(all(row['fallback'] for kind in ('gp', 'pharmacies', 'hospitals') for row in body[kind]))
+
+    def test_a_reply_with_no_elements_list_is_the_fallback(self):
+        for reply in ({}, {'elements': None}, ['not', 'a', 'dict']):
+            with self.subTest(reply=reply):
+                body, _ = self._handle_with_reply(reply)
+                self.assertFalse(body['available'])
+                self.assertTrue(body['gp'][0]['fallback'])
+
+    def test_a_real_empty_answer_is_still_none_nearby(self):
+        body, _ = self._handle_with_reply({'elements': []})
+        self.assertTrue(body['available'])
+        self.assertTrue(body['gp'][0]['noneNearby'])
+        self.assertFalse(body['gp'][0]['fallback'])
+
+    def test_a_point_outside_the_uk_is_refused_before_overpass(self):
+        app = load_lambda('nhs', 'nhs_app_outside_uk')
+        for lat, lon, where in (('48.8566', '2.3522', 'Paris'), ('53.3498', '-9.2', 'Galway'), ('40.7128', '-74.006', 'New York')):
+            with self.subTest(where=where), patch.object(app, 'urlopen') as opened:
+                result = app.handler({'httpMethod': 'GET', 'queryStringParameters': {'lat': lat, 'lon': lon}}, None)
+                self.assertEqual(result['statusCode'], 400)
+                opened.assert_not_called()
+
+    def test_the_uk_edges_are_inside(self):
+        app = load_lambda('nhs', 'nhs_app_uk_edges')
+        for lat, lon, where in (('49.9', '-6.3', 'Scilly'), ('60.8', '-0.8', 'Shetland'), ('54.3', '-7.6', 'Fermanagh'),
+                                ('52.48', '1.75', 'Lowestoft')):
+            with self.subTest(where=where), patch.object(app, 'in_bundle_area', return_value=False), \
+                 patch.object(app, 'query_overpass', return_value=[]):
+                result = app.handler({'httpMethod': 'GET', 'queryStringParameters': {'lat': lat, 'lon': lon}}, None)
+                self.assertEqual(result['statusCode'], 200)
+
+
 class ChatUpstreamFailureTests(unittest.TestCase):
     """M14 (the chat half, closed 2026-09-15): a crashed or failing
     ScoreFunction is a 502 naming the scoring service, never a 400 blaming the

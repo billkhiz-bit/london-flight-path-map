@@ -79,9 +79,15 @@ MIN_AGREE = 0.80   # per city, per direction
 # are all edge cells (spread_samples goes periphery first) but 16 take the whole 4x4 grid, interior included, so one bad
 # edge reading a third would score about 13/16 = 81% and pass the plain bar. One honest boundary cell is 15/16 = 94%.
 # And a throttled confirmation proves nothing, so it must reach most of its cells (proven both ways, docs/lessons/flood.md).
-CONFIRM_PER_CLASS = 16
-CONFIRM_AGREE = 0.90
-CONFIRM_MIN_COMPARED = 12
+# 64 AT 92%, NOT 16 AT 90% (2026-11-05): at 16 the confirmation was itself too small to say so. Tyne and Wear read 12/14
+# (86%) on the fixed seed and 13/14 and 16/16 on two others, the same mosaic, and a fixed seed means the same cells fail all
+# day. Measured on all 12 mosaics over 12 seeds, one edge agreeing a third (docs/lessons/flood.md), this is no easier on a
+# bad edge in ANY city (it passes 19% on average, was 31%; the worst city 41%, was 75%) and no harder on a true 95% class in
+# any city (87%, was 81%). 48 at 90% looked as good from the binomial, but 4 misses in 48 is a looser bar than 1 in 16, and
+# three cities got about 10 points easier: judge a change here on the sampler and the mosaics, never on a formula alone.
+CONFIRM_PER_CLASS = 64
+CONFIRM_AGREE = 0.92
+CONFIRM_MIN_COMPARED = 48
 # A class that reached the service only once or twice has not been tested, and
 # must not report 'ok'. Throttling shrinks the sample silently - at three
 # workers, half of one London class came back unreachable - so the floor is
@@ -273,6 +279,10 @@ def spread_samples(ys, xs, shape, n, rng):
     that is where the clipped tiles are - so the periphery is where a sample
     buys the most information. Spreading also catches a localised displacement
     anywhere, without this gate needing to know the tile geometry.
+
+    A CELL CAN GIVE THE SAME PIXEL TWICE, AND THAT IS WHAT KEEPS A SMALL CELL SEEN. Every cell gets its turn however few
+    pixels it holds. Drawing without replacement looks tidier and is much worse: a small edge cell runs out and stops
+    counting, so a bad edge on a sparse class would pass 96% of the time, not 32% (Tyne and Wear, measured 2026-11-05).
     """
     h, w = shape
     ch, cw = h / GRID, w / GRID
@@ -473,6 +483,12 @@ def rotating_city(cities):
     return cities[date.today().toordinal() % len(cities)]
 
 
+def bars_for(per_class):
+    """The bar and floor a sample of this size answers to. A run at the confirmation's own size is a confirmation, so
+    asking for one directly can never meet a lower bar than the confirmation it stands for."""
+    return (CONFIRM_AGREE, CONFIRM_MIN_COMPARED) if per_class >= CONFIRM_PER_CLASS else (MIN_AGREE, MIN_COMPARED)
+
+
 def needs_confirming(results, per_class):
     """True when a class fell under the bar on a sample too small to say so. An unreachable or untested class is not
     a miss: those keep their own verdicts below, so a throttled run is never quietly re-run into a pass."""
@@ -539,11 +555,11 @@ def main():
             skipped.append(city)
             checked += 1
             continue
-        res = check_city(city, mosaic_dir, args.per_class, args.seed)
-        bar, floor = MIN_AGREE, MIN_COMPARED
+        bar, floor = bars_for(args.per_class)
+        res = check_city(city, mosaic_dir, args.per_class, args.seed, bar, floor)
         if needs_confirming(res, args.per_class):
             print(f'{city:<16} a sample of {args.per_class} a class cannot say so: confirming on {CONFIRM_PER_CLASS} at {CONFIRM_AGREE:.0%}')
-            bar, floor = CONFIRM_AGREE, CONFIRM_MIN_COMPARED
+            bar, floor = bars_for(CONFIRM_PER_CLASS)
             res = check_city(city, mosaic_dir, CONFIRM_PER_CLASS, args.seed, bar, floor)
         if res is None:
             # A MISSING MOSAIC IS A FAILURE, NOT A SKIP (2026-08-31).

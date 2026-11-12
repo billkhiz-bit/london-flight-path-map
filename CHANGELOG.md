@@ -1,5 +1,158 @@
 # Changelog
 
+## 2026-11-12 (late) - Five fixes on the full map, and a check on the sample report
+
+- **Nine London place names answer again**: Mayfair, Southall, Hendon, Fitzrovia, Mill Hill, Neasden, Palmers Green, Limehouse and Wallington each looked up a postcode Royal Mail had retired, so the search said "not found". Each now uses a live postcode nearby in the same district, and a check holds every place name to a live postcode.
+- **A council's name opens it from any city's map**: typing "Birmingham" on London's map said "not found"; it now opens Birmingham on the West Midlands map. Only a council's whole name does this, never part of one.
+- **A click shows the profile you chose**: outside London, clicking a council after changing the buyer profile showed the old profile's score under the new profile's name.
+- **Changing the profile no longer brings back an old result**: after switching city or closing a result, a profile change could redraw the last postcode in the new city, with the new city's stations.
+- **A San Francisco ZIP keeps its card**: the first San Francisco ZIP looked up in a visit lost its ZIP details about a second later, when the neighbourhood list arrived.
+- **The sample street report is checked against today's figures**: its reference and headline are recomputed from today's data before every release, so a data update can no longer leave the public sample out of date unnoticed.
+
+## 2026-11-12 (evening) - Four corrections from the audit
+
+- **A postcode district search finds the right council**: searching a district that spans two councils, such as TW15 Ashford, used the first council in alphabetical order, so Ashford was shown Hounslow's figures and Uxbridge (UB8) was called not covered. It now takes the council at the district's centre.
+- **The full map's summary no longer promises growth it has not checked**: "and strong growth" was said from the affordability score, so 19 council areas with weak price growth were told otherwise. It now reads the growth score.
+- **The planes pages name a district's councils from its homes**: the counts already left out PO boxes, but the list of councils did not, so SW1P was listed under Wandsworth through a mail centre's post boxes. Four council pages lose a link that came only from PO boxes.
+- **The Healthcare card says where its rating comes from**: it read "not sourced" in nine city regions, though every rating comes from the NHS register of GP practices. It now says so.
+- **Two fixes for screen reader users**: in New York the map's Labels button now says it is on, as it is; and the API demo page now says in one line when it is fetching, what the score is, or what went wrong.
+
+## 2026-11-12 (afternoon) - The street report, three pages, the answer first
+
+- **Page 1 is the answer**: the one-line answer, then a card for each topic (aircraft noise, planes overhead, road noise, air) saying in a word whether it is worth a look, good here or there for context, with the figure, a next step and the page its detail is on. Then the key figures, the map and a box saying when the report was made, how current each source is, and how to check it.
+- **Page 2 is the noise in detail** (the flight routes, the planes overhead, how the postcode compares with its district, road noise and where to have your say); **page 3 is the air** and how to read the report.
+- **Bigger text throughout**, and every page carries the report's reference and "Page 1 of 3".
+- **A printed report can be checked like a free one**: it now states its reference and the link that re-makes it from today's data.
+- **"What this shows" is gone**: its lines now sit beside what they explain.
+
+## 2026-11-12 - Heathrow's traffic, compared like for like, and a healthcare lookup that says when it could not check
+
+- **Heathrow's 2025 traffic matched 2019's**: the full map, the API page and the methodology said 2025's flights were 2% below 2019's. That figure is in the CAA's own report, but it sets 2025's whole-year average against 2019's summer average, and summers are busier. Year against year, 2025 had as many flights as 2019, so the CAA's 2025 noise footprint being 19% smaller than 2019's is on the same traffic.
+- **The healthcare lookup no longer says "no GP nearby" when it could not check**: when the free map service it asks is busy, it can send back an error that looks like an empty answer, and that was shown as "no GP, pharmacy or hospital within 1.5 km". It now shows the NHS search links, as it does for any other failure.
+- **The healthcare lookup answers only for places in the UK**: nothing on the site or the extension asks about anywhere else, and a request for a point abroad could keep the service busy for 26 seconds.
+
+## 2026-11-11 (night) - The street report, as the site shows it
+
+- **The street report now reads like the site**: it opens with the same one-line answer as the map and the front page, then shows the planes overhead as the site's chart, road noise as the map's bars against the WHO guideline, and the air as the map's charts with their key. The repeated summary lines are gone, and the district comparison's one new fact now sits under its chart.
+- **The small print is bigger**: the notes are 10 pt (they were 7.6), the captions 9 and the sources 8. Nothing on the report prints smaller than 8 pt, the labels inside its charts and map included.
+- **Two pages**: page 1 is the aircraft answer and page 2 the air, the links and how to read the report. A postcode under two airports or beside six routes still fits two pages.
+- **Three fixes from the 12 Nov audit, before it shipped**: where the data answers for a neighbouring postcode, the report no longer shows that neighbour's road noise as yours (neighbours can differ by 20 dB); a postcode with fewer than one plane a day now carries the same rules and flight-tracking credit as one with a chart; and outside London the "Have your say" label no longer sits over nothing.
+- **The reports page says how the planes are counted**: from community flight tracking, checked against the CAA's monthly totals, beside the official sources; and the free report is described as two pages, as it is.
+
+## 2026-11-11 (evening) - Tidier search results and links
+
+- **Every area and planes overhead page reads whole in a search result**: titles fit in 60 characters and descriptions in 160, so search engines stop cutting them off. A link to any of them pasted into a chat or a post now shows its title and description.
+- **The full map's air readings say each caveat once**: the sensor's and the monitor's own rows already say provisional and ratified, so the note under them now keeps only the roadside reading and the hours rule.
+- **The comparison bars are easier to see**: the grey bar for the WHO guideline or a typical borough was faint against its track on the map and the area pages; it is now clearly darker, in light and dark mode.
+- **The full map's heading tells screen readers what the page is**: "Sky Score: noise and liveability map".
+
+## 2026-11-11 - Less text in the answer's folds
+
+- **Before you search, the full map says what a search tells you**: noise and planes, air and flood, living here, property, one line each, then example places to tap. The example buttons are softer and match the cards, and the disclaimer reads as a note rather than a black bar (every word kept).
+
+- **The full map shows you where to start.** On a first visit a light runs twice round the search box, then it keeps a still orange ring until your first search; on a phone, three example places sit under the box to tap. Every area has its own examples now, where only London had them. The dark banner over the map has gone.
+- **Bristol's and Teesside's suggestions now work**: Bristol's said to search "Bristol" or "Weston" and Teesside's "Stockton", and none of the three found anything. They now name City of Bristol, North Somerset and Stockton-on-Tees.
+- **The sample street report is up to date**: fine particles at Kew read 8.6 on it and 8.5 on the site since the air figures were reloaded on 10 November.
+
+- **"How the planes are counted" is a chart now, not paragraphs.** Each kind of day is a row with its share of days and a dot at its figure, shaded in the full map's planes colours; the meaning of "overhead" sits beside a small drawing of it, and the day rule, the check against the CAA's figures and the PO-box rule are three short points. About 90 words where there were 160. The full map's planes tile draws the same chart.
+- **"About the air readings" is shorter too**: the chart, where the sensor stands (roadside, 0.7 m from the kerb at Kew), and its caveats as three points.
+- **How it works now credits every source**: Breathe London's sensors, DEFRA's official monitors and the energy performance register join the list the folds link to.
+
+## 2026-11-10 - The answer card for everyone
+
+- **The front page's answer is easier to scan below the planes.** Each nearby fact is a tile that leads with its figure (10.2 km to Heathrow, about 1,800 ft for the aircraft overhead, 20 m to the station), the council's Sky Score and flood share sit in a small card, the map is one clear button, and each fold says what is inside before you open it.
+
+- **Planes overhead leaves out PO boxes and other bulk-mail postcodes**, which sit at a delivery office, not at homes. A district's busiest figure is now its homes': SW1P (Westminster) reads up to 44 a day, not 307, and Earl's Court SW5 5, not 305. Every page says how many it leaves out. Seven district pages whose homes see too few planes for a page are withdrawn; a postcode search still answers for each home.
+
+- **The map's answer card says in words what stands out**: the pills now sit under "Worth a look" and "Good here", each with a mark (! or a tick), so their meaning no longer rests on a dot's colour, and a screen reader hears "Crime, good here".
+- **A card you have opened stays open while the rest of the answer arrives**, and the keyboard stays where it was. Late answers used to shut it and send the focus to the top of the page.
+- **If the front page's map data fails to load, a search says so** ("Reloading the page usually fixes it"), where it used to say "Looking it up..." for ever.
+- **Every postcode's NO2 and PM2.5 figure now matches DEFRA's map to the decimal.** About 1 in 20 was 0.1 µg/m³ out, because the figure was rounded twice on its way to you.
+- **The full map no longer sends a place name to postcodes.io while you type**: only the start of a postcode, as the front page already did.
+- **Changing the buyer profile tells a screen reader the new score**, and keeps the 1 km picture complete.
+- **On a 320 px phone, the Schools scale fits its card.** The front page's typing caret stops after a few blinks, and its "no place by that name" hint is read out.
+- **The front page lists Gatwick, Stansted and Luton as the nearest airport** where they are, where it used to file them under "Flight paths".
+
+## 2026-11-09 - "All the detail" at a glance
+
+- **The full map's "All the detail" opens on a picture of what is within 1 km of the postcode**: a line each for stations, doctors and clinics, pharmacies and hospitals, every place a dot at its distance.
+- **Then a card for each nearest thing**: the nearest station, doctor, pharmacy and helipad, the airports, how many doctors and clinics are within 1 km, today's line status and the energy rating. Tap a card for its full list. Where a list holds only the nearest five of a kind and all five are close by, the card says "5 or more".
+- **On a phone the cards run one to a row**, each figure on the right, so opening one only pushes the rest down, with no gaps beside it.
+- **Listings, sold prices, the badge and next steps are now four rows** that open when tapped.
+- **The score shows each part's own score** ("Quiet skies 6.4 out of 10 · counts for 32%"), so changing the buyer profile no longer looks as if the noise changed. The detail's text is on the same scale as the cards above it.
+- **The planes overhead card names its main source** (the flight tracks and their licence) and points to the rest, which stay listed under "About these figures" in the same card.
+- **The sitemap no longer lists the API status page**, which asks search engines not to index it.
+- **On the full map, pressing Enter before the postcode suggestions arrive no longer leaves the list over the answer.**
+- **"All the detail" says when there is no hospital, doctor or pharmacy within 1.5 km**, where it used to drop the line (TW9 3PZ lost its hospitals line) or say healthcare was unavailable.
+
+## 2026-11-08 (night) - The map's postcode panel answers first, in plain words
+
+- **The full map's postcode panel opens on an answer card.** A headline says what the place is like in one sentence (the same sentence the front page gives it), pills show what stands out to watch for and what is good, and the score sits beside them.
+- **Each finding is one line until you tap it**: "Road noise · Moderate", "Crime · Medium". Tapping opens a plain explanation with a picture where an honest one exists: the rating among its own words, a share of postcodes as 100 squares, or figures side by side from zero. Then a sentence or two with the number inside, a tip where one helps, and the source.
+- **The score says whose it is and how it compares**: "Score for a balanced buyer", where it sits among the city's council areas, and the points each part earns. A part a buyer profile does not count says so, and the profile can be changed right there; the whole map follows it.
+- **"Weak" scores are now called "Low".**
+- **"All the detail" keeps its tools** (stations, NHS services, listings, sold prices, the badge) and loses the sections that repeated the findings, including a summary that called aircraft noise "unlikely to be a significant factor" beside hundreds of planes a day.
+
+## 2026-11-08 (evening) - A search sent while the front page loads
+
+- **A search typed before the front page has finished loading now gets its answer.** It used to say "Could not reach the data just now", which was not true, or "not found" for a council area; and the example answer, arriving after it, could leave the page showing neither. The search is now said to be heard straight away and answered as soon as the map is drawn, and the example no longer steps in once you have searched.
+
+## 2026-11-08 - The Bay Area is scored on the site
+
+- **The Bay Area's 50 cities now show their scores** on the full map, the Bay Area page, the front page and 50 new area pages, equal to the API's. Every score says it is built on US scales and cannot be compared with a UK score; growth is not scored there, and a city missing an input is marked and says why.
+- **The coverage sentence drops "(facts only)"**: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.
+- **The Bay Area ranking orders cities by score**, as every other city's does.
+
+## 2026-11-07 (night) - The answer as the headline; About fits a narrow window
+
+- **The front page leads with the answer.** Once a place's answer is on show, the headline says its plainest finding: how many planes pass over it on most days, or that it sees fewer than 10 a day, or where its aircraft noise is over the WHO guideline. A place we hold nothing for keeps the question. Without JavaScript the headline is the question, and the page does not move when it changes.
+- **About's section links fit a narrow window.** Below 900 px they read Why, How it grew, Questions, Talks, Who it's for and Contact, so a mouse can reach every one.
+
+## 2026-11-07 - Clearer API errors
+
+- **`/v1/environment` says when its postcode lookup fails.** It answered 404, its answer for a point with no postcode near it, when its own call to postcodes.io failed too. It now answers 503 with `Retry-After` when that lookup cannot be reached, and 502 when the lookup's answer cannot be read; 404 means only "no postcode here".
+- **The API's own error replies can be read by a browser.** A throttled request's 429 and a missing key's 403 now carry the same CORS header as every other answer, so a web page can tell a throttle from a dropped connection.
+- **The API page's "Try a request"** says the API is busy only when it really was throttled.
+
+## 2026-11-06 - About's links, postcode suggestions, and the Heathrow comparison
+
+- **About's links stand out.** A section link fills orange under the pointer, and links in the text are dark orange.
+- **The Heathrow comparison says what it compares.** The full map and the API page said the 2021 map and the CAA's 2025 contours were different models. Both are the CAA's model, run on different years, and the pages now say so. The phrase "a highly anomalous situation" is now credited to Heathrow's Noise Action Plan, where it was read.
+- **Arriving on the front page looks nothing up at postcodes.io, or connects to it.** The example's place is held in the page, so nothing goes there until you type or search.
+- **The postcode boxes on the front page and the API page suggest the rest of a postcode as you type.** While you type, only the start of a postcode is sent to postcodes.io, never a place name.
+- **The API page says what we hold.** Outside the city regions we cover, a missing figure is one we do not hold, which DEFRA may still map.
+
+## 2026-11-05 - Try a request; About and How it works rebuilt
+
+- **The API page lets you send a real request.** Type a postcode and see the request, its answer and each figure land on a card, in curl, Python or JavaScript. It uses the open route, so no key is needed. It says when an answer is for a neighbouring postcode and which figures an answer lacks.
+- **About opens on a photo of the map being explained.** The promises and the questions sit on coloured bands, the contact band is dark, and "How it grew" is a grid on a wide screen, with arrows in date order and the talks and demos among the steps, each step linking on to what it describes. The page's section links stay in view as you scroll. Those three cards are the only new words.
+- **How it works starts with the short version.** The worked example is open, with a bar for each score, the five scores are cards and the folds are full-width rows. No word changed.
+- **The Bay Area page joins the site's palette**, the last page to do so.
+- **The developers band** sizes its cards to the answer, so a figure with two neighbours no longer wraps on a phone.
+
+## 2026-11-04 (night) - Faster first answer; an honest word in the API
+
+- **Area and planes pages share the site's look.** All 103 area pages, 464 planes pages, the consultation pack, open data and the 404 page move to the site's palette and Geist headlines; the area and planes pages take Stitch's layout. An area page says each finding in plain words ("Recorded crime is close to the London median", "Schools are above average") and now prints the London median beside the rate; a planes page leads with "Up to 318 a day" for each way the airport flies, with its postcodes counted under it. Area pages draw what truly compares: bars for the share of postcodes over the road noise guideline or at flood risk, and for air, crime and price against the WHO guideline or the city's median; a labelled strip for each rating. No source figure or credit changed. Dark mode kept.
+- **The full map's crime finding** no longer repeats its figure outside London.
+- **The full map's panel leads with its findings.** Four groups (noise and planes, air and flood, living here, property), each finding in plain words with its number under it; every earlier section is still there, in "All the detail". The first screen of a postcode's panel falls from about 1,200 words to about 480.
+- **Pricing has a colour for each audience**: orange for homes and firms, blue for councils, dark for developers. No price or term changed.
+- **The panel's email label** no longer shows beside its box: its class had no rule on the map.
+- **`/v1/environment`**: `aircraftQuietCoverage` now says `modelled` where it said `measured`. A DEFRA noise map is a model; only an
+  instrument's reading is measured. The values are now `modelled`, `city` and `outside`.
+- **The front page's example** arrives sooner: the first request after a quiet spell no longer takes about 2.5 seconds.
+
+## 2026-11-04 (evening) - A calmer answer
+
+- **The answer after a search** leads with the figures, the planes as three tiles and one "Nearby" list, at under half the
+  words. Every definition, credit and way to act is kept, a tap away, and now in pictures where that is clearer: how the
+  airport's days split, the overhead rule as a drawing, and the air on one scale.
+- **The postcode box** shows what it takes when you click it, says what each place is as you type, and spots a full postcode.
+  Nothing you type is sent until you search.
+- **The page arrives in place**: the example's frame is there from the first moment, so nothing jumps as the figures land.
+- **"London from above"** has a new, sharper picture of Hounslow, its buildings coloured by aircraft noise.
+- **A visitor with animation turned off** can press Play to see the API at work.
+- **Fixed**: the air chart's caption read "MG/M\u00b3", when the unit is \u00b5g/m\u00b3.
+
 ## 2026-11-04 - A new front page
 
 - **Two columns**: the question, the search and the answer on the left, the live map beside them with nothing over it.

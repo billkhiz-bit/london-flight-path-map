@@ -5,6 +5,7 @@
 //      paint a map (cache.addAll is all-or-nothing, so a single missing
 //      SHELL_ASSET silently prevents the SW installing at all)
 import { chromium } from '@playwright/test';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const BASE = process.env.SMOKE_BASE || 'https://d1oe4ftwutjpf.cloudfront.net';
 const results = [];
@@ -15,6 +16,7 @@ const record = (name, pass, detail = '') => {
 
 const browser = await chromium.launch();
 const context = await browser.newContext();
+await keepPanelOpen(context);
 const page = await context.newPage();
 
 // ---------------------------------------------------------------------------
@@ -201,6 +203,7 @@ await context.setOffline(false);
 // would be the same defect pointing the other way: a false outage claim on
 // every good-service response.
 const tfl = await browser.newContext({ serviceWorkers: 'block' });
+await keepPanelOpen(tfl);
 const page3 = await tfl.newPage();
 
 let transportBody = null;
@@ -294,8 +297,13 @@ async function transportPanelText(body) {
   const read = () =>
     page3
       .evaluate(() => {
-        const el = document.getElementById('postcode-transport-data');
-        return el ? el.innerText.trim() : '';
+        // The line status has its own card since 2026-11-09: read both, stations first, as a reader opening both would.
+        return ['postcode-transport-data', 'postcode-line-status']
+          .map((id) => document.getElementById(id))
+          .filter(Boolean)
+          .map((el) => el.innerText.trim())
+          .filter(Boolean)
+          .join(' ');
       })
       .catch(() => '');
 
@@ -338,7 +346,7 @@ record(
 // assertion and the copy it checks were one edit away from each other.
 // A status ROW is the thing that must not exist.
 const statusRows = await page3.evaluate(
-  () => document.querySelectorAll('#postcode-transport-data .line-status').length
+  () => document.querySelectorAll('#postcode-transport-data .line-status, #postcode-line-status .line-status').length
 );
 record('partial TfL outage renders no status rows', statusRows === 0, `rows=${statusRows}`);
 

@@ -107,10 +107,12 @@ const quietAndClear = (r) => r.quiet !== '' && Number(r.quiet) >= 10 && crossesO
 
 // Real postcodes.io shapes, trimmed to what the page reads.
 const GEO = {
-  TW93PZ: { postcode: 'TW9 3PZ', latitude: 51.4713, longitude: -0.2894, admin_district: 'Richmond upon Thames' },
+  TW93PZ: { postcode: 'TW9 3PZ', latitude: 51.476982, longitude: -0.285639, admin_district: 'Richmond upon Thames' },
   NW17PJ: { postcode: 'NW1 7PJ', latitude: 51.539, longitude: -0.1426, admin_district: 'Camden' },
   TW33QL: { postcode: 'TW3 3QL', latitude: 51.462735, longitude: -0.372535, admin_district: 'Hounslow' },
   EX11HS: { postcode: 'EX1 1HS', latitude: 50.722209, longitude: -3.530574, admin_district: 'Exeter' },
+  // Option C's quiet planes band (2026-11-07), from tests/fixtures/api-demo-env.json (saved 2026-11-05).
+  SW59HP: { postcode: 'SW5 9HP', latitude: 51.489125, longitude: -0.190676, admin_district: 'Kensington and Chelsea' },
   M225RX: { postcode: 'M22 5RX', latitude: 53.3677, longitude: -2.2644, admin_district: 'Manchester' },
   // CONSTRUCTED, not a real postcode: a point 5 km out on Gatwick 26L's extended centreline,
   // given a London district so the page answers it. Every runway of Gatwick's record lacks a
@@ -120,14 +122,27 @@ const GEO = {
 };
 // Real /v1/environment shapes, captured 2026-10-03, keyed on the latitude the page sends.
 const ENV = {
-  '51.4713': { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
+  '51.476982': { environment: { roadNoiseLdenDb: 53.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 16.3, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.4, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 56.0, aircraftQuiet: 3.9, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
   '51.539': { environment: { roadNoiseLdenDb: 74.7, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 23.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.5, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 9.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
+  '51.489125': { environment: { roadNoiseLdenDb: 71.8, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 24.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.6, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 6.5, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   '50.722209': { environment: { no2AnnualMeanUgm3: 8.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 5.6, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 10.0, aircraftQuietCoverage: 'outside' }, notices: [] },
   '51.16029': { environment: { no2AnnualMeanUgm3: 9.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 6.0, pm25WhoGuidelineUgm3: 5, aircraftQuietEstimated: 6.0, aircraftQuietBasis: 'flight-path geometry, not measured', aircraftQuietCoverage: 'city' }, notices: [] },
   // Captured 2026-10-27 (section 1z's planes retry).
-  '51.462735': { environment: { roadNoiseLdenDb: 54.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 19.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.9, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 61.8, aircraftQuiet: 0.7, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
-  '53.3677': { environment: { roadNoiseLdenDb: 60.2, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 14.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 7.2, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 64.0, aircraftQuiet: 2.0, aircraftQuietCoverage: 'measured', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
+  '51.462735': { environment: { roadNoiseLdenDb: 54.1, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 19.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 8.9, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 61.8, aircraftQuiet: 0.7, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
+  '53.3677': { environment: { roadNoiseLdenDb: 60.2, roadNoiseWhoGuidelineDb: 53, no2AnnualMeanUgm3: 14.1, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 7.2, pm25WhoGuidelineUgm3: 5, aircraftNoiseLdenDb: 64.0, aircraftQuiet: 2.0, aircraftQuietCoverage: 'modelled', aircraftNoiseWhoGuidelineDb: 45 }, notices: [] },
 };
+// WITH THE PROVENANCE THE LIVE API SENDS (audit I-22, 2026-11-12). These shapes were captured on 3 Oct, before the API
+// sent `provenance`, so no browser test ever drew the air fold's DEFRA model row (it joins only where the provenance calls
+// the figure modelled). Each figure present gets the entry the live API gives it today; none is added for a figure absent.
+for (const body of Object.values(ENV)) {
+  const e = body.environment;
+  const p = {};
+  if (typeof e.roadNoiseLdenDb === 'number') p['environment.roadNoiseLdenDb'] = { sources: ['defra-noise-r4'], method: 'modelled', period: '2021' };
+  for (const k of ['no2AnnualMeanUgm3', 'pm25AnnualMeanUgm3']) {
+    if (typeof e[k] === 'number') p[`environment.${k}`] = { sources: ['defra-pcm'], method: 'modelled', resolution: '1 km grid', period: '2024' };
+  }
+  body.provenance = p;
+}
 
 const failures = [];
 let checks = 0;
@@ -152,6 +167,7 @@ const stubOffsite = (route) => {
     return route.fulfill({ status: 200, contentType: 'image/png', body: PNG_1PX });
   }
   if (url.hostname === 'api.postcodes.io') {
+    if (url.pathname.endsWith('/autocomplete')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 200, result: null }) });
     // Spaced or compact, as postcodes.io itself accepts both: the front page sends
     // TW93PZ and the street report sends TW9%203PZ.
     const key = decodeURIComponent(url.pathname.split('/').pop()).replace(/\s+/g, '').toUpperCase();
@@ -167,8 +183,8 @@ const stubOffsite = (route) => {
 await context.route(OFFSITE, stubOffsite);
 // ANSWER FIRST (2026-10-23): a plain visit opens on the example answer (#ans-example). Most of this file tests
 // what the page does without it - the question over a faded map, which a visitor still gets whenever the
-// example's lookup fails - so the front page is served with the example pointed at a postcode no stub answers,
-// exactly that failure. Section 1z turns the real example back on and tests it.
+// example's lookup fails - so the front page is served naming a postcode with no point held for it, which ends
+// the same way. Section 1z turns the real example back on and tests it.
 let exampleOn = false;
 const NO_EXAMPLE = 'ZZ0 0ZZ';
 await context.route((url) => url.hostname === '127.0.0.1' && url.pathname === '/', async (route) => {
@@ -258,6 +274,7 @@ const heroState = () =>
       inert: document.querySelector('.mapwrap').inert === true,
     };
   });
+await page.waitForFunction(() => getComputedStyle(document.querySelector('#map')).opacity === '1', null, { timeout: 3000 }).catch(() => {});
 const before = await heroState();
 ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !before.inert, 'on a wide screen the question sits beside a live map, nothing over it', JSON.stringify(before));
 // WHERE THE SEARCH COVERS, before anyone types (2026-10-19): every UK region the API serves, its council
@@ -265,7 +282,7 @@ ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !b
 // map's city buttons never named. scripts/build_coverage_strip.py --check holds the markup to the
 // registry; this holds what a visitor sees.
 // FOR DEVELOPERS (2026-10-19; three languages since front-page-v3, 2026-11-03): the open request a developer can
-// paste, in curl, Python and JavaScript (tabs, js/home-sections.mjs). All on the API host js/api-base.js holds
+// paste, in curl, Python and JavaScript (tabs, js/dev-demo.mjs). All on the API host js/api-base.js holds
 // (window.API_BASE), by lat and lon (the form /v1/environment answers; by postcode it is a 400), no key anywhere (the
 // keyed score request moved to /api/ with the redesign), and Copy copies exactly the sample on show. The clipboard is
 // stubbed: a headless browser has none to read back. (Changed by reading, not run, on the branch: run it before merging.)
@@ -326,7 +343,7 @@ ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !b
   const total = covers ? covers.regions.reduce((s, [, n]) => s + n, 0) : 0;
   ok(
     Boolean(covers && fig) && covers.visible && covers.regions.length === Number(fig[2]) && total === Number(fig[1]) &&
-      covers.regions.some(([name]) => name === 'Cardiff') && /plus New York's \d+ boroughs and \d+ Bay Area cities \(facts only\)/.test(covers.text),
+      covers.regions.some(([name]) => name === 'Cardiff') && /plus New York's \d+ boroughs and \d+ Bay Area cities\./.test(covers.text),
     "before any search one line offers where it covers, and opens to every UK region adding up to the page's own figure, then New York and the Bay Area",
     JSON.stringify(covers && { regions: covers.regions.length, total, figure: covers.figure.slice(0, 50) })
   );
@@ -628,25 +645,25 @@ const routes = await page.locator('#ans-routes').textContent();
 ok((await page.locator('#status').textContent()) === 'Showing the figures for TW9 3PZ.', 'a found postcode is announced in the live region, not left silent (audit M-14)', await page.locator('#status').textContent());
 // ONE decimal, as the full map and the street report print it. TW9 3PZ is ~10.2 km out, the
 // distance at which this page used to switch to whole km and print "10 km" (2026-10-09).
-ok(/Nearest airport on the map: Heathrow, \d+\.\d km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance (one decimal, like the map) and direction', routes);
+ok(/Airport\s*Heathrow, \d+\.\d km to the (west|north-west|south-west)/.test(routes), 'the answer names the nearest airport on the map with distance (one decimal, like the map) and direction', routes);
 ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.test(routes), 'Kew is reported under a Heathrow 27 final approach at a height', routes);
 // The nearest station (Bill, 2026-10-06: "show it first"): worked out HERE with this test's own
 // distance maths over data/stations.json, so the shared nearestStation() cannot pass by agreeing
-// with itself. TW9 3PZ is at the stub's 51.4713, -0.2894.
+// with itself. TW9 3PZ is at the stub's 51.476982, -0.285639.
 {
   const stations = Object.values(JSON.parse(await readFile(join(ROOT, 'data', 'stations.json'), 'utf8'))).flat();
   const r = Math.PI / 180;
   const km = (s) => {
     const [lon, lat] = s.coords;
-    const dLat = (lat - 51.4713) * r, dLon = (lon + 0.2894) * r;
-    return 2 * 6371.0088 * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(51.4713 * r) * Math.cos(lat * r) * Math.sin(dLon / 2) ** 2));
+    const dLat = (lat - 51.476982) * r, dLon = (lon + 0.285639) * r;
+    return 2 * 6371.0088 * Math.asin(Math.sqrt(Math.sin(dLat / 2) ** 2 + Math.cos(51.476982 * r) * Math.cos(lat * r) * Math.sin(dLon / 2) ** 2));
   };
   const near = stations.reduce((a, s) => (km(s) < km(a) ? s : a));
   const metres = Math.round(km(near) * 100) * 10;
   await page.waitForFunction(() => !document.getElementById('ans-station').hidden, null, { timeout: 10000 }).catch(() => {});
   const line = await page.locator('#ans-station').evaluate((p) => ({ hidden: p.hidden, text: p.textContent }));
   ok(
-    !line.hidden && line.text === `Nearest station: ${near.name}, ${metres} m in a straight line.`,
+    !line.hidden && line.text === `Station${near.name}, ${metres} m in a straight line`,
     'the answer names the nearest station, as worked out independently from the station list',
     `${line.text} | expected ${near.name}, ${metres} m`
   );
@@ -669,6 +686,30 @@ ok(/Under the Heathrow 27[LR] final approach, .* aircraft at about [\d,]+ ft/.te
     JSON.stringify(dist)
   );
 }
+// 7z. THE LOWER HALF AS TILES (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): each Nearby
+// tile's big figure is a figure from its OWN words (nearbyFigure(), never worked out again) and is drawn by CSS, so the
+// words above stay what a reader and these tests read; the council line is a card whose chips stay inside it (the city
+// switch's `.chips` once pulled them out, absolutely placed); the map hand-off is the one filled button.
+{
+  const tiles = await page.locator('#ans-nearby .fact:not([hidden])').evaluateAll((els) => els.map((e) => ({
+    label: e.querySelector('.k')?.textContent, fig: e.dataset.fig || null, text: e.lastElementChild?.textContent || '',
+    drawn: getComputedStyle(e, '::before').content,
+  })));
+  const withFig = tiles.filter((t) => t.fig);
+  ok(withFig.length >= 3 && withFig.every((t) => t.text.includes(t.fig.replace(/^~/, ''))),
+    "every Nearby tile's big figure is a figure from its own words", JSON.stringify(tiles));
+  ok(tiles.some((t) => t.label === 'Airport' && /^\d+(\.\d+)? km$/.test(t.fig)) && tiles.some((t) => t.label === 'Station' && /^\d+(\.\d+)? k?m$/.test(t.fig)),
+    'the airport and station tiles lead with their distance', JSON.stringify(tiles));
+  ok(withFig.every((t) => t.drawn.includes(t.fig)), 'each figure is drawn by CSS, never added to the words', JSON.stringify(withFig.map((t) => t.drawn)));
+  const card = await page.locator('#ans-area').evaluate((p) => {
+    const box = p.getBoundingClientRect();
+    return [...p.querySelectorAll('.area-chip')].map((c) => { const r = c.getBoundingClientRect(); return { text: c.textContent, inside: r.top >= box.top && r.bottom <= box.bottom && r.left >= box.left && r.right <= box.right }; });
+  });
+  ok(card.length === 2 && card.every((c) => c.inside) && /^Sky Score [\d.]+ \/ 10$/.test(card[0].text),
+    "the council card's two chips sit inside the card", JSON.stringify(card));
+  const map = await page.locator('#ans-link').evaluate((a) => ({ bg: getComputedStyle(a).backgroundColor, h: Math.round(a.getBoundingClientRect().height) }));
+  ok(map.bg !== 'rgba(0, 0, 0, 0)' && map.bg !== 'transparent' && map.h >= 44, 'the map hand-off is a filled button at least 44 px tall', JSON.stringify(map));
+}
 // Air measured nearby (ROADMAP "The plan for Breathe London", step 3; Bill, 2026-10-19: within 5 km,
 // London shows the sensor AND the official monitor). Worked out HERE over the two data files with this
 // test's own distance maths, as the station is, so the shared functions cannot pass by agreeing with
@@ -682,24 +723,46 @@ const monitorFile = JSON.parse(await readFile(join(ROOT, 'data', 'aurn-sites.jso
 const nearestTo = (sites, lat, lon) => sites.reduce((a, s) => (kmBetween(lat, lon, s.lat, s.lon) < kmBetween(lat, lon, a.lat, a.lon) ? s : a));
 const airBlock = async () => {
   await page.waitForFunction(() => !document.getElementById('ans-air').hidden, null, { timeout: 10000 }).catch(() => {});
-  return page.locator('#ans-air').evaluate((d) => ({ hidden: d.hidden, text: d.textContent, links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]) }));
+  // Since 2026-11-11 the fold says where each instrument stands as a chip and its notes as points; the readings
+  // themselves are the chart and the Nearby tiles (#ans-air-near), so the place and distance are read from there.
+  return page.evaluate(() => {
+    const d = document.getElementById('ans-air');
+    return {
+      hidden: d.hidden,
+      chips: [...d.querySelectorAll('.fold-chips span')].map((x) => x.textContent),
+      notes: [...d.querySelectorAll('.fold-keys li span')].map((x) => x.textContent),
+      near: document.getElementById('ans-air-near').textContent,
+      links: [...d.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]),
+    };
+  });
 };
 {
-  const sensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
-  const monitor = nearestTo(monitorFile.sites, 51.4713, -0.2894);
-  const sensorKm = kmBetween(51.4713, -0.2894, sensor.lat, sensor.lon);
+  const sensor = nearestTo(sensorFile.sites, 51.476982, -0.285639);
+  const monitor = nearestTo(monitorFile.sites, 51.476982, -0.285639);
+  const sensorKm = kmBetween(51.476982, -0.285639, sensor.lat, sensor.lon);
   const air = await airBlock();
   ok(
-    !air.hidden && sensorKm <= 5 && air.text.startsWith(`Nearest Breathe London sensor: ${sensor.name}, ${sensorKm.toFixed(1)} km away (${sensor.classification.toLowerCase()}`),
-    'Kew names its nearest Breathe London sensor, as worked out independently from the sensor file',
-    `${air.text.slice(0, 160)} | expected ${sensor.name}, ${sensorKm.toFixed(1)} km`
+    !air.hidden && sensorKm <= 5 && air.chips.length === 1
+      && air.chips[0].startsWith(`${sensor.name} sensor: ${sensor.classification.toLowerCase()}, ${Number(sensor.kerbDistanceM.toFixed(1))} m from the kerb`)
+      && air.near.includes(`${sensor.name}, ${sensorKm.toFixed(1)} km`),
+    'Kew names its nearest Breathe London sensor, as worked out independently from the sensor file: where it stands in the fold, how far in Nearby',
+    `${JSON.stringify(air.chips)} ${air.near.slice(0, 120)} | expected ${sensor.name}, ${sensorKm.toFixed(1)} km`
   );
+  // DEFRA'S MODEL ROW, DRAWN (audit I-22, 2026-11-12): the fixtures now carry the provenance the live API sends, so every
+  // chart the fold draws (one per pollutant an instrument nearby measures) must carry the model's own row at the API's
+  // figure for that pollutant (NO2 16.3, PM2.5 8.4). Until then no browser test ever drew it.
+  const modelRows = await page.evaluate(() => [...document.querySelectorAll('#ans-air svg[data-air-chart]')].map((s) =>
+    [s.dataset.airChart, s.querySelector('g[data-kind="model"]')?.dataset.value ?? null]));
+  const KEW_MODEL = { no2: '16.3', pm25: '8.4' };
+  ok(modelRows.length > 0 && modelRows.every(([p, v]) => v === KEW_MODEL[p]),
+    "every chart in the air fold draws DEFRA's model row at the API's figure, as the provenance calls it modelled", JSON.stringify(modelRows));
   ok(
-    kmBetween(51.4713, -0.2894, monitor.lat, monitor.lon) > 5 && !air.text.includes('Nearest official monitor'),
+    kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon) > 5 && !air.chips.some((c) => c.includes(' monitor: ')) && !air.near.includes(monitor.name),
     'the nearest official monitor is over 5 km from Kew, so it is not mentioned at all (never "none nearby")',
-    `${monitor.name} ${kmBetween(51.4713, -0.2894, monitor.lat, monitor.lon).toFixed(1)} km`
+    `${monitor.name} ${kmBetween(51.476982, -0.285639, monitor.lat, monitor.lon).toFixed(1)} km`
   );
-  ok(/can read higher than DEFRA's background figure/.test(air.text) && /at least 75% of the hours/.test(air.text), 'a roadside sensor carries why it can read above the background, and the capture floor is stated', air.text.slice(-320));
+  ok(air.notes.some((n) => /can read higher than DEFRA's background figure/.test(n)) && air.notes.some((n) => /at least 75% of the hours/.test(n)),
+    'a roadside sensor carries why it can read above the background, and the capture floor is stated, each as its own point', JSON.stringify(air.notes));
   ok(
     air.links.length === 1 && air.links[0][0] === sensorFile.attribution && air.links[0][1] === sensorFile.attributionLink,
     "the reading carries Breathe London's credit word for word, linked to breathelondon.org",
@@ -724,7 +787,9 @@ const airBlock = async () => {
     JSON.stringify(edge)
   );
 }
-ok(await page.locator('.promises').isHidden() && await page.locator('.covers').isVisible(), 'the promises step aside once an answer shows; the coverage line stays under the map');
+// Option C (Bill, 2026-11-07): a visitor's own answer has the example's treatment, so the promises stay with it (they
+// stepped aside until then); a council area's card still takes the panel (section 1z).
+ok(await page.locator('.promises').isVisible() && await page.locator('.covers').isVisible(), 'the promises stay with a visitor\'s own answer, as with the example; the coverage line stays under the map');
 // HAVE YOUR SAY and SPOTTED SOMETHING WRONG? (Bill, 2026-10-19). Kew's nearest airport is Heathrow, whose
 // pages were verified: its two links and the CAA's portal, exactly as js/street_report.mjs holds them, so a
 // link edited in one place and not the other reds here. The correction goes to support@ with the postcode.
@@ -761,7 +826,7 @@ ok(await page.locator('.promises').isHidden() && await page.locator('.covers').i
     return { say: read('ans-say'), wrong: read('ans-wrong') };
   });
   ok(
-    lines.say && !lines.say.hidden && JSON.stringify(lines.say.links) === JSON.stringify(want) && /^Have your say: /.test(lines.say.text),
+    lines.say && !lines.say.hidden && JSON.stringify(lines.say.links) === JSON.stringify(want) && /airspace change process/.test(lines.say.text),
     "Kew's answer says where to have your say: Heathrow's verified pages (its consultation while open) and the CAA's airspace change portal",
     JSON.stringify(lines.say)
   );
@@ -866,7 +931,7 @@ await page.fill('#pc', 'M22 5RX');
 await page.press('#pc', 'Enter');
 await page.waitForFunction(() => document.querySelectorAll('#map .boro').length === 10 && document.querySelector('#answer.is-open'), null, { timeout: 10000 });
 ok(/published only as charts and are not drawn here/.test(await page.locator('#ans-routes').textContent()), 'Manchester\'s undrawn departures are said, not left silent (audit M-7)', await page.locator('#ans-routes').textContent());
-ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
+ok(/Airport\s*Manchester/.test(await page.locator('#ans-routes').textContent()), 'a Manchester postcode switches the map and names Manchester airport');
 // Outside London no Breathe London line (the network is London's), and the official monitor within 5 km
 // is named with DEFRA's credit; worked out independently, as for Kew.
 {
@@ -874,11 +939,11 @@ ok(/Nearest airport on the map: Manchester/.test(await page.locator('#ans-routes
   const km = kmBetween(53.3677, -2.2644, monitor.lat, monitor.lon);
   const air = await airBlock();
   ok(
-    !air.hidden && !/Breathe London/.test(air.text) && km <= 5 &&
-      air.text.startsWith(`Nearest official monitor: ${monitor.name}, ${km.toFixed(1)} km away (${monitor.type.toLowerCase()}): `) &&
-      air.text.includes(` in ${monitorFile.year}.`),
+    !air.hidden && !air.chips.some((c) => / sensor: /.test(c)) && !air.notes.some((n) => /Breathe London/.test(n)) && km <= 5 &&
+      JSON.stringify(air.chips) === JSON.stringify([`${monitor.name} monitor: ${monitor.type.toLowerCase()}`]) &&
+      air.near.includes(`${monitor.name}, ${km.toFixed(1)} km`) && air.near.includes(` in ${monitorFile.year}`),
     'a Manchester postcode names its nearest official monitor, and no Breathe London sensor',
-    `${air.text.slice(0, 200)} | expected ${monitor.name}, ${km.toFixed(1)} km`
+    `${JSON.stringify(air.chips)} ${air.near.slice(0, 160)} | expected ${monitor.name}, ${km.toFixed(1)} km`
   );
   ok(air.links.length === 1 && air.links[0][0] === monitorFile.attribution && air.links[0][1] === monitorFile.licence, "the monitor's reading carries UK-AIR's credit word for word, linked to the OGL", JSON.stringify(air.links));
   // Manchester's airport pages have not been verified: no "have your say" line at all, never a guessed link;
@@ -928,6 +993,31 @@ await page.waitForFunction(() => document.querySelector('#ans-title')?.textConte
     'a home in line with a runway the record holds no glide path for is told so, not pointed at another approach (audit I-5)',
     gapText
   );
+  // Gatwick's routes are not drawn, so routesText() says "Nearest airport", not "Nearest airport on the map", and the
+  // Nearby list filed it under "Flight paths" beside the not-drawn line, with no Airport row (audit M-4, 2026-11-09).
+  const facts = await page.locator('#ans-routes .fact').evaluateAll((rows) => rows.map((r) => [r.querySelector('.k')?.textContent, r.lastElementChild?.textContent]));
+  ok(facts.some(([k, v]) => k === 'Airport' && /^Gatwick, /.test(v)) && !facts.some(([k, v]) => k === 'Flight paths' && /^Nearest airport/.test(v)),
+    'an airport whose routes are not drawn is still listed as the Airport, and the gap stays under Flight paths (audit M-4)', JSON.stringify(facts));
+}
+
+// 11c. A THROTTLE OR A FAILED LOOKUP IS NEVER "NO FIGURES" (2026-11-07). API Gateway's own replies carry a CORS header
+// since then (template.yaml GatewayResponses), so the page READS a throttle's 429 where its fetch used to fail outright;
+// it carries `message`, never our `error`, and read as an answer it said "No figures for that spot": a claim about the
+// place. Our own Lambda's replies keep their words (its 503 when its postcode lookup fails).
+for (const [label, pc, status, body, words] of [
+  ["a throttle (API Gateway's 429)", 'NW1 7PJ', 429, { message: 'Too Many Requests' }, 'The data is busy just now. Try again in a moment.'],
+  ["a gateway failure (API Gateway's 502)", 'TW9 3PZ', 502, { message: 'Internal server error' }, 'Could not reach the data just now. Try again in a moment.'],
+  ['our own failed lookup (the Lambda\'s 503)', 'EX1 1HS', 503, { error: 'The postcode lookup this route depends on is unavailable just now. Try again shortly.' }, 'The postcode lookup this route depends on is unavailable just now. Try again shortly.'],
+]) {
+  const env = /\/v1\/environment\?/;
+  const answer = (route) => route.fulfill({ status, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(body) });
+  await page.route(env, answer);
+  await page.fill('#pc', pc);
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction((w) => document.querySelector('#status')?.textContent === w, words, { timeout: 10000 }).catch(() => {});
+  const said = await page.locator('#status').textContent();
+  ok(said === words, `${label} is said as such, never as a place with no figures`, said);
+  await page.unroute(env, answer);
 }
 
 // 12. Place names: a borough opens its card (switching city), a Bay Area city opens the Bay Area, a city name switches.
@@ -959,6 +1049,17 @@ const fact = (label) => page.locator('#borough .facts div', { has: page.locator(
 const paloField = await fact('Nearest airfield');
 ok(/^Palo Alto \(KPAO\), [\d.]+ km to the/.test(paloField), 'Palo Alto card names its own airfield as the nearest (audit I-2: it named SJC)', paloField);
 ok(/^SJC 12R, [\d.]+ km to the/.test(await fact('Nearest of SFO, OAK and SJC')), 'and SJC 12R as the nearest of the three airports whose routes are drawn', await fact('Nearest of SFO, OAK and SJC'));
+{
+  // 2026-11-07 (Bill): the Bay Area's cards are scored, from data/us-bayarea-front.json, the engine's own rows,
+  // with the US-scales line and each input's source and year. Read from the file, never a typed score.
+  const front = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-front.json'), 'utf8'));
+  const palo = front.rows.find((r) => r.borough === 'Palo Alto');
+  const crime = palo.facts.find(([label]) => label === 'Crime');
+  const card = (await page.locator('#borough').innerText()).replace(/\s+/g, ' ');
+  const scoreShown = (await page.locator('#borough .score strong').textContent()).trim();
+  ok(scoreShown === Number(palo.score).toFixed(1) && card.includes(front.us_scales) && (await fact('Crime')).includes(crime[2]) && !/Not scored/.test(card),
+    "Palo Alto's card carries the engine's score, the US-scales line, and each input with its source and year", `${scoreShown} / ${card.slice(0, 160)}`);
+}
 // The Bay Area's lines are the GENERATED routes file's (2026-10-07), the same records the live map
 // draws: so the map draws one path per record of each kind, arrivals included, and nothing from the
 // raw FAA record (which drew finals as <line> elements and whole departures, and no arrivals).
@@ -1346,7 +1447,8 @@ const frontText = await page.locator('body').textContent();
   // places, unincorporated, which are outlines on the map and never 'cities'.
   const bayPlaces = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-places.json'), 'utf8')).places.filter((x) => x.kind === 'city' || x.kind === 'town').length;
   // THE coverage sentence (CLAUDE.md), word for word, in the Questions band since front-page-v3 (2026-11-03).
-  const want = `${csvRows} council areas in ${csvRegions} UK city regions, plus New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities (facts only).`;
+  // "(facts only)" left it on 2026-11-07, when the site began to score the Bay Area (Bill's sentence).
+  const want = `${csvRows} council areas in ${csvRegions} UK city regions, plus New York's ${nycRows} boroughs and ${bayPlaces} Bay Area cities.`;
   const fig = (await page.locator('#cover-figure').textContent()).trim();
   ok(fig === want, 'the coverage figure is recounted from the data: UK council areas and city regions, New York boroughs, Bay Area cities', `page "${fig}" vs data "${want}"`);
 }
@@ -1369,12 +1471,21 @@ const pricesOn = () =>
     })
   );
 // No card is "the one to pick" (Bill, 2026-10-06): a homeowner who jumps to the report tiers
-// saw the firms card outlined. Read from computed style: no card carries a ring or shadow, and
-// every card button has one look.
+// saw the firms card outlined. Read from computed style: no card carries a ring or shadow, and within
+// a section every card and every button looks the same. Since his pick B (2026-11-04) each audience's
+// section has its own colour, so `looks` counts the looks in each section, and each must be one.
 const cardLook = () =>
   page.locator('.tier').evaluateAll((cards) => ({
     cards: cards.length,
     ringed: cards.filter((c) => getComputedStyle(c).boxShadow !== 'none').map((c) => c.querySelector('h3')?.textContent.trim()),
+    looks: Object.entries(Object.groupBy(cards, (c) => c.closest('section')?.id || '')).map(([id, inSection]) => [
+      id,
+      new Set(inSection.map((c) => {
+        const s = getComputedStyle(c);
+        const a = c.querySelector('a.go');
+        return `${s.backgroundColor}|${s.borderTopColor}|${a ? `${getComputedStyle(a).backgroundColor}|${getComputedStyle(a).color}|${a.className}` : ''}`;
+      })).size,
+    ]),
     buttons: [...new Set(cards.flatMap((c) => [...c.querySelectorAll('a.go')].map((a) => `${getComputedStyle(a).backgroundColor}|${a.className}`)))],
   }));
 // /api/ states NO prices since the website audit of 2026-10-06 (I2): its own copy of the API
@@ -1395,8 +1506,8 @@ await page.goto(`http://127.0.0.1:${PORT}/pricing`, { waitUntil: 'domcontentload
 const pricingPrices = await pricesOn();
 const pricingCards = await cardLook();
 ok(
-  pricingCards.cards >= 4 && pricingCards.ringed.length === 0 && pricingCards.buttons.length === 1,
-  'no pricing card is highlighted on /pricing, and every card button looks the same',
+  pricingCards.cards >= 4 && pricingCards.ringed.length === 0 && pricingCards.looks.length === 3 && pricingCards.looks.every(([, n]) => n === 1),
+  'no pricing card is highlighted on /pricing: within each audience, every card and button looks the same',
   JSON.stringify(pricingCards)
 );
 const priceText = {};
@@ -1591,6 +1702,41 @@ ok(JSON.stringify(bareBars.sort()) === JSON.stringify(['/404.html', '/privacy', 
   'the bars that count no clicks are the five pages that load no analytics, and only those', JSON.stringify(bareBars));
 await page.setViewportSize(was);
 ok(statusStub.count > 0, 'the status page\'s API probes were answered by the stub, never the live API', `${statusStub.count} stubbed: ${statusStub.paths.slice(0, 3).join(', ')}`);
+// /score-demo/ SAYS WHAT CHANGED (audit I-20, 2026-11-12, WCAG 4.1.3): an example run is announced in one line by a status
+// region (the stub answers /v1/score, so no demo quota), and "Try an example" names the examples' group, not a label of
+// nothing. The card itself is no live region: a screen reader would read the raw JSON.
+{
+  await page.goto(`http://127.0.0.1:${PORT}/score-demo/index.html`, { waitUntil: 'load' });
+  const group = await page.evaluate(() => {
+    const g = document.querySelector('.examples');
+    const name = g && document.getElementById(g.getAttribute('aria-labelledby') || '')?.textContent.trim();
+    const lonely = [...document.querySelectorAll('label')].filter((l) => !l.control).map((l) => l.textContent.trim());
+    return { role: g?.getAttribute('role'), name, lonely };
+  });
+  const statusNow = () => page.evaluate(() => {
+    const s = document.getElementById('result-status');
+    return { text: s?.textContent || '', role: s?.getAttribute('role'), live: document.getElementById('result')?.getAttribute('aria-live'),
+      error: document.querySelector('#result .error')?.textContent || '' };
+  });
+  // 1. The shared stub's answer is shaped for status.html (no `context`), so the page shows an error: the line says it.
+  await page.locator('.examples button').first().click();
+  await page.waitForFunction(() => (document.getElementById('result-status')?.textContent || '').length > 0
+    && !/^Getting/.test(document.getElementById('result-status').textContent), null, { timeout: 10000 }).catch(() => {});
+  const failed = await statusNow();
+  // 2. A whole response, answered here for one request (still no live call, no quota), then back to the shared stub.
+  const WHOLE = { score: 6.2, persona: 'balanced', location: { borough: 'Hackney', postcode: 'N1 7SX' },
+    components: { quiet: 7.1, afford: 4.2, growth: 5.0, live: 6.8, env: 5.5 }, weights: { quiet: 0.3, afford: 0.2, growth: 0.1, live: 0.25, env: 0.15 },
+    context: { avgPriceGbp: 650000, priceTrendPct: 1.2, noiseImpactBand: 'low' }, methodologyVersion: '5.7', apiVersion: '1', methodologyUrl: 'https://skyscore.co.uk/how-it-works/' };
+  const whole = (url) => new URL(url).pathname.includes('/v1/score');
+  await page.route(whole, (r) => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(WHOLE) }));
+  await page.locator('.examples button').first().click();
+  await page.waitForFunction(() => /out of 10/.test(document.getElementById('result-status')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
+  const scored = await statusNow();
+  await page.unroute(whole);
+  ok(group.role === 'group' && group.name === 'Try an example' && group.lonely.length === 0 && scored.role === 'status' && scored.live === null
+      && failed.error && failed.text === failed.error && scored.text === 'Hackney scores 6.2 out of 10 for the Balanced persona.',
+    '/score-demo/ announces an error and a score in one line each, and "Try an example" names its group', JSON.stringify({ group, failed, scored }));
+}
 
 // 16e. THE EMAIL BUTTONS ARE COUNTED (2026-10-23, Bill: count them before deciding on a "book a demo" page), by
 // js/count.mjs as `email-<page>-<what>`, the what from an ALLOW-LIST of our own subjects, so the full map's
@@ -1839,26 +1985,55 @@ const makeReport = async (pc) => {
     // Read INSIDE the frame: hiding the page's #result hides the frame too, so a
     // visibility check would pass with the frame's own rule gone (tried 2026-10-06).
     // The frame's rule is what covers printing the frame alone ("Print Frame").
+    // The frame's OWN rule, read on the body child that holds the heading (2026-11-12): since the three-page build the h1
+    // sits inside a page section, which the rule hides, so the h1 keeps `display: block`. Whether it is DRAWN cannot be the
+    // test: the page's rule hides the whole frame, so "not drawn" held with the frame's rule removed (tried 2026-11-12).
     frameHeading: await page.evaluate(() => {
       const d = document.getElementById('sheet').contentDocument;
       const h1 = d?.querySelector('h1');
-      return !h1 || d.defaultView.getComputedStyle(h1).display !== 'none';
+      const top = h1 && [...d.body.children].find((el) => el.contains(h1));
+      return !h1 || !top || d.defaultView.getComputedStyle(top).display !== 'none';
     }),
   };
   await page.emulateMedia({ media: 'screen' });
   ok(!printed.report && printed.note && !printed.frameHeading, 'printing the page or the report frame gives the firms note, not the report', JSON.stringify(printed));
   const foot = ready ? await sheetDoc().locator('footer').textContent() : '';
   ok(/Free copy for personal use, not for use with clients/.test(foot), 'the free copy says on its face that it is for personal use, not for clients', foot.slice(-140));
-  const alsoLine = ready ? await sheetDoc().locator('p.note', { hasText: 'Also at this postcode' }).textContent() : '';
-  ok(/nearest station [^,]+, \d+ m in a straight line/.test(alsoLine), 'the report names the nearest station, from the same function as the front page', alsoLine.slice(-120));
-  const airNote = ready ? await sheetDoc().locator('p.note', { hasText: 'Air measured nearby' }).textContent() : '';
-  const kewSensor = nearestTo(sensorFile.sites, 51.4713, -0.2894);
-  ok(airNote.startsWith(`Air measured nearby. Nearest Breathe London sensor: ${kewSensor.name}, `), 'the report names the nearest Breathe London sensor, from the same function as the front page', airNote.slice(0, 140));
+  const stationLine = ready ? await sheetDoc().locator('p.note', { hasText: 'Nearest station:' }).textContent() : '';
+  ok(/^Nearest station: [^,]+, \d+ m in a straight line\.$/.test(stationLine), 'the report names the nearest station, from the same function as the front page', stationLine.slice(-120));
+  // THE REPORT AS THE SITE SHOWS IT (Bill's pick C, 2026-11-11): the air is the full map's charts and key, the planes the
+  // front page's chart, the road the map's bars, the headline the answer card's sentence, the district's shares the
+  // caption of its chart; each read here from the page the free copy draws.
+  const kewSensor = nearestTo(sensorFile.sites, 51.476982, -0.285639);
+  const airKey = ready ? (await sheetDoc().locator('ul.air-key li').allTextContents()).map((t) => t.replace(/\s+/g, ' ').trim()) : [];
+  ok(airKey.some((t) => t.startsWith(`${kewSensor.name} `) && t.includes('Breathe London sensor, low-cost, provisional.')), 'the report names the nearest Breathe London sensor in the air key, in the full map\'s words', JSON.stringify(airKey));
+  const drawn = ready
+    ? await page.evaluate(() => {
+        const d = document.getElementById('sheet').contentDocument;
+        return {
+          lead: d.querySelector('p.lead')?.textContent || '',
+          planes: d.querySelectorAll('.planes svg[data-planes-chart]').length,
+          air: [...d.querySelectorAll('svg[data-air-chart]')].map((s) => s.dataset.airChart),
+          road: d.querySelectorAll('.road .t-bars .t-bar').length,
+          // The district chart needs postcodes.io's bulk lookup, which this file's stub answers 404, so the free copy
+          // draws none here: its caption is held by tests/street-report.mjs, and here only where a chart is drawn.
+          district: d.querySelectorAll('.district').length,
+          fact: d.querySelector('.district .cap.fact')?.textContent || '',
+          shows: [...d.querySelectorAll('h2')].some((h) => h.textContent === 'What this shows'),
+        };
+      })
+    : {};
+  ok(
+    /^On most days, about \d+ Heathrow planes a day pass over TW9 3PZ$/.test(drawn.lead) && drawn.planes === 1 && drawn.air.join() === 'no2,pm25' &&
+      drawn.road === 2 && (drawn.district ? /^Of the [\d,]+ postcodes in TW9 on DEFRA's map, \d+% are quieter than this one and \d+% are louder\.$/.test(drawn.fact) : drawn.fact === '') && !drawn.shows,
+    "the report leads with the site's headline and draws the site's planes, air and road pictures, its district's shares under the chart, and no line a tile already says",
+    JSON.stringify(drawn)
+  );
   ok(foot.includes(sensorFile.attribution), "the report's sources carry Breathe London's credit word for word", foot.slice(-300));
   const reportSay = ready
-    ? await sheetDoc().locator('p.note', { hasText: 'Have your say.' }).evaluate((p) => [...p.querySelectorAll('a')].map((a) => a.getAttribute('href')))
+    ? await sheetDoc().locator('p.say').evaluate((p) => [...p.querySelectorAll('a.chip')].map((a) => a.getAttribute('href')))
     : [];
-  const reportWrong = ready ? await sheetDoc().locator('p.note', { hasText: 'Spotted something wrong?' }).evaluate((p) => p.querySelector('a')?.getAttribute('href')) : '';
+  const reportWrong = ready ? await sheetDoc().locator('p.say .wrong').evaluate((p) => p.querySelector('a')?.getAttribute('href')) : '';
   ok(
     reportSay.includes('https://webtrak.emsbk.com/lhr6') && reportSay.includes('https://airspacechange.caa.co.uk/having-your-say/') &&
       reportWrong === `mailto:support@skyscore.co.uk?subject=${encodeURIComponent('Correction: TW9 3PZ')}`,
@@ -1893,6 +2068,20 @@ const makeReport = async (pc) => {
     return { frame: f.clientHeight, checkBottom: Math.ceil(box.bottom) };
   });
   ok(clip.checkBottom <= clip.frame, 'the whole report shows in its frame, the check block included, once the fonts have arrived', JSON.stringify(clip));
+  // THE THREE-PAGE BUILD (2026-11-12): the free copy is the same three sections as the printed report, and its details box
+  // states the reference its check block gives (one holder, js/street_report.mjs reportReference).
+  const three = ready
+    ? await page.evaluate(() => {
+        const d = document.getElementById('sheet').contentDocument;
+        return {
+          pages: d.querySelectorAll('section.page').length,
+          cards: d.querySelectorAll('.cards .card').length,
+          detailsRef: (d.querySelector('.details')?.textContent.match(/reference ([A-Z2-9]{4}-[A-Z2-9]{4})/) || [])[1] || '',
+        };
+      })
+    : {};
+  ok(three.pages === 3 && three.cards >= 3 && three.detailsRef && three.detailsRef === free.ref,
+    'the free copy is the three-page report, with its cards, and its details state the same reference as its check block', JSON.stringify({ ...three, checkRef: free.ref }));
   ok(
     free.marks === 1 && free.line.startsWith('Personal use only · TW9 3PZ · ') && free.hidden === 'true' && free.events === 'none',
     'the free copy is watermarked with its postcode and date, out of the way of screen readers and the pointer',
@@ -2479,12 +2668,83 @@ const makeReport = async (pc) => {
   const low = await wp.evaluate(() => ({ budget: document.getElementById('fit-budget').value, read: document.getElementById('fit-read').textContent }));
   ok(low.budget === budgetBefore && /^No price set: the lowest step is £200,000\. Nothing to set from that\./.test(low.read) && !/Not understood/.test(low.read),
     'describe what you want: a price under the lowest step is said back, never stretched or dropped', JSON.stringify(low));
-  // The place list: the box offers council areas and regions by name, from the page's own rows.
-  const places = await wp.evaluate(() => ({ list: document.getElementById('pc')?.getAttribute('list'), names: [...document.querySelectorAll('#pc-places option')].map((o) => o.value) }));
-  ok(places.list === 'pc-places' && ['Hounslow', 'Camden', 'Leeds', 'Greater Manchester', 'London', 'Manhattan'].every((n) => places.names.includes(n))
-    && new Set(places.names).size === places.names.length,
-  'the postcode box offers the places it answers by name (council areas, regions, cities), each once',
-  JSON.stringify({ list: places.list, count: places.names.length }));
+  // The box (Bill's pick B, 2026-11-04): a first click shows what it takes, typing lists places and says what each is, and
+  // a full postcode is offered as itself. A place name and a whole postcode are never sent while typing.
+  {
+  const boxAsked = [];
+  wp.on('request', (r) => { if (/camd|sw5/i.test(r.url())) boxAsked.push(r.url()); });
+  await wp.evaluate(() => { document.getElementById('tab-check')?.click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
+  await wp.click('#pc');
+  const first = await wp.evaluate(() => ({ open: !document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded'), options: [...document.querySelectorAll('#pc-list [role="option"]')].map((o) => o.dataset.value), foot: document.querySelector('#pc-list .pc-foot')?.textContent }));
+  ok(first.open && first.expanded === 'true' && first.options.length === 3 && first.options.includes('Hounslow') && !first.foot,
+    'a first click on the box shows one of each thing it takes, and promises nothing about what is sent', JSON.stringify(first));
+  await wp.fill('#pc', 'camd');
+  const camd = await wp.locator('#pc-list [role="option"]').allInnerTexts();
+  ok(camd.length === 1 && /Camden/.test(camd[0]) && /Council area/.test(camd[0]), 'typing lists the places it answers by name and says what each is', JSON.stringify(camd));
+  await wp.waitForTimeout(500); // past the pause: the next fill would cancel a lookup that was going to leave
+  await wp.fill('#pc', 'sw5 9hp');
+  const asPostcode = await wp.locator('#pc-list [role="option"]').allInnerTexts();
+  ok(asPostcode.length === 1 && /SW5 9HP/.test(asPostcode[0]), 'a full postcode is offered as itself', JSON.stringify(asPostcode));
+  await wp.waitForTimeout(500); // past the pause, so a request that was going to leave has left
+  ok(boxAsked.length === 0, 'a place name and a whole postcode are not sent while typing', boxAsked.join(' '));
+  // The start of a postcode is asked about after a pause (Bill's yes, 2026-11-05), and the list answers only what is in the box.
+  {
+    const asked = [];
+    const isStart = (u) => u.hostname === 'api.postcodes.io' && u.pathname.endsWith('/autocomplete');
+    const route = async (r) => {
+      const text = new URL(r.request().url()).pathname.split('/')[2];
+      asked.push(text);
+      if (text === 'SW5') await new Promise((done) => setTimeout(done, 900)); // slower than the keystroke after it
+      return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 200, result: text === 'SW5' ? ['SW5 0AA'] : ['SW5 9AA', 'SW5 9AB'] }) }).catch(() => {});
+    };
+    await wp.route(isStart, route);
+    await wp.fill('#pc', 'sw5');
+    await wp.waitForTimeout(350); // on its way, and slow
+    await wp.fill('#pc', 'sw5 9');
+    await wp.waitForSelector('#pc-list [role="option"]', { timeout: 3000 }).catch(() => {});
+    await wp.waitForTimeout(1100); // past the slow reply
+    const found = await wp.locator('#pc-list [role="option"]').allInnerTexts();
+    ok(found.length === 2 && /SW5 9AA/.test(found[0]) && /Postcode/.test(found[0]), 'the start of a postcode is offered the rest', JSON.stringify(found));
+    ok(!found.join().includes('SW5 0AA'), 'and a slower reply for older text never replaces it', JSON.stringify(found));
+    ok(JSON.stringify(asked) === JSON.stringify(['SW5', 'SW59']), 'each start is asked about once, with no space', JSON.stringify(asked));
+    const said = await wp.evaluate(() => document.querySelector('#pc-list + .pc-live')?.textContent);
+    ok(said === '2 suggestions.', 'a screen reader is told the suggestions have arrived', String(said));
+    const quick = asked.length;
+    await wp.fill('#pc', 's');
+    await wp.fill('#pc', 'sw');
+    await wp.fill('#pc', 'sw1');
+    await wp.fill('#pc', 'sw1a');
+    await wp.fill('#pc', '');
+    await wp.waitForTimeout(500);
+    ok(asked.length === quick, 'text typed and gone inside the pause is never sent', JSON.stringify(asked));
+    await wp.unroute(isStart, route);
+  }
+  await wp.fill('#pc', 'camd');
+  await wp.keyboard.press('ArrowDown');
+  const kb = await wp.evaluate(() => ({ active: document.getElementById('pc').getAttribute('aria-activedescendant'), chosen: document.querySelector('#pc-list [aria-selected="true"]')?.dataset.value }));
+  await wp.keyboard.press('Escape');
+  const shut = await wp.evaluate(() => ({ hidden: document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded') }));
+  ok(kb.chosen === 'Camden' && Boolean(kb.active) && shut.hidden && shut.expanded === 'false', 'Down picks a place for a screen reader too, and Escape closes the list', JSON.stringify({ kb, shut }));
+  // A HINT IS SAID, AND IS NOT A LIST (audit M-10, 2026-11-09): "No place by that name yet" sat inside the listbox, where a
+  // screen reader never reads a non-option, and the box said it was expanded with nothing to choose.
+  await wp.fill('#pc', 'zzq');
+  const hintNow = await wp.evaluate(() => ({ shown: !document.getElementById('pc-list').hidden, expanded: document.getElementById('pc').getAttribute('aria-expanded'),
+    hidden: document.querySelector('#pc-list .pc-foot')?.getAttribute('aria-hidden'), said: document.querySelector('#pc-list + .pc-live')?.textContent }));
+  await wp.waitForTimeout(450); // past the pause, when a hint is said
+  const hintSaid = await wp.evaluate(() => document.querySelector('#pc-list + .pc-live')?.textContent);
+  ok(hintNow.shown && hintNow.expanded === 'false' && hintNow.hidden === 'true' && !hintNow.said && /^No place by that name yet/.test(hintSaid || ''),
+    'a hint shows, is not called a list, and is said once typing pauses', JSON.stringify({ ...hintNow, hintSaid }));
+  // THE TYPING CARET STOPS (audit M-11, 2026-11-09; WCAG 2.2.2): it blinked for as long as the page was open.
+  const caret = await wp.evaluate(() => {
+    const s = getComputedStyle(document.querySelector('.walk-caret'));
+    return { count: s.animationIterationCount, seconds: parseFloat(s.animationDuration), reduced: matchMedia('(prefers-reduced-motion: reduce)').matches };
+  });
+  // Reached only where motion is allowed: with reduced motion the caret has no animation at all, and anything would pass.
+  ok(!caret.reduced && caret.seconds > 0 && caret.count !== 'infinite' && Number(caret.count) * caret.seconds <= 5,
+    'the walkthrough\'s caret blinks for under five seconds, then stays still', JSON.stringify(caret));
+  await wp.fill('#pc', '');
+  await wp.evaluate(() => document.getElementById('pc').blur());
+  }
   await wp.close();
 }
 
@@ -2515,6 +2775,22 @@ const makeReport = async (pc) => {
     box: document.getElementById('pc').value,
     counted: window.__gc.slice(),
   }));
+  // OPTION C (review prototype, 2026-11-07): what the heading says, as a reader meets it, and whether the lead fits the
+  // room the page kept for it (its min-height, or the question's height, whichever is taller).
+  const headlineOf = () => ep.evaluate(() => {
+    const h1 = document.querySelector('.panel h1');
+    const q = h1?.querySelector('.h1-q');
+    const a = h1?.querySelector('.h1-a');
+    const shown = Boolean(a && !a.hidden);
+    return {
+      lead: shown ? a.textContent : null,
+      question: q ? getComputedStyle(q).visibility : 'missing',
+      h1s: document.querySelectorAll('h1').length,
+      said: document.getElementById('lead-said')?.textContent ?? null,
+      waiting: getComputedStyle(h1.querySelector('.h1-wait')).display !== 'none',
+      fits: shown ? a.getBoundingClientRect().height <= Math.max(parseFloat(getComputedStyle(h1).minHeight) || 0, q.getBoundingClientRect().height) + 1 : null,
+    };
+  });
 
   // PLANES OVERHEAD (2026-10-26): the district files are a gitignored build (scripts/build_planes_overhead.py),
   // so they are stubbed here in their written shape: TW9 is listed and holds Kew; NW1 is not listed, so a
@@ -2522,28 +2798,68 @@ const makeReport = async (pc) => {
   const planesAsked = [];
   const PLANES = {
     'airports.json': {
-      classes: ['westerly', 'easterly', 'mixed'], districts: ['TW3', 'TW9'], bar_full: 400,
+      classes: ['westerly', 'easterly', 'mixed'], districts: ['SW5', 'TW3', 'TW9'], bar_full: 400,
       definition: 'Overhead means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA\'s definition of an overflight (CAP 1498).',
       direction_rule: 'A day counts as one way when 80% of its flights used that way.',
+      // The builder's POSTCODES_RULE (2026-11-10), as it writes it: the fold sets it as a point, word for word.
+      postcodes_rule: 'PO boxes and other postcodes for organisations that receive a lot of post are left out: they sit at a delivery office or a business, not at homes.',
       airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } },
       credits: ['Flight tracks: adsb.lol (ODbL 1.0)'],
     },
     'TW9.json': { district: 'TW9', postcodes: { 'TW9 3PZ': { LHR: [310, 4, 168] } }, none: [], approx: [], other: [] },
     'TW3.json': { district: 'TW3', postcodes: { 'TW3 3QL': { LHR: [[7, 339], 0, 3] } }, none: [], approx: [], other: [] },
+    // SW5 9HP's real figures (2026-11-07): under the planes layer's first step on every kind of day.
+    'SW5.json': { district: 'SW5', postcodes: { 'SW5 9HP': { LHR: [4, '<1', 3] } }, none: [], approx: [], other: [] },
   };
   const planesFailOnce = new Set(['TW3.json']);
-  await ep.route('**/data/planes/*.json', (route) => {
+  const planesRoute = (route) => {
     const name = new URL(route.request().url()).pathname.split('/').pop();
     planesAsked.push(name);
     if (planesFailOnce.delete(name)) return route.fulfill({ status: 503, body: 'try again' });
     return PLANES[name]
       ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PLANES[name]) })
       : route.fulfill({ status: 404, body: 'not found' });
+  };
+  await ep.route('**/data/planes/*.json', planesRoute);
+  // Option C: the heading leads with the planes only where the full map's planes layer would colour them, and says the
+  // band it leaves blank from its first step, read from the layer's index (a gitignored build, so stubbed too, in its
+  // written shape: scripts/build_planes_layer.py).
+  const LAYER_STEPS = [{ step: 1, from: 10, to: 49, colour: '#dc8a4a' }, { step: 2, from: 50, to: 99, colour: '#c2622a' }, { step: 3, from: 100, to: 199, colour: '#9a4316' }, { step: 4, from: 200, to: null, colour: '#662809' }];
+  const layerRoute = (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ steps: LAYER_STEPS }) });
+  await ep.route('**/data/planes-layer/index.json', layerRoute);
+  // Option C (Bill, 2026-11-07): what moved ABOVE the answer, from the browser's own layout-shift entries, whatever the input:
+  // the pill, the heading, the lead, the tabs, the box, the promises. Only the answer may grow, with its status line (the
+  // live region that says it is coming); the map and the bands below are its consequence, not the heading's. An init
+  // script, so it watches from the first frame.
+  const watchAbove = () => {
+    window.__above = [];
+    new PerformanceObserver((l) => {
+      for (const x of l.getEntries()) {
+        const moved = (x.sources || []).map((s) => (s.node?.nodeType === 1 ? s.node : s.node?.parentElement)).filter(Boolean)
+          .filter((n) => n.closest('.panel') && !n.closest('#answer, #borough, #panel-find, .ans-skeleton, #want-country, #status'));
+        if (moved.length) window.__above.push({ value: x.value, recent: x.hadRecentInput, what: moved.map((n) => n.id || n.className || n.tagName).join(' ') });
+      }
+    }).observe({ type: 'layout-shift', buffered: true });
+  };
+  await ep.addInitScript(watchAbove);
+  // The heading's box and the search box's place, to the half pixel, and what the heading says.
+  const headBox = (p) => p.evaluate(() => {
+    const h1 = document.querySelector('.panel h1');
+    const a = h1.querySelector('.h1-a');
+    return {
+      h1: Math.round(h1.getBoundingClientRect().height * 2) / 2,
+      box: Math.round(document.getElementById('pc').getBoundingClientRect().top * 2) / 2,
+      size: parseFloat(getComputedStyle(h1).fontSize),
+      lead: a && !a.hidden ? a.textContent : null,
+      waiting: getComputedStyle(h1.querySelector('.h1-wait')).display !== 'none',
+      above: (window.__above || []).map((x) => x.value).reduce((t, v) => t + v, 0),
+      moved: (window.__above || []).map((x) => x.what).join(' | '),
+    };
   });
   const planesBlock = () => ep.evaluate(() => {
     const b = document.getElementById('ans-planes');
-    return { hidden: b.hidden, head: b.querySelector('h3')?.textContent, rows: [...b.querySelectorAll('.row')].map((r) => r.textContent),
-      link: b.querySelector('.planes-how a')?.getAttribute('href'), barsHidden: [...b.querySelectorAll('.bar')].every((x) => x.getAttribute('aria-hidden') === 'true'),
+    return { hidden: b.hidden, head: b.querySelector('h3')?.textContent, rows: [...b.querySelectorAll('.planes-kind')].map((r) => r.textContent),
+      link: document.querySelector('#ans-planes-notes .planes-how a')?.getAttribute('href'),
       more: [...b.querySelectorAll('.planes-more a')].map((a) => [a.textContent, a.getAttribute('href'), Math.round(a.getBoundingClientRect().height)]) };
   });
   // Where to go next (2026-11-02, Bill: "make the links clear and easy to navigate"): TW9's own page, and while
@@ -2554,8 +2870,71 @@ const makeReport = async (pc) => {
   const wantMore = [['Every postcode in TW9, sector by sector', '/planes-overhead/tw9/'],
     ...(packOpen ? [[`For Heathrow's consultation, open until ${Number(planesIndex.consultation.until.slice(8))} December: the planes over each council`, planesIndex.consultation.hub]] : [])];
 
+  // THE PAGE ARRIVES IN PLACE (Bill, 2026-11-04: "it doesn't look smooth"): the browser's own layout-shift score, on a phone,
+  // where the example used to push the map down. Measured from the first frame; the example's lookups are held back a
+  // moment so the frame is really seen. Good is under 0.1.
+  {
+    const held = await context.newPage();
+    await held.setViewportSize({ width: 390, height: 844 });
+    await held.addInitScript(() => {
+      window.__cls = 0;
+      new PerformanceObserver((l) => { for (const x of l.getEntries()) if (!x.hadRecentInput) window.__cls += x.value; }).observe({ type: 'layout-shift', buffered: true });
+    });
+    await held.addInitScript(watchAbove);
+    await held.route((u) => u.pathname.endsWith('/v1/environment'), async (route) => { await new Promise((r) => setTimeout(r, 700)); return stubOffsite(route); });
+    await held.route('**/data/planes/*.json', planesRoute);
+    await held.route('**/data/planes-layer/index.json', layerRoute);
+    await held.goto(BASE, { waitUntil: 'domcontentloaded' });
+    const frame = await held.waitForFunction(() => getComputedStyle(document.querySelector('.ans-skeleton')).display === 'block', null, { timeout: 3000 }).then(() => true).catch(() => false);
+    // Option C (Bill, 2026-11-07): the room kept under the question reads as loading, a skeleton line hidden from assistive
+    // technology, and the question still names the heading.
+    const loadingHead = await held.evaluate(() => {
+      const w = document.querySelector('.panel h1 .h1-wait');
+      const q = document.querySelector('.panel h1 .h1-q').getBoundingClientRect();
+      const r = w.getBoundingClientRect();
+      return { shown: getComputedStyle(w).display !== 'none' && getComputedStyle(w).visibility === 'visible' && r.height >= 8, hidden: w.getAttribute('aria-hidden') === 'true', clear: r.top >= q.bottom };
+    });
+    const loadingName = await held.getByRole('heading', { level: 1, name: 'How loud are the planes where you want to live?', exact: true }).count();
+    ok(frame && loadingHead.shown && loadingHead.hidden && loadingHead.clear && loadingName === 1,
+      'option C: while the example loads, the room under the question shows a skeleton line, under the question and out of the heading\'s name', JSON.stringify({ ...loadingHead, loadingName }));
+    await held.waitForFunction(() => document.querySelectorAll('#ans-tiles .ans-tile:not(.is-waiting)').length >= 2, null, { timeout: 10000 }).catch(() => {});
+    await held.waitForTimeout(800);
+    const arrived = await held.evaluate(() => ({ cls: +window.__cls.toFixed(4), loading: document.querySelector('.panel').classList.contains('is-loading'), frameGone: getComputedStyle(document.querySelector('.ans-skeleton')).display === 'none',
+      lead: (() => { const a = document.querySelector('.panel h1 .h1-a'); return a && !a.hidden ? a.textContent : null; })() }));
+    ok(frame && arrived.cls < 0.02 && !arrived.loading && arrived.frameGone, 'on a phone the example arrives in its frame and the page does not move', JSON.stringify(arrived));
+    // Option C: the heading changed in that same arrival, so the shift above includes it.
+    ok(/^Example: \S/.test(arrived.lead || ''), 'option C: on a phone the example\'s lead takes the heading within that unmoving arrival', JSON.stringify(arrived));
+    const landed = await headBox(held);
+    ok(!landed.waiting && landed.lead !== null, 'option C: on a phone the skeleton line is gone once the lead lands', JSON.stringify(landed));
+    // A SEARCH moves nothing above the answer either (Bill, 2026-11-07): from the press to the visitor's own lead, the
+    // reply held back 700 ms so the wait is seen. Their lead has the example's size, fitted to the same room.
+    await held.evaluate(() => { window.__above = []; });
+    await held.fill('#pc', 'SW5 9HP');
+    const before = await headBox(held);
+    await held.press('#pc', 'Enter');
+    const waited = await held.waitForFunction(() => getComputedStyle(document.querySelector('.panel h1 .h1-wait')).display !== 'none', null, { timeout: 2000 }).then(() => true).catch(() => false);
+    await held.waitForFunction(() => document.getElementById('lead-said')?.textContent !== '', null, { timeout: 10000 }).catch(() => {});
+    await held.waitForTimeout(400);
+    const after = await headBox(held);
+    ok(waited && after.lead === 'Fewer than 10 Heathrow planes a day pass over SW5 9HP' && !after.waiting && after.h1 === before.h1 && after.box === before.box
+      && after.size === before.size && after.above === 0,
+      'option C: on a phone a search keeps the heading\'s room and the box in place, the skeleton line while it waits, then the visitor\'s lead at the example\'s size',
+      JSON.stringify({ waited, before, after }));
+    await held.close();
+  }
+  // The point is held (Bill's yes, 2026-11-05): privacy s2b covers a search, not a lookup nobody asked for.
+  const toPostcodes = [];
+  const watch = (r) => { if (new URL(r.url()).hostname === 'api.postcodes.io') toPostcodes.push(r.url()); };
+  ep.on('request', watch);
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await shown();
+  await ep.waitForLoadState('load');
+  // The walkthrough below the map starts as it nears the screen, so it is reached, and nothing it does may reach out either.
+  await ep.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await ep.waitForTimeout(800);
+  await ep.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  ep.off('request', watch);
+  ok(toPostcodes.length === 0, 'answer first: arriving asks postcodes.io nothing, the example and the walkthrough alike', toPostcodes.join(' '));
   const first = await look();
   ok(first.label && first.title === 'Example: TW9 3PZ, Kew' && first.address === '/' && first.status === '' && first.covers && first.box === '' && first.counted.length === 0,
     'answer first: a plain visit opens on the TW9 3PZ answer, labelled as an example, with the address, the live region, the box and the counts untouched and the coverage line kept',
@@ -2574,6 +2953,13 @@ const makeReport = async (pc) => {
   ok(compact.tiles.length === 3 && /^[\d.]+ dBaircraft noise$/.test(compact.tiles[0]) && /µg\/m³NO₂ in the air$/.test(compact.tiles[1])
     && compact.tiles[2] === '310planes a day, flying west' && compact.rows === 'none' && compact.h1 > 30 && compact.lead !== 'none' && compact.promises !== 'none',
     'the example opens compact: three tiles from the answer, the rest folded, the question and the promises still there', JSON.stringify(compact));
+  // OPTION C: the example's heading is its lead finding, written from the answer (its planes here), labelled as the example
+  // and said to nobody; the question keeps its place unseen, out of the heading's name, and the lead fits the room kept.
+  const kewHead = await headlineOf();
+  const kewNamed = await ep.getByRole('heading', { level: 1, name: /^Example: On most days, about 310 Heathrow planes a day pass over TW9 3PZ$/i }).count();
+  ok(kewHead.lead === 'Example: On most days, about 310 Heathrow planes a day pass over TW9 3PZ' && kewNamed === 1 && kewHead.question === 'hidden'
+    && kewHead.h1s === 1 && kewHead.said === '' && kewHead.fits === true,
+    'option C: the example\'s heading is its planes, from the answer, labelled as the example, unannounced, inside its room', JSON.stringify({ ...kewHead, kewNamed }));
   await ep.click('#ans-more');
   const opened = await ep.evaluate(() => ({
     rows: getComputedStyle(document.getElementById('ans-rows')).display,
@@ -2585,9 +2971,56 @@ const makeReport = async (pc) => {
     'Show the full example opens the whole answer in place, says so, and counts once', JSON.stringify(opened));
   const kew = await planesBlock();
   ok(!kew.hidden && kew.head === 'Planes overhead'
-    && JSON.stringify(kew.rows) === JSON.stringify(['Flying west56% of days310 a day', 'Both ways15% of days168 a day', 'Flying east29% of days4 a day'])
-    && kew.link === '/how-it-works/#planes-overhead' && kew.barsHidden,
-    'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, bars hidden from screen readers', JSON.stringify(kew));
+    && JSON.stringify(kew.rows) === JSON.stringify(['310 a dayFlying west56% of days', '168 a dayBoth ways15% of days', '4 a dayFlying east29% of days'])
+    && kew.link === '/how-it-works/#planes-overhead',
+    'planes overhead: the example\'s answer shows Heathrow west, both ways and east from its district file, as three tiles', JSON.stringify(kew));
+  // The planes fold, less text (2026-11-11, Bill: "still text heavy"): the chart in the air chart's style, the overhead rule
+  // beside a drawing of it, three points, one sources line. Everything it says is read here from the files, independently.
+  await ep.evaluate(() => document.querySelectorAll('.ans-fold').forEach((d) => { d.open = true; }));
+  // What the page was served (the stubs above), so the check compares like with like and needs no gitignored build.
+  const info = PLANES['airports.json'];
+  const layerSteps = LAYER_STEPS;
+  const folds = await ep.evaluate(() => {
+    const n = document.getElementById('ans-planes-notes');
+    const svg = n.querySelector('svg[data-planes-chart]');
+    const words = [...n.querySelectorAll('p, li')].map((x) => x.textContent).join(' ').split(/\s+/).filter(Boolean).length;
+    return {
+      caption: n.querySelector('.planes-fig figcaption')?.textContent,
+      kinds: [...(svg?.querySelectorAll('g[data-kind]') || [])].map((g) => [g.dataset.kind, g.dataset.value, g.querySelectorAll('text')[1]?.textContent, g.querySelector('circle[data-mark]')?.getAttribute('fill')]),
+      bands: [...(svg?.querySelectorAll('rect[data-band]') || [])].map((r) => [Number(r.dataset.band), r.getAttribute('fill')]),
+      max: Number(svg?.dataset.max),
+      cone: n.querySelector('.planes-over .cone-fill')?.getAttribute('d') || '',
+      coneHidden: n.querySelector('.planes-cone')?.getAttribute('aria-hidden'),
+      over: n.querySelector('.planes-over p')?.textContent,
+      points: [...n.querySelectorAll('.fold-keys li span')].map((x) => x.textContent),
+      src: n.querySelector('.fold-src')?.textContent,
+      srcLinks: [...n.querySelectorAll('.fold-src a')].map((a) => a.getAttribute('href')),
+      words,
+      oldBits: n.querySelectorAll('.planes-days, .planes-days-bar').length,
+      says: document.querySelectorAll('#ans-say .say-links a').length,
+    };
+  });
+  const colourFor = (v) => layerSteps.filter((st) => v >= st.from).sort((a, b) => a.from - b.from).at(-1)?.colour;
+  ok(folds.caption === 'Planes overhead a day, from Heathrow'
+    && JSON.stringify(folds.kinds.map((k) => k.slice(0, 3))) === JSON.stringify([['westerly', '310', '56% of days'], ['mixed', '168', '15% of days'], ['easterly', '4', '29% of days']])
+    && folds.kinds.every(([, v, , fill]) => fill === (colourFor(Number(v)) || '#9a9893'))
+    && JSON.stringify(folds.bands) === JSON.stringify(layerSteps.filter((st) => st.from < folds.max).map((st) => [st.from, st.colour]))
+    && folds.max >= 310 && folds.oldBits === 0,
+    "the planes fold charts each kind of day with its share, coloured and banded as the full map's planes layer, from its index.json", JSON.stringify(folds));
+  const [, ax, ay] = /L([\d.]+) ([\d.]+)/.exec(folds.cone) || [];
+  const coneAngle = Math.atan2(62 - Number(ay), 60 - Number(ax)) * 180 / Math.PI;
+  ok(folds.over === info.definition && Math.abs(coneAngle - Number(/([\d.]+) degrees/.exec(info.definition)[1])) < 0.2 && folds.coneHidden === 'true',
+    "the overhead rule sits word for word beside a drawing whose angle is the rule's own", `${folds.over} | ${coneAngle.toFixed(2)}`);
+  ok(JSON.stringify(folds.points) === JSON.stringify([info.direction_rule, "Counted from community flight tracking, checked against the CAA's monthly totals for Heathrow.", info.postcodes_rule]),
+    'the day rule, the CAA check and the PO-box rule are three points, each word for word as How it works says it', JSON.stringify(folds.points));
+  ok(folds.src?.startsWith(info.credits[0]) && JSON.stringify(folds.srcLinks) === JSON.stringify(['/how-it-works/#planes-overhead', '/how-it-works/#credits']),
+    "the flight tracks' credit stays beside the figures (ODbL), every other source one link away", `${folds.src} ${JSON.stringify(folds.srcLinks)}`);
+  ok(folds.words <= 100, 'the planes fold says it in at most 100 words (it ran to about 160)', String(folds.words));
+  await ep.waitForTimeout(100);
+  const foldCounts = await ep.evaluate(() => window.__gc.slice());
+  ok(['planes', 'air', 'say', 'wrong'].every((f) => foldCounts.includes(`event/front-fold-${f}`)) && foldCounts.every((c) => /^event\/front-[a-z-]+$/.test(c)),
+    'each fold opened is counted by its name, and nothing counted holds a postcode', JSON.stringify(foldCounts));
+  await ep.evaluate(() => document.querySelectorAll('.ans-fold').forEach((d) => { d.open = false; }));
   ok(JSON.stringify(kew.more.map(([t, h]) => [t, h])) === JSON.stringify(wantMore) && kew.more.every(([, , h]) => h >= 24),
     'planes overhead links on: TW9\'s own page and, while it is open, Heathrow\'s consultation pack, each a 24 px+ target', JSON.stringify({ more: kew.more, wantMore }));
   // ...and no figure is cut off on a phone, the longest kinds included: a range on a cone's edge and "under 1" (the
@@ -2601,10 +3034,19 @@ const makeReport = async (pc) => {
     const box = document.getElementById('ans-planes'), card = document.getElementById('answer').getBoundingClientRect();
     box.replaceChildren(...planesNodes(planesModel(file, info, 'TW3 3QL', { LHR: 'Heathrow' })));
     box.hidden = false;
-    return [...box.querySelectorAll('.row .val')].filter((v) => v.scrollWidth > v.clientWidth + 1 || v.getBoundingClientRect().right > card.right + 1)
+    return [...box.querySelectorAll('.planes-kind b')].filter((v) => v.scrollWidth > v.clientWidth + 1 || v.getBoundingClientRect().right > card.right + 1)
       .map((v) => v.textContent);
   });
   ok(clipped.length === 0, 'planes overhead: no figure is cut off on a phone, "1 to 316 a day" and "under 1 to 191 a day" included', clipped.join(' | '));
+  // Every fold open on a phone, nothing past the screen (2026-11-11): the folds' sources lines keep short links whole, and a
+  // rule that kept every link whole made the air fold's Breathe London credit, one long sentence, run to 472 px.
+  const wide = await ep.evaluate(() => {
+    document.querySelectorAll('.ans-fold').forEach((d) => { d.open = true; });
+    const w = document.documentElement.clientWidth;
+    return { page: document.documentElement.scrollWidth - w,
+      over: [...document.querySelectorAll('#answer *')].filter((e) => e.getBoundingClientRect().right > w + 1).map((e) => `${e.tagName.toLowerCase()}.${e.getAttribute('class') || ''}`).slice(0, 5) };
+  });
+  ok(wide.page <= 0 && wide.over.length === 0, 'on a phone, with every fold open, nothing in the answer runs past the screen (the long air credit wraps)', JSON.stringify(wide));
   await ep.setViewportSize({ width: 1366, height: 820 });
 
   // THE DEVELOPERS BAND (Bill's pick C, 2026-11-04): on arriving, the request types itself and its answer's figures land as
@@ -2637,6 +3079,7 @@ const makeReport = async (pc) => {
     && frames.filter((f) => f.n >= 0).every((f) => f.shown === f.n + 1) && new Set(frames.map((f) => f.h)).size === 1;
   const report = (frames) => JSON.stringify({ frames: frames.length, split: frames.filter((f) => f.n !== f.t).length, early: frames.filter((f) => f.n >= 0 && f.shown !== f.n + 1).length, heights: [...new Set(frames.map((f) => f.h))] });
   const litStarted = () => ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 8000 }).then(() => true).catch(() => false);
+  const litStarted1500 = () => ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 1500 }).then(() => true).catch(() => false);
   await watchLit();
   await ep.locator('section.dev .code').scrollIntoViewIfNeeded();
   const flew = await litStarted();
@@ -2693,12 +3136,29 @@ const makeReport = async (pc) => {
   await ep.locator('section.dev .code').scrollIntoViewIfNeeded();
   await ep.waitForFunction(() => document.getElementById('dev-run')?.hidden === false, null, { timeout: 8000 }).catch(() => {});
   const movedAnyway = await ep.waitForSelector('.dev-n.is-lit', { state: 'attached', timeout: 1500 }).then(() => true).catch(() => false);
-  const calm = await ep.evaluate(() => ({ tiles: document.querySelectorAll('#dev-tiles .ans-tile b:not(.is-empty)').length, replay: document.getElementById('dev-replay').hidden }));
-  ok(!movedAnyway && calm.tiles >= 2 && calm.replay, 'with reduced motion the band shows everything at once and offers no replay', JSON.stringify({ movedAnyway, calm }));
+  const calm = await ep.evaluate(() => ({ tiles: document.querySelectorAll('#dev-tiles .ans-tile b:not(.is-empty)').length, play: document.getElementById('dev-replay').textContent, shown: !document.getElementById('dev-replay').hidden }));
+  ok(!movedAnyway && calm.tiles >= 2 && calm.shown && calm.play === 'Play', 'with reduced motion the band shows everything at once, unplayed, and offers Play', JSON.stringify({ movedAnyway, calm }));
+  // Bill's PC has Windows animations off, so this is the only way he sees it: a press is a request, whatever the setting.
+  await ep.click('#code-tab-py');
+  const tabStill = await litStarted1500();
+  await ep.click('#dev-replay');
+  const pressed = await litStarted();
+  await runEnded();
+  ok(!tabStill && pressed, 'with reduced motion a language change moves nothing, and pressing Play plays it', JSON.stringify({ tabStill, pressed }));
+  await ep.locator('#walk-tab-3').evaluate((t) => t.click());
+  await ep.waitForTimeout(150);
+  const playCounts = await ep.evaluate(() => window.__gc.slice());
+  ok(playCounts.includes('event/front-dev-play') && playCounts.includes('event/front-walk-3') && !playCounts.some((c) => /front-walk-1$/.test(c)),
+    'Play and a walkthrough step are counted, and the step the page opens on is not', JSON.stringify(playCounts));
+  await ep.click('#code-tab-curl');
   await ep.emulateMedia({ reducedMotion: null });
   await ep.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 
   await ep.fill('#pc', 'NW1 7PJ');
+  // Option C on a wide screen (Bill, 2026-11-07): the search moves nothing above the answer, and the visitor's lead has the
+  // example's size, fitted to the same room.
+  await ep.evaluate(() => { window.__above = []; });
+  const ownBefore = await headBox(ep);
   await ep.press('#pc', 'Enter');
   await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'NW1 7PJ', null, { timeout: 10000 }).catch(() => {});
   const own = await look();
@@ -2706,6 +3166,15 @@ const makeReport = async (pc) => {
     'answer first: the visitor\'s own search replaces the example, and is theirs (in the address, no example label)', JSON.stringify(own));
   ok(await ep.locator('#ans-tiles').isHidden() && await ep.locator('#ans-show').isHidden() && (await ep.locator('#answer .rows').isVisible()),
     'a visitor\'s own search has no tiles and no "full example": the answer is whole');
+  await ep.waitForFunction(() => document.getElementById('lead-said')?.textContent !== '', null, { timeout: 5000 }).catch(() => {});
+  const ownHead = await headlineOf();
+  ok(ownHead.lead === 'Road noise at NW1 7PJ is over the WHO guideline' && ownHead.said === 'Road noise at NW1 7PJ is over the WHO guideline.' && ownHead.question === 'hidden',
+    'option C: a visitor\'s own answer leads its heading (no aircraft figure here, so road noise), no "Example", said politely', JSON.stringify(ownHead));
+  const ownAfter = await headBox(ep);
+  ok(ownAfter.lead === ownHead.lead && ownAfter.h1 === ownBefore.h1 && ownAfter.box === ownBefore.box && ownAfter.size === ownBefore.size && ownAfter.size > 30
+    && ownAfter.above === 0 && !ownAfter.waiting && ownHead.fits === true,
+    'option C: on a wide screen a search keeps the heading\'s room and the box in place, and the visitor\'s lead has the example\'s size',
+    JSON.stringify({ ownBefore, ownAfter }));
   // A card takes the example's place: the question steps aside for it, and a reader scrolled down the column is
   // brought back to it, because the card is shorter than the answer it replaces.
   await ep.evaluate(() => window.scrollTo({ top: 500, behavior: 'instant' }));
@@ -2717,6 +3186,8 @@ const makeReport = async (pc) => {
     return { top: Math.round(r.top), h1: parseFloat(getComputedStyle(document.querySelector('.panel h1')).fontSize), example: document.querySelector('.panel').classList.contains('is-example') };
   });
   ok(carded.top >= 0 && carded.top < 820 && carded.h1 <= 22 && !carded.example, 'a card opened from the map, after scrolling, is on screen and the question has stepped aside', JSON.stringify(carded));
+  const cardHead = await headlineOf();
+  ok(cardHead.lead === null && cardHead.question === 'visible', 'option C: a card gives the heading back to the question', JSON.stringify(cardHead));
   await ep.evaluate(() => { document.getElementById('borough-close')?.click(); window.scrollTo({ top: 0, behavior: 'instant' }); });
   await ep.waitForTimeout(500);
   const nw1 = await planesBlock();
@@ -2737,6 +3208,17 @@ const makeReport = async (pc) => {
   ok(blip.seen.title === 'TW3 3QL' && blip.hidden && !retried.hidden && retried.rows.length === 3
     && planesAsked.filter((n) => n === 'TW3.json').length === 2,
     'planes overhead: a district file that fails once is fetched again on the next search, not kept as nothing', JSON.stringify({ blip, retried, planesAsked }));
+  const edgeHead = await headlineOf();
+  ok(edgeHead.lead === 'Aircraft noise at TW3 3QL is over the WHO guideline' && edgeHead.question === 'hidden',
+    'option C: a range is never the heading: on a flight path\'s edge it leads with DEFRA\'s aircraft noise', JSON.stringify(edgeHead));
+  // Outside our city regions there is nothing true to lead with: the question comes back, and nothing is said.
+  await ep.fill('#pc', 'EX1 1HS');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'EX1 1HS', null, { timeout: 10000 }).catch(() => {});
+  await ep.waitForTimeout(500);
+  const outHead = await headlineOf();
+  ok(outHead.lead === null && outHead.question === 'visible' && outHead.said === '' && !outHead.waiting,
+    'option C: outside our city regions the heading keeps the question, says nothing, and its skeleton line is gone', JSON.stringify(outHead));
 
   for (const [url, why] of [[`${BASE}?city=teesside`, 'a link to a city'], [`${BASE}#find`, 'a link to Find areas'], [`${BASE}?postcode=NW1+7PJ`, 'a link to a postcode']]) {
     await ep.goto(url, { waitUntil: 'domcontentloaded' });
@@ -2749,13 +3231,56 @@ const makeReport = async (pc) => {
   ok(await shown(), 'answer first: a campaign tag is still a plain visit, so it gets the example', JSON.stringify(await look()));
 
   // The example's lookup held back 1.5 s, and the visitor opens the map first: their action stands.
-  await ep.route((u) => u.hostname === 'api.postcodes.io', async (route) => { await new Promise((r) => setTimeout(r, 1500)); return stubOffsite(route); });
+  await ep.route((u) => u.pathname.endsWith('/v1/environment'), async (route) => { await new Promise((r) => setTimeout(r, 1500)); return stubOffsite(route); });
   await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
   await ep.waitForSelector('#map .boro', { timeout: 20000 });
   await pickCity(ep, 'manchester');
   await ep.waitForTimeout(3000);
   const yielded = await look();
   ok(!yielded.label && yielded.counted.includes('event/front-city'), 'answer first: a visitor who acts before the example arrives keeps what they did', JSON.stringify(yielded));
+
+  // A SEARCH SENT BEFORE THE PAGE IS READY (2026-11-08): the map's own data held back 2.5 s, and the visitor searches at
+  // once. A postcode said "Could not reach the data just now" (cityOf() read the councils before they came) and a place
+  // name fell through to "not found"; and the example, starting after, cleared what was on its way. Now the search is
+  // held, said to be heard, and run once the map is drawn, and the example never steps in.
+  const holdMap = async (route) => { await new Promise((r) => setTimeout(r, 2500)); await route.continue(); };
+  await ep.route('**/data/borough-extra.json', holdMap);
+  for (const [text, arrived, what] of [
+    ['NW1 7PJ', () => document.getElementById('answer').classList.contains('is-open') && document.getElementById('ans-title').textContent === 'NW1 7PJ', 'a postcode'],
+    ['Camden', () => document.querySelector('#borough.is-open h2')?.textContent === 'Camden', 'a council area'],
+  ]) {
+    await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await ep.fill('#pc', text);
+    await ep.press('#pc', 'Enter');
+    const heard = await ep.evaluate(() => ({ status: document.getElementById('status').textContent, drawn: document.querySelectorAll('#map .boro').length }));
+    const came = await ep.waitForFunction(arrived, null, { timeout: 15000 }).then(() => true, () => false);
+    // The example's time to step in, were it going to: it starts as soon as the map is drawn.
+    await ep.waitForTimeout(2000);
+    const after = { ...(await look()), stillThere: await ep.evaluate(arrived), answerOpen: await ep.evaluate(() => document.getElementById('answer').classList.contains('is-open')) };
+    ok(heard.drawn === 0 && heard.status === 'Looking it up...' && came && after.stillThere && !after.label && !/Could not reach|not found/.test(after.status),
+      `a visitor who searches ${what} before the map has loaded is told it was heard, then gets their answer, and the example never replaces it`, JSON.stringify({ heard, came, after }));
+  }
+  await ep.unroute('**/data/borough-extra.json', holdMap);
+
+  // IF THE MAP'S DATA NEVER COMES (audit M-2, 2026-11-09): load() failed, `booted` never came, and a held search said
+  // "Looking it up..." for ever, as did every press after. Now the page says the data did not load: at once for the
+  // search it held, and on every press after.
+  const failMap = async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.abort(); };
+  await ep.route('**/data/borough-extra.json', failMap);
+  await ep.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await ep.fill('#pc', 'NW1 7PJ');
+  await ep.press('#pc', 'Enter');
+  const heldWhile = await ep.evaluate(() => document.getElementById('status').textContent);
+  const toldHeld = await ep.waitForFunction(() => /did not load/.test(document.getElementById('status').textContent), null, { timeout: 8000 })
+    .then(() => true, () => false);
+  await ep.evaluate(() => { document.getElementById('status').textContent = ''; });
+  await ep.fill('#pc', 'Camden');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForTimeout(300);
+  const later = await ep.evaluate(() => document.getElementById('status').textContent);
+  ok(heldWhile === 'Looking it up...' && toldHeld && /did not load/.test(later),
+    'a search sent while the map\'s data fails to load is told so, and so is every press after (audit M-2)', JSON.stringify({ heldWhile, toldHeld, later }));
+  await ep.unroute('**/data/borough-extra.json', failMap);
   await ep.close();
   exampleOn = false;
 }

@@ -45,6 +45,45 @@ done
 
 cd "$(dirname "$0")/.." || exit 2
 
+# ONE LOG FOR EVERY RUN (2026-11-08). A run also writes its whole output to
+# .preflight/last.log (gitignored), so a run started by hand can be followed,
+# or read afterwards, without the caller choosing a file. The script runs
+# itself again through tee. tee alone would hide the verdict - a pipeline exits
+# with its LAST stage, the very lie at the top of this file - so the inner run
+# writes its exit code to .preflight/last.exit and the outer run exits with it;
+# no code there (the run was killed) exits 2, never 0.
+#
+# Where a local progress panel is installed (~/.claude/progress, Bill's
+# job-progress plugin), the run also points it at this log, with the stage
+# count and the time the last finished run took, read from that run's own
+# log, so neither is a number typed here to go stale.
+if [ -z "${PREFLIGHT_INNER:-}" ]; then
+  mkdir -p .preflight
+  if [ -f .preflight/last.log ]; then
+    stages=$(grep -E '^  [^ ]' .preflight/last.log | grep -vE '^  (failed:|!|inconclusive:|advisory:)' \
+      | grep -cE '(PASS|FAIL)\b|  (ok|deviates|INCONCLUSIVE|SKIPPED|INCOMPLETE)')
+  else
+    stages=0
+  fi
+  last_ms=$(cat .preflight/last.ms 2>/dev/null || echo 0)
+  started=$(date +%s%3N)
+  rm -f .preflight/last.exit
+  if [ -d "$HOME/.claude/progress" ]; then
+    log_path="$(pwd -W 2>/dev/null || pwd)/.preflight/last.log"
+    {
+      printf '{ "title": "Preflight", "log": "%s", "format": "preflight"' "$log_path"
+      [ "$stages" -gt 0 ] && printf ', "total": %s' "$stages"
+      printf ', "startedAt": %s' "$started"
+      [ "$last_ms" -gt 0 ] && printf ', "expectedMs": %s' "$last_ms"
+      printf ' }\n'
+    } > "$HOME/.claude/progress/job.json"
+  fi
+  { PREFLIGHT_INNER=1 sh scripts/preflight.sh "$@"; echo $? > .preflight/last.exit; } 2>&1 | tee .preflight/last.log
+  code=$(cat .preflight/last.exit 2>/dev/null || echo 2)
+  [ -f .preflight/last.exit ] && echo $(( $(date +%s%3N) - started )) > .preflight/last.ms
+  exit "$code"
+fi
+
 # Load .env so checks that need a credential can find one (added 2026-08-07).
 # `score sanity` is the first: it used to hard-code the demo API key, which put
 # a blocking gate on the same public 2,000/month quota as score-demo/index.html,
@@ -306,6 +345,9 @@ check "Bay Area ZIPs == Census, site == API" python scripts/build_bayarea_zips.p
 # New York on the front page (2026-10-06): its borough rows are the score engine's, and
 # its noise picture the one the file names. Offline: reads the Lambda and the files only.
 check "New York front page == engine"  python scripts/build_nyc_front.py --check
+# The Bay Area's front-page cards (2026-11-07): each city's score is the engine's, its inputs in the records
+# builder's own words with their sources and years. Offline: reads the Lambda and the committed readers' files.
+check "Bay Area front page == engine"  python scripts/build_bayarea_front.py --check
 # The Bay Area on the LIVE map (2026-10-05): its outlines, facts, airports and
 # routes, re-derived from the /bay-area/ page builder's own functions and
 # compared with data/us-bayarea-cities.json and the BAYAREA-MAP block.
@@ -316,7 +358,8 @@ check "Bay Area map data == page"     python scripts/build_bayarea_map_data.py -
 check "Bay Area tiers == page"        python scripts/build_bayarea_areas.py --check
 # The Bay Area's 50 city records in the score Lambda (2026-10-22, release 2): the BAYAREA-BOROUGHS block and the
 # California anchors, joined by GEOID from the readers' committed files. Offline and exact, so blocking: a hand
-# edit, or a reader re-run without --write here, reds. Inert until CITIES['bayarea'] reads the block.
+# edit, or a reader re-run without --write here, reds. Since 2026-11-07 the same records are the site's too
+# (index.html BAYAREA-RECORDS, which the full map scores from), held by the same check.
 check "Bay Area records == readers"   python scripts/build_bayarea_records.py --check
 # Each city's DEFRA aircraft PNG must exist, paint pixels, and be positioned at
 # the box it was rendered for (2026-09-26). A transparent PNG would be marked
@@ -351,6 +394,9 @@ check "who it is for == one list"     python scripts/build_who_for.py --check
 # The front page's picture of the sample street report (2026-11-03): made from the PDF by its builder, never by hand;
 # offline, the PDF and the picture are the ones it recorded, and the page sizes the picture as it is.
 check "report picture == the sample PDF" python scripts/build_report_still.py --check
+# The sample's FIGURES (audit I-10, 2026-11-12): its printed reference and headline recomputed from today's API answer,
+# AIRAC and planes counts, so a data roll that leaves the public sample stale goes red here. Network: INCONCLUSIVE offline.
+net_check "sample report == today's figures" node scripts/check_sample_report.mjs
 # Borough crimeRate against ONS Table C4, all eleven CITY_PFA cities in one
 # run. The --check has existed since 2026-08-03 and no preflight stage ever
 # ran it - crime was one of three scoring inputs whose check sat outside the
@@ -637,9 +683,10 @@ check "selector tiers do not overlap" node tests/selector-widths.mjs
 # Deliberately data-driven, unlike the stage above: no count to keep in step,
 # so city ten is covered the day it is added. Both defects re-proven red.
 check "every city switches"           node tests/city-switch.mjs
-# The first city whose records are FACTS, not scores: card, ranking, ZIP and
-# name search, on screen, at desktop and phone width (2026-10-05).
-check "Bay Area: facts, no score"     node tests/bayarea-map.mjs
+# The first city whose records were FACTS, not scores: card, ranking, ZIP and
+# name search, on screen, at desktop and phone width (2026-10-05); since
+# 2026-11-07 the card and the ranking carry the API's score on US scales.
+check "Bay Area: facts and scores"    node tests/bayarea-map.mjs
 # The legal pages must be reachable from the homepage on a phone. From
 # 2026-08-28 to 2026-09-07 the mobile web homepage rendered exactly ONE
 # visible link - the skip link - because `.is-tabbed .sheet-footer` was
@@ -720,6 +767,9 @@ check "web/native layout split"       node tests/native-sim-render.mjs
 # borough-score-parity compares SCORES. Both passed while nine UK cities
 # answered an area search with "NYC subway data coming soon".
 check "UK cities get UK panel content" node tests/uk-city-panel.mjs
+# The full map's search guide (2026-11-11): the light under 5 s, reduced motion, the phone's chips, when it ends and is
+# remembered, and every place a city's words name found by the search.
+check "map search guide + Try chips"    node tests/search-guide.mjs
 # A postcode no city covers must be TOLD so, never analysed against the city on
 # screen (2026-09-26: a user near Norwich was told Heathrow/Stansted was his
 # nearest airport and that aircraft noise was low). Also holds all 86 covered
@@ -744,15 +794,27 @@ check "planes answer: model + links"      node tests/planes-model.mjs
 check "Find areas: words read into choices" node tests/find-words.mjs
 # The walkthrough below the map (2026-11-03): what its noise and air steps say from the example's answer.
 check "walkthrough: noise + air steps"    node tests/home-sections.mjs
+# /api/'s "Try a request" (2026-11-05): every answer a reader can reach, from real responses, under the page's own policy.
+check "API page: try a request"            node tests/api-demo.mjs
+check "postcode box suggestions"        node tests/place-box.mjs
+check "panel findings"                  node tests/panel-findings.mjs
+# "All the detail", option 1 (2026-11-09): the picture of what is within 1 km and the card faces, every branch on purpose.
+check "detail cards"                    node tests/detail-near.mjs
 # The full map's air side by side (2026-11-03, Bill's refined B): js/street_report.mjs airChart() is pure, so its
 # geometry (to scale, beyond the scale, labels at the edge), its shapes, its escaping and the WHO guideline it shares
 # with the API (read from app.py) are held here without a browser; the live panel is tests/uk-city-panel.mjs.
 check "air side by side: chart"           node tests/air-chart.mjs
+# The street report as the site draws it (Bill's pick C, 2026-11-11): reportParts() is pure, so every branch C added (the
+# headline, the planes chart busiest first, the road bars or bound, the air key, the district's caption, the flowed pages,
+# the bigger small print) and the import cycle through planes.mjs are held here; the free copy in tests/front-page.mjs.
+check "street report: as the site draws it" node tests/street-report.mjs
 # The approach strip on /how-it-works/ (2026-10-26): the site's first interactive picture outside the map. The
 # page-wide gates read it; only this moves its slider: no sideways scroll at 390 and 1366, the keyboard flies the
 # plane and aria-valuetext follows, reduced motion stills it, tiles load as they come into view, and every picture
 # path is absolute (the page is also served at /how-it-works, no slash, where relative ones 404).
 check "approach strip works, at both widths" node tests/approach-strip.mjs
+# About and How it works on Stitch's layout (2026-11-05): the real pictures, the bands, the rail, each bar's length.
+check "About + How it works: layout"        node tests/page-bands.mjs
 # 99 static area pages are the site's only indexable surface; thin or
 # duplicated ones are worse than none (doorway pages), so this asserts
 # CONTENT and that the sitemap agrees in both directions.

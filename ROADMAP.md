@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+**Last reviewed:** 2026-11-10 - the 9 Nov audit's four Important findings closed and live, the air figures reloaded at DEFRA's precision and checked against its file, the outreach sheets rebuilt; previously 2026-11-09 - "All the detail" option 1, the phone cards one to a row and `www` -> the bare name LIVE and pushed; the site called ready for outreach, upkeep only, the four outreach gates set out for Bill; previously 2026-11-07 - the meta CSP's ignored `frame-ancestors` gone LIVE from ten pages; `env-upstream-status` built (a failed postcode lookup is a 503, the gateway's own errors readable); most of the week's 5xx were Lambda throttles at the account's limit of 10; previously 2026-11-06 - About's grid, section links and link colours LIVE; the front page's held point, postcode suggestions and the Heathrow corrections deployed; previously 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
 the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
@@ -26,7 +26,186 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-12)
+>
+> **AUDIT 12 NOV** (`AUDIT_REPORT_2026-11-12.md`): 0 Critical, 22 Important, 30 Minor. The street report build's three defects
+> (I-4 neighbour road reading, I-5 "under 1 a day" without its rules and credit, I-6 "Have your say" over nothing) and the
+> `/reports/` wording (I-7, M-1, M-2) FIXED in the uncommitted build, `tests/street-report.mjs` block 6 (red on the old code).
+> Open, in order: I-1 district search council (`index.html:11259`), I-2 "strong growth" from affordability, I-3 planes pages'
+> councils from PO boxes, I-21 "2% below 2019" (annual against summer; the Leicester fact-check), I-8/I-9 `/nhs` (SAM, Bill's word).
+> N65 reviewed the same day (branch `n65`): the Doc 29 core is sound, the gate is wired to nothing; Bill said yes to the five
+> method rules (12 Nov), so next is the "freeze and wire" session (no download).
+> **LIVE 12 Nov (evening), drift PASS, 152/152 area pages = API:** the three-page street report (`0cdec370`), "a year with as
+> many Heathrow flights as 2019" and the `/nhs` fix (`63820a53`, reviewed changeset), audit I-1, I-2, I-3, I-12 (`e6631533`).
+> **Also LIVE (late):** `0b98838b` (I-19 New York's Labels button, I-20 /score-demo/ announcements), drift PASS. Gate fixes
+> `d7dd3cfc` (I-11, I-22, M-25, M-28). **Built, to commit after preflight, deploy on Bill's word (`web-deploy`):** I-13 to I-17
+> (full-map state faults, `tests/search-guide.mjs` 7) and I-10 (`check_sample_report.mjs`). **N65** built on its worktree,
+> uncommitted: merge master into n65 first. **Audit left:** I-18 (a phone's view on a profile change; look at 390), 20 Minors.
+> **Report build COMMITTED `08ec87c6`** (pushed; deployed later the same day). Then, Bill's yes: I-21 the "2% below 2019" wording and I-8/I-9
+> the `/nhs` fixes, built and tested (red on the old code); after their preflight and commit, the web deploy and the SAM
+> changeset wait on his word.
+>
+> ## START HERE (2026-11-11)
+>
+> **TILES LIVE** (`e8849ae0`; preflight PASS 46 min, drift PASS, live shots at 390/1366 on claude.ai/artifact/JbmPxQXsgP71RJA1zzbYTt).
+> **THE FOLDS, LESS TEXT** (Bill: "still text heavy"; his pick, mock-up claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2), BUILT, screenshots to
+> Bill before any deploy: `planesChart()` + `overheadConeSvg()` in js/planes.mjs, the planes fold as chart + overhead row + three
+> word-for-word points + one sources line (162 words to 92), the air fold as chart + chips + `airNoteList()` points (97 to 75), the
+> full map's planes tile on the same chart. How it works' #credits gains Breathe London, DEFRA's monitors and the EPC register
+> (`tests/test_credits_list.py`). Last night's "fix Breathe London's License typo" was WRONG: it is their required spelling.
+> **FOLDS LIVE** (`1f6e57b7`, drift PASS, checked live at 390/1366).
+> **THE FULL MAP'S SEARCH GUIDE, BUILT** (Bill's pick C2; built-on-the-map videos claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu v6), deploy on his
+> word: the comet (two steady laps, 4.6 s, then the ring; reduced motion = ring), `endSearchGuide()` at any answer, remembered only
+> after a user activation; Try chips from each city's `tryExamples` (phones: three in the card); the dark first-run banner REMOVED.
+> Its test searches every place each city's words name: Bristol's hint ("Bristol, Bath or Weston") and Teesside's "Stockton" found
+> nothing, now fixed. Ships with the street report's two fixes (sample PDF regenerated, PM2.5 8.5; the fallback says DEFRA's map) and
+> `address_noise_report.mjs` no longer leaves its working .html in home/reports/ (home-deploy would have published it).
+> **NEXT: the street report refresh** (mock-up first: planes figures from `planesChart`, the air chart, the site's look).
+> The old "Make search more obvious" row (Tier review, below) is answered by the guide on both layouts.
+> **GUIDE LIVE** (`e6ce0417`). **THE ANALYSIS PANEL, OPTION A, LIVE** (`ff96ee42`; Bill's pick, claude.ai/artifact/8EFboJHqQ1FBvdd6K5pCCv v2):
+> before a search a UK city's panel says what a search tells you, the answer card's four groups from `FIND_GROUPS` (one holder),
+> then its Try chips (rounded, to match); `showEmptyState(city)` is the one builder; the disclaimer is dark on the map's grey.
+> **STREET REPORT C + BIGGER SMALL PRINT, BUILT 11 Nov night** (Bill's pick, mock-up claude.ai/artifact/1HZDc4VDRGxVUL791DMewp v5): two
+> pages flowed, the site's headline, planes chart, road bars and air charts; no text under 8 pt (seven postcodes checked); the
+> sample PDF and the front page's still regenerated; deploy on Bill's word (web-deploy for js/, home-deploy for the sample and /reports/, then /pricing).
+> **Then, Bill's yes (11 Nov, after comparing 8 established reports, claude.ai/artifact/WXjyPUmF9H5pQExNeK5hRp):** (a) a verdict word per
+> topic on page 1 (the site's words, never Pass/Fail), (b) a next step per topic, (c) a footer with reference, date and page x of 2,
+> (d) "desktop only, no site visit" near the top, (e) "not a conveyancing search under the Search Code" + complaints route. Mock-up
+> first. **No trust marks** (Search Code/CoPSO/TPO): needed only to sell as a conveyancing search (PI cover per search, PCCB
+> inspection); revisit after insurance and the rename, or when a conveyancer asks.
+> **NEXT BUILD, Bill's yes 11 Nov 22:55: THREE FIXED PAGES, ANSWER FIRST** (printed mock-up v2 claude.ai/artifact/1GAXwXEyNJBxVJCtG1hx38):
+> p1 headline + four topic cards (verdict word, figure, next step, page of the detail) + the four figure tiles + a taller map +
+> "Report details / How current"; p2 routes, planes, TW9, road; p3 air, station, links, reading notes ("not a conveyancing
+> search under the Search Code", no complaints line), sources. Footer "Page x of 3". AND BIGGER TEXT: body and table 10.5 pt,
+> tile labels, captions 9.5, notes 10.5, sources 8.5, measured on the 7 postcodes (page 3 is the constraint: move the station
+> and links to page 2 if it overflows). Then /, /pricing and /reports/ say three pages; the script refuses a fourth.
+> **TIDY-UPS + SEO TEMPLATE FIXES, LIVE 11 Nov** (`741aa88c`; drift PASS, 152/152 area pages = API, checked live at 1366 and 390): the map's air fold says each caveat once and drops "Sources:";
+> audit M-14 (the yardstick bar to 3:1 on its track, map and built pages, `tests/test_yardstick_contrast.py`); M-7's comment
+> corrected (the fix, a static fallback for the held example, is Bill's call); every area and planes page's title fits 60
+> characters and description 160, with share tags (`page_title()`/`fit()` in build_area_pages, `tests/test_page_meta.py`);
+> /map/'s heading says "Sky Score: noise and liveability map" to screen readers and search engines, the brand alone on screen.
+> M-9 (html-validate 11) waits: this session's `npm install` was refused by the permission check, so Bill runs it.
+>
+> ## START HERE (2026-11-10, night)
+>
+> **THE FRONT PAGE ANSWER'S LOWER HALF AS TILES (Bill's pick A; his "do tiles and deploy", and "deploy tonight" after he logs off).** Nearby facts led by their figure (`nearbyFigure()`, drawn by CSS from `data-fig`), the council line a card with chips, one filled map button, fold summaries with hints. Front-page suite 438/438 (section 7z, each check proved red); the full preflight was STOPPED at 22:40 because Bill switched the PC off (no failures up to the full map's panel checks); the tiles are UNCOMMITTED on master in the working tree; next session: re-run the full preflight, then commit by name, push, `web-deploy` + `home-deploy`, drift check, live screenshots (Bill's deploy word stands) on claude.ai/artifact/JbmPxQXsgP71RJA1zzbYTt. Uncommitted with them: CHANGELOG, CLAUDE.md, ROADMAP, docs/lessons/front-page-and-site.md.
+>
+> **NEXT BUILD (Bill's pick, mock-up claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v3): THE PLANES CHART**, the air chart's twin: one row per kind of day, the share of days under its name, a dot at the figure (a range as a bar, its label above), shaded by the planes layer's own steps. Front page planes fold = chart, an "Overhead" row (small cone + one sentence), three short points, ONE credit line (`Flight tracks: adsb.lol (ODbL 1.0) · All sources`, linking `/how-it-works/#credits`); the air fold = option A (sensor chip, three points); the full map's planes tile gets the same chart. CREDITS AUDIT (claude.ai/artifact/4KBihu1EwZcsoSEFgBDMAM): Have your say's CAA sentence becomes a row; the sidebar's short "Source:" lines stay; the planes and air tiles stop saying things twice. FIRST: add Breathe London and the energy rating register to `#credits` (both missing) before any credit becomes a link; fix "Open Government License" to "Licence" (live). Screenshots to Bill before any deploy.
+>
+> ## START HERE (2026-11-10, late)
+>
+> **PO BOXES OUT OF THE PLANES FIGURES, LIVE (`3a26b741`, Bill's rule A; deployed on his word after a full preflight PASS).** NSPL large users left out (28,263); 51 district headlines fell, none rose (SW1P 307 -> 44, SW5 305 -> 5); SW5, W11, W1G, W1J, W1T, W1W and WC1A withdrawn by the sync's --delete, WA3 added; drift PASS (50 pages, 42 data files, 153 area pages), 152/152 area pages = API. Story: `docs/lessons/in-progress-measurements.md`.
+>
+> **ALSO TONIGHT:** DMARC live (`p=none`) and SES production access GRANTED (50,000 a day; nothing sends while the sign-up flows are off); an AWS budget ($20/month, alerts 80% actual + 100% forecast) and the Lambda concurrency increase requested. The area updates list is committed on branch `area-updates-list` (`eaf2452d`), NOT merged: it waits for the ICO fee and legal batch 2 (OPERATIONS.md s3.10 on that branch).
+>
+> **NEXT:** the two sign-up guards before the I17 flip (a global daily send ceiling, sub-address normalisation); then the SEO "safe now" template batch on its own branch, on Bill's word. Heathrow's 27 Oct - 22 Dec consultation IS its statutory expansion consultation (checked on heathrow.com, 10 Nov): the pages' wording stands.
+>
+> ## START HERE (2026-11-10)
+>
+> **THE 9 NOV AUDIT'S FOUR IMPORTANT FINDINGS ARE CLOSED AND LIVE.** `d1a292b5` (upkeep + I-1 hospitals line + the air loader at DEFRA's 6 decimals + ties said as "joint") and `4183486e` (I-3 pills in words, Bill's pick A; I-4 late answers keep the visitor's place; M-2 front page says when its data failed; M-4 Gatwick as the Airport), each after a full preflight PASS, both `web-deploy`ed with Bill's word, drift PASS, live shots at 1366 and 390 (claude.ai/artifact/9fizwcmmDp59FWUDtzuCQh). M-3 is by design (the 5 Nov tests chose it). The AIR RELOAD ran (Bill's OK): 2,704,817 rows, then 285 random live postcodes equal DEFRA's file to the decimal.
+>
+> **OUTREACH SHEETS REBUILT** (`area_summary.mjs`, same points): West Kensington's PM2.5 9.1 and "joint 10th"; the correction note on Bill's Desktop (`earls-court-correction-note-2026-11-10.txt`) replaces the unsent 18 Oct one. Bill sends.
+>
+> **NEXT:** nothing on the site but upkeep. The outreach gates are Bill's (DMARC still absent 10 Nov). Next `/audit` ~16 Nov, in a fresh session (Opus + several reviewers, or Fable by choice; `/model` back after). Minors left from the audit: M-1, M-5 to M-15.
+>
+> ## START HERE (2026-11-09, night)
+>
+> **EVERYTHING LIVE AND PUSHED (master = origin at `e0e7b358`).** Option 1 and the release below went live at 18:20 (`e19d0650`); on a phone the detail cards now run one to a row (Bill: "do what's best for the phone view"; LIVE 21:25, `e0e7b358`): the face a row, figure right, the summary positioned so an open card's chevron stays on it; `tests/uk-city-panel.mjs` measures both at 390, red on each half. Desktop keeps two columns. A low-effort review found a race in `fillDetail()` (a late answer from an earlier search wiped the current one's answers): fixed, `tests/detail-near.mjs` now 28 checks, red without it. `www` 301s to the bare name: PUBLISHED by Bill, verified (one hop, path and query kept). Both full preflights ended 86 of 87, the 87th `noise legend == publishers` timing out on DEFRA's server and passing alone (also on 8 Nov); Bill's call both times: deploy (and push).
+>
+> **THE SITE IS READY FOR OUTREACH (Bill asked, 9 Nov): no new features, upkeep only.** What holds outreach back is the four gates (DMARC, the ICO fee, legal batch 2, the rename), all Bill's; his checklist: claude.ai/artifact/PmTj9JFVMk5h9AWG5etkyK. Legal batch 2 was re-checked against the live pages that night: T1-T7 and P1-P10 still to approve (the fonts line and the paid-liability cap are already live).
+>
+> **NEXT (upkeep):** the DEFRA legend check gets one retry and says "could not check" rather than failing when DEFRA does not answer (three false reds in two days); the full map's suggestions race; `/audit` (last 31 Oct). On Bill's word: legal batch 2 into the pages.
+>
+> ## START HERE (2026-11-09)
+>
+> **"ALL THE DETAIL", OPTION 1 (Bill's pick 8 Nov 22:35; his "deploy when possible" 9 Nov).** The full map's fold opens on a picture of what is within 1 km of a full postcode (a line per kind: stations, doctors and clinics, pharmacies, hospitals), then cards, each the nearest of something and opening to its full list (station, doctor, pharmacy, doctors and clinics within 1 km, helipad, airport, line status, energy), then four rows (homes for sale and to rent, sold prices, the badge, next steps). `js/detail-near.mjs` words it, pure (`tests/detail-near.mjs`, 27 checks); every loader's container keeps its id inside a card, line status in its own `#postcode-line-status`. A route sends only its nearest five of a kind, so a full five within reach says "5 or more" (Bill: "you do it"). Verified on the local build at 1366 and 390 (SW11 1AA, M1 1AE): no errors, no sideways scroll. Mock-up vs build: claude.ai/artifact/J2cmNnj8fB8usVKKo66z6M.
+>
+> **SEARCH CONSOLE (9 Nov emails), read in the report:** 600 indexed, 86 not, each reason intended except one: `/score-demo/status.html` was in `sitemap.xml` while noindex. Taken out; `write_sitemap()` now refuses any noindex page (`tests/test_sitemap_noindex.py`, red on the old sitemap). The 4xx is bare `/badge` (400, by design); 54 alternates are the map's `?city=&borough=` links.
+>
+> **WRITTEN, NOT PUBLISHED: `www` 301s to the bare name** in one hop, path and query kept (`scripts/install_cloudfront_index_rewrite.py`; `tests/test_cloudfront_function.py`, red on the old function). Bill publishes: `AWS_PROFILE=flightmap python scripts/install_cloudfront_index_rewrite.py`.
+>
+> **ALSO IN THIS RELEASE:** the score shows each part's own score and how much it counts (live since 8 Nov 22:15, committed 9 Nov), and the fold's text on the tiles' scale (live since 8 Nov 22:42).
+>
+> **NEXT:** the full map's suggestions race (below), then the area pages in the answer-card style, `/audit` (last 31 Oct).
+
+> ## START HERE (2026-11-08)
+>
+> **LIVE 8 Nov ~18:30 UTC: THE BAY AREA IS SCORED ON THE SITE** (master `2eb2dca7`). The backend changeset was read before it ran: the score function's code was its only real change (the chat role and function and the API definition were Dynamic, caused by `ScoreFunction.Arn`; parameters unchanged). Then data, web, home, bay-area, area (56 changed pages: 50 Bay Area, 5 New York, the index) and meta. Verified from the origin: drift PASS (47 pages, 42 data files, 153 area pages, 20 precached), area-page freshness 152/152, site-API parity 6/6, score sanity 29 postcodes; in a browser at 1366 and 390 the ranking orders the 50 cities by score with `*` on a withheld input. About's section-link pick (D) went live 7 Nov.
+>
+> **COMMITTED (`5ea355a2`), was branch `early-search-and-preflight-log`:** (1) a search sent before the front page's map data arrived said "Could not reach the data just now" (`cityOf()` read the councils before they came) or, for a place name, "not found"; and the example, starting after, took the newest search number and cleared the answer before asking whether the visitor had acted, so the page showed neither. Now the box holds the latest early search and `load()` runs it once the map is drawn; the example gives way before it touches anything (`tests/front-page.mjs` 1z, a postcode and a council area, sent with the map provably undrawn). (2) `scripts/preflight.sh` tees every run to `.preflight/last.log`, its exit code carried through a file, never the pipe (`tests/test_preflight_log.py`, proven red on the pipe's own code).
+>
+> **EARLY-SEARCH + PREFLIGHT LOG COMMITTED 8 Nov (`5ea355a2`, preflight PASS), not yet deployed: it ships with the panel's `web-deploy`.**
+>
+> **BUILT 8 Nov, branch `panel-answer-card`: THE FULL MAP'S POSTCODE PANEL AS AN ANSWER CARD AND TILES** (Bill: "deploy recommended"; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). Headline from `js/answer-lead.mjs` (moved out of home-sections, re-exported), pills from `pillsFor()`, the score with its city comparison, points per part and profile chips (`setPersona()`, one profile everywhere), "Weak" -> "Low"; each finding a closed tile with plain sentences and an honest picture (`tile`, `tileHtml()` in `js/panel-findings.mjs`); the fold keeps its tools. Checked: panel-findings 58/58, uk-city-panel, panel-contrast (2,814 nodes AA, opened), a11y-source; SW11 1AA in a browser at 1366 and 390. The first full preflight failed on two of mine, both fixed: `tests/test_area_findings.py` anchored on `crimeNote(extra)`'s whole signature (now its name and first argument), and `tests/test_us_city_branches.py` caught a new `currentCity === 'nyc'` (the comparison's unit now follows the panel's own area rule); its third red, "noise legend == publishers", was a DEFRA read timeout that passed alone. LIVE 8 Nov 22:07 (`2d955e27`): second full preflight PASS, `web-deploy`, drift PASS, checked in a browser at 1366 and 390.
+>
+> **CONFIRMED BUG, predates the card (live, 8 Nov):** on the full map, pressing Enter before `#search-input`'s suggestions arrive lets them open afterwards over the result (fill + Enter within ~30 ms, London and the Bay Area alike; with a pause they close). Late suggestions must be dropped once a search is sent, as the front page's place box already does. Its own change, after the panel deploy.
+>
+> **THEN:** the area pages in the same style (Bill's yes, after the panel), the front page after the ~20 Nov read, the street report later, the weekly audit (last `AUDIT_REPORT_2026-10-31.md`).
+
+> ## START HERE (2026-11-07)
+>
+> **LIVE 7 Nov: the ignored `frame-ancestors` is gone from all ten pages' meta CSP** (`64bca769`; Bill ran web, demo and prototype deploys; drift PASS, 47 pages + 41 data files + 103 area pages; `X-Frame-Options: DENY` still served). `tests/changes-why.mjs` now fails on ANY console error on the live page (its one exception removed after the deploy, 30/30 live).
+>
+> **LIVE 7 Nov, `env-upstream-status` (master `f99e770c`, Bill's yes 7 Nov): backend by a reviewed changeset at 18:10 UTC (ScoreFunction code + the API definition only, parameters unchanged; gateway 403s now carry CORS, the sea is still 404, score sanity PASS), then `web-deploy` + `home-deploy` (drift PASS 47 + 41 + 103), combined preflight PASS.** `/v1/environment` answers 503 + `Retry-After` when its postcodes.io lookup cannot be reached or refuses (429, 5xx), 502 when its answer cannot be read, and keeps 404 for "no postcode here" (`PostcodeLookupFailed`). API Gateway's `DEFAULT_4XX`/`DEFAULT_5XX` carry `Access-Control-Allow-Origin: '*'`, so a page can read a throttle: `/api/` says "busy" only for a 429 it reads. Grepping every API reader found the front page trusting a body without `r.ok`: a readable 429 would have said "No figures for that spot"; it now says the data is busy or unreachable (`tests/front-page.mjs` 11c, proven red on the old code). Preflight PASS bar one DEFRA read timeout (re-run alone: PASS). Deployed in that order: backend first, because with the old backend `/api/` would call a failed lookup "no postcode"; between the two deploys the OLD front page could call a readable 429 "No figures for that spot", for about 40 minutes.
+>
+> **WHY THE API'S 5xx (OPERATIONS.md s5, second read):** 4-7 Nov 58 of 16,271 (0.36%, from 1.75%); 17 are `[5XX]` lines (Land Registry 15, EPC 2) and 41 are Lambda THROTTLES: account-wide concurrency peaks at exactly 10, the default limit for a new account. Bill's console step: Service Quotas, Lambda concurrent executions, request 1000. This also answers audit I3's open half.
+>
+> **BILL TO PICK: About's section links in a narrow desktop window** (below about 890 px a mouse cannot reach the last ones). Measured on the live page: today 67 px hidden at 820, 159 at 720; B compact fits 820 not 720; C two rows (mouse only) a 103 px bar; D short names (Why, Questions, Talks, Contact) fits both. Recommended D below ~900 px, full names above. Image sent to Bill 7 Nov.
+>
+> **ALSO 7 NOV:** Search Console read both sitemaps (617 discovered = 617 listed); Pages still processing, re-read ~9 Nov. Still one outside API key holder (6 calls, last 17 Oct). A Buyer Scout's first run sits on Bill's Desktop (organisations only, drafts HELD behind the outreach gates; Companies House only, as the regulators' registers bar promotion).
+
+> ## START HERE (2026-11-06)
+>
+> **ABOUT'S GRID LIVE 6 Nov (`5dc99c4b`, master pushed, preflight PASS, drift PASS).** Checked on the live page at 390, 1000, 1366 and 1920: the arrows in date order, the bar stuck, every jump clear of it, no errors. A review before the final preflight fixed eight points, three of them checks that could not fail (proven red six ways). One link not verified: AI Tinkerers answers a script 403, and the page says sign-in needed; Bill opens it once.
+>
+> **LIVE 7 Nov (`64bca769`, Bill ran the deploy, drift PASS; `KNOWN_BENIGN` then removed), branch `drop-meta-frame-ancestors`:** the directive that browsers ignore in a meta CSP, gone from all ten pages, so their console error goes; framing stays refused by `X-Frame-Options: DENY`. Ships with `web-deploy`, `demo-deploy` and `prototype-deploy`. THEN remove `KNOWN_BENIGN` from `tests/changes-why.mjs`: it reads the live page, so it must wait for the deploy, and removing it first turns that check red.
+>
+> **ABOUT'S LINKS, Bill's pick E, 6 Nov:** he asked for them filled or orange, and six filled orange pills were too bright on the real page, so a section link fills orange only under a pointer and links in the text are dark orange. Options: claude.ai/artifact/92Wpsi5ETKhyvPCaFz69dt.
+>
+> **BILL SAID "DEPLOY" 6 NOV, with the Leicester corrections below:** the front page holds the example's point, so arriving asks postcodes.io nothing (closes the legal batch 2 note of 5 Nov once live); live postcode suggestions on `/` and `/api/`, and "Nothing you type is sent until you search" gone; `/api/` says what WE hold outside our city regions. DEPLOY ORDER, or the front page's module fails to link for the seconds between uploads (`aws s3 cp js/` is not atomic, and `home-engine.mjs` now imports what only the new `place-box.mjs` exports): `AWS_PROFILE=flightmap aws s3 cp js/place-box.mjs s3://london-flight-map-frontend/js/place-box.mjs --content-type "application/javascript" --cache-control "no-cache" --region eu-west-2` FIRST (the new file serves the old pages unchanged), then `web-deploy`, then `home-deploy` straight after (until then `/` lacks `.pc-live`, so the status words show beside Check).
+>
+> **THE LEICESTER CORRECTIONS, same deploy:** the full map and `/api/` called the Heathrow comparison "different models" for 41 days, though 3 Nov's note recorded it as fixed. Both are the CAA's ANCON 2.4, read from the PDFs on 6 Nov (`docs/lessons/aircraft-estimate.md`). `test_public_wording.py` now refuses the phrase, and "a highly anomalous situation" cites Heathrow's plan, where it was read.
+
+> ## START HERE (2026-11-05)
+>
+> **ABOUT'S TIMELINE, 5 NOV LATE, Bill said "deploy":** the ten-card rail read too small live, and bigger type did not win him over (branch `about-timeline-size`, superseded, never deployed). Stitch redrafted it, he picked the three-column grid and asked for arrows and a link to each section: `ol.grew.grid`, every step linking on from its own words, and the page's section links now stay in view (`nav.jump`, his pick of the two readings).
+>
+> **LIVE 5 Nov, 16:45 (`c415f9af`, master pushed, drift PASS).** Final preflight PASS, the flood stage included; web, home and bay-area deployed. First real run of "Try a request", no stubs, at 390 and 1366: arriving asks the API once and postcodes.io never, SW5 9HP reads 71.8 dB and 24 µg/m³ as a direct call does, a repeat press sends nothing, shift 0.0005 at most, and ZZ99 9ZZ, IM1 1AD, BT1 5GS, AB10 1AB and EX1 1HS are each answered in words. `responsive`, `live-mobile-verify` and `site-api-parity` re-run after the deploy: all pass.
+>
+> **Bill said "deploy" 5 Nov** (his brief of 4 Nov, built on `page-drafts`). `/api/` has "Try a request": a reader sends a postcode and sees the real request and answer, through the front page's band, now one
+> module (`js/dev-demo.mjs`) on two pages, their styles held equal. It asks the open route only, and nothing goes to postcodes.io until a reader sends. About opens on the speaker photo, its promises and questions on the bands, and "How it grew"
+> is ten cards along a rail from 1320 px, his talks among the steps and the film in a wider first card (four rounds of his picks that day). How it works opens on the short version, its example open with a bar per score. `/bay-area/` joined the palette, so `WAITING` is empty.
+> Every word, link and `data-event` was diffed against master; only "Show the worked example" went, with its fold, and the three talk cards are the only new words. A code review before preflight found 10 points past 141 green checks: 9 fixed, each with a check. Deliberate breaks then proved the gates.
+> The session died at 14:18 mid-check (nothing lost) and the next one re-ran the second review: 10 more points, all on `/api/`. 8 fixed, each proven red: a press of the postcode on show now cancels what is on its way and takes back an old problem, a press of the example still on its way plays when it lands, the run on arriving ends at any press, the band keeps its room (shift 0.10 to under 0.02), its words follow the form, `finite` and `el` have one holder, the sub-processor row is in date order.
+>
+> **THE FLOOD GATE CHANGED 5 NOV:** preflight went red on Tyne and Wear at 12/14 on the fixed seed; seeds 23 and 37 read 13/14 and 16/16, so the map has not drifted. A confirmation is now 64 a class at 92%, not 16 at 90%: no easier on a bad edge in any of the 12 cities, no harder on a true 95% class in any (`docs/lessons/flood.md`, with the table). 48 at 90% was tried first and an independent review caught it easing three cities.
+>
+> **BUILT 7 Nov on `env-upstream-status` (see START HERE 2026-11-07), was "LATER, ONE BACKEND CHANGESET":** (1) `/v1/environment` answers 404 when its own postcodes.io call fails (`reverse_geocode` returns None for both): it should be a 502 or 503, keeping 404 for the sea; the page's words cover both meanwhile. (2) `GatewayResponses` set no CORS header, so a browser cannot tell a throttle from a network failure: adding `Access-Control-Allow-Origin` to DEFAULT_4XX/5XX would let `/api/` say so. Both change what API callers see, so they go through a reviewed changeset, with Bill's yes.
+>
+> **NEXT, Bill's yes 5 Nov, own branch:** the front page holds the example's point, so a visit stops reaching postcodes.io (privacy s2b covers a search, not that), and live postcode suggestions as you type on the front page and `/api/`, as the full map has
+> them; the line "Nothing you type is sent until you search" goes. Rides with it, seen on the first live run: `/api/` says "No DEFRA figure here" outside our city regions (EX1 1HS), where DEFRA may map the place and we only do not hold it, as the API's own notice says; `sayAnswer` and `no-figures` should say that. The short version above the strip stays, unless he says otherwise. SETTLED 5 Nov: a press plays for a reader with reduced motion too (the review queried it; Bill: "yes do the animation").
+>
+> **SMALL, ANY TIME:** Seen in review 6 Nov, Bill's call: below about 890 px (measured) About's six section links run past the bar's edge, which a phone swipes but a mouse reaches only by Tab or Shift+wheel. A visible scrollbar would push the bar past its 64 px clearance, so it needs a look of its own.
+>
+> **ALSO 5 NOV:** NOW.md trimmed 385 to 174 lines, section 4's history moved word for word to `90_DAY_ROADMAP.md`. Explee and alternatives assessed: buy nothing (memory `project-outreach-tools-assessment-2026-11-05`). PICKED UP NEXT: a Buyer Scout
+> if Bill says yes: Companies House plus a regulator's list, ranked with our own figures, drafts only, organisations only until the gates clear.
+
 > ## START HERE (2026-11-04)
+>
+> **4 Nov, last release.** LIVE (`d0e1d409`): all 103 area and 464 planes pages on Stitch's layout, with Bill's pick B of visuals (bars where a true number compares, labelled strips for ratings) and plain
+> words for crime and schools; the consultation pack, open data and 404 on the palette; `tests/test_site_palette.py` holds them all but `bay-area/`. Next: drafts of About, How it works and API, one at a time.
+> The front page's redesign waits only on Bill's call: the read it protects is the top bar and Book a demo clicks on the page shipped today.
+>
+> **4 Nov late.** LIVE (`b8e9c041`): the full map's panel findings first, Pricing coloured by audience (Bill's pick B).
+>
+> **4 Nov night.** LIVE (`b67b2871`): the API's `aircraftQuietCoverage` says `modelled`; the score Lambda has 1,024 MB (cold call about
+> 1.0 s, was 3.0 s). Bill picked Stitch's plain-headline panel over four rounds of charts, then its layouts for the site. Order: full map
+> panel; area + planes templates; Pricing, About, How it works, API; the front page after the ~20 Nov read. Privacy and terms stay.
+> Drafts and palette: claude.ai/artifact/3CXraMciWCAhMvxBPUZuca. `tests/test_site_palette.py` holds the 7 pages on the palette.
+>
+> **Evening, on `front-page-polish`:** Bill's five points, all his B picks: the answer summary first with diagrams in its folds
+> (495 words to about 230), the guided postcode box (`js/place-box.mjs`), the page arriving in place (phone shift 0.133 to 0.008),
+> the new "London from above" picture, Play for visitors with animation off, and the MG/M³ caption fixed.
 >
 > **The front page rework shipped today, on Bill's call, ahead of the ~20 Nov read.** He chose the whole rework, so the read
 > ended at 12 days: counts frozen in Desktop `Sky Score Marketing\engagement-read-2026-11-04.md` (52 of 87 front-page views
@@ -1936,6 +2115,17 @@ Open UPRN and for the EPC UPRN field.
 Bill's rulings: the Bay Area goes live as a flight-path PAGE first (`/bay-area/`),
 covering the 50 cities of the four counties round SFO, OAK and SJC; the scored
 city on the map follows. Detail and what was learnt: EXPANSION.md.
+
+**The site scores the Bay Area (2026-11-07, branch `bayarea-site-scores`, BUILT, not yet deployed; Bill reviewed it
+on localhost and ruled the four open points).** The full map, the front-page cards, `/bay-area/` and 50 area pages
+(152 in all) show each city's API score, from the API's own records (`BAYAREA-RECORDS`, written beside the Lambda's
+by `build_bayarea_records.py`; the front file by `build_bayarea_front.py`). Bill's rulings: the map ranks the cities
+by score with `*` on a withheld input, said beside the table; "(facts only)" leaves the coverage sentence everywhere;
+the front-page cards are scored; every input figure carries its source and year (years read from the readers' files).
+`SITE_FACTS_ONLY_CITIES` and `AREA_PAGES_PENDING` are empty. To ship: preflight, then backend (only comments and the
+two empty sets change in app.py) and `data-deploy` (the new `data/us-bayarea-front.json`) before `web-deploy`,
+`home-deploy`, `bay-area-deploy`, `area-deploy`, `meta-deploy` (llms.txt, sitemap); verify with the drift check and
+`area-page-freshness.mjs` (152 pages). Detail: `docs/lessons/us-cities.md`.
 
 - [x] Derive the routes from the FAA's CIFP (`build_us_flight_paths.py`).
 - [x] Build and gate the page (`build_bay_area_page.py --check`, blocking).

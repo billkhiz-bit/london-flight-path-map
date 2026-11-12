@@ -28,6 +28,7 @@
 // scripts/check_deploy_drift.sh is the one that notices that.
 
 import { chromium } from '@playwright/test';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const SITE = process.env.SMOKE_BASE || 'https://d1oe4ftwutjpf.cloudfront.net';
 const API =
@@ -132,6 +133,7 @@ async function readSite(page, postcode) {
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
+await keepPanelOpen(page);
 // The map is index.html in the repo and /map/ on the site (2026-10-06): /
 // there is the front page, which renders no score tables to compare.
 const LIVE = !/^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/.test(SITE);

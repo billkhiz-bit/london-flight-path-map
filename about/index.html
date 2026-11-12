@@ -28,7 +28,11 @@
       where it is not used (Bill, 2026-10-24: not "AI slop"). The film itself is a plain link to YouTube, because
       this policy allows no frames and an embed would set YouTube's cookies.
       The film and the prototype link are counted by js/count.mjs (an allow-list; front-page.mjs 16f). Demos given
-      at events go under "Talks and demos", never on the timeline (Bill, 2026-10-24: product steps only there).
+      at events are steps on the timeline too since 2026-11-05 (Bill, reversing his 2026-10-24 "product steps only": "an important
+      part of the Sky Score story"), with their photos and links still under "Talks and demos".
+      On Stitch's layout since 2026-11-05 (Bill's brief of 4 Nov): the speaker photo is the hero, the promises and the
+      questions on the same warm and cool bands as /pricing, the contact band dark; every word and link kept.
+      tests/page-bands.mjs holds the layout.
     -->
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
@@ -37,6 +41,8 @@
     <style>
       :root {
         --bg: #f4f3ef; --paper: #fbfaf8; --dark: #141414; --mid: #55554f; --line: #dedcd6; --rule: #c4c1b8; --orange: #f27d26; --orange-ink: #a85416; --focus: #d35a12;
+        /* The bands' colours, as /pricing has them: --on-tint is --mid darkened for a coloured band, --on-dark text on the dark one. */
+        --tint: #fbeee3; --water: #dbe4e8; --on-tint: #3f3f3b; --on-dark: #dedcd6;
         --font-display: 'Geist', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace;
         --gutter: clamp(16px, 4vw, 48px);
         color-scheme: light;
@@ -54,7 +60,8 @@
       nav.top-nav a.nav-cta { box-shadow: inset 0 0 0 1.5px var(--dark); font-weight: 600; }
       nav.top-nav a:hover { color: var(--dark); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }
       nav.top-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }
-      main { padding: 24px var(--gutter) 40px; max-width: 1200px; }
+      /* 1440, as /pricing: the coloured bands should reach the bar's right edge on a laptop. */
+      main { padding: 24px var(--gutter) 40px; max-width: 1440px; }
       h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 5.2vw, 64px); line-height: 1.0; letter-spacing: -0.04em; margin: 0 0 20px; text-wrap: balance; }
       h1 .ink { color: var(--orange-ink); }
       p.lead { margin: 0; color: var(--mid); font-size: 19px; max-width: 48ch; }
@@ -64,43 +71,67 @@
       /* Sections (2026-10-24, Bill: "bunched up, no clear separation"): each opens on a full-width rule with room
          above and below, so where one ends is seen, not inferred from a gap. The contact band is its own panel. */
       section { margin: 0 0 clamp(64px, 8vw, 104px); scroll-margin-top: 16px; }
-      main > section:not(.contact) { border-top: 1px solid var(--rule); padding-top: clamp(28px, 3.5vw, 44px); }
+      main > section:not(.contact, .band) { border-top: 1px solid var(--rule); padding-top: clamp(28px, 3.5vw, 44px); }
+      /* The bands (Stitch's layout, Bill's brief of 2026-11-04): warm for what we promise, cool for what people ask, dark for
+         the close, the same three as /pricing. */
+      section.band { padding: clamp(20px, 3vw, 36px); border-radius: 18px; }
+      #promises { background: var(--tint); }
+      #asked { background: var(--water); }
       figure { margin: 0; }
       figure img { border-radius: 18px; width: 100%; }
       figcaption { margin: 8px 2px 0; font-size: 13px; color: var(--mid); }
 
       /* The opening: the reason, then who is saying it. */
-      .opening { max-width: 940px; margin: 0 0 clamp(48px, 6vw, 72px); }
+      .opening { max-width: 940px; }
       .byline { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; font-size: 15px; color: var(--mid); }
       .byline img { width: 40px; height: 40px; border-radius: 50%; }
       .byline b { color: var(--dark); font-weight: 600; }
-      /* On this page (2026-10-23, Bill: link better to the sections): one row of links, wrapping on a phone. */
-      nav.jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
-      nav.jump a { font-size: 15px; font-weight: 600; text-decoration: none; padding: 7px 13px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--dark); }
+      /* On this page (2026-10-23, Bill: link better to the sections): one row of links. */
+      /* The section links stay in view (Bill, 2026-11-05: "so its easier to navigate"), so they sit straight under main, whose height
+         is how far they can stick. One line at any width: on a phone they scroll sideways in their own bar rather than fill the
+         screen. scroll-padding keeps a jump's heading, and anything reached by Tab, clear of the bar (WCAG 2.4.11). A short window
+         has too little height to give away, so there the links stay at the top of the page. */
+      html { scroll-padding-top: 64px; }
+      nav.jump { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: nowrap; gap: 8px; margin: 18px calc(-1 * var(--gutter)) clamp(20px, 3vw, 32px); padding: 10px var(--gutter); overflow-x: auto; scrollbar-width: none; background: var(--bg); border-bottom: 1px solid var(--line); }
+      @media (max-height: 500px) { html { scroll-padding-top: 0; } nav.jump { position: static; } }
+      /* Short names where the full ones would run past the bar's edge (Bill's pick D, 2026-11-07): below about 890 px a mouse
+         could reach the last links only by Tab or Shift+wheel. The visible words are each link's name, so a reader hears what shows. */
+      nav.jump .short { display: none; }
+      @media (max-width: 900px) { nav.jump .long { display: none; } nav.jump .short { display: inline; } }
+      nav.jump a { flex: none; white-space: nowrap; font-size: 15px; font-weight: 600; text-decoration: none; padding: 7px 13px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--dark); }
       nav.jump a:hover { box-shadow: inset 0 0 0 1.5px var(--dark); text-decoration: underline; text-underline-offset: 4px; }
+      /* Orange only under the pointer (Bill, 2026-11-06: six filled pills were "too bright"), and only where there is a pointer: a
+         phone's hover stays on a link after the tap, which would leave one pill stuck orange. */
+      @media (hover: hover) { nav.jump a:hover { background: var(--orange); box-shadow: none; } }
+      /* Links in the text stand out from it (Bill, 2026-11-06), in the darker orange: plain orange text reads 2.4:1 on this page's
+         backgrounds. Not the section links or the film, nor the dark band's, where dark orange reads 3.5:1 and they stay white. */
+      main a:not(nav.jump a, ul.links a, figure.film a) { color: var(--orange-ink); font-weight: 500; }
+      main a:not(nav.jump a, ul.links a, figure.film a):hover { color: var(--dark); }
 
       ul.links a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; }
       ul.links a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
-      /* Why I built it: a letter beside the photo of the map being explained. */
-      .letter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-items: center; }
-      @media (min-width: 900px) { .letter { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 56px; } }
+      /* The hero: the map being explained. 16:9, cropped to keep both the speaker and the screen, so it is held from the top
+         third: the floor is what goes. tests/page-bands.mjs measures the frame. */
+      figure.hero { margin: 0 0 clamp(48px, 6vw, 72px); }
+      figure.hero img { aspect-ratio: 16 / 9; object-fit: cover; object-position: 50% 22%; }
+
+      /* Why I built it: a letter, one column, under the photo of the map being explained. */
       .letter p { max-width: 60ch; }
       .signed { display: flex; align-items: center; gap: 12px; margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
       .signed img { width: 52px; height: 52px; border-radius: 50%; }
       .signed b { display: block; font-family: var(--font-display); font-weight: 600; line-height: 1.2; }
       .signed span { font-size: 15px; color: var(--mid); }
 
-      /* What you can hold us to (2026-10-24, Bill): four promises a reader can check, each under a dark rule, so it
-         reads as a standard rather than another set of cards; then the publishers, as text (a logo can imply an
-         endorsement). tests/test_about_sources.py holds every named publisher to a live source in LICENSING.md. */
-      ul.promises { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px 32px; }
+      /* What you can hold us to (2026-10-24, Bill): four promises a reader can check, on the warm band since 2026-11-05;
+         then the publishers, as text (a logo can imply an endorsement). tests/test_about_sources.py holds every named
+         publisher to a live source in LICENSING.md. */
+      ul.promises { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
       @media (min-width: 640px) { ul.promises { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-      @media (min-width: 1080px) { ul.promises { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-      ul.promises li { border-top: 2px solid var(--dark); padding-top: 12px; }
+      ul.promises li { background: var(--paper); border-radius: 16px; padding: 22px 24px; }
       ul.promises b { display: block; font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: -0.01em; line-height: 1.25; margin: 0 0 6px; }
       ul.promises span { color: var(--mid); font-size: 16px; }
-      p.sources { margin: 26px 0 0; max-width: 78ch; font-size: 16px; color: var(--mid); }
+      p.sources { margin: 26px 0 0; max-width: 78ch; font-size: 16px; color: var(--on-tint); }
 
       /* How it grew: a real sequence, so the months sit on a dashed rail like a route on the map, with a waypoint
          at each. The first waypoint is filled: it is where the route starts. */
@@ -115,6 +146,57 @@
       ol.grew h3 { font-size: clamp(19px, 1.9vw, 22px); margin: 0 0 4px; }
       ol.grew p { margin: 0; max-width: 60ch; color: var(--mid); }
       p.grew-more { margin: 4px 0 0 34px; font-size: 16px; color: var(--mid); }
+      /* On a wide screen it is a grid (Bill's pick from Stitch's drafts, 2026-11-05): the first map as a band with its film, then
+         nine cards in three rows, read left to right, with arrows giving the date order. Each arrow is a picture of nothing in
+         the list, so it is drawn in CSS and a screen reader hears only the ordered list. A row's end returns under the row
+         to the start of the next, as a line of text does. tests/page-bands.mjs measures each arrow from one step to the next. */
+      @media (min-width: 1000px) {
+        ol.grew.grid {
+          --col: 48px; --row: 60px; --clear: 5px;
+          --dash-x: repeating-linear-gradient(to right, var(--orange-ink) 0 6px, transparent 6px 12px);
+          --dash-y: repeating-linear-gradient(to bottom, var(--orange-ink) 0 6px, transparent 6px 12px);
+          --head-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'%3E%3Cpath d='M0 0l10 6L0 12z' fill='%23a85416'/%3E%3C/svg%3E");
+          --head-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 10'%3E%3Cpath d='M0 0h12L6 10z' fill='%23a85416'/%3E%3C/svg%3E");
+          max-width: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--row) var(--col);
+        }
+        ol.grew.grid > li { display: block; padding: 20px 22px 22px; border-radius: 18px; background: var(--paper); box-shadow: 0 0 0 1px var(--line); }
+        ol.grew.grid > li.talk { background: var(--tint); }
+        ol.grew.grid time { display: block; font-size: 15px; }
+        ol.grew.grid h3 { font-size: 20px; line-height: 1.25; margin: 4px 0 8px; }
+        ol.grew.grid p { max-width: none; font-size: 16px; line-height: 1.55; }
+
+        ol.grew.grid > li:first-child { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); grid-template-rows: 1fr auto auto auto 1fr; column-gap: 48px; padding: 28px 32px; }
+        ol.grew.grid > li:first-child > div { display: contents; }
+        ol.grew.grid > li:first-child time { grid-column: 1; grid-row: 2; }
+        ol.grew.grid > li:first-child h3 { grid-column: 1; grid-row: 3; font-size: 28px; margin: 6px 0 10px; }
+        ol.grew.grid > li:first-child p { grid-column: 1; grid-row: 4; font-size: 17px; }
+        ol.grew.grid figure.film { grid-column: 2; grid-row: 1 / -1; margin: 0; max-width: none; }
+        ol.grew.grid .film-label { margin-top: 10px; font-size: 15px; }
+        ol.grew.grid figure.film figcaption { margin: 2px 2px 0; font-size: 14px; }
+
+        /* The list's own rail and waypoints give way to the arrows. */
+        ol.grew.grid > li::before, ol.grew.grid > li::after { display: none; width: auto; height: auto; top: auto; bottom: auto; left: auto; border-radius: 0; box-shadow: none; background: none; }
+        /* Along a row. */
+        ol.grew.grid > li:nth-child(3n+2)::after, ol.grew.grid > li:nth-child(3n)::after {
+          display: block; left: 100%; top: 50%; width: var(--col); height: 12px; margin-top: -6px;
+          background: var(--head-right) right var(--clear) center / 10px 12px no-repeat, var(--dash-x) left var(--clear) center / calc(100% - 2 * var(--clear) - 10px) 2px no-repeat;
+        }
+        /* From the first map down to the second step. */
+        ol.grew.grid > li:nth-child(2)::before {
+          display: block; left: 50%; top: calc(-1 * var(--row)); width: 12px; height: var(--row); margin-left: -6px;
+          background: var(--head-down) center bottom var(--clear) / 12px 10px no-repeat, var(--dash-y) center top var(--clear) / 2px calc(100% - 2 * var(--clear) - 10px) no-repeat;
+        }
+        /* From the end of a row, back under it, and down into the start of the next. */
+        ol.grew.grid > li:nth-child(4)::after, ol.grew.grid > li:nth-child(7)::after {
+          display: block; left: 50%; top: calc(100% + var(--clear)); width: 2px; height: calc(var(--row) / 2 - var(--clear)); margin-left: -1px;
+          background: var(--dash-y);
+        }
+        ol.grew.grid > li:nth-child(5)::before, ol.grew.grid > li:nth-child(8)::before {
+          display: block; left: 50%; top: calc(-1 * var(--row) / 2); width: calc(200% + 2 * var(--col) + 7px); height: calc(var(--row) / 2); margin-left: -6px;
+          background: var(--head-down) left bottom var(--clear) / 12px 10px no-repeat, var(--dash-y) 5px 0 / 2px calc(100% - var(--clear) - 10px) no-repeat, var(--dash-x) 5px 0 / calc(100% - 5px) 2px no-repeat;
+        }
+        ol.grew.grid ~ p.grew-more { margin: 32px 0 0; }
+      }
       /* The hackathon film is a link out, never an embed: a still of our own, and nothing from YouTube loads until
          someone chooses to watch. */
       figure.film { margin: 16px 0 0; max-width: 560px; }
@@ -137,7 +219,7 @@
       dl.asked dt::before { content: "\201C"; color: var(--orange-ink); }
       dl.asked dt::after { content: "\201D"; color: var(--orange-ink); }
       dl.asked dd { margin: 0; color: var(--mid); font-size: 16px; }
-      p.asked-note { color: var(--mid); font-size: 15px; margin: -6px 0 18px; }
+      p.asked-note { color: var(--on-tint); font-size: 15px; margin: -6px 0 18px; }
 
       /* The two talk photos share one 16:9 frame and one row (2026-10-24, Bill: smaller), so the portrait Deen
          Developers photo no longer sets the row's height; its crop keeps the speaker's face (object-position). */
@@ -151,11 +233,11 @@
       ul.talk-links a, ul.talk-links b { font-weight: 600; color: var(--dark); }
 
       /* The close: one band, the three ways to reach a person. */
-      .contact { background: var(--paper); border-radius: 18px; padding: clamp(22px, 3vw, 36px); display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+      .contact { background: var(--dark); color: #fff; border-radius: 18px; padding: clamp(22px, 3vw, 36px); display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
       .contact h2 { margin: 0; }
       ul.links { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
-      ul.links a { box-shadow: inset 0 0 0 1.5px var(--dark); color: var(--dark); }
-      ul.links a.primary { background: var(--dark); color: #fff; }
+      ul.links a { box-shadow: inset 0 0 0 1.5px var(--on-dark); color: #fff; }
+      ul.links a.primary { background: var(--orange); box-shadow: none; color: var(--dark); }
 
       footer { padding: 24px var(--gutter) 40px; font-size: 13px; color: var(--mid); display: flex; gap: 18px; flex-wrap: wrap; justify-content: space-between; }
       footer a { color: var(--mid); }
@@ -197,24 +279,26 @@
         <h1>A more informed decision when choosing <span class="ink">where to live</span></h1>
         <p class="lead">That is the whole reason Sky Score exists. A listing shows you the kitchen. It rarely tells you about the aircraft overhead, the road outside, the air or the flood risk, so we put those beside every postcode we cover, from the organisations that measure them, and say plainly where a figure is our own estimate.</p>
         <p class="byline"><img src="/about/bill-headshot.webp" width="40" height="40" alt="" /><span><b>Bilal Khizar</b>, founder</span></p>
-        <nav class="jump" aria-label="On this page">
-          <a href="#why">Why I built it</a>
-          <a href="#grew">How it grew</a>
-          <a href="#asked">Questions people ask</a>
-          <a href="#talks">Talks and demos</a>
-          <a href="#for">Who it's for</a>
-          <a href="#contact">Get in touch</a>
-        </nav>
       </div>
 
+      <nav class="jump" aria-label="On this page">
+        <a href="#why"><span class="long">Why I built it</span><span class="short">Why</span></a>
+        <a href="#grew">How it grew</a>
+        <a href="#asked"><span class="long">Questions people ask</span><span class="short">Questions</span></a>
+        <a href="#talks"><span class="long">Talks and demos</span><span class="short">Talks</span></a>
+        <a href="#for">Who it's for</a>
+        <a href="#contact"><span class="long">Get in touch</span><span class="short">Contact</span></a>
+      </nav>
+
+      <figure class="hero">
+        <picture>
+          <source srcset="/about/talk-ai-tinkerers-speaker.webp" type="image/webp" />
+          <img src="/about/talk-ai-tinkerers-speaker.jpg" width="1600" height="1314" alt="Bilal Khizar speaking into a microphone beside a large screen showing the Sky Score map of London's flight paths." />
+        </picture>
+        <figcaption>Showing the map at AI Tinkerers London, 22 September 2026.</figcaption>
+      </figure>
+
       <section class="letter" id="why" aria-labelledby="why-h">
-        <figure>
-          <picture>
-            <source srcset="/about/talk-ai-tinkerers-speaker.webp" type="image/webp" />
-            <img src="/about/talk-ai-tinkerers-speaker.jpg" width="1600" height="1314" alt="Bilal Khizar speaking into a microphone beside a large screen showing the Sky Score map of London's flight paths." />
-          </picture>
-          <figcaption>Showing the map at AI Tinkerers London, 22 September 2026.</figcaption>
-        </figure>
         <div>
           <h2 id="why-h">Why I built it</h2>
           <p>I went to a property viewing, and while I was there a plane flew low overhead. The listing hadn't said a word about it.</p>
@@ -226,7 +310,7 @@
         </div>
       </section>
 
-      <section id="promises" aria-labelledby="promises-h">
+      <section class="band" id="promises" aria-labelledby="promises-h">
         <h2 id="promises-h">What you can hold us to</h2>
         <ul class="promises">
           <li><b>Every figure has a source.</b><span>Each one comes from the organisation that measured or published it, and is credited to them.</span></li>
@@ -239,7 +323,7 @@
 
       <section id="grew" aria-labelledby="grew-h">
         <h2 id="grew-h">How it grew</h2>
-        <ol class="grew">
+        <ol class="grew grid">
           <li>
             <time datetime="2026-03">March 2026</time>
             <div>
@@ -271,41 +355,63 @@
             <time datetime="2026-05">May 2026</time>
             <div>
               <h3>Data first</h3>
-              <p>Every figure now comes from the organisation that measures it, or is marked as our own estimate. Work began on an API, so businesses can use the same figures.</p>
+              <p>Every figure now comes from the organisation that measures it, or is marked as our own estimate. Work began on <a href="/api/">an API</a>, so businesses can use the same figures.</p>
             </div>
           </li>
           <li>
             <time datetime="2026-06">June 2026</time>
             <div>
               <h3>An iPhone app</h3>
-              <p>On the App Store, with a button that scores the place you are standing.</p>
+              <p>On <a href="https://apps.apple.com/gb/app/sky-score/id6768118116">the App Store</a>, with a button that scores the place you are standing.</p>
             </div>
           </li>
           <li>
             <time datetime="2026">Summer 2026</time>
             <div>
               <h3>Beyond London</h3>
-              <p>Nine more English city regions, from Greater Manchester to Teesside.</p>
+              <p><a href="/area/">Nine more English city regions</a>, from Greater Manchester to Teesside.</p>
+            </div>
+          </li>
+          <li class="talk">
+            <time datetime="2026-07-30">July 2026 &middot; Live demo</time>
+            <div>
+              <h3>Deen Developers' Build Night</h3>
+              <p>No pitching allowed: you open the thing and use it live, in front of everyone. <a href="#talks">So I did.</a></p>
+            </div>
+          </li>
+          <li class="talk">
+            <time datetime="2026-09-22">September 2026 &middot; Talk</time>
+            <div>
+              <h3>AI Tinkerers London</h3>
+              <p>I talked through the map on the big screen. <a href="https://london.aitinkerers.org/talks/rsvp_PqkfcAzQqdQ">The talk page and recording</a> (sign-in needed).</p>
             </div>
           </li>
           <li>
             <time datetime="2026-09">September 2026</time>
             <div>
               <h3>Flight paths from the official routes</h3>
-              <p>After feedback on Reddit, London's flight paths were redrawn from the routes published in the UK AIP (NATS).</p>
+              <p>After feedback on Reddit, London's flight paths were redrawn from <a href="/how-it-works/#credits">the routes published in the UK AIP (NATS)</a>.</p>
             </div>
           </li>
           <li>
             <time datetime="2026-10">October 2026</time>
             <div>
               <h3>The Bay Area, and the air nearby</h3>
-              <p>Fifty Bay Area cities, shown as facts without a score, and the air measured near a postcode, from Breathe London's sensors and the government's monitors.</p>
+              <p><a href="/bay-area/">Fifty Bay Area cities</a>, shown as facts without a score, and the air measured near a postcode, from Breathe London's sensors and the government's monitors.</p>
             </div>
-          </li>        </ol>
+          </li>
+          <li class="talk">
+            <time datetime="2026-10-14">October 2026 &middot; Talk and live demo</time>
+            <div>
+              <h3>London Geo Meetup</h3>
+              <p>&ldquo;From hackathon to live map&rdquo;: <a href="#talks">the stories behind the map</a>, told online.</p>
+            </div>
+          </li>
+        </ol>
         <p class="grew-more">Every change, with its date: <a href="/changes">What changed, and when</a>.</p>
       </section>
 
-      <section id="asked" aria-labelledby="asked-h">
+      <section class="band" id="asked" aria-labelledby="asked-h">
         <h2 id="asked-h">Questions people have asked</h2>
         <p class="asked-note">Asked out loud, by the audience at a talk.</p>
         <dl class="asked">

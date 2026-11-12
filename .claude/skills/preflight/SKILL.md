@@ -154,3 +154,9 @@ commit does not go out regardless of what else is green:
 - **Check a claim against the artefact before it goes into a commit message** (2026-10-23). A message said a photo
   showed "no faces but Bill's", copied from a memory note; the photo showed two other people. Open the image, diff
   or data the message describes first: a pushed message cannot be corrected without rewriting history.
+- **Never patch text that holds an escape sequence through a shell** (2026-11-09, the third time: 1 Sep, 19 Oct). A
+  Python-in-a-heredoc patch wrote JS `.join('\n')` into `tests/failure-path.mjs`; the `\n` arrived as a real newline,
+  the CRLF round-trip made it `\r\n`, and the file stopped parsing: preflight failed ESLint ("Unterminated string
+  constant") and "degraded + offline fallbacks". Two shell-quoted repairs repeated the fault; the Edit tool fixed it at
+  once. Any `\n`, `\t`, `\\`, a regex or a Windows path goes in with Edit (or a script written to a FILE), and every
+  patched `.mjs`/`.js` gets `node --check` (a `.py`, `python -m py_compile`) before the next step, not at preflight.

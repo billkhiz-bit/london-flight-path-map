@@ -15,20 +15,23 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
-import { districtOf, planesLinks, planesModel, planesNodes, planesWalk } from '/js/planes.mjs';
-import { exampleFigures } from '/js/home-sections.mjs';
+import { districtOf, planesLinks, planesModel, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
+import { EXAMPLE, bindPlaceBox, postcodeCompletions } from '/js/place-box.mjs';
+import { airFigure, airPanel, answerLead, exampleFigures, layerSteps } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
 import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
-  airNotes,
+  airNoteList,
   correctionHref,
   haveYourSay,
-  monitorLine,
+  monitorFact,
+  monitorSetting,
   nearestMonitor,
   nearestSensor,
   nearestStation,
-  sensorLine,
+  sensorFact,
+  sensorSetting,
   stationDistance,
 } from '/js/street_report.mjs';
 
@@ -58,7 +61,8 @@ const isMapCity = (k) => Object.hasOwn(CITY_NAME, k);
 // GoatCounter has no bounce rate, and "more interactive, fewer bounces" (Bill, 6 Oct) cannot be
 // judged without one. So the front page counts `front-engaged` ONCE per page view, at the first
 // action a visitor takes, and each way in once (`front-search`, `front-example`, `front-city`,
-// `front-map`): engaged views over views of / is the measure. Only a person's
+// `front-map`, and since 2026-11-04 `front-place-pick`, `front-fold-<which>`, `front-walk-<step>`, `front-dev-play`,
+// `front-dev-lang`, `front-full-map`: each the NAME of a control, never a postcode or anything typed): engaged views over views of / is the measure. Only a person's
 // actions count; a deep link runs search() at boot and is never engagement, so the calls sit
 // on the controls, not in search(). Like every page count, no cookie and no identifier
 // (privacy s2c). A way is recorded only once GoatCounter has taken it, and analytics must
@@ -67,7 +71,7 @@ const engagedWays = new Set();
 // Whether the visitor has done anything yet, counted or not (an ad blocker stops the count, never this):
 // the example answer gives way to it (search()).
 let acted = false;
-function engaged(way) {
+export function engaged(way) {
   acted = true;
   if (engagedWays.has(way)) return;
   try {
@@ -165,7 +169,9 @@ const hero = document.querySelector('.hero');
 // cut at the page's 30 km, and the coded arrivals. They used to be re-derived
 // here from the raw FAA record, with whole departures and no arrivals at all.
 const US = {
-  bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', routes: '/data/us-bayarea-routes.json', noiseDir: '/bay-area/' },
+  // `front`: each city's score from the score engine, its inputs in words with their sources and years, and the
+  // US-scales line (scripts/build_bayarea_front.py, 2026-11-07). Optional: without it a card says so, never "not scored".
+  bayarea: { places: '/data/us-bayarea-places.json', proc: '/data/us-flight-procedures.json', routes: '/data/us-bayarea-routes.json', noiseDir: '/bay-area/', front: '/data/us-bayarea-front.json' },
   // New York (Bill, 2026-10-06: "show on the main screen instead of going to the full map"):
   // the map's own outlines, the FAA's routes for JFK, LaGuardia, Newark and Teterboro, and
   // scripts/build_nyc_front.py's file - the US noise picture's frame and one row per borough
@@ -233,34 +239,6 @@ const state = {
 };
 
 
-// "For developers" (2026-10-19): Copy puts the request EXACTLY as shown on the clipboard, and says so in
-// a polite live region. Where the clipboard is refused (no permission, an old browser), the request is
-// selected instead and the visitor is told how to copy on THEIR device: Ctrl+C, Cmd+C on a Mac, the
-// menu on a phone or tablet ("Ctrl+C" showed on an iPhone: audit 2026-10-22, M-14). Copying counts as
-// engagement, like the other first actions, so B2B interest on this page can be read in GoatCounter.
-const COPY_HOW = /iPhone|iPad|iPod|Android/.test(navigator.userAgent)
-  ? 'Selected. Copy it from the menu.'
-  : `Selected. Press ${/Mac/.test(navigator.userAgent) ? 'Cmd+C' : 'Ctrl+C'} to copy.`;
-document.querySelectorAll('section.dev button.copy[data-copy]').forEach((button) => {
-  button.addEventListener('click', async () => {
-    const pre = byId(button.dataset.copy);
-    const status = byId('copy-status');
-    if (!pre) return;
-    engaged('api-copy');
-    try {
-      await navigator.clipboard.writeText(pre.textContent);
-      if (status) status.textContent = 'Copied. Paste it into a terminal.';
-    } catch {
-      const range = document.createRange();
-      range.selectNodeContents(pre);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      if (status) status.textContent = COPY_HOW;
-    }
-  });
-});
-
 const ramp = byId('ramp');
 // The ramp is the palette of the picture on the map: DEFRA's in England, BTS's
 // in the Bay Area. It was DEFRA's everywhere, so not one colour painted over
@@ -310,19 +288,27 @@ function parseCsv(text) {
 const rowFor = (name) => state.rows.find((r) => norm(r.borough) === norm(name)) || null;
 
 // The places the box answers by name (search(): council areas by rowFor, regions and cities by name), offered as the
-// visitor types (2026-11-02, Bill: a search "like other websites", "without imposing on privacy concerns"). A native
-// <datalist> filled from the rows the page already holds: nothing is fetched or sent while typing. Postcodes are not
-// listed (there are 1.8 million; the box takes any). No rows, no list: the box works as before.
+// visitor types (2026-11-02, Bill: a search "like other websites", "without imposing on privacy concerns"), from the rows
+// the page already holds, so a place name is not sent while typing. The start of a postcode is asked about (js/place-box.mjs). No rows,
+// no places: the box still works, and still offers its examples.
+const PLACE_EXAMPLES = () => [
+  { value: byId('ans-example')?.dataset.pc || EXAMPLE.postcode, note: 'a postcode, under Heathrow\u2019s arrivals' },
+  { value: 'Hounslow', note: 'a council area' },
+  { value: 'Palo Alto', note: 'a Bay Area city' },
+];
+const setPlaces = byId('pc') && byId('pc-list')
+  ? bindPlaceBox(byId('pc'), byId('pc-list'), PLACE_EXAMPLES(), (value) => {
+    const box = byId('pc');
+    box.value = value;
+    engaged('place-pick');
+    byId('check')?.requestSubmit();
+  }, { lookup: postcodeCompletions })
+  : () => {};
 function fillPlaces() {
-  const list = byId('pc-places');
-  if (!list) return;
-  const names = new Set([...state.rows.map((r) => r.borough), ...state.rows.map((r) => r.city_name), ...CITIES.map(([, n]) => n)]
-    .filter((n) => typeof n === 'string' && n.trim()));
-  list.replaceChildren(...[...names].sort((a, b) => a.localeCompare(b, 'en-GB')).map((n) => {
-    const o = document.createElement('option');
-    o.value = n;
-    return o;
-  }));
+  const councils = new Set(state.rows.map((r) => r.borough).filter((n) => typeof n === 'string' && n.trim()));
+  const regions = [...state.rows.map((r) => r.city_name), ...CITIES.map(([, n]) => n)].filter((n) => typeof n === 'string' && n.trim() && !councils.has(n));
+  setPlaces([...[...councils].map((name) => ({ name, kind: 'Council area' })), ...[...new Set(regions)].map((name) => ({ name, kind: 'City region' }))]
+    .sort((a, b) => a.name.localeCompare(b.name, 'en-GB')));
 }
 
 async function load() {
@@ -332,6 +318,14 @@ async function load() {
   // Campaign tags do not count as asking (Reddit, the best channel, links with them).
   const asked = new URLSearchParams(location.search);
   const plain = !wantFind && !['city', 'postcode', 'borough'].some((k) => asked.get(k));
+  // The example's lookups and planes files start now, beside the map's data, not after it: each is fetched once and kept, so
+  // search() finds them answered. They used to queue behind the map, and the third tile behind the first two.
+  if (plain) {
+    const pc = byId('ans-example')?.dataset.pc || '';
+    exampleAnswer();
+    // The planes layer's steps too: the example's heading may lead with its planes only where the layer colours them.
+    Promise.all([loadPlanes(pc), loadPlanesIndex(), layerSteps()]).catch(() => {});
+  }
   const [extra, proc, rasters, csv, nycDoc, crossings] = await Promise.all([
     d3.json('/data/borough-extra.json'), d3.json('/data/flight-procedures.json'), d3.json('/data/aircraft-noise-rasters.json'),
     d3.text(CSV).catch(() => ''),
@@ -353,8 +347,20 @@ async function load() {
   // /#find opens the Find areas tab (the card's link, or a link sent to someone). Not engagement:
   // nobody has done anything yet.
   if (wantFind && !document.querySelector('.tabs[role="tablist"]')?.hidden) setTab('find', { counted: false, keepCard: true });
-  // Not awaited: the page is ready now, and the example arrives when its two lookups do.
-  if (plain) search(byId('ans-example')?.dataset.pc || '', { example: true });
+  // The map is drawn: from here a search runs at once (the submit handler), and this decides what runs now.
+  booted = true;
+  const exampleText = byId('ans-example')?.dataset.pc || '';
+  // What runs now. A search the visitor sent while the page loaded is their latest wish: it runs, after a deep link's own
+  // (bootFromQuery, above), so it is the answer left on screen, and the example does not come. Otherwise a plain visit
+  // opens on the example, unless the visitor has already done something else (search() refuses it then too). Not
+  // awaited: the example arrives when its two lookups do, and however it ends (shown, failed, or overtaken by the
+  // visitor) its frame gives way.
+  if (early !== null) {
+    const text = early;
+    early = null;
+    search(text);
+  } else if (plain && !acted) search(exampleText, { example: true }).finally(endLoading);
+  else endLoading();
 }
 
 function renderChips() {
@@ -451,8 +457,11 @@ async function loadNyc() {
 }
 
 async function loadBayArea() {
-  const [places, proc, routes] = await Promise.all([d3.json(US.bayarea.places), d3.json(US.bayarea.proc), d3.json(US.bayarea.routes)]);
+  const [places, proc, routes, front] = await Promise.all([
+    d3.json(US.bayarea.places), d3.json(US.bayarea.proc), d3.json(US.bayarea.routes), d3.json(US.bayarea.front).catch(() => null),
+  ]);
   state.usProc = proc;
+  state.bayFront = front;
   state.usRoutes = routes;
   state.usPlaces = places;
   state.usNoise = { png: US.bayarea.noiseDir + places.noise.file, bbox: frameBox(places.frame) };
@@ -1024,6 +1033,8 @@ function openCard(html, { announce = true } = {}) {
   card.setAttribute('aria-live', announce ? 'polite' : 'off');
   card.innerHTML = html;
   card.classList.add('is-open');
+  // Option C: a card takes the answer's place, so no lead is on its way for this heading any more.
+  waitLead(false);
   panelState();
   card.querySelector('#borough-close')?.addEventListener('click', () => closeBorough(true));
 }
@@ -1069,17 +1080,23 @@ function panelState() {
   const panel = byId('answer')?.closest('.panel') || byId('borough')?.closest('.panel');
   if (!panel) return;
   panel.classList.toggle('has-result', Boolean(byId('answer')?.classList.contains('is-open') || byId('borough')?.classList.contains('is-open')));
+  // Option C: the heading says the answer's lead only while that answer is what the panel shows.
+  syncLead();
 }
 const closeButton = '<button type="button" id="borough-close" class="close" aria-label="Close">&times;</button>';
-function boroughCardHtml(row, f) {
-  const cityName = row.city_name || CITY_NAME[row.city] || '';
-  const onMap = Boolean(f);
-  const bars = COMPONENTS.map(([k, label]) => {
+// The five component rows of a card, one holder for the council-area card and the Bay Area's.
+function scoreBarsHtml(row) {
+  return COMPONENTS.map(([k, label]) => {
     const v = fmt1(row[k]);
     return v == null
       ? `<div class="row"><span>${label}</span><span class="bar"></span><span class="val">not scored</span></div>`
       : `<div class="row"><span>${label}</span><span class="bar"><i style="width:${Number(v) * 10}%"></i></span><span class="val">${v} / 10</span></div>`;
   }).join('');
+}
+function boroughCardHtml(row, f) {
+  const cityName = row.city_name || CITY_NAME[row.city] || '';
+  const onMap = Boolean(f);
+  const bars = scoreBarsHtml(row);
   const facts = CARD_FACTS.filter(([, col]) => col in row).map(([label, col, print]) => {
     const v = row[col];
     return `<div><dt>${label}</dt><dd>${v === '' || v == null ? 'not published for this area' : esc(print(v, row))}</dd></div>`;
@@ -1098,16 +1115,30 @@ function boroughCardHtml(row, f) {
     ${row.note ? `<p class="where">${esc(row.note)}</p>` : ''}
     <p class="more">${links}</p>`;
 }
+// A Bay Area city's card (2026-11-07: scored, Bill's call): the engine's score and its five components, the
+// US-scales line, then each input in words with its source and year, all from data/us-bayarea-front.json (never
+// typed here), then the flight-path facts it always had.
+function bayScoreHtml(row, zip) {
+  const score = fmt1(row.score);
+  const scoredAs = zip?.cityMajority ? `<p class="where">ZIP ${esc(zip.code)} is scored as ${esc(row.borough)}, where half or more of its residents live.</p>` : '';
+  return `<p class="score"><strong>${score}</strong><span>Sky Score out of 10, balanced weighting, method ${esc(row.methodology_version)}</span></p>
+    <p class="where">${esc(state.bayFront.us_scales)}</p>${scoredAs}
+    <div class="rows">${scoreBarsHtml(row)}</div>`;
+}
+const bayInputsHtml = (row) =>
+  row.facts.map(([label, figure, source]) => `<div><dt>${esc(label)}</dt><dd>${esc(figure)} <small>${esc(source)}</small></dd></div>`).join('');
 function placeCardHtml(f, zip) {
   const name = featureName(f);
   const ring = mainRing(f);
   const lat = d3.mean(ring, (p) => p[1]), lon = d3.mean(ring, (p) => p[0]);
   const near = nearestRunway(state.usProc, lat, lon);
+  const row = state.bayFront?.rows.find((r) => r.borough === name);
   return `${closeButton}
     <h2 tabindex="-1">${esc(name)}</h2>
-    <p class="where">${esc(f.properties.county)} County, California. Not scored: the Bay Area page shows where the routes are, not a score.</p>
-    <dl class="facts">${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div>${routesFactHtml(f)}</dl>
-    <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
+    <p class="where">${esc(f.properties.county)} County, California.${row ? '' : ' Its score could not be loaded just now.'}</p>
+    ${row ? bayScoreHtml(row, zip) : ''}
+    <dl class="facts">${row ? bayInputsHtml(row) : ''}${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div>${routesFactHtml(f)}</dl>
+    <p class="more">${row ? `<a href="${esc(row.area_page)}">Full scorecard</a> &middot; ` : ''}<a href="${MAP_PATH}?city=bayarea&amp;borough=${encodeURIComponent(name)}">Open on the full map</a> &middot; <a href="/bay-area/">The Bay Area page</a></p>`;
 }
 // The routes on the map are SFO's, OAK's and SJC's, but the FAA holds 23 more
 // airfields round the bay, and a card that named only the three told Livermore
@@ -1154,7 +1185,7 @@ function zipFactsHtml(zip) {
 function zipCardHtml(zip) {
   return `${closeButton}
     <h2 tabindex="-1">ZIP ${esc(zip.code)}</h2>
-    <p class="where">${esc(zip.county)} County, California. Not scored.</p>
+    <p class="where">${esc(zip.county)} County, California. No city holds half of its residents, so it takes no city's score.</p>
     <dl class="facts">${zipFactsHtml(zip)}</dl>
     <p class="more"><a href="/bay-area/">The Bay Area page</a></p>`;
 }
@@ -1209,10 +1240,28 @@ const form = byId('check');
 const status = byId('status');
 const answer = byId('answer');
 const say = (s) => { if (status) status.textContent = s; };
+// A SEARCH SENT BEFORE THE PAGE IS READY (2026-11-08). The box works from the first frame, but search() reads what load()
+// fetches (the map's councils, the CSV's rows, the routes): sent before them, a postcode threw in cityOf() and said "Could
+// not reach the data just now", which was not true, and a place name fell through to "not found". So until load() has
+// drawn the map (`booted`), a search is held, the latest one only, and load() decides what runs once it can.
+let booted = false;
+let early = null;
+// If load() fails, nothing a search reads will ever arrive: a held search waited for ever on "Looking it up..." (audit
+// M-2, 2026-11-09). It is said plainly instead, now and on every press after. Not a retry: load() binds the page's
+// controls, so running it twice would bind them twice.
+let bootFailed = false;
+const NOT_LOADED = 'The map\'s data did not load, so nothing can be looked up. Reloading the page usually fixes it.';
 form?.addEventListener('submit', (ev) => {
   ev.preventDefault();
   engaged('search');
-  search(byId('pc')?.value || '');
+  const text = byId('pc')?.value || '';
+  if (booted) { search(text); return; }
+  if (!text.trim()) return;
+  if (bootFailed) { say(NOT_LOADED); return; }
+  early = text;
+  // The example will not come now (its frame gives way), and the live region says the search was heard.
+  endLoading();
+  say('Looking it up...');
 });
 
 // A search has up to four awaits (the Bay Area names, postcodes.io, a city's outlines,
@@ -1225,6 +1274,7 @@ let searchSeq = 0;
 // THE EXAMPLE, COMPACT (front-page-v3 step 2): the answer stays whole in the page, shown as three tiles until the
 // visitor asks for the rest. Each tile is written from the live answer; a figure it lacks is no tile, never a zero.
 const examplePanel = () => answer?.closest('.panel');
+const endLoading = () => document.querySelector('.panel')?.classList.remove('is-loading');
 function tileNode({ figure, words }) {
   const tile = document.createElement('span');
   tile.className = 'ans-tile';
@@ -1239,7 +1289,8 @@ function showExampleTiles(e) {
   const more = byId('ans-more');
   examplePanel()?.classList.add('is-example');
   if (tiles) {
-    tiles.replaceChildren(...exampleFigures(e).map(tileNode));
+    tiles.replaceChildren(...exampleFigures(e).map(tileNode), tileNode({ figure: '\u00a0', words: '\u00a0' }));
+    tiles.lastElementChild.classList.add('is-waiting');
     tiles.hidden = false;
   }
   if (show) show.hidden = false;
@@ -1249,8 +1300,9 @@ function showExampleTiles(e) {
 function addPlanesTile(model) {
   const tiles = byId('ans-tiles');
   const lead = planesWalk(model)?.lead;
-  if (!tiles || tiles.hidden || !lead || !examplePanel()?.classList.contains('is-example')) return;
-  tiles.append(tileNode(lead));
+  if (!tiles || tiles.hidden || !examplePanel()?.classList.contains('is-example')) return;
+  tiles.querySelector('.is-waiting')?.remove();
+  if (lead) tiles.append(tileNode(lead));
 }
 function clearExampleTiles() {
   examplePanel()?.classList.remove('is-example', 'is-full');
@@ -1259,6 +1311,91 @@ function clearExampleTiles() {
   if (tiles) { tiles.hidden = true; tiles.replaceChildren(); }
   if (show) show.hidden = true;
 }
+
+// ---- OPTION C: the answer as the headline (review prototype, 2026-11-07; ROADMAP "answer first", option C) ----
+// Once an answer is on show (the example on arriving, or the visitor's own search), the hero's h1 says that answer's lead
+// finding, written from the answer by answerLead() (js/home-sections.mjs), never typed; with nothing true to lead with it
+// keeps the question. The h1 holds both in one grid cell (home/index.html): the question stays in place, unseen, so the
+// heading never shrinks, and the example's room is kept from the first frame and its lead fitted into it, so it never
+// grows either (tests/front-page.mjs measures the shift). The lead shows only while its answer does: a card, the Find tab
+// or a new search gives the heading back to the question. A visitor's own lead is said in #lead-said, politely; the
+// example's is not, as the example says nothing in the live region.
+const lead = { text: null, example: false, shown: '' };
+let headlineEls = null;
+function headline() {
+  if (headlineEls?.h1.isConnected) return headlineEls;
+  const h1 = document.querySelector('.panel h1');
+  if (!h1) return null;
+  // The front page writes the question in its span; a layout that does not (design/) has it wrapped here.
+  let q = h1.querySelector(':scope > .h1-q');
+  if (!q) {
+    q = document.createElement('span');
+    q.className = 'h1-q';
+    q.append(...h1.childNodes);
+    h1.append(q);
+  }
+  let a = h1.querySelector(':scope > .h1-a');
+  if (!a) {
+    a = document.createElement('span');
+    a.className = 'h1-a';
+    a.hidden = true;
+    h1.append(a);
+  }
+  headlineEls = { h1, q, a };
+  // A wider or narrower column, or the heading's font arriving, changes the room: the example's lead is fitted again.
+  if ('ResizeObserver' in window) new ResizeObserver(() => fitLead()).observe(q);
+  return headlineEls;
+}
+// Every lead, the example's and a visitor's alike (Bill, 2026-11-07: one size and treatment), fits the room the page keeps
+// for it, or its arrival would move the page: the heading's kept height (its min-height) or the question's, whichever is
+// taller. A long lead steps down in size until it fits, never below 0.7 of the heading's.
+function fitLead() {
+  const p = headlineEls;
+  if (!p || p.a.hidden) return;
+  p.a.style.fontSize = '';
+  const room = Math.max(parseFloat(getComputedStyle(p.h1).minHeight) || 0, p.q.getBoundingClientRect().height);
+  for (let size = 0.95; size >= 0.69 && p.a.getBoundingClientRect().height > room + 0.5; size -= 0.05) p.a.style.fontSize = `${size.toFixed(2)}em`;
+}
+function syncLead() {
+  const p = headline();
+  if (!p) return;
+  const on = Boolean(lead.text && answer?.classList.contains('is-open') && !byId('borough')?.classList.contains('is-open')
+    && !p.h1.closest('.panel')?.classList.contains('is-find'));
+  const key = on ? `${lead.example ? 'example' : 'own'}\n${lead.text}` : '';
+  if (key !== lead.shown) {
+    lead.shown = key;
+    p.h1.classList.toggle('has-lead', on);
+    p.a.hidden = !on;
+    p.a.replaceChildren();
+    if (on && lead.example) p.a.append(Object.assign(document.createElement('span'), { className: 'h1-ex', textContent: 'Example: ' }));
+    if (on) p.a.append(lead.text);
+  }
+  fitLead();
+}
+// While a lead is on its way the heading's room shows a skeleton line (home/index.html .h1-wait; Bill, 2026-11-07). Set when
+// a postcode's lookup starts; ended by the lead landing (or proving to be none), or by the search ending without an answer.
+function waitLead(on) {
+  headline()?.h1.classList.toggle('is-waiting', on);
+}
+function writeLead(text, { example = false } = {}) {
+  Object.assign(lead, { text: text || null, example });
+  syncLead();
+  // Only the answer on show ends the wait: a slower, earlier answer landing during a newer search leaves it waiting.
+  if (answer?.classList.contains('is-open')) waitLead(false);
+  const said = byId('lead-said');
+  if (said && !example && lead.shown) said.textContent = `${lead.text}.`;
+}
+function clearLead() {
+  lead.text = null;
+  waitLead(false);
+  syncLead();
+  const said = byId('lead-said');
+  if (said) said.textContent = '';
+}
+for (const fold of document.querySelectorAll('.ans-fold[data-fold]')) {
+  fold.addEventListener('toggle', () => { if (fold.open) engaged(`fold-${fold.dataset.fold}`); });
+}
+byId('map-full')?.addEventListener('click', () => engaged('full-map'));
 byId('ans-more')?.addEventListener('click', (ev) => {
   const open = examplePanel()?.classList.toggle('is-full') === true;
   ev.currentTarget.textContent = open ? 'Hide the full example' : 'Show the full example';
@@ -1274,12 +1411,19 @@ byId('ans-more')?.addEventListener('click', (ev) => {
 async function search(raw, { example = false } = {}) {
   const text = raw.trim();
   if (!text) return;
+  // The example gives way to anything the visitor has done, and must do so BEFORE it takes a number or clears a thing:
+  // it once took the newest number and cleared the answer first, so a visitor's search on its way became stale, the
+  // example stood down too, and the page showed neither (2026-11-08).
+  if (example && acted) return;
   const seq = ++searchSeq;
   const stale = () => seq !== searchSeq || (example && acted);
+  if (!example) endLoading();
   const label = byId('ans-example');
   if (label) label.hidden = true;
   clearExampleTiles();
   answer?.classList.remove('is-open');
+  // Option C: an earlier answer's lead never sits over a new search; until this one has its own, the question.
+  clearLead();
   clearPin();
   hideWant();
   // A place name first: a borough, a Bay Area city or a city region.
@@ -1325,9 +1469,12 @@ async function search(raw, { example = false } = {}) {
   if (/^\d{5}$/.test(pc)) { await searchZip(pc, stale); return; }
   if (!example) say('Looking it up...');
   closeBorough(false);
+  // Option C: the heading's skeleton line shows until this answer's lead lands; if no answer comes, the wait ends here.
+  waitLead(true);
+  let rendered = false;
   try {
-    // The example's two lookups are exampleAnswer()'s, shared with the walkthrough below the map (one pair of
-    // requests for both); a visitor's own search makes its own.
+    // The example's lookup is exampleAnswer()'s, shared with the walkthrough below the map (one request for both); a
+    // visitor's own search makes its own.
     const ex = example ? await exampleAnswer() : null;
     const geo = example ? { result: ex?.geo ?? null } : await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc.replace(/\s+/g, ''))}`)).json();
     if (stale()) return;
@@ -1338,11 +1485,20 @@ async function search(raw, { example = false } = {}) {
     // screen is how the live site once told a Norwich reader about Stansted.
     if (city && city !== state.city) await show(city, { lat, lon }); else if (city) draw({ lat, lon });
     if (stale()) return;
-    const env = example ? ex.env : await (await fetch(`${ENV}?lat=${lat}&lon=${lon}`)).json();
+    const res = example ? null : await fetch(`${ENV}?lat=${lat}&lon=${lon}`);
+    const env = example ? ex.env : await res.json();
     if (stale()) return;
-    if (!env.environment) { if (!example) say(env.error || 'No figures for that spot.'); return; }
+    // Only our Lambda's answers carry `error` (its 404, its 503 when its postcode lookup fails). API Gateway's own carry
+    // `message`, and since 2026-11-07 a browser can read them (template.yaml GatewayResponses): a throttle or a gateway
+    // failure is not a place with no figures, so it must never read as "No figures for that spot".
+    const failed = res && !res.ok && !env.error;
+    if (!env.environment) {
+      if (!example) say(failed ? (res.status === 429 ? 'The data is busy just now. Try again in a moment.' : 'Could not reach the data just now. Try again in a moment.') : env.error || 'No figures for that spot.');
+      return;
+    }
     if (example) {
-      render(geo.result.postcode, district, city, env.environment, lat, lon);
+      render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance, { example: true });
+      rendered = true;
       if (label) label.hidden = false;
       // The heading says it too: "Example: TW9 3PZ, Kew". render() wrote the bare postcode, and the visitor's own
       // search writes theirs over it, so the prefix can only ever sit on the example.
@@ -1361,11 +1517,16 @@ async function search(raw, { example = false } = {}) {
     // and it went from "Looking it up..." to empty, so a screen-reader user
     // heard nothing when the figures arrived (audit 2026-10-05 M-14).
     say(city ? `Showing the figures for ${geo.result.postcode}.` : `${geo.result.postcode} is outside the cities on the map. Here are the figures we hold for it.`);
-    render(geo.result.postcode, district, city, env.environment, lat, lon);
+    render(geo.result.postcode, district, city, env.environment, lat, lon, env.provenance);
+    rendered = true;
     setQuery({ city: city || state.city, postcode: geo.result.postcode });
   } catch {
     // A stale search's failure is not this one's: say nothing over the newer answer. Nor the example's own.
     if (!stale() && !example) say('Could not reach the data just now. Try again in a moment.');
+  } finally {
+    // No answer, so no lead is coming. A newer search owns the wait; an example given way to a visitor's other action
+    // (a city, a tab) does not, so it ends here too.
+    if (!rendered && seq === searchSeq) waitLead(false);
   }
 }
 // ---- a US ZIP: the Census's ZIP areas for the four Bay Area counties ----
@@ -1476,19 +1637,19 @@ async function loadPlanes(postcode) {
 // ---- the example's figures, for the walkthrough below the map (front-page-v3, 2026-11-03) ----
 // The walkthrough ("From a postcode to a sourced answer", js/home-sections.mjs) SHOWS what a search gives with the
 // example's own answer, never a figure typed into the page: these hand it the same lookups and files the answer
-// above reads. exampleAnswer() is the example's postcodes.io and /v1/environment pair, made once and shared with
-// search(), so the walkthrough costs no second pair; it resolves to { geo, env } or null (not found, no figures, a
-// failed fetch), and a failure is retried on the next call, as the planes files are. A deep link never runs the
+// above reads. exampleAnswer() is the example's /v1/environment request at its held point, made once and shared with
+// search(), so the walkthrough costs no second one; it resolves to { geo, env } or null (no figures, a failed fetch,
+// a page naming another example), and a failure is retried on the next call, as the planes files are. A deep link never runs the
 // example, so then the walkthrough asks for it itself when it comes near the screen.
 let exampleLoad = null;
 export function exampleAnswer() {
-  const pc = (byId('ans-example')?.dataset.pc || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (!pc) return Promise.resolve(null);
+  // The point is held, so arriving asks postcodes.io nothing; it asks OUR API once, at that point (audit M-7, 2026-11-09:
+  // the route's one shared bucket, 5 a second, can be emptied, and then the example is not shown). A page naming another
+  // example has no point here.
+  if (byId('ans-example')?.dataset.pc !== EXAMPLE.postcode) return Promise.resolve(null);
   exampleLoad ??= (async () => {
-    const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`)).json();
-    if (!geo?.result) return null;
-    const env = await (await fetch(`${ENV}?lat=${geo.result.latitude}&lon=${geo.result.longitude}`)).json();
-    return env?.environment ? { geo: geo.result, env } : null;
+    const env = await (await fetch(`${ENV}?lat=${EXAMPLE.latitude}&lon=${EXAMPLE.longitude}`)).json();
+    return env?.environment ? { geo: EXAMPLE, env } : null;
   })().catch(() => null).then((found) => {
     if (!found) exampleLoad = null;
     return found;
@@ -1500,8 +1661,48 @@ export const planesFilesFor = (postcode) => loadPlanes(postcode);
 /** [Breathe London sensors, DEFRA monitors], the answer's own files (fetched once, kept). */
 export const airFiles = () => Promise.all([loadSensors(), loadMonitors()]);
 
-function render(postcode, district, city, e, lat, lon) {
+/** A Nearby tile's big figure (Bill's pick A, 2026-11-10: the answer's lower half as tiles, like its top), TAKEN FROM THE
+ *  FACT'S OWN WORDS, never worked out again: the distance to an airport or a station, an approach's height, an air
+ *  reading's first concentration. null when the words hold none (the tile then shows its words alone). */
+export function nearbyFigure(label, text) {
+  const pick = (re) => { const m = re.exec(String(text ?? '')); return m ? m[1] : null; };
+  if (label === 'Airport') return pick(/(\d+(?:\.\d+)? km)/);
+  if (label === 'Station') return pick(/(\d+(?:\.\d+)? k?m) in a straight line/);
+  if (label === 'Flight path' || label === 'Flight paths') { const h = pick(/about ([\d,]+ ft)/); return h ? `~${h}` : null; }
+  if (label === 'Air sensor' || label === 'Air monitor') return pick(/(\d+(?:\.\d+)? µg\/m³)/);
+  return null;
+}
+// One tile of the answer's Nearby list: what it is, then the fact, its words unchanged (the tests and a screen reader
+// read them); the big figure is drawn by CSS from data-fig, so it is never read twice. A long fact spans the row.
+const WIDE_FROM = 60;
+function factRow(label, text) {
+  const row = document.createElement('div');
+  row.className = String(text).length > WIDE_FROM ? 'fact is-wide' : 'fact';
+  const fig = nearbyFigure(label, text);
+  if (fig) row.dataset.fig = fig;
+  row.append(Object.assign(document.createElement('span'), { className: 'k', textContent: label }), Object.assign(document.createElement('span'), { textContent: text }));
+  return row;
+}
+// routesText() speaks in sentences; the list wants what each is about. A sentence it does not recognise is kept whole.
+function routeFacts(text) {
+  return text.split(/(?<=\.)\s+/).filter(Boolean).map((sentence) => {
+    // Both of routesText()'s airport sentences: one whose routes are not drawn (Gatwick, Stansted, Luton) is "Nearest
+    // airport", and fell through to a second "Flight paths" row with no Airport row (audit M-4, 2026-11-09). Its own
+    // "Routes: ... not drawn here" sentence still says so, under Flight paths.
+    const airport = /^Nearest airport(?: on the map)?: (.*?)\.?$/.exec(sentence);
+    const approach = /^Nearest published approach: (.*?)\.?$/.exec(sentence);
+    return airport ? factRow('Airport', airport[1]) : approach ? factRow('Flight path', approach[1]) : factRow('Flight paths', sentence);
+  });
+}
+
+function render(postcode, district, city, e, lat, lon, prov = {}, { example = false } = {}) {
   const title = byId('ans-title'), where = byId('ans-where');
+  // Option C: this answer's lead, written once its planes are known (they may lead it), so the heading changes once. Never
+  // a throw into the planes block's chain: a fault here keeps the question and is said in the console.
+  lead.text = null;
+  const leadFrom = (model, steps = []) => {
+    try { writeLead(answerLead(e, postcode, model, steps), { example }); } catch (err) { console.error('The headline keeps the question: its lead could not be written.', err); }
+  };
   if (title) title.textContent = postcode;
   if (where) where.textContent = district + (city ? '' : ' (not yet on the map: figures only)');
   const bar = (v, who) => { const max = who * 2; return `<span class="bar"><i style="width:${Math.min(100, (v / max) * 100)}%"></i><b style="left:${(who / max) * 100}%" title="WHO guideline ${who}"></b></span>`; };
@@ -1541,15 +1742,27 @@ function render(postcode, district, city, e, lat, lon) {
   if (planes) {
     planes.hidden = true;
     planes.replaceChildren();
+    const notes = byId('ans-planes-notes');
+    if (notes) {
+      notes.hidden = true;
+      notes.replaceChildren();
+    }
     // As for the station and the air: a later search owns the block. Not tied to the map's cities: the files
     // cover every council the score covers (Nottingham's are under East Midlands' flights), and say who is in.
     const seq = ++planesSeq;
-    Promise.all([loadPlanes(postcode), loadPlanesIndex()]).then(([[file, info], index]) => {
+    // The layer's steps (option C's heading) never fail: without them it is [] and the planes do not lead.
+    Promise.all([loadPlanes(postcode), loadPlanesIndex(), layerSteps()]).then(([[file, info], index, steps]) => {
       if (seq !== planesSeq) return;
       const model = planesModel(file, info, postcode);
+      leadFrom(model, steps);
       if (!model) return;
       planes.append(...planesNodes(model, document, planesLinks(index, postcode, model)));
       planes.hidden = false;
+      const notes = byId('ans-planes-notes');
+      if (notes) {
+        notes.replaceChildren(...planesNotes(model, document, steps));
+        notes.hidden = false;
+      }
       addPlanesTile(model);
     }).catch((err) => {
       // A file the model cannot read (a field missing after a part-deployed roll) hides the block, as a failed
@@ -1559,30 +1772,42 @@ function render(postcode, district, city, e, lat, lon) {
       if (seq !== planesSeq) return;
       planes.hidden = true;
       planes.replaceChildren();
+      // The block is hidden, so the heading may not lead with what it would have said.
+      leadFrom(null);
     });
+  } else {
+    // After this answer opens, as the planes' lead would land.
+    Promise.resolve().then(() => leadFrom(null));
   }
 
   const routes = byId('ans-routes');
-  if (routes) routes.textContent = city && state.proc ? routesText(state.proc, lat, lon) : '';
+  if (routes) routes.replaceChildren(...routeFacts(city && state.proc ? routesText(state.proc, lat, lon) : ''));
   const station = byId('ans-station');
   if (station) {
     station.hidden = true;
-    station.textContent = '';
+    station.replaceChildren();
+    station.className = 'fact';
+    delete station.dataset.fig;
     // A later search owns the line: an earlier one's list landing late must not write it.
     const seq = ++stationSeq;
     if (city) {
       loadStations().then((list) => {
         const near = list && seq === stationSeq ? nearestStation(list, lat, lon) : null;
         if (!near) return;
-        station.textContent = `Nearest station: ${near.name}, ${stationDistance(near.km)} in a straight line.`;
+        const tile = factRow('Station', `${near.name}, ${stationDistance(near.km)} in a straight line`);
+        station.replaceChildren(...tile.childNodes);
+        station.className = tile.className;
+        if (tile.dataset.fig) station.dataset.fig = tile.dataset.fig;
         station.hidden = false;
       });
     }
   }
   const air = byId('ans-air');
+  const airNear = byId('ans-air-near');
   if (air) {
     air.hidden = true;
     air.replaceChildren();
+    airNear?.replaceChildren();
     // As for the station: a later search owns the block.
     const seq = ++airSeq;
     if (city) {
@@ -1592,10 +1817,29 @@ function render(postcode, district, city, e, lat, lon) {
         const monitor = monitors ? nearestMonitor(monitors, lat, lon) : null;
         if (!sensor && !monitor) return;
         const para = (className, text) => Object.assign(document.createElement('p'), { className, textContent: text });
-        if (sensor) air.append(para('', sensorLine(sensor)));
-        if (monitor) air.append(para('', monitorLine(monitor)));
-        air.append(para('air-note', airNotes(sensor, monitor)));
-        const credit = para('air-credit', '');
+        const chart = airPanel(e, prov, sensor, monitor);
+        if (chart) air.append(airFigure(chart));
+        // Less text (Bill, 2026-11-11: "still text heavy"): the readings are the chart and the Nearby tiles above, so the
+        // fold keeps what neither says: where each instrument stands (a sensor's kerb distance changes what it reads), and
+        // the notes as points, from the one holder the report and the full map read as a paragraph (airNoteList).
+        const chips = document.createElement('p');
+        chips.className = 'fold-chips';
+        if (sensor) chips.append(Object.assign(document.createElement('span'), { textContent: `${sensor.name} sensor: ${sensorSetting(sensor)}` }));
+        if (monitor) chips.append(Object.assign(document.createElement('span'), { textContent: `${monitor.name} monitor: ${monitorSetting(monitor)}` }));
+        air.append(chips);
+        if (sensor) airNear?.append(factRow('Air sensor', sensorFact(sensor)));
+        if (monitor) airNear?.append(factRow('Air monitor', monitorFact(monitor)));
+        const keys = document.createElement('ul');
+        keys.className = 'fold-keys air-note';
+        for (const n of airNoteList(sensor, monitor)) {
+          const li = document.createElement('li');
+          const mark = Object.assign(document.createElement('b'), { textContent: n.mark });
+          mark.setAttribute('aria-hidden', 'true');
+          li.append(mark, Object.assign(document.createElement('span'), { textContent: n.text }));
+          keys.append(li);
+        }
+        air.append(keys);
+        const credit = para('air-credit fold-src', '');
         for (const c of [sensor?.credit, monitor?.credit].filter(Boolean)) {
           if (credit.childNodes.length) credit.append(' ');
           credit.append(Object.assign(document.createElement('a'), { href: c.href, textContent: c.text }));
@@ -1614,9 +1858,16 @@ function render(postcode, district, city, e, lat, lon) {
     sayEl.replaceChildren();
     const say = city && state.proc ? haveYourSay(routesNear(state.proc, plane(lat, lon), AIRPORT_SCOPE_KM)) : null;
     if (say) {
-      sayEl.append('Have your say: ');
-      say.links.forEach((l, i) => sayEl.append(...(i ? [' · ', anchorFor(l)] : [anchorFor(l)])));
-      sayEl.append(". Flight paths change through the CAA's airspace change process: ", anchorFor(say.change), ' shows each proposal and the stage it has reached.');
+      const links = document.createElement('ul');
+      links.className = 'say-links';
+      for (const l of say.links) {
+        const item = document.createElement('li');
+        item.append(anchorFor(l));
+        links.append(item);
+      }
+      const change = document.createElement('p');
+      change.append("Flight paths change through the CAA's airspace change process: ", anchorFor(say.change), ' shows each proposal and the stage it has reached.');
+      sayEl.append(links, change);
       sayEl.hidden = false;
     }
   }
@@ -1624,13 +1875,14 @@ function render(postcode, district, city, e, lat, lon) {
   if (wrong) {
     wrong.replaceChildren();
     wrong.hidden = !city;
-    if (city) wrong.append('Spotted something wrong? ', anchorFor({ href: correctionHref(postcode), text: 'Tell us' }), ': local knowledge is the best check on data like this.');
+    if (city) wrong.append(anchorFor({ href: correctionHref(postcode), text: 'Tell us' }), ': local knowledge is the best check on data like this.');
   }
   const area = byId('ans-area');
   if (area) {
     const row = city ? rowFor(district) : null;
     area.innerHTML = row
-      ? `Council area: <b>${esc(row.borough)}</b>${row.score !== '' ? `, Sky Score ${esc(row.score)}` : ''}${row.flood_medium_or_high_pct !== '' ? `, ${esc(row.flood_medium_or_high_pct)}% of postcodes at medium or high flood risk` : ''}. <button type="button" class="linkish" id="ans-open-area">Its figures</button> &middot; <a href="/how-it-works/">How it is worked out</a>`
+      // A small card (Bill's pick A, 2026-11-10): the council, its score and flood share as chips, then its two links.
+      ? `<span class="area-k">Council area</span> <b>${esc(row.borough)}</b><span class="area-chips">${row.score !== '' ? `<span class="area-chip">Sky Score ${esc(row.score)} / 10</span> ` : ''}${row.flood_medium_or_high_pct !== '' ? `<span class="area-chip">${esc(row.flood_medium_or_high_pct)}% of postcodes at medium or high flood risk</span>` : ''}</span><span class="area-links"><button type="button" class="linkish" id="ans-open-area">Its figures</button> &middot; <a href="/how-it-works/">How it is worked out</a></span>`
       : '';
     area.querySelector('#ans-open-area')?.addEventListener('click', () => selectBorough(row.borough, { scroll: true, focus: true }));
   }
@@ -1871,6 +2123,8 @@ function setTab(name, { focus = false, counted = true, keepCard = false } = {}) 
   const card = byId('borough'), home = byId(`panel-${name}`);
   if (card && home && card.parentElement !== home) home.appendChild(card);
   panel?.classList.toggle('is-find', name === 'find');
+  // Option C: on Find areas the heading is the question; back on the check tab, the answer's lead returns with the answer.
+  syncLead();
   // The address says which tab is open, so a reload or a shared link comes back to it.
   history.replaceState(null, '', location.pathname + location.search + (name === 'find' ? '#find' : ''));
   if (name === 'find') {
@@ -2032,4 +2286,11 @@ function bindFit() {
   tablist.hidden = false;
 }
 
-load().catch((e) => say(`The map could not load: ${e.message}`));
+load().catch((e) => {
+  bootFailed = true;
+  // A search held while it loaded is answered now, and the example's frame gives way: nothing is coming to fill it.
+  const held = early !== null;
+  early = null;
+  endLoading();
+  say(held ? NOT_LOADED : `The map could not load: ${e.message}`);
+});

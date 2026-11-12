@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Reports: one page of official figures for a street or an area - Sky Score</title>
-    <meta name="description" content="One-page reports built from official data: aircraft noise for a single address, with the published approach that passes it, or an air and noise summary for a whole area. Free for residents' groups." />
+    <title>Reports: official figures for a street or an area - Sky Score</title>
+    <meta name="description" content="Short reports built from official data: aircraft noise for a single address, with the published approach that passes it, or an air and noise summary for a whole area. Free for residents' groups." />
     <link rel="canonical" href="https://skyscore.co.uk/reports/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://skyscore.co.uk/reports/" />
     <meta property="og:title" content="Reports - Sky Score" />
-    <meta property="og:description" content="One page of official figures for a street or an area: aircraft noise, the published flight routes, air quality and flood risk, each with its source." />
+    <meta property="og:description" content="Official figures for a street or an area: aircraft noise, the published flight routes, air quality and flood risk, each with its source." />
     <meta property="og:site_name" content="Sky Score" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
     <!--
@@ -110,8 +110,8 @@
       </nav>
     </header>
     <main>
-      <h1>One page of official figures, for a street or a whole area</h1>
-      <p class="lead">Every number on a report comes from a public body's own published data, with the source and its date printed beside it. Nothing is estimated by us unless it says so.</p>
+      <h1>Official figures, for a street or a whole area</h1>
+      <p class="lead">Every number on a report comes from a public body's own published data, or, for the planes overhead, from community flight tracking checked against the CAA's monthly totals, with the source and its date printed beside it. Nothing is estimated by us unless it says so.</p>
 
       <div class="reports">
         <article>
@@ -122,6 +122,8 @@
             <li>The nearest published routes, with the aircraft's height on the glide path</li>
             <li>How the postcode compares with its neighbours in the same district</li>
             <li>A map of the routes round it, from the official aeronautical publication</li>
+            <li>The planes overhead a day, by which way the airport is flying, where we count them</li>
+            <li>Road noise and the air at the postcode, against the WHO guidelines</li>
           </ul>
           <p class="for"><b>For:</b> buyers and renters (free for your own home), buying agents and relocation firms, conveyancers and surveyors (<a href="/pricing#reports">prices</a>).</p>
           <div class="actions"><a class="go" href="/reports/street/">Make yours, free</a><a class="go quiet" href="/reports/sample-street-report-kew.pdf">See a sample (Kew, TW9; PDF)</a></div>
@@ -142,17 +144,17 @@
 
       <h2 class="sec">How a report is made</h2>
       <div class="how">
-        <div><h3>Official sources only</h3>DEFRA's noise and air maps, the aeronautical publications the routes are drawn from, and the Environment Agency's flood map. Each figure carries its source and date.</div>
+        <div><h3>Published sources</h3>DEFRA's noise and air maps, the aeronautical publications the routes are drawn from, and the Environment Agency's flood map. The planes overhead are counted from community flight tracking, only for airports whose counts check out against the CAA's monthly totals. Each figure carries its source and date.</div>
         <div><h3>Checked before it leaves</h3>The checks that gate the website run on the data a report reads: the flight routes are rebuilt from the published aeronautical information and checked on every release, the noise map's colours against DEFRA's own, and an area's flood figures against the Environment Agency's own service.</div>
         <div><h3>Honest about estimates</h3>Where the noise map has no reading for a street, the report says so and shows our estimate from the published routes as an estimate, never as a measurement.</div>
-        <div><h3>What it does not say</h3>How often aircraft fly a route: the official files say where the routes are, not their traffic. And nothing about a property we have not measured.</div>
+        <div><h3>What it does not say</h3>How often aircraft fly each route: the official files say where the routes are, not their traffic, and the planes overhead are counted at the postcode, never per route. And nothing about a property we have not measured.</div>
       </div>
 
       <h2 class="sec" id="prices">What it costs</h2>
       <p class="note">Free for your own home, read on screen, and free for residents' groups. Firms pay per report and councils per study, and every price is on <a href="/pricing#reports">the pricing page</a>. A report is not a conveyancing search or a survey and does not replace either. Street reports cover the city regions on <a href="/map/">the map</a>; an area summary can also cover an area the API previews, such as Greater Norwich in the sample.</p>
     </main>
     <footer>
-      <span>All figures from official public data.</span>
+      <span>Figures from official public data and community flight tracking.</span>
       <span><a href="/map/">Full map</a> &middot; <a href="/pricing">Pricing</a> &middot; <a href="/area/">Council areas</a> &middot; <a href="/about/">About</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a> &middot; <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">Method</a></span>
     </footer>
     <script type="module" src="/js/count.mjs"></script>

@@ -1,5 +1,7 @@
 /**
- * Aircraft-noise report for ONE postcode, as a one-page PDF.
+ * Aircraft-noise report for ONE postcode, as a three-page PDF, the answer first (Bill's pick 2026-11-11 v2, built
+ * 2026-11-12): page 1 the cards, key figures, map and details; page 2 the aircraft and road detail; page 3 the air and the
+ * notes, in bigger type. One page until 2026-11-11, two (Bill's pick C) for a day. A fourth page is refused.
  *
  *   node scripts/address_noise_report.mjs --postcode "TW9 3PZ" --place "Kew" \
  *     --sample --out ~/OneDrive/Desktop/aircraft-noise-report.pdf
@@ -26,8 +28,10 @@
  *     keep terminated ones;
  *   - the 2021-vs-a-normal-year caveat (the CAA's latest Heathrow contours): data/covid-understatement.json.
  *
- * WHAT IT DELIBERATELY DOES NOT SAY. How OFTEN aircraft pass: that is N65,
- * which this product does not hold. Any adjective for the level ("severe",
+ * WHAT IT DELIBERATELY DOES NOT SAY. How OFTEN aircraft pass, except through
+ * js/planes.mjs from data/planes/ (since 2026-11-11, the planes chart every surface
+ * draws), never a figure of its own; not N65, which this product does not hold.
+ * Any adjective for the level ("severe",
  * "acceptable"): the page compares with the WHO guideline and stops there.
  * A height for departures: the AIP record carries none.
  * No em dashes in the output, matching the site's rule.
@@ -39,7 +43,7 @@
  */
 import { chromium } from '@playwright/test';
 import { existsSync } from 'node:fs';
-import { readFile, rename, writeFile } from 'node:fs/promises';
+import { readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -49,6 +53,7 @@ import {
   LONDON_RASTER,
   ROUTE_RADIUS_KM,
   SCOPE_KM,
+  checkLink,
   districtComparison,
   mapSvg,
   nearestMonitor,
@@ -56,7 +61,9 @@ import {
   nearestStation,
   rasterFor,
   reportDocument,
+  reportReference,
 } from '../js/street_report.mjs';
+import { districtOf, planesModel } from '../js/planes.mjs';
 
 const API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment';
 
@@ -68,6 +75,7 @@ function args(argv) {
     else if (k === '--place') ((out.place = v), i++);
     else if (k === '--out') ((out.out = v), i++);
     else if (k === '--sample') out.sample = true;
+    else if (k === '--keep-html') out.keepHtml = true;
     else throw new Error(`unknown argument ${k}`);
   }
   if (!out.postcode) throw new Error('usage: --postcode "TW9 3PZ" [--place "Kew"] [--sample] [--out file.pdf]');
@@ -167,9 +175,23 @@ const quiet = {
   ...(await readJson('data/aircraft-quiet-regions.json')).quiet,
 };
 const district = await districtComparison(quiet, loc.outcode, env.aircraftQuiet, livePostcodes);
+// PLANES OVERHEAD (Bill's pick C, 2026-11-11), read through js/planes.mjs as every surface reads them. The airports'
+// rules and the layer's steps must be here (planes-deploy builds them): without them the report would drop its chart
+// in silence, so it refuses. A district with no file of its own is not counted, and the report says nothing of planes.
+for (const need of ['data/planes/airports.json', 'data/planes-layer/index.json']) {
+  if (!existsSync(resolve(need))) throw new Error(`${need} is missing: build the planes files before printing a report`);
+}
+const planesInfo = await readJson('data/planes/airports.json');
+const planesFile = resolve(`data/planes/${districtOf(loc.postcode)}.json`);
+const planesHere = existsSync(planesFile) ? planesModel(await readJson(planesFile), planesInfo, loc.postcode) : null;
+const layerSteps = (await readJson('data/planes-layer/index.json')).steps || [];
 
+// THE REFERENCE AND CHECK LINK the free copy carries (js/street_report.mjs, one holder), for the day in UTC as the free
+// copy takes it, so a firm's copy can be checked at /reports/street/ exactly as a resident's can (2026-11-12).
+const made = new Date().toISOString().slice(0, 10);
+const ref = await reportReference(loc.postcode, made, proc.airac, env);
 const html = reportDocument(
-  spec,
+  { ...spec, made, ref, check: checkLink(loc.postcode, made, ref) },
   {
     postcode: loc.postcode,
     council: loc.admin_district,
@@ -177,6 +199,8 @@ const html = reportDocument(
     resolvedAs,
     notices: envBody.notices,
     env,
+    provenance: envBody.provenance,
+    planes: { model: planesHere, steps: layerSteps },
     routes,
     district,
     covid: await readJson('data/covid-understatement.json'),
@@ -210,25 +234,32 @@ try {
   await pg.goto(pathToFileURL(htmlPath).href, { waitUntil: 'load' });
   const tmp = spec.out.replace(/\.pdf$/i, '.NEW.pdf');
   const pdf = await pg.pdf({ path: tmp, format: 'A4', printBackground: true, preferCSSPageSize: true, tagged: true });
-  // It is sold as ONE page. Count the page objects rather than trusting the layout.
+  // It is sold as three fixed pages (Bill's pick, 2026-11-11 v2; built 2026-11-12): the answer, the noise detail, the air
+  // and the notes. Count the page objects rather than trusting the layout. A fourth page is REFUSED: the new file is
+  // removed and the last good one left where it was (audit M-8, 2026-11-12: it used to be written over it, then exit 1).
   const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
-  if (pages !== 1) {
-    console.error(`the report ran to ${pages} pages, not 1 - shorten it before sending`);
+  if (pages > 3) {
+    console.error(`the report ran to ${pages} pages, not 3 - fit it before sending; ${spec.out} was left as it was`);
     process.exitCode = 1;
-  }
-  try {
-    await rename(tmp, spec.out);
-  } catch (e) {
-    console.error(`Could not replace ${spec.out} - close it in any PDF viewer and re-run. (${e.code})`);
-    process.exitCode = 1;
+    await unlink(tmp).catch(() => {});
+  } else {
+    try {
+      await rename(tmp, spec.out);
+    } catch (e) {
+      console.error(`Could not replace ${spec.out} - close it in any PDF viewer and re-run. (${e.code})`);
+      process.exitCode = 1;
+    }
   }
 } finally {
   await browser.close();
+  // The page the PDF was printed from is a working file. Left beside a PDF written into home/reports/, home-deploy's
+  // `--include "*.html"` would publish it as /reports/<name>.html (2026-11-11, caught before a deploy): gone unless asked for.
+  if (!spec.keepHtml) await unlink(htmlPath).catch(() => {});
 }
 const listed =
   routes.finals.filter((x) => x.dist <= ROUTE_RADIUS_KM).length +
   routes.departures.filter((x) => x.dist <= ROUTE_RADIUS_KM).length;
 console.log(
-  `${loc.postcode} (${loc.admin_district}): aircraft ${typeof env.aircraftNoiseLdenDb === 'number' ? `${env.aircraftNoiseLdenDb} dB measured` : 'not measured'}, ` +
+  `${loc.postcode} (${loc.admin_district}): aircraft ${typeof env.aircraftNoiseLdenDb === 'number' ? `${env.aircraftNoiseLdenDb} dB on DEFRA's map (modelled)` : 'no DEFRA figure'}, ` +
     `${listed} routes within ${ROUTE_RADIUS_KM} km, district comparison ${district ? `${district.n} live postcodes` : 'none'}\n  ${spec.out}`
 );

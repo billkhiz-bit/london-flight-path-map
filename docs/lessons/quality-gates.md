@@ -99,3 +99,14 @@ matched the log counts WITH the regions calls). The stub now sends every non-sco
 the key (`route.fallback` with the header removed; the route is open, so the page renders the same answer). Proof is
 the same log: the demo key's calls during the next full preflight, against 13 per run before. Lesson: an "it costs
 nothing" premise is a measurement to repeat, not a fact to keep.
+
+## One log for every preflight run (2026-11-08)
+
+Bill's progress panel (4 Nov) shows a job only when something writes `~/.claude/progress/job.json`, so a run he
+started himself showed nothing. `preflight.sh` now runs itself again through `tee .preflight/last.log`. The trap is
+the one this file's header records: a pipeline exits with its last stage, tee, always 0. So the inner run writes its
+code to `.preflight/last.exit` and the outer run exits with that (none there exits 2). `tests/test_preflight_log.py`
+runs the real block, cut from the script, in front of a stand-in exiting 0, 1 and 3; replacing `exit "$code"` with
+`exit $?` turned the 1 and the 3 into 0 and the test red. The pointer's stage count and expected time come from the
+previous run's own log and `last.ms`, never a number typed in (107 had been quoted; 8 Nov's run had 109). Edit
+`preflight.sh` only where no run is going: sh reads a script as it runs it.

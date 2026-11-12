@@ -4,7 +4,7 @@
 
 Sky Score scores any UK postcode or NYC ZIP from 0-10 across five components, quiet, affordability, growth, liveability and **environment** (added v3.9, 2026-08-26, gaining road noise at v4.0, 2026-08-29; growth is weighted for the `investor` persona only since v3.3 — it describes the market rather than the property), surfacing the hidden quality factors (aircraft noise, road noise, **air quality, flood risk**, schools, crime, transport, healthcare) that listings sites are commercially incentivised not to show. For renters and buyers on the consumer side; for property-data aggregators, conveyancers, and Sharia-compliant home-finance providers on the B2B side.
 
-> Methodology v5.7 · API v1.0 · Live in production · **97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only)** - the one coverage sentence for every public surface (2026-10-12) · the front page and `/v1/score` cover all 13 UK city regions plus New York; the full map draws 11 (91 boroughs, compared site-vs-Lambda on the rendered score), the other 3 being API-and-front-page only (Cardiff, Nottingham, Greater Norwich) · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
+> Methodology v5.7 · API v1.0 · Live in production · **97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities** - the one coverage sentence for every public surface (2026-10-12) · the front page and `/v1/score` cover all 13 UK city regions plus New York; the full map draws 11 (91 boroughs, compared site-vs-Lambda on the rendered score), the other 3 being API-and-front-page only (Cardiff, Nottingham, Greater Norwich) · Per-postcode Haversine quiet resolution (v3.0) with DEFRA raster scaffold (v3.1)
 >
 > **Air quality, road noise and flood risk are all SCORED, not just drawn.**
 > They are the fifth component, `environment` — air quality 0.65 / flood 0.35
@@ -83,16 +83,16 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | What | URL |
 |---|---|
 | Front page: search beside the live map, the API shown working (since 2026-10-06, rebuilt 2026-11-04) | <https://skyscore.co.uk/> |
-| Full map (the consumer app; `/` until 2026-10-06) | <https://skyscore.co.uk/map/> |
+| Full map (the consumer app; `/` until 2026-10-06): a postcode opens on an answer card, each finding a tile with a plain explanation (since 2026-11-08) | <https://skyscore.co.uk/map/> |
 | Free street report: one page of official figures for your own home, made in the browser | <https://skyscore.co.uk/reports/street/> |
 | Reports (samples; their prices are on /pricing) | <https://skyscore.co.uk/reports/> |
 | Pricing (every price since 2026-10-06: councils, platforms, firms' reports) | <https://skyscore.co.uk/pricing> |
 | Privacy policy | <https://skyscore.co.uk/privacy> |
-| Area pages (102 boroughs, static, no JS) | <https://skyscore.co.uk/area/> |
+| Area pages (152: 102 UK and New York, 50 Bay Area cities; static, findings first with bars and rating strips) | <https://skyscore.co.uk/area/> |
 | Open data (every council area's figures in one CSV) | <https://skyscore.co.uk/open-data/> |
-| Bay Area flight paths (San Francisco, Oakland, San Jose) | <https://skyscore.co.uk/bay-area/> |
+| Bay Area: 50 cities scored on US scales (since 2026-11-08), and the flight paths of San Francisco, Oakland and San Jose | <https://skyscore.co.uk/bay-area/> |
 | Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
-| API landing page | <https://skyscore.co.uk/api/> |
+| API landing page (send a real request from the page) | <https://skyscore.co.uk/api/> |
 | API browser demo | <https://skyscore.co.uk/score-demo/index.html> |
 | API reference (Swagger UI) | <https://skyscore.co.uk/score-demo/api-docs.html> |
 | OpenAPI 3.0 spec | <https://skyscore.co.uk/score-demo/openapi.yaml> |

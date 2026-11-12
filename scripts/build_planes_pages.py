@@ -79,6 +79,7 @@ import sys
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import NamedTuple
 
 import numpy as np
 
@@ -261,30 +262,56 @@ def sector_parts(figs: list) -> list[str]:
     return [f'{counts[words]:,} {words}' for words in BAND_ORDER if counts[words]]
 
 
-def sector_reading(figs: list) -> str:
-    """The parts as one phrase: "66 at 100+, 69 on an edge, 25 under 10"."""
-    return ', '.join(sector_parts(figs))
+class Day(NamedTuple):
+    """One kind of day across a district. `busiest` is None where it was not measured (null, never 0)."""
+    busiest: int | None
+    parts: list[str]
+    total: int
 
 
-def overall_reading(figs: list) -> str:
-    """The line above a table, for a whole district on one kind of day: the busiest figure, then the bands."""
-    busiest = max(most(v) for v in figs)
-    if busiest == 0:
-        return f'under 1 a day at all {len(figs):,} of its postcodes'
-    return f'up to {busiest} a day; of its {len(figs):,} postcodes, {sector_reading(figs)}'
+def day_figure(figs: list) -> Day:
+    values = [v for v in figs if v is not None]
+    return Day(max(most(v) for v in values), sector_parts(values), len(values)) if values else Day(None, [], 0)
+
+
+def day_headline(day: Day) -> str:
+    """The figure as a page leads with it, always with its "Up to": a bare 318 would read as every postcode's, and TW9's
+    66 under 10 say otherwise."""
+    if day.busiest is None:
+        return 'Not measured'
+    return 'Under 1' if day.busiest == 0 else f'Up to {day.busiest}'
+
+
+def day_html(label: str, share: int, day: Day) -> str:
+    """One kind of day: the airport's way of flying, the figure, then its postcodes as one bar with every count said.
+    The bar's counts are of POSTCODES and say so: under "Up to 318 a day" a bare 386 reads as planes. Where every postcode
+    is under 1 there is nothing to split, and "under 10" beneath "Under 1" would read as a second figure, so it says so."""
+    way = label.lower().removeprefix('flying ')
+    head = f'<li><p class="way">On a day it flies {e(way)}, {share}% of days</p><p class="big">{e(day_headline(day))}</p>'
+    if day.busiest is None:
+        return head + '</li>'
+    if day.busiest == 0:
+        return head + f'<p class="aday">a day, at all {day.total:,} of its postcodes</p></li>'
+    _, bands = split_bands(day.parts)
+    counts = {words: n for n, words, _ in bands}
+    key = ''.join(f'<dt><i class="{BAND_CLASS[band_words]}"></i>{e(said)}</dt><dd>{counts[band_words]:,}</dd>'
+                  for band_words, said in BAND_KEY if band_words in counts)
+    return (head + f'<p class="aday">a day</p><p class="of-all">Of its {day.total:,} postcodes:</p>'
+            + band_bar(bands) + f'<dl class="counts">{key}</dl></li>')
+
+
+def day_lines(day: Day) -> list[str]:
+    """A whole district on one kind of day as table lines (the consultation pack, 2026-11-01), one line each, so a phone's
+    narrow column never breaks a band: ['up to 317 a day', '137 at 100+', ...]."""
+    if day.busiest is None:
+        return ['not measured']
+    if day.busiest == 0:
+        return ['under 1 a day', f'at all {day.total:,} postcodes']
+    return [f'up to {day.busiest} a day', *day.parts]
 
 
 def district_cell(figs: list) -> list[str]:
-    """A whole district on one kind of day as table lines (the consultation pack, 2026-11-01): overall_reading's
-    words, one line each, so a phone's narrow column never breaks a band: ['up to 317 a day', '137 at 100+', ...].
-    A kind of day with no figure is not measured (null, never 0)."""
-    values = [v for v in figs if v is not None]
-    if not values:
-        return ['not measured']
-    busiest = max(most(v) for v in values)
-    if busiest == 0:
-        return ['under 1 a day', f'at all {len(values):,} postcodes']
-    return [f'up to {busiest} a day', *sector_parts(values)]
+    return day_lines(day_figure(figs))
 
 
 # ----------------------------------------------------------------- inputs
@@ -304,13 +331,20 @@ def read_planes(planes: Path = PLANES):
     return meta, files
 
 
-def district_context(path: Path = AVERAGES) -> dict:
-    """{district: {'lads': Counter, 'city': str, 'at': (easting, northing)}}: councils and positions, no figures."""
+def district_context(path: Path = AVERAGES, skip: frozenset = frozenset()) -> dict:
+    """{district: {'lads': Counter, 'city': str, 'at': (easting, northing)}}: councils and positions, no figures.
+
+    `skip` is NSPL's large users (rule A, adsb_postcode_averages.large_users()): a district's councils are counted from
+    the postcodes its figures count, never from PO boxes (audit I-3, 2026-11-12: Wandsworth's consultation pack listed
+    SW1P through the Nine Elms mail centre's 280 boxes, though all 422 measured postcodes are Westminster's; 43 district
+    pages named a council only through left-out boxes)."""
     with np.load(path, allow_pickle=False) as z:
         pcs, lads, cities = z['postcode'], z['lad'], z['city']
         east, north = z['easting'].astype(float), z['northing'].astype(float)
     by, sums = {}, {}
     for k, pc in enumerate(pcs):
+        if str(pc).strip().upper() in skip:
+            continue
         d = str(pc).split()[0]
         c = by.setdefault(d, {'lads': Counter(), 'cities': Counter()})
         c['lads'][str(lads[k])] += 1
@@ -359,10 +393,13 @@ def verdict(f: dict, totals: tuple[int, int]) -> str | None:
                   default=0)
     if busiest < PAGE_FROM:
         return f'busiest postcode {busiest} a day (< {PAGE_FROM})'
-    if measured > live:
-        raise SystemExit(f"{f['district']}: {measured} measured, {live} live in NSPL: not the averages' edition")
-    if measured < COVERED_FROM * live:
-        return f'{measured} of {live} postcodes in the covered councils (< {COVERED_FROM:.0%})'
+    # Large users are left out of the figures (rule A, 2026-11-10), so coverage is judged against the rest: counting
+    # them would call a district's PO boxes postcodes outside the covered councils.
+    homes = live - large
+    if measured > homes:
+        raise SystemExit(f"{f['district']}: {measured} measured, {homes} live small users in NSPL: not the averages' edition")
+    if measured < COVERED_FROM * homes:
+        return f'{measured} of {homes} postcodes in the covered councils (< {COVERED_FROM:.0%})'
     if large > LARGE_UNDER * live:
         return f'{large} of {live} postcodes are large users (> {LARGE_UNDER:.0%})'
     if measured < MIN_POSTCODES:
@@ -408,33 +445,33 @@ def model(name: str, f: dict, meta: dict, ctx: dict, totals: tuple[int, int], na
         if top < PAGE_FROM:
             also.append({'name': names.get(code, code), 'most': per_day(top)})
             continue
+        days = [(label, info['share_pct'][kind], day_figure([by_pc[pc][col[kind]] for pc in by_pc]))
+                for kind, label in order]
         tables.append({
             'code': code, 'name': names.get(code, code), 'period': period(info['months']),
             'columns': [(label, f"{info['share_pct'][kind]}% of days") for kind, label in order],
-            'overall': [(label, info['share_pct'][kind],
-                         reading([by_pc[pc][col[kind]] for pc in by_pc], overall_reading, 'not measured'))
-                        for kind, label in order],
             # Each cell a list of band phrases, one line each, so a narrow column never breaks "at 10 to 99".
             'rows': [(sector, len(pcs), [reading([by_pc[pc][col[kind]] for pc in pcs], sector_parts,
                                                  ['not measured']) for kind, _ in order])
                      for sector, pcs in sectors.items()],
-            'district_cells': [district_cell([by_pc[pc][col[kind]] for pc in by_pc]) for kind, _ in order],
+            'district_cells': [day_lines(day) for _, _, day in days],
+            'days': days,
         })
     measured = len(f['postcodes']) + len(f['none'])
-    live = totals[0]
+    live, large = totals
     # The note explains EDGE only where a reading says it: a range inside one band reads as that band.
-    edges = any(EDGE in text for t in tables for text in [*(o[2] for o in t['overall']),
+    edges = any(EDGE in text for t in tables for text in [*(p for _, _, day in t['days'] for p in day.parts),
                                                             *(p for row in t['rows'] for c in row[2] for p in c)])
     return {
         'district': name, 'slug': name.lower(), 'city': ctx['city'],
         'city_label': area.CITY_LABEL.get(ctx['city'], ctx['city'].title()),
         'councils': councils(ctx['lads']),
-        'measured': measured, 'live': live,
+        'measured': measured, 'live': live - large, 'large': large,  # 'live' leaves out the large users, as the figures do
         'periods': sorted({t['period'] for t in tables}),
         'tables': tables, 'also': also,
         'edge': edges, 'approx': len(f['approx']), 'other': len(f['other']),
         'example': next(iter(sectors.values()))[0],
-        'definition': f"{meta['definition']} {meta['direction_rule']}",
+        'definition': f"{meta['definition']} {meta['direction_rule']} {meta['postcodes_rule']}",  # required: the builder writes it
         'credits': meta['credits'], 'licence': meta['licence'],
         'nearby': nearby,
     }
@@ -467,12 +504,15 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
     where = listed(council_names)
     measured = (f"All {m['live']:,} of its postcodes measured" if m['measured'] == m['live']
                 else f"{m['measured']:,} of its {m['live']:,} postcodes measured, the ones in {where}")
+    if m['large']:  # said, never silent: the left-out post boxes are not postcodes we failed to measure
+        measured += (' (1 PO box or other large-user postcode left out)' if m['large'] == 1
+                     else f" ({m['large']:,} PO boxes and other large-user postcodes left out)")
     airports = listed([t['name'] for t in m['tables']])
+    # "Heathrow and London City fly", "Heathrow flies" (2026-11-11: 62 two-airport descriptions said "flies").
+    fly = 'fly' if len(m['tables']) > 1 else 'flies'
     sections = []
     for t in m['tables']:
-        # 'Flying west' -> 'flies west', 'Both ways' -> 'flies both ways': the answer's own labels.
-        overall = '\n'.join(f"<li>On a day it flies {e(label.lower().removeprefix('flying '))} ({share}% of days): "
-                            f'{e(text)}</li>' for label, share, text in t['overall'])
+        overall = '\n'.join(day_html(*day) for day in t['days'])
         head = ''.join(f'<th scope="col">{e(label)}<span class="note">{e(share)}</span></th>'
                        for label, share in t['columns'])
         rows = '\n'.join(f'<tr><th scope="row">{e(sector)}<span class="note">{n} postcode{"s" if n != 1 else ""}'
@@ -514,9 +554,16 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
     return PAGE.format(
         extra_style='\n  .respond { font-weight:600; }' if respond else '',
         respond=respond,
-        title=e(f'Planes overhead in {d}: flight paths over {council_names[0]} | Sky Score'),
-        description=e(f'How many planes pass over {d} ({where}) on a day {airports} flies west, east or both ways, '
-                      f'postcode sector by sector. Counted from flight tracking, {first_period}.')[:300],
+        title=e(area.page_title(f'Planes overhead in {d}: flight paths over {council_names[0]}',
+                                f'Planes overhead in {d}, {council_names[0]}', f'Planes overhead in {d}')),
+        description=e(area.fit(
+            f'How many planes pass over {d} ({where}) on a day {airports} {fly} west, east or both ways, '
+            f'postcode sector by sector. Counted from flight tracking, {first_period}.',
+            f'How many planes pass over {d} ({where}) on a day {airports} {fly} west, east or both ways, '
+            f'sector by sector, {first_period}.',
+            f'How many planes pass over {d} ({where}) on a day {airports} {fly} west, east or both ways.',
+            f'Planes over {d} on a day {airports} {fly} west, east or both ways.',
+        )),
         canonical=f'{area.SITE}{URL_ROOT}{m["slug"]}/',
         crumbs_ld=area.breadcrumb_ld([('Sky Score', '/'), ('Planes overhead', URL_ROOT),
                                       (m['district'], f'{URL_ROOT}{m["slug"]}/')]),
@@ -535,16 +582,16 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
 STYLE = """
   /* The area pages' look (scripts/build_area_pages.py), so the two read as one site. */
   :root {{ color-scheme: light dark;
-    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; --band0:#d6d3d1; }}
+    """ + area.PALETTE_LIGHT + """ --band0:#d6d3d1; }}
   * {{ box-sizing:border-box; }}
-  body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
-  a:focus-visible, input:focus-visible, button:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
-  .wrap {{ max-width:760px; margin:0 auto; padding:24px 20px 64px; }}
-  a {{ color:var(--orange); }}
+  body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:var(--bg); line-height:1.6; }}
+  a:focus-visible, input:focus-visible, button:focus-visible {{ outline:3px solid var(--focus); outline-offset:2px; }}
+  .wrap {{ max-width:1100px; margin:0 auto; padding:24px clamp(16px, 4vw, 48px) 64px; }}
+  a {{ color:var(--orange-ink); }}
   nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}
-  h1 {{ font-size:28px; line-height:1.25; margin:0 0 6px; }}
-  .sub {{ color:var(--mid); font-size:14px; margin:0 0 20px; }}
-  .check {{ margin:0 0 28px; padding:14px 16px; background:var(--bg); border:1px solid var(--line); border-radius:8px; }}
+  h1 {{ font-family:var(--font-display); font-weight:700; font-size:clamp(30px, 4.4vw, 44px); line-height:1.12; letter-spacing:-0.02em; margin:0 0 10px; }}
+  .sub {{ color:var(--mid); font-size:16px; margin:0 0 20px; max-width:66ch; }}
+  .check {{ margin:0 0 28px; padding:16px 20px; background:var(--paper); border:1px solid var(--line); border-radius:18px; }}
   .check label {{ display:block; font-weight:600; font-size:14px; margin-bottom:6px; }}
   .check .row {{ display:flex; gap:8px; flex-wrap:wrap; }}
   .check input {{ font:inherit; font-size:16px; padding:8px 10px; border:1px solid var(--mid); border-radius:6px; width:12em; max-width:100%; background:Canvas; color:CanvasText; }}
@@ -574,8 +621,19 @@ STYLE = """
   .tw {{ overflow-x:auto; }}
   .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0;
     margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }}
-  h2 {{ font-size:18px; margin:32px 0 8px; }}
-  ul.overall {{ margin:0 0 16px; padding-left:18px; }}
+  h2 {{ font-family:var(--font-display); font-size:22px; font-weight:600; letter-spacing:-0.01em; margin:36px 0 8px; }}
+  /* THE MAIN FINDING FIRST (Bill's pick, 2026-11-04: Stitch's layout): how many pass depends on which way the airport
+     flies, so each kind of day is one column, "Up to N" the largest figure on the page, its postcodes as one bar. */
+  ul.overall {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:24px 40px; list-style:none; margin:20px 0 24px; padding:0; }}
+  ul.overall .way {{ margin:0; font-size:14px; color:var(--mid); }}
+  ul.overall .big {{ margin:6px 0 0; font-family:var(--font-display); font-size:clamp(32px, 4vw, 44px); font-weight:700; line-height:1.05; letter-spacing:-0.03em; }}
+  ul.overall .aday {{ margin:0 0 10px; font-size:14px; color:var(--mid); }}
+  ul.overall .of-all {{ margin:0 0 4px; font-size:13px; color:var(--mid); }}
+  ul.overall .bands {{ max-width:none; margin:0 0 8px; }}
+  dl.counts {{ display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:2px 12px; margin:0; font-size:13px; color:var(--mid); }}
+  dl.counts dt {{ display:flex; align-items:center; gap:6px; }}
+  dl.counts dt i {{ display:inline-block; width:11px; height:11px; border-radius:2px; flex:none; }}
+  dl.counts dd {{ margin:0; font-family:var(--font-mono); font-size:12.5px; font-weight:500; color:var(--dark); text-align:right; }}
   .sources {{ font-size:12px; color:var(--mid); }}
   .nearby a {{ display:inline-block; margin:0 10px 6px 0; }}
   footer {{ margin-top:40px; font-size:12px; color:var(--mid); }}
@@ -587,10 +645,9 @@ STYLE = """
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
   .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
   .site-top .site-nav a:hover {{ text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }}
-  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; --band0:#4a4a48; }}
-    body {{ background:#141414; }}
+    :root {{ """ + area.PALETTE_DARK + """ --band0:#4a4a48; }}
   }}
   /* The phone menu (2026-10-23), as on the area pages: a popover, so no script. */
   .menu-btn, .menu-close {{ display: none; }}
@@ -656,6 +713,12 @@ HEAD = """<!doctype html>
 <title>{title}</title>
 <meta name="description" content="{description}" />
 <link rel="canonical" href="{canonical}" />
+<meta property="og:title" content="{title}" />
+<meta property="og:description" content="{description}" />
+<meta property="og:url" content="{canonical}" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Sky Score" />
+<meta name="twitter:card" content="summary" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -797,7 +860,7 @@ def render_sitemap(manifest: dict) -> str:
 # gets one, by that rule, not a list: Heathrow's approaches cross most of London (32 councils on 1 Nov).
 # - The link and its closing date are READ from js/street_report.mjs HAVE_YOUR_SAY (the one holder of "Have your say"
 #   links, verified live); no entry with an `until`, no pack.
-# - The planes figures are the district pages' own, from the same files (district_cell: overall_reading's words);
+# - The planes figures are the district pages' own, from the same files (district_cell: day_lines's words);
 #   the borough's noise, air and flood are its area page's own (build_area_pages.gather), with that page's sources.
 # - The page says "open until" while it is and "closed on" after: built on 23 December it differs, so --check (a
 #   blocking preflight stage) reds until --write, and planes-pages-deploy ships the closed wording. Never a 404 for a
@@ -945,10 +1008,16 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
     has_area = (REPO / area_path.strip('/') / 'index.html').exists()
     return PACK.format(
         extra_style=EXTRA_STYLE,
-        title=e(f'Planes over {borough} today, for Heathrow\'s consultation | Sky Score'),
-        description=e(f'The planes from Heathrow over each postcode district in {borough}, with its official noise, '
-                      f'air and flood figures: the same for anyone responding to Heathrow\'s expansion '
-                      f'consultation. Counted from flight tracking, {tables[0]["period"]}.')[:300],
+        title=e(area.page_title(f'Planes over {borough} today: Heathrow consultation',
+                                f'Planes over {borough}: Heathrow consultation')),
+        description=e(area.fit(
+            f'The planes from Heathrow over each postcode district in {borough}, with its official noise, '
+            f'air and flood figures: the same for anyone responding to Heathrow\'s expansion '
+            f'consultation. Counted from flight tracking, {tables[0]["period"]}.',
+            f'The planes from Heathrow over each postcode district in {borough}, with its noise, air and flood '
+            f'figures, for anyone responding to Heathrow\'s consultation.',
+            f'Heathrow\'s planes over each postcode district in {borough}, with its noise, air and flood figures.',
+        )),
         canonical=f'{area.SITE}{URL_ROOT}{PACK_DIR}/{area.slug(borough)}/',
         crumbs_ld=area.breadcrumb_ld([('Sky Score', '/'), ('Planes overhead', URL_ROOT),
                                       ('Heathrow consultation', f'{URL_ROOT}{PACK_DIR}/'),
@@ -974,10 +1043,13 @@ def render_pack_hub(packs: dict[str, list[dict]], c: dict, today: str) -> str:
     periods = sorted({t['period'] for ms in packs.values() for m in ms for t in m['tables'] if t['code'] == PACK_AIRPORT})
     return PACK_HUB.format(
         extra_style=EXTRA_STYLE,
-        title=e("Planes from Heathrow, council by council, for Heathrow's consultation | Sky Score"),
-        description=e(f'The planes from Heathrow over each of the {len(entries)} councils its flights cross, district '
-                      f"by district, with official noise, air and flood figures, for Heathrow's expansion "
-                      'consultation.'),
+        title=e(area.page_title("Heathrow consultation: the planes over each council")),
+        description=e(area.fit(
+            f'The planes from Heathrow over each of the {len(entries)} councils its flights cross, district '
+            f"by district, with official noise, air and flood figures, for Heathrow's expansion consultation.",
+            f'The planes from Heathrow over each of the {len(entries)} councils its flights cross, district by district, '
+            f"with noise, air and flood figures, for Heathrow's consultation.",
+        )),
         canonical=f'{area.SITE}{URL_ROOT}{PACK_DIR}/', state=e(pack_state(c['until'], today)), href=e(c['href']),
         crumbs_ld=area.breadcrumb_ld([('Sky Score', '/'), ('Planes overhead', URL_ROOT),
                                       ('Heathrow consultation', f'{URL_ROOT}{PACK_DIR}/')]),
@@ -1249,7 +1321,8 @@ def missing_inputs(root: Path = REPO) -> list[str]:
 def inputs(root: Path = REPO):
     """Everything a build reads that is not tracked; `root` is another clone with --inputs-from (read only)."""
     meta, files = read_planes(root / 'data' / 'planes')
-    ctx = district_context(root / 'data' / 'adsb' / 'postcode-averages.npz')
+    import adsb_postcode_averages as pa  # rule A's one holder of the large-user list  # pylint: disable=import-outside-toplevel
+    ctx = district_context(root / 'data' / 'adsb' / 'postcode-averages.npz', skip=pa.large_users(root / 'data' / 'nspl.csv'))
     return meta, files, ctx, district_totals(files, root / 'data' / 'nspl.csv'), airport_names(), kinds()
 
 

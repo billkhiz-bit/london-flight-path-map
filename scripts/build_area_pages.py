@@ -47,6 +47,7 @@ import functools
 import html
 import json
 import re
+import statistics
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -56,6 +57,11 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / 'backend' / 'lambdas' / 'score'))
 
 import app  # noqa: E402  pylint: disable=wrong-import-position
+
+sys.path.insert(0, str(REPO / 'scripts'))
+# The Bay Area's inputs in words, each with its source and year, and its US-scales line: ONE holder, read by the
+# full map's card (through index.html's generated block), the front page's card and these pages (2026-11-07).
+import build_bayarea_records as bay_records  # noqa: E402  pylint: disable=wrong-import-position
 
 # The map's holder. Loaded eagerly and NOT guarded: if this file moves, the
 # right outcome is a crash, not 99 quietly thinner pages.
@@ -218,6 +224,10 @@ MEASURED_FIELD = {
 }
 
 
+# What the page's visuals draw, as held.
+VISUAL_FIGURES = ('roadNoiseAboveWhoPct', 'floodMediumOrHighPct', 'no2AnnualMeanUgm3', 'pm25AnnualMeanUgm3', 'crimeRate')
+
+
 def measured_value(key: str, value: float) -> str:
     """Display text for one measured environment figure, printed as held (never re-rounded).
 
@@ -319,12 +329,18 @@ def gather(city: str, borough: str) -> dict | None:
     # Derived from the response, never recomputed here: a second implementation
     # of the same rank is a second thing to keep in step.
     rank = (body.get('context') or {}).get('priceRankInCity') or {}
-    # Per CURRENCY (audit 2026-10-06, I6): the sterling pool is every UK area covered; New York's is
-    # its own five boroughs, and the page said "the whole country" for both.
+    # Per POOL (audit 2026-10-06, I6; per pool since 2026-11-07): the sterling pool is every UK area covered; a US
+    # city's is its own areas (app.pool_of: one pool per US metro). It said "New York's five boroughs, the only US
+    # prices held" for every US city, false of the Bay Area's pages and of New York's once the Bay Area was priced.
     if app.CITIES[city].get('country') == 'United Kingdom':
         afford_note = 'Scored against the prices of every UK area we cover, not just this city'
     else:
-        afford_note = "Scored against New York's five boroughs, the only US prices held: not comparable with UK scores"
+        pool = app.pool_of(city)
+        members = [c for c in app.CITIES if app.pool_of(c) == pool]
+        n = sum(len(app.CITIES[c]['boroughs']) for c in members)
+        afford_note = (f"Scored among the {n} areas of {CITY_LABEL.get(city, city)} alone, never with another city's "
+                       'prices: not comparable with UK scores' if members == [city] else
+                       f'Scored among {n} areas in the same price pool: not comparable with UK scores')
     if rank.get('rank') and rank.get('of', 0) > 1:
         afford_note += f' - {rank["rank"]} of {rank["of"]} here by price, cheapest first'
 
@@ -364,9 +380,21 @@ def gather(city: str, borough: str) -> dict | None:
     def uk_note(text):
         return text if uk else None
 
+    # A city scored on the US SCALES (a California-anchored record, the Bay Area) says its inputs in the records
+    # builder's own words, each with its source and year, the same words its front-page and map cards use, and the
+    # UK rows below find nothing of theirs in its record. Its price is a Census median, its trend county-wide.
+    us_scaled = bool(app.CITIES[city].get('usAnchors'))
+    if us_scaled:
+        anchors, rows = bay_records.records()
+        if dict(rows).get(borough) != scoring:
+            raise SystemExit(f"{city}/{borough}: the Lambda's record is not what the readers' files give: "
+                             'run scripts/build_bayarea_records.py --write')
+        for label, figure, source in bay_records.input_facts(borough, scoring, anchors, bay_records.input_sources(),
+                                                             app.US_PRICE_TOP_CODE, ctx.get('crimeNote')):
+            add(label, figure, source)
     add('Average price', fmt_price(ctx.get('avgPriceGbp')), uk_note('HM Land Registry HPI'))
     trend = ctx.get('priceTrendPct')
-    if isinstance(trend, (int, float)):
+    if isinstance(trend, (int, float)) and not us_scaled:
         add('Price trend', f'{trend:+.1f}% year on year', uk_note('HM Land Registry HPI'))
     # THE BAND IS AN ESTIMATE, AND THE CAPTION SAID IT WAS A DEFRA SURVEY
     # (2026-09-13 audit, I24). `noiseImpactBand` is the geometry distance
@@ -382,10 +410,13 @@ def gather(city: str, borough: str) -> dict | None:
         'unmapped': "Estimated from the distance to the airport and its routes; DEFRA's noise maps do not cover this airport",
         'none': 'No commercial airport in this city region',
     }.get(contour)
+    if us_scaled:
+        aircraft_note = ("Estimated from the FAA's published routes over the city's residents, fitted to the noise "
+                         'monitors of San Francisco and San Jose airports; not a measurement')
     add('Aircraft noise band', (ctx.get('noiseImpactBand') or '').title() or None,
-        uk_note(aircraft_note))
+        aircraft_note if us_scaled else uk_note(aircraft_note))
 
-    merged = {**painted, **{k: v for k, v in scoring.items() if v is not None}}
+    merged = {} if us_scaled else {**painted, **{k: v for k, v in scoring.items() if v is not None}}
     for key, label, note in (
         ('crimeRate', 'Recorded crime', 'ONS Table C4, per 1,000 residents per year'),
         ('p8', 'Progress 8', 'DfE KS4 2023/24 revised, 0.0 is the national average'),
@@ -413,16 +444,33 @@ def gather(city: str, borough: str) -> dict | None:
         if key == 'crimeRate' and scoring.get('crimeEstimated'):
             note = 'Sky Score estimate - ONS publishes no rate for this area'
         add(label, f'{raw:g}' if isinstance(raw, (int, float)) else str(raw).title(), uk_note(note))
+        if key == 'crimeRate' and scoring.get('crimeEstimated'):
+            facts[-1]['estimated'] = True
 
     return {
         'city': city,
+        'uk': uk,
         'borough': borough,
         'score': body['score'],
+        # Said on a US-scaled city's page, under its score (Bill's rule): its scales are not the UK's.
+        'us_scales': bay_records.us_scales(len(app.CITIES[city]['boroughs'])) if us_scaled else '',
         'facts': facts,
         'sources': body.get('sources') or [],
         'methodology': body.get('methodologyVersion'),
+        # What the visuals draw, as held: absent stays absent, and a missing figure simply draws no bar.
+        'figures': {key: merged.get(key) for key in VISUAL_FIGURES},
+        'avg_price': ctx.get('avgPriceGbp'),
+        'price_median': statistics.median(prices) if len(prices) > 1 else None,
     }
 
+
+# THE SITE'S PALETTE, one holder for every page these two builders write (build_planes_pages.py reads it as
+# area.PALETTE_LIGHT). tests/test_site_palette.py holds the built pages to it.
+PALETTE_LIGHT = (
+    "--bg:#f4f3ef; --paper:#fbfaf8; --dark:#141414; --mid:#55554f; --line:#dedcd6; --orange:#f27d26; --orange-ink:#a85416; "
+    "--focus:#d35a12; --track:#e4e3e0; --yard:#807e79;\n    --font-display:'Geist',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;"
+)
+PALETTE_DARK = '--dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#141414; --paper:#1c1c1c; --orange:#fb923c; --orange-ink:#fb923c; --track:#3a3a3a; --yard:#8c8a85;'
 
 # COUNTED SINCE 2026-10-22. The three templates below (an area page, the area index, open data) carried no
 # analytics, so the pages most likely to arrive from a search were the ones GoatCounter could not see. Each now
@@ -441,6 +489,8 @@ PAGE = """<!doctype html>
 <meta property="og:description" content="{description}" />
 <meta property="og:url" content="{canonical}" />
 <meta property="og:type" content="article" />
+<meta property="og:site_name" content="Sky Score" />
+<meta name="twitter:card" content="summary" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -454,33 +504,59 @@ PAGE = """<!doctype html>
      reader gets a white flash and a light scrollbar against a #141414 page.
      Declaring it is what makes the dark block honest. */
   :root {{ color-scheme: light dark;
-    --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
+    """ + PALETTE_LIGHT + """ }}
   * {{ box-sizing:border-box; }}
-  body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
-  a:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }} /* the site's ring, not the browser's (audit 2026-10-22, M-13) */
-  .wrap {{ max-width:720px; margin:0 auto; padding:24px 20px 64px; }}
-  a {{ color:var(--orange); }}
+  body {{ margin:0; padding:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:var(--bg); line-height:1.6; }}
+  a:focus-visible {{ outline:3px solid var(--focus); outline-offset:2px; }} /* the site's ring, not the browser's (audit 2026-10-22, M-13) */
+  .wrap {{ max-width:1100px; margin:0 auto; padding:24px clamp(16px, 4vw, 48px) 64px; }}
+  a {{ color:var(--orange-ink); }}
   nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}
-  h1 {{ font-size:28px; line-height:1.25; margin:0 0 6px; }}
-  .sub {{ color:var(--mid); font-size:14px; margin:0 0 24px; }}
-  .headline {{ display:flex; align-items:baseline; gap:10px; padding:16px 18px; background:var(--bg); border:1px solid var(--line); border-radius:8px; margin-bottom:24px; }}
-  .headline .n {{ font-size:34px; font-weight:700; }}
+  h1 {{ font-family:var(--font-display); font-weight:700; font-size:clamp(30px, 4.4vw, 44px); line-height:1.12; letter-spacing:-0.02em; margin:0 0 10px; }}
+  .sub {{ color:var(--mid); font-size:16px; margin:0 0 8px; max-width:62ch; }}
+  /* FINDINGS FIRST (Bill's pick, 2026-11-04: Stitch's layout, the site's own colours). The score, then each finding in
+     plain words with its figure under it. A score's bar takes the map's own colour for that score. */
+  .headline {{ display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 12px; margin:28px 0 10px; }}
+  .headline .n {{ font-family:var(--font-display); font-size:clamp(56px, 9vw, 84px); font-weight:700; line-height:1; letter-spacing:-0.03em; }}
   .headline .of {{ color:var(--mid); font-size:14px; }}
-  table {{ width:100%; border-collapse:collapse; font-size:14px; }}
-  th, td {{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }}
-  th {{ width:42%; font-weight:600; }}
-  /* 12px, the site's small print everywhere else (sources, the front page's notes); 11px was the one size below
-     it, and 72% of a page's words sat under 13px (site audit 2026-11-01, Bill: raise, never shrink). */
-  td .note {{ display:block; color:var(--mid); font-size:12px; }}
-  .tw {{ overflow-x:auto; }}
-  /* The caption names the table for a screen reader without adding a
-     visible heading. Defined here because these pages ship their own
-     CSS and do not load the app stylesheet. */
-  .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0;
-    margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }}
-  h2 {{ font-size:16px; margin:32px 0 8px; }}
+  .bar {{ height:8px; background:var(--track); border-radius:4px; overflow:hidden; }}
+  .bar i {{ display:block; height:100%; border-radius:4px; }}
+  .bar.big {{ max-width:520px; margin-bottom:28px; }}
+  dl.scores {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:20px 24px; margin:0; padding:24px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }}
+  dl.scores dt {{ font-size:14px; font-weight:500; }}
+  dl.scores dd {{ margin:0; }}
+  dl.scores b {{ font-family:var(--font-display); font-size:22px; font-weight:700; }}
+  dl.scores .of {{ font-family:var(--font-mono); font-size:12px; color:var(--mid); }}
+  dl.scores .bar {{ margin:6px 0 0; }}
+  /* 12px, the site's small print everywhere else; 11px was the one size below it (site audit 2026-11-01). */
+  .note {{ display:block; color:var(--mid); font-size:12px; margin-top:4px; }}
+  .groups {{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 48px; margin:8px 0; }}
+  @media (max-width: 760px) {{ .groups {{ grid-template-columns:minmax(0, 1fr); }} }}
+  section.group {{ padding:24px 0 8px; }}
+  section.group + section.group {{ border-top:1px solid var(--line); }}
+  section.group h2 {{ font-family:var(--font-mono); font-size:12px; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:var(--mid); margin:0 0 14px; }}
+  .find {{ margin:0 0 18px; }}
+  .find-h {{ margin:0; font-size:19px; font-weight:600; line-height:1.3; }}
+  .find-big {{ font-family:var(--font-display); font-size:26px; font-weight:700; letter-spacing:-0.02em; }}
+  .find-d {{ margin:2px 0 0; color:var(--mid); font-size:14px; }}
+  /* VISUALS (Bill's pick B, 2026-11-04). A bar shows a share of a whole or a figure beside a named yardstick, from a true
+     zero; a strip shows where a rating sits among its own words. Aircraft noise and the price trend have nothing honest to
+     be drawn against, so they stay as words. Bars and strips are hidden from a screen reader; a caption stays readable
+     unless the sentence above it already says the same figures. */
+  .vis {{ margin-top:8px; max-width:420px; }}
+  .vis-h {{ margin:10px 0 0; font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--mid); }}
+  .vis-cap {{ display:flex; justify-content:space-between; gap:10px; font-size:12.5px; color:var(--mid); margin:6px 0 3px; }}
+  .vis-cap b {{ font-family:var(--font-mono); font-size:12.5px; font-weight:500; color:var(--dark); white-space:nowrap; }}
+  .vis .bar i {{ background:var(--orange); }}
+  .vis .bar i.yard {{ background:var(--yard); }}
+  .steps {{ display:flex; gap:3px; margin-top:8px; max-width:420px; font-size:12px; }}
+  .steps span {{ flex:1; padding:4px 2px; text-align:center; border-radius:4px; background:var(--track); color:var(--dark); }}
+  .steps span.on {{ background:var(--orange); color:#141414; font-weight:600; }}
+  h2 {{ font-family:var(--font-display); font-size:20px; font-weight:600; margin:32px 0 8px; }}
   .sources {{ font-size:12px; color:var(--mid); }}
-  .cta {{ margin:28px 0; padding:16px 18px; border:1px solid var(--line); border-radius:8px; }}
+  .cta {{ margin:12px 0 28px; padding:20px 24px; background:var(--paper); border:1px solid var(--line); border-radius:18px; }}
+  /* The way to the map is the page's one button: dark, as every button on the site but the front page's search. */
+  .cta a {{ display:inline-block; padding:10px 18px; border-radius:10px; background:var(--dark); color:var(--bg); font-weight:600; font-size:14px; text-decoration:none; }}
+  .cta a:hover {{ text-decoration:underline; text-underline-offset:3px; }}
   footer {{ margin-top:40px; font-size:12px; color:var(--mid); }}
   /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
   .site-top {{ display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }}
@@ -488,14 +564,12 @@ PAGE = """<!doctype html>
   .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
   .site-top .site-nav {{ align-items:center; }}
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
-  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06). These
-     pages' --orange is #c2410c light / #fb923c dark, both past the 3:1 a state cue needs. */
+  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06): --focus, past the 3:1 a state cue needs. */
   .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
   .site-top .site-nav a:hover {{ text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }}
-  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
-    body {{ background:#141414; }}
+    :root {{ """ + PALETTE_DARK + """ }}
   }}
   /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
      fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
@@ -526,15 +600,15 @@ PAGE = """<!doctype html>
 <h1>{borough} noise and liveability</h1>
 <p class="sub">{city_label}. {topics_cap}, from published sources.</p>
 
-<div class="headline"><span class="n">{score}</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
+<div class="headline" data-fact><span class="n">{score}</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
+<div class="bar big" aria-hidden="true"><i style="width:{score_width}%;background:{score_colour}"></i></div>
+{us_scales}
+<dl class="scores">
+{scores}
+</dl>
 
-<div class="tw">
-<table>
-<caption class="visually-hidden">Published measurements for {borough}</caption>
-<tbody>
-{rows}
-</tbody>
-</table>
+<div class="groups">
+{groups}
 </div>
 
 {cta}
@@ -542,7 +616,7 @@ PAGE = """<!doctype html>
 {planes}<h2>Where these numbers come from</h2>
 <p class="sources">{sources}</p>
 <p class="sources">Methodology version {methodology}. Full method: <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">the methodology</a> (and the <a href="/score-demo/api-docs.html">API reference</a>).
-Figures are for the whole borough; a single address can differ{map_note}.</p>
+Figures are for the whole {unit}; a single address can differ{map_note}.</p>
 </main>
 
 <footer>
@@ -555,33 +629,231 @@ Figures are for the whole borough; a single address can differ{map_note}.</p>
 """
 
 
-def topics(facts) -> str:
+def topics(facts, compact: bool = False) -> str:
     """What this page actually shows, in words (audit 2026-10-06, I7): 22 of 102 pages promised
-    schools and showed no schools figure, and Cardiff's promised road noise it does not hold."""
+    schools and showed no schools figure, and Cardiff's promised road noise it does not hold. `compact` says the same
+    topics in shorter words, for a description that must fit a search result (2026-11-11)."""
     have = {f['label'] for f in facts}
-    words = ['aircraft and road noise' if 'Road noise' in have else 'aircraft noise', 'affordability']
-    for label, word in (
-        ('Progress 8', 'schools'),
-        ('Recorded crime', 'crime'),
-        ('Transport access', 'transport'),
-        ('Air quality', 'air quality'),
-        ('Flood risk', 'flood risk'),
+    noise = ('aircraft and road noise' if 'Road noise' in have else 'aircraft noise') if not compact else 'noise'
+    words = [noise, 'prices' if compact else 'affordability']
+    for label, word, short in (
+        ('Progress 8', 'schools', 'schools'),
+        ('Recorded crime', 'crime', 'crime'),
+        ('Crime', 'crime', 'crime'),
+        ('Transport access', 'transport', 'transport'),
+        ('Rail access', 'rail access', 'rail'),
+        ('Air quality', 'air quality', 'air'),
+        ('Flood risk', 'flood risk', 'flood'),
     ):
         if label in have:
-            words.append(word)
+            words.append(short if compact else word)
     return ', '.join(words[:-1]) + ' and ' + words[-1]
+
+
+# SEARCH RESULTS SHOW ABOUT 60 CHARACTERS OF A TITLE AND 160 OF A DESCRIPTION (the SEO audit of 2026-11-10: 395 of 498
+# planes titles and nearly every description ran past them). ONE rule for the area and planes pages: a title keeps
+# " | Sky Score" only where it fits; a description is the first of its versions, longest first, that fits, never cut
+# mid-word. tests/test_page_meta.py holds every built page to them.
+TITLE_MAX, DESC_MAX = 60, 160
+
+
+def page_title(*cores: str) -> str:
+    for core in cores:
+        if len(f'{core} | Sky Score') <= TITLE_MAX:
+            return f'{core} | Sky Score'
+        if len(core) <= TITLE_MAX:
+            return core
+    return cores[-1]
+
+
+def fit(*versions: str) -> str:
+    for v in versions:
+        if len(v) <= DESC_MAX:
+            return v
+    return versions[-1]
+
+
+# FINDINGS FIRST (Bill's pick, 2026-11-04: Stitch's layout). gather() is untouched: the same facts, said as findings.
+# The scores come first; each other fact sits in one of four groups, in two columns on a wide screen. A fact with no
+# place here is a build error, never a silent gap (tests/test_area_findings.py).
+SCORE_ROWS = ('Quiet skies', 'Affordability', 'Growth', 'Liveability', 'Environment')
+COLUMNS = (
+    (('Noise and planes', ('Aircraft noise band', 'Road noise')), ('Air and flood', ('Air quality', 'Flood risk'))),
+    # Crime, Rail access, Median home value and County price trend: the Bay Area's inputs, in the records builder's
+    # words (2026-11-07), placed where the UK's like-for-like rows sit.
+    (('Living here', ('Recorded crime', 'Crime', 'Progress 8', 'Transport access', 'Rail access', 'Healthcare access')),
+     ('Property', ('Average price', 'Median home value', 'Price trend', 'County price trend'))),
+)
+SAID_AS = {'Aircraft noise band': 'Aircraft noise'}
+
+
+def score_colour(score: float) -> str:
+    """The map's scoreColor(), held equal to it by tests/test_area_findings.py."""
+    return '#26f27d' if score >= 7 else '#f2b826' if score >= 4 else '#f27d26'
+
+
+def school_band(p8: float) -> str:
+    """DfE's Progress 8 bands, the map's schoolBandFromP8(), held equal to it by tests/test_area_findings.py."""
+    if p8 >= 0.5:
+        return 'well above average'
+    if p8 >= 0.2:
+        return 'above average'
+    if p8 >= -0.2:
+        return 'average'
+    return 'below average' if p8 >= -0.5 else 'well below average'
+
+
+@functools.cache
+def london_crime_median() -> float:
+    """The map's londonCrimeMedian(): every UK page's rate is read against it, as the map's panel reads it."""
+    return statistics.median(r['crimeRate'] for r in _BOROUGH_EXTRA['london'].values()
+                             if isinstance(r.get('crimeRate'), (int, float)))
+
+
+def london_median_said() -> str:
+    """The median as every part of a page prints it, so a sentence and a bar's caption cannot differ."""
+    return f'{london_crime_median():.1f}'
+
+
+def crime_against_london(rate: float) -> str:
+    """The rate in words, on the map's own thresholds (crimeNote): a bare 87.6 says nothing to a first-time reader."""
+    ratio = rate / london_crime_median()
+    if ratio >= 1.15:
+        return f'{ratio:.1f} times the London median'
+    if ratio <= 0.85:
+        return f'{1 / ratio:.1f} times lower than the London median'
+    return 'close to the London median'
+
+
+# WHO's 2021 annual guidelines, held equal to js/street_report.mjs AIR_WHO_2021 and the API by tests/test_area_findings.py.
+AIR_WHO = {'no2': 10, 'pm25': 5}
+RATING_STEPS = ('Poor', 'Moderate', 'Good', 'Excellent')
+SCHOOL_STEPS = ('Well below', 'Below', 'Average', 'Above', 'Well above')
+
+
+def is_figure(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def bar_html(width: float, yard: bool = False) -> str:
+    """One bar from a true zero. The sliver keeps a tiny share visible (0.33% of a bar is under two pixels); zero stays zero."""
+    drawn = max(width, 0.6) if width > 0 else 0
+    return f'<div class="bar" aria-hidden="true"><i{" class=yard" if yard else ""} style="width:{drawn:.2f}%"></i></div>'
+
+
+def share_bar(pct: float, words: str) -> str:
+    """A share of the council's postcodes: the bar's whole is all of them."""
+    return f'<div class="vis"><div class="vis-cap"><span>{e(words)}</span><b>{pct:g}%</b></div>{bar_html(pct)}</div>'
+
+
+def pair_bars(rows: list[tuple[str, float, str, bool]], heading: str = '', said: bool = False) -> str:
+    """A figure beside its yardstick, both from a true zero on one scale, so the lengths keep the true ratio. `said`: the
+    sentence above gives both figures, so a screen reader need not hear them again."""
+    top = max(value for _, value, _, _ in rows) * 1.12
+    body = ''.join(f'<div class="vis-cap"><span>{e(name)}</span><b>{e(text)}</b></div>{bar_html(value / top * 100, yard)}'
+                   for name, value, text, yard in rows)
+    label = f'<p class="vis-h">{e(heading)}</p>' if heading else ''
+    return f'<div class="vis"{" aria-hidden=true" if said else ""}>{label}{body}</div>'
+
+
+def step_strip(names: tuple[str, ...], on: str) -> str:
+    """Where a rating sits among its own words. Nothing for a rating outside them: it could not be shown truthfully."""
+    if on.lower() not in {n.lower() for n in names}:
+        return ''
+    cells = ''.join(f'<span{" class=on" if n.lower() == on.lower() else ""}>{e(n)}</span>' for n in names)
+    return f'<div class="steps" aria-hidden="true">{cells}</div>'
+
+
+def visuals(data: dict, city_label: str, uk: bool) -> dict[str, tuple[str, str]]:
+    """Each fact's (strip under its headline, bars under its words). A figure a council does not hold draws nothing."""
+    fig, name = data.get('figures') or {}, data['borough']
+    out: dict[str, tuple[str, str]] = {}
+    if is_figure(fig.get('roadNoiseAboveWhoPct')):
+        out['Road noise'] = ('', share_bar(fig['roadNoiseAboveWhoPct'], 'Postcodes over the WHO guideline'))
+    if is_figure(fig.get('floodMediumOrHighPct')):
+        out['Flood risk'] = ('', share_bar(fig['floodMediumOrHighPct'], 'Postcodes at medium or high risk'))
+    air = ''.join(pair_bars([(name, fig[key], f'{fig[key]:g} µg/m³', False), ('WHO guideline', AIR_WHO[short], f'{AIR_WHO[short]} µg/m³', True)], heading)
+                  for key, short, heading in (('no2AnnualMeanUgm3', 'no2', 'Nitrogen dioxide'), ('pm25AnnualMeanUgm3', 'pm25', 'Fine particles'))
+                  if is_figure(fig.get(key)))
+    if air:
+        out['Air quality'] = ('', air)
+    if uk and is_figure(fig.get('crimeRate')):
+        median = london_crime_median()
+        out['Recorded crime'] = ('', pair_bars([(name, fig['crimeRate'], f"{fig['crimeRate']:g}", False), ('London median', median, london_median_said(), True)], said=True))
+    if is_figure(data.get('avg_price')) and is_figure(data.get('price_median')):
+        out['Average price'] = ('', pair_bars([(name, data['avg_price'], fmt_price(data['avg_price']), False),
+                                               (f'{city_label} median', data['price_median'], fmt_price(data['price_median']), True)]))
+    for f in data['facts']:
+        if f['label'] in ('Transport access', 'Healthcare access'):
+            out[f['label']] = (step_strip(RATING_STEPS, str(f['value'])), '')
+        elif f['label'] == 'Progress 8':
+            band = school_band(float(f['value']))
+            out['Progress 8'] = (step_strip(SCHOOL_STEPS, band if band == 'average' else band.removesuffix(' average')), '')
+    return out
+
+
+def finding(f: dict, uk: bool, strip: str = '', bars: str = '') -> str:
+    """One fact as a finding: its plain words, its strip, its figure, its bars, then the source note it always carried."""
+    label, value, note = f['label'], f['value'], f.get('note')
+    detail = ''
+    if label == 'Recorded crime':
+        if uk:
+            # ONS publishes no rate for the City of London: the figure is ours, and the sentence must say so.
+            word, unit = (('Estimated crime', "offences per 1,000 residents a year, Sky Score's estimate") if f.get('estimated')
+                          else ('Recorded crime', 'recorded offences per 1,000 residents a year'))
+            head = f'{word} is {crime_against_london(float(value))}'
+            detail = f'{value} {unit}; the London median is {london_median_said()}.'
+        else:
+            head, detail = 'Recorded crime', f'{value} recorded offences per 1,000 residents a year.'
+    elif label == 'Progress 8':
+        head, detail = f'Schools are {school_band(float(value))}', f'Progress 8 is {value}.'
+    elif label in ('Average price', 'Price trend'):
+        return (f'<div class="find" data-fact><p class="find-d">{e(label)}</p><p class="find-h find-big">{e(value)}</p>{bars}'
+                + (f'<span class="note">{e(note)}</span>' if note else '') + '</div>')
+    else:
+        said = SAID_AS.get(label, label)
+        # An API-only city holds no band, only the figure one would be cut from: that reads as a figure, never a word.
+        head, detail = (said, str(value)) if re.search(r'\d', str(value)) else (f'{said} is {str(value).lower()}', '')
+        if bars and detail:
+            detail = ''  # an API-only city's figure: its bar's caption says it, in fuller words
+    return (f'<div class="find" data-fact><p class="find-h">{e(head)}</p>{strip}'
+            + (f'<p class="find-d">{e(detail)}</p>' if detail else '') + bars
+            + (f'<span class="note">{e(note)}</span>' if note else '') + '</div>')
+
+
+def score_row(f: dict) -> str:
+    """One score out of 10, its bar in the map's colour for that score, its note under it."""
+    shown = f['value'].split(' / ')[0]
+    width = max(0.0, min(100.0, float(shown) * 10))
+    return (f'<div data-fact><dt>{e(f["label"])}</dt><dd><b>{e(shown)}</b> <span class="of">/ 10</span>'
+            f'<div class="bar" aria-hidden="true"><i style="width:{width:g}%;background:{score_colour(float(shown))}"></i></div>'
+            + (f'<span class="note">{e(f["note"])}</span>' if f.get('note') else '') + '</dd></div>')
+
+
+def findings_html(facts: list[dict], uk: bool, drawn: dict[str, tuple[str, str]] | None = None) -> tuple[str, str]:
+    """The scores and the two columns of groups. Every fact must land somewhere: a new label stops the build."""
+    by_label = {f['label']: f for f in facts}
+    if len(by_label) != len(facts):
+        raise ValueError('two facts share a label, so one would vanish from the page')
+    placed = {'Sky Score', *SCORE_ROWS, *(label for column in COLUMNS for _, labels in column for label in labels)}
+    lost = set(by_label) - placed
+    if lost:
+        raise ValueError(f'no place on the area page for {sorted(lost)}')
+    scores = '\n'.join(score_row(by_label[label]) for label in SCORE_ROWS if label in by_label)
+    columns = []
+    for column in COLUMNS:
+        sections = []
+        for name, labels in column:
+            found = [finding(by_label[label], uk, *(drawn or {}).get(label, ('', ''))) for label in labels if label in by_label]
+            if found:
+                sections.append(f'<section class="group"><h2>{e(name)}</h2>\n' + '\n'.join(found) + '\n</section>')
+        columns.append('<div>\n' + '\n'.join(sections) + '\n</div>')
+    return scores, '\n'.join(columns)
 
 
 def render(data: dict) -> str:
     city_label = CITY_LABEL.get(data['city'], data['city'].title())
-    rows = '\n'.join(
-        '<tr><th scope="row">{}</th><td>{}{}</td></tr>'.format(
-            e(f['label']),
-            e(f['value']),
-            f'<span class="note">{e(f["note"])}</span>' if f.get('note') else '',
-        )
-        for f in data['facts']
-    )
+    scores, groups = findings_html(data['facts'], data['uk'], visuals(data, city_label, data['uk']))
     # THE META DESCRIPTION NAMED UK BODIES FOR NEW YORK TOO (2026-08-31, C3).
     #
     # This is the text that appears in a SEARCH RESULT, so "Brooklyn ... from
@@ -590,14 +862,20 @@ def render(data: dict) -> str:
     # fix, because it is built here and not there. Found by the gate written for
     # the notes, which is the argument for writing the gate.
     uk_city = app.CITIES[data['city']].get('country') == 'United Kingdom'
-    source_clause = 'from official public data' if uk_city else 'from public New York City sources'
+    source_clause = ('from official public data' if uk_city
+                     else 'from public US federal and California sources' if data.get('us_scales')
+                     else 'from public New York City sources')
     # "Cardiff, Cardiff" (audit I7): a borough that shares its city's name is named once.
     place = data['borough'] if data['borough'] == city_label else f"{data['borough']}, {city_label}"
     shown = topics(data['facts'])
-    desc = (
-        f"{data['borough']} scores {data['score']} out of 10 on Sky Score. "
-        f"{shown[0].upper() + shown[1:]} for {place}, {source_clause}."
-    )[:300]
+    lead = f"{data['borough']} scores {data['score']} out of 10 on Sky Score"
+    short = topics(data['facts'], compact=True)
+    desc = fit(
+        f"{lead}. {shown[0].upper() + shown[1:]} for {place}, {source_clause}.",
+        f"{lead}. {shown[0].upper() + shown[1:]}, {source_clause}.",
+        f"{lead}: {short}, {source_clause}.",
+        f"{lead}: {short}.",
+    )
     # A PREVIEW CITY HAS NO MAP, SO ITS PAGE MUST NOT OFFER ONE (2026-09-30).
     #
     # Every page linked to /?city=<city>, and the site IGNORES a city that
@@ -615,18 +893,22 @@ def render(data: dict) -> str:
         )
         map_note = ''
     else:
+        # The Bay Area's map holds cities, ZIPs and San Francisco's neighbourhoods, never a postcode (2026-11-07).
+        on_map = (f'The published routes, the federal noise map and every city\'s score in {e(city_label)}.'
+                  if data.get('us_scales') else
+                  f'Noise contours, flight corridors and every neighbourhood in {e(city_label)}.')
         cta = (
             '<div class="cta">\n'
-            '  <p style="margin:0 0 8px;"><strong>See it on the map.</strong> Noise contours, flight corridors '
-            f'and every neighbourhood in {e(city_label)}.</p>\n'
+            f'  <p style="margin:0 0 8px;"><strong>See it on the map.</strong> {on_map}</p>\n'
             # /map/ since 2026-10-06, when the front page took / and the full map moved.
             f'  <a href="/map/?city={e(data["city"])}&amp;borough={e(data["borough"].replace(" ", "+"))}">'
             f'Open {e(data["borough"])} on the Sky Score map</a>\n'
             '</div>'
         )
-        map_note = ', and the map shows postcode-level detail'
+        map_note = (', and the map shows the routes over each ZIP' if data.get('us_scales')
+                    else ', and the map shows postcode-level detail')
     return PAGE.format(
-        title=e(f"{data['borough']} noise & liveability score | Sky Score"),
+        title=e(page_title(f"{data['borough']} noise & liveability score")),
         description=e(desc),
         canonical=f"{SITE}/area/{slug(data['city'])}/{slug(data['borough'])}/",
         crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Areas', '/area/'),
@@ -643,8 +925,13 @@ def render(data: dict) -> str:
         # byte-identical to before (its sitemap date does not move).
         planes=planes_section(data['city'], data['borough']),
         map_note=map_note,
+        unit='city' if data.get('us_scales') else 'borough',
         score=e(data['score']),
-        rows=rows,
+        us_scales=f'<p class="sub">{e(data["us_scales"])}</p>\n' if data.get('us_scales') else '',
+        score_width=f"{max(0.0, min(100.0, float(data['score']) * 10)):g}",
+        score_colour=score_colour(float(data['score'])),
+        scores=scores,
+        groups=groups,
         # EVERY source, not the first six (2026-09-07, audit I7). The `[:6]`
         # cap silently dropped the tail of the attribution array, and the tail
         # is where the environment datasets sit:
@@ -679,8 +966,14 @@ INDEX = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Every area Sky Score covers | Sky Score</title>
-<meta name="description" content="Noise and liveability scores for {coverage}, from published UK government and New York City sources." />
+<meta name="description" content="{description}" />
 <link rel="canonical" href="{site}/area/" />
+<meta property="og:title" content="Every area Sky Score covers | Sky Score" />
+<meta property="og:description" content="{description}" />
+<meta property="og:url" content="{site}/area/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Sky Score" />
+<meta name="twitter:card" content="summary" />
 <link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -689,12 +982,12 @@ INDEX = """<!doctype html>
 <style>
   /* See the note on the borough template: same reason, same fix. */
   :root {{ color-scheme: light dark;
-    --dark:#141414; --mid:#636363; --line:#e7e5e4; --orange:#c2410c; }}
-  body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); line-height:1.6; }}
-  a:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
+    """ + PALETTE_LIGHT + """ }}
+  body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:var(--bg); line-height:1.6; }}
+  a:focus-visible {{ outline:3px solid var(--focus); outline-offset:2px; }}
   .wrap {{ max-width:720px; margin:0 auto; padding:24px 20px 64px; }}
-  a {{ color:var(--orange); }}
-  h1 {{ font-size:28px; margin:0 0 6px; }}
+  a {{ color:var(--orange-ink); }}
+  h1 {{ font-family:var(--font-display); font-size:32px; font-weight:700; letter-spacing:-0.02em; margin:0 0 6px; }}
   h2 {{ font-size:16px; margin:28px 0 6px; }}
   ul {{ margin:0; padding-left:18px; }}
   li {{ margin:2px 0; }}
@@ -715,10 +1008,9 @@ INDEX = """<!doctype html>
   table.compare td.score {{ font-weight:700; }}
   .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }}
   .key {{ color:var(--mid); font-size:12px; margin:4px 0 0; }}
-  :root {{ --page:#fff; }}
+  :root {{ --page:var(--bg); }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --orange:#fb923c; --page:#141414; }}
-    body {{ background:#141414; }}
+    :root {{ """ + PALETTE_DARK + """ }}
   }}
   /* The site bar (2026-10-06): the front page's header.top, in this page's own font and colours. */
   .site-top {{ display:flex; align-items:center; justify-content:space-between; gap:8px 16px; flex-wrap:wrap; padding:14px clamp(16px, 4vw, 48px); }}
@@ -726,11 +1018,10 @@ INDEX = """<!doctype html>
   .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
   .site-top .site-nav {{ align-items:center; }}
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
-  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06). These
-     pages' --orange is #c2410c light / #fb923c dark, both past the 3:1 a state cue needs. */
+  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06): --focus, past the 3:1 a state cue needs. */
   .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
   .site-top .site-nav a:hover {{ text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }}
-  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
      fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
      pages carry none), and a browser without popovers keeps the plain bar. On a wide screen the closed popover
@@ -760,7 +1051,7 @@ INDEX = """<!doctype html>
 <p class="sub">{coverage}. Each page carries the published measurements behind that area's score.</p>
 <p class="sub">Each city's areas side by side: the Sky Score and its five parts are out of 10, and 10 is best. A dash means that area's page publishes no figure for it.</p>
 <p class="sub">All of it in one file: <a href="/open-data/">download the open data (CSV)</a>.</p>
-<p class="sub">In the United States: <a href="/bay-area/">flight paths over 50 San Francisco Bay Area cities</a>.</p>
+<p class="sub">The Bay Area's flight paths, city by city: <a href="/bay-area/">the Bay Area page</a>.</p>
 {body}
 <p class="sub" style="margin-top:32px;"><a href="/map/">Back to the map</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/terms">Terms</a></p>
 </main>
@@ -778,8 +1069,10 @@ NONE_PUBLISHED = '<td><span aria-hidden="true">&ndash;</span><span class="visual
 
 
 def compare_cell(label, facts):
-    """One cell: the figure that area's page publishes under `label`, or a dash that says it publishes none."""
-    value = next((f['value'] for f in facts if f['label'] == label), None)
+    """One cell: the figure that area's page publishes under `label`, or a dash that says it publishes none.
+    The price column takes a US-scaled city's Census median (its page's 'Median home value') under the same cell."""
+    labels = (label, 'Median home value') if label == 'Average price' else (label,)
+    value = next((f['value'] for f in facts if f['label'] in labels), None)
     if value is None:
         return NONE_PUBLISHED
     value = str(value).removesuffix(' / 10')
@@ -789,7 +1082,10 @@ def compare_cell(label, facts):
 def compare_table(city, entries) -> str:
     """One city's areas in one table: the figures their own pages publish, alphabetical."""
     label = CITY_LABEL.get(city, city.title())
-    head = ''.join(f'<th scope="col">{e(c)}</th>' for c in COMPARE_COLUMNS)
+    # A US-scaled city's price is a Census MEDIAN, so its column says so (its pages' own label).
+    median = any(f['label'] == 'Median home value' for _, d in entries for f in d['facts'])
+    head = ''.join(f'<th scope="col">{e("Median home value" if median and c == "Average price" else c)}</th>'
+                   for c in COMPARE_COLUMNS)
     rows = '\n'.join(
         f'<tr><th scope="row"><a href="/area/{p}/">{e(d["borough"])}</a></th>'
         + ''.join(compare_cell(c, d['facts']) for c in COMPARE_COLUMNS) + '</tr>'
@@ -797,15 +1093,25 @@ def compare_table(city, entries) -> str:
     )
     # Affordability and growth are scored within a currency pool: the US pages say so row by row, and the table
     # says it once, so nobody sets a New York figure beside a UK one.
-    note = ('' if app.CITIES[city].get('country') == 'United Kingdom' else
-            f'<p class="key">Affordability and growth are scored among {e(label)}\'s own areas: not comparable '
-            'with UK scores.</p>\n')
+    if app.CITIES[city].get('country') == 'United Kingdom':
+        note = ''
+    elif app.CITIES[city].get('growthNotScored'):
+        # The Bay Area (2026-11-07): growth is not scored, and its inputs are on US scales.
+        note = (f'<p class="key">Affordability is scored among {e(label)}\'s own areas, and growth is not scored here. '
+                f'{e(bay_records.us_scales(len(app.CITIES[city]["boroughs"])))}</p>\n')
+    else:
+        note = (f'<p class="key">Affordability and growth are scored among {e(label)}\'s own areas: not comparable '
+                'with UK scores.</p>\n')
     return (
         f'<div class="tw" role="region" aria-label="{e(label)}: areas compared" tabindex="0">\n'
         f'<table class="compare">\n<caption class="visually-hidden">{e(label)}: each area\'s Sky Score, its five '
         f'parts and its average price</caption>\n<thead><tr><th scope="col">Area</th>{head}</tr></thead>\n'
         f'<tbody>\n{rows}\n</tbody>\n</table>\n</div>\n{note}'
     )
+
+
+# How the coverage sentence names each city outside the UK, in its order (the counts come from the pages).
+ABROAD_WORDS = {'nyc': "New York's {n} boroughs", 'bayarea': '{n} Bay Area cities'}
 
 
 def render_index(pages) -> str:
@@ -822,9 +1128,17 @@ def render_index(pages) -> str:
     uk = [c for c in by_city if app.CITIES[c].get('country') == 'United Kingdom']
     abroad = [c for c in by_city if c not in uk]
     uk_n = sum(len(by_city[c]) for c in uk)
-    us = ' and '.join(f"{CITY_LABEL.get(c, c.title())}'s {len(by_city[c])} boroughs" for c in sorted(abroad))
+    # THE coverage sentence, word for word (CLAUDE.md; Bill, 2026-11-07: "plus New York's 5 boroughs and 50 Bay
+    # Area cities"): each US city's words here, its count from the pages. A city with no words stops the build.
+    unknown = sorted(set(abroad) - set(ABROAD_WORDS))
+    if unknown:
+        raise SystemExit(f'no coverage words for {unknown}: add them to ABROAD_WORDS')
+    us = ' and '.join(ABROAD_WORDS[c].format(n=len(by_city[c])) for c in sorted(abroad, key=list(ABROAD_WORDS).index))
     coverage = f'{uk_n} council areas in {len(uk)} UK city regions' + (f', plus {us}' if us else '')
-    return INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body))
+    # The coverage sentence word for word (tests/test_llms_txt.py's holder); the source clause goes when it will not fit.
+    description = fit(f'Noise and liveability scores for {coverage}, from published UK government and US sources.',
+                      f'Noise and liveability scores for {coverage}.')
+    return INDEX.format(coverage=coverage, site=SITE, body='\n'.join(body), description=e(description))
 
 
 def main() -> int:
@@ -839,7 +1153,9 @@ def main() -> int:
     for city, cfg in app.CITIES.items():
         # The API scores these and the site shows FACTS (app.SITE_FACTS_ONLY_CITIES, Bill 2026-10-22): an area
         # page is a published SCORE, so none is written until the city's site release crosses the one-way door.
-        if city in app.SITE_FACTS_ONLY_CITIES:
+        # Nor for a city the map scores whose pages are not built yet (app.AREA_PAGES_PENDING: the Bay Area,
+        # 2026-11-07, whose US inputs need their own findings and notes here before a page can say them).
+        if city in app.SITE_FACTS_ONLY_CITIES or city in app.AREA_PAGES_PENDING:
             continue
         for borough in sorted(cfg['boroughs']):
             data = gather(city, borough)
@@ -1112,19 +1428,20 @@ OPEN_DATA_PAGE = """<!doctype html>
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://cubitt33.goatcounter.com; connect-src https://cubitt33.goatcounter.com; base-uri 'self'; form-action 'self';" />
 <style>
-  :root {{ color-scheme: light dark; --dark:#141414; --mid:#636363; --line:#e7e5e4; --bg:#fafaf9; --orange:#c2410c; }}
+  :root {{ color-scheme: light dark;
+    """ + PALETTE_LIGHT + """ }}
   * {{ box-sizing:border-box; }}
-  body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:#fff; line-height:1.6; }}
-  a:focus-visible {{ outline:3px solid #d35a12; outline-offset:2px; }}
+  body {{ margin:0; font-family:'Inter',system-ui,sans-serif; color:var(--dark); background:var(--bg); line-height:1.6; }}
+  a:focus-visible {{ outline:3px solid var(--focus); outline-offset:2px; }}
   .wrap {{ max-width:760px; margin:0 auto; padding:24px 20px 64px; }}
-  a {{ color:var(--orange); }}
+  a {{ color:var(--orange-ink); }}
   nav.crumbs {{ font-size:12px; color:var(--mid); margin-bottom:20px; }}
-  h1 {{ font-size:28px; line-height:1.25; margin:0 0 6px; }}
+  h1 {{ font-family:var(--font-display); font-size:32px; font-weight:700; letter-spacing:-0.02em; line-height:1.2; margin:0 0 6px; }}
   h2 {{ font-size:18px; margin:32px 0 8px; }}
   .sub {{ color:var(--mid); margin:0 0 20px; }}
-  .dl {{ display:inline-block; padding:12px 18px; border:1px solid var(--line); border-radius:8px; background:var(--bg); font-weight:600; }}
+  .dl {{ display:inline-block; padding:12px 18px; border:1px solid var(--line); border-radius:10px; background:var(--paper); font-weight:600; }}
   .tw {{ overflow-x:auto; }}
-  .tw:focus-visible {{ outline:2px solid var(--orange); outline-offset:2px; }}
+  .tw:focus-visible {{ outline:2px solid var(--focus); outline-offset:2px; }}
   table {{ width:100%; border-collapse:collapse; font-size:13px; }}
   th, td {{ text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }}
   th {{ font-weight:600; }}
@@ -1136,14 +1453,12 @@ OPEN_DATA_PAGE = """<!doctype html>
   .site-top .site-nav {{ display:flex; gap:4px; flex-wrap:wrap; }}
   .site-top .site-nav {{ align-items:center; }}
   .site-top .site-nav a {{ font-size:14px; font-weight:500; text-decoration:none; padding:8px 12px; border-radius:8px; color:var(--dark); }}
-  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06). These
-     pages' --orange is #c2410c light / #fb923c dark, both past the 3:1 a state cue needs. */
+  /* 'You are here' is an underline and Full map an outlined button (Bill, 2026-10-06): --focus, past the 3:1 a state cue needs. */
   .site-top .site-nav a.nav-cta {{ box-shadow: inset 0 0 0 1.5px var(--dark); font-weight:600; }}
   .site-top .site-nav a:hover {{ text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 7px; }}
-  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--orange); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
+  .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#1c1c1c; --orange:#fb923c; }}
-    body {{ background:#141414; }}
+    :root {{ """ + PALETTE_DARK + """ }}
   }}
   /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
      fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
@@ -1259,8 +1574,29 @@ STATIC_URLS = [
     ('/api/', '0.9', 'monthly'),
     ('/score-demo/', '0.7', 'monthly'),
     ('/score-demo/api-docs.html', '0.6', 'monthly'),
-    ('/score-demo/status.html', '0.3', 'weekly'),
+    # Never /score-demo/status.html: it asks search engines not to index it (a status page), and a sitemap
+    # listing a noindex page is a contradiction Google reports. It was listed until 2026-11-09, when Search
+    # Console emailed "Excluded by 'noindex' tag" for a sitemap page. write_sitemap() now refuses one.
 ]
+
+# A page that asks search engines not to index it, read from its own <meta name="robots"> (or "googlebot"): the
+# only place our pages say it, as CloudFront sends no X-Robots-Tag. Attributes in either order, any case.
+META_TAG = re.compile(r'<meta\b[^>]*>', re.IGNORECASE)
+META_ATTR = re.compile(r'([a-z-]+)\s*=\s*["\']([^"\']*)["\']')
+
+
+def noindex_in(text: str) -> bool:
+    """True when `text` holds a robots meta tag whose content includes noindex."""
+    for tag in META_TAG.findall(text):
+        attrs = dict(META_ATTR.findall(tag.lower()))
+        if attrs.get('name') in ('robots', 'googlebot') and 'noindex' in attrs.get('content', ''):
+            return True
+    return False
+
+
+def asks_noindex(path: str) -> bool:
+    """True when the repo file at `path` asks search engines not to index it."""
+    return noindex_in((REPO / path).read_text(encoding='utf-8'))
 
 
 # URLs whose file is not at the same path in the repo (2026-10-06): the front page
@@ -1340,6 +1676,11 @@ def write_sitemap(paths: list[str]) -> None:
     missing = [f for f in files if not (REPO / f).exists()]
     if missing:
         raise SystemExit(f'sitemap URLs with no file behind them: {missing}')
+    hidden = [f for f in files if asks_noindex(f)]
+    if hidden:
+        # Refuse rather than drop: either the page should be indexed (remove its noindex) or it should not be
+        # listed (remove it from STATIC_URLS). Only a person can say which.
+        raise SystemExit(f'sitemap URLs whose page asks not to be indexed: {hidden}')
     dated = last_changed(files)
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']

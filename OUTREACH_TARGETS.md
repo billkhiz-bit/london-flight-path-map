@@ -308,9 +308,9 @@ east), checked against the CAA's monthly totals, beside the official noise, air 
 
 | Who | What they get | When |
 |---|---|---|
-| Local papers covering Heathrow's footprint (Reach's MyLondon, Newsquest's Richmond & Twickenham Times, the Evening Standard's property pages) | One borough's list: its districts with the most planes overhead, and its quietest | After the ICO fee and DKIM; the loud version after the rename |
-| Residents' associations and amenity societies in Richmond, Hounslow, Ealing, Hammersmith and Fulham, Wandsworth and Hillingdon | A free consultation pack: that borough's measured planes overhead, noise and air, every figure with its source | After the ICO fee and DKIM |
-| Journalists' requests (#journorequest on X) about property, noise or air | A sourced answer from the data | After the ICO fee and DKIM |
+| Local papers covering Heathrow's footprint (Reach's MyLondon, Newsquest's Richmond & Twickenham Times, the Evening Standard's property pages) | One borough's list: its districts with the most planes overhead, and its quietest | After the rename (Bill, 2026-11-10: no press before it) |
+| Residents' associations and amenity societies in Richmond, Hounslow, Ealing, Hammersmith and Fulham, Wandsworth and Hillingdon | A free consultation pack: that borough's measured planes overhead, noise and air, every figure with its source | After the ICO fee, DMARC and legal batch 2, before the rename (Bill, 2026-11-10); only where the group's legal form allows cold email, and after the planes figures leave out PO boxes |
+| Journalists' requests (#journorequest on X) about property, noise or air | A sourced answer from the data | After the ICO fee, DMARC and legal batch 2, before the rename (Bill, 2026-11-10); only where the group's legal form allows cold email, and after the planes figures leave out PO boxes |
 | Buying agents and relocation firms covering south-west London | The Book a demo link and `/badge` | Warm contacts only until the rename (rows 5-10) |
 | London property video creators | The figures, and a clip for their own videos | After the rename |
 
@@ -332,7 +332,7 @@ Each is measured and in the repo. Re-check the source before quoting if the date
 |---|---|---|
 | Heathrow 55 dB Lden contour: DEFRA 2021 **75.6 km2** vs CAA 2025 **142.4 km2** (ERCD 2601 Table 12), 1.9x, about half (rolled 2026-11-01; ERCD 2501's 2024 figure was 148.4, so never quote that now) | `scripts/measure_covid_understatement.py --check` (blocking) | 2026-11-01 |
 | 62% of DEFRA's mapped Heathrow area (124.2 of 199.8 km2) is below 55 dB | ROADMAP, Option C | 2026-09-26 |
-| **Coverage, the ONE sentence: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only).** The full map draws 11 of the 13 UK city regions (91 boroughs); never quote that, "14 cities" or "102 boroughs" as the coverage - each was true of one surface, and three versions were live at once until 2026-10-12 | front page, `/api/`, `/reports/`, `/open-data/`, `/area/` (counted per country by `build_area_pages.py`) | 2026-10-12 |
+| **Coverage, the ONE sentence: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.** The full map draws 11 of the 13 UK city regions (91 boroughs); never quote that, "14 cities" or "102 boroughs" as the coverage - each was true of one surface, and three versions were live at once until 2026-10-12 | front page, `/api/`, `/reports/`, `/open-data/`, `/area/` (counted per country by `build_area_pages.py`) | 2026-10-12 |
 | Every input is official public data. DEFRA, the Environment Agency, ONS and HM Land Registry publish under the Open Government Licence; **the UK flight routes come from the UK AIP (NATS), which is public but NOT openly licensed** - never say "all open data" (corrected 2026-10-06; it read "every input is open government data") | LICENSING.md | 2026-10-06 |
 | Crime checked against ONS Table C4; prices against HM Land Registry HPI; flood against the EA's own map service, before every release | blocking preflight stages | current |
 | Neighbourhood prices use HM Land Registry Category A sales only, as HMLR's own statistics do | `build_city_neighbourhoods.py --check` | 2026-09-01 |

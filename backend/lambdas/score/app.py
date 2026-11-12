@@ -2054,8 +2054,9 @@ NORWICH_BOROUGHS = {
     'South Norfolk': {'impact': 'low', 'avgPrice': 307735, 'trend': -0.2, 'crimeRate': 41.8, 'transport': 'poor', 'healthcare': 'moderate', 'airQualityWhoRatio': 1.38, 'floodMediumOrHighPct': 0.56, 'roadNoiseAboveWhoPct': 33.8},
 }
 
-# The San Francisco Bay Area's 50 cities (release 2, 2026-10-22), scored by CITIES['bayarea'] (the API only:
-# the site shows them as facts until its own release, SITE_FACTS_ONLY_CITIES). Every field is joined by Census
+# The San Francisco Bay Area's 50 cities (release 2, 2026-10-22), scored by CITIES['bayarea'], and on the site's
+# full map and its 50 area pages from the same records since 2026-11-07 (index.html BAYAREA-RECORDS, the same
+# builder's second holder). Every field is joined by Census
 # GEOID from the readers' committed files (field-by-field sources in scripts/build_bayarea_records.py), and the
 # US measures carry their own names so no UK ramp can read them: crimePer1000Us, roadNoiseUsSharePct and
 # floodSfhaPct go to us_anchored_to_score against US_CALIFORNIA_ANCHORS. A city missing an input carries the
@@ -2376,11 +2377,12 @@ CITIES = {
         # than return the current set and present a fabricated zero change.
         # 'hasHistory': False,
     },
-    # The San Francisco Bay Area's 50 cities (release 2, 2026-10-22): the API scores them, the site shows
-    # them as facts until its own release (SITE_FACTS_ONLY_CITIES below). Its own POOL (decision 2): pooled
+    # The San Francisco Bay Area's 50 cities (release 2, 2026-10-22): the API scores them, and the site's full
+    # map and area pages since 2026-11-07 from the same records. Its own POOL
+    # (decision 2), mirrored by the site's CITY_DATA.bayarea.pool: pooled
     # with New York by currency, the "$2M+" top code would set the p95 and move New York's published
-    # affordability (Queens 6.5 -> 9.9). Reached by city NAME only for now: the Lambda holds no Bay Area ZIP
-    # table, and a ZIP spans cities (resolve_query says so on a Bay Area ZIP rather than guessing one).
+    # affordability (Queens 6.5 -> 9.9). Reached by city name, or by a ZIP scored as the city holding half or
+    # more of its residents (BAYAREA_ZIPS, 2026-10-23; until then names only).
     # hasHistory omitted, so ?compare=previous declines: no previous vintage was ever held.
     'bayarea': {
         'boroughs': BAYAREA_BOROUGHS,
@@ -2415,7 +2417,21 @@ CITIES = {
 # on the site, and a site city that renders facts while the API scores it must be here. Leaving this set is
 # the same one-way door as leaving BACKEND_ONLY_CITIES: the site must then reproduce the API on every borough.
 # scripts/build_area_pages.py writes no scored page for these.
-SITE_FACTS_ONLY_CITIES = frozenset({'bayarea'})
+#
+# EMPTY SINCE 2026-11-07 (built for review, branch bayarea-site-scores): the Bay Area LEFT through the door.
+# The full map scores its 50 cities from the API's own records (index.html BAYAREA-RECORDS, written beside
+# BAYAREA-BOROUGHS by scripts/build_bayarea_records.py), and tests/borough-score-parity.mjs now compares every
+# city and persona with calc_score. Kept, empty, because both parity gates read it: the next city through the
+# API-first door is declared here again.
+SITE_FACTS_ONLY_CITIES = frozenset()
+
+# Cities the site SCORES whose area pages are not written yet: scripts/build_area_pages.py writes none for
+# these (an area page bakes a score and its findings, and the Bay Area's US inputs need their own findings and
+# notes there), tests/area-page-freshness.mjs and tests/test_area_index_table.py leave them out of their counts,
+# and tests/test_borough_data_parity.py holds the set to cities the site scores. EMPTY since the same release
+# (2026-11-07): build_area_pages.py writes the Bay Area's 50 pages, its inputs in build_bayarea_records.py's words.
+# Kept, empty, for the next city whose map scores land before its pages.
+AREA_PAGES_PENDING = frozenset()
 
 # v5.1: the real-terms trend, attached to every sterling city's records here
 # rather than written into the thirteen borough tables above. IN PLACE, so the
@@ -9041,14 +9057,15 @@ def env_resolution(bd):
 # rasters land. Both are declared in plannedComponents today; neither has data
 # in this repo yet, so neither appears here.
 # The values `aircraftQuietCoverage` can take on /v1/environment, in the order a
-# reader would rank them. 'measured': DEFRA's raster has this postcode.
+# reader would rank them. 'modelled': DEFRA's raster has this postcode (it read 'measured' until 2026-11-04, against
+# this file's own rule that only an instrument's reading is measured: a strategic noise map is a model).
 # 'city': estimated from the resolved city's own airports and flight paths.
 # 'outside': the postcode resolved to no city Sky Score covers, so the estimate
 # is the loudest of every geometry held - a weaker claim, and the one state the
 # extension's panel-wide caveat is about. The key is absent when there is no
 # aircraft figure at all. Declared as a tuple so a test can assert the handler
 # never emits a fourth spelling.
-AIRCRAFT_QUIET_COVERAGE = ('measured', 'city', 'outside')
+AIRCRAFT_QUIET_COVERAGE = ('modelled', 'city', 'outside')
 
 _COVERAGE_NOTICES = {
     'raster': None,  # measured at this location — nothing to disclose
@@ -10095,8 +10112,24 @@ def _fetch_postcode(clean):
 _reverse_cache_get, _reverse_cache_put = _make_lru(1024)
 
 
+class PostcodeLookupFailed(Exception):
+    """postcodes.io could not answer a reverse lookup: NOT "there is no postcode here".
+
+    Until 2026-11-07 reverse_geocode returned None for both, so /v1/environment answered a failed lookup with the
+    404 it gives the sea, and a caller could not tell "try again" from "nothing here" (/api/'s words had to cover
+    both). `status` is what the route answers, as sold_prices does for Land Registry: 503 when the service could not
+    be reached, timed out or refused (a 429 or a 5xx), 502 when it answered with something we cannot read.
+    """
+
+    def __init__(self, status, reason):
+        super().__init__(reason)
+        self.status = status
+
+
 def reverse_geocode(lat, lon):
-    """Nearest UK location to a coordinate, or None.
+    """Nearest UK location to a coordinate, or None when there is no postcode near it.
+
+    Raises PostcodeLookupFailed when postcodes.io itself could not answer: a failure is never a None.
 
     Returns a dict of `postcode`, `ladCode` and `adminDistrict` — the last two
     so the caller can derive a city. It returned the bare postcode string until
@@ -10127,12 +10160,17 @@ def reverse_geocode(lat, lon):
     try:
         with urlopen(req, timeout=5) as resp:
             payload = json.loads(resp.read().decode())
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except HTTPError as exc:
+        # HTTPError before URLError: it is a subclass. A 429 or a 5xx is the service being unavailable; any other
+        # status for a lat/lon already checked in range is an answer we did not expect, so ours to call a bad gateway.
         logger.warning('postcodes.io reverse lookup failed for %s: %s', _log_coarse(lat, lon), exc)
-        return None
+        raise PostcodeLookupFailed(503 if exc.code == 429 or exc.code >= 500 else 502, f'HTTP {exc.code}') from exc
+    except (URLError, TimeoutError) as exc:
+        logger.warning('postcodes.io reverse lookup failed for %s: %s', _log_coarse(lat, lon), exc)
+        raise PostcodeLookupFailed(503, type(exc).__name__) from exc
     except json.JSONDecodeError as exc:
         logger.warning('postcodes.io returned non-JSON for %s: %s', _log_coarse(lat, lon), exc)
-        return None
+        raise PostcodeLookupFailed(502, 'non-JSON') from exc
 
     # A coordinate in the sea returns status 200 with result: null. That is a
     # legitimate "no postcode here", not an error, and must not be cached as
@@ -11606,7 +11644,18 @@ def handle_environment(event):
     if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
         return response(400, {'error': 'lat/lon out of range.'})
 
-    location = reverse_geocode(lat, lon)
+    try:
+        location = reverse_geocode(lat, lon)
+    except PostcodeLookupFailed as exc:
+        # Not the sea: the lookup this route depends on failed, so say so and keep 404 for "no postcode here".
+        return response(
+            exc.status,
+            {
+                'error': 'The postcode lookup this route depends on is unavailable just now. Try again shortly.',
+                'location': {'lat': lat, 'lon': lon},
+            },
+            headers={'Retry-After': '10'} if exc.status == 503 else None,
+        )
     if not location:
         return response(
             404,
@@ -11636,7 +11685,7 @@ def handle_environment(event):
         # PHRASE in aircraftQuietBasis, guarded by an e2e probe of the live
         # endpoint - a caveat keyed on wording is how audit I12's caveat
         # deleted itself. Consumers read this; the prose stays for people.
-        env['aircraftQuietCoverage'] = 'measured'
+        env['aircraftQuietCoverage'] = 'modelled'
         # Same WHO 2018 document as the road figure above; this is the value
         # _QUIET_CEILING_DB is already anchored on, restated so a consumer does
         # not have to know the scoring internals to read the decibels.

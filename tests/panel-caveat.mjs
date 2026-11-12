@@ -31,6 +31,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { chromium } from 'playwright';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 // Serve the repo root regardless of where this is invoked from.
 const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
@@ -52,6 +53,7 @@ await new Promise((r) => server.listen(PORT, r));
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
+await keepPanelOpen(page);
 await page.goto(`http://localhost:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(3000);
 

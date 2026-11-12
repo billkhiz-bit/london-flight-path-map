@@ -34,7 +34,7 @@ const PAGES = [
   { path: '/reports/street/', name: 'free street report' },
   { path: '/how-it-works/', name: 'how it works' },
   { path: '/about/', name: 'about' },
-  { path: '/api/', name: 'API landing' },
+  { path: '/api/', name: 'API landing', settled: '#dev-tiles' },
   { path: '/changes', name: 'what changed this quarter' },
   { path: '/score-demo/', name: 'score demo' },
   {
@@ -78,6 +78,12 @@ test.describe('Accessibility', () => {
       if (settled && (await page.locator(settled).count()) > 0) {
         await expect(page.locator(settled)).toBeVisible({ timeout: 15_000 });
       }
+
+      // A figure fades in over a quarter of a second, and axe reads the colour it has at that moment: 2.5:1 mid-fade on a
+      // tile whose settled figure is far past AA (2026-11-04). Finite animations end first; a caret that blinks for ever never will.
+      await page.evaluate(() => Promise.all(document.getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => {}))));
 
       let builder = new AxeBuilder({ page }).withTags([
         'wcag2a',
@@ -138,6 +144,14 @@ test.describe('Accessibility', () => {
     // started, and then races the render — a green wait that guarantees nothing,
     // which is the failure mode this whole test exists to close.
     await expect(page.locator('#sidebar-title')).toHaveText(/SW11/i, { timeout: 30_000 });
+    // Since 2026-11-08 the panel opens on an answer card whose score and findings are closed until tapped: wait for
+    // the card, then open the score and every tile as a reader would, so the scan reaches what they hold.
+    await expect(page.locator('.answer-card .summary-verdict')).toBeVisible({ timeout: 30_000 });
+    await page.locator('#sidebar-content details.tile').first().waitFor({ state: 'attached', timeout: 30_000 });
+    await page.evaluate(() => {
+      document.getElementById('ac-score')?.setAttribute('open', '');
+      for (const d of document.querySelectorAll('#sidebar-content details.tile')) d.open = true;
+    });
     await expect(page.locator('.score-row').first()).toBeVisible({ timeout: 30_000 });
 
     const results = await new AxeBuilder({ page })

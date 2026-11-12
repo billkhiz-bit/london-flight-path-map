@@ -75,7 +75,15 @@ sitemap.xml|sitemap.xml
 .well-known/security.txt|.well-known/security.txt
 preview.png|preview.png
 fonts/fonts.css|fonts/fonts.css
+sw.js|sw.js
+manifest.webmanifest|manifest.webmanifest
+home/reports/sample-street-report-kew.pdf|reports/sample-street-report-kew.pdf
+home/reports/sample-street-report-kew-top.webp|reports/sample-street-report-kew-top.webp
+home/reports/sample-area-summary-norwich.pdf|reports/sample-area-summary-norwich.pdf
 '
+# The last five since 2026-11-12 (audit I-11): pwa-deploy's service worker and manifest, and home-deploy's sample
+# reports and the front page's picture of one, were uploaded and never compared, so a deploy that skipped pwa-deploy,
+# or left a regenerated sample out, passed unseen.
 
 # EVERY FILE UNDER js/, DERIVED (2026-10-12, audit 2026-10-09 M-9). Five of them
 # were named above by hand while web-deploy and home-deploy upload js/api-base.js,
@@ -244,8 +252,9 @@ done
 # Raised 25 -> 41 on 2026-10-19: the target had grown to 39 with no edit
 # here (the floor trailed by 14, so 14 files could have been dropped
 # unseen), and the two air files (breathe-london-sensors, aurn-sites) make 41.
-if [ "$DATA_CHECKED" -lt 41 ]; then
-  printf 'FAIL: compared only %d deployed data files, expected at least 41. The\n' "$DATA_CHECKED"
+# Raised 41 -> 42 on 2026-11-12 (audit M-25): the target uploads 42, so one could have gone unseen.
+if [ "$DATA_CHECKED" -lt 42 ]; then
+  printf 'FAIL: compared only %d deployed data files, expected at least 42. The\n' "$DATA_CHECKED"
   printf '  data-deploy parse is broken or the files have moved - either way this\n'
   printf '  pass reported agreement it never measured.\n'
   exit 1
@@ -625,11 +634,10 @@ for h in strict-transport-security x-content-type-options referrer-policy x-fram
   fi
 done
 
-# X-Frame-Options carries the CSPs' STATED intent, because theirs cannot.
-# Every page declares `frame-ancestors 'none'` in a <meta> CSP, where that
-# directive is IGNORED - so this header is the only thing actually refusing to
-# be framed. DENY matches what the pages claim, and the custom policy has
-# served it since 2026-09-28. SAMEORIGIN used to be accepted as the state
+# X-Frame-Options is the only thing refusing to be framed: a <meta> CSP cannot,
+# and the pages' `frame-ancestors 'none'`, ignored there, went on 2026-11-06
+# (tests/test_meta_csp.py). The custom policy has served
+# DENY since 2026-09-28. SAMEORIGIN used to be accepted as the state
 # inherited from the managed policy; now it would mean the site fell back to
 # that policy, so it reds. (Absent is caught by the presence loop above.)
 XFO=$(hdr 'x-frame-options' | tr 'A-Z' 'a-z')

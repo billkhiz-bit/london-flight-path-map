@@ -11,7 +11,7 @@
 //   node tests/planes-model.mjs
 
 import assert from 'node:assert/strict';
-import { districtOf, period, perDay, planesLinks, planesModel, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
+import { districtOf, overheadConeSvg, period, perDay, planesBandLead, planesChart, planesLead, planesLinks, planesModel, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
 
 const NAMES = { LHR: 'Heathrow', LCY: 'London City', MAN: 'Manchester' };
 const INFO = {
@@ -191,6 +191,122 @@ check('walkthrough: several airports tell the busiest; nothing to tell is null; 
   assert.deepEqual([shortFigure(null), shortFigure('<1'), shortFigure([0, 40]), shortFigure(['<1', 40])],
     ['not measured', 'under 1', 'up to 40', 'under 1 to 40']);
   assert.equal(stepColour(['<1', 49], STEPS), '#dc8a4a', "a range is coloured by its busier end, as the layer's stripes are");
+});
+
+// OPTION C, THE ANSWER AS THE HEADLINE (review prototype, 2026-11-07): the front page's h1 leads with the planes only in
+// planesWalk()'s own "most days" terms, only where the full map's planes layer would colour the figure, names the airport
+// it counts, and never carries a figure whose caveat it cannot.
+check('headline: Kew leads with its most days, the airport named, in the walkthrough\'s own words', () => {
+  const kew = planesModel(TW9, INFO, 'TW9 3PZ', NAMES);
+  assert.equal(planesLead(kew, STEPS), 'On most days, about 310 Heathrow planes a day pass over TW9 3PZ');
+  assert.ok(planesWalk(kew, STEPS).sentence.map((p) => p.text).join('').startsWith('On most days, about 310 planes a day pass over TW9 3PZ'),
+    'the headline and the walkthrough say the same day and figure');
+  const e16 = planesModel({ ...E16, approx: [], other: [] }, INFO, 'E16 2QD', NAMES);
+  assert.equal(planesLead(e16, STEPS), 'On most days, about 104 Heathrow planes a day pass over E16 2QD', 'two airports: the busiest, named, never a sum');
+});
+
+check('headline: no "most days" at half or under, no range, nothing the layer leaves blank, and no steps, no planes', () => {
+  const even = { ...INFO, airports: { ...INFO.airports, LHR: { ...INFO.airports.LHR, share_pct: { westerly: 50, easterly: 35, mixed: 15 } } } };
+  assert.equal(planesLead(planesModel(TW9, even, 'TW9 3PZ', NAMES), STEPS), null);
+  assert.equal(planesLead(planesModel(TW3, INFO, 'TW3 3QL', NAMES), STEPS), null, 'a range is never a headline');
+  const few = (v) => planesModel({ district: 'TW9', postcodes: { 'TW9 3PZ': { LHR: [v, 40, 2] } }, none: [], approx: [], other: [] }, INFO, 'TW9 3PZ', NAMES);
+  assert.equal(planesLead(few(9), STEPS), null, 'under the layer\'s first step (10), as SW5 9HP\'s 4 a day: blank on the map, so not the headline');
+  assert.equal(planesLead(few(10), STEPS), 'On most days, about 10 Heathrow planes a day pass over TW9 3PZ', 'the first step itself leads');
+  assert.equal(planesLead(few('<1'), STEPS), null);
+  assert.equal(planesLead(planesModel(TW9, INFO, 'TW9 3PZ', NAMES)), null, 'without the layer\'s steps the planes never lead');
+  assert.equal(planesLead(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES), STEPS), null, 'none reaching 1 a day is said below, never led with');
+  assert.equal(planesLead(null, STEPS), null);
+});
+
+check('headline: a caveat that changes the figure keeps the planes out of it', () => {
+  assert.equal(planesLead(planesModel({ ...TW9, approx: ['TW9 3PZ'] }, INFO, 'TW9 3PZ', NAMES), STEPS), null, 'an estimated position');
+  assert.equal(planesLead(planesModel({ ...TW9, other: ['TW9 3PZ'] }, INFO, 'TW9 3PZ', NAMES), STEPS), null, 'other flying the count cannot see');
+});
+
+// THE QUIET SIDE (Bill, 2026-11-07: "answer the planes question before road noise"): the band the layer leaves blank, said
+// as that band, read from the steps, only where it holds on every kind of day for every airport listed.
+const at = (figs, extra = {}) => planesModel({ district: 'SW5', postcodes: { 'SW5 9HP': figs }, none: [], approx: [], other: [], ...extra }, INFO, 'SW5 9HP', NAMES);
+check('band: SW5 9HP\'s few planes, as the layer\'s blank band, the airport named, the step read from the layer', () => {
+  assert.equal(planesBandLead(at({ LHR: [4, '<1', 3] }), STEPS), 'Fewer than 10 Heathrow planes a day pass over SW5 9HP');
+  assert.equal(planesBandLead(at({ LHR: [9, 9, 9] }), STEPS), 'Fewer than 10 Heathrow planes a day pass over SW5 9HP', 'up to the step itself');
+  assert.equal(planesBandLead(at({ LHR: [4, '<1', 3] }), [{ from: 25, colour: '#dc8a4a' }]), 'Fewer than 25 Heathrow planes a day pass over SW5 9HP', 'the band is the layer\'s, never typed');
+  assert.equal(planesBandLead(at({ LHR: [4, '<1', 3] }), []), null, 'no steps, no band');
+});
+
+check('band: never claimed unless true on every kind of day held: a figure at the step, a range reaching it, or a day not measured', () => {
+  assert.equal(planesBandLead(at({ LHR: [10, 1, 1] }), STEPS), null);
+  assert.equal(planesBandLead(at({ LHR: [[2, 12], 1, 1] }), STEPS), null, 'a range is judged on its top');
+  assert.equal(planesBandLead(at({ LHR: [[2, 9], 1, '<1'] }), STEPS), 'Fewer than 10 Heathrow planes a day pass over SW5 9HP', 'a range under the step is inside the band');
+  assert.equal(planesBandLead(at({ LHR: [4, null, 3] }), STEPS), null, 'a kind of day not measured is not "fewer than"');
+});
+
+check('band: per airport, never a sum; none reaching 1 says it of each airport; a caveat or no data claims nothing', () => {
+  assert.equal(planesBandLead(at({ LHR: [4, 2, 3], LCY: [6, 1, 2] }), STEPS), 'Fewer than 10 planes a day from each of Heathrow and London City pass over SW5 9HP');
+  assert.equal(planesBandLead(at({ LHR: [4, 2, 3], LCY: [16, 1, 2] }), STEPS), null, 'one airport over the step');
+  assert.equal(planesBandLead(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES), STEPS), 'Fewer than 10 planes a day from each airport we count pass over TW9 9ZZ');
+  assert.equal(planesBandLead(at({ LHR: [4, 2, 3] }, { approx: ['SW5 9HP'] }), STEPS), null, 'an estimated position');
+  assert.equal(planesBandLead(at({ LHR: [4, 2, 3] }, { other: ['SW5 9HP'] }), STEPS), null, 'other flying the count cannot see');
+  assert.equal(planesBandLead(at({ BHX: [4, 2, 3] }), STEPS), null, 'an airport airports.json does not publish is never spoken for');
+  assert.equal(planesBandLead(null, STEPS), null);
+});
+
+check('the large-user rule is said beside the definition, and an older file without it says nothing extra', () => {
+  const rule = 'PO boxes and other postcodes for organisations that receive a lot of post are left out.';
+  const told = planesModel(TW9, { ...INFO, postcodes_rule: rule }, 'TW9 3PZ', NAMES).definition;
+  assert.ok(told.endsWith(rule) && told.includes(INFO.direction_rule), told);
+  const older = planesModel(TW9, INFO, 'TW9 3PZ', NAMES).definition;
+  assert.equal(older, `${INFO.definition} ${INFO.direction_rule}`);
+  assert.doesNotMatch(older, /undefined/);
+});
+
+// ---- the planes chart (2026-11-11): the air chart's twin, from the model, banded and coloured by the layer's steps ----
+const rowsOf = (svg) => [...svg.matchAll(/<g data-kind="([^"]+)" data-value="([^"]*)">/g)].map((m) => [m[1], m[2]]);
+const fillsOf = (svg) => [...svg.matchAll(/data-mark="planes" cx="([\d.]+)"[^>]*fill="(#[0-9a-f]{6})"/g)].map((m) => [Number(m[1]), m[2]]);
+check('chart: Kew, each kind of day at its figure on one scale, coloured and banded as the layer', () => {
+  const svg = planesChart(planesModel(TW9, INFO, 'TW9 3PZ', NAMES).airports[0], STEPS);
+  assert.deepEqual(rowsOf(svg), [['westerly', '310'], ['mixed', '168'], ['easterly', '4']]);
+  assert.match(svg, /data-max="400"/, '310 with a little room rounds to 400');
+  assert.deepEqual([...svg.matchAll(/data-band="(\d+)"/g)].map((m) => Number(m[1])), [10, 50, 100, 200]);
+  const x = (v) => +(176 + (v / 400) * 158).toFixed(2);
+  assert.deepEqual(fillsOf(svg), [[x(310), '#662809'], [x(168), '#9a4316'], [x(4), '#9a9893']], 'dots at their figures, in their steps; under the first step neutral');
+  assert.match(svg, /56% of days/);
+});
+check('chart: a range is a bar from fewest to most with its label above; none is a figure, at zero', () => {
+  const svg = planesChart(planesModel(TW3, INFO, 'TW3 3QL', NAMES).airports[0], STEPS);
+  assert.deepEqual(rowsOf(svg), [['westerly', '7 to 339'], ['mixed', '3'], ['easterly', 'none']]);
+  const x = (v) => +(176 + (v / 400) * 158).toFixed(2);
+  assert.match(svg, new RegExp(`data-range="1" x1="${x(7)}" x2="${x(339)}"`));
+});
+check('chart: a kind of day with no figure says "not measured", never 0', () => {
+  const lcy = planesModel(E16, INFO, 'E16 2QD', NAMES).airports.find((a) => a.code === 'LCY');
+  const svg = planesChart(lcy, STEPS);
+  assert.deepEqual(rowsOf(svg).find(([k]) => k === 'easterly'), ['easterly', '']);
+  assert.match(svg, />not measured</);
+  assert.equal(fillsOf(svg).length, 2, 'no dot for the day not measured');
+});
+check('chart: without the layer steps, no bands and no guessed colour', () => {
+  const svg = planesChart(planesModel(TW9, INFO, 'TW9 3PZ', NAMES).airports[0], []);
+  assert.doesNotMatch(svg, /data-band/);
+  assert.ok(fillsOf(svg).every(([, c]) => c === '#9a9893'));
+});
+check('chart: every name is escaped, and a colour that is not a colour is never drawn', () => {
+  const svg = planesChart({ name: 'A<b>', code: 'Q"x', rows: [{ kind: 'westerly', label: 'L<i>', share: 's&t', value: 120 }] },
+    [{ from: 10, colour: 'red" onload="x' }, { from: 100, colour: '#9a4316' }]);
+  assert.doesNotMatch(svg, /<b>|<i>|onload/);
+  assert.match(svg, /L&lt;i&gt;/);
+  assert.deepEqual(fillsOf(svg).map(([, c]) => c), ['#9a4316']);
+});
+check('rules: the three sentences apart, word for word, null where the file has none', () => {
+  const rule = 'PO boxes and other postcodes for organisations that receive a lot of post are left out.';
+  assert.deepEqual(planesModel(TW9, { ...INFO, postcodes_rule: rule }, 'TW9 3PZ', NAMES).rules, { overhead: INFO.definition, direction: INFO.direction_rule, postcodes: rule });
+  assert.equal(planesModel(TW9, INFO, 'TW9 3PZ', NAMES).rules.postcodes, null);
+});
+check("cone: the drawing's angle is the rule's own, and no angle means no drawing", () => {
+  const svg = overheadConeSvg(INFO.definition);
+  const [, ax, ay] = /L([\d.]+) ([\d.]+)/.exec(svg);
+  assert.ok(Math.abs(Math.atan2(62 - Number(ay), 60 - Number(ax)) * 180 / Math.PI - 48.5) < 0.2, svg);
+  assert.match(svg, /aria-hidden="true"/);
+  assert.equal(overheadConeSvg('Overhead means close by.'), '');
 });
 
 console.log(`planes model: ${passed} checks passed`);

@@ -9,7 +9,8 @@
 ## Project
 
 **THE PUBLIC COVERAGE SENTENCE (2026-10-12), the only one to quote: "97 council areas in 13 UK city regions, plus
-New York's 5 boroughs and 50 Bay Area cities (facts only)".** Three versions had been live at once (97 in 13; 102
+New York's 5 boroughs and 50 Bay Area cities".** ("(facts only)" until 2026-11-07, when the site began to score
+the Bay Area.) Three versions had been live at once (97 in 13; 102
 in 14; 11 and 91), each true of one surface. The counts below describe surfaces; `build_area_pages.py` counts the
 sentence per country for `/area/`, and OUTREACH_TARGETS "Facts safe to quote" holds it.
 

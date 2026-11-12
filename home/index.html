@@ -101,7 +101,8 @@
       .hero { position: relative; margin: 0 var(--gutter); display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(24px, 3vw, 56px); align-items: start; }
       .mapcol { position: sticky; top: 16px; min-width: 0; }
       .mapwrap { position: relative; height: min(calc(100vh - 150px), 680px); min-height: 480px; border-radius: 18px; overflow: hidden; background: var(--water); }
-      .mapwrap > svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+      .mapwrap > svg { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; transition: opacity 0.25s; }
+      .mapwrap > svg:empty { opacity: 0; }
       .mapwrap > svg:active { cursor: grabbing; }
       /* Strokes keep their on-screen width at any zoom; the engine counter-scales the marks. */
       .hero svg .boro { fill: #faf9f6; stroke: #8f8e88; stroke-width: 0.7; vector-effect: non-scaling-stroke; transition: fill 0.15s; cursor: pointer; }
@@ -136,11 +137,50 @@
       .os-credit { position: absolute; left: 24px; bottom: 6px; margin: 0; font-size: 10px; color: var(--dark); background: rgba(251, 250, 248, 0.85); padding: 1px 6px; border-radius: 4px; pointer-events: none; }
 
       .panel { min-width: 0; padding-top: 10px; }
+      /* A plain visit arrives in place (Bill, 2026-11-04: "it doesn't look smooth"; measured, the example pushed the map down
+         0.08 of the screen on a phone). The example's frame and labels are in the page from the first frame, so only the
+         figures arrive. The engine ends this state however the example ends; it also ends by itself if the engine never ran. */
+      .ans-skeleton { display: none; margin-top: 18px; padding: 14px 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; }
+      .panel.is-loading .ans-skeleton { display: block; animation: skeleton-gone 0s linear 8s forwards; }
+      .panel.is-loading .status:empty { min-height: 0; margin: 0; }
+      .ans-skeleton .ans-pc { margin: 0 0 2px; font: 600 18px/1.55 var(--font-display); }
+      .ans-skeleton .ans-show { visibility: hidden; }
+      @keyframes skeleton-gone { to { visibility: hidden; } }
+      #ans-tiles .ans-tile b { animation: figure-in 0.25s ease-out; }
+      @keyframes figure-in { from { opacity: 0; } }
       .panel h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(36px, 3.9vw, 56px); line-height: 1.04; letter-spacing: -0.03em; margin: 0 0 12px; text-wrap: balance; }
-      /* Once there is a visitor's own answer or a card, the question makes way for it so the result stays on one screen.
-         The example does not: it is a line of tiles, and the question is still the page's. */
-      .panel.has-result:not(.is-example) h1 { font-size: 22px; margin-bottom: 8px; }
-      .panel.has-result:not(.is-example) .lead, .panel.has-result:not(.is-example) .promises, .panel.has-result:not(.is-example) .news { display: none; }
+      /* A council area's card takes the panel: the question makes way for it so the card stays on one screen. A postcode's
+         answer no longer does (option C, Bill 2026-11-07: a visitor's own headline has the example's size and treatment, so
+         the lead, the promises and the pill stay with it, and a search moves nothing above the answer). */
+      .panel:has(#borough.is-open) h1 { font-size: 22px; margin-bottom: 8px; }
+      .panel:has(#borough.is-open) .lead, .panel:has(#borough.is-open) .promises, .panel:has(#borough.is-open) .news { display: none; }
+      /* OPTION C, the answer as the headline (review prototype, 2026-11-07). The question and the answer's lead share one
+         grid cell, each its own height (align-self: start), so the heading is as tall as the taller and never moves what is
+         under it when one gives way to the other: the question, unseen once there is a lead, still holds its room. */
+      .panel h1 { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
+      .panel h1 > .h1-q, .panel h1 > .h1-a { grid-area: 1 / 1; align-self: start; min-width: 0; }
+      .panel h1.has-lead > .h1-q { visibility: hidden; }
+      .panel h1 > .h1-a[hidden] { display: none; }
+      .panel h1 > .h1-a { animation: figure-in 0.25s ease-out; }
+      .h1-a .h1-ex { display: block; margin: 0 0 8px; font: 600 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange-ink); }
+      /* While a lead is on its way (the example arriving, or a visitor's search), the room under the question holds a
+         skeleton line in the example frame's colours (Bill, 2026-11-07: "so it reads as loading, not empty"). Absolutely
+         placed at the foot of the kept room, which always leaves at least the "Example:" line's 25 px under the question, so
+         it moves nothing; hidden from assistive technology; gone once the lead lands. Ends by itself if the engine never runs. */
+      .panel h1 > .h1-wait { display: none; position: absolute; left: 0; bottom: 6px; width: min(62%, 13em); height: clamp(10px, 0.3em, 16px); border-radius: 999px; background: var(--tint); box-shadow: inset 0 0 0 1px var(--line); }
+      /* The room the lead is fitted into (fitLead): the "Example:" line and three lines of the heading (two where a stacked
+         column is wide), kept from the first frame on the postcode tab whatever the answer, so neither arriving nor a search
+         moves what is under the heading. Only with scripts, so a reader without them gets no gap; never on the Find tab or
+         under a card, where the heading is the question at 22 px. */
+      @media (scripting: enabled) {
+        .panel:not(.is-find):not(:has(#borough.is-open)) h1 { min-height: calc(25px + 3.12em); }
+        .panel.is-loading:not(.is-find):not(:has(#borough.is-open)) h1:not(.has-lead) > .h1-wait,
+        .panel:not(.is-find):not(:has(#borough.is-open)) h1.is-waiting:not(.has-lead) > .h1-wait { display: block; }
+        .panel.is-loading h1 > .h1-wait { animation: skeleton-gone 0s linear 8s forwards; }
+      }
+      @media (scripting: enabled) and (min-width: 600px) and (max-width: 1279px), (scripting: enabled) and (min-width: 600px) and (max-height: 500px) {
+        .panel:not(.is-find):not(:has(#borough.is-open)) h1 { min-height: calc(25px + 2.08em); }
+      }
       .panel p.lead { margin: 0 0 18px; color: var(--mid); font-size: 17px; line-height: 1.5; max-width: 46ch; }
       /* The "New" pill: written by build_planes_pages.py between PLANES-PILL markers, so it goes with the consultation. */
       .news { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; margin: 0 0 16px; padding: 5px 12px 5px 5px; font-size: 13px; line-height: 1.3; color: var(--dark); text-decoration: none; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; }
@@ -152,7 +192,17 @@
       .promises li { display: inline-flex; align-items: center; gap: 8px; font: 600 14px var(--font-body); color: var(--dark); }
       .promises svg { flex: none; }
       .field-label { display: block; margin: 0 0 6px; font: 600 12px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
-      form.check { display: flex; gap: 8px; }
+      form.check { position: relative; display: flex; gap: 8px; }
+      .pc-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20; max-height: 320px; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 30px rgba(20, 20, 20, 0.14); }
+      .pc-list[hidden] { display: none; }
+      .pc-head { margin: 0; padding: 8px 10px 4px; font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      .pc-foot { margin: 4px 0 0; padding: 8px 10px 6px; font-size: 12px; color: var(--mid); border-top: 1px solid var(--line); }
+      .pc-foot:first-child { margin: 0; border-top: 0; }
+      .pc-opt { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 40px; padding: 8px 10px; font: 500 15px var(--font-body); color: var(--dark); border-radius: 8px; cursor: pointer; }
+      .pc-opt small { flex: none; font: 400 12.5px var(--font-body); color: var(--mid); }
+      .pc-opt mark { font-weight: 600; color: var(--orange-ink); background: none; }
+      .pc-opt:hover, .pc-opt[aria-selected='true'] { background: var(--tint); }
+      .pc-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
       form.check input { flex: 1; min-width: 0; font: 500 18px var(--font-body); padding: 14px 16px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; color: var(--dark); }
       /* --mid, 7.4:1 on white. The placeholder is the field's only visible label,
          and #8a8985 measured 3.50:1 (audit 2026-10-05 I-6). */
@@ -197,7 +247,8 @@
          weight. The first version was an underline with the second tab in grey, and read as a caption:
          Bill asked where the options were. The chosen one is filled, as a chosen city chip is. */
       .tabs { display: inline-flex; gap: 4px; padding: 4px; margin: 2px 0 16px; background: #ebe9e3; border-radius: 12px; }
-      .tabs[hidden] { display: none; }
+      /* Waiting for the rows they search. Unseen and out of the tab order, but holding their place: arriving must move nothing. */
+      .tabs[hidden] { visibility: hidden; opacity: 0; }
       .tabs [role="tab"] { font: 600 15px var(--font-body); color: var(--dark); background: transparent; border: 0; border-radius: 9px; padding: 9px 18px; cursor: pointer; }
       .tabs [role="tab"]:hover { background: #fff; }
       .tabs [role="tab"][aria-selected="true"] { color: #fff; background: var(--dark); }
@@ -270,12 +321,57 @@
       .row .val { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
       .row .val small { color: var(--mid); font-size: 11px; display: block; white-space: normal; }
       .answer .more, .borough .more { margin: 12px 0 0; font-size: 14px; }
+      /* The planes as three kinds of day, each a tile: a range on a cone's edge wraps inside its own. */
+      .planes-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 8px 0 0; }
+      .planes-kind { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 9px 10px; font: 500 12.5px/1.3 var(--font-body); color: var(--mid); background: var(--tint); border-radius: 10px; }
+      .planes-kind b { font: 700 17px/1.2 var(--font-display); letter-spacing: -0.01em; color: var(--dark); overflow-wrap: anywhere; }
+      .planes-kind small { font-size: 12px; }
+      .nearby { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+      .nearby:not(:has(.fact:not([hidden]))) { display: none; }
+      .nearby h3 { margin: 0 0 6px; font: 600 16px/1.3 var(--font-display); letter-spacing: -0.01em; }
+      .fact { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; padding: 2px 0; font-size: 14px; }
+      .fact[hidden] { display: none; }
+      .fact .k { color: var(--mid); }
+      .ans-fold { border-top: 1px solid var(--line); }
+      .ans-fold:first-of-type { margin-top: 14px; }
+      .ans-fold:has(> [hidden]) { display: none; }
+      /* Hidden for every tool, not only for the eye: a closed details keeps its children's boxes in current Chrome. */
+      .ans-fold:not([open]) > :not(summary) { display: none; }
+      .ans-fold p { margin: 0 0 8px; }
+      .ans-fold .walk-air { max-width: 400px; margin: 4px 0 10px; }
+      /* The two folds, less text (2026-11-11, Bill: "still text heavy"; mock-up claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2):
+         a chart, the overhead rule beside a small drawing of it, short points, chips, one sources line (js/planes.mjs
+         planesNotes, the engine's air fold). The planes chart takes the page's type, as the air chart does below. */
+      .answer #ans-planes-notes { --font-mono: var(--font-body); }
+      .planes-over { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; align-items: center; margin: 0 0 10px; padding: 8px 10px; border-radius: 12px; background: var(--tint); }
+      .planes-over p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--dark); }
+      .planes-cone { display: block; width: 112px; height: auto; }
+      .cone-fill { fill: #fff; fill-opacity: 0.6; stroke: #e5b48c; }
+      .cone-top { stroke: var(--mid); stroke-dasharray: 3 2; }
+      .cone-ground { stroke: var(--dark); stroke-width: 1.5; }
+      .cone-home { fill: var(--dark); }
+      .cone-in { fill: var(--orange); stroke: var(--dark); }
+      .cone-out { fill: #fff; stroke: var(--mid); }
+      .fold-keys { display: grid; gap: 6px; margin: 0 0 10px; padding: 0; list-style: none; }
+      .fold-keys li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; font-size: 13px; line-height: 1.4; }
+      .fold-keys b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--tint); color: var(--orange-ink); font: 600 12px var(--font-body); }
+      .fold-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .fold-chips span { padding: 4px 10px; border-radius: 999px; background: var(--tint); color: var(--dark); font: 600 12px/1.4 var(--font-body); }
+      .fold-src { padding-top: 8px; border-top: 1px dashed var(--line); font-size: 12px; line-height: 1.45; color: var(--mid); }
+      .fold-src a { color: var(--orange-ink); font-weight: 600; }
+      /* The planes line's two short links stay whole; never the air credit, a long sentence that must wrap on a phone. */
+      #ans-planes-notes .fold-src a { white-space: nowrap; }
+      .say-links { display: grid; gap: 4px; margin: 0 0 8px; padding: 0; list-style: none; font-size: 14px; }
+      .say-links a { font-weight: 600; color: var(--orange-ink); }
+      .ans-fold summary { min-height: 40px; padding: 9px 0; font: 600 14px var(--font-body); cursor: pointer; }
+      .ans-fold > div, .ans-fold > p { margin: 0 0 10px; font-size: 13px; color: var(--mid); }
       .answer .more a, .borough .more a { color: var(--orange-ink); font-weight: 600; }
       .answer .routes, .answer .area { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
       /* Air measured nearby (2026-10-19): the readings, what kind each is, then each publisher's credit. */
       .answer .air p { margin: 4px 0 0; }
       .answer .air p:first-child { margin-top: 0; }
-      .answer .air .air-note, .answer .air .air-credit { font-size: 12px; }
+      .answer .air .air-credit { font-size: 12px; }
+      .answer .air .fold-chips { margin: 4px 0 10px; }
       .answer .air .air-credit a { color: inherit; }
       /* Planes overhead (2026-10-26): the answer's own rows under a heading of their own, a row per way the
          airport flies (js/planes.mjs). A range's bar spans its two ends, lighter, as the figure is less sure. */
@@ -304,6 +400,54 @@
       /* Kept whole: on a phone held sideways "How it is worked out" broke across two lines, and a broken link's box
          spans both, over the button beside it (axe target-size at 844x390). */
       .answer .area button.linkish, .answer .area a { white-space: nowrap; }
+      /* THE ANSWER'S LOWER HALF AS TILES (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): the
+         top's look carried down. Presentation only: every fact keeps its words, ids and order; a tile's big figure is drawn
+         from data-fig (nearbyFigure(), from the fact's own words) as generated content with empty alt text, so it is never
+         read twice and never in a test's text. */
+      .answer .planes .planes-more { margin: 8px 0 0; }
+      .answer .planes .planes-more:first-of-type { margin-top: 14px; }
+      .answer .planes .planes-more a { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 10px 14px; border: 1.5px solid var(--dark); border-radius: 12px; background: var(--paper); color: var(--dark); font: 600 14px/1.3 var(--font-body); text-decoration: none; }
+      .answer .planes .planes-more a::after { content: "\2192" / ""; flex: none; }
+      .answer .planes .planes-more a:hover { background: var(--tint); }
+      /* One column of tiles, figure on the left (measured 10 Nov: the real approach and sensor lines are long, so a two-column
+         grid left the airport and the station each alone on half a row; packing them with `dense` would split seen order
+         from read order, as the full map's cards found on 2026-11-09). */
+      .answer .nearby { display: grid; gap: 8px; }
+      .answer .nearby > h3 { margin-bottom: 0; }
+      .answer #ans-routes, .answer #ans-air-near { display: contents; }
+      .answer .nearby .fact { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); column-gap: 12px; row-gap: 1px; align-items: start; padding: 10px 12px; border-radius: 12px; background: var(--tint); font-size: 13px; line-height: 1.35; }
+      .answer .nearby .fact[hidden] { display: none; }
+      .answer .nearby .fact[data-fig]::before { content: attr(data-fig) / ""; grid-row: 1 / span 2; grid-column: 1; align-self: center; font: 700 19px/1.15 var(--font-display); letter-spacing: -0.01em; color: var(--dark); overflow-wrap: anywhere; }
+      .answer .nearby .fact .k, .answer .nearby .fact > :last-child { grid-column: 2; }
+      .answer .nearby .fact:not([data-fig]) { grid-template-columns: minmax(0, 1fr); }
+      .answer .nearby .fact:not([data-fig]) .k, .answer .nearby .fact:not([data-fig]) > :last-child { grid-column: 1; }
+      .answer .nearby .fact .k { font-weight: 600; color: var(--mid); }
+      .answer .nearby .fact > :last-child { color: var(--dark); }
+      .answer .area { display: grid; gap: 6px; margin: 12px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
+      .answer .area:empty { display: none; }
+      .answer .area .area-k { font-size: 12.5px; color: var(--mid); }
+      .answer .area b { font: 600 16px/1.25 var(--font-display); }
+      /* area-chips, never .chips: that is the city switch's absolutely placed list, which took these off the card. */
+      .answer .area .area-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .answer .area .area-chip { padding: 4px 10px; border-radius: 999px; background: var(--tint); color: var(--dark); font: 600 12.5px/1.35 var(--font-body); }
+      .answer .area .area-links { font-size: 13px; }
+      .answer .more:has(#ans-link) { margin-top: 14px; }
+      .answer .more #ans-link { display: flex; justify-content: center; align-items: center; min-height: 48px; padding: 10px 16px; border-radius: 12px; background: var(--dark); color: #fff; font: 600 15px var(--font-body); text-decoration: none; }
+      .answer .more #ans-link:hover { background: #2b2b2b; }
+      .ans-fold summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 10px; list-style: none; }
+      .ans-fold summary::-webkit-details-marker { display: none; }
+      .ans-fold summary[data-hint]::before { content: attr(data-hint) / ""; grid-row: 2; grid-column: 1; font: 400 12.5px/1.3 var(--font-body); color: var(--mid); }
+      /* A chevron drawn with borders: the arrow character fell back to a plain "v" (no glyph in the page's fonts). */
+      .ans-fold summary::after { content: ""; grid-row: 1 / span 2; grid-column: 2; width: 8px; height: 8px; margin: 0 4px 4px; border-right: 2px solid var(--mid); border-bottom: 2px solid var(--mid); transform: rotate(45deg); transition: transform 0.15s; }
+      .ans-fold[open] summary::after { margin: 4px 4px 0; transform: rotate(-135deg); }
+      @media (prefers-reduced-motion: reduce) { .ans-fold summary::after { transition: none; } }
+      .say-links { gap: 6px; }
+      /* Block, not flex: ::first-letter (the capital each link starts with here) applies only to a block box. */
+      .say-links a { display: block; position: relative; min-height: 40px; padding: 10px 34px 10px 12px; border-radius: 10px; background: var(--tint); color: var(--dark); text-decoration: none; }
+      .say-links a::first-letter { text-transform: uppercase; }
+      .say-links a::after { content: "\2192" / ""; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+      /* The air chart in the page's own type: the shared chart reads --font-mono, so only this fold changes. */
+      .answer .air { --font-mono: var(--font-body); }
       /* "Count my vote" (2026-10-13): where a visitor the map does not cover wants it next. */
       .want { margin: 10px 0 0; font-size: 13px; color: var(--mid); }
       .want b { color: var(--dark); font-weight: 600; }
@@ -422,7 +566,8 @@
       /* 01: the little search box, the three things it takes, and where each opens. */
       .walk-box { display: flex; align-items: center; gap: 2px; padding: 6px 6px 6px 14px; border: 1.5px solid var(--dark); border-radius: 12px; background: #fff; }
       .walk-typed { min-height: 1.4em; font: 500 18px var(--font-body); }
-      .walk-caret { width: 2px; height: 22px; background: var(--dark); animation: walk-caret 1.1s steps(1) infinite; }
+      /* Four blinks (4.4 s), then still (audit M-11, 2026-11-09; WCAG 2.2.2: under five seconds needs no pause button). */
+      .walk-caret { width: 2px; height: 22px; background: var(--dark); animation: walk-caret 1.1s steps(1) 4; }
       @keyframes walk-caret { 50% { opacity: 0; } }
       @media (prefers-reduced-motion: reduce) { .walk-caret { animation: none; } }
       .walk-go { margin-left: auto; padding: 9px 14px; border-radius: 9px; background: var(--orange); font: 600 14px var(--font-body); }
@@ -447,7 +592,8 @@
       .walk-note { margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--mid); }
       .walk-note a { color: var(--orange-ink); font-weight: 600; }
       .walk-air { margin: 0; }
-      .walk-air figcaption { margin: 0 0 4px; font: 600 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
+      /* Never uppercase: it turns the micro sign into a capital mu, so "\00B5 g/m\00B3" read as MG/M\00B3, a thousand times too much. */
+      .walk-air figcaption { margin: 0 0 4px; font: 600 11px var(--font-mono); letter-spacing: 0.06em; color: var(--mid); }
       .walk-air svg { display: block; width: 100%; height: auto; }
       .walk-planes-head { margin: 0 0 14px; font-size: 15px; line-height: 1.45; }
       .walk-planes-head b { font-family: var(--font-display); }
@@ -473,7 +619,11 @@
       /* See it from above: the film's still, and the way to the approach strip on /how-it-works/. */
       .above { display: grid; gap: 24px 56px; align-items: center; }
       @media (min-width: 900px) { .above { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
-      .above img { display: block; width: 100%; height: auto; border-radius: 18px; }
+      .above-shot { min-width: 0; margin: 0; padding: 10px; color: #d9d7d0; background: #000; border-radius: 18px; }
+      .above-shot img { display: block; width: 100%; height: auto; border-radius: 10px; }
+      .above-key { display: flex; align-items: center; gap: 8px; margin: 8px 4px 0; font: 500 11.5px var(--font-body); }
+      .above-key i { flex: 0 1 180px; height: 8px; border-radius: 2px; background: linear-gradient(90deg, #e7d7bd, #efb56f, #e27a4c, #c73e2e, #8b1a1a); }
+      .above-shot figcaption { margin: 8px 4px 2px; font-size: 11.5px; line-height: 1.45; }
       .above .lede { margin: 16px 0 24px; }
 
       /* Beyond one street: numbered rows, in the order a buyer meets them. */
@@ -608,8 +758,8 @@
         /* The map is below the list on a stacked layout: a way down to it. */
         .find-mapjump { display: block; }
       }
-      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-      /* The answer under the request (js/home-sections.mjs): at rest everything shows; a run hides it and brings it back. */
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .mapwrap > svg { transition: none; } #ans-tiles .ans-tile b, .panel h1 > .h1-a { animation: none; } }
+      /* The answer under the request (js/dev-demo.mjs): at rest everything shows; a run hides it and brings it back. */
       .dev-wire { display: flex; align-items: center; gap: 10px; height: 30px; margin: 0 0 0 20px; font: 500 12px var(--font-mono); color: #b9b6ae; }
       .dev-wire::before { content: ''; width: 2px; height: 100%; background: var(--orange); transform-origin: top; transition: transform 0.25s; }
       .dev-run.is-waiting:not(.is-answered) .dev-wire { color: transparent; }
@@ -623,7 +773,7 @@
       .dev-caret { position: absolute; width: 8px; height: 1.05em; margin-top: 0.2em; background: var(--orange); }
       .dev-page { margin-top: 10px; padding: 10px 12px 12px; color: var(--dark); background: var(--paper); border-radius: 10px; }
       .dev-page-head { margin: 0 0 8px; font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--mid); }
-      .dev-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .dev-tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
       .dev-tiles .ans-tile { padding: 9px 10px; }
       .dev-tiles .ans-tile b { min-height: 1.15em; font-size: 18px; }
       .dev-tiles .ans-tile b.is-empty { visibility: hidden; }
@@ -672,11 +822,15 @@
         <!-- The panel FIRST in the page (audit 2026-10-05 I-5): after the map it was
              reached after thirty-odd map controls, and on a stacked layout focus ran
              map-then-panel while the eye ran panel-then-map. -->
-        <div class="panel">
+        <div class="panel is-loading">
           <!-- PLANES-PILL:BEGIN (scripts/build_planes_pages.py --write; never edit by hand) -->
           <a class="news" href="#planes-band"><b>New</b>Heathrow&rsquo;s consultation: the planes over your council <i aria-hidden="true">&rarr;</i></a>
           <!-- PLANES-PILL:END -->
-          <h1>How loud are the planes where you want to live?</h1>
+          <!-- OPTION C (review prototype, 2026-11-07): the question is the page's heading for search engines and readers
+               without scripts. Once an answer is on show, the engine writes its lead finding into the same h1, in .h1-a
+               beside it (js/home-sections.mjs answerLead), and the question stays in place unseen, holding the box. -->
+          <h1><span class="h1-q">How loud are the planes where you want to live?</span><span class="h1-wait" aria-hidden="true"></span></h1>
+          <p class="vh" id="lead-said" aria-live="polite"></p>
           <p class="lead">Aircraft and road noise and air quality for your street, and flood risk for your area, from official data.</p>
           <!-- Two tabs (2026-10-14): the postcode check, and Find areas, which shades the council areas
                that fit your choices on the map beside it. Hidden until the engine has the open-data
@@ -690,10 +844,10 @@
                it was cut to "Postcode, ZIP o" at 320 wide. The placeholder is now an example. -->
           <label for="pc" class="field-label">Postcode, ZIP or place</label>
           <form class="check" id="check">
-            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="postal-code" inputmode="text" list="pc-places" />
-            <!-- Places the box answers by name (council areas, regions, cities), offered as you type (2026-11-02): filled in
-                 the page from what it already holds, so nothing is sent while typing. -->
-            <datalist id="pc-places"></datalist>
+            <input type="text" id="pc" name="pc" placeholder="Your postcode" autocomplete="off" inputmode="text" role="combobox" aria-expanded="false" aria-controls="pc-list" aria-autocomplete="list" />
+            <!-- What the box takes, and the places it answers by name (js/place-box.mjs, Bill's pick B, 2026-11-04): places from what
+                 the page already holds, and the rest of a postcode from postcodes.io as it is typed. -->
+            <div class="pc-list" id="pc-list" role="listbox" aria-label="Suggestions" hidden></div>
             <button type="submit">Check<span class="yours"> yours</span></button>
           </form>
           <ul class="promises">
@@ -703,6 +857,16 @@
           </ul>
           <p class="status" id="status" aria-live="polite"></p>
           <div class="want" id="want-country" aria-live="polite" hidden></div>
+          <!-- The example's frame while its figures load: labels only, never a figure, and the same boxes as the tiles it gives way to. -->
+          <div class="ans-skeleton" aria-hidden="true">
+            <p class="ans-pc"><span class="ex">Example:</span></p>
+            <div class="ans-tiles">
+              <span class="ans-tile"><b>&nbsp;</b>aircraft noise</span>
+              <span class="ans-tile"><b>&nbsp;</b>NO₂ in the air</span>
+              <span class="ans-tile"><b>&nbsp;</b>planes a day, flying west</span>
+            </div>
+            <p class="ans-show"><button type="button" tabindex="-1">Show the full example</button></p>
+          </div>
           <div class="answer" id="answer">
             <!-- Text from the first answer on; never empty (html-validate), and hidden with the answer until then. -->
             <h2 class="ans-pc" id="ans-title">Your answer</h2>
@@ -717,14 +881,21 @@
             <p class="where" id="ans-where"></p>
             <div class="rows" id="ans-rows"></div>
             <div class="planes" id="ans-planes" hidden></div>
-            <p class="routes" id="ans-routes"></p>
-            <p class="routes" id="ans-station" hidden></p>
-            <div class="routes air" id="ans-air" hidden></div>
-            <p class="routes" id="ans-say" hidden></p>
-            <p class="routes" id="ans-wrong" hidden></p>
+            <!-- Summary first (Bill's pick B, 2026-11-04: the answer ran to 495 words, mostly small print). The figures and one
+                 list to scan stay open; every definition, credit and way to act is kept, one tap away, in the folds below. -->
+            <div class="nearby" id="ans-nearby">
+              <h3>Nearby</h3>
+              <div id="ans-routes"></div>
+              <div class="fact" id="ans-station" hidden></div>
+              <div id="ans-air-near"></div>
+            </div>
             <p class="area" id="ans-area"></p>
             <p class="want" id="ans-want" aria-live="polite" hidden></p>
             <p class="more"><a id="ans-link" href="/map/">See the full picture on the map</a></p>
+            <details class="ans-fold" data-fold="planes"><summary data-hint="Why west days and east days differ">How the planes are counted</summary><div id="ans-planes-notes" hidden></div></details>
+            <details class="ans-fold" data-fold="air"><summary data-hint="DEFRA's model beside the nearest sensor or monitor">About the air readings</summary><div class="routes air" id="ans-air" hidden></div></details>
+            <details class="ans-fold" data-fold="say"><summary data-hint="Respond, complain, or look up a flight">Have your say</summary><div class="routes" id="ans-say" hidden></div></details>
+            <details class="ans-fold" data-fold="wrong"><summary data-hint="Local knowledge is the best check">Spotted something wrong?</summary><p class="routes" id="ans-wrong" hidden></p></details>
           </div>
           </div>
           <div role="tabpanel" id="panel-find" aria-labelledby="tab-find" hidden>
@@ -780,7 +951,7 @@
           </div>
           <div class="map-key">
             <!-- COVERAGE-STRIP:BEGIN (scripts/build_coverage_strip.py --write; never edit by hand) -->
-            <details class="covers"><summary>Which places does it cover?</summary><ul><li>Bristol <b>4</b></li><li>Cardiff <b>4</b></li><li>Greater Manchester <b>10</b></li><li>Greater Norwich <b>3</b></li><li>Leicester <b>8</b></li><li>London <b>33</b></li><li>Merseyside <b>5</b></li><li>Nottingham <b>4</b></li><li>South Yorkshire <b>4</b></li><li>Teesside <b>5</b></li><li>Tyne and Wear <b>5</b></li><li>West Midlands <b>7</b></li><li>West Yorkshire <b>5</b></li></ul> council areas, plus New York's 5 boroughs and 50 Bay Area cities (facts only).</details>
+            <details class="covers"><summary>Which places does it cover?</summary><ul><li>Bristol <b>4</b></li><li>Cardiff <b>4</b></li><li>Greater Manchester <b>10</b></li><li>Greater Norwich <b>3</b></li><li>Leicester <b>8</b></li><li>London <b>33</b></li><li>Merseyside <b>5</b></li><li>Nottingham <b>4</b></li><li>South Yorkshire <b>4</b></li><li>Teesside <b>5</b></li><li>Tyne and Wear <b>5</b></li><li>West Midlands <b>7</b></li><li>West Yorkshire <b>5</b></li></ul> council areas, plus New York's 5 boroughs and 50 Bay Area cities.</details>
             <!-- COVERAGE-STRIP:END -->
           </div>
         </div>
@@ -822,7 +993,7 @@
                 <p class="walk-opens" aria-live="polite"><span class="walk-tag">Opens on</span>
                   <span data-walk-opens="postcode"><b>TW9 3PZ, Kew</b>, in Richmond upon Thames, under Heathrow&rsquo;s arrivals: the street&rsquo;s own noise, air and planes.</span>
                   <span data-walk-opens="place" hidden><b>Hounslow</b>, the council area&rsquo;s card: its score, the five scores behind it and its official figures, with the full scorecard a click away.</span>
-                  <span data-walk-opens="zip" hidden><b>Palo Alto</b>, the Bay Area city holding half or more of the ZIP&rsquo;s residents: its facts and the routes over it.</span>
+                  <span data-walk-opens="zip" hidden><b>Palo Alto</b>, the Bay Area city holding half or more of the ZIP&rsquo;s residents: its score, its facts and the routes over it.</span>
                 </p>
                 <p class="walk-yours"><a href="#pc">Search yours</a></p>
               </div>
@@ -855,7 +1026,7 @@
               <div class="walk-text">
                 <p class="walk-n">05</p>
                 <h3>A page to keep, every figure sourced</h3>
-                <p>One page of the official figures for the street you name, each with who published it and when, ready to print or send. Free for your own home.</p>
+                <p>Three pages of the official figures for the street you name, each with who published it and when, ready to print or send. Free for your own home.</p>
               </div>
               <div class="walk-demo walk-report">
                 <!-- REPORT-STILL (scripts/build_report_still.py --write makes the picture from the PDF; its --check holds the size here) -->
@@ -877,11 +1048,15 @@
            After the rename a short silent loop of the film may take its place (Bill, 3 Nov; NOW.md's Blender line). -->
       <section class="band" aria-labelledby="above-h">
         <div class="wrap above">
-          <img src="/about/film-still-battersea.webp" width="1280" height="720" loading="lazy" decoding="async" alt="A still from the film: Battersea from the air, its streets coloured by DEFRA's aircraft noise, a plane on Heathrow's approach." />
+          <figure class="above-shot">
+            <img src="/about/hounslow-noise-render.webp" width="1100" height="602" loading="lazy" decoding="async" alt="A model of Hounslow from above, its buildings coloured by aircraft noise, redder where it is louder, with the Great West Road, the Piccadilly line and Hounslow East station named." />
+            <p class="above-key" aria-hidden="true"><span>Aircraft noise</span><i></i><span>louder</span></p>
+            <figcaption>Hounslow, each building coloured by DEFRA&rsquo;s modelled aircraft noise (Round 4). Contains OS data &copy; Crown copyright 2026; &copy; OpenStreetMap contributors; building heights &copy; Environment Agency copyright and/or database right 2022. All rights reserved.</figcaption>
+          </figure>
           <div>
-            <p class="eyebrow">See it from above</p>
+            <p class="eyebrow">London from above</p>
             <h2 id="above-h">Fly Heathrow&rsquo;s approach over London.</h2>
-            <p class="lede">From Westminster to the runway, see the noise build under one approach, place by place.</p>
+            <p class="lede">Follow the planes in over London and watch the noise rise, street by street, to Hounslow.</p>
             <a class="pill dark" href="/how-it-works/#see-it">Fly the approach <i aria-hidden="true"></i></a>
           </div>
         </div>
@@ -898,7 +1073,7 @@
             <li><span class="way-n" aria-hidden="true">01</span><h3>Find an area that fits</h3><p>Set a budget and what you want to avoid or be near, such as aircraft noise, busy roads, flood risk or a station, and see which council areas fit, shaded on the map.</p>
               <!-- #find opens the Find areas tab above (js/home-engine.mjs), and /#find works from anywhere. -->
               <p class="way-go"><a href="#find">Find areas</a><a href="/area/">Every council area</a></p></li>
-            <li id="reports"><span class="way-n" aria-hidden="true">02</span><h3>A report for your street</h3><p>One page of the official figures for the streets you name, every number with its source and date. Free for your own home and for residents&rsquo; groups; a sourced answer for agents and surveyors to hand to a client.</p>
+            <li id="reports"><span class="way-n" aria-hidden="true">02</span><h3>A report for your street</h3><p>Three pages of the official figures for the street you name, every number with its source and date. Free for your own home and for residents&rsquo; groups; a sourced answer for agents and surveyors to hand to a client.</p>
               <p class="way-go"><a href="/reports/">Reports</a><a href="/pricing#reports">What it costs</a></p></li>
             <li><span class="way-n" aria-hidden="true">03</span><h3>Data for your business</h3><p>The same figures through an API, in your own system, or as one open file of every UK council area, free for non-commercial use.</p>
               <p class="way-go"><a href="/api/">The API</a><a href="/open-data/">The open data</a></p></li>
@@ -936,7 +1111,7 @@ print(env['no2AnnualMeanUgm3'], env['roadNoiseLdenDb'])</pre></div>
               <div role="tabpanel" id="code-js" aria-labelledby="code-tab-js" hidden><pre tabindex="0" role="region" aria-label="The request in JavaScript" id="dev-env-js">const r = await fetch('https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment?lat=51.4790&amp;lon=-0.2860');
 const { environment } = await r.json();
 console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></div>
-              <!-- The answer (Bill's pick C of the API mock-up, 2026-11-04): written by js/home-sections.mjs from the example's own
+              <!-- The answer (Bill's pick C of the API mock-up, 2026-11-04): written by js/dev-demo.mjs from the example's own
                    response, never typed, and hidden until then, so without it the band is the request alone. -->
               <div class="dev-run" id="dev-run" hidden>
                 <p class="dev-wire" aria-hidden="true">200 OK</p>
@@ -1046,7 +1221,7 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
             <details><summary>How are the figures checked?</summary><p>The planes counts are checked against the CAA&rsquo;s monthly totals for each airport, and an airport is counted only once its counts pass. Where DEFRA does not map aircraft noise, the estimate from the flight routes is published with its error against DEFRA&rsquo;s own maps. <a href="/how-it-works/">More in How it works</a></p></details>
             <!-- THE coverage sentence (CLAUDE.md), recounted from the data by tests/front-page.mjs and added up against the
                  coverage strip by scripts/build_coverage_strip.py --check. -->
-            <details id="faq-cover"><summary>Which places does it cover?</summary><p id="cover-figure">97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities (facts only).</p></details>
+            <details id="faq-cover"><summary>Which places does it cover?</summary><p id="cover-figure">97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.</p></details>
             <details><summary>Is it free?</summary><p>Searching is free. Reports and the API have free and paid options: see <a href="/pricing">Pricing</a>.</p></details>
             <details><summary>Can I use it for my business?</summary><p>Yes: through the API, in your own system, or as one open file of every UK council area, free for non-commercial use. <a href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="faq">Book a demo</a> to go through your own postcodes.</p></details>
           </div>

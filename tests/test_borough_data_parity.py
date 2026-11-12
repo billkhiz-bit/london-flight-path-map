@@ -33,6 +33,34 @@ from .conftest import load_lambda
 DATA = os.path.normpath(
     os.path.join(os.path.dirname(__file__), os.pardir, 'data', 'borough-extra.json')
 )
+PAGE = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir, 'index.html'))
+
+# THE SITE'S SECOND HOLDER (2026-11-07, the Bay Area's site scores). borough-extra.json holds the UK's and New
+# York's inputs; the Bay Area's are a generated block in index.html, the API's own records written beside the
+# Lambda's by scripts/build_bayarea_records.py (so the 30-odd readers of borough-extra.json, each built for UK
+# fields, never meet a US record). Read back here INDEPENDENTLY of that builder, from the page text, so a
+# hand-edit of either holder fails this file as well as the builder's --check.
+PAGE_HOLDERS = {
+    'bayarea': (
+        '// BAYAREA-RECORDS:START',
+        '// BAYAREA-RECORDS:END',
+        'const BAYAREA_RECORDS = ',
+    ),
+}
+
+
+def _page_holders():
+    """{city: {borough: record}} for the cities whose site holder is a generated block in index.html."""
+    with open(PAGE, encoding='utf-8') as handle:
+        text = handle.read()
+    out = {}
+    for city, (start, end, decl) in PAGE_HOLDERS.items():
+        i = text.index(start)
+        block = text[i:text.index(end, i)]
+        body = block[block.index(decl) + len(decl):block.rindex('};') + 1]
+        # One JSON record per line, each followed by a comma, the last one included.
+        out[city] = json.loads(re.sub(r',\s*\}$', '}', body.strip()))
+    return out
 
 score_app = load_lambda('score', 'score_app_borough_parity')
 
@@ -71,6 +99,13 @@ SHARED_FIELDS = (
     'floodMediumOrHighPct',
     # v4.0, 2026-08-29. Scored, so it must agree across both holders.
     'roadNoiseAboveWhoPct',
+    # The Bay Area's US measures (2026-11-07), scored on the US scales against California's anchors, and the
+    # reasons an input is withheld; no UK or New York record carries any of them on either side.
+    'crimePer1000Us',
+    'crimeFewResidents',
+    'roadNoiseUsSharePct',
+    'floodSfhaPct',
+    'withheld',
 )
 
 # Cities the score Lambda serves that the consumer site does NOT, so they have
@@ -121,7 +156,7 @@ BACKEND_ONLY_CITIES = frozenset({
 
 def _site_cities():
     with open(DATA, encoding='utf-8') as handle:
-        return set(json.load(handle))
+        return set(json.load(handle)) | set(_page_holders())
 
 
 # Cities held by BOTH surfaces, so there is something to compare. Derived, not
@@ -202,7 +237,11 @@ def test_site_has_no_city_the_lambda_cannot_score():
 
 def _extra():
     with open(DATA, encoding='utf-8') as handle:
-        return json.load(handle)
+        extra = json.load(handle)
+    page = _page_holders()
+    both = set(extra) & set(page)
+    assert not both, f'{sorted(both)} has two site holders, borough-extra.json and index.html: keep one'
+    return {**extra, **page}
 
 
 def _pairs(city):
@@ -279,6 +318,45 @@ def test_the_comparison_actually_compared_something():
     """
     assert len(_pairs('london')) == 33
     assert len(_pairs('nyc')) == 5
+    # The page holder, against the Lambda's own count rather than a typed one.
+    assert len(_pairs('bayarea')) == len(score_app.CITIES['bayarea']['boroughs']) > 0
+
+
+def test_a_page_holder_is_the_lambdas_record_whole():
+    """The Bay Area's site records are the Lambda's, field for field and nothing more.
+
+    SHARED_FIELDS above compares the liveability and environment inputs, the fields borough-extra.json can
+    carry. A page holder carries the WHOLE record - price, the "$2M+" flag, trend, county and the aircraft band
+    as well - because the site scores every component from it, so every field is compared here, and a field on
+    one side only is a failure, not a skip.
+    """
+    for city, records in _page_holders().items():
+        lam = score_app.CITIES[city]['boroughs']
+        assert set(records) == set(lam), f'{city}: the page holder and the Lambda list different places'
+        drift = []
+        for name, site in records.items():
+            # The Lambda's records gain derived keys at import (trendReal for sterling cities); compare what the
+            # builder wrote, the reader's fields.
+            want = {k: v for k, v in lam[name].items() if k in site or k in _RECORD_FIELDS}
+            if site != want:
+                drift.append(f'{city}/{name}: site={site!r} api={want!r}')
+        assert not drift, 'a page holder has drifted from the Lambda:\n  ' + '\n  '.join(drift[:10])
+
+
+# The fields scripts/build_bayarea_records.py writes into every record (withheld only where an input is missing).
+_RECORD_FIELDS = (
+    'impact', 'avgPrice', 'priceTopCoded', 'trend', 'county', 'crimePer1000Us', 'crimeFewResidents',
+    'transport', 'roadNoiseUsSharePct', 'floodSfhaPct', 'withheld',
+)
+
+
+def test_area_pages_pending_are_cities_the_site_scores():
+    """AREA_PAGES_PENDING (the score Lambda) names cities whose area pages are not built yet: each must be a city
+    the API scores, that the site holds inputs for (it scores it), and that is not also facts-only."""
+    pending = score_app.AREA_PAGES_PENDING
+    assert pending <= set(score_app.CITIES), f'pending but not scored: {sorted(pending - set(score_app.CITIES))}'
+    assert pending <= _site_cities(), f'pending but the site holds no inputs: {sorted(pending - _site_cities())}'
+    assert not pending & score_app.SITE_FACTS_ONLY_CITIES, 'a city is either facts-only or scored with pages pending'
 
 
 def test_name_aliases_match_the_builder():

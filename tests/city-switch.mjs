@@ -49,6 +49,7 @@ import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { keepPanelOpen } from './panel-fold.mjs';
 
 const ROOT = process.cwd();
 // 8123 (smoke-local), 8921 (locator), 8922 (selector-widths) and 8923
@@ -113,6 +114,7 @@ const openAt = async (vp) => {
     isMobile: vp.width < 900,
     hasTouch: vp.width < 900,
   });
+  await keepPanelOpen(context);
   const pg = await context.newPage();
   pg.on('pageerror', (e) => errors.push(e.message));
   pg.on('console', (m) => {
@@ -280,10 +282,12 @@ console.log('\n--- area-page deep links ---');
         // the way") must not come back through a re-render path.
         dark: document.querySelectorAll('.layer-selection path').length,
         blackFill: document.querySelectorAll('path.borough[fill="#141414"]').length,
+        // "Nothing searched yet" by its marker, not by a city's words (the London sentence went on 2026-11-11, option A).
+        empty: !!document.querySelector('#sidebar-content .no-result-yet'),
       }));
       const ok = borough
         ? r.rows > 0 && r.dark === 1 && r.blackFill === 0 && r.text.includes(borough)
-        : r.rows === 0 && /Search by area/.test(r.text);
+        : r.rows === 0 && r.empty;
       if (!ok) fail++;
       console.log(`  ${ok ? 'ok  ' : 'FAIL'} desktop ${query.padEnd(44)} rows=${r.rows} selected=${r.dark} blackFill=${r.blackFill}`);
     } catch (e) {

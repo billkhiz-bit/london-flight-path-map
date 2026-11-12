@@ -82,6 +82,62 @@ def test_each_old_html_name_redirects_once_to_its_page(tmp_path):
         assert got[new]['uri'] == f'{new}/index.html'
 
 
+def handle(requests, tmp_path):
+    """The function's result for each whole request object (host header and query string included)."""
+    harness = tmp_path / 'fn-requests.js'
+    harness.write_text(
+        installer.FUNCTION_CODE
+        + '\nconst reqs = JSON.parse(process.argv[2]);\n'
+        + 'console.log(JSON.stringify(reqs.map((r) => handler({ request: r }))));\n',
+        encoding='utf-8',
+    )
+    out = subprocess.run(  # noqa: S603 - Node on PATH, our own harness and JSON we built
+        [NODE, str(harness), json.dumps(requests)], capture_output=True, text=True, check=True
+    )
+    return json.loads(out.stdout)
+
+
+def www(uri, querystring=None):
+    return {'uri': uri, 'headers': {'host': {'value': 'www.skyscore.co.uk'}}, 'querystring': querystring or {}}
+
+
+def test_www_goes_to_the_bare_name_with_its_path_and_query(tmp_path):
+    # 2026-11-09: www served 200 copies of every page, which Search Console listed as alternates.
+    got = handle([
+        www('/'),
+        www('/area/london/camden/'),
+        www('/map/', {'city': {'value': 'london'}, 'borough': {'value': 'Ealing'}}),
+        www('/', {'postcode': {'value': 'SW11%201AA'}}),
+        www('/x', {'a': {'value': '1', 'multiValue': [{'value': '1'}, {'value': '2'}]}, 'flag': {'value': ''}}),
+    ], tmp_path)
+    locations = [r['headers']['location']['value'] for r in got]
+    assert all(r['statusCode'] == 301 for r in got)
+    assert locations == [
+        'https://skyscore.co.uk/',
+        'https://skyscore.co.uk/area/london/camden/',
+        'https://skyscore.co.uk/map/?city=london&borough=Ealing',
+        'https://skyscore.co.uk/?postcode=SW11%201AA',
+        'https://skyscore.co.uk/x?a=1&a=2&flag',
+    ]
+
+
+def test_www_and_an_old_name_is_one_hop(tmp_path):
+    got = handle([www('/privacy.html')], tmp_path)[0]
+    assert got['headers']['location']['value'] == 'https://skyscore.co.uk/privacy'
+
+
+def test_the_bare_name_is_never_redirected_for_its_host(tmp_path):
+    bare = {'uri': '/pricing', 'headers': {'host': {'value': 'skyscore.co.uk'}}, 'querystring': {}}
+    cloudfront = {'uri': '/map/', 'headers': {'host': {'value': 'd1oe4ftwutjpf.cloudfront.net'}}, 'querystring': {}}
+    got = handle([bare, cloudfront], tmp_path)
+    assert got[0].get('statusCode') is None and got[0]['uri'] == '/pricing/index.html'
+    assert got[1].get('statusCode') is None and got[1]['uri'] == '/map/index.html'
+
+
+def test_the_comment_fits_cloudfronts_limit():
+    assert len(installer.FUNCTION_COMMENT) <= 64, len(installer.FUNCTION_COMMENT)
+
+
 def test_every_redirect_target_is_a_key_the_makefile_uploads():
     makefile = (REPO_ROOT / 'Makefile').read_text(encoding='utf-8')
     for new in moved(installer.FUNCTION_CODE).values():

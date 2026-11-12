@@ -1,5 +1,5 @@
 /**
- * The one-page aircraft-noise report for one postcode: everything except
+ * The three-page aircraft-noise report for one postcode: everything except
  * where the inputs come from and how the page is printed.
  *
  * WHY THIS EXISTS (2026-10-06). Bill ruled that reports are free for a person's
@@ -20,6 +20,11 @@
  */
 
 import { AIRPORT_NAME, ORIGIN, add, compass, mul, reciprocal } from './flight_geometry.mjs';
+// The report's headline, planes chart and road bars are the site's own (Bill's pick C, 2026-11-11). planes.mjs imports
+// esc from here: a cycle ES modules allow, as nothing in either runs the other at load (tests/street-report.mjs).
+import { answerLead } from './answer-lead.mjs';
+import { pictureHtml, planesFindings, roadFinding } from './panel-findings.mjs';
+import { planesChart } from './planes.mjs';
 
 // A route further away than this is not listed. A judgement, stated on the page.
 export const ROUTE_RADIUS_KM = 5;
@@ -118,6 +123,9 @@ export const monitorPeriod = (m) => String(m.year);
 /** "nitrogen dioxide 14.2 µg/m³ in 2024" */
 export const monitorReadings = (m) => `${pollutants(m)} in ${monitorPeriod(m)}`;
 /** "Nearest Breathe London sensor: George Street, 1.5 km away (roadside, 0.7 m from the kerb): nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026." */
+/** The short forms for the answer's Nearby list: the place, how far, and the readings; the full line sits in its fold. */
+export const sensorFact = (s) => `${s.name}, ${stationDistance(s.km)}: ${sensorReadings(s)}`;
+export const monitorFact = (m) => `${m.name}, ${stationDistance(m.km)}: ${monitorReadings(m)}`;
 export function sensorLine(s) {
   return `Nearest Breathe London sensor: ${s.name}, ${stationDistance(s.km)} away (${sensorSetting(s)}): ${sensorReadings(s)}.`;
 }
@@ -169,16 +177,148 @@ export function haveYourSay(routes, today = new Date()) {
 /** The correction address, as the full map's "Spotted something wrong?" has used since before 2026-10-13. */
 export const correctionHref = (place) => `mailto:support@skyscore.co.uk?subject=${encodeURIComponent(`Correction: ${place}`)}`;
 
-/** What kind of measurement each line is, and why a sensor by a road reads above DEFRA's background figure. */
-export function airNotes(sensor, monitor) {
-  const notes = [];
-  if (sensor) notes.push('Breathe London sensors are low-cost: their figures are provisional and are recalibrated over time.');
-  if (sensor && sensor.classification !== 'Urban Background')
-    notes.push("A sensor by a road can read higher than DEFRA's background figure: it measures the traffic beside it, where DEFRA's is the average across a 1 km square.");
-  if (monitor) notes.push("Official monitors are DEFRA's reference instruments, and their figures are ratified.");
-  notes.push(`Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.`);
-  return notes.join(' ');
+// ---- The reference, shared by the free copy and the printed report (moved here from js/street_report_page.mjs
+// 2026-11-12, unchanged, so every copy already made still checks). A hash of the figures a copy states, the postcode
+// and the day it was made: anyone handed a copy re-makes it from today's data with the original day and compares.
+const SITE = 'https://skyscore.co.uk';
+const STATED = [
+  'aircraftQuiet',
+  'aircraftQuietEstimated',
+  'aircraftNoiseLdenDb',
+  'roadNoiseLdenDb',
+  'roadNoiseBelowDb',
+  'no2AnnualMeanUgm3',
+  'pm25AnnualMeanUgm3',
+];
+const REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I to misread
+
+/** The reference for a copy: 8 characters of a SHA-256 over what the copy states. */
+export async function reportReference(postcode, made, airac, env) {
+  const text = JSON.stringify([postcode, made, airac ?? null, ...STATED.map((k) => (typeof env[k] === 'number' ? env[k] : null))]);
+  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
+  let out = '';
+  for (let i = 0; i < 8; i++) out += REF_ALPHABET[d[i] & 31];
+  return `${out.slice(0, 4)}-${out.slice(4)}`;
 }
+/** The link that re-makes a copy and checks its reference. */
+export const checkLink = (postcode, made, ref) =>
+  `${SITE}/reports/street/?postcode=${encodeURIComponent(postcode)}&made=${made}&ref=${ref.replace('-', '')}`;
+
+// ---- Page 1's cards (Bill's three-page pick, 2026-11-11 v2; v3 and the build 2026-11-12) ----
+/** The verdict words: the site's pill words, a mark and a word, never colour alone (audit I-3, 2026-11-10). */
+export const GLANCE_WORDS = { watch: ['!', 'Worth a look'], good: ['✓', 'Good here'], none: ['–', 'For context'] };
+
+/**
+ * One card per topic: a verdict word, the figure, a next step where the site has one, and the page its detail is on.
+ * ONE RULE decides the word, and this is its only holder: a postcode's OWN figure against its WHO guideline ("Worth a
+ * look" over it, "Good here" under it) for road noise, and for aircraft noise where DEFRA's map gives a figure; the planes
+ * from the full map's own watch step (planesFindings' `stand`, from the planes layer's steps); air and any estimate get
+ * none ("For context"): the WHO 2021 air guidelines sit under the modelled figure almost everywhere (js/answer-lead.mjs),
+ * and an estimate is not a finding against a yardstick. As the map's pills (pillsFor), aircraft noise is never "Good
+ * here" beside planes that are a watch item. The map rates aircraft noise by its band and road noise by the council, so a
+ * card can differ from a map pill: the card is about this postcode's own figure. A topic with nothing true to say has no
+ * card. A neighbour's road reading is never this postcode's (audit I-4). Pure; held by tests/street-report.mjs.
+ */
+export function glanceCards({ env = {}, model = null, steps = [], resolvedAs = null, aircraftMap = false, sensor = null, say = null } = {}) {
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const verdict = (v, who) => (v > who ? 'watch' : v < who ? 'good' : null);
+  const side = (v, who) => (v > who ? 'over' : v < who ? 'under' : 'level with');
+  const cards = [];
+
+  const webtrak = say && (say.links || []).some((l) => /webtrak/i.test(l.href))
+    ? `WebTrak shows each ${AIRPORT_NAME[say.code] || say.code} flight as it passes; the link is on page 2.`
+    : null;
+  const db = num(env.aircraftNoiseLdenDb);
+  const awho = num(env.aircraftNoiseWhoGuidelineDb);
+  if (db !== null) {
+    cards.push({
+      key: 'aircraft', topic: 'Aircraft noise', stand: awho !== null ? verdict(db, awho) : null,
+      // Whole decibels, as the key figure under the cards gives it, so page 1 never states one figure two ways; the
+      // verdict is decided on the figure itself.
+      figure: `${Math.round(db)} dB on DEFRA's map${awho !== null ? `, ${side(db, awho)} the WHO guideline of ${awho}` : ''}`,
+      step: webtrak, page: 2,
+    });
+  } else if (env.aircraftQuietCoverage !== 'outside' && num(env.aircraftQuietEstimated) !== null) {
+    cards.push({
+      key: 'aircraft', topic: 'Aircraft noise', stand: null,
+      figure: aircraftMap ? 'No DEFRA figure: outside its contours, so an estimate' : 'No DEFRA map for this airport, so an estimate',
+      step: webtrak, page: 1,
+    });
+  }
+
+  if (model) {
+    const found = planesFindings(model, { steps });
+    if (!model.airports.length) {
+      if (found.length) cards.push({ key: 'planes', topic: 'Planes overhead', stand: null, figure: 'Under 1 a day from each airport we count', step: null, page: 2 });
+    } else {
+      // The busiest airport, as the report's charts and headline lead with it.
+      const peak = (a) => Math.max(0, ...a.rows.map((r) => (Array.isArray(r.value) ? r.value[1] : typeof r.value === 'number' ? r.value : 0)));
+      const i = model.airports.map((a, k) => [k, peak(a)]).sort((x, y) => y[1] - x[1])[0][0];
+      const a = model.airports[i];
+      const t = found[i] && found[i].tile;
+      if (t) {
+        const level = /^(Not measured|None)$/.test(t.level) ? t.level.toLowerCase() : t.level;
+        cards.push({
+          key: 'planes', topic: 'Planes overhead', stand: t.stand === 'watch' ? 'watch' : null,
+          figure: `${a.name}: ${level}${t.sub ? ` when ${t.sub}` : ''}`, step: (t.say && t.say[0]) || null, page: 2,
+        });
+      }
+    }
+  }
+  const watchPlanes = cards.some((c) => c.key === 'planes' && c.stand === 'watch');
+  const air0 = cards.find((c) => c.key === 'aircraft');
+  if (air0 && watchPlanes && air0.stand === 'good') air0.stand = null;
+
+  const rdb = num(env.roadNoiseLdenDb);
+  const below = num(env.roadNoiseBelowDb);
+  const rwho = num(env.roadNoiseWhoGuidelineDb);
+  if (resolvedAs && (rdb !== null || below !== null)) {
+    cards.push({ key: 'road', topic: 'Road noise', stand: null, figure: `Not given: the figure we hold is for ${resolvedAs}`, step: null, page: 2 });
+  } else if (rdb !== null && rwho !== null) {
+    const tip = roadFinding({ db: rdb, who: rwho });
+    cards.push({
+      key: 'road', topic: 'Road noise', stand: verdict(rdb, rwho),
+      figure: `${rdb.toFixed(1)} dB, ${side(rdb, rwho)} the WHO guideline of ${rwho}`, step: (tip && tip.tile.tip) || null, page: 2,
+    });
+  } else if (below !== null) {
+    const under = rwho !== null && below <= rwho;
+    cards.push({
+      key: 'road', topic: 'Road noise', stand: under ? 'good' : null,
+      figure: under ? `Under the WHO guideline of ${rwho}: DEFRA mapped none at ${below} dB or above` : `DEFRA mapped none at ${below} dB or above`,
+      step: null, page: 2,
+    });
+  }
+
+  const no2 = num(env.no2AnnualMeanUgm3);
+  const pm = num(env.pm25AnnualMeanUgm3);
+  if (no2 !== null || pm !== null) {
+    const figs = [no2 !== null && `NO₂ ${no2.toFixed(1)}`, pm !== null && `PM2.5 ${pm.toFixed(1)}`].filter(Boolean).join(' and ');
+    const whos = [no2 !== null && num(env.no2WhoGuidelineUgm3), pm !== null && num(env.pm25WhoGuidelineUgm3)].filter((v) => typeof v === 'number');
+    const breathe = sensor && sensor.credit && /Breathe London/.test(sensor.credit.text || '');
+    cards.push({
+      key: 'air', topic: 'Air', stand: null,
+      figure: `${figs} µg/m³ on DEFRA's model${whos.length === (no2 !== null) + (pm !== null) ? `; the WHO guideline${whos.length > 1 ? 's are' : ' is'} ${whos.join(' and ')}` : ''}`,
+      step: breathe ? "Breathe London's own map shows the nearest sensor's readings hour by hour." : null, page: 3,
+    });
+  }
+  return cards;
+}
+
+/**
+ * What kind of measurement each line is, and why a sensor by a road reads above DEFRA's background figure, one note
+ * each, with a mark for a list: the front page's air fold sets them as points (2026-11-11), the report and the full map
+ * as one paragraph (airNotes). One holder, so the two can never say different things.
+ */
+export function airNoteList(sensor, monitor) {
+  const notes = [];
+  if (sensor) notes.push({ key: 'provisional', mark: '~', text: 'Breathe London sensors are low-cost: their figures are provisional and are recalibrated over time.' });
+  if (sensor && sensor.classification !== 'Urban Background')
+    notes.push({ key: 'roadside', mark: '↑', text: "A sensor by a road can read higher than DEFRA's background figure: it measures the traffic beside it, where DEFRA's is the average across a 1 km square." });
+  if (monitor) notes.push({ key: 'ratified', mark: '✓', text: "Official monitors are DEFRA's reference instruments, and their figures are ratified." });
+  notes.push({ key: 'capture', mark: '✓', text: `Each figure rests on at least ${CAPTURE_FLOOR_PCT}% of the hours in its period.` });
+  return notes;
+}
+export const airNotes = (sensor, monitor) => airNoteList(sensor, monitor).map((n) => n.text).join(' ');
 
 // ---- Air side by side (Bill, 2026-11-03: "refined B" of claude.ai/artifact/6ysdR2AJvPbWhi8PR3UVGc) ----
 // The full map sets DEFRA's model for the postcode's own 1 km square beside the nearest sensor and monitor, ONE scale
@@ -249,6 +389,61 @@ export function airChart(pollutant, rows, who = AIR_WHO_2021[pollutant]) {
     + `<line data-axis="1" x1="${x0}" x2="${x1}" y1="${axisY}" y2="${axisY}" stroke-width="1" style="stroke:var(--air-ink-3, #636363)"/>`
     + ticks.map((t) => `<text x="${x(t)}" y="${axisY + 13}" font-size="9.5" text-anchor="${t === max ? 'end' : 'middle'}" style="fill:var(--air-ink-3, #636363);font-family:var(--font-mono, monospace)">${t === who ? `WHO ${t}` : t}</text>`).join('')
     + '</svg>';
+}
+// ---- The air for one postcode, as the full map's panel and the street report both set it (2026-11-11) ----
+// Moved here from index.html's panel when the report took the same charts (Bill's pick C), so the two read the API's
+// answer, word the key and build the rows one way: a third copy was the alternative.
+/**
+ * DEFRA's model for the postcode's own grid square, from a /v1/environment body, read with the provenance the API sends
+ * (method, resolution, period), so a surface says what the API says and never calls the model measured. Null for a
+ * non-modelled answer or no figure.
+ */
+export function airSquare(d) {
+  const e = d && d.environment;
+  const pv = (d && d.provenance) || {};
+  const meta = pv['environment.no2AnnualMeanUgm3'] || pv['environment.pm25AnnualMeanUgm3'];
+  if (!e || !meta || meta.method !== 'modelled') return null;
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+  const no2 = num(e.no2AnnualMeanUgm3);
+  const pm25 = num(e.pm25AnnualMeanUgm3);
+  if (no2 === null && pm25 === null) return null;
+  // "1 km grid" -> "1 km square". One quantifier and a number check (a nested one is what the security
+  // lint calls unsafe: catastrophic backtracking on a crafted string).
+  const res = /^([0-9.]{1,8}) ?km grid$/.exec(String(meta.resolution || ''));
+  const km = res && Number.isFinite(Number(res[1])) ? res[1] : null;
+  return {
+    no2,
+    pm25,
+    period: /^\d{4}$/.test(String(meta.period)) ? String(meta.period) : null,
+    square: km ? `${km} km square` : 'grid square',
+    background: /background/i.test(String(e.airQualitySource || '')),
+    who: { no2: num(e.no2WhoGuidelineUgm3), pm25: num(e.pm25WhoGuidelineUgm3) },
+  };
+}
+/** The model's row label, sub-label and key words, for a square from airSquare(); null for none. */
+export function airModelOf(square) {
+  if (!square) return null;
+  return {
+    label: "DEFRA's model",
+    sub: `this ${square.square}${square.period ? ` · ${square.period}` : ''}`,
+    no2: square.no2,
+    pm25: square.pm25,
+    detail: `DEFRA's ${square.background ? 'background ' : ''}model for this postcode's ${square.square}${square.period ? `, ${square.period}` : ''}.`,
+  };
+}
+const capFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+/** The key's words for a sensor: what it is, its setting, its period. */
+export const sensorKeyNote = (s) => `Breathe London sensor, low-cost, provisional. ${capFirst(sensorSetting(s))}. Over the ${sensorPeriod(s)}.`;
+/** The key's words for a monitor. */
+export const monitorKeyNote = (m) => `Official DEFRA monitor, ratified. ${capFirst(monitorSetting(m))}. In ${monitorPeriod(m)}.`;
+/** One pollutant's rows for airChart(): the model, the sensor and the monitor, each where present. */
+export function airRows(p, { model, sensor, monitor }) {
+  const reading = (r) => (r && r[p] && typeof r[p].mean === 'number' ? r[p].mean : null);
+  return [
+    model && { kind: 'model', label: model.label, sub: model.sub, v: model[p] },
+    sensor && { kind: 'sensor', label: sensor.name, sub: `sensor · ${stationDistance(sensor.km)}`, v: reading(sensor) },
+    monitor && { kind: 'monitor', label: monitor.name, sub: `monitor · ${stationDistance(monitor.km)}`, v: reading(monitor) },
+  ].filter(Boolean);
 }
 // h 345 -> 290 on 2026-11-03: a little wider and shorter, so the report fits one A4 page again after it gained the
 // air measured nearby and the have-your-say lines (the frame logic widens the view, so the approach stays in shot).
@@ -323,8 +518,9 @@ export async function districtComparison(quiet, outcode, mine, livePostcodes) {
 // ---- drawing ---------------------------------------------------------------
 /** A map label on a plate. */
 function tag(x, y, text, cls) {
-  const w = text.length * 8.6 + 12;
-  return `<rect x="${r1(x - w / 2)}" y="${r1(y - 15)}" width="${r1(w)}" height="20" rx="3" class="plate"/><text x="${r1(x)}" y="${r1(y)}" class="lab${cls}" text-anchor="middle">${esc(text)}</text>`;
+  // Sized for the 16-unit labels (8.3 pt printed; 15 until 2026-11-11, when no text in the report may print under 8 pt).
+  const w = text.length * 9.4 + 12;
+  return `<rect x="${r1(x - w / 2)}" y="${r1(y - 16)}" width="${r1(w)}" height="22" rx="3" class="plate"/><text x="${r1(x)}" y="${r1(y)}" class="lab${cls}" text-anchor="middle">${esc(text)}</text>`;
 }
 
 /** The report's map. `imageHref(png)` turns the picture's repository path into an address the page can load. */
@@ -375,8 +571,8 @@ export function mapSvg({ pl, routes, raster, boroughs, scale, label, imageHref }
   layers += `<circle cx="${px}" cy="${py}" r="9" class="pin"/><circle cx="${px}" cy="${py}" r="2.5"/>`;
   layers += tag(px, py - 18, label, ' strong');
   const bar = 5 * k;
-  layers += `<g transform="translate(18,${H - 16})"><rect x="-6" y="-24" width="${r1(bar + 12)}" height="32" class="plate"/><line x1="0" y1="0" x2="${r1(bar)}" y2="0" class="scalebar"/><text x="${r1(bar / 2)}" y="-7" class="small" text-anchor="middle">5 km</text></g>`;
-  layers += `<rect x="12" y="12" width="92" height="24" class="plate"/><text x="20" y="29" class="small">North is up</text>`;
+  layers += `<g transform="translate(18,${H - 16})"><rect x="-6" y="-26" width="${r1(bar + 12)}" height="34" class="plate"/><line x1="0" y1="0" x2="${r1(bar)}" y2="0" class="scalebar"/><text x="${r1(bar / 2)}" y="-7" class="small" text-anchor="middle">5 km</text></g>`;
+  layers += `<rect x="12" y="12" width="112" height="26" class="plate"/><text x="20" y="30" class="small">North is up</text>`;
 
   const swatches = scale
     .map(
@@ -401,11 +597,11 @@ function districtSvg(c) {
     })
     .join('');
   const ticks = [0, 2, 4, 6, 8, 10]
-    .map((t) => `<text x="${r1(t * bw)}" y="${base + 14}" class="small" text-anchor="middle">${t}</text>`)
+    .map((t) => `<text x="${r1(t * bw)}" y="${base + 17}" class="dsmall" text-anchor="middle">${t}</text>`)
     .join('');
   return `<svg viewBox="-8 0 ${W + 16} ${H}" role="img" aria-label="Quiet Skies scores of the ${c.n} postcodes in ${esc(c.outcode)} on DEFRA's map">
 ${bars}<line x1="0" y1="${base}" x2="${W}" y2="${base}" class="axis"/>${ticks}
-<text x="0" y="${H - 6}" class="small">loudest</text><text x="${W}" y="${H - 6}" class="small" text-anchor="end">quietest</text></svg>`;
+<text x="0" y="${H - 4}" class="dsmall">loudest</text><text x="${W}" y="${H - 4}" class="dsmall" text-anchor="end">quietest</text></svg>`;
 }
 
 // ---- the page ----------------------------------------------------------------
@@ -495,45 +691,25 @@ export function reportParts(spec, f) {
     .slice(0, 6)
     .map((r) => r.cells);
 
-  const bullets = [];
-  if (measured) {
-    const diff = Math.round(db - who);
-    bullets.push(
-      `Aircraft noise here averages <strong>${Math.round(db)} dB</strong> outdoors across the year, ${diff > 0 ? `${diff} dB above` : diff < 0 ? `${-diff} dB below` : 'level with'} the ${who} dB the WHO recommends.`
-    );
-  } else {
-    // The endpoint's own sentence says WHY there is no measurement here (outside
-    // DEFRA's contours, or no contours published at all); do not paraphrase it.
-    // Chosen by content, not position: the same array carries road notices.
-    const aircraftNotice = (f.notices || []).find((n) => /aircraft/i.test(n));
-    bullets.push(esc(aircraftNotice || 'There is no measured aircraft noise level for this postcode.'));
-  }
-  if (top) {
-    bullets.push(
-      `Aircraft landing on ${esc(name(top.code))}'s runway ${esc(top.rwy)} pass <strong>${where(top.dist, top.q)}</strong> at about ${ft(top)}, on days when the airport is landing towards the ${top.towards}.`
-    );
-  }
-  if (deps[0]) {
-    bullets.push(
-      `The nearest published departure route (${esc(deps[0].name)}, runway ${esc(deps[0].rwy)}) passes ${where(deps[0].dist, deps[0].q)}.`
-    );
-  }
-  if (!top && near) {
-    bullets.push(
-      `${esc(name(near.code))} Airport's runway is <strong>${km(near.dist)} km to the ${compass(near.q)}</strong>. ${
+  // "WHAT THIS SHOWS" IS GONE (Bill's yes to mock-up v3, 2026-11-12, claude.ai/artifact/PETRJg3HpWznos2MV8TLuL): it held
+  // only what no tile, row or chart says, under a heading that said nothing. Each of its two lines now sits beside what it
+  // explains: why DEFRA gives no figure here under the key figures on page 1 (the estimate tile says "see below"), and a
+  // postcode beside a runway rather than under its approach under the routes table on page 2.
+  // The endpoint's own sentence says WHY there is no measurement here (outside DEFRA's contours, or no contours published
+  // at all); do not paraphrase it. Chosen by content, not position: the same array carries road notices.
+  const aircraftNotice = (f.notices || []).find((n) => /aircraft/i.test(n));
+  const whyNone = measured ? '' : `<p class="cap moved why">${esc(aircraftNotice || "DEFRA's map gives no aircraft noise level for this postcode.")}</p>`;
+  const runwaySide = !top && near
+    ? `<p class="cap moved">${esc(name(near.code))} Airport's runway is <strong>${km(near.dist)} km to the ${compass(near.q)}</strong>. ${
         finals.length
           ? 'This postcode is level with the runway, to its side, not under an approach line: the nearest point of each approach is the runway end.'
           : `No published approach line passes within ${ROUTE_RADIUS_KM} km of this postcode.`
-      }`
-    );
-  } else if (!top && !deps[0]) {
-    bullets.push(`No published approach or departure route passes within ${ROUTE_RADIUS_KM} km.`);
-  }
-  if (district) {
-    bullets.push(
-      `Of the ${district.n.toLocaleString('en-GB')} postcodes in ${esc(district.outcode)} on DEFRA's map, <strong>${district.quieterPct}% are quieter</strong> than this one and ${district.louderPct}% are louder.`
-    );
-  }
+      }</p>`
+    : '';
+  // The district's shares, word for word as the bullet said them, now under its chart.
+  const districtFact = district
+    ? `Of the ${district.n.toLocaleString('en-GB')} postcodes in ${esc(district.outcode)} on DEFRA's map, <strong>${district.quieterPct}% are quieter</strong> than this one and ${district.louderPct}% are louder.`
+    : '';
 
   const listed = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0]);
   const covered = routes.scope.filter((a) => a.method !== 'not-drawn').map((a) => esc(name(a.code)));
@@ -556,35 +732,83 @@ export function reportParts(spec, f) {
     'Smaller airfields, military flights and helicopters are not covered.',
   ].join(' ');
 
-  const also = [];
-  if (typeof env.roadNoiseLdenDb === 'number')
-    also.push(
-      `road noise ${env.roadNoiseLdenDb.toFixed(1)} dB Lden (WHO guideline ${Number(env.roadNoiseWhoGuidelineDb)})`
-    );
-  else if (typeof env.roadNoiseBelowDb === 'number') also.push(`road noise below ${env.roadNoiseBelowDb} dB Lden`);
-  if (typeof env.no2AnnualMeanUgm3 === 'number')
-    also.push(
-      `nitrogen dioxide ${env.no2AnnualMeanUgm3.toFixed(1)} &micro;g/m&sup3; (guideline ${Number(env.no2WhoGuidelineUgm3)})`
-    );
-  if (typeof env.pm25AnnualMeanUgm3 === 'number')
-    also.push(
-      `fine particles ${env.pm25AnnualMeanUgm3.toFixed(1)} &micro;g/m&sup3; (guideline ${Number(env.pm25WhoGuidelineUgm3)})`
-    );
-  if (f.station) also.push(`nearest station ${esc(f.station.name)}, ${stationDistance(f.station.km)} in a straight line`);
-  // Air measured nearby, from the same functions as the front page; each reading's credit, word for
-  // word as its publisher requires and linked, goes in the sources line.
-  const airMeasured =
-    f.sensor || f.monitor
-      ? [f.sensor && sensorLine(f.sensor), f.monitor && monitorLine(f.monitor), airNotes(f.sensor, f.monitor)]
-          .filter(Boolean)
-          .map(esc)
-          .join(' ')
-      : '';
-  // Where to have your say: the airport whose route passes nearest, only if its pages were verified (HAVE_YOUR_SAY).
-  const say = haveYourSay(routes);
-  const sayLine = say
-    ? `${say.links.map((l) => `<a href="${esc(l.href)}">${esc(l.text)}</a>`).join(' &middot; ')}. Flight paths change through the CAA's airspace change process: <a href="${esc(say.change.href)}">${esc(say.change.text)}</a> shows each proposal and the stage it has reached.`
+  // THE HEADLINE (Bill's pick C): the sentence the full map's answer card and the front page give this place, from
+  // the one writer of it (answerLead), so the three can never disagree. A sentence about DEFRA's figures names the
+  // postcode those figures are for; the planes' sentence names its own.
+  const pm = (f.planes && f.planes.model) || null; // planesModel() for this postcode, or null: not counted, say nothing
+  const steps = (f.planes && f.planes.steps) || [];
+  const lead = answerLead(env, f.resolvedAs || f.postcode, pm, steps);
+
+  // PLANES OVERHEAD (Bill's pick C): the front page's chart (planesChart), only where js/planes.mjs has counted this
+  // postcode, with the overhead rule and the period under it; the other rules, word for word, are reading points.
+  // Two airports (SW1P, E16): one heading, the busiest first (the one the headline names), each chart labelled, and the
+  // overhead rule and the period said once under them, so the pair fits its page.
+  const peak = (a) => Math.max(0, ...a.rows.map((r) => (Array.isArray(r.value) ? r.value[1] : typeof r.value === 'number' ? r.value : 0)));
+  const flown = pm ? [...pm.airports].sort((a, b) => peak(b) - peak(a)) : [];
+  const periods = [...new Set(flown.map((a) => a.period))];
+  const planesBlock = pm
+    ? (flown.length
+        ? `<h2>Planes overhead a day${flown.length === 1 ? `, from ${esc(flown[0].name)}` : ''}</h2>` +
+          flown.map((a) => `<div class="blk">${flown.length > 1 ? `<p class="from">From ${esc(a.name)}</p>` : ''}${planesChart(a, steps)}</div>`).join('') +
+          `<p class="cap">${esc([pm.rules.overhead, `${periods.length === 1 ? periods[0] : flown.map((a) => `${a.name}: ${a.period}`).join('; ')}.`].filter(Boolean).join(' '))}</p>`
+        : `<h2>${esc(pm.heading)}</h2><p class="cap">${esc([pm.none, pm.rules.overhead].filter(Boolean).join(' '))}</p>`) +
+      [pm.edge, pm.approx, pm.other].filter(Boolean).map((s) => `<p class="cap">${esc(s)}</p>`).join('')
     : '';
+  // "Under 1 a day" is a figure too (audit A-9, 2026-11-12): it carries the overhead rule above and the other rules and
+  // the flight tracks' credit here, as a counted airport's chart does, or 158,748 postcodes' figure went out bare.
+  const planesPoints = pm ? [pm.rules.direction, pm.counted, pm.rules.postcodes].filter(Boolean).map(esc) : [];
+  const planesCredits = pm && pm.credits.length ? ` Planes overhead: ${pm.credits.map(esc).join('; ')}.` : '';
+
+  // ROAD NOISE (Bill's pick C): the full map's own finding and bars (roadFinding, pictureHtml) for this postcode's
+  // modelled figure against the WHO's, or DEFRA's surveyed-quiet bound, which is no reading and draws no bar. The
+  // council's rating stays on the map: this report is about the postcode.
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const roadPeriod = f.provenance && f.provenance['environment.roadNoiseLdenDb'] && /^\d{4}$/.test(String(f.provenance['environment.roadNoiseLdenDb'].period))
+    ? String(f.provenance['environment.roadNoiseLdenDb'].period)
+    : '';
+  // /v1/environment answers for the NEAREST postcode. That is fine for a 1 km air square and wrong for road noise, where
+  // neighbours differ by 20 dB, so a neighbour's reading is never drawn as this postcode's (the full map's
+  // roadReadingFrom; audit A-11, 2026-11-12): the block then says whose the figure is and draws nothing.
+  const neighbourRoad = Boolean(f.resolvedAs) && (num(env.roadNoiseLdenDb) !== undefined || num(env.roadNoiseBelowDb) !== undefined);
+  const road = f.resolvedAs
+    ? null
+    : roadFinding({ db: num(env.roadNoiseLdenDb), belowDb: num(env.roadNoiseBelowDb), who: num(env.roadNoiseWhoGuidelineDb), period: roadPeriod });
+  const roadPictures = road ? road.tile.visual.filter(Boolean).map((v) => pictureHtml(v)).join('') : '';
+  const roadBlock = road
+    ? `<div class="road blk"><h2>Road noise at this postcode</h2><div class="road-row">${roadPictures ? `<div class="road-pics">${roadPictures}</div>` : ''}<p class="cap">${esc(road.tile.say[0])}${typeof env.roadNoiseLdenDb === 'number' ? ` DEFRA's modelled figure${roadPeriod ? ` for ${roadPeriod}` : ''}.` : ''}</p></div></div>`
+    : neighbourRoad
+      ? `<div class="road blk"><h2>Road noise at this postcode</h2><p class="cap">DEFRA's road noise figure we hold here is for ${esc(f.resolvedAs)}, the nearest postcode, not ${esc(f.postcode)}. Road noise can differ by 20 dB between neighbouring postcodes, so it is not given for this one.</p></div>`
+      : '';
+
+  // AIR (Bill's pick C): the full map's charts, DEFRA's model for the postcode's own square beside the nearest sensor
+  // and monitor on one scale per pollutant, with the map's key; then only the notes the key does not say already.
+  const square = airSquare({ environment: env, provenance: f.provenance });
+  const airModel = airModelOf(square);
+  const airCharts = ['no2', 'pm25']
+    .map((p) => {
+      const rows = airRows(p, { model: airModel, sensor: f.sensor, monitor: f.monitor });
+      if (!rows.some((r) => typeof r.v === 'number')) return '';
+      return `<figure class="air-fig"><figcaption>${esc(AIR_POLLUTANT_NAMES[p].toUpperCase())}, &micro;g/m&sup3;</figcaption>${airChart(p, rows, (square && square.who[p]) || AIR_WHO_2021[p])}</figure>`;
+    })
+    .filter(Boolean);
+  const airKey = [
+    airModel && `<li>${airKeyMark('model')}<span><strong>${esc(airModel.label)}</strong> ${esc(airModel.detail)}</span></li>`,
+    f.sensor && `<li>${airKeyMark('sensor')}<span><strong>${esc(f.sensor.name)}</strong> ${esc(stationDistance(f.sensor.km))}. ${esc(sensorKeyNote(f.sensor))}</span></li>`,
+    f.monitor && `<li>${airKeyMark('monitor')}<span><strong>${esc(f.monitor.name)}</strong> ${esc(stationDistance(f.monitor.km))}. ${esc(monitorKeyNote(f.monitor))}</span></li>`,
+  ].filter(Boolean);
+  const airPoints = [
+    [airModel, f.sensor, f.monitor].filter(Boolean).length > 1 ? 'They measure in different ways, places and periods, so expect them to differ.' : '',
+    ...(f.sensor || f.monitor ? airNoteList(f.sensor, f.monitor).filter((n) => n.key === 'roadside' || n.key === 'capture').map((n) => n.text) : []),
+  ].filter(Boolean);
+  const airBlock = airCharts.length
+    ? `<div class="blk"><h2>Air at this postcode, against the WHO guideline</h2><div class="air-two"><div class="air-charts">${airCharts.join('')}</div><ul class="air-key">${airKey.join('')}</ul></div></div>${airPoints.length ? `<ul class="pts">${airPoints.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`
+    : '';
+  const stationLine = f.station ? `<p class="note"><strong>Nearest station:</strong> ${esc(f.station.name)}, ${stationDistance(f.station.km)} in a straight line.</p>` : '';
+  // Where to have your say: the airport whose route passes nearest, only if its pages were verified (HAVE_YOUR_SAY),
+  // as buttons (Bill's pick C), then the correction address.
+  const say = haveYourSay(routes);
+  // No verified pages for the airport (every postcode outside London today): no "Have your say" label over nothing (audit A-1).
+  const sayBlock = `<p class="say">${say ? `<strong>Have your say</strong> ${[...say.links, say.change].map((l) => `<a class="chip" href="${esc(l.href)}">${esc(l.text)}</a>`).join(' ')} ` : ''}<span class="wrong"><strong>Spotted something wrong?</strong> <a href="${esc(correctionHref(f.postcode))}">Tell us</a></span></p>`;
   const airCredits = [f.sensor, f.monitor]
     .filter(Boolean)
     .map((r) => ` <a href="${esc(r.credit.href)}">${esc(r.credit.text)}</a>${r.credit.text.endsWith('.') ? '' : '.'}`)
@@ -616,42 +840,120 @@ export function reportParts(spec, f) {
     ? new Date(`${spec.made}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
     : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
+  // PAGE 1's CARDS, from the one rule glanceCards() holds, and the report's details box (Bill's three-page pick).
+  const cards = glanceCards({ env, model: pm, steps, resolvedAs: f.resolvedAs, aircraftMap, sensor: f.sensor, say });
+  const cardsHtml = cards.length
+    ? `<div class="cards">${cards
+        .map((c) => {
+          const [mark, word] = GLANCE_WORDS[c.stand || 'none'];
+          return `<div class="card ${c.stand || 'none'}" data-card="${c.key}"><div class="top"><b class="n">${esc(c.topic)}</b><span class="w"><i aria-hidden="true">${mark}</i>${word}</span></div>`
+            + `<div class="fig">${esc(c.figure)}</div>${c.step ? `<div class="step"><strong>Next step:</strong> ${esc(c.step)}</div>` : ''}<div class="ref">The detail: page ${c.page}</div></div>`;
+        })
+        .join('')}</div>`
+    : '';
+  const planesPeriods = pm ? [...new Set(pm.airports.map((a) => a.period).filter(Boolean))] : [];
+  const airMeta = f.provenance && f.provenance['environment.no2AnnualMeanUgm3'];
+  const airPeriod = airMeta && /^\d{4}$/.test(String(airMeta.period)) ? String(airMeta.period) : '';
+  const current = [
+    aircraftMap ? "DEFRA's noise maps for 2021, the latest published" : "DEFRA's road noise map for 2021, the latest published",
+    airac ? `flight routes AIRAC ${esc(airac)}` : null,
+    planesPeriods.length ? `planes counted ${esc(planesPeriods.join('; '))}` : null,
+    airPeriod ? `air: DEFRA's model for ${airPeriod}` : null,
+  ].filter(Boolean).join(' · ');
+  const details = `<div class="details"><b>Report details</b> ${esc(f.postcode)}${spec.place ? `, ${esc(spec.place)}` : ''}${f.council ? `, ${esc(f.council)}` : ''} · prepared ${esc(when)}${spec.ref ? ` · reference ${esc(spec.ref)}` : ''}<br><b>How current</b> ${current}${spec.check ? `<br><b>Check this report</b> <a href="${esc(spec.check)}">${esc(spec.check.replace('https://', ''))}</a>` : ''}</div>`;
+  // The footer on every printed page: the reference where the copy has one, the postcode, the day, the routes' AIRAC, and
+  // "Page x of 3" (@page margin boxes; a CSS string, so what is quoted in it is escaped for CSS). Print only.
+  const cssStr = (s) => `"${String(s).replace(/[\\"]/g, (ch) => `\\${ch}`).replace(/[\r\n]+/g, ' ')}"`;
+  const footLine = [spec.ref ? `Reference ${spec.ref}` : null, f.postcode, `Prepared ${when}`, airac ? `AIRAC ${airac}` : null].filter(Boolean).join('  ·  ');
+  const pageFooter = `
+  @page { @bottom-left { content: ${cssStr(footLine)}; font: 8pt 'Geist', system-ui, sans-serif; color: #5f5e59; }
+          @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 8pt 'Geist', system-ui, sans-serif; color: #5f5e59; } }`;
+
   const css = `  @page { size: A4; margin: 10mm 14mm 8mm; }
   :root { --ink:#1c1c1a; --muted:#5f5e59; --rule:#dedcd6; --band:#f4f2ee; --accent:#b4441a; --fin:#d9480f; --dep:#1d4ed8; }
-  body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); background:#fff; font-size: 9.5pt; line-height: 1.36; margin: 0; }
+  body { font-family: 'Geist', system-ui, sans-serif; color: var(--ink); background:#fff; font-size: 10.5pt; line-height: 1.38; margin: 0; }
   h1 { font-size: 18pt; line-height: 1.15; margin: 0 0 3px; }
   .tag { font-size: 8pt; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 1px 6px; vertical-align: middle; margin-left: 8px; }
   .sub { color: var(--muted); margin: 0 0 9px; }
-  h2 { font-size: 10.5pt; margin: 9px 0 4px; }
+  h2 { font-size: 12pt; margin: 10px 0 4px; }
+  .lead { margin: 0 0 9px; padding: 6px 10px; background: var(--band); border-left: 3px solid var(--accent); font-size: 11.5pt; font-weight: 600; line-height: 1.3; }
   .keys { display: grid; grid-template-columns: repeat(${tiles.length}, 1fr); gap: 7px; margin: 0 0 9px; }
   .key { background: var(--band); border-radius: 6px; padding: 8px 10px; }
   .key .n { font-size: 17pt; font-weight: 700; line-height: 1; }
-  .key .l { font-size: 8pt; color: var(--muted); margin-top: 4px; }
+  .key .l { font-size: 9.5pt; color: var(--muted); margin-top: 4px; }
   svg { display: block; width: 100%; height: auto; }
   .ground { fill: #ebe9e4; } .boro { fill: none; stroke: #a9a79f; stroke-width: 0.8; }
   .fin { fill: none; stroke: var(--fin); stroke-width: 3; } .dep { fill: none; stroke: var(--dep); stroke-width: 2; stroke-dasharray: 9 6; }
   .rwy { fill: none; stroke: var(--ink); stroke-width: 5; } .pin { fill: #fff; stroke: var(--ink); stroke-width: 3; }
-  .lab { font-size: 15px; fill: var(--ink); } .strong { font-weight: 700; } .plate { fill: #fff; fill-opacity: 0.85; }
-  .small { font-size: 12px; fill: var(--muted); } .scalebar { stroke: var(--ink); stroke-width: 2; } .axis { stroke: var(--rule); stroke-width: 1; }
+  .lab { font-size: 16px; fill: var(--ink); } .strong { font-weight: 700; } .plate { fill: #fff; fill-opacity: 0.85; }
+  .small { font-size: 16px; fill: var(--muted); } .dsmall { font-size: 18px; fill: var(--muted); } .scalebar { stroke: var(--ink); stroke-width: 2; } .axis { stroke: var(--rule); stroke-width: 1; }
   .bin { fill: #cfccc4; } .mine { fill: var(--accent); }
   .legend { font-size: 8pt; color: var(--muted); margin: 4px 0 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
   .key-line { display: inline-block; width: 22px; height: 0; border-top: 3px solid var(--fin); margin: 0 2px 0 0; }
   .key-line.dep { border-top: 2px dashed var(--dep); margin-left: 10px; } .gap { width: 12px; }
   .sw { display: inline-flex; align-items: center; gap: 2px; } .sw i { width: 11px; height: 9px; display: inline-block; }
-  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; }
+  table { width: 100%; border-collapse: collapse; font-size: 10.5pt; }
   th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-  th { font-weight: 600; color: var(--muted); font-size: 8.2pt; }
-  .cols { display: grid; grid-template-columns: ${district ? '1.25fr 1fr' : '1fr'}; gap: 16px; align-items: start; }
+  th { font-weight: 600; color: var(--muted); font-size: 9.5pt; }
+  td:nth-child(4) { white-space: nowrap; } /* the height: "about 1,800 ft" wrapped to two lines at 10.5 pt (2026-11-12) */
+  .cols { display: grid; grid-template-columns: ${planesBlock && district ? '300pt 1fr' : '1fr'}; gap: 16px; align-items: start; }
+  .planes svg { max-width: 300pt; } .planes .from { font-size: 10.5pt; font-weight: 600; margin: 6px 0 0; } .district svg { max-width: 300pt; }
   ul { margin: 0; padding-left: 17px; } li { margin: 3px 0; }
-  .cap { font-size: 8pt; color: var(--muted); margin: 0 0 2px; }
-  .note { font-size: 7.6pt; color: var(--muted); margin: 5px 0 0; }
-  footer { margin-top: 9px; padding-top: 6px; border-top: 1px solid var(--rule); font-size: 7.4pt; color: var(--muted); }
+  .cap { font-size: 9.5pt; color: var(--muted); margin: 3px 0 2px; }
+  .cap.fact { color: var(--ink); }
+  .cap.moved { margin: 4px 0 8px; } .cap.why { padding-left: 8px; border-left: 3px solid var(--accent); }
+  .note { font-size: 10.5pt; color: var(--muted); margin: 6px 0 0; }
+  .road-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; align-items: center; }
+  .t-bars { display: grid; gap: 6px; } .t-bar { display: grid; gap: 2px; }
+  .t-cap { display: flex; justify-content: space-between; gap: 8px; font-size: 9.5pt; color: var(--muted); }
+  .t-cap b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .t-track { height: 6px; background: #e4e3e0; border-radius: 3px; }
+  .t-track i { display: block; height: 100%; border-radius: 3px; } .t-track i.here { background: var(--ink); } .t-track i.yard { background: #807e79; }
+  /* THREE FIXED PAGES, the answer first (Bill's pick, 2026-11-11 v2; built 2026-11-12): page 1 the answer (cards, key
+     figures, map, details), page 2 the aircraft and road detail, page 3 the air and how to read it. Within a page each
+     section stays whole and no heading is left at its foot; scripts/address_noise_report.mjs refuses a fourth page. */
+  .page { break-after: page; } .page:last-child { break-after: auto; }
+  .blk, .district, figure, li, tr, .card { break-inside: avoid; } h2 { break-after: avoid; }
+  .page h2.pagehead { font-size: 13pt; margin: 0 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--accent); }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 10px; }
+  .card { border: 1px solid var(--rule); border-radius: 7px; padding: 8px 10px; display: grid; gap: 3px; align-content: start; }
+  .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+  .card b.n { font-size: 11.5pt; }
+  .card .w { display: inline-flex; gap: 4px; align-items: center; font-weight: 700; font-size: 9.5pt; white-space: nowrap; }
+  .card .w i { font-style: normal; display: inline-grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; color: #fff; font-size: 8.5pt; }
+  .card.watch .w { color: #a04d00; } .card.watch .w i { background: #a04d00; }
+  .card.good .w { color: #076b36; } .card.good .w i { background: #076b36; }
+  .card.none .w { color: var(--muted); } .card.none .w i { background: #8a8880; }
+  .card .fig { font-size: 10.5pt; font-weight: 600; }
+  .card .step { font-size: 9.5pt; color: var(--muted); } .card .step strong { color: var(--accent); }
+  .card .ref { font-size: 9pt; color: var(--muted); }
+  .details { margin: 10px 0 0; padding: 7px 10px; background: var(--band); border-radius: 6px; font-size: 9.5pt; line-height: 1.5; overflow-wrap: anywhere; }
+  .details b { margin-right: 4px; }${pageFooter}
+  .air-two { display: grid; grid-template-columns: 320pt 1fr; gap: 16px; align-items: start; }
+  .air-charts { display: grid; gap: 8px; }
+  .air-fig { margin: 0; } .air-fig figcaption { font-size: 9.5pt; color: var(--muted); margin: 0 0 2px; }
+  ul.air-key { list-style: none; padding: 0; margin: 14px 0 0; font-size: 9.5pt; color: var(--muted); }
+  ul.air-key li { display: grid; grid-template-columns: 16px 1fr; gap: 5px; margin: 2px 0; }
+  ul.air-key svg { width: 14px; height: 14px; margin-top: 1px; } ul.air-key strong { color: var(--ink); }
+  ul.pts { font-size: 10.5pt; margin: 6px 0 0; padding-left: 16px; } ul.pts li { margin: 2px 0; }
+  .say { font-size: 10.5pt; margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+  .say a.chip { border: 1px solid var(--rule); border-radius: 6px; padding: 1px 7px; }
+  .say .wrong { margin-left: 4px; }
+  footer { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--rule); font-size: 8.5pt; color: var(--muted); }
 `;
 
-  const body = `<h1>${title}${spec.sample ? '<span class="tag">Sample report</span>' : ''}</h1>
-<p class="sub">What ${aircraftMap ? 'the official noise map and the published flight routes' : 'the published flight routes and official data'} say about this postcode${f.council ? `, in ${esc(f.council)}` : ''}.${f.resolvedAs ? ` Noise and air figures are for ${esc(f.resolvedAs)}, the nearest postcode the data resolves to.` : ''}</p>
+  const body = `<section class="page">
+<h1>${title}${spec.sample ? '<span class="tag">Sample report</span>' : ''}</h1>
+<p class="sub">What ${aircraftMap ? 'the official noise map and the published flight routes' : 'the published flight routes and official data'} say about this postcode${f.council ? `, in ${esc(f.council)}` : ''}.${f.resolvedAs ? ` Noise and air figures are for ${esc(f.resolvedAs)}, the nearest postcode the data resolves to.` : ''} A desktop report from published data: no site visit or survey.</p>
+${lead ? `<p class="lead">${esc(lead)}</p>` : ''}
+${cardsHtml}
 <div class="keys">${tiles.map(([n, l]) => `<div class="key"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('')}</div>
+${whyNone}
 ${f.map}
+${details}
+</section>
+<section class="page">
+<h2 class="pagehead">${roadBlock ? 'Aircraft and road noise in detail' : 'Aircraft noise in detail'}</h2>
 <h2>Published routes within ${ROUTE_RADIUS_KM} km</h2>
 ${
   rows.length
@@ -659,15 +961,20 @@ ${
 ${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('\n')}</tbody></table>`
     : `<p>No published approach or departure route passes within ${ROUTE_RADIUS_KM} km of this postcode.</p>`
 }
-<p class="note" style="margin-top:4px">${scopeLine}</p>
-<div class="cols"><div><h2>What this shows</h2><ul>${bullets.map((b) => `<li>${b}</li>`).join('')}</ul></div>
-${district ? `<div><h2>How it compares within ${esc(district.outcode)}</h2><p class="cap">Quiet Skies scores of the ${district.n.toLocaleString('en-GB')} postcodes on DEFRA's map. This postcode's band is in orange.</p>${districtSvg(district)}</div>` : ''}</div>
-${also.length ? `<p class="note"><strong>Also at this postcode:</strong> ${also.join('; ')}.</p>` : ''}
-${airMeasured ? `<p class="note"><strong>Air measured nearby.</strong> ${airMeasured}</p>` : ''}
-${sayLine ? `<p class="note"><strong>Have your say.</strong> ${sayLine}</p>` : ''}
-<p class="note"><strong>Spotted something wrong?</strong> <a href="${esc(correctionHref(f.postcode))}">Tell us</a>: local knowledge is the best check on data like this.</p>
-<p class="note"><strong>Reading this report.</strong> Lden is a yearly average of the outdoor level, with evening and night flights weighted more heavily; it does not describe single loud events or the number of flights. ${vintage} The route lines are the published centre lines: aircraft fly either side of them, and the path to joining a final approach is directed by air traffic control and is not drawn. This is information, not a survey or an environmental search; visit at different times of day before deciding.</p>
-<footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? `${esc(String(covid.caa || 'CAA ERCD').split(',')[0])}; ` : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS).${airCredits} Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
+<p class="cap">${scopeLine}</p>
+${runwaySide}
+${planesBlock || district ? `<div class="cols">${planesBlock ? `<div class="planes">${planesBlock}</div>` : ''}${district ? `<div class="district"><h2>How it compares within ${esc(district.outcode)}</h2><p class="cap">Quiet Skies scores of the ${district.n.toLocaleString('en-GB')} postcodes on DEFRA's map. This postcode's band is in orange.</p>${districtSvg(district)}<p class="cap fact">${districtFact}</p></div>` : ''}</div>` : ''}
+${roadBlock}
+${sayBlock}
+</section>
+<section class="page">
+<h2 class="pagehead">${airBlock ? 'Air, and how to read this report' : 'How to read this report'}</h2>
+${airBlock}
+${stationLine}
+<h2>Reading this report</h2>
+<ul class="pts"><li>Lden is a yearly average of the outdoor level, with evening and night flights weighted more heavily; it does not describe single loud events or the number of flights.</li><li>${vintage}</li><li>The route lines are the published centre lines: aircraft fly either side of them, and the path to joining a final approach is directed by air traffic control and is not drawn.</li>${planesPoints.map((t) => `<li>${t}</li>`).join('')}<li>This is information, not a survey or an environmental search; visit at different times of day before deciding.</li><li>It is not a conveyancing search under the Search Code. Our terms: skyscore.co.uk/terms.</li></ul>
+<footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? `${esc(String(covid.caa || 'CAA ERCD').split(',')[0])}; ` : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS).${planesCredits}${airCredits} Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
+</section>
 `;
   return { title, css, body };
 }

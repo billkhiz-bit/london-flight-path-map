@@ -5,7 +5,7 @@ WHY. `EGSSPJKLFL33M` runs on the AWS MANAGED `SecurityHeadersPolicy`
 (`67f7725c-6f97-4210-82d7-5512b31e9d03`), which cannot be edited and carries
 no Permissions-Policy - so the header was never removed, it was never there
 (measured 2026-09-08). The same policy sets `X-Frame-Options: SAMEORIGIN`
-while every page's meta CSP claims `frame-ancestors 'none'`, which a meta tag
+while every page's meta CSP claimed `frame-ancestors 'none'` (removed 2026-11-06), which a meta tag
 cannot deliver; there is not one <iframe> in the repo, so DENY is the honest
 value and this header is the only thing actually refusing to be framed.
 
