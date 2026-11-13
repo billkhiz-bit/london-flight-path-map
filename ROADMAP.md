@@ -2162,7 +2162,12 @@ two empty sets change in app.py) and `data-deploy` (the new `data/us-bayarea-fro
       now holds its RULE instead. **On the 29th:** merge `faa-2611`, then `bay-area-deploy`, `web-deploy`,
       `data-deploy` and the backend through a reviewed changeset (the Lambda's block changed), all Bill's, then
       verify from the origin.
-- [ ] Each new FAA cycle (28 days; **2612 is effective 2026-11-26**):
+- [ ] **Cycle 2612 BUILT 2026-11-13 on branch `faa-2612`, kept off master until it takes effect on 26 Nov:** no
+      route changed at any of the seven airports (the record equals 2611's but for its cycle label), so no score
+      moves; the FAA renamed the not-coded list again (`Not In CIFP.xlsx`, spaces), so the builder's pattern now
+      takes a space or an underscore. **On the 26th:** merge `faa-2612`, the backend through a reviewed changeset
+      (`PROVENANCE_PERIODS['faa-cifp']` only), then `data-deploy`, `web-deploy`, `bay-area-deploy`, and verify.
+- [ ] Each new FAA cycle (28 days; **2613 is effective 2026-12-24**):
       `build_us_flight_paths.py --fetch`, then `--write` on
       `build_bay_area_page.py`, `build_bayarea_map_data.py` and
       `build_bayarea_areas.py` (all three read the record, and all three

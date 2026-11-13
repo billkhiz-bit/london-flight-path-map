@@ -10526,7 +10526,7 @@ PROVENANCE_PERIODS = {
     'dfe-ks4': '2023/24',               # build_progress8.VINTAGE
     'ons-nspl': 'August 2026',          # load_nspl.NSPL_VINTAGE ('2026-08'), written as a month like the rest
     'uk-aip': 'AIRAC 2026-10-29',       # build_flight_paths.AIRAC
-    'faa-cifp': 'cycle 2611, effective 2026-10-29',  # build_us_flight_paths.RECORD 'cycle' / 'effective'
+    'faa-cifp': 'cycle 2612, effective 2026-11-26',  # build_us_flight_paths.RECORD 'cycle' / 'effective'
 }
 NOT_RECORDED = None  # a continuously updated register or a map with no edition: when we last pulled it is not stored
 # Said beside every NOT_RECORDED period, so an agent can tell "not stored yet" from "does not apply".

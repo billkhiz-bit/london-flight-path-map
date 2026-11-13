@@ -379,6 +379,11 @@ def test_the_not_coded_list_is_found_by_pattern_and_only_one_is_accepted(tmp_pat
     assert us.not_coded_member(['FAACIFP18', 'Not_In_CIFP.xlsx']) == 'Not_In_CIFP.xlsx'
     assert us.not_coded_member(['FAACIFP18', 'Not_In_CIFP.xlsx', 'Not_In_CIFP_2611.xlsx']) is None
     assert us.not_coded_member(['FAACIFP18', 'Not_In_CIFP_2611.pdf']) is None
+    # Cycle 2612 renamed it again, with spaces: 'Not In CIFP.xlsx'. Either separator, never two lists.
+    assert us.not_coded_member(['FAACIFP18', 'Not In CIFP.xlsx']) == 'Not In CIFP.xlsx'
+    assert us.not_coded_member(['FAACIFP18', 'Not In CIFP 2612.xlsx']) == 'Not In CIFP 2612.xlsx'
+    assert us.not_coded_member(['FAACIFP18', 'Not In CIFP.xlsx', 'Not_In_CIFP.xlsx']) is None
+    assert us.not_coded_member(['FAACIFP18', 'NotInCIFP.xlsx']) is None
     renamed = tmp_path / 'renamed.zip'
     with zipfile.ZipFile(renamed, 'w') as z:
         z.writestr(us.MEMBER, 'HDR01')
