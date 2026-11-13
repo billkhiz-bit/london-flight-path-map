@@ -239,3 +239,71 @@ def test_a_figure_its_bar_says_is_not_printed_twice():
 def test_no_text_on_an_area_page_is_under_the_sites_12px():
     # "Raise, never shrink" (Bill, the site audit of 2026-11-01).
     assert not re.search(r'font-size:(?:\d|1[01])(?:\.\d+)?px', pages.PAGE)
+
+
+# THE ANSWER CARD (Bill's pick A, 2026-11-13). Its words are the map's: each rule is read back out of the map's own code.
+PANEL = (REPO / 'js' / 'panel-findings.mjs').read_text(encoding='utf-8')
+
+
+def test_the_cards_tones_are_the_maps_toneof():
+    sets = {name: set(re.findall(r"'([a-z ]+)'", body)) for name, body in re.findall(r'const (GOOD|MID|BAD) = new Set\(\[([^\]]*)\]\)', PANEL)}
+    assert sets == {'GOOD': set(pages.TONE_GOOD), 'MID': set(pages.TONE_MID), 'BAD': set(pages.TONE_BAD)}
+
+
+def test_high_prices_is_the_maps_own_rule():
+    body = PANEL[PANEL.index('export function priceFinding'):]
+    assert int(re.search(r'afford < (\d+)', body).group(1)) == pages.AFFORD_WATCH
+    assert re.search(r"pill: 'High prices'", body)
+
+
+def card_of(facts, crime_band=None):
+    return pages.card_items({'facts': facts, 'crime_band': crime_band})
+
+
+def test_only_the_ends_of_the_councils_aircraft_band_are_a_verdict():
+    # toneOf() knows no "severe": Hounslow, the most exposed council, had no pill until the band got its own rule.
+    stands = {w: [i['stand'] for i in card_of([{'label': 'Aircraft noise band', 'value': w}])]
+              for w in ('Low', 'Low-Moderate', 'Moderate', 'Moderate-High', 'High', 'Severe')}
+    assert stands == {'Low': ['good'], 'Low-Moderate': [], 'Moderate': [], 'Moderate-High': [], 'High': ['watch'], 'Severe': ['watch']}
+
+
+def test_a_word_outside_every_scale_is_no_verdict_and_nothing_to_say_is_no_headline():
+    items = card_of([{'label': 'Road noise', 'value': '48.9% of postcodes'}, {'label': 'Air quality', 'value': 'Moderate'}])
+    assert items == [] and pages.card_lead(items) is None
+
+
+def test_crime_reads_the_councils_band_as_the_map_does_never_the_rate():
+    rate = [{'label': 'Recorded crime', 'value': '56.5'}]
+    assert [i['stand'] for i in card_of(rate, 'low')] == ['good']
+    assert card_of(rate, 'medium') == [] and card_of(rate, None) == []
+
+
+def test_the_headline_names_two_of_each_side_worth_a_look_first():
+    facts = [{'label': 'Aircraft noise band', 'value': 'Severe'}, {'label': 'Road noise', 'value': 'High'},
+             {'label': 'Air quality', 'value': 'Poor'}, {'label': 'Flood risk', 'value': 'Low'},
+             {'label': 'Transport access', 'value': 'Good'}, {'label': 'Progress 8', 'value': '0.6'},
+             {'label': 'Affordability', 'value': '1.0 / 10'}, {'label': 'Average price', 'value': '£1'}]
+    items = card_of(facts)
+    assert [i['pill'] for i in items] == ['Aircraft noise', 'Road noise', 'Air quality', 'High prices', 'Flood risk', 'Schools', 'Transport']
+    assert pages.card_lead(items) == ('Aircraft noise is severe and road noise is high; '
+                                      'schools are well above average and transport access is good.')
+
+
+def test_every_card_holds_the_score_and_every_pill_reaches_its_finding():
+    built = 0
+    for city, cfg in pages.app.CITIES.items():
+        for borough in cfg['boroughs']:
+            data = pages.gather(city, borough)
+            if not data or len(data['facts']) < pages.MIN_FACTS:
+                continue
+            html = pages.render(data)
+            built += 1
+            card = re.search(r'<section class="card( solo)?"[^>]*>(.*?)</section>', html, re.S)
+            assert card and '<span class="n">' in card.group(2), (city, borough)
+            ids = set(re.findall(r' id="([^"]+)"', html))
+            links = re.findall(r'<a class="pill (watch|good)" href="#([^"]+)">', card.group(2))
+            assert all(target in ids for _, target in links), (city, borough)
+            # Never colour alone: each pill says its verdict in words, and a page with no pill has no headline.
+            assert card.group(2).count('class="visually-hidden"') == len(links)
+            assert ('card-lead' in card.group(2)) == bool(links), (city, borough)
+    assert built > 100

@@ -2970,9 +2970,18 @@ const makeReport = async (pc) => {
     lead: getComputedStyle(document.querySelector('.panel .lead')).display,
     promises: getComputedStyle(document.querySelector('.promises')).display,
   }));
-  ok(compact.tiles.length === 3 && /^[\d.]+ dBaircraft noise$/.test(compact.tiles[0]) && /µg\/m³NO₂ in the air$/.test(compact.tiles[1])
-    && compact.tiles[2] === '310planes a day, flying west' && compact.rows === 'none' && compact.h1 > 30 && compact.lead !== 'none' && compact.promises !== 'none',
+  ok(compact.tiles.length === 3 && /^[\d.]+ dBaircraft noise/.test(compact.tiles[0]) && /µg\/m³NO₂ in the air/.test(compact.tiles[1])
+    && compact.tiles[2].startsWith('310planes a day, flying west') && compact.rows === 'none' && compact.h1 > 30 && compact.lead !== 'none' && compact.promises !== 'none',
     'the example opens compact: three tiles from the answer, the rest folded, the question and the promises still there', JSON.stringify(compact));
+  // EACH TILE'S YARDSTICK (Bill's pick A, 2026-11-13): what is on screen, its line read as a visitor sees it (innerText
+  // skips the form the tiles' width hides), the verdict in words and bold, never the colour alone.
+  const yards = await ep.evaluate(() => [...document.querySelectorAll('#ans-tiles .ans-tile')].map((t) => {
+    const y = t.querySelector('.ans-yard');
+    return y ? { text: y.innerText.trim(), bold: Number(getComputedStyle(y).fontWeight) >= 600 } : null;
+  }));
+  ok(yards.length === 3 && yards[0]?.text === 'Over the WHO guideline of 45' && yards[0].bold
+    && yards[1]?.text === 'WHO guideline: 10' && !yards[1].bold && /^Heathrow flew west on \d+% of days$/.test(yards[2]?.text || ''),
+    "each tile says its yardstick: aircraft over the WHO guideline (bold, in words), the air's guideline as context, how often Heathrow flew west", JSON.stringify(yards));
   // OPTION C: the example's heading is its lead finding, written from the answer (its planes here), labelled as the example
   // and said to nobody; the question keeps its place unseen, out of the heading's name, and the lead fits the room kept.
   const kewHead = await headlineOf();

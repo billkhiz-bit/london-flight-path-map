@@ -1275,12 +1275,30 @@ let searchSeq = 0;
 // visitor asks for the rest. Each tile is written from the live answer; a figure it lacks is no tile, never a zero.
 const examplePanel = () => answer?.closest('.panel');
 const endLoading = () => document.querySelector('.panel')?.classList.remove('is-loading');
-function tileNode({ figure, words }) {
+// Each tile's yardstick line (Bill's pick A, 2026-11-13) under its words: `over` marks a verdict past the guideline, and a
+// tile with a short form carries both, the stylesheet showing the one its width suits (one is ever read, the other hidden).
+function tileNode({ figure, words, yard = null, yardShort = null, over = false }) {
   const tile = document.createElement('span');
   tile.className = 'ans-tile';
   const b = document.createElement('b');
   b.textContent = figure;
   tile.append(b, words);
+  if (yard) {
+    const line = document.createElement('span');
+    line.className = over ? 'ans-yard is-over' : 'ans-yard';
+    if (yardShort) {
+      const long = document.createElement('span');
+      long.className = 'yd-l';
+      long.textContent = yard;
+      const short = document.createElement('span');
+      short.className = 'yd-s';
+      short.textContent = yardShort;
+      line.append(long, short);
+    } else {
+      line.textContent = yard;
+    }
+    tile.append(line);
+  }
   return tile;
 }
 function showExampleTiles(e) {
@@ -1289,7 +1307,7 @@ function showExampleTiles(e) {
   const more = byId('ans-more');
   examplePanel()?.classList.add('is-example');
   if (tiles) {
-    tiles.replaceChildren(...exampleFigures(e).map(tileNode), tileNode({ figure: '\u00a0', words: '\u00a0' }));
+    tiles.replaceChildren(...exampleFigures(e).map(tileNode), tileNode({ figure: '\u00a0', words: '\u00a0', yard: '\u00a0' }));
     tiles.lastElementChild.classList.add('is-waiting');
     tiles.hidden = false;
   }

@@ -233,10 +233,14 @@ export const GLANCE_WORDS = { watch: ['!', 'Worth a look'], good: ['✓', 'Good 
  * card can differ from a map pill: the card is about this postcode's own figure. A topic with nothing true to say has no
  * card. A neighbour's road reading is never this postcode's (audit I-4). Pure; held by tests/street-report.mjs.
  */
+/** Where a figure stands against its WHO guideline, in the words every card uses: ONE holder (glanceCards here, and the
+ * front page's example tiles since Bill's pick A of 2026-11-13). */
+export const whoSide = (v, who) => (v > who ? 'over' : v < who ? 'under' : 'level with');
+
 export function glanceCards({ env = {}, model = null, steps = [], resolvedAs = null, aircraftMap = false, sensor = null, say = null } = {}) {
   const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
   const verdict = (v, who) => (v > who ? 'watch' : v < who ? 'good' : null);
-  const side = (v, who) => (v > who ? 'over' : v < who ? 'under' : 'level with');
+  const side = whoSide;
   const cards = [];
 
   const webtrak = say && (say.links || []).some((l) => /webtrak/i.test(l.href))

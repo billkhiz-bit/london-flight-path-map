@@ -49,6 +49,48 @@
   dl.scores b { font-family:var(--font-display); font-size:22px; font-weight:700; }
   dl.scores .of { font-family:var(--font-mono); font-size:12px; color:var(--mid); }
   dl.scores .bar { margin:6px 0 0; }
+  /* THE ANSWER CARD (Bill's pick A, 2026-11-13): the full map's card, in its own colours (index.html .answer-card), first
+     on the page; the score and its five parts sit in it. Dark in both themes: on a dark page it lifts to the page's paper. */
+  .card { --c-head:#ffffff; --c-text:#f3f1ec; --c-lede:#d9d7d0; --c-label:#b9b6ae; --c-line:#55554f; --c-track:#3a3a3a;
+    display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:24px 32px; margin:24px 0 8px; padding:24px;
+    border-radius:6px; background:#141414; color:var(--c-text); }
+  .card.solo { grid-template-columns:minmax(0, 1fr); max-width:720px; }
+  .card-main { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .card-where { margin:0; font-size:12.5px; color:var(--c-label); }
+  .card-lead { margin:0; font-family:var(--font-display); font-size:clamp(20px, 2.4vw, 24px); font-weight:700; line-height:1.25; letter-spacing:-0.01em; color:var(--c-head); }
+  .pills { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0; }
+  .pill-lab { margin-right:2px; font-size:12px; color:var(--c-label); }
+  .pill { display:inline-flex; align-items:center; gap:7px; min-height:30px; padding:4px 11px 4px 9px; font-size:13px; line-height:1.2; color:var(--c-text); text-decoration:none; border:1px solid var(--c-line); border-radius:999px; }
+  .pill:hover { border-color:var(--c-text); }
+  .pill .mark { flex:none; }
+  .pill.watch .mark { color:var(--orange); }
+  .pill.good .mark { color:#26f27d; }
+  .card a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  .card-score { min-width:0; padding-left:28px; border-left:1px solid var(--c-line); }
+  .card.solo .card-score { padding-left:0; border-left:0; }
+  .card .headline { margin:0 0 8px; }
+  .card .headline .n { font-size:clamp(44px, 6vw, 60px); color:var(--c-head); }
+  .card .headline .of, .card .sub { color:var(--c-lede); }
+  .card .bar { background:var(--c-track); }
+  .card .bar.big { margin-bottom:16px; }
+  .card dl.scores { grid-template-columns:minmax(0, 1fr); gap:12px; padding:0; border:0; }
+  /* Each part on one line, its name left and its figure right, the bar under them and the note under that. */
+  .card dl.scores dt { float:left; font-size:13px; line-height:1.9; color:var(--c-text); }
+  .card dl.scores dd { text-align:right; }
+  .card dl.scores b { font-size:17px; color:var(--c-head); }
+  .card dl.scores .bar { clear:both; height:6px; margin:4px 0 0; }
+  .card dl.scores .note { text-align:left; }
+  .card dl.scores .of, .card .note { color:var(--c-label); }
+  .card-main .card-map { align-self:flex-start; margin-top:6px; }
+  .card-map { display:inline-block; margin-top:16px; padding:8px 16px; border-radius:999px; background:#ffffff; color:#141414; font-size:14px; font-weight:600; text-decoration:none; }
+  .card-map:hover { text-decoration:underline; text-underline-offset:3px; }
+  .find { scroll-margin-top:16px; }
+  .visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  @media (max-width: 760px) {
+    .card { grid-template-columns:minmax(0, 1fr); padding:16px; }
+    .card-score { padding-left:0; padding-top:16px; border-left:0; border-top:1px solid var(--c-line); }
+    .card.solo .card-score { padding-top:0; border-top:0; }
+  }
   /* 12px, the site's small print everywhere else; 11px was the one size below it (site audit 2026-11-01). */
   .note { display:block; color:var(--mid); font-size:12px; margin-top:4px; }
   .groups { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 48px; margin:8px 0; }
@@ -92,6 +134,7 @@
   .site-top .site-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }
   @media (prefers-color-scheme: dark) {
     :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#141414; --paper:#1c1c1c; --orange:#fb923c; --orange-ink:#fb923c; --track:#3a3a3a; --yard:#8c8a85; }
+    .card { background:#1c1c1c; box-shadow:inset 0 0 0 1px #3a3a3a; }
   }
   /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
      fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
@@ -122,6 +165,15 @@
 <h1>Leeds noise and liveability</h1>
 <p class="sub">West Yorkshire. Aircraft and road noise, affordability, schools, crime, transport, air quality and flood risk, from published sources.</p>
 
+<section class="card" aria-label="The answer for Leeds">
+<div class="card-main">
+<p class="card-where">Leeds &middot; one of 5 West Yorkshire council areas</p>
+<p class="card-lead">Transport access is poor; flood risk is low and air quality is good.</p>
+<p class="pills"><span class="pill-lab">Worth a look</span> <a class="pill watch" href="#transport"><svg class="mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 3.8v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="7" cy="10.2" r="0.9" fill="currentColor"/></svg>Transport<span class="visually-hidden">, worth a look</span></a></p>
+<p class="pills"><span class="pill-lab">Good here</span> <a class="pill good" href="#air-quality"><svg class="mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.2 7.2l1.9 1.9 3.7-3.9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Air quality<span class="visually-hidden">, good here</span></a> <a class="pill good" href="#flood-risk"><svg class="mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.2 7.2l1.9 1.9 3.7-3.9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Flood risk<span class="visually-hidden">, good here</span></a></p>
+<a class="card-map" href="/map/?city=westyorkshire&amp;borough=Leeds">Open it on the map</a>
+</div>
+<div class="card-score">
 <div class="headline" data-fact><span class="n">5.8</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
 <div class="bar big" aria-hidden="true"><i style="width:58%;background:#f2b826"></i></div>
 
@@ -133,26 +185,29 @@
 <div data-fact><dt>Environment</dt><dd><b>7.4</b> <span class="of">/ 10</span><div class="bar" aria-hidden="true"><i style="width:74%;background:#26f27d"></i></div></dd></div>
 </dl>
 
+</div>
+</section>
+
 <div class="groups">
 <div>
 <section class="group"><h2>Noise and planes</h2>
-<div class="find" data-fact><p class="find-h">Aircraft noise is moderate</p><span class="note">Estimated from the distance to the airport and its routes, scaled by the size of its DEFRA noise map</span></div>
-<div class="find" data-fact><p class="find-h">Road noise is moderate</p><div class="vis"><div class="vis-cap"><span>Postcodes over the WHO guideline</span><b>50.9%</b></div><div class="bar" aria-hidden="true"><i style="width:50.90%"></i></div></div><span class="note">DEFRA road Lden, share of postcodes over WHO 53 dB</span></div>
+<div class="find" id="aircraft-noise" data-fact><p class="find-h">Aircraft noise is moderate</p><span class="note">Estimated from the distance to the airport and its routes, scaled by the size of its DEFRA noise map</span></div>
+<div class="find" id="road-noise" data-fact><p class="find-h">Road noise is moderate</p><div class="vis"><div class="vis-cap"><span>Postcodes over the WHO guideline</span><b>50.9%</b></div><div class="bar" aria-hidden="true"><i style="width:50.90%"></i></div></div><span class="note">DEFRA road Lden, share of postcodes over WHO 53 dB</span></div>
 </section>
 <section class="group"><h2>Air and flood</h2>
-<div class="find" data-fact><p class="find-h">Air quality is good</p><div class="vis"><p class="vis-h">Nitrogen dioxide</p><div class="vis-cap"><span>Leeds</span><b>12.8 µg/m³</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>WHO guideline</span><b>10 µg/m³</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:69.75%"></i></div></div><div class="vis"><p class="vis-h">Fine particles</p><div class="vis-cap"><span>Leeds</span><b>7.3 µg/m³</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>WHO guideline</span><b>5 µg/m³</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:61.15%"></i></div></div><span class="note">DEFRA background maps against WHO 2021</span></div>
-<div class="find" data-fact><p class="find-h">Flood risk is low</p><div class="vis"><div class="vis-cap"><span>Postcodes at medium or high risk</span><b>0.87%</b></div><div class="bar" aria-hidden="true"><i style="width:0.87%"></i></div></div><span class="note">Environment Agency, Risk of Flooding from Rivers and Sea, allowing for defences</span></div>
+<div class="find" id="air-quality" data-fact><p class="find-h">Air quality is good</p><div class="vis"><p class="vis-h">Nitrogen dioxide</p><div class="vis-cap"><span>Leeds</span><b>12.8 µg/m³</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>WHO guideline</span><b>10 µg/m³</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:69.75%"></i></div></div><div class="vis"><p class="vis-h">Fine particles</p><div class="vis-cap"><span>Leeds</span><b>7.3 µg/m³</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>WHO guideline</span><b>5 µg/m³</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:61.15%"></i></div></div><span class="note">DEFRA background maps against WHO 2021</span></div>
+<div class="find" id="flood-risk" data-fact><p class="find-h">Flood risk is low</p><div class="vis"><div class="vis-cap"><span>Postcodes at medium or high risk</span><b>0.87%</b></div><div class="bar" aria-hidden="true"><i style="width:0.87%"></i></div></div><span class="note">Environment Agency, Risk of Flooding from Rivers and Sea, allowing for defences</span></div>
 </section>
 </div>
 <div>
 <section class="group"><h2>Living here</h2>
-<div class="find" data-fact><p class="find-h">Recorded crime is 1.3 times the London median</p><p class="find-d">113.1 recorded offences per 1,000 residents a year; the London median is 87.6.</p><div class="vis" aria-hidden=true><div class="vis-cap"><span>Leeds</span><b>113.1</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>London median</span><b>87.6</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:69.15%"></i></div></div><span class="note">ONS Table C4, per 1,000 residents per year</span></div>
-<div class="find" data-fact><p class="find-h">Schools are average</p><div class="steps" aria-hidden="true"><span>Well below</span><span>Below</span><span class=on>Average</span><span>Above</span><span>Well above</span></div><p class="find-d">Progress 8 is 0.1.</p><span class="note">DfE KS4 2023/24 revised, 0.0 is the national average</span></div>
-<div class="find" data-fact><p class="find-h">Transport access is poor</p><div class="steps" aria-hidden="true"><span class=on>Poor</span><span>Moderate</span><span>Good</span><span>Excellent</span></div><span class="note">The national stop register (NaPTAN), share of postcodes within 800 m of a station</span></div>
-<div class="find" data-fact><p class="find-h">Healthcare access is moderate</p><div class="steps" aria-hidden="true"><span>Poor</span><span class=on>Moderate</span><span>Good</span><span>Excellent</span></div><span class="note">NHS Organisation Data Service, share of postcodes within 500 m of a GP practice</span></div>
+<div class="find" id="crime" data-fact><p class="find-h">Recorded crime is 1.3 times the London median</p><p class="find-d">113.1 recorded offences per 1,000 residents a year; the London median is 87.6.</p><div class="vis" aria-hidden=true><div class="vis-cap"><span>Leeds</span><b>113.1</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>London median</span><b>87.6</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:69.15%"></i></div></div><span class="note">ONS Table C4, per 1,000 residents per year</span></div>
+<div class="find" id="schools" data-fact><p class="find-h">Schools are average</p><div class="steps" aria-hidden="true"><span>Well below</span><span>Below</span><span class=on>Average</span><span>Above</span><span>Well above</span></div><p class="find-d">Progress 8 is 0.1.</p><span class="note">DfE KS4 2023/24 revised, 0.0 is the national average</span></div>
+<div class="find" id="transport" data-fact><p class="find-h">Transport access is poor</p><div class="steps" aria-hidden="true"><span class=on>Poor</span><span>Moderate</span><span>Good</span><span>Excellent</span></div><span class="note">The national stop register (NaPTAN), share of postcodes within 800 m of a station</span></div>
+<div class="find" id="healthcare" data-fact><p class="find-h">Healthcare access is moderate</p><div class="steps" aria-hidden="true"><span>Poor</span><span class=on>Moderate</span><span>Good</span><span>Excellent</span></div><span class="note">NHS Organisation Data Service, share of postcodes within 500 m of a GP practice</span></div>
 </section>
 <section class="group"><h2>Property</h2>
-<div class="find" data-fact><p class="find-d">Average price</p><p class="find-h find-big">£246,385</p><div class="vis"><div class="vis-cap"><span>Leeds</span><b>£246,385</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>West Yorkshire median</span><b>£199,347</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:72.24%"></i></div></div><span class="note">HM Land Registry HPI</span></div>
+<div class="find" id="price" data-fact><p class="find-d">Average price</p><p class="find-h find-big">£246,385</p><div class="vis"><div class="vis-cap"><span>Leeds</span><b>£246,385</b></div><div class="bar" aria-hidden="true"><i style="width:89.29%"></i></div><div class="vis-cap"><span>West Yorkshire median</span><b>£199,347</b></div><div class="bar" aria-hidden="true"><i class=yard style="width:72.24%"></i></div></div><span class="note">HM Land Registry HPI</span></div>
 <div class="find" data-fact><p class="find-d">Price trend</p><p class="find-h find-big">+2.4% year on year</p><span class="note">HM Land Registry HPI</span></div>
 </section>
 </div>

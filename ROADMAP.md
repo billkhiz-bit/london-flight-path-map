@@ -33,7 +33,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > the two functions' code only, checked from the API), M-27 the wording gate reads every uploaded JSON, M-26 `/reports/`
 > network-first, M-6 the 8 pt floor (`scripts/report_text_floor.py`), M-10, M-15, M-17, M-13, and Bill's picks: M-4 option A
 > (`REF_PLANES_FROM` 2026-11-14), M-22 titles and descriptions, M-19 footers. Drift PASS, 152/152 area pages = API.
-> **Open:** push `n65` (Bill's yes first: public repo, EASA's terms); the next `/audit` ~16 Nov in a fresh session.
+> **Evening:** `n65` PUSHED on Bill's word (`f534085e`). FAA cycle 2612 BUILT on branch `faa-2612` (`41fbbda3`, pushed; no route
+> changed, deploy on 26 Nov). The UK AIP's 26 Nov edition checked: every UK route equals the 29 Oct record (London City's coding
+> tables only reissued), so no roll. Bill's picks A of claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1 BUILT: the area pages' answer card
+> and the example's yardstick lines; Breathe London re-fetched (to Oct 2026). N65's 2025 tracks downloading (detached, `data/adsb/fetch-2025.log`).
+> **Open:** the next `/audit` ~16 Nov in a fresh session.
 >
 > ## START HERE (2026-11-12)
 >

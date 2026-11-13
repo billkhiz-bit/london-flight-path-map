@@ -272,6 +272,10 @@ Or just describe what you need, I have full context of this project.
   plain words: crime against the London median (`crime_against_london`), Progress 8 as a band (`school_band`), bars in `score_colour`, all three held equal to `index.html` by `tests/test_area_findings.py`. A
   figure where a band would be stays a figure. `visuals()` (his pick B) draws only what truly compares: a share of postcodes, a figure beside a named yardstick from a true zero, a strip for a rating
   among its own words. Aircraft noise and the price trend stay words: nothing honest to draw them against. A figure not held draws nothing. Planes pages lead with `day_figure()`'s "Up to N", always with its "Up to": a bare 318 reads as every postcode's. The score span and ` data-fact` are read by tests.
+  **Since 2026-11-13 they open on the map's ANSWER CARD** (Bill's pick A, claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1): `card_items()` / `card_lead()` say what stands out FROM THE PAGE'S OWN FINDINGS (tones the
+  map's `toneOf()` sets, the crime pill the council band the map's crime pill reads, High prices the map's affordability-under-3 rule, each read back out of `js/panel-findings.mjs` by the tests);
+  the council's aircraft band has six words and only Low / High / Severe are a verdict (`toneOf()` knows no "severe": Hounslow had no pill). Nothing at either end: no headline. The score and
+  its parts moved into the card, markup unchanged; each pill links to its finding's id and says its verdict in words.
 - **One palette for the pages, held by `tests/test_site_palette.py`** (Bill, 2026-11-04: "ensure the colour scheme is consistent"): a
   rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink (empty since 2026-11-05, when `/bay-area/` joined). Read a
   colour from the repo, never from a mock-up (the amber `#f0b429` I called the scores' was in no file). Colours that carry meaning keep
@@ -392,6 +396,11 @@ Or just describe what you need, I have full context of this project.
   `.area-chip`s (NEVER `.chips`: the city switch's, absolutely placed); `#ans-link` is the one filled button; fold summaries carry
   `data-hint`; a border-drawn chevron (the arrow glyph fell back to "v"); the air fold's chart takes the page font via `--font-mono`.
   `tests/front-page.mjs` 7z, red on each fault.
+- **The example's tiles carry a yardstick line** (Bill's pick A, 2026-11-13; claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1): the street report's
+  card rule through ONE holder, `whoSide()` (js/street_report.mjs): DEFRA's own aircraft figure over/under the answer's WHO guideline (never an
+  estimate's), the air guideline as context with no verdict, and how often the airport flew that way from the planes file's `sharePct`
+  (`planesWalk().lead`). A narrow row of tiles shows the short forms by a container query on `.ans-tiles`, never the screen; every line,
+  the skeleton's too, keeps two lines of room, or the frame grows when the figures land.
 - **The answer's folds are pictures and points, not paragraphs** (Bill, 2026-11-11: "still text heavy"; mock-up
   claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2; planes fold 162 words to 92, air 97 to 75). Planes: `planesChart()` (js/planes.mjs,
   the air chart's twin, banded and coloured by the planes layer's index.json steps), the overhead rule beside `overheadConeSvg()`

@@ -489,6 +489,9 @@ def gather(city: str, borough: str) -> dict | None:
         'figures': {key: merged.get(key) for key in VISUAL_FIGURES},
         'avg_price': ctx.get('avgPriceGbp'),
         'price_median': statistics.median(prices) if len(prices) > 1 else None,
+        # The answer card's crime pill reads the band the full map's crime pill reads (crimeFinding: its council band),
+        # never a tone re-derived from the rate. Not a fact: the page prints the rate, as before.
+        'crime_band': painted.get('crime') if uk and not us_scaled else None,
     }
 
 
@@ -555,6 +558,48 @@ PAGE = """<!doctype html>
   dl.scores b {{ font-family:var(--font-display); font-size:22px; font-weight:700; }}
   dl.scores .of {{ font-family:var(--font-mono); font-size:12px; color:var(--mid); }}
   dl.scores .bar {{ margin:6px 0 0; }}
+  /* THE ANSWER CARD (Bill's pick A, 2026-11-13): the full map's card, in its own colours (index.html .answer-card), first
+     on the page; the score and its five parts sit in it. Dark in both themes: on a dark page it lifts to the page's paper. */
+  .card {{ --c-head:#ffffff; --c-text:#f3f1ec; --c-lede:#d9d7d0; --c-label:#b9b6ae; --c-line:#55554f; --c-track:#3a3a3a;
+    display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:24px 32px; margin:24px 0 8px; padding:24px;
+    border-radius:6px; background:#141414; color:var(--c-text); }}
+  .card.solo {{ grid-template-columns:minmax(0, 1fr); max-width:720px; }}
+  .card-main {{ display:flex; flex-direction:column; gap:12px; min-width:0; }}
+  .card-where {{ margin:0; font-size:12.5px; color:var(--c-label); }}
+  .card-lead {{ margin:0; font-family:var(--font-display); font-size:clamp(20px, 2.4vw, 24px); font-weight:700; line-height:1.25; letter-spacing:-0.01em; color:var(--c-head); }}
+  .pills {{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0; }}
+  .pill-lab {{ margin-right:2px; font-size:12px; color:var(--c-label); }}
+  .pill {{ display:inline-flex; align-items:center; gap:7px; min-height:30px; padding:4px 11px 4px 9px; font-size:13px; line-height:1.2; color:var(--c-text); text-decoration:none; border:1px solid var(--c-line); border-radius:999px; }}
+  .pill:hover {{ border-color:var(--c-text); }}
+  .pill .mark {{ flex:none; }}
+  .pill.watch .mark {{ color:var(--orange); }}
+  .pill.good .mark {{ color:#26f27d; }}
+  .card a:focus-visible {{ outline:3px solid var(--focus); outline-offset:2px; }}
+  .card-score {{ min-width:0; padding-left:28px; border-left:1px solid var(--c-line); }}
+  .card.solo .card-score {{ padding-left:0; border-left:0; }}
+  .card .headline {{ margin:0 0 8px; }}
+  .card .headline .n {{ font-size:clamp(44px, 6vw, 60px); color:var(--c-head); }}
+  .card .headline .of, .card .sub {{ color:var(--c-lede); }}
+  .card .bar {{ background:var(--c-track); }}
+  .card .bar.big {{ margin-bottom:16px; }}
+  .card dl.scores {{ grid-template-columns:minmax(0, 1fr); gap:12px; padding:0; border:0; }}
+  /* Each part on one line, its name left and its figure right, the bar under them and the note under that. */
+  .card dl.scores dt {{ float:left; font-size:13px; line-height:1.9; color:var(--c-text); }}
+  .card dl.scores dd {{ text-align:right; }}
+  .card dl.scores b {{ font-size:17px; color:var(--c-head); }}
+  .card dl.scores .bar {{ clear:both; height:6px; margin:4px 0 0; }}
+  .card dl.scores .note {{ text-align:left; }}
+  .card dl.scores .of, .card .note {{ color:var(--c-label); }}
+  .card-main .card-map {{ align-self:flex-start; margin-top:6px; }}
+  .card-map {{ display:inline-block; margin-top:16px; padding:8px 16px; border-radius:999px; background:#ffffff; color:#141414; font-size:14px; font-weight:600; text-decoration:none; }}
+  .card-map:hover {{ text-decoration:underline; text-underline-offset:3px; }}
+  .find {{ scroll-margin-top:16px; }}
+  .visually-hidden {{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }}
+  @media (max-width: 760px) {{
+    .card {{ grid-template-columns:minmax(0, 1fr); padding:16px; }}
+    .card-score {{ padding-left:0; padding-top:16px; border-left:0; border-top:1px solid var(--c-line); }}
+    .card.solo .card-score {{ padding-top:0; border-top:0; }}
+  }}
   /* 12px, the site's small print everywhere else; 11px was the one size below it (site audit 2026-11-01). */
   .note {{ display:block; color:var(--mid); font-size:12px; margin-top:4px; }}
   .groups {{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 48px; margin:8px 0; }}
@@ -598,6 +643,7 @@ PAGE = """<!doctype html>
   .site-top .site-nav a[aria-current] {{ text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }}
   @media (prefers-color-scheme: dark) {{
     :root {{ """ + PALETTE_DARK + """ }}
+    .card {{ background:#1c1c1c; box-shadow:inset 0 0 0 1px #3a3a3a; }}
   }}
   /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
      fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
@@ -628,12 +674,18 @@ PAGE = """<!doctype html>
 <h1>{borough} noise and liveability</h1>
 <p class="sub">{city_label}. {topics_cap}, from published sources.</p>
 
+<section class="{card_class}" aria-label="The answer for {borough}">
+{card_main}
+<div class="card-score">
 <div class="headline" data-fact><span class="n">{score}</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
 <div class="bar big" aria-hidden="true"><i style="width:{score_width}%;background:{score_colour}"></i></div>
 {us_scales}
 <dl class="scores">
 {scores}
 </dl>
+{card_map}
+</div>
+</section>
 
 <div class="groups">
 {groups}
@@ -820,9 +872,18 @@ def visuals(data: dict, city_label: str, uk: bool) -> dict[str, tuple[str, str]]
     return out
 
 
+# Each finding's id, the answer card's pills' link target (one per page: Crime and Recorded crime never meet).
+FINDING_ID = {
+    'Aircraft noise band': 'aircraft-noise', 'Road noise': 'road-noise', 'Air quality': 'air-quality',
+    'Flood risk': 'flood-risk', 'Recorded crime': 'crime', 'Crime': 'crime', 'Progress 8': 'schools',
+    'Transport access': 'transport', 'Healthcare access': 'healthcare', 'Average price': 'price', 'Median home value': 'price',
+}
+
+
 def finding(f: dict, uk: bool, strip: str = '', bars: str = '') -> str:
     """One fact as a finding: its plain words, its strip, its figure, its bars, then the source note it always carried."""
     label, value, note = f['label'], f['value'], f.get('note')
+    anchor = f' id="{FINDING_ID[label]}"' if label in FINDING_ID else ''
     detail = ''
     if label == 'Recorded crime':
         if uk:
@@ -836,7 +897,7 @@ def finding(f: dict, uk: bool, strip: str = '', bars: str = '') -> str:
     elif label == 'Progress 8':
         head, detail = f'Schools are {school_band(float(value))}', f'Progress 8 is {value}.'
     elif label in ('Average price', 'Price trend'):
-        return (f'<div class="find" data-fact><p class="find-d">{e(label)}</p><p class="find-h find-big">{e(value)}</p>{bars}'
+        return (f'<div class="find"{anchor} data-fact><p class="find-d">{e(label)}</p><p class="find-h find-big">{e(value)}</p>{bars}'
                 + (f'<span class="note">{e(note)}</span>' if note else '') + '</div>')
     else:
         said = SAID_AS.get(label, label)
@@ -844,7 +905,7 @@ def finding(f: dict, uk: bool, strip: str = '', bars: str = '') -> str:
         head, detail = (said, str(value)) if re.search(r'\d', str(value)) else (f'{said} is {str(value).lower()}', '')
         if bars and detail:
             detail = ''  # an API-only city's figure: its bar's caption says it, in fuller words
-    return (f'<div class="find" data-fact><p class="find-h">{e(head)}</p>{strip}'
+    return (f'<div class="find"{anchor} data-fact><p class="find-h">{e(head)}</p>{strip}'
             + (f'<p class="find-d">{e(detail)}</p>' if detail else '') + bars
             + (f'<span class="note">{e(note)}</span>' if note else '') + '</div>')
 
@@ -879,9 +940,122 @@ def findings_html(facts: list[dict], uk: bool, drawn: dict[str, tuple[str, str]]
     return scores, '\n'.join(columns)
 
 
+# THE ANSWER CARD (Bill's pick A, 2026-11-13; mock-up claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1): the full map's card,
+# first on the page. A headline sentence and pills from the page's OWN findings, then the score and its five parts, moved
+# into the card; every finding below stays word for word, and each pill links to its finding. The tones are the map's
+# toneOf() words (js/panel-findings.mjs, held equal by tests/test_area_findings.py); the crime pill reads the council
+# band the map's crime pill reads; High prices is the map's own rule (priceFinding: affordability under 3 of 10). The
+# council's aircraft band has six words of its own (Low, Low-Moderate, Moderate, Moderate-High, High, Severe) and only
+# its ends are a verdict: toneOf() knows no "severe", and Hounslow, the most exposed, would otherwise have had no pill.
+# A word outside a scale has no tone, and a page with nothing at either end has no headline: absence is not a reading.
+TONE_GOOD = frozenset({'low', 'good', 'excellent', 'above average', 'well above average'})
+TONE_MID = frozenset({'medium', 'moderate', 'average'})
+TONE_BAD = frozenset({'high', 'poor', 'below average', 'well below average'})
+AIRCRAFT_BAND_TONE = {'low': 'good', 'high': 'bad', 'severe': 'bad'}
+AFFORD_WATCH = 3
+# The headline names at most two of each side: what is worth a look in the page's order, then what is good in the order a
+# home-buyer asks (crime and schools first). The pills name them all.
+LEAD_MOST = 2
+LEAD_GOOD_ORDER = ('crime', 'schools', 'transport', 'healthcare', 'flood', 'air', 'road', 'aircraft')
+CARD_RATED = (
+    ('Aircraft noise band', 'aircraft', 'Aircraft noise', 'aircraft noise is {w}'),
+    ('Road noise', 'road', 'Road noise', 'road noise is {w}'),
+    ('Air quality', 'air', 'Air quality', 'air quality is {w}'),
+    ('Flood risk', 'flood', 'Flood risk', 'flood risk is {w}'),
+)
+CARD_ACCESS = (('Transport access', 'transport', 'Transport'), ('Healthcare access', 'healthcare', 'Healthcare'))
+MARK_WATCH = ('<svg class="mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" '
+              'fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 3.8v4" stroke="currentColor" stroke-width="1.6" '
+              'stroke-linecap="round"/><circle cx="7" cy="10.2" r="0.9" fill="currentColor"/></svg>')
+MARK_GOOD = ('<svg class="mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" '
+             'fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.2 7.2l1.9 1.9 3.7-3.9" fill="none" '
+             'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+
+
+def tone_of(word) -> str | None:
+    """The map's toneOf(): 'good', 'mid', 'bad', or None for a word outside every scale."""
+    w = ' '.join(str(word or '').lower().split())
+    return 'good' if w in TONE_GOOD else 'mid' if w in TONE_MID else 'bad' if w in TONE_BAD else None
+
+
+def card_items(data: dict) -> list[dict]:
+    """What stands out, from the page's own facts: worth a look first, then good, each in the page's order."""
+    by = {f['label']: f for f in data['facts']}
+    items = []
+
+    def add(key, pill, word, phrase, tone):
+        stand = 'watch' if tone == 'bad' else 'good' if tone == 'good' else None
+        if stand:
+            items.append({'key': key, 'pill': pill, 'id': FINDING_ID.get(label_of[key], ''), 'stand': stand,
+                          'phrase': phrase.format(w=' '.join(str(word).lower().split()))})
+
+    label_of = {key: label for label, key, _, _ in CARD_RATED}
+    label_of.update({key: label for label, key, _ in CARD_ACCESS})
+    price_label = next((label for label in ('Average price', 'Median home value') if label in by), None)
+    label_of.update({'crime': 'Recorded crime', 'schools': 'Progress 8', 'prices': price_label or 'Average price'})
+    for label, key, pill, phrase in CARD_RATED:
+        if label in by:
+            word = by[label]['value']
+            tone = AIRCRAFT_BAND_TONE.get(str(word).lower()) if key == 'aircraft' else tone_of(word)
+            add(key, pill, word, phrase, tone)
+    if data.get('crime_band') and 'Recorded crime' in by:
+        add('crime', 'Crime', data['crime_band'], 'crime is {w}', tone_of(data['crime_band']))
+    if 'Progress 8' in by:
+        band = school_band(float(by['Progress 8']['value']))
+        add('schools', 'Schools', band, 'schools are {w}', tone_of(band))
+    for label, key, pill in CARD_ACCESS:
+        if label in by:
+            add(key, pill, by[label]['value'], f'{label.lower()} is {{w}}', tone_of(by[label]['value']))
+    afford = by.get('Affordability')
+    if afford and price_label and float(str(afford['value']).split(' / ')[0]) < AFFORD_WATCH:
+        add('prices', 'High prices', 'high', 'prices are high', 'bad')
+    return [i for i in items if i['stand'] == 'watch'] + [i for i in items if i['stand'] == 'good']
+
+
+def card_lead(items: list[dict]) -> str | None:
+    """One sentence from the pills: up to two worth a look, then up to two good; None when nothing stands out."""
+    watch = [i['phrase'] for i in items if i['stand'] == 'watch'][:LEAD_MOST]
+    good = [i['phrase'] for i in sorted((i for i in items if i['stand'] == 'good'),
+                                        key=lambda i: LEAD_GOOD_ORDER.index(i['key']))][:LEAD_MOST]
+    parts = [' and '.join(p) for p in (watch, good) if p]
+    if not parts:
+        return None
+    text = '; '.join(parts) + '.'
+    return text[0].upper() + text[1:]
+
+
+def card_pills(items: list[dict]) -> str:
+    """Two rows of links to the findings, each named with its verdict in words, never by its colour alone (audit I-3)."""
+    rows = []
+    for stand, said, mark in (('watch', 'Worth a look', MARK_WATCH), ('good', 'Good here', MARK_GOOD)):
+        mine = [i for i in items if i['stand'] == stand]
+        if mine:
+            links = ' '.join(f'<a class="pill {stand}" href="#{i["id"]}">{mark}{e(i["pill"])}'
+                             f'<span class="visually-hidden">, {said.lower()}</span></a>' for i in mine)
+            rows.append(f'<p class="pills"><span class="pill-lab">{said}</span> {links}</p>')
+    return '\n'.join(rows)
+
+
 def render(data: dict) -> str:
     city_label = CITY_LABEL.get(data['city'], data['city'].title())
     scores, groups = findings_html(data['facts'], data['uk'], visuals(data, city_label, data['uk']))
+    items = card_items(data)
+    lead = card_lead(items)
+    of_n = len(app.CITIES[data['city']]['boroughs'])
+    unit = ("of New York's 5 boroughs" if data['city'] == 'nyc' else f'of {of_n} Bay Area cities' if data.get('us_scales')
+            else f'of {of_n} {city_label} council areas')
+    # The card's way to the map: the same address as the box below, and none for a city the map does not hold. Under the
+    # pills when there are pills, else under the score.
+    card_map = ('' if data['city'] in backend_only_cities() else
+                f'<a class="card-map" href="/map/?city={e(data["city"])}&amp;borough={e(data["borough"].replace(" ", "+"))}">'
+                'Open it on the map</a>')
+    card_main = ''
+    if items:
+        card_main = ('<div class="card-main">\n'
+                     f'<p class="card-where">{e(data["borough"])} &middot; one {e(unit)}</p>\n'
+                     + (f'<p class="card-lead">{e(lead)}</p>\n' if lead else '')
+                     + card_pills(items) + '\n' + (card_map + '\n' if card_map else '') + '</div>')
+        card_map = ''
     # THE META DESCRIPTION NAMED UK BODIES FOR NEW YORK TOO (2026-08-31, C3).
     #
     # This is the text that appears in a SEARCH RESULT, so "Brooklyn ... from
@@ -936,6 +1110,9 @@ def render(data: dict) -> str:
         map_note = (', and the map shows the routes over each ZIP' if data.get('us_scales')
                     else ', and the map shows postcode-level detail')
     return PAGE.format(
+        card_class='card' if card_main else 'card solo',
+        card_main=card_main,
+        card_map=card_map,
         title=e(page_title(f"{data['borough']} noise & liveability score")),
         description=e(desc),
         canonical=f"{SITE}/area/{slug(data['city'])}/{slug(data['borough'])}/",

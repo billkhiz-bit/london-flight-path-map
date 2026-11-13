@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-13 (evening) - Area pages lead with the answer, and the example says what each figure is against
+
+- **Every area page opens on its answer**: a dark card at the top, as on the full map, says in one sentence what stands out for that council, then marks each finding worth a look or good here, each linking to its detail lower down. The score and its five parts now sit in the card. Every finding below is word for word as before.
+- **The front page's example says what each figure is against**: under the aircraft noise figure, whether it is over or under the WHO guideline; under the air figure, the WHO guideline; under the planes figure, how often Heathrow flew that way.
+- **Breathe London's sensors, a month on**: the 12-month means now run to the end of October 2026. 117 sensors qualify (116 before); most figures moved by less than 1 µg/m³.
+
 ## 2026-11-13 - Tidier errors, a fresh report picture, and two notes reworded
 
 - **Bad sign-up requests get a plain answer**: a sign-up sent with something other than text in a field was answered as a server fault. It is now told what was wrong. Removing a saved place with an over-long postcode is the same.

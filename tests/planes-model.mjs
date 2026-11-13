@@ -166,9 +166,12 @@ check('walkthrough: Kew in one sentence, then west, both ways, east in the layer
 });
 
 check('the hero\'s tile: the commonest one-way day, its figure from the model, and nothing if that day has no planes', () => {
-  assert.deepEqual(planesWalk(planesModel(TW9, INFO, 'TW9 3PZ', NAMES), STEPS).lead, { figure: '310', words: 'planes a day, flying west' });
+  // Its yardstick (Bill's pick A, 2026-11-13): how often the airport flew that way, the file's share, never typed.
+  assert.deepEqual(planesWalk(planesModel(TW9, INFO, 'TW9 3PZ', NAMES), STEPS).lead,
+    { figure: '310', words: 'planes a day, flying west', yard: `Heathrow flew west on ${INFO.airports.LHR.share_pct.westerly}% of days`, yardShort: `West on ${INFO.airports.LHR.share_pct.westerly}% of days`, over: false });
   const east = { ...INFO, airports: { ...INFO.airports, LHR: { ...INFO.airports.LHR, share_pct: { westerly: 29, easterly: 56, mixed: 15 } } } };
-  assert.deepEqual(planesWalk(planesModel(TW9, east, 'TW9 3PZ', NAMES), STEPS).lead, { figure: '4', words: 'planes a day, flying east' });
+  assert.deepEqual(planesWalk(planesModel(TW9, east, 'TW9 3PZ', NAMES), STEPS).lead,
+    { figure: '4', words: 'planes a day, flying east', yard: 'Heathrow flew east on 56% of days', yardShort: 'East on 56% of days', over: false });
 });
 
 check('walkthrough: no "most days" unless one way is over half of all days, and never a range in the sentence', () => {

@@ -4,11 +4,11 @@
  "attributionLink": "https://www.breathelondon.org/",
  "licence": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
  "window": {
-  "from": "2025-10-01",
-  "to": "2026-09-30"
+  "from": "2025-11-01",
+  "to": "2026-10-31"
  },
  "captureFloor": 0.75,
- "fetched": "2026-10-19",
+ "fetched": "2026-11-13",
  "note": "Display only, never scored. Low-cost sensors, provisional values that are recalibrated over time. Kerbside, roadside and background sensors measure different things: show the nearest with its classification, never rank them.",
  "sites": [
   {
@@ -24,14 +24,14 @@
    "lon": -0.10155,
    "measuringSince": "2021-02-17",
    "no2": {
-    "mean": 27.1,
+    "mean": 28.0,
     "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
+    "mean": 7.0,
     "capture": 0.997,
-    "ratified": 0.252
+    "ratified": 0.167
    }
   },
   {
@@ -47,14 +47,14 @@
    "lon": 0.1592,
    "measuringSince": "2025-03-27",
    "no2": {
-    "mean": 20.7,
-    "capture": 0.995,
+    "mean": 19.8,
+    "capture": 0.988,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
+    "mean": 7.3,
     "capture": 0.998,
-    "ratified": 0.252
+    "ratified": 0.167
    }
   },
   {
@@ -70,8 +70,8 @@
    "lon": 0.08309,
    "measuringSince": "2021-02-19",
    "no2": {
-    "mean": 18.0,
-    "capture": 0.994,
+    "mean": 18.4,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": null
@@ -89,14 +89,14 @@
    "lon": -0.05841,
    "measuringSince": "2025-03-16",
    "no2": {
-    "mean": 25.7,
-    "capture": 0.998,
+    "mean": 26.3,
+    "capture": 0.997,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.5,
+    "mean": 7.3,
     "capture": 0.998,
-    "ratified": 0.252
+    "ratified": 0.167
    }
   },
   {
@@ -112,14 +112,14 @@
    "lon": -0.44201,
    "measuringSince": "2025-04-02",
    "no2": {
-    "mean": 32.0,
-    "capture": 0.99,
+    "mean": 33.0,
+    "capture": 0.986,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.1,
-    "capture": 0.994,
-    "ratified": 0.249
+    "capture": 0.991,
+    "ratified": 0.164
    }
   },
   {
@@ -135,14 +135,14 @@
    "lon": -0.17658,
    "measuringSince": "2025-03-28",
    "no2": {
-    "mean": 17.9,
+    "mean": 17.8,
     "capture": 0.99,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.6,
+    "mean": 7.5,
     "capture": 0.991,
-    "ratified": 0.253
+    "ratified": 0.168
    }
   },
   {
@@ -158,14 +158,14 @@
    "lon": -0.00507,
    "measuringSince": "2025-04-11",
    "no2": {
-    "mean": 20.7,
-    "capture": 0.967,
+    "mean": 19.9,
+    "capture": 0.96,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.3,
+    "mean": 7.2,
     "capture": 0.977,
-    "ratified": 0.255
+    "ratified": 0.168
    }
   },
   {
@@ -182,7 +182,7 @@
    "measuringSince": "2025-04-19",
    "no2": {
     "mean": 16.5,
-    "capture": 0.848,
+    "capture": 0.763,
     "ratified": 0.0
    },
    "pm25": null
@@ -205,9 +205,9 @@
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 9.3,
+    "mean": 9.4,
     "capture": 0.994,
-    "ratified": 0.252
+    "ratified": 0.167
    }
   },
   {
@@ -223,14 +223,14 @@
    "lon": -0.34401,
    "measuringSince": "2021-10-17",
    "no2": {
-    "mean": 20.5,
-    "capture": 0.916,
+    "mean": 20.4,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.3,
-    "capture": 0.978,
-    "ratified": 0.236
+    "mean": 7.2,
+    "capture": 0.997,
+    "ratified": 0.167
    }
   },
   {
@@ -247,13 +247,13 @@
    "measuringSince": "2021-10-28",
    "no2": {
     "mean": 18.2,
-    "capture": 0.998,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 6.9,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -269,14 +269,14 @@
    "lon": 0.11474,
    "measuringSince": "2021-10-30",
    "no2": {
-    "mean": 19.9,
-    "capture": 0.996,
+    "mean": 19.8,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.0,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 6.9,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -292,14 +292,14 @@
    "lon": -0.07541,
    "measuringSince": "2021-11-05",
    "no2": {
-    "mean": 20.4,
-    "capture": 0.996,
+    "mean": 20.3,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.2,
-    "capture": 0.997,
-    "ratified": 0.252
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -315,34 +315,15 @@
    "lon": -0.24095,
    "measuringSince": "2025-03-09",
    "no2": {
-    "mean": 19.5,
-    "capture": 0.997,
+    "mean": 19.4,
+    "capture": 0.995,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.9,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 6.8,
+    "capture": 0.996,
+    "ratified": 0.167
    }
-  },
-  {
-   "code": "BL0021",
-   "name": "Newham University Hospital",
-   "borough": "E09000025",
-   "boroughName": "Newham",
-   "classification": "Urban Background",
-   "locationType": "Hospital",
-   "kerbDistanceM": 5.0,
-   "heightM": 2.7,
-   "lat": 51.52319,
-   "lon": 0.03351,
-   "measuringSince": "2025-04-17",
-   "no2": {
-    "mean": 17.3,
-    "capture": 0.797,
-    "ratified": 0.0
-   },
-   "pm25": null
   },
   {
    "code": "BL0022",
@@ -357,14 +338,14 @@
    "lon": 0.002,
    "measuringSince": "2025-04-25",
    "no2": {
-    "mean": 22.6,
-    "capture": 0.963,
+    "mean": 23.1,
+    "capture": 0.962,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.5,
-    "capture": 0.795,
-    "ratified": 0.316
+    "capture": 0.793,
+    "ratified": 0.21
    }
   },
   {
@@ -380,14 +361,14 @@
    "lon": -0.17328,
    "measuringSince": "2021-01-23",
    "no2": {
-    "mean": 25.0,
-    "capture": 0.838,
+    "mean": 26.0,
+    "capture": 0.829,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.9,
-    "capture": 0.844,
-    "ratified": 0.283
+    "capture": 0.836,
+    "ratified": 0.185
    }
   },
   {
@@ -403,14 +384,14 @@
    "lon": -0.16687,
    "measuringSince": "2021-01-28",
    "no2": {
-    "mean": 24.3,
-    "capture": 0.998,
+    "mean": 24.4,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.5,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.997,
+    "ratified": 0.167
    }
   },
   {
@@ -427,13 +408,13 @@
    "measuringSince": "2021-06-23",
    "no2": {
     "mean": 14.7,
-    "capture": 0.993,
+    "capture": 0.991,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.5,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.4,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -449,14 +430,14 @@
    "lon": -0.112,
    "measuringSince": "2025-04-25",
    "no2": {
-    "mean": 26.1,
-    "capture": 0.998,
+    "mean": 25.6,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.998,
-    "ratified": 0.251
+    "mean": 7.0,
+    "capture": 0.997,
+    "ratified": 0.167
    }
   },
   {
@@ -472,14 +453,14 @@
    "lon": -0.28108,
    "measuringSince": "2021-11-30",
    "no2": {
-    "mean": 16.5,
-    "capture": 0.995,
+    "mean": 16.3,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 6.9,
-    "capture": 0.997,
-    "ratified": 0.252
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -496,13 +477,13 @@
    "measuringSince": "2025-05-01",
    "no2": {
     "mean": 18.3,
-    "capture": 0.998,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.0,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 6.7,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -518,14 +499,14 @@
    "lon": -0.12081,
    "measuringSince": "2023-07-17",
    "no2": {
-    "mean": 13.0,
-    "capture": 0.969,
+    "mean": 12.8,
+    "capture": 0.966,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.2,
-    "capture": 0.996,
-    "ratified": 0.252
+    "capture": 0.994,
+    "ratified": 0.168
    }
   },
   {
@@ -541,14 +522,14 @@
    "lon": 0.05842,
    "measuringSince": "2024-05-01",
    "no2": {
-    "mean": 24.3,
-    "capture": 0.974,
+    "mean": 25.0,
+    "capture": 0.972,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.0,
-    "capture": 0.84,
-    "ratified": 0.135
+    "mean": 6.8,
+    "capture": 0.92,
+    "ratified": 0.12
    }
   },
   {
@@ -564,14 +545,14 @@
    "lon": -0.00834,
    "measuringSince": "2021-02-16",
    "no2": {
-    "mean": 20.3,
-    "capture": 0.997,
+    "mean": 20.2,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.2,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -587,27 +568,8 @@
    "lon": 0.08561,
    "measuringSince": "2021-02-16",
    "no2": {
-    "mean": 17.3,
-    "capture": 0.866,
-    "ratified": 0.0
-   },
-   "pm25": null
-  },
-  {
-   "code": "BL0042",
-   "name": "John Harrison Way",
-   "borough": "E09000011",
-   "boroughName": "Greenwich",
-   "classification": "Roadside",
-   "locationType": "Reference Location",
-   "kerbDistanceM": 23.0,
-   "heightM": 2.7,
-   "lat": 51.49465,
-   "lon": 0.00921,
-   "measuringSince": "2021-02-16",
-   "no2": {
-    "mean": 22.9,
-    "capture": 0.828,
+    "mean": 17.2,
+    "capture": 0.782,
     "ratified": 0.0
    },
    "pm25": null
@@ -625,8 +587,8 @@
    "lon": -0.14166,
    "measuringSince": "2021-02-17",
    "no2": {
-    "mean": 13.1,
-    "capture": 0.848,
+    "mean": 12.9,
+    "capture": 0.763,
     "ratified": 0.0
    },
    "pm25": null
@@ -645,13 +607,13 @@
    "measuringSince": "2021-02-23",
    "no2": {
     "mean": 20.0,
-    "capture": 0.994,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.6,
-    "capture": 0.995,
-    "ratified": 0.252
+    "capture": 0.993,
+    "ratified": 0.167
    }
   },
   {
@@ -668,13 +630,13 @@
    "measuringSince": "2021-02-23",
    "no2": {
     "mean": 20.6,
-    "capture": 0.998,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.4,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -690,14 +652,14 @@
    "lon": -0.13194,
    "measuringSince": "2021-02-19",
    "no2": {
-    "mean": 23.9,
-    "capture": 0.917,
+    "mean": 24.0,
+    "capture": 0.971,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.0,
-    "capture": 0.982,
-    "ratified": 0.241
+    "mean": 6.9,
+    "capture": 0.98,
+    "ratified": 0.155
    }
   },
   {
@@ -713,14 +675,14 @@
    "lon": -0.21265,
    "measuringSince": "2025-04-02",
    "no2": {
-    "mean": 22.4,
-    "capture": 0.8,
+    "mean": 22.3,
+    "capture": 0.798,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.9,
-    "capture": 0.834,
-    "ratified": 0.247
+    "mean": 6.8,
+    "capture": 0.832,
+    "ratified": 0.145
    }
   },
   {
@@ -736,8 +698,8 @@
    "lon": -0.25809,
    "measuringSince": "2021-02-19",
    "no2": {
-    "mean": 20.5,
-    "capture": 0.97,
+    "mean": 21.2,
+    "capture": 0.968,
     "ratified": 0.0
    },
    "pm25": null
@@ -755,14 +717,14 @@
    "lon": -0.2208,
    "measuringSince": "2021-05-26",
    "no2": {
-    "mean": 23.0,
-    "capture": 0.909,
+    "mean": 22.8,
+    "capture": 0.916,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.5,
-    "capture": 0.909,
-    "ratified": 0.247
+    "mean": 7.4,
+    "capture": 0.916,
+    "ratified": 0.162
    }
   },
   {
@@ -778,14 +740,14 @@
    "lon": -0.2562,
    "measuringSince": "2021-06-09",
    "no2": {
-    "mean": 22.5,
-    "capture": 0.997,
+    "mean": 22.6,
+    "capture": 0.995,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 6.8,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -801,14 +763,14 @@
    "lon": -0.11916,
    "measuringSince": "2021-05-26",
    "no2": {
-    "mean": 18.3,
-    "capture": 0.826,
+    "mean": 18.2,
+    "capture": 0.853,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.827,
-    "ratified": 0.254
+    "mean": 7.1,
+    "capture": 0.854,
+    "ratified": 0.181
    }
   },
   {
@@ -824,14 +786,14 @@
    "lon": -0.06207,
    "measuringSince": "2021-05-27",
    "no2": {
-    "mean": 19.4,
+    "mean": 19.3,
     "capture": 0.991,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 10.6,
+    "mean": 10.8,
     "capture": 0.982,
-    "ratified": 0.252
+    "ratified": 0.167
    }
   },
   {
@@ -848,13 +810,13 @@
    "measuringSince": "2021-05-28",
    "no2": {
     "mean": 16.5,
-    "capture": 0.995,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.995,
-    "ratified": 0.252
+    "mean": 7.0,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -870,14 +832,14 @@
    "lon": -0.04833,
    "measuringSince": "2025-05-01",
    "no2": {
-    "mean": 21.3,
-    "capture": 0.998,
+    "mean": 21.2,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.3,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -893,14 +855,14 @@
    "lon": -0.07756,
    "measuringSince": "2021-05-25",
    "no2": {
-    "mean": 19.6,
-    "capture": 0.996,
+    "mean": 19.5,
+    "capture": 0.995,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.2,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -916,14 +878,14 @@
    "lon": -0.0467,
    "measuringSince": "2021-05-27",
    "no2": {
-    "mean": 16.8,
-    "capture": 0.998,
+    "mean": 16.9,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.3,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -939,14 +901,14 @@
    "lon": -0.01274,
    "measuringSince": "2021-05-27",
    "no2": {
-    "mean": 22.2,
-    "capture": 0.839,
+    "mean": 22.3,
+    "capture": 0.92,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.9,
-    "capture": 0.901,
-    "ratified": 0.177
+    "mean": 6.8,
+    "capture": 0.984,
+    "ratified": 0.162
    }
   },
   {
@@ -962,14 +924,14 @@
    "lon": -0.04709,
    "measuringSince": "2021-05-28",
    "no2": {
-    "mean": 16.3,
-    "capture": 0.871,
+    "mean": 16.4,
+    "capture": 0.869,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.0,
-    "capture": 0.872,
-    "ratified": 0.207
+    "mean": 6.9,
+    "capture": 0.87,
+    "ratified": 0.11
    }
   },
   {
@@ -985,14 +947,14 @@
    "lon": -0.04494,
    "measuringSince": "2021-10-06",
    "no2": {
-    "mean": 19.7,
-    "capture": 0.992,
+    "mean": 19.1,
+    "capture": 0.967,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.993,
-    "ratified": 0.253
+    "mean": 7.3,
+    "capture": 0.991,
+    "ratified": 0.168
    }
   },
   {
@@ -1009,13 +971,13 @@
    "measuringSince": "2025-04-12",
    "no2": {
     "mean": 16.7,
-    "capture": 0.967,
+    "capture": 0.965,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.3,
-    "capture": 0.968,
-    "ratified": 0.26
+    "capture": 0.966,
+    "ratified": 0.172
    }
   },
   {
@@ -1031,14 +993,14 @@
    "lon": -0.25474,
    "measuringSince": "2021-06-08",
    "no2": {
-    "mean": 18.2,
-    "capture": 0.997,
+    "mean": 18.0,
+    "capture": 0.995,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.8,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 6.7,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -1054,14 +1016,14 @@
    "lon": -0.03854,
    "measuringSince": "2021-06-08",
    "no2": {
-    "mean": 18.8,
-    "capture": 0.998,
+    "mean": 18.7,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.0,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -1078,13 +1040,13 @@
    "measuringSince": "2021-06-09",
    "no2": {
     "mean": 16.6,
-    "capture": 0.994,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.996,
-    "ratified": 0.252
+    "mean": 7.0,
+    "capture": 0.994,
+    "ratified": 0.167
    }
   },
   {
@@ -1100,14 +1062,14 @@
    "lon": -0.15239,
    "measuringSince": "2021-06-10",
    "no2": {
-    "mean": 20.5,
-    "capture": 0.996,
+    "mean": 20.3,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.2,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -1124,13 +1086,13 @@
    "measuringSince": "2021-06-22",
    "no2": {
     "mean": 16.6,
-    "capture": 0.878,
+    "capture": 0.876,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.879,
-    "ratified": 0.286
+    "mean": 7.0,
+    "capture": 0.877,
+    "ratified": 0.19
    }
   },
   {
@@ -1146,8 +1108,8 @@
    "lon": 0.21176,
    "measuringSince": "2025-03-16",
    "no2": {
-    "mean": 17.9,
-    "capture": 0.842,
+    "mean": 17.8,
+    "capture": 0.757,
     "ratified": 0.0
    },
    "pm25": null
@@ -1166,13 +1128,13 @@
    "measuringSince": "2021-06-10",
    "no2": {
     "mean": 19.1,
-    "capture": 0.994,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.2,
-    "capture": 0.996,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.994,
+    "ratified": 0.168
    }
   },
   {
@@ -1188,8 +1150,8 @@
    "lon": -0.21003,
    "measuringSince": "2021-06-10",
    "no2": {
-    "mean": 19.3,
-    "capture": 0.971,
+    "mean": 19.9,
+    "capture": 0.969,
     "ratified": 0.0
    },
    "pm25": null
@@ -1207,14 +1169,14 @@
    "lon": -0.13296,
    "measuringSince": "2021-06-11",
    "no2": {
-    "mean": 20.8,
-    "capture": 0.807,
+    "mean": 21.1,
+    "capture": 0.805,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.6,
-    "capture": 0.807,
-    "ratified": 0.311
+    "mean": 6.5,
+    "capture": 0.805,
+    "ratified": 0.207
    }
   },
   {
@@ -1231,13 +1193,13 @@
    "measuringSince": "2025-03-16",
    "no2": {
     "mean": 21.5,
-    "capture": 0.998,
+    "capture": 0.996,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.5,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.4,
+    "capture": 0.996,
+    "ratified": 0.167
    }
   },
   {
@@ -1254,13 +1216,13 @@
    "measuringSince": "2021-06-23",
    "no2": {
     "mean": 16.0,
-    "capture": 0.996,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.0,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -1277,13 +1239,13 @@
    "measuringSince": "2021-06-15",
    "no2": {
     "mean": 15.2,
-    "capture": 0.986,
+    "capture": 0.984,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.2,
-    "capture": 0.988,
-    "ratified": 0.254
+    "capture": 0.985,
+    "ratified": 0.169
    }
   },
   {
@@ -1300,13 +1262,13 @@
    "measuringSince": "2021-05-28",
    "no2": {
     "mean": 17.4,
-    "capture": 0.997,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 8.2,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 8.3,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -1322,14 +1284,14 @@
    "lon": -0.07814,
    "measuringSince": "2021-06-16",
    "no2": {
-    "mean": 14.5,
-    "capture": 0.969,
+    "mean": 14.6,
+    "capture": 0.967,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.0,
-    "capture": 0.97,
-    "ratified": 0.259
+    "capture": 0.968,
+    "ratified": 0.172
    }
   },
   {
@@ -1345,14 +1307,14 @@
    "lon": -0.1193,
    "measuringSince": "2021-06-23",
    "no2": {
-    "mean": 20.9,
-    "capture": 0.984,
+    "mean": 21.2,
+    "capture": 0.982,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.7,
-    "capture": 0.986,
-    "ratified": 0.255
+    "mean": 7.6,
+    "capture": 0.984,
+    "ratified": 0.17
    }
   },
   {
@@ -1369,13 +1331,13 @@
    "measuringSince": "2021-06-29",
    "no2": {
     "mean": 18.4,
-    "capture": 0.997,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.3,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -1392,9 +1354,9 @@
    "measuringSince": "2021-06-30",
    "no2": null,
    "pm25": {
-    "mean": 7.3,
-    "capture": 0.778,
-    "ratified": 0.044
+    "mean": 7.2,
+    "capture": 0.861,
+    "ratified": 0.04
    }
   },
   {
@@ -1410,14 +1372,14 @@
    "lon": 0.12814,
    "measuringSince": "2021-06-30",
    "no2": {
-    "mean": 20.5,
-    "capture": 0.959,
+    "mean": 20.4,
+    "capture": 0.987,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 6.9,
-    "capture": 0.962,
-    "ratified": 0.229
+    "capture": 0.991,
+    "ratified": 0.168
    }
   },
   {
@@ -1433,14 +1395,14 @@
    "lon": -0.16757,
    "measuringSince": "2021-07-21",
    "no2": {
-    "mean": 47.2,
-    "capture": 0.809,
+    "mean": 48.4,
+    "capture": 0.883,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.8,
-    "capture": 0.866,
-    "ratified": 0.139
+    "mean": 6.7,
+    "capture": 0.939,
+    "ratified": 0.119
    }
   },
   {
@@ -1456,14 +1418,14 @@
    "lon": 0.18194,
    "measuringSince": "2021-07-23",
    "no2": {
-    "mean": 14.6,
-    "capture": 0.981,
+    "mean": 13.9,
+    "capture": 0.951,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.0,
-    "capture": 0.997,
-    "ratified": 0.252
+    "capture": 0.994,
+    "ratified": 0.167
    }
   },
   {
@@ -1480,13 +1442,13 @@
    "measuringSince": "2025-04-10",
    "no2": {
     "mean": 15.4,
-    "capture": 0.994,
+    "capture": 0.991,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.994,
-    "ratified": 0.253
+    "mean": 7.0,
+    "capture": 0.991,
+    "ratified": 0.168
    }
   },
   {
@@ -1502,14 +1464,14 @@
    "lon": 0.09436,
    "measuringSince": "2021-09-23",
    "no2": {
-    "mean": 20.8,
-    "capture": 0.997,
+    "mean": 20.9,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.2,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -1525,14 +1487,14 @@
    "lon": -0.00943,
    "measuringSince": "2021-09-25",
    "no2": {
-    "mean": 16.7,
-    "capture": 0.996,
+    "mean": 16.6,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.0,
-    "capture": 0.996,
-    "ratified": 0.253
+    "capture": 0.992,
+    "ratified": 0.168
    }
   },
   {
@@ -1548,14 +1510,14 @@
    "lon": 0.06181,
    "measuringSince": "2025-03-27",
    "no2": {
-    "mean": 21.7,
-    "capture": 0.998,
+    "mean": 21.4,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.1,
-    "capture": 0.999,
-    "ratified": 0.252
+    "capture": 0.995,
+    "ratified": 0.168
    }
   },
   {
@@ -1571,14 +1533,14 @@
    "lon": 0.19531,
    "measuringSince": "2021-09-29",
    "no2": {
-    "mean": 40.6,
-    "capture": 0.931,
+    "mean": 41.8,
+    "capture": 0.925,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.9,
-    "capture": 0.973,
-    "ratified": 0.247
+    "mean": 6.8,
+    "capture": 0.97,
+    "ratified": 0.161
    }
   },
   {
@@ -1595,13 +1557,13 @@
    "measuringSince": "2021-10-19",
    "no2": {
     "mean": 18.3,
-    "capture": 0.993,
+    "capture": 0.989,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.7,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 6.5,
+    "capture": 0.995,
+    "ratified": 0.168
    }
   },
   {
@@ -1618,13 +1580,13 @@
    "measuringSince": "2021-10-28",
    "no2": {
     "mean": 22.5,
-    "capture": 0.94,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 8.6,
-    "capture": 0.938,
-    "ratified": 0.208
+    "mean": 8.7,
+    "capture": 0.97,
+    "ratified": 0.171
    }
   },
   {
@@ -1641,13 +1603,13 @@
    "measuringSince": "2022-03-01",
    "no2": {
     "mean": 19.6,
-    "capture": 0.959,
+    "capture": 0.956,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.2,
-    "capture": 0.96,
-    "ratified": 0.238
+    "mean": 7.1,
+    "capture": 0.956,
+    "ratified": 0.15
    }
   },
   {
@@ -1663,14 +1625,14 @@
    "lon": -0.05248,
    "measuringSince": "2025-03-29",
    "no2": {
-    "mean": 17.2,
-    "capture": 0.996,
+    "mean": 17.1,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.3,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 6.8,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -1686,14 +1648,14 @@
    "lon": -0.09949,
    "measuringSince": "2025-04-03",
    "no2": {
-    "mean": 35.9,
-    "capture": 0.944,
+    "mean": 35.6,
+    "capture": 0.941,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 8.7,
-    "capture": 0.944,
-    "ratified": 0.24
+    "capture": 0.942,
+    "ratified": 0.151
    }
   },
   {
@@ -1710,7 +1672,7 @@
    "measuringSince": "2025-04-26",
    "no2": {
     "mean": 21.0,
-    "capture": 0.924,
+    "capture": 0.839,
     "ratified": 0.0
    },
    "pm25": null
@@ -1728,14 +1690,14 @@
    "lon": 0.04884,
    "measuringSince": "2025-04-17",
    "no2": {
-    "mean": 22.2,
-    "capture": 0.998,
+    "mean": 22.1,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.3,
-    "capture": 0.999,
-    "ratified": 0.252
+    "mean": 7.2,
+    "capture": 0.995,
+    "ratified": 0.168
    }
   },
   {
@@ -1752,13 +1714,13 @@
    "measuringSince": "2021-06-03",
    "no2": {
     "mean": 16.0,
-    "capture": 0.996,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.3,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -1774,8 +1736,8 @@
    "lon": -0.06085,
    "measuringSince": "2021-06-18",
    "no2": {
-    "mean": 21.2,
-    "capture": 0.901,
+    "mean": 21.1,
+    "capture": 0.897,
     "ratified": 0.0
    },
    "pm25": null
@@ -1793,14 +1755,14 @@
    "lon": -0.11449,
    "measuringSince": "2021-06-28",
    "no2": {
-    "mean": 22.4,
-    "capture": 0.996,
+    "mean": 21.9,
+    "capture": 0.991,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.0,
+    "capture": 0.994,
+    "ratified": 0.168
    }
   },
   {
@@ -1816,14 +1778,14 @@
    "lon": -0.17445,
    "measuringSince": "2021-06-29",
    "no2": {
-    "mean": 22.8,
-    "capture": 0.978,
+    "mean": 22.5,
+    "capture": 0.974,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.3,
-    "capture": 0.997,
-    "ratified": 0.252
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -1839,14 +1801,14 @@
    "lon": -0.20378,
    "measuringSince": "2021-06-29",
    "no2": {
-    "mean": 31.2,
-    "capture": 0.791,
+    "mean": 31.1,
+    "capture": 0.872,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 6.9,
-    "capture": 0.808,
-    "ratified": 0.076
+    "mean": 6.8,
+    "capture": 0.889,
+    "ratified": 0.069
    }
   },
   {
@@ -1863,13 +1825,13 @@
    "measuringSince": "2025-06-27",
    "no2": {
     "mean": 18.3,
-    "capture": 0.983,
+    "capture": 0.979,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.1,
-    "capture": 0.986,
-    "ratified": 0.255
+    "capture": 0.982,
+    "ratified": 0.169
    }
   },
   {
@@ -1886,13 +1848,13 @@
    "measuringSince": "2025-03-12",
    "no2": {
     "mean": 18.2,
-    "capture": 0.997,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.0,
-    "capture": 0.999,
-    "ratified": 0.252
+    "capture": 0.995,
+    "ratified": 0.168
    }
   },
   {
@@ -1908,14 +1870,14 @@
    "lon": -0.04769,
    "measuringSince": "2025-03-12",
    "no2": {
-    "mean": 18.0,
-    "capture": 0.998,
+    "mean": 18.1,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.0,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.995,
+    "ratified": 0.168
    }
   },
   {
@@ -1932,13 +1894,13 @@
    "measuringSince": "2021-07-23",
    "no2": {
     "mean": 25.3,
-    "capture": 0.998,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.3,
+    "capture": 0.994,
+    "ratified": 0.167
    }
   },
   {
@@ -1954,14 +1916,14 @@
    "lon": 0.08384,
    "measuringSince": "2021-07-20",
    "no2": {
-    "mean": 20.6,
-    "capture": 0.961,
+    "mean": 20.8,
+    "capture": 0.958,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.6,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.994,
+    "ratified": 0.167
    }
   },
   {
@@ -1978,13 +1940,13 @@
    "measuringSince": "2021-08-31",
    "no2": {
     "mean": 18.7,
-    "capture": 0.871,
+    "capture": 0.888,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.5,
-    "capture": 0.872,
-    "ratified": 0.15
+    "capture": 0.89,
+    "ratified": 0.076
    }
   },
   {
@@ -2000,14 +1962,14 @@
    "lon": 0.00912,
    "measuringSince": "2021-09-09",
    "no2": {
-    "mean": 20.9,
-    "capture": 0.997,
+    "mean": 20.8,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.2,
-    "capture": 0.997,
-    "ratified": 0.252
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2023,14 +1985,14 @@
    "lon": -0.28702,
    "measuringSince": "2025-04-17",
    "no2": {
-    "mean": 27.0,
-    "capture": 0.996,
+    "mean": 26.7,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.9,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.7,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2046,14 +2008,14 @@
    "lon": -0.18808,
    "measuringSince": "2021-09-07",
    "no2": {
-    "mean": 12.7,
-    "capture": 0.913,
+    "mean": 12.3,
+    "capture": 0.969,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.1,
-    "capture": 0.923,
-    "ratified": 0.192
+    "mean": 7.0,
+    "capture": 0.981,
+    "ratified": 0.157
    }
   },
   {
@@ -2069,14 +2031,14 @@
    "lon": 0.01843,
    "measuringSince": "2021-09-25",
    "no2": {
-    "mean": 18.8,
-    "capture": 0.998,
+    "mean": 18.7,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.5,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -2092,14 +2054,14 @@
    "lon": 0.02739,
    "measuringSince": "2021-10-08",
    "no2": {
-    "mean": 22.3,
-    "capture": 0.998,
+    "mean": 22.5,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.7,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.994,
+    "ratified": 0.167
    }
   },
   {
@@ -2115,14 +2077,14 @@
    "lon": 0.175,
    "measuringSince": "2021-10-08",
    "no2": {
-    "mean": 17.9,
-    "capture": 0.998,
+    "mean": 17.8,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.3,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.994,
+    "ratified": 0.167
    }
   },
   {
@@ -2138,14 +2100,14 @@
    "lon": 0.17934,
    "measuringSince": "2025-04-04",
    "no2": {
-    "mean": 19.5,
-    "capture": 0.933,
+    "mean": 19.6,
+    "capture": 0.93,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.5,
-    "capture": 0.807,
-    "ratified": 0.265
+    "capture": 0.804,
+    "ratified": 0.161
    }
   },
   {
@@ -2161,8 +2123,8 @@
    "lon": -0.16328,
    "measuringSince": "2021-10-26",
    "no2": {
-    "mean": 37.2,
-    "capture": 0.954,
+    "mean": 36.3,
+    "capture": 0.95,
     "ratified": 0.0
    },
    "pm25": null
@@ -2180,14 +2142,14 @@
    "lon": -0.3355,
    "measuringSince": "2022-01-06",
    "no2": {
-    "mean": 45.4,
-    "capture": 0.947,
+    "mean": 44.7,
+    "capture": 0.937,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.3,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2203,14 +2165,14 @@
    "lon": -0.43423,
    "measuringSince": "2025-04-13",
    "no2": {
-    "mean": 28.7,
-    "capture": 0.834,
+    "mean": 28.6,
+    "capture": 0.75,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.3,
-    "capture": 0.79,
-    "ratified": 0.318
+    "mean": 7.4,
+    "capture": 0.787,
+    "ratified": 0.212
    }
   },
   {
@@ -2226,14 +2188,14 @@
    "lon": -0.13445,
    "measuringSince": "2021-12-09",
    "no2": {
-    "mean": 28.5,
-    "capture": 0.997,
+    "mean": 28.1,
+    "capture": 0.993,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 8.2,
-    "capture": 0.996,
-    "ratified": 0.252
+    "mean": 8.0,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2249,14 +2211,14 @@
    "lon": -0.18537,
    "measuringSince": "2021-12-09",
    "no2": {
-    "mean": 20.8,
-    "capture": 0.994,
+    "mean": 20.9,
+    "capture": 0.99,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.0,
-    "capture": 0.997,
-    "ratified": 0.252
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2272,14 +2234,14 @@
    "lon": -0.11944,
    "measuringSince": "2021-12-09",
    "no2": {
-    "mean": 18.5,
-    "capture": 0.978,
+    "mean": 18.4,
+    "capture": 0.974,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.6,
-    "capture": 0.979,
-    "ratified": 0.257
+    "mean": 7.5,
+    "capture": 0.976,
+    "ratified": 0.171
    }
   },
   {
@@ -2295,14 +2257,14 @@
    "lon": -0.12106,
    "measuringSince": "2025-04-13",
    "no2": {
-    "mean": 22.9,
-    "capture": 0.998,
+    "mean": 23.0,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.9,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.8,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -2319,13 +2281,13 @@
    "measuringSince": "2025-04-09",
    "no2": {
     "mean": 23.3,
-    "capture": 0.958,
+    "capture": 0.959,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 8.5,
-    "capture": 0.959,
-    "ratified": 0.238
+    "mean": 8.8,
+    "capture": 0.96,
+    "ratified": 0.155
    }
   },
   {
@@ -2342,13 +2304,13 @@
    "measuringSince": "2025-07-25",
    "no2": {
     "mean": 24.8,
-    "capture": 0.936,
+    "capture": 0.989,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.995,
-    "ratified": 0.252
+    "mean": 7.3,
+    "capture": 0.992,
+    "ratified": 0.168
    }
   },
   {
@@ -2364,14 +2326,14 @@
    "lon": -0.13595,
    "measuringSince": "2025-05-17",
    "no2": {
-    "mean": 25.1,
-    "capture": 0.998,
+    "mean": 25.0,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.7,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.5,
+    "capture": 0.995,
+    "ratified": 0.168
    }
   },
   {
@@ -2387,14 +2349,14 @@
    "lon": -0.14812,
    "measuringSince": "2025-05-17",
    "no2": {
-    "mean": 23.1,
-    "capture": 0.995,
+    "mean": 23.0,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 7.5,
-    "capture": 0.996,
-    "ratified": 0.252
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2411,13 +2373,13 @@
    "measuringSince": "2025-06-22",
    "no2": {
     "mean": 15.8,
-    "capture": 0.994,
+    "capture": 0.99,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.6,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.5,
+    "capture": 0.994,
+    "ratified": 0.167
    }
   },
   {
@@ -2433,14 +2395,14 @@
    "lon": -0.15142,
    "measuringSince": "2025-06-22",
    "no2": {
-    "mean": 31.1,
-    "capture": 0.99,
+    "mean": 30.8,
+    "capture": 0.987,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.3,
-    "capture": 0.996,
-    "ratified": 0.252
+    "mean": 7.2,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2456,14 +2418,14 @@
    "lon": -0.15245,
    "measuringSince": "2025-06-22",
    "no2": {
-    "mean": 29.9,
-    "capture": 0.992,
+    "mean": 29.6,
+    "capture": 0.988,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 7.3,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2479,14 +2441,71 @@
    "lon": -0.14604,
    "measuringSince": "2025-06-22",
    "no2": {
-    "mean": 33.2,
-    "capture": 0.976,
+    "mean": 33.3,
+    "capture": 0.972,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.7,
-    "capture": 0.996,
-    "ratified": 0.252
+    "mean": 7.6,
+    "capture": 0.993,
+    "ratified": 0.168
+   }
+  },
+  {
+   "code": "BL0164",
+   "name": "Orchard Street j/w Portman Mews South",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.51499,
+   "lon": -0.15433,
+   "measuringSince": "2026-01-21",
+   "no2": null,
+   "pm25": {
+    "mean": 7.3,
+    "capture": 0.771,
+    "ratified": 0.0
+   }
+  },
+  {
+   "code": "BL0165",
+   "name": "Holles Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.51501,
+   "lon": -0.14427,
+   "measuringSince": "2026-01-21",
+   "no2": null,
+   "pm25": {
+    "mean": 7.8,
+    "capture": 0.77,
+    "ratified": 0.0
+   }
+  },
+  {
+   "code": "BL0166",
+   "name": "Margaret Street",
+   "borough": "E09000033",
+   "boroughName": "Westminster",
+   "classification": "Kerbside",
+   "locationType": "Street",
+   "kerbDistanceM": 0.5,
+   "heightM": 3.0,
+   "lat": 51.51615,
+   "lon": -0.14386,
+   "measuringSince": "2026-01-21",
+   "no2": null,
+   "pm25": {
+    "mean": 7.4,
+    "capture": 0.771,
+    "ratified": 0.0
    }
   },
   {
@@ -2502,14 +2521,14 @@
    "lon": -0.06991,
    "measuringSince": "2025-04-27",
    "no2": {
-    "mean": 27.6,
-    "capture": 0.998,
+    "mean": 27.5,
+    "capture": 0.995,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.2,
-    "capture": 0.998,
-    "ratified": 0.252
+    "mean": 7.1,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -2525,14 +2544,14 @@
    "lon": -0.18882,
    "measuringSince": "2025-05-01",
    "no2": {
-    "mean": 17.4,
-    "capture": 0.996,
+    "mean": 17.3,
+    "capture": 0.992,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 6.7,
-    "capture": 0.998,
-    "ratified": 0.252
+    "capture": 0.995,
+    "ratified": 0.168
    }
   },
   {
@@ -2549,13 +2568,13 @@
    "measuringSince": "2025-05-02",
    "no2": {
     "mean": 19.4,
-    "capture": 0.998,
+    "capture": 0.994,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.4,
-    "capture": 0.998,
-    "ratified": 0.251
+    "mean": 7.1,
+    "capture": 0.995,
+    "ratified": 0.167
    }
   },
   {
@@ -2572,13 +2591,13 @@
    "measuringSince": "2025-06-07",
    "no2": {
     "mean": 14.7,
-    "capture": 0.99,
+    "capture": 0.986,
     "ratified": 0.0
    },
    "pm25": {
     "mean": 6.8,
-    "capture": 0.993,
-    "ratified": 0.253
+    "capture": 0.99,
+    "ratified": 0.168
    }
   },
   {
@@ -2594,14 +2613,14 @@
    "lon": -0.16526,
    "measuringSince": "2025-07-29",
    "no2": {
-    "mean": 28.9,
-    "capture": 0.925,
+    "mean": 29.0,
+    "capture": 0.975,
     "ratified": 0.0
    },
    "pm25": {
-    "mean": 7.0,
-    "capture": 0.997,
-    "ratified": 0.252
+    "mean": 6.9,
+    "capture": 0.993,
+    "ratified": 0.168
    }
   },
   {
@@ -2616,11 +2635,15 @@
    "lat": 51.50824,
    "lon": -0.12894,
    "measuringSince": "2025-12-16",
-   "no2": null,
+   "no2": {
+    "mean": 27.7,
+    "capture": 0.809,
+    "ratified": 0.0
+   },
    "pm25": {
     "mean": 8.0,
-    "capture": 0.778,
-    "ratified": 0.044
+    "capture": 0.86,
+    "ratified": 0.039
    }
   }
  ],
@@ -2629,7 +2652,7 @@
    "code": "BL0005",
    "site": "Ley Street",
    "pollutant": "pm25",
-   "reason": "capture 32% of hours"
+   "reason": "capture 38% of hours"
   },
   {
    "code": "BL0011",
@@ -2647,13 +2670,13 @@
    "code": "BL0012",
    "site": "Laurence House - Catford",
    "pollutant": "no2",
-   "reason": "capture 66% of hours"
+   "reason": "capture 58% of hours"
   },
   {
    "code": "BL0012",
    "site": "Laurence House - Catford",
    "pollutant": "pm25",
-   "reason": "capture 66% of hours"
+   "reason": "capture 58% of hours"
   },
   {
    "code": "BL0013",
@@ -2676,20 +2699,26 @@
   {
    "code": "BL0021",
    "site": "Newham University Hospital",
+   "pollutant": "no2",
+   "reason": "capture 71% of hours"
+  },
+  {
+   "code": "BL0021",
+   "site": "Newham University Hospital",
    "pollutant": "pm25",
-   "reason": "capture 28% of hours"
+   "reason": "capture 20% of hours"
   },
   {
    "code": "BL0026",
    "site": "St Thomas' Hospital",
    "pollutant": "no2",
-   "reason": "capture 69% of hours"
+   "reason": "capture 74% of hours"
   },
   {
    "code": "BL0026",
    "site": "St Thomas' Hospital",
    "pollutant": "pm25",
-   "reason": "capture 69% of hours"
+   "reason": "capture 75% of hours"
   },
   {
    "code": "BL0041",
@@ -2700,14 +2729,20 @@
   {
    "code": "BL0042",
    "site": "John Harrison Way",
+   "pollutant": "no2",
+   "reason": "capture 74% of hours"
+  },
+  {
+   "code": "BL0042",
+   "site": "John Harrison Way",
    "pollutant": "pm25",
-   "reason": "capture 17% of hours"
+   "reason": "capture 8% of hours"
   },
   {
    "code": "BL0043",
    "site": "Beddington Lane North",
    "pollutant": "pm25",
-   "reason": "capture 54% of hours"
+   "reason": "capture 45% of hours"
   },
   {
    "code": "BL0048",
@@ -2731,31 +2766,31 @@
    "code": "BL0052",
    "site": "Byward Street / Great Tower Street",
    "pollutant": "no2",
-   "reason": "capture 46% of hours"
+   "reason": "capture 54% of hours"
   },
   {
    "code": "BL0052",
    "site": "Byward Street / Great Tower Street",
    "pollutant": "pm25",
-   "reason": "capture 49% of hours"
+   "reason": "capture 57% of hours"
   },
   {
    "code": "BL0056",
    "site": "Christopher Hatton Primary School",
    "pollutant": "no2",
-   "reason": "capture 51% of hours"
+   "reason": "capture 59% of hours"
   },
   {
    "code": "BL0056",
    "site": "Christopher Hatton Primary School",
    "pollutant": "pm25",
-   "reason": "capture 59% of hours"
+   "reason": "capture 67% of hours"
   },
   {
    "code": "BL0074",
    "site": "Scotts Primary School",
    "pollutant": "pm25",
-   "reason": "capture 59% of hours"
+   "reason": "capture 58% of hours"
   },
   {
    "code": "BL0076",
@@ -2779,127 +2814,109 @@
    "code": "BL0099",
    "site": "St Jerome Bilingual School",
    "pollutant": "pm25",
-   "reason": "capture 34% of hours"
+   "reason": "capture 42% of hours"
   },
   {
    "code": "BL0107",
    "site": "William Byrd Primary Academy - Victoria Lane",
    "pollutant": "pm25",
-   "reason": "capture 12% of hours"
+   "reason": "capture 3% of hours"
   },
   {
    "code": "BL0113",
    "site": "Tottenham Hale",
    "pollutant": "pm25",
-   "reason": "capture 65% of hours"
+   "reason": "capture 64% of hours"
   },
   {
    "code": "BL0123",
    "site": "North Circular Road",
    "pollutant": "no2",
-   "reason": "capture 36% of hours"
+   "reason": "capture 44% of hours"
   },
   {
    "code": "BL0123",
    "site": "North Circular Road",
    "pollutant": "pm25",
-   "reason": "capture 37% of hours"
+   "reason": "capture 45% of hours"
   },
   {
    "code": "BL0124",
    "site": "Hogarth Roundabout - Great West Road",
    "pollutant": "no2",
-   "reason": "capture 46% of hours"
+   "reason": "capture 54% of hours"
   },
   {
    "code": "BL0124",
    "site": "Hogarth Roundabout - Great West Road",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours"
+   "reason": "capture 58% of hours"
   },
   {
    "code": "BL0136",
    "site": "Ampthill Square Estate",
    "pollutant": "no2",
-   "reason": "capture 70% of hours"
+   "reason": "capture 64% of hours"
   },
   {
    "code": "BL0136",
    "site": "Ampthill Square Estate",
    "pollutant": "pm25",
-   "reason": "capture 70% of hours"
+   "reason": "capture 64% of hours"
   },
   {
    "code": "BL0146",
    "site": "Brownhill Road",
    "pollutant": "no2",
-   "reason": "capture 46% of hours"
+   "reason": "capture 54% of hours"
   },
   {
    "code": "BL0146",
    "site": "Brownhill Road",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours"
+   "reason": "capture 58% of hours"
   },
   {
    "code": "BL0147",
    "site": "Plassy Road",
    "pollutant": "no2",
-   "reason": "capture 46% of hours"
+   "reason": "capture 54% of hours"
   },
   {
    "code": "BL0147",
    "site": "Plassy Road",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours"
+   "reason": "capture 58% of hours"
   },
   {
    "code": "BL0148",
    "site": "Boston Place",
    "pollutant": "pm25",
-   "reason": "capture 37% of hours"
+   "reason": "capture 45% of hours"
   },
   {
    "code": "BL0164",
    "site": "Orchard Street j/w Portman Mews South",
    "pollutant": "no2",
-   "reason": "capture 65% of hours (measuring here since 2026-01-21)"
-  },
-  {
-   "code": "BL0164",
-   "site": "Orchard Street j/w Portman Mews South",
-   "pollutant": "pm25",
-   "reason": "capture 69% of hours (measuring here since 2026-01-21)"
+   "reason": "capture 73% of hours (measuring here since 2026-01-21)"
   },
   {
    "code": "BL0165",
    "site": "Holles Street",
    "pollutant": "no2",
-   "reason": "capture 65% of hours (measuring here since 2026-01-21)"
-  },
-  {
-   "code": "BL0165",
-   "site": "Holles Street",
-   "pollutant": "pm25",
-   "reason": "capture 69% of hours (measuring here since 2026-01-21)"
+   "reason": "capture 73% of hours (measuring here since 2026-01-21)"
   },
   {
    "code": "BL0166",
    "site": "Margaret Street",
    "pollutant": "no2",
-   "reason": "capture 65% of hours (measuring here since 2026-01-21)"
-  },
-  {
-   "code": "BL0166",
-   "site": "Margaret Street",
-   "pollutant": "pm25",
-   "reason": "capture 69% of hours (measuring here since 2026-01-21)"
+   "reason": "capture 73% of hours (measuring here since 2026-01-21)"
   },
   {
    "code": "BL0175",
    "site": "The Bath House",
    "pollutant": "no2",
-   "reason": "capture 64% of hours"
+   "reason": "capture 63% of hours"
   },
   {
    "code": "BL0175",
@@ -2908,154 +2925,148 @@
    "reason": "capture 64% of hours"
   },
   {
-   "code": "BL0177",
-   "site": "Trafalgar Square",
-   "pollutant": "no2",
-   "reason": "capture 73% of hours (measuring here since 2025-12-16)"
-  },
-  {
    "code": "BL0178",
    "site": "Arkwright Road",
    "pollutant": "no2",
-   "reason": "capture 61% of hours (measuring here since 2026-01-28)"
+   "reason": "capture 70% of hours (measuring here since 2026-01-28)"
   },
   {
    "code": "BL0178",
    "site": "Arkwright Road",
    "pollutant": "pm25",
-   "reason": "capture 62% of hours (measuring here since 2026-01-28)"
+   "reason": "capture 71% of hours (measuring here since 2026-01-28)"
   },
   {
    "code": "BL0179",
    "site": "Nutley Terrace",
    "pollutant": "no2",
-   "reason": "capture 63% of hours (measuring here since 2026-01-28)"
+   "reason": "capture 71% of hours (measuring here since 2026-01-28)"
   },
   {
    "code": "BL0179",
    "site": "Nutley Terrace",
    "pollutant": "pm25",
-   "reason": "capture 65% of hours (measuring here since 2026-01-28)"
+   "reason": "capture 73% of hours (measuring here since 2026-01-28)"
   },
   {
    "code": "BL0180",
    "site": "Heath Street",
    "pollutant": "no2",
-   "reason": "capture 61% of hours (measuring here since 2026-01-29)"
+   "reason": "capture 69% of hours (measuring here since 2026-01-29)"
   },
   {
    "code": "BL0180",
    "site": "Heath Street",
    "pollutant": "pm25",
-   "reason": "capture 63% of hours (measuring here since 2026-01-29)"
+   "reason": "capture 71% of hours (measuring here since 2026-01-29)"
   },
   {
    "code": "BL0181",
    "site": "St Francis RC Primary School",
    "pollutant": "no2",
-   "reason": "capture 48% of hours (measuring here since 2026-02-17)"
+   "reason": "capture 53% of hours (measuring here since 2026-02-17)"
   },
   {
    "code": "BL0181",
    "site": "St Francis RC Primary School",
    "pollutant": "pm25",
-   "reason": "capture 51% of hours (measuring here since 2026-02-17)"
+   "reason": "capture 55% of hours (measuring here since 2026-02-17)"
   },
   {
    "code": "BL0182",
    "site": "Westway",
    "pollutant": "no2",
-   "reason": "capture 46% of hours (measuring here since 2026-04-01)"
+   "reason": "capture 54% of hours (measuring here since 2026-04-01)"
   },
   {
    "code": "BL0182",
    "site": "Westway",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours (measuring here since 2026-04-01)"
+   "reason": "capture 58% of hours (measuring here since 2026-04-01)"
   },
   {
    "code": "BL0183",
    "site": "China Hall",
    "pollutant": "no2",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 58% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0183",
    "site": "China Hall",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 58% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0184",
    "site": "Redriff Road",
    "pollutant": "no2",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 58% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0184",
    "site": "Redriff Road",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 58% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0185",
    "site": "Lower Road",
    "pollutant": "no2",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 57% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0185",
    "site": "Lower Road",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 58% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0186",
    "site": "Hawkstone Road",
    "pollutant": "no2",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 58% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0186",
    "site": "Hawkstone Road",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours (measuring here since 2026-03-03)"
+   "reason": "capture 58% of hours (measuring here since 2026-03-03)"
   },
   {
    "code": "BL0187",
    "site": "Rotherhithe New Road",
    "pollutant": "no2",
-   "reason": "capture 34% of hours (measuring here since 2026-03-06)"
+   "reason": "capture 42% of hours (measuring here since 2026-03-06)"
   },
   {
    "code": "BL0187",
    "site": "Rotherhithe New Road",
    "pollutant": "pm25",
-   "reason": "capture 34% of hours (measuring here since 2026-03-06)"
+   "reason": "capture 42% of hours (measuring here since 2026-03-06)"
   },
   {
    "code": "BL0188",
    "site": "Bush Road",
    "pollutant": "no2",
-   "reason": "capture 46% of hours (measuring here since 2026-04-01)"
+   "reason": "capture 54% of hours (measuring here since 2026-04-01)"
   },
   {
    "code": "BL0188",
    "site": "Bush Road",
    "pollutant": "pm25",
-   "reason": "capture 50% of hours (measuring here since 2026-04-01)"
+   "reason": "capture 58% of hours (measuring here since 2026-04-01)"
   },
   {
    "code": "BL0189",
    "site": "Glendower Prep School",
    "pollutant": "no2",
-   "reason": "capture 15% of hours (measuring here since 2026-06-16)"
+   "reason": "capture 17% of hours (measuring here since 2026-06-16)"
   },
   {
    "code": "BL0189",
    "site": "Glendower Prep School",
    "pollutant": "pm25",
-   "reason": "capture 15% of hours (measuring here since 2026-06-16)"
+   "reason": "capture 17% of hours (measuring here since 2026-06-16)"
   },
   {
    "code": "BL0190",
@@ -3067,7 +3078,7 @@
    "code": "BL0190",
    "site": "Bexley Allotments - Old Farm Avenue",
    "pollutant": "pm25",
-   "reason": "capture 14% of hours (measuring here since 2026-07-23)"
+   "reason": "capture 22% of hours (measuring here since 2026-07-23)"
   },
   {
    "code": "BL0191",
