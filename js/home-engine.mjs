@@ -16,7 +16,7 @@
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
 import { districtOf, planesLinks, planesModel, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
-import { EXAMPLE, bindPlaceBox, postcodeCompletions } from '/js/place-box.mjs';
+import { EXAMPLE, bindPlaceBox, noPointSaid, postcodeCompletions } from '/js/place-box.mjs';
 import { airFigure, airPanel, answerLead, exampleFigures, layerSteps } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
 import {
@@ -1480,6 +1480,8 @@ async function search(raw, { example = false } = {}) {
     if (stale()) return;
     if (!geo.result) { if (!example) { say('That postcode was not found, and no place on the map has that name.'); wantCountry(); } return; }
     const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
+    // No map reference, no point to ask about (audit M-18): /api/'s own sentence, never the API's 400 for developers.
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) { if (!example) say(noPointSaid(geo.result.postcode || pc)); return; }
     const city = cityOf(district);
     // A postcode no city covers gets no pin: a pin on whichever city is on
     // screen is how the live site once told a Norwich reader about Stansted.

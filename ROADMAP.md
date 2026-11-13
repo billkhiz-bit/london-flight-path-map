@@ -38,9 +38,15 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **LIVE 12 Nov (evening), drift PASS, 152/152 area pages = API:** the three-page street report (`0cdec370`), "a year with as
 > many Heathrow flights as 2019" and the `/nhs` fix (`63820a53`, reviewed changeset), audit I-1, I-2, I-3, I-12 (`e6631533`).
 > **Also LIVE (late):** `0b98838b` (I-19 New York's Labels button, I-20 /score-demo/ announcements), drift PASS. Gate fixes
-> `d7dd3cfc` (I-11, I-22, M-25, M-28). **Built, to commit after preflight, deploy on Bill's word (`web-deploy`):** I-13 to I-17
-> (full-map state faults, `tests/search-guide.mjs` 7) and I-10 (`check_sample_report.mjs`). **N65** built on its worktree,
-> uncommitted: merge master into n65 first. **Audit left:** I-18 (a phone's view on a profile change; look at 390), 20 Minors.
+> `d7dd3cfc` (I-11, I-22, M-25, M-28). **LIVE late 12 Nov (`902ca40c`, drift PASS):** I-13 to I-17 (full-map state faults,
+> `tests/search-guide.mjs` 7) and I-10 (`check_sample_report.mjs`, a preflight gate). **N65** committed on `n65` (`fefa2812`
+> merges master `902ca40c`; `ea4964f3` the frozen method + gate runner), NOT pushed (public repo, EASA's terms: Bill's yes
+> first). **Night, built + red-proven, preflight then commit, deploy on Bill's word:** I-18 (the last Important),
+> M-5, M-14, M-16, M-18, M-20, M-21, M-23, M-24, M-29, and the DEFRA freshness retry. N65 item 3 (population inside the
+> 50-event contour) committed on `n65` (`f534085e`), not pushed. M-9 BUILT on Bill's pick A (the focus orange, 3.84:1).
+> The full preflight was stopped by Claude Code for low memory; the quick stages all pass (ESLint, html-validate, both
+> ruffs, pytest backend 594 and root 3,287, area pages == API). **Next: the full preflight, commit, then deploy on Bill's
+> word** (web, home, demo, area, meta). **Audit left:** 10 Minors.
 > **Report build COMMITTED `08ec87c6`** (pushed; deployed later the same day). Then, Bill's yes: I-21 the "2% below 2019" wording and I-8/I-9
 > the `/nhs` fixes, built and tested (red on the old code); after their preflight and commit, the web deploy and the SAM
 > changeset wait on his word.

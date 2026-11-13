@@ -220,6 +220,12 @@ Or just describe what you need, I have full context of this project.
   old postcode in a new city; a late redraw passes the card's own options and checks it is still on screen. A covered council's
   WHOLE name opens it from any city (`councilElsewhere`), never a prefix. `LONDON_AREA_MAP` postcodes must be LIVE in NSPL
   (`tests/test_london_area_postcodes.py`: nine had been retired). Each is reached on purpose in `tests/search-guide.mjs` 7.
+  A REDRAW is not a result: `setPersona()` passes `reveal: false` (I-18: a phone was thrown from Rankings to Search). One key,
+  one effect: the Layers popover's Escape marks the key used and the result card's Escape steps aside (M-14).
+- **Every outline focus ring on a page that defines `--focus` is drawn in it** (M-16, `tests/test_focus_ring_contrast.py`).
+- **A postcode with no map reference has ONE sentence, `noPointSaid()` (js/place-box.mjs)** for `/` and `/api/` (M-18): never
+  pass a null latitude to the API. **An area page's tied price rank says "joint"**, the tie counted from the API's own ranks
+  (`price_ranks()`, M-23); /open-data/'s CAA year is read from `data/covid-understatement.json` (M-20), never typed.
 - **The map's source is `index.html`, served at `/map/`; the front page is `home/index.html` at `/`.**
   Locally, `/` is still the map. `js/api-base.js` is loaded by an ABSOLUTE path.
 - **Phone vs desktop is `PHONE_LAYOUT = '(max-width: 900px), (max-height: 500px)'`**, stated by every @media
@@ -396,7 +402,8 @@ Or just describe what you need, I have full context of this project.
   **Breathe London's credit says "License": their required spelling** (scripts/fetch_breathe_london.py); never "correct" it.
 - **The full map's search guide** (Bill's pick C2, 2026-11-11; claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu): on a first visit
   `.search-box.guide` runs one light round the search box (an SVG outline, pathLength 100, two laps, 4.6 s: under WCAG 2.2.2's
-  5 s, so no pause control), then a still orange ring; reduced motion shows the ring only. `endSearchGuide()` ends it at any
+  5 s, so no pause control), then a still ring in the FOCUS orange (`--focus`, 3.84:1; the brand orange was 2.60:1 against the
+  panel, under WCAG 1.4.11's 3:1: audit M-9, Bill's pick A, 2026-11-12); reduced motion shows the ring only. `endSearchGuide()` ends it at any
   answer (a search, a Try chip, a borough, a deep link) and remembers it (`flightmap_hint_seen`) only after a user activation
   (`navigator.userActivation.hasBeenActive`), so a visitor who arrived by a link still gets it next time. The dark first-run
   banner is GONE. Try chips are the registry's `tryExamples` (every city: phones at least 700 px tall show three in the card while the guide is on; shorter phones keep the hint,

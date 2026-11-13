@@ -326,8 +326,10 @@
         stroke-dashoffset: 34;
         opacity: 0.35;
       }
+      /* The FOCUS orange, never the brand's (audit M-9, Bill's pick A, 2026-11-12): #f27d26 was 2.60:1 against the panel,
+         under the 3:1 a control's edge needs (WCAG 1.4.11); --focus is 3.84:1 and the colour of every focus ring. */
       .search-box.guide input:not(:focus) {
-        border-color: var(--orange);
+        border-color: var(--focus);
         box-shadow: 0 0 0 3px rgba(242, 125, 38, 0.28);
       }
       @media (prefers-reduced-motion: no-preference) {
@@ -355,7 +357,7 @@
           box-shadow: 0 0 0 0 rgba(242, 125, 38, 0);
         }
         100% {
-          border-color: var(--orange);
+          border-color: var(--focus);
           box-shadow: 0 0 0 3px rgba(242, 125, 38, 0.28);
         }
       }
@@ -1248,7 +1250,7 @@
         opacity: 0.85;
       }
       .retry-btn:focus-visible {
-        outline: 2px solid var(--dark);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       /* Audit F-A11Y-8: quick-search chips. Centred row of tappable
@@ -1801,7 +1803,7 @@
       }
       .badge-embed:focus-visible,
       .badge-copy:focus-visible {
-        outline: 2px solid var(--dark);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       /* Consumer notify capture in the postcode panel (D5, 2026-08-21). */
@@ -1824,7 +1826,7 @@
       }
       .notify-form input:focus-visible,
       .notify-form button:focus-visible {
-        outline: 2px solid var(--dark);
+        outline: 2px solid var(--focus);
         outline-offset: 2px;
       }
       .notify-form button {
@@ -14094,12 +14096,14 @@
       // handler now asks what is showing and re-renders that.
       let panelSubject = { kind: 'none' };
 
-      function updateSidebar(data, { switchToAnalysis = true } = {}) {
+      // `reveal: false` redraws without moving a phone to the Search view: a profile change is not a new result
+      // (audit I-18, 2026-11-12: tapping "Family" in Rankings threw the phone back to Search over the map).
+      function updateSidebar(data, { switchToAnalysis = true, reveal = true } = {}) {
         endSearchGuide(); // a borough click or ?borough= link is a result too
         // The Bay Area's places land on their own card (2026-10-05), which since
         // 2026-11-07 carries the API's score on US scales above the flight-path
         // facts: every route here - a click, a search, a ranking row - goes there.
-        if (data && data.facts) return renderPlaceFacts(data, { switchToAnalysis });
+        if (data && data.facts) return renderPlaceFacts(data, { switchToAnalysis, reveal });
         panelSubject = { kind: 'borough' };
         setPanelSubject(data.name);
         announceResult('Results loaded for ' + data.name + '.');
@@ -14107,7 +14111,7 @@
         // Audit F-A11Y-4 hook: a result has just landed. On phones the
         // sheet starts in 'peek' so the map stays visible - TODO below
         // decides whether to auto-open it now or leave the user to tap up.
-        revealSheetIfMobile();
+        if (reveal) revealSheetIfMobile();
 
         const priceFull = formatPrice(data.avg_price, currentCity);
         const noiseClass =
@@ -14859,7 +14863,7 @@
         });
       }
 
-      function updateSidebarPostcode(analysis, boroughData, search) {
+      function updateSidebarPostcode(analysis, boroughData, search, { reveal = true } = {}) {
         const req = search || { token: searchSeq };
         panelSubject = { kind: 'postcode', analysis };
         setPanelSubject(analysis.label || analysis.postcode);
@@ -14871,7 +14875,7 @@
         // placeholder asks for was the one a screen-reader user never heard.
         announceResult('Results loaded for ' + (analysis.label || analysis.postcode) + '.');
         switchTab('analysis');
-        revealSheetIfMobile();
+        if (reveal) revealSheetIfMobile(); // not for a profile change (audit I-18)
 
         // ONE FIGURE AND ONE WORD, wherever the panel says them (a review, 2026-11-04): DEFRA's picture where it covers the
         // postcode, else the estimate, held to 0-10 (the geometry's points can add past 10). The finding, the fold's
@@ -16432,7 +16436,8 @@
         if (panelSubject.kind === 'postcode') {
           const a = panelSubject.analysis;
           const activeTab = document.querySelector('.tab.active')?.dataset.tab;
-          updateSidebarPostcode(a, matchBorough(a.borough) || null);
+          // reveal: false (audit I-18): a profile change keeps the visitor where they are; Rankings stays Rankings on a phone.
+          updateSidebarPostcode(a, matchBorough(a.borough) || null, undefined, { reveal: false });
           if (activeTab) switchTab(activeTab);
           // Said for the new buyer (audit M-12, 2026-11-09; WCAG 4.1.3): the redraw announced "Results loaded for SW5 9HP",
           // all a screen reader heard of a changed profile. The card's own verdict label says the score, never retyped here.
@@ -16444,10 +16449,10 @@
           // so a card left behind by another city is never redrawn over the new one.
           const { p, ...opts } = panelSubject.bay;
           const fresh = opts.tier === 'city' ? getActiveBoroughData()[p.name] : null;
-          renderPlaceFacts(fresh || p, { ...opts, switchToAnalysis: false });
+          renderPlaceFacts(fresh || p, { ...opts, switchToAnalysis: false, reveal: false });
         } else if (selectedBorough) {
           const data = getActiveBoroughData()[selectedBorough];
-          if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false });
+          if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false, reveal: false });
         }
       }
 
@@ -17003,7 +17008,7 @@
 
       // tier: 'city' (the default), 'neighbourhood'. A ZIP is shown ON its
       // city's card: its own area first, then the city's.
-      function renderPlaceFacts(p, { switchToAnalysis = true, zip = null, zipArea = null, tier = 'city', redraw = false } = {}) {
+      function renderPlaceFacts(p, { switchToAnalysis = true, zip = null, zipArea = null, tier = 'city', redraw = false, reveal = true } = {}) {
         // What the card shows, kept so a persona change re-renders THIS card (a ZIP, a neighbourhood) with the
         // new persona's score, rather than the bare city card.
         panelSubject = { kind: 'borough', bay: { p, zip, zipArea, tier } };
@@ -17019,7 +17024,7 @@
               : 'Flight-path facts loaded for ' + (zip ? `ZIP ${zip.code}, ` : '') + p.name + '. Not scored.'
           );
           if (switchToAnalysis) switchTab('analysis');
-          revealSheetIfMobile();
+          if (reveal) revealSheetIfMobile();
         }
         if (tier === 'city' && !zipArea) showTierOutline(null);
         const row = (label, value) =>
@@ -17608,6 +17613,9 @@
           document.addEventListener('keydown', (ev) => {
             if (ev.key !== 'Escape') return;
             if (layersTrigger.getAttribute('aria-expanded') !== 'true') return;
+            // One key, one effect (audit M-14, 2026-11-12): marked as used, so the result card's Escape below leaves the
+            // phone's open card alone. It closed both: the popover AND the card the visitor was reading.
+            ev.preventDefault();
             setLayersOpen(false);
             layersTrigger.focus();
           });
@@ -18013,6 +18021,8 @@
           // Escape conventionally clears the input instead.
           document.addEventListener('keydown', (ev) => {
             if (ev.key !== 'Escape') return;
+            // Not when the key closed the Layers popover (audit M-14), whichever listener ran first.
+            if (ev.defaultPrevented || document.getElementById('layers-trigger')?.getAttribute('aria-expanded') === 'true') return;
             const active = document.activeElement;
             if (active && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
             if (getComputedStyle(closeBtn).display === 'none') return;

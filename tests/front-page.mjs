@@ -111,6 +111,8 @@ const GEO = {
   NW17PJ: { postcode: 'NW1 7PJ', latitude: 51.539, longitude: -0.1426, admin_district: 'Camden' },
   TW33QL: { postcode: 'TW3 3QL', latitude: 51.462735, longitude: -0.372535, admin_district: 'Hounslow' },
   EX11HS: { postcode: 'EX1 1HS', latitude: 50.722209, longitude: -3.530574, admin_district: 'Exeter' },
+  // postcodes.io's real shape for the Isle of Man: a postcode with no map reference (tests/api-demo.mjs holds the same).
+  IM11AD: { postcode: 'IM1 1AD', latitude: null, longitude: null },
   // Option C's quiet planes band (2026-11-07), from tests/fixtures/api-demo-env.json (saved 2026-11-05).
   SW59HP: { postcode: 'SW5 9HP', latitude: 51.489125, longitude: -0.190676, admin_district: 'Kensington and Chelsea' },
   M225RX: { postcode: 'M22 5RX', latitude: 53.3677, longitude: -2.2644, admin_district: 'Manchester' },
@@ -1018,6 +1020,21 @@ for (const [label, pc, status, body, words] of [
   const said = await page.locator('#status').textContent();
   ok(said === words, `${label} is said as such, never as a place with no figures`, said);
   await page.unroute(env, answer);
+}
+
+// 11d. A POSTCODE WITH NO MAP REFERENCE (audit M-18, 2026-11-12): the Isle of Man's came back with a null latitude, the page
+// sent lat=null to the API and showed its developer message. It is now said in /api/'s own words, and nothing is asked.
+{
+  const asked = [];
+  const watch = (req) => { if (/\/v1\/environment\?/.test(req.url())) asked.push(req.url()); };
+  page.on('request', watch);
+  await page.fill('#pc', 'IM1 1AD');
+  await page.press('#pc', 'Enter');
+  const words = 'IM1 1AD has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none.';
+  await page.waitForFunction((w) => document.querySelector('#status')?.textContent === w, words, { timeout: 10000 }).catch(() => {});
+  const said = await page.locator('#status').textContent();
+  page.off('request', watch);
+  ok(said === words && asked.length === 0, 'a postcode with no map reference is said in plain words, and the API is not asked about a missing point', JSON.stringify({ said, asked }));
 }
 
 // 12. Place names: a borough opens its card (switching city), a Bay Area city opens the Bay Area, a city name switches.
@@ -2077,11 +2094,14 @@ const makeReport = async (pc) => {
           pages: d.querySelectorAll('section.page').length,
           cards: d.querySelectorAll('.cards .card').length,
           detailsRef: (d.querySelector('.details')?.textContent.match(/reference ([A-Z2-9]{4}-[A-Z2-9]{4})/) || [])[1] || '',
+          // A footer inside a section is no landmark, so a name on it is prohibited and unheard (audit M-5, 2026-11-12).
+          namedFooters: d.querySelectorAll('section footer[aria-label]').length,
         };
       })
     : {};
   ok(three.pages === 3 && three.cards >= 3 && three.detailsRef && three.detailsRef === free.ref,
     'the free copy is the three-page report, with its cards, and its details state the same reference as its check block', JSON.stringify({ ...three, checkRef: free.ref }));
+  ok(three.namedFooters === 0, "the report's sources footer, inside its last page, carries no name: it is not a landmark (audit M-5)", JSON.stringify(three));
   ok(
     free.marks === 1 && free.line.startsWith('Personal use only · TW9 3PZ · ') && free.hidden === 'true' && free.events === 'none',
     'the free copy is watermarked with its postcode and date, out of the way of screen readers and the pointer',

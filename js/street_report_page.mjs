@@ -263,8 +263,8 @@ async function make(raw, check = null) {
         + ` font-weight="600" fill="rgba(20,20,20,0.09)">${xml(line)}</text></svg>`;
       mark.style.backgroundImage = `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(tile)}")`;
       doc.body.append(mark);
-      // The page has its own footer, so the report's needs a name of its own (M-10, landmark-unique).
-      doc.querySelector('footer')?.setAttribute('aria-label', 'About this report');
+      // The report's sources footer sits inside its last page's <section>, where a footer is no landmark, so it takes no
+      // name (audit M-5, 2026-11-12): the name it was given for landmark uniqueness (M-10) became a prohibited attribute.
 
       // The reference, the check link and its QR code, and the terms line. Bill, 2026-10-06:
       // "can't firms just pretend to be a resident?", then "people can screenshot and maybe

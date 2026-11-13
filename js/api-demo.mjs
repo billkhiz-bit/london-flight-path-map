@@ -36,7 +36,7 @@
  */
 
 import { armDev, bindCodeTabs, bindCopy, devAnswer, finite, playDev, writeAnswer } from './dev-demo.mjs';
-import { EXAMPLE, POSTCODE, bindPlaceBox, postcodeCompletions } from './place-box.mjs';
+import { EXAMPLE, POSTCODE, bindPlaceBox, noPointSaid, postcodeCompletions } from './place-box.mjs';
 
 export { EXAMPLE };
 
@@ -99,7 +99,7 @@ export function sayProblem(kind, pc, shown) {
   const said = {
     invalid: 'That is not a UK postcode. Try one like SW5 9HP.',
     unknown: `We could not find ${pc}. Check it and send it again.`,
-    'no-point': `${pc} has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none.`,
+    'no-point': noPointSaid(pc),
     'no-postcode': `The API found no postcode near the map reference for ${pc}. Try another.`,
     'no-figures': `We hold no noise or NO₂ figure for ${pc}.`,
     busy: 'The API is busy just now: this route answers a few requests a second for everyone. Wait a moment and send it again.',

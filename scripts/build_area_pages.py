@@ -247,9 +247,33 @@ def measured_value(key: str, value: float) -> str:
     raise KeyError(key)
 
 
+@functools.cache
+def answer(city: str, borough: str):
+    """The API's answer for one area, asked once per build (gather() and price_ranks() read the same one)."""
+    return app.resolve_query({'borough': borough, 'city': city})
+
+
+@functools.cache
+def price_ranks(city: str) -> tuple:
+    """Every area's priceRankInCity rank in this city, AS THE API ANSWERS IT (never recomputed here). The API gives tied
+    prices the same, better rank, so a rank held by several areas is a tie (audit M-23, 2026-11-12: the Bay Area's 16
+    cities at the Census's top price code each read "35 of 50", an order where there is none)."""
+    ranks = []
+    for b in app.CITIES[city]['boroughs']:
+        body, status = answer(city, b)
+        r = ((body or {}).get('context') or {}).get('priceRankInCity') or {} if status == 200 else {}
+        if r.get('rank'):
+            ranks.append(r['rank'])
+    return tuple(ranks)
+
+
+def ordinal(n: int) -> str:
+    return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
+
+
 def gather(city: str, borough: str) -> dict | None:
     """Every published figure for one borough, absent keys omitted."""
-    body, status = app.resolve_query({'borough': borough, 'city': city})
+    body, status = answer(city, borough)
     if status != 200 or not isinstance(body.get('score'), (int, float)):
         return None
     ctx = body.get('context') or {}
@@ -342,7 +366,11 @@ def gather(city: str, borough: str) -> dict | None:
                        'prices: not comparable with UK scores' if members == [city] else
                        f'Scored among {n} areas in the same price pool: not comparable with UK scores')
     if rank.get('rank') and rank.get('of', 0) > 1:
-        afford_note += f' - {rank["rank"]} of {rank["of"]} here by price, cheapest first'
+        shared = price_ranks(city).count(rank['rank'])
+        # "Share that figure", never "the same price": at the Census's top code the figure is "$2M or more".
+        afford_note += (f' - joint {ordinal(rank["rank"])} of {rank["of"]} here by price, cheapest first ({shared} areas '
+                        'share that figure)' if shared > 1 else
+                        f' - {rank["rank"]} of {rank["of"]} here by price, cheapest first')
 
     add('Sky Score', f"{body['score']} / 10")
     add('Quiet skies', f"{comp.get('quiet')} / 10" if comp.get('quiet') is not None else None)
@@ -1506,7 +1534,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 </div>
 
 <h2>Read before using</h2>
-<p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10-15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: its Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's 2024 figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same figures are available per postcode through the <a href="/api/">API</a>.</p>
+<p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10-15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: its Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's {caa_year} figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same figures are available per postcode through the <a href="/api/">API</a>.</p>
 </main>
 <footer>
 <p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/about/">About</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
@@ -1533,13 +1561,20 @@ OPEN_DATA_LICENCE = (
 )
 
 
+def caa_contour_year() -> int:
+    """The year of the CAA's Heathrow contours that DEFRA's 2021 map is compared with (audit M-20, 2026-11-12): READ from
+    measure_covid_understatement.py's holder, never typed. /open-data/ said 2024 for ten days after every other surface
+    moved to 2025 (the 1 Nov roll), because its sentence carried the year as text."""
+    return int(json.loads((REPO / 'data' / 'covid-understatement.json').read_text(encoding='utf-8'))['caa_year'])
+
+
 def open_data_files() -> dict[str, str]:
     rows = open_data_rows()
     columns = '\n'.join(f'<tr><td><code>{e(c)}</code></td><td>{e(d)}</td></tr>' for c, d in OPEN_DATA_COLUMNS)
     page = OPEN_DATA_PAGE.format(
         n=len(rows), c=len({r[0] for r in rows}), site=SITE, csv=OPEN_DATA_CSV,
         vintage=e(app.SNAPSHOT_VINTAGE_LABEL), methodology=e(app.METHODOLOGY_VERSION),
-        licence=OPEN_DATA_LICENCE, columns=columns,
+        licence=OPEN_DATA_LICENCE, columns=columns, caa_year=caa_contour_year(),
         crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Open data', '/open-data/')]))
     return {OPEN_DATA_CSV: open_data_csv(rows), 'index.html': page}
 

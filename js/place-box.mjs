@@ -13,6 +13,11 @@
 export const EXAMPLE = { postcode: 'TW9 3PZ', latitude: 51.476982, longitude: -0.285639, admin_district: 'Richmond upon Thames' };
 
 export const POSTCODE = /^[a-z]{1,2}\d[a-z\d]?\s*\d[a-z]{2}$/i;
+
+// A real postcode with no map reference: postcodes.io answers the Isle of Man's and the Channel Islands' with a null
+// latitude. ONE sentence for / and /api/ (audit M-18, 2026-11-12: the front page passed the null on and showed the API's
+// developer message, "lat and lon are required and must be numbers.").
+export const noPointSaid = (pc) => `${pc} has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none.`;
 const PARTLY = /^[a-z]{1,2}\d/i;
 // The start of a postcode from end to end, so "b1 flat 3, high street" is not sent while typing.
 const STARTING = /^[a-z]{1,2}\d[a-z\d]?(\s*\d[a-z]{0,2})?$/i;

@@ -79,5 +79,28 @@ class LlmsTxtTests(unittest.TestCase):
         self.assertIn('Quiet Skies is an estimate', gate.shown('llms.txt')[0])
 
 
+
+PLANES = ROOT / 'data' / 'planes' / 'airports.json'
+
+
+@unittest.skipUnless(PLANES.exists(), 'data/planes/airports.json is not on this clone (gitignored; planes-deploy ships it)')
+class LlmsTxtPlanesPeriodTests(unittest.TestCase):
+    """The planes line's period is the counts' own (audit M-29, 2026-11-12): every other surface reads it from
+    data/planes/airports.json, and this one copy was typed, so the next planes roll would have left it behind."""
+
+    def test_the_planes_period_is_the_counts_own(self):
+        import json
+
+        from conftest import load_script
+
+        period = load_script('build_planes_pages').period
+        airports = json.loads(PLANES.read_text(encoding='utf-8'))['airports']
+        periods = {period(a['months']) for a in airports.values() if a.get('months')}
+        self.assertEqual(len(periods), 1, f'the airports are counted over different periods ({sorted(periods)}): '
+                                          'llms.txt says one; reword it before relaxing this')
+        line = next(ln for ln in text().splitlines() if '/planes-overhead/' in ln and 'counted from flight tracking' in ln)
+        self.assertIn(f'counted from flight tracking, {periods.pop()},', line)
+
+
 if __name__ == '__main__':
     unittest.main()

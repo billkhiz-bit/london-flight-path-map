@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-12 (night) - A phone keeps its place, plainer words, and the last audit fixes
+
+- **Choosing a buyer profile on a phone keeps you on Rankings**: with a result open, picking a profile threw the phone back to Search and drew the ranking table over the map. It now re-sorts the ranking where you are.
+- **Escape closes one thing at a time**: on a phone with a result open, Escape on the Layers menu also closed the result. It now closes the menu, and a second Escape closes the result.
+- **Isle of Man and Channel Islands postcodes are answered plainly**: the front page showed a message meant for developers. It now says these postcodes have no map reference, as the API page does.
+- **Tied prices say so**: 16 Bay Area cities whose home values sit at the Census's top figure each read "35 of 50" by price, as if they were in order. They now say "joint 35th", and how many share the figure.
+- **The API page names all of what it covers**: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities. It said "97 boroughs" and left out the Bay Area.
+- **Smaller corrections**: the open data page compares DEFRA's map with the CAA's 2025 contours (it still said 2024); the About page says the Bay Area is now scored; three buttons on the full map show the same focus ring as the rest of the site; and the ring that guides a first visit to the search box is a deeper orange, easier to see against the panel.
+
 ## 2026-11-12 (late) - Five fixes on the full map, and a check on the sample report
 
 - **Nine London place names answer again**: Mayfair, Southall, Hendon, Fitzrovia, Mill Hill, Neasden, Palmers Green, Limehouse and Wallington each looked up a postcode Royal Mail had retired, so the search said "not found". Each now uses a live postcode nearby in the same district, and a check holds every place name to a live postcode.

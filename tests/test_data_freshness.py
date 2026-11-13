@@ -121,3 +121,48 @@ def test_faa_reads_the_cycle_in_effect_today_not_the_oldest_listed(monkeypatch, 
 
     monkeypatch.setattr(fresh, 'TODAY', datetime.date(2026, 11, 26))
     assert fresh.cifp()[1:3] == ('2026-11-26', 'NEWER')
+
+
+class _Answer:
+    status = 200
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def test_a_request_with_no_answer_is_asked_again_and_three_silences_stay_inconclusive(monkeypatch):
+    # DEFRA's Round 4 airport service hung on about one request in three (2026-11-12): one silence must not
+    # make the row INCONCLUSIVE, three must, and a 404 is "not there" at once, never asked again.
+    import urllib.error
+
+    import pytest
+
+    calls = []
+
+    def flaky(silent, then):
+        def urlopen(req, timeout):
+            calls.append(timeout)
+            if len(calls) <= silent:
+                raise TimeoutError('The read operation timed out')
+            if then == 404:
+                raise urllib.error.HTTPError(req.full_url, 404, 'Not Found', {}, None)
+            return _Answer()
+        return urlopen
+
+    monkeypatch.setattr(fresh.urllib.request, 'urlopen', flaky(2, 200))
+    assert fresh.resolves('https://example.invalid/round-4') is True
+    assert len(calls) == 3 and all(t <= 15 for t in calls)
+
+    calls.clear()
+    monkeypatch.setattr(fresh.urllib.request, 'urlopen', flaky(3, 200))
+    with pytest.raises(TimeoutError):
+        fresh.resolves('https://example.invalid/round-4')
+    assert len(calls) == 3
+
+    calls.clear()
+    monkeypatch.setattr(fresh.urllib.request, 'urlopen', flaky(0, 404))
+    assert fresh.resolves('https://example.invalid/round-5') is False
+    assert len(calls) == 1

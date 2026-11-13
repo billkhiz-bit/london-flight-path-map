@@ -47,8 +47,11 @@ const ok = (cond, name, detail = '') => {
   console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${name}${cond || !detail ? '' : `: ${detail}`}`);
 };
 const FAILS = /NOT FOUND|NOT COVERED|NOT ON THE MAP|CONNECTION ISSUE/;
-const ORANGE = 'rgb(242, 125, 38)';
-const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/;
+// The ring at rest is the focus orange, --focus #d35a12 (audit M-9, Bill's pick A, 2026-11-12): the brand orange read
+// 2.60:1 against the panel, under the 3:1 a control's edge needs (WCAG 1.4.11). Measured against what is behind it.
+const RING = 'rgb(211, 90, 18)';
+const lumOf = (rgb) => { const [r, g, b] = rgb.match(/\d+/g).slice(0, 3).map((v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const contrastOf = (a, b) => { const [x, y] = [lumOf(a), lumOf(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/;
 
 const browser = await chromium.launch();
 const errors = [];
@@ -91,9 +94,15 @@ console.log('Desktop, first visit');
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
   const rest = await page.evaluate(() => {
     const i = getComputedStyle(document.getElementById('search-input'));
-    return { border: i.borderTopColor, shadow: i.boxShadow, light: getComputedStyle(document.querySelector('.search-comet')).opacity };
+    // The first painted background behind the box: the panel the ring is seen against.
+    let el = document.getElementById('search-input').parentElement;
+    let panel = 'rgba(0, 0, 0, 0)';
+    while (el && /rgba\(0, 0, 0, 0\)|transparent/.test(panel)) { panel = getComputedStyle(el).backgroundColor; el = el.parentElement; }
+    return { border: i.borderTopColor, shadow: i.boxShadow, light: getComputedStyle(document.querySelector('.search-comet')).opacity, panel };
   });
-  ok(rest.border === 'rgb(242, 125, 38)' && /3px/.test(rest.shadow) && rest.light === '0', 'at rest the light is gone and the box keeps a still orange ring', JSON.stringify(rest));
+  ok(rest.border === RING && contrastOf(rest.border, rest.panel) >= 3 && /3px/.test(rest.shadow) && rest.light === '0',
+    'at rest the light is gone and the box keeps a still ring in the focus orange, 3:1 or more against the panel (WCAG 1.4.11, audit M-9)',
+    JSON.stringify({ ...rest, ratio: contrastOf(rest.border, rest.panel).toFixed(2) }));
   const chips = await page.evaluate(() => ({
     row: getComputedStyle(document.getElementById('search-try')).display,
     panel: [...document.querySelectorAll('#sidebar-content .quicksearch .quicksearch-chip')].map((b) => b.textContent),
@@ -120,7 +129,7 @@ console.log('Reduced motion');
     border: getComputedStyle(document.getElementById('search-input')).borderTopColor,
     light: getComputedStyle(document.querySelector('.search-comet')).opacity,
   }));
-  ok(r.guide && r.running === 0 && r.border === ORANGE && r.light === '0', 'with reduced motion: the still ring at once, no light, nothing moving', JSON.stringify(r));
+  ok(r.guide && r.running === 0 && r.border === RING && r.light === '0', 'with reduced motion: the still ring at once, no light, nothing moving', JSON.stringify(r));
   await ctx.close();
 }
 
@@ -357,6 +366,47 @@ console.log('The audit\'s map-state faults');
   const panel = await page.evaluate(() => document.getElementById('sidebar-content')?.innerText || '');
   ok(typeof want === 'number' && panel.includes(`${want.toFixed(1)}/10`) && /Investor/.test(panel),
     'Trafford clicked after choosing Investor shows the Investor score, as the ranking has it', `want ${want} | ${panel.slice(0, 160).replace(/\s+/g, ' ')}`);
+  await ctx.close();
+}
+for (const [what, q, want] of [['a postcode', 'TW9 3PZ', /TW9 3PZ/], ['a borough', 'Hounslow', /HOUNSLOW/]]) {
+  // I-18: on a phone, a profile chosen in Rankings with a result open keeps the phone on Rankings (it was thrown back to
+  // Search, the table drawn over the map), and the result is redrawn for the new profile, still the same result.
+  const { ctx, page } = await visit('', { width: 390, height: 844 });
+  await page.evaluate((s) => triggerSearch(s), q);
+  await answered(page);
+  await page.locator('.mobile-nav-btn[data-mview="ranking"]').click();
+  await page.waitForFunction(() => document.querySelector('.app')?.dataset.mview === 'ranking', null, { timeout: 5000 }).catch(() => {});
+  await page.locator('#persona-bar .persona-btn[data-persona="family"]').click();
+  await page.waitForTimeout(600);
+  const st = await page.evaluate(() => ({
+    mview: document.querySelector('.app')?.dataset.mview,
+    nav: document.querySelector('.mobile-nav-btn[aria-current="page"]')?.dataset.mview,
+    persona: currentPersona,
+    title: document.getElementById('sidebar-title')?.textContent.trim(),
+  }));
+  ok(st.mview === 'ranking' && st.nav === 'ranking' && st.persona === 'family' && want.test(st.title),
+    `on a phone, a profile chosen in Rankings with ${what} open stays on Rankings and keeps the result`, JSON.stringify(st));
+  await ctx.close();
+}
+{
+  // M-14: on a phone with a result card open, Escape on the Layers popover closes the popover only; a second closes the card.
+  const { ctx, page } = await visit('', { width: 390, height: 844 });
+  await page.evaluate(() => triggerSearch('TW9 3PZ'));
+  await answered(page);
+  // A keyboard user's path (Escape is a key): the open card covers the Layers button on a phone, so a pointer cannot reach it.
+  await page.locator('#layers-trigger').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.getElementById('layers-trigger')?.getAttribute('aria-expanded') === 'true', null, { timeout: 5000 }).catch(() => {});
+  const cardOpen = () => page.evaluate(() => !document.querySelector('#tab-analysis .no-result-yet') && getComputedStyle(document.getElementById('result-close')).display !== 'none');
+  const before = { popover: await page.evaluate(() => document.getElementById('layers-trigger').getAttribute('aria-expanded')), card: await cardOpen() };
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  const first = { popover: await page.evaluate(() => document.getElementById('layers-trigger').getAttribute('aria-expanded')), card: await cardOpen() };
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  const second = { card: await cardOpen() };
+  ok(before.popover === 'true' && before.card && first.popover === 'false' && first.card && !second.card,
+    'on a phone, Escape on the Layers popover closes it and leaves the result card open; a second Escape closes the card', JSON.stringify({ before, first, second }));
   await ctx.close();
 }
 {
