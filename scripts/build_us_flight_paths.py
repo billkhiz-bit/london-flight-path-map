@@ -79,8 +79,9 @@ PAGE = 'https://www.faa.gov/air_traffic/flight_info/aeronav/digital_products/cif
 ZIP_URL = re.compile(r'https://aeronav\.faa\.gov/Upload_313-d/cifp/CIFP_(\d{6})\.zip')
 MEMBER = 'FAACIFP18'
 NOT_CODED = 'Not_In_CIFP.xlsx'
-# Cycle 2611 (effective 2026-10-29) renamed it Not_In_CIFP_2611.xlsx: found by pattern, exactly one per zip.
-NOT_CODED_NAME = re.compile(r'^Not_In_CIFP(_\d{4})?\.xlsx$')
+# Cycle 2611 (effective 2026-10-29) renamed it Not_In_CIFP_2611.xlsx, and 2612 (2026-11-26) "Not In CIFP.xlsx":
+# found by pattern (an underscore or a space between words), exactly one per zip; anything else still refuses.
+NOT_CODED_NAME = re.compile(r'^Not[_ ]In[_ ]CIFP([_ ]\d{4})?\.xlsx$')
 
 
 def not_coded_member(names):
