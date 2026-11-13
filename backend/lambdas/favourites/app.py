@@ -271,6 +271,11 @@ def handler(event, context):
             postcode = body.get('postcode', '')
             if not isinstance(postcode, str) or not postcode.strip():
                 return response(400, {'error': 'Postcode is required and must be a string'})
+            # Past DynamoDB's 1,024-byte sort key its ValidationException answered 503
+            # (audit M-11, 12 Nov 2026). A save refuses anything over the cap, so no
+            # stored favourite is longer: a longer delete is the caller's 400.
+            if len(postcode) > MAX_LOCATION_LEN:
+                return response(400, {'error': f'Postcode exceeds the maximum length of {MAX_LOCATION_LEN} characters.'})
             table.delete_item(Key={'userId': token, 'postcode': postcode})
             return response(200, {'message': 'Deleted'})
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-11-13 - Tidier errors, a fresh report picture, and two notes reworded
+
+- **Bad sign-up requests get a plain answer**: a sign-up sent with something other than text in a field was answered as a server fault. It is now told what was wrong. Removing a saved place with an over-long postcode is the same.
+- **The report picture on the front page stays current**: after the sample report was remade, a returning visitor's phone could keep showing the old picture. It now checks for a newer one.
+- **Two data notes say "modelled"**: two of our published data files described DEFRA's aircraft noise map as "measured". DEFRA's map is a model; the notes now say so.
+- **Reports keep their smallest text readable**: a report with any text under 8 pt, chart labels included, is no longer produced.
+- **A report's reference now covers its planes counts**: from 14 November, checking a copy also checks the planes figures it prints, so a copy made before a planes update no longer reads as current. Copies made earlier still check the way they were made.
+- **Credits say where the planes counts come from**: the front page, Pricing, the API page, About and How it works now say "official public data and community flight tracking", as the reports do.
+- **Shorter titles and descriptions in search results**: ten pages had titles or descriptions too long for a search result to show whole.
+- **A postcode answer stays put**: on the full map, a postcode answered in the first moments after the page opened could be replaced by its council's panel when the rest of the data arrived. It now stays the postcode's answer.
+- **Smaller corrections**: the full map's air panel stays quiet, rather than failing, if an older copy of its code is still cached.
+
 ## 2026-11-12 (night) - A phone keeps its place, plainer words, and the last audit fixes
 
 - **Choosing a buyer profile on a phone keeps you on Rankings**: with a result open, picking a profile threw the phone back to Search and drew the ranking table over the map. It now re-sorts the ranking where you are.

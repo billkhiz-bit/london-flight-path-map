@@ -42,6 +42,7 @@
  * inputs off the disk and prints the page to PDF with Playwright.
  */
 import { chromium } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -189,7 +190,7 @@ const layerSteps = (await readJson('data/planes-layer/index.json')).steps || [];
 // THE REFERENCE AND CHECK LINK the free copy carries (js/street_report.mjs, one holder), for the day in UTC as the free
 // copy takes it, so a firm's copy can be checked at /reports/street/ exactly as a resident's can (2026-11-12).
 const made = new Date().toISOString().slice(0, 10);
-const ref = await reportReference(loc.postcode, made, proc.airac, env);
+const ref = await reportReference(loc.postcode, made, proc.airac, env, planesHere);
 const html = reportDocument(
   { ...spec, made, ref, check: checkLink(loc.postcode, made, ref) },
   {
@@ -238,8 +239,26 @@ try {
   // and the notes. Count the page objects rather than trusting the layout. A fourth page is REFUSED: the new file is
   // removed and the last good one left where it was (audit M-8, 2026-11-12: it used to be written over it, then exit 1).
   const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) || []).length;
+  // No text under 8 pt, chart labels included (Bill's rule for the three-page build), measured on the printed file by
+  // the one holder, scripts/report_text_floor.py (audit M-6, 2026-11-13). Refused the same way as a fourth page; a
+  // floor that could not be measured refuses too, because an unmeasured report is not a checked one.
+  let floorFault = null;
+  if (pages <= 3) {
+    try {
+      execFileSync('python', [resolve('scripts/report_text_floor.py'), tmp], { encoding: 'utf8', stdio: 'pipe' });
+    } catch (e) {
+      floorFault =
+        e.status === 1
+          ? `the report has text under 8 pt (${(e.stdout || '').trim()}) - fit it before sending`
+          : `the 8 pt floor could not be measured (${(e.stderr || e.message || '').trim().split('\n').pop()})`;
+    }
+  }
   if (pages > 3) {
     console.error(`the report ran to ${pages} pages, not 3 - fit it before sending; ${spec.out} was left as it was`);
+    process.exitCode = 1;
+    await unlink(tmp).catch(() => {});
+  } else if (floorFault) {
+    console.error(`${floorFault}; ${spec.out} was left as it was`);
     process.exitCode = 1;
     await unlink(tmp).catch(() => {});
   } else {

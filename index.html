@@ -17,12 +17,12 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
 
-    <title>Sky Score, UK property quality data · noise, liveability, affordability</title>
+    <title>Sky Score: noise and liveability map</title>
 
     <!-- OG Meta Tags for social sharing -->
     <meta
       name="description"
-      content="Sky Score: noise, liveability and affordability data for property in UK city regions, New York and the San Francisco Bay Area. Independent of estate agents and listings sites. Free, open methodology."
+      content="Noise, liveability and affordability data for property in UK city regions, New York and the Bay Area. Independent of estate agents. Free, open method."
     />
     <meta property="og:title" content="Sky Score, independent property quality data" />
     <meta
@@ -9894,15 +9894,11 @@
               /* not yet ready */
             }
           }
-          if (typeof selectedBorough !== 'undefined' && selectedBorough) {
-            const data = typeof getActiveBoroughData === 'function' ? getActiveBoroughData()[selectedBorough] : null;
-            if (data && typeof updateSidebar === 'function') {
-              try {
-                updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false });
-              } catch (e) {
-                /* sidebar not in analysis mode */
-              }
-            }
+          // What the panel shows, redrawn as itself (audit M-15, 2026-11-13): a postcode answer stays a postcode answer.
+          try {
+            redrawPanelSubject();
+          } catch (e) {
+            /* sidebar not in analysis mode */
           }
         } catch (err) {
           // One retry first: this file is small and same-origin, so a single
@@ -9920,12 +9916,7 @@
           console.warn('borough-extra hydration failed; scores are incomplete:', err);
           try {
             if (typeof renderBoroughRanking === 'function') renderBoroughRanking();
-            if (typeof selectedBorough !== 'undefined' && selectedBorough) {
-              const d = typeof getActiveBoroughData === 'function' ? getActiveBoroughData()[selectedBorough] : null;
-              if (d && typeof updateSidebar === 'function') {
-                updateSidebar({ name: selectedBorough, ...d }, { switchToAnalysis: false });
-              }
-            }
+            redrawPanelSubject(); // as above (audit M-15)
           } catch (e) {
             /* nothing rendered yet - the notice appears on first render instead */
           }
@@ -10176,8 +10167,7 @@
             price,
             impact,
             avg_price: price,
-            trend: boroughRaw[borough]?.trend || 3,
-            trend_pct: '+' + (boroughRaw[borough]?.trend || 3) + '%',
+            // No trend fields (audit M-17, 2026-11-13): nothing read them, and both said +3% for a borough with none.
             scores: {
               quiet: Math.round(quiet * 10) / 10,
               afford: Math.round(afford * 10) / 10,
@@ -12147,12 +12137,14 @@
         if (!loaded || !stillCurrent()) return;
         // Read, worded and built by js/street_report.mjs (airSquare, airModelOf, the key notes, airRows) since 2026-11-11,
         // when the street report took the same charts: one reading of the API's answer for both.
-        const square = loaded[0].airSquare(env);
         const [m, sensors, monitors] = loaded;
         const section = document.getElementById('postcode-air-section');
         const el = document.getElementById('postcode-air-data');
         if (!section || !el) return;
         try {
+          // Inside the guard (audit M-10, 2026-11-13): a module from an older cache has no airSquare either, and this
+          // line, above the try, threw out of the panel's loader instead of leaving the section hidden.
+          const square = m.airSquare(env);
           const sensor = sensors ? m.nearestSensor(sensors, lat, lon) : null;
           const monitor = monitors ? m.nearestMonitor(monitors, lat, lon) : null;
           if (!sensor && !monitor) return;
@@ -16429,31 +16421,42 @@
         if (desc) desc.textContent = PERSONAS[currentPersona].desc;
         recalcAllScores();
         renderBoroughRanking();
-        // Refresh the sidebar for WHATEVER it is showing (stay on Rankings
-        // tab). A postcode result is re-rendered as a postcode result, with
-        // the borough record recalculated for the new persona - it was the
-        // borough panel that replaced it before (I19).
+        // Said for the new buyer (audit M-12, 2026-11-09; WCAG 4.1.3): the redraw announced "Results loaded for SW5 9HP",
+        // all a screen reader heard of a changed profile. The card's own verdict label says the score, never retyped here.
+        if (redrawPanelSubject() === 'postcode') {
+          const verdict = document.querySelector('#sidebar-content .summary-verdict[aria-label]');
+          if (verdict) announceResult(`${verdict.getAttribute('aria-label')}.`);
+        }
+      }
+
+      // Refresh the sidebar for WHATEVER it is showing (stay on the tab you are on). A postcode result is re-rendered as a
+      // postcode result, with the borough record recalculated - it was the borough panel that replaced it before (I19).
+      // ONE rule for a profile change and the late borough-data load (audit M-15, 2026-11-13): the load redrew
+      // selectedBorough, which a postcode search sets to its council, so an answer given before the data arrived became
+      // the council's panel. Never a new result: reveal: false (audit I-18) keeps a phone where it is.
+      function redrawPanelSubject() {
         if (panelSubject.kind === 'postcode') {
           const a = panelSubject.analysis;
           const activeTab = document.querySelector('.tab.active')?.dataset.tab;
-          // reveal: false (audit I-18): a profile change keeps the visitor where they are; Rankings stays Rankings on a phone.
           updateSidebarPostcode(a, matchBorough(a.borough) || null, undefined, { reveal: false });
           if (activeTab) switchTab(activeTab);
-          // Said for the new buyer (audit M-12, 2026-11-09; WCAG 4.1.3): the redraw announced "Results loaded for SW5 9HP",
-          // all a screen reader heard of a changed profile. The card's own verdict label says the score, never retyped here.
-          const verdict = document.querySelector('#sidebar-content .summary-verdict[aria-label]');
-          if (verdict) announceResult(`${verdict.getAttribute('aria-label')}.`);
-        } else if (panelSubject.bay && selectedBorough) {
+          return 'postcode';
+        }
+        if (panelSubject.bay && selectedBorough) {
           // A Bay Area card keeps its ZIP or neighbourhood and takes the new persona's score (a city's record
           // is read again; a neighbourhood has no score to change). selectedBorough is cleared by switchCity(),
           // so a card left behind by another city is never redrawn over the new one.
           const { p, ...opts } = panelSubject.bay;
           const fresh = opts.tier === 'city' ? getActiveBoroughData()[p.name] : null;
           renderPlaceFacts(fresh || p, { ...opts, switchToAnalysis: false, reveal: false });
-        } else if (selectedBorough) {
+          return 'bay';
+        }
+        if (selectedBorough) {
           const data = getActiveBoroughData()[selectedBorough];
           if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false, reveal: false });
+          return 'borough';
         }
+        return 'none';
       }
 
       let rankingView = 'neighbourhood'; // 'borough' or 'neighbourhood'

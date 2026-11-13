@@ -140,6 +140,56 @@ class FavouritesDeleteShapeTests(unittest.TestCase):
         self.assertEqual(result['statusCode'], 400)
         table.delete_item.assert_not_called()
 
+    def test_postcode_past_the_sort_key_limit_is_400(self):
+        # Audit M-11 (12 Nov 2026): DynamoDB refuses a sort key over 1,024 bytes, and
+        # its ValidationException answered 503 about storage.
+        result, table = self._delete(json.dumps({'postcode': 'A' * 1025}))
+        self.assertEqual(result['statusCode'], 400)
+        table.delete_item.assert_not_called()
+
+
+class SignupBodyShapeTests(unittest.TestCase):
+    """Audit M-11 (12 Nov 2026): a body that is not an object, or a field that is
+    not text, is a 400. Each answered 500, so anyone could trip the 5xx alarm."""
+
+    BODIES = (
+        '[]',
+        '"you@example.com"',
+        '1',
+        'true',
+        'false',
+        json.dumps({'email': 1}),
+        json.dumps({'email': ['you@example.com']}),
+        json.dumps({'email': 'you@example.com', 'name': 5}),
+        json.dumps({'email': 'you@example.com', 'source': 1}),
+        json.dumps({'email': 'you@example.com', 'postcode': {}}),
+    )
+
+    def setUp(self):
+        self.app = load_lambda('signup', 'signup_app_errors')
+
+    def test_each_bad_body_is_400_before_any_lookup(self):
+        for body in self.BODIES:
+            with self.subTest(body=body), \
+                 patch.object(self.app, 'get_existing_signup') as lookup, \
+                 patch.object(self.app, 'start_verification') as verify:
+                result = self.app.handler({'httpMethod': 'POST', 'body': body}, None)
+                self.assertEqual(result['statusCode'], 400)
+                self.assertIn('error', json.loads(result['body']))
+                lookup.assert_not_called()
+                verify.assert_not_called()
+
+    def test_null_fields_still_read_as_absent(self):
+        # null was always "not given": it must keep reaching the address check.
+        with patch.object(self.app, 'get_existing_signup') as lookup:
+            result = self.app.handler({
+                'httpMethod': 'POST',
+                'body': json.dumps({'email': None, 'name': None}),
+            }, None)
+        self.assertEqual(result['statusCode'], 400)
+        self.assertIn('valid email', json.loads(result['body'])['error'])
+        lookup.assert_not_called()
+
 
 class ChatClientReuseTests(unittest.TestCase):
     """M15: one client per container, not one per request."""

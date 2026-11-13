@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
 
 import { answerLead } from '../js/answer-lead.mjs';
 import { districtOf, planesModel } from '../js/planes.mjs';
-import { reportReference } from '../js/street_report.mjs';
+import { REF_PLANES_FROM, reportReference } from '../js/street_report.mjs';
 
 const SAMPLE = resolve('home/reports/sample-street-report-kew.pdf');
 const POSTCODE = 'TW9 3PZ';
@@ -60,9 +60,15 @@ try {
 }
 
 const proc = await readJson('data/flight-procedures.json');
-const fresh = await reportReference(POSTCODE, made, proc.airac, env);
 const planesFile = `data/planes/${districtOf(POSTCODE)}.json`;
 const model = existsSync(resolve(planesFile)) ? planesModel(await readJson(planesFile), await readJson('data/planes/airports.json'), POSTCODE) : null;
+// From REF_PLANES_FROM a copy's reference takes its planes figures (audit M-4): without the counts (gitignored) that
+// half cannot be recomputed, which is not the same as a stale sample.
+if (made >= REF_PLANES_FROM && !existsSync(resolve(planesFile))) {
+  console.log(`INCONCLUSIVE: ${planesFile} is not in this clone, and the sample's reference (made ${made}) takes the planes figures`);
+  process.exit(0);
+}
+const fresh = await reportReference(POSTCODE, made, proc.airac, env, model);
 const steps = (await readJson('data/planes-layer/index.json')).steps || [];
 const lead = answerLead(env, POSTCODE, model, steps);
 

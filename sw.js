@@ -378,10 +378,15 @@ self.addEventListener('fetch', (event) => {
   // because the Swagger page renders it, and found cache-first here by
   // tests/test_sw_no_cache_prefixes.py on the day that test was written.
   // The vendored Swagger UI beside it stays cache-first; it is version-pinned.
+  // /reports/ (audit M-26, 2026-11-13): the front page's picture of the sample
+  // report keeps ONE name (scripts/build_report_still.py) and is rebuilt with
+  // each sample, so cache-first kept a returning visitor on the first picture
+  // they saw. Its max-age (a day, like the PDF) still spares the round trip.
   if (
     url.origin === self.location.origin &&
     (url.pathname.startsWith('/preview/') ||
       url.pathname.startsWith('/open-data/') ||
+      url.pathname.startsWith('/reports/') ||
       url.pathname === '/score-demo/openapi.yaml')
   ) {
     event.respondWith(networkFirstAsset(req));

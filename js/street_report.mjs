@@ -192,9 +192,23 @@ const STATED = [
 ];
 const REF_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I to misread
 
-/** The reference for a copy: 8 characters of a SHA-256 over what the copy states. */
-export async function reportReference(postcode, made, airac, env) {
-  const text = JSON.stringify([postcode, made, airac ?? null, ...STATED.map((k) => (typeof env[k] === 'number' ? env[k] : null))]);
+// The planes figures join the reference for copies made from this day (audit M-4, Bill's pick A, 2026-11-13): before it a
+// planes roll left the check saying "matches" over out-of-date planes figures. The recipe is chosen by the copy's OWN day,
+// so the copy and its check always agree, and every copy made before this day still checks the way it was made.
+export const REF_PLANES_FROM = '2026-11-14';
+
+/** The planes figures a copy states, for its reference: each airport's period and figures in the model's order, and
+ * whether it says "Under 1 a day". Null when the copy has no planes block. */
+export function planesStated(model) {
+  if (!model) return null;
+  return [model.none ? 'none' : null, ...(model.airports || []).map((a) => [a.code, a.period, ...a.rows.map((r) => r.value ?? null)])];
+}
+
+/** The reference for a copy: 8 characters of a SHA-256 over what the copy states. `planes` is the copy's planesModel(). */
+export async function reportReference(postcode, made, airac, env, planes = null) {
+  const stated = [postcode, made, airac ?? null, ...STATED.map((k) => (typeof env[k] === 'number' ? env[k] : null))];
+  if (made >= REF_PLANES_FROM) stated.push(planesStated(planes));
+  const text = JSON.stringify(stated);
   const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
   let out = '';
   for (let i = 0; i < 8; i++) out += REF_ALPHABET[d[i] & 31];

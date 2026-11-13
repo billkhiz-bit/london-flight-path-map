@@ -121,7 +121,7 @@ Or just describe what you need, I have full context of this project.
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
   **DEFRA's Heathrow map and the CAA's yearly contours are ONE model on two years** (ANCON v2.4; read from the PDFs 2026-11-06: Heathrow's Noise Action Plan 2024-2028 pp. 9 and 38, ERCD 2201, ERCD 2601): never "different models". "A highly anomalous situation" is cited to that plan, p. 9: DEFRA's authorship of it was never found.
-  **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
+  **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules, + every uploaded JSON's string values since audit M-27, 2026-11-13), on
   what a visitor sees; a new exception goes in its allow-lists WITH its reason, never a looser pattern.
 
 ## Rules that bite
@@ -328,8 +328,11 @@ Or just describe what you need, I have full context of this project.
   aircraft "Good here" beside a planes watch; a card can differ from a map pill (the map bands aircraft noise and rates road by
   council). "What this shows" is GONE: its lines sit under the key figures (why no DEFRA figure) and the routes table (beside a
   runway). The reference (`reportReference`, `checkLink`) moved here from the free copy, unchanged: a test pins TW9 3PZ's live
-  HCH7-V2UJ. Every printed page carries the reference and "Page x of 3" (@page margin boxes). Body and table 10.5 pt, labels and
-  captions 9.5, notes 10.5, sources 8.5, and NO text under 8 pt, chart labels included (pdfium reports CSS px: x0.75 for pt);
+  HCH7-V2UJ. From `REF_PLANES_FROM` (2026-11-14) the reference takes the copy's planes figures too (`planesStated()`, M-4, Bill's
+  pick A), the recipe chosen by the copy's OWN day: every caller passes its planesModel(), never a retyped figure.
+  Every printed page carries the reference and "Page x of 3" (@page margin boxes). Body and table 10.5 pt, labels and
+  captions 9.5, notes 10.5, sources 8.5, and NO text under 8 pt, chart labels included (pdfium reports CSS px: x0.75 for pt;
+  ONE measure, `scripts/report_text_floor.py`: the script refuses a report under it, `tests/test_report_text_floor.py` holds the sample; M-6);
   `address_noise_report.mjs` refuses a fourth page and leaves the last good file. Check a layout change on TW9 3PZ, SW1P 3JA,
   E16 2PX, TW6 2GA (16 routes; page 3 is the tight one), NW1 4RY, M22 5RX, LS1 4DY and N3 1JN (three airports; page 2 95%).
   A neighbour's road reading (`resolvedAs`) is never this postcode's, as on the map; "Under 1 a day" carries the planes' rules
@@ -362,7 +365,7 @@ Or just describe what you need, I have full context of this project.
   (a footer change re-dates them all in the sitemap); counted `<page>-linkedin`; `tests/test_linkedin_company_link.py`
   holds every copy, so at the rename change the holder and it names what is left.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
-  worker installing everywhere; `/data/` is network-first; `/badge` passes through; every `no-cache` upload in
+  worker installing everywhere; `/data/` and `/reports/` (the report picture keeps one name, M-26) are network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).

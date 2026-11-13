@@ -1443,7 +1443,7 @@ OPEN_DATA_PAGE = """<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Open data - Sky Score</title>
-<meta name="description" content="Download Sky Score's borough-level scores and inputs for {n} UK areas as one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices, from official public data." />
+<meta name="description" content="Download Sky Score's scores and inputs for {n} UK council areas as one CSV: aircraft and road noise, air quality, flood risk, crime, schools and prices." />
 <link rel="canonical" href="{site}/open-data/" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="{site}/open-data/" />

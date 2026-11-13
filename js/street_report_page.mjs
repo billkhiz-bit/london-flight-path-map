@@ -173,7 +173,9 @@ async function make(raw, check = null) {
     // (audit 2026-10-09 M-6: the report read the local clock, this the UTC one).
     const made = new Date().toISOString().slice(0, 10);
     // Worked out before the report too, which states it in its details (the check block below says it again, with the link).
-    const ref = await reportReference(loc.postcode, made, proc.airac, env);
+    // The planes figures the copy prints are part of its reference from REF_PLANES_FROM (audit M-4): one model for both.
+    const planesHere = planesModel(planesFile, planesInfo, loc.postcode);
+    const ref = await reportReference(loc.postcode, made, proc.airac, env, planesHere);
     const html = reportDocument(
       { postcode: loc.postcode, made, ref },
       {
@@ -184,7 +186,7 @@ async function make(raw, check = null) {
         notices: envBody.notices,
         env,
         provenance: envBody.provenance,
-        planes: { model: planesModel(planesFile, planesInfo, loc.postcode), steps: (layer && Array.isArray(layer.steps) && layer.steps) || [] },
+        planes: { model: planesHere, steps: (layer && Array.isArray(layer.steps) && layer.steps) || [] },
         routes,
         district,
         covid,
@@ -346,7 +348,7 @@ async function make(raw, check = null) {
     }
     result.classList.add('is-open');
     // The check's verdict before "ready": whoever waits for ready sees the verdict with it.
-    if (check) await showCheck(check, loc.postcode, proc.airac, env);
+    if (check) await showCheck(check, loc.postcode, proc.airac, env, planesHere);
     say(`Your report for ${esc(loc.postcode)} is ready below.`);
     window.goatcounter?.count?.({ path: 'event/street-report-made', title: 'street-report-made', event: true });
   } catch (e) {
@@ -362,8 +364,8 @@ async function make(raw, check = null) {
  * states today's figures; a mismatch means the figures have moved since, or the copy was changed,
  * and the page says both, because it cannot tell which.
  */
-async function showCheck(check, postcode, airac, env) {
-  const expected = (await reportReference(postcode, check.made, airac, env)).replace('-', '');
+async function showCheck(check, postcode, airac, env, planes) {
+  const expected = (await reportReference(postcode, check.made, airac, env, planes)).replace('-', '');
   const shown = `${check.ref.slice(0, 4)}-${check.ref.slice(4)}`;
   const when = esc(longDate(check.made));
   const ok = expected === check.ref;

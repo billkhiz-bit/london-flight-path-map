@@ -1276,6 +1276,49 @@ console.log('Findings first');
     && strip.overStrip <= 0 && strip.pastTile <= 0 && strip.overWord.length === 0, JSON.stringify(strip));
   check('no page errors at 320 px', nwErrors.length === 0, nwErrors.slice(0, 2).join(' | '));
   await nw.close();
+
+  // AN OLDER CACHED MODULE LEAVES THE AIR SECTION HIDDEN, QUIETLY (audit M-10, 2026-11-13). renderAirNearby() called
+  // airSquare() ABOVE the try meant for exactly this case, so a street_report.mjs from before 2026-11-11 (no airSquare)
+  // threw out of the loader as an unhandled rejection. Served here with airSquare renamed away; the rest of the module
+  // is today's, so the only thing missing is the one function.
+  // Service workers blocked: sw.js fetches /js/ itself, and its requests never reach page.route.
+  const old = await browser.newPage({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
+  const oldErrors = [];
+  old.on('pageerror', (e) => oldErrors.push(e.message));
+  await old.addInitScript(() => {
+    window.__rejections = [];
+    window.addEventListener('unhandledrejection', (e) => window.__rejections.push(String(e.reason && e.reason.message || e.reason)));
+  });
+  let served = false;
+  await old.route('**/js/street_report.mjs*', async (r) => {
+    const body = (await readFile(join(ROOT, 'js', 'street_report.mjs'), 'utf8')).replace('export function airSquare(', 'function airSquareGone(');
+    served = !/export function airSquare\(/.test(body);
+    await r.fulfill({ status: 200, contentType: 'application/javascript', body });
+  });
+  await old.route('**/v1/environment**', (r) => json(r, environmentWith({ roadNoiseLdenDb: 71.8 })));
+  await old.route('**/transport?**', (r) => json(r, { stations: [], lineStatus: [] }));
+  await old.route('**/nhs?**', (r) => json(r, { gp: [], pharmacies: [], hospitals: [] }));
+  await old.route('**/sold-prices?**', (r) => json(r, { transactions: [] }));
+  await old.route('**/epc?**', (r) => json(r, { available: false }));
+  await old.goto(url, { waitUntil: 'domcontentloaded' });
+  await old.waitForTimeout(2500);
+  await old.evaluate((city) => window.switchCity(city), 'london');
+  await old.waitForTimeout(1200);
+  await old.fill('#search-input', 'SW5 9HP');
+  await old.press('#search-input', 'Enter');
+  // Reached on purpose: the module was asked for (the loader ran) and the panel answered.
+  const asked = await old.waitForFunction(() => /\S/.test(document.querySelector('[data-find="road"]')?.innerText || ''), null, { timeout: 15000 })
+    .then(() => true, () => false);
+  await old.waitForTimeout(2500);
+  const oldState = await old.evaluate(() => ({
+    hidden: document.getElementById('postcode-air-section')?.hidden ?? null,
+    rejections: window.__rejections,
+  }));
+  check('an older cached module without airSquare leaves the air section hidden, with no unhandled error',
+    served && asked && oldState.hidden === true && oldState.rejections.length === 0 && oldErrors.length === 0,
+    !served ? 'the old module was never served, so this case was not reached'
+      : !asked ? 'the search never answered, so this case was not reached' : JSON.stringify({ ...oldState, oldErrors }));
+  await old.close();
   console.log('');
 }
 

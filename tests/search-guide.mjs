@@ -422,6 +422,39 @@ for (const [what, q, want] of [['a postcode', 'TW9 3PZ', /TW9 3PZ/], ['a borough
   await ctx.close();
 }
 
+{
+  // M-15 (2026-11-13): a postcode answered BEFORE the borough data arrives stays the postcode's answer when it lands. The
+  // late load redrew selectedBorough, which a postcode search sets to its council, so TW9 3PZ became Richmond's panel.
+  // Reached on purpose: the data file is held until the answer is on screen. Service workers blocked, or the worker's own
+  // fetch of /data/ would pass the hold by.
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`M-15: ${e.message}`));
+  await stubLiveApi(page);
+  let release;
+  const hold = new Promise((r) => { release = r; });
+  let heldIt = false;
+  await page.route('**/data/borough-extra.json*', async (route) => {
+    heldIt = true;
+    await hold;
+    await route.continue().catch(() => {});
+  });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#search-input', { timeout: 20000 });
+  await page.evaluate(() => triggerSearch('TW9 3PZ'));
+  const first = await answered(page);
+  const early = await page.evaluate(() => panelSubject.kind);
+  const landed = page.waitForResponse((r) => r.url().includes('/data/borough-extra.json'), { timeout: 15000 }).then(() => true, () => false);
+  release();
+  const arrived = await landed;
+  await page.waitForTimeout(1200);
+  const st = await page.evaluate(() => ({ kind: panelSubject.kind, title: document.getElementById('sidebar-title')?.textContent.trim() }));
+  ok(heldIt && /TW9 3PZ/.test(first) && early === 'postcode' && arrived && st.kind === 'postcode' && /TW9 3PZ/.test(st.title),
+    'a postcode answered before the borough data arrives is still that postcode once it lands',
+    !heldIt || early !== 'postcode' ? `not reached: held ${heldIt}, answer "${first}" as ${early}` : JSON.stringify({ arrived, ...st }));
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 ok(errors.length === 0, 'no page errors', errors.join(' | '));

@@ -406,6 +406,14 @@ def handle_post(event):
     body = parse_body(event)
     if body is None:
         return response(400, {'error': 'Invalid or missing JSON body.'}, event)
+    # A body that is not an object, or a field that is not text, is the caller's
+    # mistake: each raised on `.get` / `.strip` and answered 500, so anyone could
+    # write 5xx lines and trip the 5xx alarm (audit M-11, 12 Nov 2026).
+    if not isinstance(body, dict):
+        return response(400, {'error': 'JSON body must be an object.'}, event)
+    for field in ('email', 'name', 'source', 'postcode'):
+        if body.get(field) is not None and not isinstance(body.get(field), str):
+            return response(400, {'error': f'{field} must be a string.'}, event)
 
     email = (body.get('email') or '').strip().lower()
     name = (body.get('name') or '').strip()

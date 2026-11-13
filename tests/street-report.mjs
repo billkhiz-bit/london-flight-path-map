@@ -235,6 +235,30 @@ const cardsOf = (body) => [...body.matchAll(/<div class="card (\w+)" data-card="
   const env = { aircraftNoiseLdenDb: 57.2, aircraftQuiet: 3.2, roadNoiseLdenDb: 50.5, no2AnnualMeanUgm3: 17.0, pm25AnnualMeanUgm3: 8.5 };
   const got = await m.reportReference('TW9 3PZ', '2026-11-12', '2026-10-29', env);
   ok(got === 'HCH7-V2UJ', 'the reference recipe is the one live copies were made with', got);
+
+  // THE PLANES FIGURES JOIN THE REFERENCE from REF_PLANES_FROM (audit M-4, Bill's pick A, 2026-11-13): a planes roll left
+  // the check saying "matches" over out-of-date planes figures. A copy's own day picks the recipe, so a copy made before
+  // the day still checks as it was made, whatever planes figures are passed.
+  const planes = (west, months = 'January to August 2026') => ({
+    none: null,
+    airports: [{ code: 'LHR', period: months, rows: [{ value: west }, { value: 4 }] }],
+  });
+  ok(await m.reportReference('TW9 3PZ', '2026-11-12', '2026-10-29', env, planes(310)) === 'HCH7-V2UJ',
+    'a copy made before the planes day keeps its reference whatever planes figures are passed');
+  const day = m.REF_PLANES_FROM;
+  const [a, b, c, d, e] = await Promise.all([
+    m.reportReference('TW9 3PZ', day, '2026-10-29', env, planes(310)),
+    m.reportReference('TW9 3PZ', day, '2026-10-29', env, planes(310)),
+    m.reportReference('TW9 3PZ', day, '2026-10-29', env, planes(311)),
+    m.reportReference('TW9 3PZ', day, '2026-10-29', env, planes(310, 'January to September 2026')),
+    m.reportReference('TW9 3PZ', day, '2026-10-29', env, null),
+  ]);
+  ok(a === b, 'from the planes day the same planes figures give the same reference', `${a} / ${b}`);
+  ok(a !== c, 'from the planes day a planes count that moved changes the reference', `${a} / ${c}`);
+  ok(a !== d, 'from the planes day a new counting period changes the reference', `${a} / ${d}`);
+  ok(a !== e, 'from the planes day a copy without a planes block has its own reference', `${a} / ${e}`);
+  ok(JSON.stringify(m.planesStated({ none: 'Under 1 a day ...', airports: [] })) === '["none"]' && m.planesStated(null) === null,
+    '"Under 1 a day" and no planes block are stated as themselves');
 }
 
 console.log(`street report: ${passed} checks passed${failed ? `, ${failed} FAILED` : ''}`);

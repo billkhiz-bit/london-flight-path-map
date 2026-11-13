@@ -99,6 +99,19 @@ def test_the_network_first_rules_feed_network_first():
         assert 'networkFirst' in m.group(2), f"the /{m.group(1)}/ rule does not call a networkFirst handler: {m.group(2).strip()[:80]}"
 
 
+def test_the_report_picture_is_network_first():
+    """Audit M-26 (2026-11-13): the front page's picture of the sample report is rebuilt under ONE name
+    (scripts/build_report_still.py SERVED), so cache-first kept the first copy a visitor saw. Read from its builder,
+    never typed here."""
+    served = re.search(r"^SERVED = '([^']+)'", read('scripts/build_report_still.py'), re.M)
+    assert served, 'build_report_still.py no longer names SERVED; re-read it before trusting this test'
+    first = served.group(1).lstrip('/').split('/')[0]
+    _, before_default = fetch_handler()
+    assert f"startsWith('/{first}/')" in before_default, (
+        f'{served.group(1)} is served cache-first by sw.js: a rebuilt picture never reaches a returning visitor'
+    )
+
+
 def test_preview_and_open_data_are_named_since_v1_0_36():
     """The two that prompted this file; proven red against the v1.0.35 handler."""
     _, before_default = fetch_handler()
