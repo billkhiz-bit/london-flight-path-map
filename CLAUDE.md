@@ -485,6 +485,8 @@ Or just describe what you need, I have full context of this project.
 - **Prove every new gate red on the defect itself** before trusting it green. Assert SETS, not counts.
 - **Measure the DOM, not the flag that should change it**; poll for the state you want, never one already true;
   reach edge states on purpose (a state reached by chance is not gated).
+- **A Playwright look is a user gesture** (`waitForSelector`, `evaluate`, `waitForFunction`: measured 2026-11-14): a test of
+  what a page does WITHOUT activation must not touch it first; let the page say when (a console line from an init script).
 - **Verify deploys from the ORIGIN, never from exit codes**: `sh scripts/check_deploy_drift.sh`,
   `tests/area-page-freshness.mjs`, `scripts/check_score_sanity.py`, `tests/site-api-parity.mjs`.
 - **When a capability lands, exercise it the way a caller would** (postcode scoring "worked" for two days

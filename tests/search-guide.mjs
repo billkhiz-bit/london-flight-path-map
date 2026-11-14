@@ -177,11 +177,32 @@ for (const [width, height] of [[320, 568], [375, 667], [844, 390]]) {
 }
 
 // ---- 4. An answer by a link nobody tapped ----
+//      NOTHING may touch the page until the link's search has ended the guide. Playwright runs its selector waits and
+//      evaluates as a user gesture (Runtime.callFunctionOn userGesture: true; measured 2026-11-14: hasBeenActive went
+//      false -> true at the first waitForSelector), so a test that looked first handed the page the very activation
+//      this checks is missing. It passed only while the map's boot beat the test's first look, and went red on a loaded
+//      PC (preflight of 2026-11-14 00:00). Now the page says when the guide ends, through the console (no gesture), and
+//      the boundaries are held back 1.5 s so a slow boot is reached on purpose, every run: the old way reds on it.
 console.log('Deep link');
 {
-  const { ctx, page } = await visit('?postcode=TW9%203PZ');
-  await page.waitForFunction(() => !document.querySelector('.search-box.guide'), null, { timeout: 15000 }).catch(() => {});
-  const ended = !(await guideOn(page));
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+  await ctx.route('**/data/london-boroughs.json', async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.continue(); });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`?postcode=: ${e.message}`));
+  await stubLiveApi(page);
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const box = document.querySelector('.search-box');
+      if (!box) return;
+      new MutationObserver((recs) => {
+        const had = recs.some((r) => (r.oldValue || '').split(/\s+/).includes('guide'));
+        if (had && !box.classList.contains('guide')) console.log('search-guide-ended');
+      }).observe(box, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+    });
+  });
+  const said = page.waitForEvent('console', { predicate: (m) => m.text() === 'search-guide-ended', timeout: 20000 }).then(() => true, () => false);
+  await page.goto(BASE + '?postcode=TW9%203PZ', { waitUntil: 'domcontentloaded' });
+  const ended = (await said) && !(await guideOn(page));
   const remembered = await seen(page);
   ok(ended && remembered !== '1', 'an answer by a link ends the guide but does not remember it', `ended=${ended} seen=${remembered}`);
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });

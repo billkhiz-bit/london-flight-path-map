@@ -113,6 +113,28 @@ at 60 degrees (off the centreline, and London City's 5.5 degree approach is ~250
 wide), where Kew does not move (under the centreline). **Not settled:** heights are above sea level, not ground, so high airfields (Leeds Bradford ~200 m) count
 high; a low aircraft orbiting back over a cell within one pass counts once; by-hour classing would place a mixed
 day's hours properly (needs per-hour counts); `average()` does not apply `coverage_verdict()`, publishing must.
+**2025's tracks, fetched 13-14 Nov 2026 for N65:** adsb.lol has NO release of any kind for 28 May to 10 Jun 2025: the
+fetch's 14 days are 404s, the release list runs from 27 May (prod) to 11 Jun with nothing between, and a gap day under the
+staging and mlatonly names is a 404 too (checked 13 Nov). 11 Jun reads about half a day (36,886 traces, 2,851 kept, against
+~65,000 and ~6,500 either side), so likely partial. A 2025 count over May or June is short by those days: `coverage_verdict()`
+judges them, never a guess. METAR for March to December 2025 is cached for all 22 counted airports (IEM dropped the connection
+once after 20 files; a re-run fetched the rest).
+**2025's coverage against the CAA's monthly Table 03 (14 Nov 2026; tables for April to December 2025 fetched into `data/caa/`,
+results in `data/adsb/coverage-2025/`; the download ended 14 Nov 20:20 with all 262 published days):** whole months pass
+April 11 of 15, July 10, August 9, September 10, October 11, November 10 (August 2026: 12); December runs to the 30th only, so
+provisional. Eight pass every whole month (STN, LTN, LCY, MAN, BHX, LBA, BRS, EMA) and Norwich every one measured whole (one
+November day unmeasured). **Heathrow fails July to September (91.9 to 93.4%) and passes from October (96.3%, 97.9%); Gatwick
+fails every whole month to October (48.8% in April, 1,565 visits never heard low; 89 to 92% from June) and passes November
+(97.1%).** The shortfall was in TAKE-OFFS: July 2025 Heathrow landed 98.5% of half the CAA's count and took off 85.4%; Gatwick
+97.6% and 85.6%; short on every runway, both directions. **It ends on a day, not gradually** (take-offs over landings, per day,
+`daily-LHR-LGW-takeoffs.txt`; every aircraft that lands takes off, so a day's ratio needs no CAA figure): Heathrow swings 0.74
+to 1.00 to 6 Oct 2025 (full days among short ones) and holds 0.97 to 1.01 from 7 Oct (one day at 0.94); Gatwick runs 0.67 to 0.93 to 4 Nov and holds 0.96
+to 1.02 from 5 Nov. A step like that is a receiver coming online near each field, not traffic. So 2025 counts every take-off at
+LHR from 7 Oct and at LGW from 5 Nov; before those days, likely (not yet measured) the missed departures are still heard higher
+up, which is what N65 at a home needs: measure that (a point under a departure route, before and after the step) before
+earlier 2025 months are used for N65 there. Gatwick in April is a different fault: landings were short too (55% and 43% of
+half), so whole aircraft were missing. Also failing: CWL every month (71 to 86%), MME July to October (67 to 83%; November neither reading fits), NCL (89 to
+95%, passing September and October), LPL (91 to 95%, passing July only).
 **The year so far, 2026-10-21:** the fetch finished at 289 of 291 days (adsb.lol's 5 May archive is near-empty,
 6 May's is a 404), all counted (~35 s a day, none failed). **`average()` then ran out of 32 GB**: holding every
 day at once meant 388 million rows at 48.5 degrees, ~3 GB a column. It now reads the metas alone first, then

@@ -35,9 +35,18 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > (`REF_PLANES_FROM` 2026-11-14), M-22 titles and descriptions, M-19 footers. Drift PASS, 152/152 area pages = API.
 > **Evening:** `n65` PUSHED on Bill's word (`f534085e`). FAA cycle 2612 BUILT on branch `faa-2612` (`41fbbda3`, pushed; no route
 > changed, deploy on 26 Nov). The UK AIP's 26 Nov edition checked: every UK route equals the 29 Oct record (London City's coding
-> tables only reissued), so no roll. Bill's picks A of claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1 BUILT: the area pages' answer card
-> and the example's yardstick lines; Breathe London re-fetched (to Oct 2026). N65's 2025 tracks downloading (detached, `data/adsb/fetch-2025.log`).
-> **Open:** the next `/audit` ~16 Nov in a fresh session.
+> tables only reissued), so no roll. Bill's picks A of claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1 LIVE (`ea305d5c`, deployed on
+> Bill's word: data, web, home, area, meta): every area page opens on the map's answer card, and the example's tiles carry a
+> yardstick line; Breathe London re-fetched (to Oct 2026). Drift PASS (55/42/153), 152/152 area pages = API, live shots at 1366
+> and 390, no page errors. N65's 2025 tracks: the download stopped at the PC's shutdown (14 Nov 00:57, at 29 Sep) and was
+> resumed 14 Nov 16:21 (`data/adsb/fetch-2025-resume.log`); it ENDED 14 Nov 20:20 with all 262 published days. 14 Nov: the
+> search-guide check that reddened the midnight preflight was the TEST handing the page a user gesture
+> (`docs/lessons/quality-gates.md`); fixed and proven both ways. adsb.lol has NO release for 28 May to 10 Jun 2025
+> (14 days, every kind; `docs/lessons/in-progress-measurements.md`). METAR March to December 2025 cached for all 22 airports.
+> **2025's coverage against the CAA's monthly tables** (same lesson file): 8 airports pass every whole month; Heathrow and
+> Gatwick missed 10 to 15% of TAKE-OFFS until a step on one day each (LHR 7 Oct 2025, LGW 5 Nov 2025), full from then.
+> **Open:** whether those earlier departures are still heard higher up (N65 at LHR/LGW before the steps); the next `/audit`
+> ~16 Nov in a fresh session; FAA 2612 on 26 Nov.
 >
 > ## START HERE (2026-11-12)
 >

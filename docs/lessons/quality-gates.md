@@ -138,3 +138,17 @@ failed with EADDRINUSE on 8981, held by the orphan's own search-guide stage. A s
 path missed them all (they name `tests/...` relative). After a stopped run, list `sh.exe` with `preflight.sh` in its
 command line and every process under them (PowerShell `Get-CimInstance Win32_Process`, by `ParentProcessId`), end those
 alone, never another session's `node` (the MCP servers), and treat that run's log as void.
+
+**A Playwright look is a user gesture (2026-11-14).** The midnight preflight of 13-14 Nov went red on one check, "an answer
+by a link ends the guide but does not remember it: ended=true seen=1", while N65's track download loaded the PC; alone it
+passed twice. The map was right. The map remembers the guide only after a user activation
+(`navigator.userActivation.hasBeenActive`), and Playwright runs its selector waits and evaluates through
+`Runtime.callFunctionOn` with `userGesture: true` (playwright-core 1.58.2, `crExecutionContext.js`). A probe page logging its
+own `hasBeenActive` to the console read false after `goto` and true straight after the first `waitForSelector`. So the test
+handed the page the activation it was checking was absent, and passed only while the map's boot (boundaries, then
+`bootFromQuery`) beat the test's first look. Holding `/data/london-boroughs.json` back 1.5 s reproduced the red every run.
+The fix in `tests/search-guide.mjs` step 4: an init script watches `.search-box` and logs `search-guide-ended` when the
+`guide` class leaves it; the test waits for that console line before any look, and keeps the 1.5 s hold so a slow boot is
+reached on purpose. Proven: green with the hold, red on a map that always remembers. Rule: a test of what a page does
+without activation (sticky activation, autoplay, a popup, `requestFullscreen`, clipboard writes) must not touch the page
+before the page has acted; let the page say when.
