@@ -7,7 +7,8 @@ stage ends; days made by other code are refused; the CAA's own areas pass every 
 file's JSON round trip; a hybrid run decides nothing; the CLI writes the verdict beside the days. Item 3: the people
 inside each end's 50-event contour are counted from a population file and judged; a contour at the grid's edge refuses
 the count; the CLI refuses a Heathrow run without the file unless --no-population (then "not measured"), and never asks
-for it on Gatwick's. Offline only.
+for it on Gatwick's. Rule 6 (2026-11-15): --no-airborne-starts takes the take-offs first heard in the air out
+and scales by each day's scale_without_airborne; a day made before rule 6 is refused either way. Offline only.
 """
 import datetime as dt
 import json
@@ -29,16 +30,19 @@ def _meta(day, **over):
     m = {'airport': 'LHR', 'day': day, 'window_local': '07:00-23:00', 'threshold_db': 65.0, 'cell_m': 100.0,
          'grid': {'x0': 0.0, 'y0': 0.0, 'nx': 200, 'ny': 100}, 'computed_share': 0.97, 'scale': 1.0,
          'spread': {'s_db': 2.0, 'z_cut': 5.0, 'floor_db': 55.4605}, 'variant': 'default', 'code': 'c0de',
-         'anp_fingerprint': 'f00d'}
+         'anp_fingerprint': 'f00d', 'scale_without_airborne': 1.0, 'airborne_takeoffs': {'movements': 0, 'computed': 0}}
     m.update(over)
     return m
 
 
-def _arrays(arrivals, light=None, heavy=None, spread=None):
-    """Plain counts and their spread twins (the spread ones `spread` times the plain, default the same)."""
+def _arrays(arrivals, light=None, heavy=None, spread=None, airborne_light=None, airborne_heavy=None):
+    """Plain counts and their spread twins (the spread ones `spread` times the plain, default the same). Rule 6's
+    take-offs first heard in the air are INSIDE the departures and also apart (none unless given)."""
     z = np.zeros(N)
     a = {'arrivals': np.asarray(arrivals, float), 'departures_light': z if light is None else np.asarray(light, float),
-         'departures_heavy': z if heavy is None else np.asarray(heavy, float)}
+         'departures_heavy': z if heavy is None else np.asarray(heavy, float),
+         'departures_light_airborne': z if airborne_light is None else np.asarray(airborne_light, float),
+         'departures_heavy_airborne': z if airborne_heavy is None else np.asarray(airborne_heavy, float)}
     a.update({f'{k}_p': v * (spread if spread is not None else 1.0) for k, v in list(a.items())})
     return a
 
@@ -98,6 +102,45 @@ def test_rule_2_reads_the_shares_and_refuses_a_day_without_them():
     with pytest.raises(gr.Refused, match='rule 2'):
         gr.build_runs([(_meta('2025-03-30'), old)])
     assert gr.build_runs([(_meta('2025-03-30'), old)], spread=False)
+
+
+def test_rule_6_takes_the_airborne_take_offs_out_only_when_asked():
+    # 20 arrivals and 40 departures a day, 20 of them first heard in the air. With them (scale 1.0): 60, reaches 50.
+    # Without them: (60 - 20) times the day's scale_without_airborne: 1.2 gives 48 (does not reach 50; left in, 72
+    # would), 1.3 gives 52 (reaches it; scaled by `scale` instead, 40 would not).
+    for without, reaches in ((1.2, False), (1.3, True)):
+        days = [(_meta('2025-03-30', scale=1.0, scale_without_airborne=without),
+                 _arrays(np.full(N, 20.0), light=np.full(N, 40.0), airborne_light=np.full(N, 20.0)))]
+        assert gr.build_runs(days)[1]['light']['areas_km2'][50] == pytest.approx(N * 0.01)
+        area = gr.build_runs(days, airborne=False)[1]['light']['areas_km2'][50]
+        assert area == (pytest.approx(N * 0.01) if reaches else 0.0), (without, area)
+        for spread in (True, False):  # the plain counts and the 5-12 shares alike
+            assert gr.build_runs(days, airborne=False, spread=spread)[1]['light']['areas_km2'][50] == area
+
+
+def test_rule_6_off_is_a_variant_beside_and_the_days_say_what_they_hold():
+    days = [(_meta(d, airborne_takeoffs={'movements': 70, 'computed': 68}), _arrays(_target_counts()))
+            for d in _days('2025-03-30', 3)]
+    result = gr.verdict(days, airborne=False)
+    assert not result['ok']
+    assert 'rule 6 (take-offs first heard in the air) OFF: a variant reported beside, never the deciding run' in         result['lines']
+    assert result['about']['rule_6_airborne_starts'] is False
+    assert result['about']['days'][0]['airborne_takeoffs'] == {'movements': 70, 'computed': 68}
+    assert not any('rule 6' in line for line in gr.verdict(days)['lines'])
+
+
+def test_a_day_made_before_rule_6_is_refused_either_way():
+    meta = {k: v for k, v in _meta('2025-03-30').items() if k != 'airborne_takeoffs'}
+    for airborne in (True, False):
+        with pytest.raises(gr.Refused, match='made before rule 6'):
+            gr.build_runs([(meta, _arrays(np.full(N, 40.0)))], airborne=airborne)
+    old = {k: v for k, v in _arrays(np.full(N, 40.0)).items() if 'airborne' not in k}
+    for airborne in (True, False):
+        with pytest.raises(gr.Refused, match='rule 6: 2025-03-30 has no'):
+            gr.build_runs([(_meta('2025-03-30'), old)], airborne=airborne)
+    with pytest.raises(gr.Refused, match='no scale_without_airborne'):
+        gr.build_runs([(_meta('2025-03-30', scale_without_airborne=None), _arrays(np.full(N, 40.0)))],
+                      airborne=False)
 
 
 def test_both_stage_ends_are_judged():
@@ -206,6 +249,12 @@ def test_the_cli_writes_the_verdict_beside_the_days(tmp_path):
     assert result['about']['days'][0]['scale'] == 1.0 and result['runs']['light']['day'] == '2-day average'
     assert result['runs']['light']['population_above_50'] == 0  # counted: nothing reaches 50 here
     assert gr.main(['--day', str(tmp_path / 'nothing-*.npz')]) == 2
+    # Rule 6 off: its own file, never written over the deciding run's.
+    assert gr.main(['--day', str(tmp_path / 'LHR-*-n65.npz'), '--population', str(people),
+                    '--no-airborne-starts']) == 0
+    off = list(tmp_path.glob('gate-LHR-2025-03-30_2025-03-31-default-scaled-spread-noairborne.json'))
+    assert len(off) == 1
+    assert json.loads(off[0].read_text(encoding='utf-8'))['about']['rule_6_airborne_starts'] is False
 
 
 def test_the_cli_refuses_without_the_population_file_unless_asked(tmp_path, capsys):

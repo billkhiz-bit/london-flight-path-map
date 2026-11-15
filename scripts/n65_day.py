@@ -43,6 +43,15 @@ THE FROZEN METHOD (Bill's rulings, 2026-11-12; docs/lessons/n65.md), each varian
   SPREAD_FLOOR_DB for it, where a share is under 3e-7 (five standard deviations), said.
 - Rule 4, `--variant hybrid`: the default profile's power flown at each flight's OBSERVED heights (hybrid_heights()), an
   UPPER BOUND only, never the model; its files carry the variant and never combine with the default's.
+- Rule 6 (Bill, 2026-11-15), take-offs first heard in the air: a take-off the counter could not see because it was
+  first heard above its 400 ft band (Heathrow before 7 Oct 2025, Gatwick before 5 Nov 2025) is found by
+  airborne_takeoffs() and joined to the runway at the start of its take-off run. Its levels are counted with the
+  departures AND apart (`departures_*_airborne`), and each day carries `scale_without_airborne`, so the gate runner
+  reports the run without them beside (--no-airborne-starts).
+- Rule 7 (Bill, 2026-11-15), the field level: published_field(), the published elevation (ELEVATION_FT, AD 2.2) moved
+  through the day by the METAR QNH, never the counter's level from touchdowns heard (too few were heard before the
+  receivers came online, and its level ran 70-290 ft at Heathrow against the published 83). The counter's own is
+  reported beside as a check (`field.counter_check`). Fewer than two METAR reports for the day: refused.
 - A day's field level must be shaped by METAR (an uncached month reads stormy mornings low): refused otherwise.
 - Each day file carries the code that made it and its noise tables' fingerprint; combine() and the gate runner refuse
   days that differ in either, or in grid, threshold, window, spread or variant.
@@ -125,6 +134,8 @@ N65_SCRIPTS = ('n65_day.py', 'n65_doc29.py', 'n65_grid.py', 'n65_path.py', 'n65_
 SAME_IN_EVERY_DAY = ('airport', 'grid', 'cell_m', 'threshold_db', 'window_local', 'code', 'anp_fingerprint', 'spread',
                      'variant')
 OP_OF_KIND = {'take-off': 'D', 'landing': 'A'}
+# What every per-flight row carries from its job; 'heard' is 'low' (the counter's) or 'airborne' (rule 6).
+ROW_KEYS = ('time', 'op', 'icao', 'how', 'anp_id', 'airline', 'heard')
 MOUNTS = {'wing': 'wing', 'fuselage': 'fuselage', 'prop': 'prop', 'propeller': 'prop'}
 
 # The largest the installation effect (4-15) and the start-of-roll directivity (4-22 to 4-25) can add, by mount: read
@@ -367,10 +378,52 @@ def _outside_repo(path: Path) -> bool:
         return True
 
 
+def published_field(airport: str, day: dt.date):
+    """Rule 7 (Bill, 2026-11-15): (the field level N65 reads every movement with, how), from the airport's PUBLISHED
+    elevation (ELEVATION_FT, AD 2.2) and the day's METAR QNH, never from aircraft heard: the elevation is the field's
+    pressure altitude at 1013.25 hPa, and the QNH moves it through the day exactly as the counter's own field level
+    moves (adsb_movements.FieldLevel, FT_PER_HPA), so it is that class with one vote at the elevation.
+    (None, why) where the airport has no elevation or fewer than two METAR reports are cached for the day:
+    field_refusal() then refuses the day, never the counter's fallback.
+
+    WHY. The counter sets the field's LEVEL from aircraft heard touching down. Before a receiver came online the
+    surface was seldom heard: on most of Heathrow's 2025 days before 7 Oct fewer than five touchdowns were heard (the
+    counter fell back to the p10 of in-zone minima), and on many it did set, the level ran 70-290 ft against the
+    published 83 ft; Gatwick had none heard through early April (docs/lessons/n65.md, rule 7). A level that needs
+    nothing heard is the same on every day."""
+    import adsb_movements as am
+
+    if airport not in ELEVATION_FT:
+        return None, f'no aerodrome elevation for {airport} (add its AD 2.2 figure to ELEVATION_FT)'
+    qnh = sorted(am.metar_qnh(airport, day))
+    if len(qnh) < 2:
+        return None, (f'{len(qnh)} METAR report(s) cached for {airport} on {day}: cache the month with '
+                      'scripts/fetch_metar.py, then run the day again')
+    t, hpa = qnh[len(qnh) // 2]  # one vote AT a report, so the class's shape there is that report's own QNH
+    elevation = ELEVATION_FT[airport]
+    field = am.FieldLevel([(t, elevation + (1013.25 - hpa) * am.FT_PER_HPA)], qnh)
+    return field, f'published elevation {elevation:g} ft (AD 2.2), shaped by METAR ({len(qnh)} reports)'
+
+
+def day_field(airport: str, day: dt.date, traces: list, ap: dict):
+    """(field, how, check): rule 7's field level for the day (published_field()), and beside it the counter's own
+    from touchdowns heard (adsb_movements.field_level()) as a CHECK only: how it was found, and how far it reads from
+    ours at noon UTC (None where the counter has none). The counter's never replaces ours."""
+    import adsb_movements as am
+
+    field, how = published_field(airport, day)
+    heard, heard_how = am.field_level(traces, ap)
+    check = {'how': heard_how, 'minus_published_ft': None}
+    if field is not None and heard is not None:
+        noon = dt.datetime(day.year, day.month, day.day, 12, tzinfo=dt.UTC).timestamp()
+        check['minus_published_ft'] = round(float(am.field_at(heard, noon)) - float(am.field_at(field, noon)), 1)
+    return field, how, check
+
+
 def field_refusal(field, how: str) -> str | None:
     """Why a day may not be run on this field level, or None. Only a field level shaped by the day's METAR QNH: the
     counter's fallbacks (no METAR month cached, or the p10 of in-zone minima) read stormy mornings low (CLAUDE.md, the
-    plane counter's field level; the 12 Nov review)."""
+    plane counter's field level; the 12 Nov review). Since rule 7 the field is published_field()'s."""
     if field is None:
         return f'no field level ({how})'
     if 'shaped by METAR' not in how:
@@ -398,6 +451,84 @@ def caa_day_movements(table_path: Path, airport: str, day: dt.date) -> tuple[flo
     return movements, {'table': Path(table_path).name, 'month': want, 'grand_total': totals[airport],
                        'days_in_month': days, 'share_16h': round(share, 6), 'share_source': source,
                        'day_movements_16h': round(movements, 2)}
+
+
+def airborne_takeoffs(rec: dict, ap: dict, field, moves: list) -> list[tuple[str, str | None, float]]:
+    """Rule 6: [('take-off', runway or None, time first heard)] for each take-off in one aircraft's day that the
+    counter (adsb_movements.movements(), whose `moves` these are) could not see, because it was first heard in the air.
+
+    WHY (Bill's ruling, 2026-11-15, option A). Until a receiver came online (Heathrow 7 Oct 2025, Gatwick 5 Nov 2025)
+    10-15% of their take-offs were first heard 0.8-2.2 km from the field's centre at about 410-630 ft (p10-p90 of 158
+    missed at Heathrow on 19 Sep 2025 and 45 at Gatwick on 16 Jul 2025), on the centreline: just above the counter's
+    LOW_ABOVE_FT band, so it never saw them take off. The counter stays as it is (the public planes pages read it);
+    here each such stretch is a take-off, joined to the runway at the start of its take-off run
+    (n65_tracks.departure_track()'s unheard roll), and kept apart so the run without them is reported beside it
+    (scripts/n65_gate_run.py --no-airborne-starts).
+
+    A stretch of the trace (its first point, or the first after a silence over the counter's RUN_GAP_S) is one when:
+    its first point is airborne, inside the airport's zone and no higher than the counter's UNSEEN_BAND_FT above the
+    field; the first later point at least CLIMB_FT above the field, within WINDOW_S, is farther from the centre (it
+    climbs AWAY: an approach first heard in the air comes closer); and the counter counted no movement of this aircraft
+    within WINDOW_S of it (a stretch heard low is the counter's). Every bound is the counter's own. The runway is the
+    counter's runway_for() on the stretch's first TRACK_WINDOW_S within 3 km of the zone, as it reads its own take-offs.
+    """
+    import adsb_movements as am
+
+    pts = rec['pts']
+    (clat, clon), zone = ap['centre'], ap['zone_km']
+    times = [t for _, _, t in moves]
+    out = []
+    for i, p in enumerate(pts):
+        if i and p[0] - pts[i - 1][0] <= am.RUN_GAP_S:
+            continue  # not the start of a stretch
+        b = am.baro(p)
+        if am.is_ground(p) or b is None:
+            continue
+        floor = am.field_at(field, p[0])
+        d0 = am.km_between(p[1], p[2], clat, clon)
+        if b - floor > am.UNSEEN_BAND_FT or d0 > zone:
+            continue
+        if any(abs(p[0] - t) <= am.WINDOW_S for t in times):
+            continue
+        stretch = [p]
+        for q in pts[i + 1:]:
+            if q[0] - stretch[-1][0] > am.RUN_GAP_S:
+                break
+            stretch.append(q)
+        up = next((q for q in stretch[1:] if q[0] - p[0] <= am.WINDOW_S and am.baro(q) is not None
+                   and am.baro(q) >= floor + am.CLIMB_FT), None)
+        if up is None or am.km_between(up[1], up[2], clat, clon) <= d0:
+            continue
+        climb = [q for q in stretch if q[0] - p[0] <= am.TRACK_WINDOW_S
+                 and am.km_between(q[1], q[2], clat, clon) <= zone + 3]
+        out.append(('take-off', am.runway_for(climb, ap), p[0]))
+    return out
+
+
+def tally(counts: dict, shares: dict, row: dict, res: dict, labels=('light', 'heavy')) -> None:
+    """Add one computed flight (_fly()'s result) to the day: an arrival to 'arrivals'; a departure to both stage ends'
+    'departures_<end>' and, if it was first heard in the air (rule 6), to their '_airborne' twins as well, so the run
+    without those take-offs is the departures less the twins. The 5-12 shares (rule 2) go the same way. One event per
+    flight per cell: the cells a flight reaches are distinct."""
+    if row['op'] == 'A':
+        counts['arrivals'][res['reached']['approach']] += 1
+        cells, p = res['spread']['approach']
+        shares['arrivals_p'][cells] += p
+        return
+    apart = ('', '_airborne') if row.get('heard') == 'airborne' else ('',)
+    for label in labels:
+        cells, p = res['spread'][label]
+        for suffix in apart:
+            counts[f'departures_{label}{suffix}'][res['reached'][label]] += 1
+            shares[f'departures_{label}{suffix}_p'][cells] += p
+
+
+def rule_scales(caa_movements: float, computed: int, airborne_computed: int) -> dict:
+    """Rule 1's scale with rule 6's take-offs (the deciding run's) and without them (the run reported beside): the
+    CAA's movements over the movements computed either way; None where nothing was computed."""
+    without = computed - airborne_computed
+    return {'scale': round(caa_movements / computed, 6) if computed else None,
+            'scale_without_airborne': round(caa_movements / without, 6) if without else None}
 
 
 def code_version(scripts_dir: Path = REPO / 'scripts') -> str:
@@ -451,7 +582,7 @@ def _fly(job: dict) -> dict:
     'spread': {label: (flat cells at or above SPREAD_FLOOR_DB, each one's 5-12 share)}}."""
     cfg, g = _W['cfg'], _W['grid']
     db, noise, runways = _W['profiles'], _W['noise'], _W['runways']
-    row = {k: job[k] for k in ('time', 'op', 'icao', 'how', 'anp_id', 'airline')}
+    row = {k: job[k] for k in ROW_KEYS}
     reached: dict = {}
     spread: dict = {}
 
@@ -623,7 +754,7 @@ def day(a) -> int:
     registry = tm.read_registry(a.registry)
     operator_engines = nt.read_operator_engines(a.operator_engines) if a.operator_engines else {}
     traces = tm.near_traces(Path(a.extract), ap)
-    field, how_field = am.field_level(traces, ap)
+    field, how_field, field_check = day_field(a.airport, dt.date.fromisoformat(day_name), traces, ap)  # rule 7
     why = field_refusal(field, how_field)
     if why:
         print(f'REFUSED: {why}')
@@ -634,7 +765,8 @@ def day(a) -> int:
     jobs, outside, by_how = [], 0, Counter()
     for rec in traces:
         moves, _ = am.movements(rec, ap, field)
-        if not moves:
+        late = airborne_takeoffs(rec, ap, field, moves)  # rule 6: take-offs the counter could not see
+        if not moves and not late:
             continue
         pts = []
         for p in rec['pts']:
@@ -650,7 +782,7 @@ def day(a) -> int:
                 h = None
             pts.append((p[0], x, y, ground, p[5] if isinstance(p[5], (int, float)) else None, h))
         airline = tm.airline_of(rec)
-        for kind, rw_name, ts in moves:
+        for kind, rw_name, ts, heard in [(*m, 'low') for m in moves] + [(*m, 'airborne') for m in late]:
             op = OP_OF_KIND.get(kind)
             if op is None:
                 continue
@@ -664,7 +796,11 @@ def day(a) -> int:
             if rw_name not in runways:
                 window = (ts - 120, ts + 60) if op == 'D' else (ts - 60, ts + 120)
                 rw_name = tr.runway_from_points([tr.Pt(*p) for p in pts], rw_objects, *window)
-            jobs.append({'time': ts, 'ts_runway': ts, 'op': op, 'icao': res.icao, 'how': res.how, 'airline': airline,
+            # A take-off first heard in the air (rule 6) is flown like the counter's: n65_tracks.departure_track()
+            # finds no roll (its stretch starts after a silence over RUN_GAP_S; a roll's run breaks at 120 s) and
+            # starts it at the take-off run's start, then runs on to the first point heard.
+            jobs.append({'time': ts, 'ts_runway': ts, 'op': op, 'icao': res.icao, 'how': res.how,
+                         'airline': airline, 'heard': heard,
                          'anp_id': res.candidate.anp_id if res.candidate else None,
                          'delta': res.candidate.delta(op) if res.candidate else 0.0,
                          'runway': rw_name, 'pts': pts})
@@ -676,15 +812,18 @@ def day(a) -> int:
            'runways': runways, 'elevation_ft': elev_ft, 'variant': a.variant}
     labels = ('light', 'heavy')
     counts = {'arrivals': np.zeros(g.size, np.int32), 'departures_light': np.zeros(g.size, np.int32),
-              'departures_heavy': np.zeros(g.size, np.int32)}
+              'departures_heavy': np.zeros(g.size, np.int32),
+              # Rule 6: the take-offs first heard in the air, ALSO counted in the departures above, kept apart so the
+              # gate runner can report the run without them beside (--no-airborne-starts).
+              'departures_light_airborne': np.zeros(g.size, np.int32),
+              'departures_heavy_airborne': np.zeros(g.size, np.int32)}
     # Rule 2's counts beside the plain ones: each flight's 5-12 share at each cell (float).
     shares = {f'{k}_p': np.zeros(g.size, np.float64) for k in counts}
     rows, reasons = [], Counter()
     typed = [j for j in jobs if j['anp_id']]
     for j in jobs:
         if not j['anp_id']:
-            rows.append({**{k: j[k] for k in ('time', 'op', 'icao', 'how', 'anp_id', 'airline')},
-                         'not_computed': j['how']})
+            rows.append({**{k: j[k] for k in ROW_KEYS}, 'not_computed': j['how']})
             reasons[(j['op'], j['how'])] += 1
     t1 = time.time()
     with ProcessPoolExecutor(max_workers=a.workers, initializer=_init_worker, initargs=(cfg,)) as ex:
@@ -694,29 +833,26 @@ def day(a) -> int:
             if 'not_computed' in row:
                 reasons[(row['op'], row['not_computed'].split(':')[0])] += 1
                 continue
-            if row['op'] == 'A':
-                counts['arrivals'][res['reached']['approach']] += 1
-                cells, p = res['spread']['approach']
-                shares['arrivals_p'][cells] += p  # one event per flight per cell: the cells are distinct
-            else:
-                for label in labels:
-                    counts[f'departures_{label}'][res['reached'][label]] += 1
-                    cells, p = res['spread'][label]
-                    shares[f'departures_{label}_p'][cells] += p
+            tally(counts, shares, row, res, labels)
             if k % 100 == 0:
                 print(f'  {k}/{len(typed)} flown, {time.time() - t1:.0f} s')
     computed = sum(1 for r in rows if 'not_computed' not in r)
+    airborne = {'movements': sum(1 for j in jobs if j['heard'] == 'airborne'),
+                'computed': sum(1 for r in rows if r['heard'] == 'airborne' and 'not_computed' not in r)}
     n65 = {label: counts['arrivals'] + counts[f'departures_{label}'] for label in labels}
     n65_spread = {label: shares['arrivals_p'] + shares[f'departures_{label}_p'] for label in labels}
     fingerprint = anp_fingerprint(*a.anp)
     summary = {
         'airport': a.airport, 'day': day_name, 'window_local': '07:00-23:00',
         'threshold_db': THRESHOLD_DB, 'cell_m': g.cell, 'grid': {'x0': g.x0, 'y0': g.y0, 'nx': g.nx, 'ny': g.ny},
-        'field': {'pressure_altitude_ft': round(float(field)), 'how': how_field},
+        'field': {'pressure_altitude_ft': round(float(field)), 'how': how_field, 'counter_check': field_check},
         'movements': len(jobs), 'outside_window': outside, 'computed': computed,
         'computed_share': round(computed / len(jobs), 4) if jobs else None,
         # Rule 1: the CAA's movements for this day over the movements computed, applied by scripts/n65_gate_run.py.
-        'caa': caa_how, 'scale': round(caa_movements / computed, 6) if computed else None,
+        'caa': caa_how, **rule_scales(caa_movements, computed, airborne['computed']),
+        # Rule 6: the take-offs first heard in the air, inside every count above; the gate runner's
+        # --no-airborne-starts takes them out and scales by scale_without_airborne instead.
+        'airborne_takeoffs': airborne,
         'spread': {'s_db': SPREAD_S_DB, 'z_cut': SPREAD_Z_CUT, 'floor_db': round(SPREAD_FLOOR_DB, 4)},
         'variant': a.variant, 'code': code_version(), 'anp_fingerprint': fingerprint,
         'by_op': {op: {'movements': sum(1 for j in jobs if j['op'] == op),

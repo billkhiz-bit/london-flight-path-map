@@ -179,6 +179,12 @@ Or just describe what you need, I have full context of this project.
   never a per-type figure anywhere (their terms). Aircraft types resolve by `scripts/n65_types.py` (own data, then the
   engine from the registration (the FAA register; the CAA's G-INFO only with its written consent), then the
   airline-and-type table `data/n65/airline-engines.csv`, then the louder candidate by level; a blank is unknown).
+- **N65 joins take-offs first heard in the air to the runway; the counter never changes for N65** (frozen rule 6, Bill,
+  2026-11-15): until 7 Oct 2025 (LHR) and 5 Nov 2025 (LGW) 10-15% of take-offs were first heard at ~410-630 ft, just
+  above the counter's 400 ft band. `n65_day.airborne_takeoffs()` finds them with the counter's own bounds, counted apart;
+  `n65_gate_run.py --no-airborne-starts` reports the run without them beside (`docs/lessons/n65.md`, rule 6). N65's
+  field level is the PUBLISHED elevation moved by the METAR QNH (`published_field()`, rule 7), never the counter's
+  from touchdowns heard (too few before those dates: 94 of Heathrow's 177 days); the counter's is a check beside.
 - **National anchors are per POOL** (`pool_of(city)` / site `poolOf`: a city's `pool`, else its currency;
   one per US metro: decision 2 of 2026-10-16, built 2026-10-18): never pool USD with GBP, nor the Bay Area
   with New York. The site needs `BACKEND_ONLY_PRICES` /
