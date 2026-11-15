@@ -1196,3 +1196,17 @@ commit's `index.html` (six red, one per fault plus Hendon) and 86 of 86 after.
   no key spent), and recomputes `reportReference()` for that day and `answerLead()` with today's planes counts. Proven
   red by nudging one figure (road 50.5 to 50.6 dB): the reference moved HCH7-V2UJ to 2CR6-KWXC. An older sample with no
   reference fails too, but that proves the parse, not the figures: red was proven on the figure itself.
+
+**Later the same night (I-18, M-5, M-14, M-16, M-18, M-20, M-21, M-23, M-24, M-29).** Reproduced first where a visitor
+would meet it: I-18 on the LIVE map at 390 (TW9 3PZ, Rankings, "Family": `data-mview` went to `search`, the ranking table
+drawn over the map), screenshot kept for Bill beside the fixed one. Every redraw of a result called
+`revealSheetIfMobile()`; `switchToAnalysis: false` stopped only `switchTab()`. A `reveal` option on the three renderers,
+false from `setPersona()`. M-14's test could not CLICK the Layers button on a phone (the open card covers it): Escape is a
+keyboard path, so the test focuses the button and presses Enter. M-23's tie is counted from the API's own answers,
+cached once per build (`answer()`), never a second ranking: only the Bay Area ties (16 at the Census's top code, all
+35th), and the note says "share that figure", never "the same price", because the figure is "$2M or more". M-21's
+descriptions were already over 160 characters; touched, each was fitted. M-29's period gate skips where
+`data/planes/airports.json` is absent (gitignored). M-9 (the search guide's ring, 2.60:1) is a visual change, so four
+looks were drawn on the live page with one rule injected, each edge measured against the panel: A the focus orange
+3.84:1, B the dark edge with an orange halo 17.6:1, C the ink orange 5.10:1 (claude.ai/artifact/WRf3FYJeGDYXYgQbsKg6F4,
+Bill's pick).

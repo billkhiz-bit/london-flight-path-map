@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-10 - the 9 Nov audit's four Important findings closed and live, the air figures reloaded at DEFRA's precision and checked against its file, the outreach sheets rebuilt; previously 2026-11-09 - "All the detail" option 1, the phone cards one to a row and `www` -> the bare name LIVE and pushed; the site called ready for outreach, upkeep only, the four outreach gates set out for Bill; previously 2026-11-07 - the meta CSP's ignored `frame-ancestors` gone LIVE from ten pages; `env-upstream-status` built (a failed postcode lookup is a 503, the gateway's own errors readable); most of the week's 5xx were Lambda throttles at the account's limit of 10; previously 2026-11-06 - About's grid, section links and link colours LIVE; the front page's held point, postcode suggestions and the Heathrow corrections deployed; previously 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+**Last reviewed:** 2026-11-13 - every finding of the 12 Nov audit fixed and live (`8ef25b01`, `3a60b42a`, the sign-up and favourites changeset reviewed and checked from the API); previously 2026-11-10 - the 9 Nov audit's four Important findings closed and live, the air figures reloaded at DEFRA's precision and checked against its file, the outreach sheets rebuilt; previously 2026-11-09 - "All the detail" option 1, the phone cards one to a row and `www` -> the bare name LIVE and pushed; the site called ready for outreach, upkeep only, the four outreach gates set out for Bill; previously 2026-11-07 - the meta CSP's ignored `frame-ancestors` gone LIVE from ten pages; `env-upstream-status` built (a failed postcode lookup is a 503, the gateway's own errors readable); most of the week's 5xx were Lambda throttles at the account's limit of 10; previously 2026-11-06 - About's grid, section links and link colours LIVE; the front page's held point, postcode suggestions and the Heathrow corrections deployed; previously 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
 the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
@@ -26,6 +26,28 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-13)
+>
+> **EVERY 12 NOV AUDIT FINDING IS FIXED AND LIVE** (M-12's value still needs the console). The night batch (I-18 and nine
+> Minors) LIVE as `8ef25b01`; the remaining Minors LIVE as `3a60b42a`: M-11 sign-up and favourites 400s (reviewed changeset:
+> the two functions' code only, checked from the API), M-27 the wording gate reads every uploaded JSON, M-26 `/reports/`
+> network-first, M-6 the 8 pt floor (`scripts/report_text_floor.py`), M-10, M-15, M-17, M-13, and Bill's picks: M-4 option A
+> (`REF_PLANES_FROM` 2026-11-14), M-22 titles and descriptions, M-19 footers. Drift PASS, 152/152 area pages = API.
+> **Evening:** `n65` PUSHED on Bill's word (`f534085e`). FAA cycle 2612 BUILT on branch `faa-2612` (`41fbbda3`, pushed; no route
+> changed, deploy on 26 Nov). The UK AIP's 26 Nov edition checked: every UK route equals the 29 Oct record (London City's coding
+> tables only reissued), so no roll. Bill's picks A of claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1 LIVE (`ea305d5c`, deployed on
+> Bill's word: data, web, home, area, meta): every area page opens on the map's answer card, and the example's tiles carry a
+> yardstick line; Breathe London re-fetched (to Oct 2026). Drift PASS (55/42/153), 152/152 area pages = API, live shots at 1366
+> and 390, no page errors. N65's 2025 tracks: the download stopped at the PC's shutdown (14 Nov 00:57, at 29 Sep) and was
+> resumed 14 Nov 16:21 (`data/adsb/fetch-2025-resume.log`); it ENDED 14 Nov 20:20 with all 262 published days. 14 Nov: the
+> search-guide check that reddened the midnight preflight was the TEST handing the page a user gesture
+> (`docs/lessons/quality-gates.md`); fixed and proven both ways. adsb.lol has NO release for 28 May to 10 Jun 2025
+> (14 days, every kind; `docs/lessons/in-progress-measurements.md`). METAR March to December 2025 cached for all 22 airports.
+> **2025's coverage against the CAA's monthly tables** (same lesson file): 8 airports pass every whole month; Heathrow and
+> Gatwick missed 10 to 15% of TAKE-OFFS until a step on one day each (LHR 7 Oct 2025, LGW 5 Nov 2025), full from then.
+> **Open:** whether those earlier departures are still heard higher up (N65 at LHR/LGW before the steps); the next `/audit`
+> ~16 Nov in a fresh session; FAA 2612 on 26 Nov.
+>
 > ## START HERE (2026-11-12)
 >
 > **AUDIT 12 NOV** (`AUDIT_REPORT_2026-11-12.md`): 0 Critical, 22 Important, 30 Minor. The street report build's three defects
@@ -38,9 +60,15 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > **LIVE 12 Nov (evening), drift PASS, 152/152 area pages = API:** the three-page street report (`0cdec370`), "a year with as
 > many Heathrow flights as 2019" and the `/nhs` fix (`63820a53`, reviewed changeset), audit I-1, I-2, I-3, I-12 (`e6631533`).
 > **Also LIVE (late):** `0b98838b` (I-19 New York's Labels button, I-20 /score-demo/ announcements), drift PASS. Gate fixes
-> `d7dd3cfc` (I-11, I-22, M-25, M-28). **Built, to commit after preflight, deploy on Bill's word (`web-deploy`):** I-13 to I-17
-> (full-map state faults, `tests/search-guide.mjs` 7) and I-10 (`check_sample_report.mjs`). **N65** built on its worktree,
-> uncommitted: merge master into n65 first. **Audit left:** I-18 (a phone's view on a profile change; look at 390), 20 Minors.
+> `d7dd3cfc` (I-11, I-22, M-25, M-28). **LIVE late 12 Nov (`902ca40c`, drift PASS):** I-13 to I-17 (full-map state faults,
+> `tests/search-guide.mjs` 7) and I-10 (`check_sample_report.mjs`, a preflight gate). **N65** committed on `n65` (`fefa2812`
+> merges master `902ca40c`; `ea4964f3` the frozen method + gate runner), NOT pushed (public repo, EASA's terms: Bill's yes
+> first). **Night, built + red-proven, preflight then commit, deploy on Bill's word:** I-18 (the last Important),
+> M-5, M-14, M-16, M-18, M-20, M-21, M-23, M-24, M-29, and the DEFRA freshness retry. N65 item 3 (population inside the
+> 50-event contour) committed on `n65` (`f534085e`), not pushed. M-9 BUILT on Bill's pick A (the focus orange, 3.84:1).
+> The full preflight was stopped by Claude Code for low memory; the quick stages all pass (ESLint, html-validate, both
+> ruffs, pytest backend 594 and root 3,287, area pages == API). **Next: the full preflight, commit, then deploy on Bill's
+> word** (web, home, demo, area, meta). **Audit left:** 10 Minors.
 > **Report build COMMITTED `08ec87c6`** (pushed; deployed later the same day). Then, Bill's yes: I-21 the "2% below 2019" wording and I-8/I-9
 > the `/nhs` fixes, built and tested (red on the old code); after their preflight and commit, the web deploy and the SAM
 > changeset wait on his word.

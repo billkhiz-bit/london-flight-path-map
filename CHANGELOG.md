@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-11-13 (evening) - Area pages lead with the answer, and the example says what each figure is against
+
+- **Every area page opens on its answer**: a dark card at the top, as on the full map, says in one sentence what stands out for that council, then marks each finding worth a look or good here, each linking to its detail lower down. The score and its five parts now sit in the card. Every finding below is word for word as before.
+- **The front page's example says what each figure is against**: under the aircraft noise figure, whether it is over or under the WHO guideline; under the air figure, the WHO guideline; under the planes figure, how often Heathrow flew that way.
+- **Breathe London's sensors, a month on**: the 12-month means now run to the end of October 2026. 117 sensors qualify (116 before); most figures moved by less than 1 µg/m³.
+
+## 2026-11-13 - Tidier errors, a fresh report picture, and two notes reworded
+
+- **Bad sign-up requests get a plain answer**: a sign-up sent with something other than text in a field was answered as a server fault. It is now told what was wrong. Removing a saved place with an over-long postcode is the same.
+- **The report picture on the front page stays current**: after the sample report was remade, a returning visitor's phone could keep showing the old picture. It now checks for a newer one.
+- **Two data notes say "modelled"**: two of our published data files described DEFRA's aircraft noise map as "measured". DEFRA's map is a model; the notes now say so.
+- **Reports keep their smallest text readable**: a report with any text under 8 pt, chart labels included, is no longer produced.
+- **A report's reference now covers its planes counts**: from 14 November, checking a copy also checks the planes figures it prints, so a copy made before a planes update no longer reads as current. Copies made earlier still check the way they were made.
+- **Credits say where the planes counts come from**: the front page, Pricing, the API page, About and How it works now say "official public data and community flight tracking", as the reports do.
+- **Shorter titles and descriptions in search results**: ten pages had titles or descriptions too long for a search result to show whole.
+- **A postcode answer stays put**: on the full map, a postcode answered in the first moments after the page opened could be replaced by its council's panel when the rest of the data arrived. It now stays the postcode's answer.
+- **Smaller corrections**: the full map's air panel stays quiet, rather than failing, if an older copy of its code is still cached.
+
+## 2026-11-12 (night) - A phone keeps its place, plainer words, and the last audit fixes
+
+- **Choosing a buyer profile on a phone keeps you on Rankings**: with a result open, picking a profile threw the phone back to Search and drew the ranking table over the map. It now re-sorts the ranking where you are.
+- **Escape closes one thing at a time**: on a phone with a result open, Escape on the Layers menu also closed the result. It now closes the menu, and a second Escape closes the result.
+- **Isle of Man and Channel Islands postcodes are answered plainly**: the front page showed a message meant for developers. It now says these postcodes have no map reference, as the API page does.
+- **Tied prices say so**: 16 Bay Area cities whose home values sit at the Census's top figure each read "35 of 50" by price, as if they were in order. They now say "joint 35th", and how many share the figure.
+- **The API page names all of what it covers**: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities. It said "97 boroughs" and left out the Bay Area.
+- **Smaller corrections**: the open data page compares DEFRA's map with the CAA's 2025 contours (it still said 2024); the About page says the Bay Area is now scored; three buttons on the full map show the same focus ring as the rest of the site; and the ring that guides a first visit to the search box is a deeper orange, easier to see against the panel.
+
 ## 2026-11-12 (late) - Five fixes on the full map, and a check on the sample report
 
 - **Nine London place names answer again**: Mayfair, Southall, Hendon, Fitzrovia, Mill Hill, Neasden, Palmers Green, Limehouse and Wallington each looked up a postcode Royal Mail had retired, so the search said "not found". Each now uses a live postcode nearby in the same district, and a check holds every place name to a live postcode.

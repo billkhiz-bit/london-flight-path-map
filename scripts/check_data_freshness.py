@@ -81,17 +81,34 @@ def fetch_text(url):
         return r.read().decode('utf-8', errors='replace')
 
 
-def resolves(url):
+RESOLVE_TRIES = 3
+RESOLVE_TIMEOUT = 15
+
+
+def resolves(url, tries=RESOLVE_TRIES, timeout=RESOLVE_TIMEOUT):
     """True on 200/206, False on 404; raises on anything else, so an outage is
-    INCONCLUSIVE rather than "not published"."""
+    INCONCLUSIVE rather than "not published".
+
+    ASKED AGAIN WHEN NOTHING CAME BACK (2026-11-12): DEFRA's Round 4 airport
+    service hung on about one request in three (the same address answered in
+    about 2 s the next time, with or without the Range header), and one hang
+    made the whole noise row INCONCLUSIVE on every preflight that day. Only a
+    request that got NO answer (a timeout or a dropped connection) is asked
+    again; a 404 still means "not there" at once, any other HTTP status still
+    raises, and three silent tries still raise, so a real outage stays
+    INCONCLUSIVE."""
     req = urllib.request.Request(url, headers={'User-Agent': UA, 'Range': 'bytes=0-0'})
-    try:
-        with urllib.request.urlopen(req, timeout=40) as r:
-            return r.status in (200, 206)
-    except urllib.error.HTTPError as exc:
-        if exc.code == 404:
-            return False
-        raise
+    for attempt in range(1, tries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.status in (200, 206)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                return False
+            raise
+        except (TimeoutError, urllib.error.URLError):
+            if attempt == tries:
+                raise
 
 
 # ---- pure helpers (tested offline in tests/test_data_freshness.py) ---------

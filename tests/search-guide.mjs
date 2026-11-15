@@ -47,8 +47,11 @@ const ok = (cond, name, detail = '') => {
   console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${name}${cond || !detail ? '' : `: ${detail}`}`);
 };
 const FAILS = /NOT FOUND|NOT COVERED|NOT ON THE MAP|CONNECTION ISSUE/;
-const ORANGE = 'rgb(242, 125, 38)';
-const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/;
+// The ring at rest is the focus orange, --focus #d35a12 (audit M-9, Bill's pick A, 2026-11-12): the brand orange read
+// 2.60:1 against the panel, under the 3:1 a control's edge needs (WCAG 1.4.11). Measured against what is behind it.
+const RING = 'rgb(211, 90, 18)';
+const lumOf = (rgb) => { const [r, g, b] = rgb.match(/\d+/g).slice(0, 3).map((v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const contrastOf = (a, b) => { const [x, y] = [lumOf(a), lumOf(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };const UK_POSTCODE = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/;
 
 const browser = await chromium.launch();
 const errors = [];
@@ -91,9 +94,15 @@ console.log('Desktop, first visit');
   await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {}))));
   const rest = await page.evaluate(() => {
     const i = getComputedStyle(document.getElementById('search-input'));
-    return { border: i.borderTopColor, shadow: i.boxShadow, light: getComputedStyle(document.querySelector('.search-comet')).opacity };
+    // The first painted background behind the box: the panel the ring is seen against.
+    let el = document.getElementById('search-input').parentElement;
+    let panel = 'rgba(0, 0, 0, 0)';
+    while (el && /rgba\(0, 0, 0, 0\)|transparent/.test(panel)) { panel = getComputedStyle(el).backgroundColor; el = el.parentElement; }
+    return { border: i.borderTopColor, shadow: i.boxShadow, light: getComputedStyle(document.querySelector('.search-comet')).opacity, panel };
   });
-  ok(rest.border === 'rgb(242, 125, 38)' && /3px/.test(rest.shadow) && rest.light === '0', 'at rest the light is gone and the box keeps a still orange ring', JSON.stringify(rest));
+  ok(rest.border === RING && contrastOf(rest.border, rest.panel) >= 3 && /3px/.test(rest.shadow) && rest.light === '0',
+    'at rest the light is gone and the box keeps a still ring in the focus orange, 3:1 or more against the panel (WCAG 1.4.11, audit M-9)',
+    JSON.stringify({ ...rest, ratio: contrastOf(rest.border, rest.panel).toFixed(2) }));
   const chips = await page.evaluate(() => ({
     row: getComputedStyle(document.getElementById('search-try')).display,
     panel: [...document.querySelectorAll('#sidebar-content .quicksearch .quicksearch-chip')].map((b) => b.textContent),
@@ -120,7 +129,7 @@ console.log('Reduced motion');
     border: getComputedStyle(document.getElementById('search-input')).borderTopColor,
     light: getComputedStyle(document.querySelector('.search-comet')).opacity,
   }));
-  ok(r.guide && r.running === 0 && r.border === ORANGE && r.light === '0', 'with reduced motion: the still ring at once, no light, nothing moving', JSON.stringify(r));
+  ok(r.guide && r.running === 0 && r.border === RING && r.light === '0', 'with reduced motion: the still ring at once, no light, nothing moving', JSON.stringify(r));
   await ctx.close();
 }
 
@@ -168,11 +177,32 @@ for (const [width, height] of [[320, 568], [375, 667], [844, 390]]) {
 }
 
 // ---- 4. An answer by a link nobody tapped ----
+//      NOTHING may touch the page until the link's search has ended the guide. Playwright runs its selector waits and
+//      evaluates as a user gesture (Runtime.callFunctionOn userGesture: true; measured 2026-11-14: hasBeenActive went
+//      false -> true at the first waitForSelector), so a test that looked first handed the page the very activation
+//      this checks is missing. It passed only while the map's boot beat the test's first look, and went red on a loaded
+//      PC (preflight of 2026-11-14 00:00). Now the page says when the guide ends, through the console (no gesture), and
+//      the boundaries are held back 1.5 s so a slow boot is reached on purpose, every run: the old way reds on it.
 console.log('Deep link');
 {
-  const { ctx, page } = await visit('?postcode=TW9%203PZ');
-  await page.waitForFunction(() => !document.querySelector('.search-box.guide'), null, { timeout: 15000 }).catch(() => {});
-  const ended = !(await guideOn(page));
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+  await ctx.route('**/data/london-boroughs.json', async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.continue(); });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`?postcode=: ${e.message}`));
+  await stubLiveApi(page);
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const box = document.querySelector('.search-box');
+      if (!box) return;
+      new MutationObserver((recs) => {
+        const had = recs.some((r) => (r.oldValue || '').split(/\s+/).includes('guide'));
+        if (had && !box.classList.contains('guide')) console.log('search-guide-ended');
+      }).observe(box, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+    });
+  });
+  const said = page.waitForEvent('console', { predicate: (m) => m.text() === 'search-guide-ended', timeout: 20000 }).then(() => true, () => false);
+  await page.goto(BASE + '?postcode=TW9%203PZ', { waitUntil: 'domcontentloaded' });
+  const ended = (await said) && !(await guideOn(page));
   const remembered = await seen(page);
   ok(ended && remembered !== '1', 'an answer by a link ends the guide but does not remember it', `ended=${ended} seen=${remembered}`);
   await page.goto(BASE, { waitUntil: 'domcontentloaded' });
@@ -359,6 +389,47 @@ console.log('The audit\'s map-state faults');
     'Trafford clicked after choosing Investor shows the Investor score, as the ranking has it', `want ${want} | ${panel.slice(0, 160).replace(/\s+/g, ' ')}`);
   await ctx.close();
 }
+for (const [what, q, want] of [['a postcode', 'TW9 3PZ', /TW9 3PZ/], ['a borough', 'Hounslow', /HOUNSLOW/]]) {
+  // I-18: on a phone, a profile chosen in Rankings with a result open keeps the phone on Rankings (it was thrown back to
+  // Search, the table drawn over the map), and the result is redrawn for the new profile, still the same result.
+  const { ctx, page } = await visit('', { width: 390, height: 844 });
+  await page.evaluate((s) => triggerSearch(s), q);
+  await answered(page);
+  await page.locator('.mobile-nav-btn[data-mview="ranking"]').click();
+  await page.waitForFunction(() => document.querySelector('.app')?.dataset.mview === 'ranking', null, { timeout: 5000 }).catch(() => {});
+  await page.locator('#persona-bar .persona-btn[data-persona="family"]').click();
+  await page.waitForTimeout(600);
+  const st = await page.evaluate(() => ({
+    mview: document.querySelector('.app')?.dataset.mview,
+    nav: document.querySelector('.mobile-nav-btn[aria-current="page"]')?.dataset.mview,
+    persona: currentPersona,
+    title: document.getElementById('sidebar-title')?.textContent.trim(),
+  }));
+  ok(st.mview === 'ranking' && st.nav === 'ranking' && st.persona === 'family' && want.test(st.title),
+    `on a phone, a profile chosen in Rankings with ${what} open stays on Rankings and keeps the result`, JSON.stringify(st));
+  await ctx.close();
+}
+{
+  // M-14: on a phone with a result card open, Escape on the Layers popover closes the popover only; a second closes the card.
+  const { ctx, page } = await visit('', { width: 390, height: 844 });
+  await page.evaluate(() => triggerSearch('TW9 3PZ'));
+  await answered(page);
+  // A keyboard user's path (Escape is a key): the open card covers the Layers button on a phone, so a pointer cannot reach it.
+  await page.locator('#layers-trigger').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.getElementById('layers-trigger')?.getAttribute('aria-expanded') === 'true', null, { timeout: 5000 }).catch(() => {});
+  const cardOpen = () => page.evaluate(() => !document.querySelector('#tab-analysis .no-result-yet') && getComputedStyle(document.getElementById('result-close')).display !== 'none');
+  const before = { popover: await page.evaluate(() => document.getElementById('layers-trigger').getAttribute('aria-expanded')), card: await cardOpen() };
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  const first = { popover: await page.evaluate(() => document.getElementById('layers-trigger').getAttribute('aria-expanded')), card: await cardOpen() };
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  const second = { card: await cardOpen() };
+  ok(before.popover === 'true' && before.card && first.popover === 'false' && first.card && !second.card,
+    'on a phone, Escape on the Layers popover closes it and leaves the result card open; a second Escape closes the card', JSON.stringify({ before, first, second }));
+  await ctx.close();
+}
 {
   // I-17: the first San Francisco ZIP of a session keeps its ZIP once the neighbourhood list arrives.
   const { ctx, page } = await visit('?city=bayarea');
@@ -369,6 +440,39 @@ console.log('The audit\'s map-state faults');
   await page.waitForTimeout(800);
   const zipNow = await page.evaluate(() => ({ title: document.getElementById('sidebar-title')?.textContent.trim(), card: /ZIP 94103/.test(document.getElementById('sidebar-content')?.innerText || ''), loaded: typeof bayTiers !== 'undefined' && !!bayTiers.loaded }));
   ok(zipNow.loaded && /ZIP 94103/.test(zipNow.title) && zipNow.card, 'the first San Francisco ZIP keeps its ZIP card after the neighbourhood list arrives', JSON.stringify(zipNow));
+  await ctx.close();
+}
+
+{
+  // M-15 (2026-11-13): a postcode answered BEFORE the borough data arrives stays the postcode's answer when it lands. The
+  // late load redrew selectedBorough, which a postcode search sets to its council, so TW9 3PZ became Richmond's panel.
+  // Reached on purpose: the data file is held until the answer is on screen. Service workers blocked, or the worker's own
+  // fetch of /data/ would pass the hold by.
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`M-15: ${e.message}`));
+  await stubLiveApi(page);
+  let release;
+  const hold = new Promise((r) => { release = r; });
+  let heldIt = false;
+  await page.route('**/data/borough-extra.json*', async (route) => {
+    heldIt = true;
+    await hold;
+    await route.continue().catch(() => {});
+  });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#search-input', { timeout: 20000 });
+  await page.evaluate(() => triggerSearch('TW9 3PZ'));
+  const first = await answered(page);
+  const early = await page.evaluate(() => panelSubject.kind);
+  const landed = page.waitForResponse((r) => r.url().includes('/data/borough-extra.json'), { timeout: 15000 }).then(() => true, () => false);
+  release();
+  const arrived = await landed;
+  await page.waitForTimeout(1200);
+  const st = await page.evaluate(() => ({ kind: panelSubject.kind, title: document.getElementById('sidebar-title')?.textContent.trim() }));
+  ok(heldIt && /TW9 3PZ/.test(first) && early === 'postcode' && arrived && st.kind === 'postcode' && /TW9 3PZ/.test(st.title),
+    'a postcode answered before the borough data arrives is still that postcode once it lands',
+    !heldIt || early !== 'postcode' ? `not reached: held ${heldIt}, answer "${first}" as ${early}` : JSON.stringify({ arrived, ...st }));
   await ctx.close();
 }
 

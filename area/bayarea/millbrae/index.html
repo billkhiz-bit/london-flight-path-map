@@ -49,6 +49,48 @@
   dl.scores b { font-family:var(--font-display); font-size:22px; font-weight:700; }
   dl.scores .of { font-family:var(--font-mono); font-size:12px; color:var(--mid); }
   dl.scores .bar { margin:6px 0 0; }
+  /* THE ANSWER CARD (Bill's pick A, 2026-11-13): the full map's card, in its own colours (index.html .answer-card), first
+     on the page; the score and its five parts sit in it. Dark in both themes: on a dark page it lifts to the page's paper. */
+  .card { --c-head:#ffffff; --c-text:#f3f1ec; --c-lede:#d9d7d0; --c-label:#b9b6ae; --c-line:#55554f; --c-track:#3a3a3a;
+    display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:24px 32px; margin:24px 0 8px; padding:24px;
+    border-radius:6px; background:#141414; color:var(--c-text); }
+  .card.solo { grid-template-columns:minmax(0, 1fr); max-width:720px; }
+  .card-main { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .card-where { margin:0; font-size:12.5px; color:var(--c-label); }
+  .card-lead { margin:0; font-family:var(--font-display); font-size:clamp(20px, 2.4vw, 24px); font-weight:700; line-height:1.25; letter-spacing:-0.01em; color:var(--c-head); }
+  .pills { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0; }
+  .pill-lab { margin-right:2px; font-size:12px; color:var(--c-label); }
+  .pill { display:inline-flex; align-items:center; gap:7px; min-height:30px; padding:4px 11px 4px 9px; font-size:13px; line-height:1.2; color:var(--c-text); text-decoration:none; border:1px solid var(--c-line); border-radius:999px; }
+  .pill:hover { border-color:var(--c-text); }
+  .pill .mark { flex:none; }
+  .pill.watch .mark { color:var(--orange); }
+  .pill.good .mark { color:#26f27d; }
+  .card a:focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  .card-score { min-width:0; padding-left:28px; border-left:1px solid var(--c-line); }
+  .card.solo .card-score { padding-left:0; border-left:0; }
+  .card .headline { margin:0 0 8px; }
+  .card .headline .n { font-size:clamp(44px, 6vw, 60px); color:var(--c-head); }
+  .card .headline .of, .card .sub { color:var(--c-lede); }
+  .card .bar { background:var(--c-track); }
+  .card .bar.big { margin-bottom:16px; }
+  .card dl.scores { grid-template-columns:minmax(0, 1fr); gap:12px; padding:0; border:0; }
+  /* Each part on one line, its name left and its figure right, the bar under them and the note under that. */
+  .card dl.scores dt { float:left; font-size:13px; line-height:1.9; color:var(--c-text); }
+  .card dl.scores dd { text-align:right; }
+  .card dl.scores b { font-size:17px; color:var(--c-head); }
+  .card dl.scores .bar { clear:both; height:6px; margin:4px 0 0; }
+  .card dl.scores .note { text-align:left; }
+  .card dl.scores .of, .card .note { color:var(--c-label); }
+  .card-main .card-map { align-self:flex-start; margin-top:6px; }
+  .card-map { display:inline-block; margin-top:16px; padding:8px 16px; border-radius:999px; background:#ffffff; color:#141414; font-size:14px; font-weight:600; text-decoration:none; }
+  .card-map:hover { text-decoration:underline; text-underline-offset:3px; }
+  .find { scroll-margin-top:16px; }
+  .visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+  @media (max-width: 760px) {
+    .card { grid-template-columns:minmax(0, 1fr); padding:16px; }
+    .card-score { padding-left:0; padding-top:16px; border-left:0; border-top:1px solid var(--c-line); }
+    .card.solo .card-score { padding-top:0; border-top:0; }
+  }
   /* 12px, the site's small print everywhere else; 11px was the one size below it (site audit 2026-11-01). */
   .note { display:block; color:var(--mid); font-size:12px; margin-top:4px; }
   .groups { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:0 48px; margin:8px 0; }
@@ -92,6 +134,7 @@
   .site-top .site-nav a[aria-current] { text-decoration: underline; text-decoration-color: var(--focus); text-decoration-thickness: 3px; text-underline-offset: 7px; }
   @media (prefers-color-scheme: dark) {
     :root { --dark:#f5f5f4; --mid:#a1a1a1; --line:#3a3a3a; --bg:#141414; --paper:#1c1c1c; --orange:#fb923c; --orange-ink:#fb923c; --track:#3a3a3a; --yard:#8c8a85; }
+    .card { background:#1c1c1c; box-shadow:inset 0 0 0 1px #3a3a3a; }
   }
   /* The phone menu (2026-10-23). Below 680 px the name and the six links no longer share a row, so the links
      fold behind a Menu button. It is a popover, so it needs no script (privacy and terms allow none, the area
@@ -122,6 +165,14 @@
 <h1>Millbrae noise and liveability</h1>
 <p class="sub">San Francisco Bay Area. Aircraft and road noise, affordability, crime, rail access and flood risk, from published sources.</p>
 
+<section class="card" aria-label="The answer for Millbrae">
+<div class="card-main">
+<p class="card-where">Millbrae &middot; one of 50 Bay Area cities</p>
+<p class="card-lead">Aircraft noise is high and prices are high.</p>
+<p class="pills"><span class="pill-lab">Worth a look</span> <a class="pill watch" href="#aircraft-noise"><svg class="mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 3.8v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="7" cy="10.2" r="0.9" fill="currentColor"/></svg>Aircraft noise<span class="visually-hidden">, worth a look</span></a> <a class="pill watch" href="#price"><svg class="mark" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 3.8v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="7" cy="10.2" r="0.9" fill="currentColor"/></svg>High prices<span class="visually-hidden">, worth a look</span></a></p>
+<a class="card-map" href="/map/?city=bayarea&amp;borough=Millbrae">Open it on the map</a>
+</div>
+<div class="card-score">
 <div class="headline" data-fact><span class="n">1.3</span><span class="of">Sky Score out of 10; on every score here, 10 is best</span></div>
 <div class="bar big" aria-hidden="true"><i style="width:13%;background:#f27d26"></i></div>
 <p class="sub">On US scales: crime, road noise and flood risk are scored against California&#x27;s own figures, and prices among the Bay Area&#x27;s 50 cities alone. Not comparable with a UK score, nor with New York&#x27;s.</p>
@@ -132,23 +183,26 @@
 <div data-fact><dt>Environment</dt><dd><b>2.6</b> <span class="of">/ 10</span><div class="bar" aria-hidden="true"><i style="width:26%;background:#f27d26"></i></div></dd></div>
 </dl>
 
+</div>
+</section>
+
 <div class="groups">
 <div>
 <section class="group"><h2>Noise and planes</h2>
-<div class="find" data-fact><p class="find-h">Aircraft noise is high</p><span class="note">Estimated from the FAA&#x27;s published routes over the city&#x27;s residents, fitted to the noise monitors of San Francisco and San Jose airports; not a measurement</span></div>
-<div class="find" data-fact><p class="find-h">Road noise</p><p class="find-d">12.1% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California&#x27;s 6.88%, 0 at double or more</p><span class="note">BTS National Transportation Noise Map, 2022</span></div>
+<div class="find" id="aircraft-noise" data-fact><p class="find-h">Aircraft noise is high</p><span class="note">Estimated from the FAA&#x27;s published routes over the city&#x27;s residents, fitted to the noise monitors of San Francisco and San Jose airports; not a measurement</span></div>
+<div class="find" id="road-noise" data-fact><p class="find-h">Road noise</p><p class="find-d">12.1% of residents in the 45 dB LAeq band or louder, scored 10 at none, 5 at California&#x27;s 6.88%, 0 at double or more</p><span class="note">BTS National Transportation Noise Map, 2022</span></div>
 </section>
 <section class="group"><h2>Air and flood</h2>
-<div class="find" data-fact><p class="find-h">Flood risk</p><p class="find-d">3.2% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California&#x27;s 3.14%, 0 at double or more</p><span class="note">FEMA National Flood Hazard Layer, as read October 2026</span></div>
+<div class="find" id="flood-risk" data-fact><p class="find-h">Flood risk</p><p class="find-d">3.2% of residents in the 1% annual-chance flood zone, scored 10 at none, 5 at California&#x27;s 3.14%, 0 at double or more</p><span class="note">FEMA National Flood Hazard Layer, as read October 2026</span></div>
 </section>
 </div>
 <div>
 <section class="group"><h2>Living here</h2>
-<div class="find" data-fact><p class="find-h">Crime is withheld, not estimated: policed by the san mateo county sheriff under contract; doj counts its crime in the sheriff&#x27;s county figures, so it has no rate of its own</p><span class="note">California DOJ OpenJustice, 2025</span></div>
+<div class="find" id="crime" data-fact><p class="find-h">Crime is withheld, not estimated: policed by the san mateo county sheriff under contract; doj counts its crime in the sheriff&#x27;s county figures, so it has no rate of its own</p><span class="note">California DOJ OpenJustice, 2025</span></div>
 <div class="find" data-fact><p class="find-h">Rail access</p><p class="find-d">Poor: the share of residents within 800 m of a rail, metro or light-rail station, banded as the UK is (buses and ferries are not counted)</p><span class="note">BTS National Transit Map, compiled 2026</span></div>
 </section>
 <section class="group"><h2>Property</h2>
-<div class="find" data-fact><p class="find-h">Median home value</p><p class="find-d">$1,934,900</p><span class="note">US Census Bureau American Community Survey 5-year estimates, 2020-2024</span></div>
+<div class="find" id="price" data-fact><p class="find-h">Median home value</p><p class="find-d">$1,934,900</p><span class="note">US Census Bureau American Community Survey 5-year estimates, 2020-2024</span></div>
 <div class="find" data-fact><p class="find-h">County price trend</p><p class="find-d">San Mateo County, -0.61% in a year (a fact, not scored: county-wide)</p><span class="note">FHFA county house price index, 2025</span></div>
 </section>
 </div>

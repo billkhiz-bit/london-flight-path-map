@@ -110,3 +110,45 @@ runs the real block, cut from the script, in front of a stand-in exiting 0, 1 an
 `exit $?` turned the 1 and the 3 into 0 and the test red. The pointer's stage count and expected time come from the
 previous run's own log and `last.ms`, never a number typed in (107 had been quoted; 8 Nov's run had 109). Edit
 `preflight.sh` only where no run is going: sh reads a script as it runs it.
+
+## A flaky publisher, and a gate that could not fail (2026-11-12, night)
+
+**DEFRA's freshness row.** Every preflight on 12 Nov ended "PASS (INCOMPLETE)" on `check_data_freshness.py`'s DEFRA
+row. The afternoon's note blamed the Round 5 address for hanging; measured at night it answered 404 in 0.1 s, and the
+hang was Round 4's AIRPORT service, about one request in three, with or without the one-byte Range header (three tries
+of each: one ranged and one plain request hung, the rest answered in 2-7 s). A Range header was briefly blamed on one
+pair of tries: repeat a timing before naming a cause. `resolves()` now asks a request that got NO answer (a timeout or
+a dropped connection) again, three times at 15 s; a 404 is still "not there" at once, any other status still raises,
+three silences still raise, so a real outage stays INCONCLUSIVE (`tests/test_data_freshness.py`, red on one try).
+
+**A heredoc made a gate that could not fail.** The new focus-ring test (M-16) was appended through a Python script fed
+by a Git Bash heredoc: the heredoc turned `\\b` into `\b`, Python wrote it as a BACKSPACE character, and the regex
+`\x08(solid|...)\x08` matched nothing, so the gate passed on the very file it was written to catch. Two more traps
+hid it: the Read tool does not show control characters (the line looked right), and a "fix" sent through the same
+shell quoting left the bytes as they were. Only the red proof caught it: green on the committed map's three dark rings.
+The same night a heredoc turned `report\\'s` into `report's` inside a JS string, and the front-page suite died on a
+syntax error. Rules: write any test text with backslashes or quotes with the Write or Edit tool, never a heredoc; scan
+touched files for control characters (bytes under 32 other than tab, LF, CR) before a commit; and never trust a new
+gate until it has gone red on the defect.
+
+**A reaped preflight keeps running (2026-11-12, night).** Claude Code stopped a background `sh scripts/preflight.sh` for
+low memory and reported it killed, but only its outer shell ended: six `sh.exe` preflight processes, the local server on
+8123, `tests/front-page.mjs` and five headless browsers (about 1 GB) ran on, and a hand-run `tests/search-guide.mjs` then
+failed with EADDRINUSE on 8981, held by the orphan's own search-guide stage. A search on command lines containing the repo
+path missed them all (they name `tests/...` relative). After a stopped run, list `sh.exe` with `preflight.sh` in its
+command line and every process under them (PowerShell `Get-CimInstance Win32_Process`, by `ParentProcessId`), end those
+alone, never another session's `node` (the MCP servers), and treat that run's log as void.
+
+**A Playwright look is a user gesture (2026-11-14).** The midnight preflight of 13-14 Nov went red on one check, "an answer
+by a link ends the guide but does not remember it: ended=true seen=1", while N65's track download loaded the PC; alone it
+passed twice. The map was right. The map remembers the guide only after a user activation
+(`navigator.userActivation.hasBeenActive`), and Playwright runs its selector waits and evaluates through
+`Runtime.callFunctionOn` with `userGesture: true` (playwright-core 1.58.2, `crExecutionContext.js`). A probe page logging its
+own `hasBeenActive` to the console read false after `goto` and true straight after the first `waitForSelector`. So the test
+handed the page the activation it was checking was absent, and passed only while the map's boot (boundaries, then
+`bootFromQuery`) beat the test's first look. Holding `/data/london-boroughs.json` back 1.5 s reproduced the red every run.
+The fix in `tests/search-guide.mjs` step 4: an init script watches `.search-box` and logs `search-guide-ended` when the
+`guide` class leaves it; the test waits for that console line before any look, and keeps the 1.5 s hold so a slow boot is
+reached on purpose. Proven: green with the hold, red on a map that always remembers. Rule: a test of what a page does
+without activation (sticky activation, autoplay, a popup, `requestFullscreen`, clipboard writes) must not touch the page
+before the page has acted; let the page say when.

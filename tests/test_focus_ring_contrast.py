@@ -125,3 +125,21 @@ def test_the_focus_colour_reaches_3_to_1_on_every_background(rel):
     grounds = {name: t[name] for name in BACKGROUNDS if name in t} | {'white': '#ffffff'}
     low = {name: round(contrast(t['--focus'], colour), 2) for name, colour in grounds.items()}
     assert all(v >= 3.0 for v in low.values()), f'{rel}: --focus {t["--focus"]} against {low}'
+
+
+@pytest.mark.parametrize('rel', FOCUS_TOKEN_PAGES)
+def test_every_outline_ring_is_drawn_in_the_focus_colour(rel):
+    """A page that defines --focus draws every outline ring in it (audit M-16, 2026-11-12): three of the full map's (the
+    retry button, the badge's embed and copy buttons, the notify form) were drawn in --dark, so a keyboard user met two
+    different rings on one page. The token or its own value, as a literal, both count."""
+    text = (REPO / rel).read_text(encoding='utf-8')
+    focus = tokens(text)['--focus'].lower()
+    off = []
+    for body in focus_rules(text):
+        if 'outline' not in body:
+            continue
+        for ring in RING.findall(body):
+            r = ring.strip().lower()
+            if re.search(r'\b(solid|dashed|dotted|double)\b', r) and 'var(--focus' not in r and focus not in r:
+                off.append(r)
+    assert not off, f'{rel}: outline rings not in the focus colour {focus}: {off}'

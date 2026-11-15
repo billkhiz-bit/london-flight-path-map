@@ -243,7 +243,7 @@ def build_regions():
         'ramp': ramp_identity(app),
         'source': 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden, per-airport coverages',
         'note': (
-            'Quiet scores for the postcodes DEFRA measured around Birmingham, '
+            "Quiet scores for the postcodes inside DEFRA's modelled aircraft noise maps around Birmingham, "
             'Bristol, East Midlands, Leeds Bradford, Liverpool, Manchester and '
             'Newcastle airports. London is in aircraft-quiet-london.json. '
             'Postcodes absent from both have no aircraft contour and fall back '
@@ -318,7 +318,7 @@ def main():
         'ramp': ramp_identity(app),
         'source': 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden',
         'note': (
-            'Quiet scores for the London postcodes DEFRA actually measured. '
+            "Quiet scores for the London postcodes inside DEFRA's modelled aircraft noise map. "
             'Postcodes absent from this file have no aircraft contour and fall '
             'back to flight-path geometry.'
         ),

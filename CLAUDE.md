@@ -122,7 +122,7 @@ Or just describe what you need, I have full context of this project.
   `/talks/` handout broke the OGL and prices rules unseen for a month, fixed 2026-10-24). Say **AI** only as an event's
   name or where AI is NOT used; never how the product works or was built (Bill, 2026-10-24: not "AI slop").
   **DEFRA's Heathrow map and the CAA's yearly contours are ONE model on two years** (ANCON v2.4; read from the PDFs 2026-11-06: Heathrow's Noise Action Plan 2024-2028 pp. 9 and 38, ERCD 2201, ERCD 2601): never "different models". "A highly anomalous situation" is cited to that plan, p. 9: DEFRA's authorship of it was never found.
-  **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules), on
+  **`tests/test_public_wording.py` holds these on every page and PDF the Makefile uploads** (+ js/ modules, + every uploaded JSON's string values since audit M-27, 2026-11-13), on
   what a visitor sees; a new exception goes in its allow-lists WITH its reason, never a looser pattern.
 
 ## Rules that bite
@@ -227,6 +227,12 @@ Or just describe what you need, I have full context of this project.
   old postcode in a new city; a late redraw passes the card's own options and checks it is still on screen. A covered council's
   WHOLE name opens it from any city (`councilElsewhere`), never a prefix. `LONDON_AREA_MAP` postcodes must be LIVE in NSPL
   (`tests/test_london_area_postcodes.py`: nine had been retired). Each is reached on purpose in `tests/search-guide.mjs` 7.
+  A REDRAW is not a result: `setPersona()` passes `reveal: false` (I-18: a phone was thrown from Rankings to Search). One key,
+  one effect: the Layers popover's Escape marks the key used and the result card's Escape steps aside (M-14).
+- **Every outline focus ring on a page that defines `--focus` is drawn in it** (M-16, `tests/test_focus_ring_contrast.py`).
+- **A postcode with no map reference has ONE sentence, `noPointSaid()` (js/place-box.mjs)** for `/` and `/api/` (M-18): never
+  pass a null latitude to the API. **An area page's tied price rank says "joint"**, the tie counted from the API's own ranks
+  (`price_ranks()`, M-23); /open-data/'s CAA year is read from `data/covid-understatement.json` (M-20), never typed.
 - **The map's source is `index.html`, served at `/map/`; the front page is `home/index.html` at `/`.**
   Locally, `/` is still the map. `js/api-base.js` is loaded by an ABSOLUTE path.
 - **Phone vs desktop is `PHONE_LAYOUT = '(max-width: 900px), (max-height: 500px)'`**, stated by every @media
@@ -273,6 +279,10 @@ Or just describe what you need, I have full context of this project.
   plain words: crime against the London median (`crime_against_london`), Progress 8 as a band (`school_band`), bars in `score_colour`, all three held equal to `index.html` by `tests/test_area_findings.py`. A
   figure where a band would be stays a figure. `visuals()` (his pick B) draws only what truly compares: a share of postcodes, a figure beside a named yardstick from a true zero, a strip for a rating
   among its own words. Aircraft noise and the price trend stay words: nothing honest to draw them against. A figure not held draws nothing. Planes pages lead with `day_figure()`'s "Up to N", always with its "Up to": a bare 318 reads as every postcode's. The score span and ` data-fact` are read by tests.
+  **Since 2026-11-13 they open on the map's ANSWER CARD** (Bill's pick A, claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1): `card_items()` / `card_lead()` say what stands out FROM THE PAGE'S OWN FINDINGS (tones the
+  map's `toneOf()` sets, the crime pill the council band the map's crime pill reads, High prices the map's affordability-under-3 rule, each read back out of `js/panel-findings.mjs` by the tests);
+  the council's aircraft band has six words and only Low / High / Severe are a verdict (`toneOf()` knows no "severe": Hounslow had no pill). Nothing at either end: no headline. The score and
+  its parts moved into the card, markup unchanged; each pill links to its finding's id and says its verdict in words.
 - **One palette for the pages, held by `tests/test_site_palette.py`** (Bill, 2026-11-04: "ensure the colour scheme is consistent"): a
   rebuilt page joins `HELD` and cannot drift; every other page is declared with its reason, and the waiting list can only shrink (empty since 2026-11-05, when `/bay-area/` joined). Read a
   colour from the repo, never from a mock-up (the amber `#f0b429` I called the scores' was in no file). Colours that carry meaning keep
@@ -329,8 +339,11 @@ Or just describe what you need, I have full context of this project.
   aircraft "Good here" beside a planes watch; a card can differ from a map pill (the map bands aircraft noise and rates road by
   council). "What this shows" is GONE: its lines sit under the key figures (why no DEFRA figure) and the routes table (beside a
   runway). The reference (`reportReference`, `checkLink`) moved here from the free copy, unchanged: a test pins TW9 3PZ's live
-  HCH7-V2UJ. Every printed page carries the reference and "Page x of 3" (@page margin boxes). Body and table 10.5 pt, labels and
-  captions 9.5, notes 10.5, sources 8.5, and NO text under 8 pt, chart labels included (pdfium reports CSS px: x0.75 for pt);
+  HCH7-V2UJ. From `REF_PLANES_FROM` (2026-11-14) the reference takes the copy's planes figures too (`planesStated()`, M-4, Bill's
+  pick A), the recipe chosen by the copy's OWN day: every caller passes its planesModel(), never a retyped figure.
+  Every printed page carries the reference and "Page x of 3" (@page margin boxes). Body and table 10.5 pt, labels and
+  captions 9.5, notes 10.5, sources 8.5, and NO text under 8 pt, chart labels included (pdfium reports CSS px: x0.75 for pt;
+  ONE measure, `scripts/report_text_floor.py`: the script refuses a report under it, `tests/test_report_text_floor.py` holds the sample; M-6);
   `address_noise_report.mjs` refuses a fourth page and leaves the last good file. Check a layout change on TW9 3PZ, SW1P 3JA,
   E16 2PX, TW6 2GA (16 routes; page 3 is the tight one), NW1 4RY, M22 5RX, LS1 4DY and N3 1JN (three airports; page 2 95%).
   A neighbour's road reading (`resolvedAs`) is never this postcode's, as on the map; "Under 1 a day" carries the planes' rules
@@ -363,7 +376,7 @@ Or just describe what you need, I have full context of this project.
   (a footer change re-dates them all in the sitemap); counted `<page>-linkedin`; `tests/test_linkedin_company_link.py`
   holds every copy, so at the rename change the holder and it names what is left.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
-  worker installing everywhere; `/data/` is network-first; `/badge` passes through; every `no-cache` upload in
+  worker installing everywhere; `/data/` and `/reports/` (the report picture keeps one name, M-26) are network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
@@ -390,6 +403,11 @@ Or just describe what you need, I have full context of this project.
   `.area-chip`s (NEVER `.chips`: the city switch's, absolutely placed); `#ans-link` is the one filled button; fold summaries carry
   `data-hint`; a border-drawn chevron (the arrow glyph fell back to "v"); the air fold's chart takes the page font via `--font-mono`.
   `tests/front-page.mjs` 7z, red on each fault.
+- **The example's tiles carry a yardstick line** (Bill's pick A, 2026-11-13; claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1): the street report's
+  card rule through ONE holder, `whoSide()` (js/street_report.mjs): DEFRA's own aircraft figure over/under the answer's WHO guideline (never an
+  estimate's), the air guideline as context with no verdict, and how often the airport flew that way from the planes file's `sharePct`
+  (`planesWalk().lead`). A narrow row of tiles shows the short forms by a container query on `.ans-tiles`, never the screen; every line,
+  the skeleton's too, keeps two lines of room, or the frame grows when the figures land.
 - **The answer's folds are pictures and points, not paragraphs** (Bill, 2026-11-11: "still text heavy"; mock-up
   claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2; planes fold 162 words to 92, air 97 to 75). Planes: `planesChart()` (js/planes.mjs,
   the air chart's twin, banded and coloured by the planes layer's index.json steps), the overhead rule beside `overheadConeSvg()`
@@ -403,7 +421,8 @@ Or just describe what you need, I have full context of this project.
   **Breathe London's credit says "License": their required spelling** (scripts/fetch_breathe_london.py); never "correct" it.
 - **The full map's search guide** (Bill's pick C2, 2026-11-11; claude.ai/artifact/Jkh6b9wkuwpXHaK17BycFu): on a first visit
   `.search-box.guide` runs one light round the search box (an SVG outline, pathLength 100, two laps, 4.6 s: under WCAG 2.2.2's
-  5 s, so no pause control), then a still orange ring; reduced motion shows the ring only. `endSearchGuide()` ends it at any
+  5 s, so no pause control), then a still ring in the FOCUS orange (`--focus`, 3.84:1; the brand orange was 2.60:1 against the
+  panel, under WCAG 1.4.11's 3:1: audit M-9, Bill's pick A, 2026-11-12); reduced motion shows the ring only. `endSearchGuide()` ends it at any
   answer (a search, a Try chip, a borough, a deep link) and remembers it (`flightmap_hint_seen`) only after a user activation
   (`navigator.userActivation.hasBeenActive`), so a visitor who arrived by a link still gets it next time. The dark first-run
   banner is GONE. Try chips are the registry's `tryExamples` (every city: phones at least 700 px tall show three in the card while the guide is on; shorter phones keep the hint,
@@ -473,6 +492,8 @@ Or just describe what you need, I have full context of this project.
 - **Prove every new gate red on the defect itself** before trusting it green. Assert SETS, not counts.
 - **Measure the DOM, not the flag that should change it**; poll for the state you want, never one already true;
   reach edge states on purpose (a state reached by chance is not gated).
+- **A Playwright look is a user gesture** (`waitForSelector`, `evaluate`, `waitForFunction`: measured 2026-11-14): a test of
+  what a page does WITHOUT activation must not touch it first; let the page say when (a console line from an init script).
 - **Verify deploys from the ORIGIN, never from exit codes**: `sh scripts/check_deploy_drift.sh`,
   `tests/area-page-freshness.mjs`, `scripts/check_score_sanity.py`, `tests/site-api-parity.mjs`.
 - **When a capability lands, exercise it the way a caller would** (postcode scoring "worked" for two days

@@ -16,7 +16,7 @@
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
 import { districtOf, planesLinks, planesModel, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
-import { EXAMPLE, bindPlaceBox, postcodeCompletions } from '/js/place-box.mjs';
+import { EXAMPLE, bindPlaceBox, noPointSaid, postcodeCompletions } from '/js/place-box.mjs';
 import { airFigure, airPanel, answerLead, exampleFigures, layerSteps } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
 import {
@@ -1275,12 +1275,30 @@ let searchSeq = 0;
 // visitor asks for the rest. Each tile is written from the live answer; a figure it lacks is no tile, never a zero.
 const examplePanel = () => answer?.closest('.panel');
 const endLoading = () => document.querySelector('.panel')?.classList.remove('is-loading');
-function tileNode({ figure, words }) {
+// Each tile's yardstick line (Bill's pick A, 2026-11-13) under its words: `over` marks a verdict past the guideline, and a
+// tile with a short form carries both, the stylesheet showing the one its width suits (one is ever read, the other hidden).
+function tileNode({ figure, words, yard = null, yardShort = null, over = false }) {
   const tile = document.createElement('span');
   tile.className = 'ans-tile';
   const b = document.createElement('b');
   b.textContent = figure;
   tile.append(b, words);
+  if (yard) {
+    const line = document.createElement('span');
+    line.className = over ? 'ans-yard is-over' : 'ans-yard';
+    if (yardShort) {
+      const long = document.createElement('span');
+      long.className = 'yd-l';
+      long.textContent = yard;
+      const short = document.createElement('span');
+      short.className = 'yd-s';
+      short.textContent = yardShort;
+      line.append(long, short);
+    } else {
+      line.textContent = yard;
+    }
+    tile.append(line);
+  }
   return tile;
 }
 function showExampleTiles(e) {
@@ -1289,7 +1307,7 @@ function showExampleTiles(e) {
   const more = byId('ans-more');
   examplePanel()?.classList.add('is-example');
   if (tiles) {
-    tiles.replaceChildren(...exampleFigures(e).map(tileNode), tileNode({ figure: '\u00a0', words: '\u00a0' }));
+    tiles.replaceChildren(...exampleFigures(e).map(tileNode), tileNode({ figure: '\u00a0', words: '\u00a0', yard: '\u00a0' }));
     tiles.lastElementChild.classList.add('is-waiting');
     tiles.hidden = false;
   }
@@ -1480,6 +1498,8 @@ async function search(raw, { example = false } = {}) {
     if (stale()) return;
     if (!geo.result) { if (!example) { say('That postcode was not found, and no place on the map has that name.'); wantCountry(); } return; }
     const { latitude: lat, longitude: lon, admin_district: district } = geo.result;
+    // No map reference, no point to ask about (audit M-18): /api/'s own sentence, never the API's 400 for developers.
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) { if (!example) say(noPointSaid(geo.result.postcode || pc)); return; }
     const city = cityOf(district);
     // A postcode no city covers gets no pin: a pin on whichever city is on
     // screen is how the live site once told a Norwich reader about Stansted.

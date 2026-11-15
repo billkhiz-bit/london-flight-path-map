@@ -45,6 +45,26 @@ def problems(text: str) -> list[str]:
     return found
 
 
+DESCRIPTION = re.compile(r'<meta\s+name="description"\s+content="([^"]*)"')
+NOINDEX = re.compile(r'<meta\s+name="robots"\s+content="[^"]*noindex')
+
+
+def hand_written_pages() -> list[tuple[str, str]]:
+    """(path, text) for every page the Makefile uploads that no page builder writes and a search engine may index.
+    The list is the wording gate's (the Makefile's own upload commands), never one typed here."""
+    sys.path.insert(0, str(ROOT / 'tests'))
+    from test_public_wording import published_pages
+
+    out = []
+    for rel in published_pages():
+        if rel.startswith(('area/', 'planes-overhead/')):
+            continue
+        text = (ROOT / rel).read_text(encoding='utf-8')
+        if not NOINDEX.search(text):
+            out.append((rel, text))
+    return out
+
+
 def built_pages() -> list[Path]:
     pages = sorted((ROOT / 'area').rglob('index.html'))
     planes = ROOT / 'planes-overhead'
@@ -63,6 +83,27 @@ class PageMeta(unittest.TestCase):
             if found:
                 bad[str(p.relative_to(ROOT))] = found
         self.assertEqual(bad, {}, f'{len(bad)} pages: {dict(list(bad.items())[:3])}')
+
+    def test_every_hand_written_page_fits_a_search_result(self):
+        # Audit M-22 (2026-11-13): the limits were held on the BUILT pages only, so /bay-area/ shipped a 99-character
+        # title and the front page a 257-character description. Every other page the Makefile uploads and a search
+        # engine may index (no robots noindex) is held to the same two numbers; its share tags stay its own.
+        pages = hand_written_pages()
+        self.assertGreater(len(pages), 10, f'only {len(pages)} hand-written pages found: the Makefile parse changed')
+        bad = {}
+        for rel, text in pages:
+            m = TITLE.search(text)
+            title = html.unescape(m.group(1)).strip() if m else ''
+            d = DESCRIPTION.search(text)
+            desc = html.unescape(d.group(1)) if d else ''
+            found = []
+            if not title or len(title) > area.TITLE_MAX:
+                found.append(f'title {len(title)} characters: {title!r}')
+            if len(desc) > area.DESC_MAX:
+                found.append(f'description {len(desc)} characters')
+            if found:
+                bad[rel] = found
+        self.assertEqual(bad, {}, f'{len(bad)} pages: {bad}')
 
     def test_a_title_keeps_the_brand_only_where_it_fits(self):
         self.assertEqual(area.page_title('Camden noise & liveability score'), 'Camden noise & liveability score | Sky Score')

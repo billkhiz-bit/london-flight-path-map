@@ -74,21 +74,33 @@ check('air: a hostile name is escaped inside the chart', () => {
   assert.doesNotMatch(a.svg, /<img/);
 });
 
-check('example tiles: the aircraft and air figures, from the answer', () => {
+check('example tiles: the aircraft and air figures, from the answer, each with its yardstick (Bill\'s pick A)', () => {
   const tiles = exampleFigures({ aircraftNoiseLdenDb: 57.2, aircraftNoiseWhoGuidelineDb: 45, no2AnnualMeanUgm3: 17 });
-  assert.deepEqual(tiles, [{ figure: '57.2 dB', words: 'aircraft noise' }, { figure: '17 µg/m³', words: 'NO₂ in the air' }]);
+  assert.deepEqual(tiles, [
+    { figure: '57.2 dB', words: 'aircraft noise', yard: 'Over the WHO guideline of 45', yardShort: "Over WHO's 45 dB", over: true },
+    { figure: '17 µg/m³', words: 'NO₂ in the air', yard: 'WHO guideline: 10', over: false },
+  ]);
 });
 
-check('example tiles: an estimate says it is one', () => {
-  const [tile] = exampleFigures({ aircraftQuietCoverage: 'estimated', aircraftQuietEstimated: 7 });
+check("example tiles: the yardstick is the report's rule, the guideline read from the answer", () => {
+  const [under, air] = exampleFigures({ aircraftNoiseLdenDb: 41.4, aircraftNoiseWhoGuidelineDb: 45, no2AnnualMeanUgm3: 9, no2WhoGuidelineUgm3: 25 });
+  assert.equal(under.yard, 'Under the WHO guideline of 45');
+  assert.equal(under.over, false, 'under the guideline is never marked as over it');
+  assert.equal(air.yard, 'WHO guideline: 25', "the answer's own guideline, never a typed one");
+  assert.equal(exampleFigures({ aircraftNoiseLdenDb: 45, aircraftNoiseWhoGuidelineDb: 45 })[0].yard, 'Level with the WHO guideline of 45');
+});
+
+check('example tiles: an estimate says it is one, and takes no WHO line (a guideline is for a figure, not an estimate)', () => {
+  const [tile] = exampleFigures({ aircraftQuietCoverage: 'estimated', aircraftQuietEstimated: 7, aircraftNoiseWhoGuidelineDb: 45 });
   assert.equal(tile.figure, '3.0 / 10');
   assert.match(tile.words, /estimate from the routes, not measured/);
+  assert.equal(tile.yard, null);
 });
 
 check('example tiles: a figure the answer lacks is no tile, never a zero', () => {
   assert.deepEqual(exampleFigures({ aircraftQuietCoverage: 'outside' }), []);
   assert.deepEqual(exampleFigures(null), []);
-  assert.deepEqual(exampleFigures({ no2AnnualMeanUgm3: 0 }), [{ figure: '0 µg/m³', words: 'NO₂ in the air' }], 'a real zero stays');
+  assert.deepEqual(exampleFigures({ no2AnnualMeanUgm3: 0 }), [{ figure: '0 µg/m³', words: 'NO₂ in the air', yard: 'WHO guideline: 10', over: false }], 'a real zero stays');
 });
 
 const DEV = {

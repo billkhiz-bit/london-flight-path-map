@@ -193,8 +193,16 @@ export function planesWalk(model, steps = []) {
   return {
     airport: a.name,
     sentence,
-    // The hero's third tile: the commonest one-way kind of day, or nothing if that day has no planes to tell.
-    lead: lead && said(leadWords) ? { figure: shortFigure(lead.value), words: `planes a day, flying ${DIR[lead.kind]}` } : null,
+    // The hero's third tile: the commonest one-way kind of day, or nothing if that day has no planes to tell. Its line
+    // (Bill's pick A, 2026-11-13) is how often the airport flew that way over the counted period, read from the file;
+    // `yardShort` is the same fact for a narrow tile.
+    lead: lead && said(leadWords) ? {
+      figure: shortFigure(lead.value),
+      words: `planes a day, flying ${DIR[lead.kind]}`,
+      yard: Number.isFinite(lead.sharePct) ? `${a.name} flew ${DIR[lead.kind]} on ${lead.sharePct}% of days` : null,
+      yardShort: Number.isFinite(lead.sharePct) ? `${DIR[lead.kind].charAt(0).toUpperCase()}${DIR[lead.kind].slice(1)} on ${lead.sharePct}% of days` : null,
+      over: false,
+    } : null,
     rows: a.rows.map((r) => ({ kind: r.kind, label: r.label, share: r.share, figure: shortFigure(r.value), bar: r.bar, range: r.range, colour: stepColour(r.value, steps) })),
     foot: `Planes a day over ${model.postcode} from ${a.name}, ${a.period}. Never an average of the three: no day is average.`,
     how: model.how,

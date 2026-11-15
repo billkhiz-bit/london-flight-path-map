@@ -17,7 +17,7 @@
  */
 
 import { planesModel, planesWalk } from './planes.mjs';
-import { AIR_WHO_2021, airChart, nearestMonitor, nearestSensor, stationDistance } from './street_report.mjs';
+import { AIR_WHO_2021, airChart, nearestMonitor, nearestSensor, stationDistance, whoSide } from './street_report.mjs';
 import { armDev, bindCodeTabs, bindCopy, bindTabs, el, finite, still, writeAnswer } from './dev-demo.mjs';
 
 // ---- pure: what each panel says, from the example's /v1/environment answer ----
@@ -63,12 +63,30 @@ export function noiseRows(e, provenance = {}) {
  * The hero's example, compact: { figure, words } tiles for aircraft noise and nitrogen dioxide, from the same answer the
  * full example shows. The aircraft figure is noiseRows()'s, so an estimate from the routes says it is one. A figure the
  * answer lacks is no tile, never a zero. The planes tile joins from planesWalk(), when its files arrive.
+ *
+ * Each tile's YARDSTICK (Bill's pick A, 2026-11-13; claude.ai/artifact/TkXfH8Uu4e7JLp5dtoJWt1), on the street report's
+ * card rule (glanceCards, through whoSide): DEFRA's own aircraft figure against the answer's WHO guideline, never an
+ * estimate's; the air figure with its guideline as context and no verdict, since the WHO 2021 levels sit under the model
+ * almost everywhere (js/answer-lead.mjs). `over` marks the one tile whose line is a verdict past its guideline.
  */
 export function exampleFigures(e) {
   const tiles = [];
   const aircraft = noiseRows(e)?.rows.find((r) => r.label === 'Aircraft');
-  if (aircraft) tiles.push({ figure: aircraft.figure, words: aircraft.sub ? `aircraft noise, ${aircraft.sub}` : 'aircraft noise' });
-  if (finite(e?.no2AnnualMeanUgm3)) tiles.push({ figure: `${e.no2AnnualMeanUgm3} µg/m³`, words: 'NO₂ in the air' });
+  if (aircraft) {
+    const defra = !aircraft.sub && finite(e.aircraftNoiseLdenDb) && finite(e.aircraftNoiseWhoGuidelineDb);
+    const side = defra ? whoSide(e.aircraftNoiseLdenDb, e.aircraftNoiseWhoGuidelineDb) : null;
+    tiles.push({
+      figure: aircraft.figure,
+      words: aircraft.sub ? `aircraft noise, ${aircraft.sub}` : 'aircraft noise',
+      yard: side ? `${side.charAt(0).toUpperCase()}${side.slice(1)} the WHO guideline of ${e.aircraftNoiseWhoGuidelineDb}` : null,
+      yardShort: side ? `${side.charAt(0).toUpperCase()}${side.slice(1)} WHO's ${e.aircraftNoiseWhoGuidelineDb} dB` : null,
+      over: side === 'over',
+    });
+  }
+  if (finite(e?.no2AnnualMeanUgm3)) {
+    const who = finite(e.no2WhoGuidelineUgm3) ? e.no2WhoGuidelineUgm3 : AIR_WHO_2021.no2;
+    tiles.push({ figure: `${e.no2AnnualMeanUgm3} µg/m³`, words: 'NO₂ in the air', yard: `WHO guideline: ${who}`, over: false });
+  }
   return tiles;
 }
 

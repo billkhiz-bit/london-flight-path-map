@@ -92,7 +92,9 @@ jobs:
       # version the server was built and tested against, like the action SHAs above.
       # pypdf (2026-10-24): tests/test_public_wording.py reads the published PDFs (talks/, home/reports/) for the
       # wording rules; pinned to the version it was proven on.
-      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml mcp==1.23.3 pypdf==6.7.0
+      # pypdfium2 (2026-11-13, audit M-6): tests/test_report_text_floor.py measures each character's size in the sample
+      # street report (pypdf cannot); pinned to the version the floor was proven on.
+      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml mcp==1.23.3 pypdf==6.7.0 pypdfium2==5.5.0
       # backend/tests — the maintained suite (the same one /preflight runs).
       - run: python -m pytest tests/ -v --tb=short
         working-directory: backend

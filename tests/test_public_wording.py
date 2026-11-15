@@ -6,7 +6,8 @@ Government Licence". No gate read the pages a visitor reads, so this one does.
 
 WHICH FILES: the Makefile's own upload commands (`aws s3 cp <page>.html`, and every `aws s3 sync <dir>/`: its HTML,
 and its PDFs where the command includes "*.pdf"), so a file is checked because it is published, never because
-somebody remembered to list it; plus the modules under js/ that write text into those pages. js/vendor/ is
+somebody remembered to list it; plus the modules under js/ that write text into those pages, and (audit M-27,
+2026-11-13) every JSON file it uploads, by its string values, where the file exists in the clone. js/vendor/ is
 third-party code, not our words. A PDF is read for itself: an HTML page fixed but never re-rendered leaves the old
 sentence live in its PDF.
 
@@ -70,6 +71,32 @@ def published_texts():
     Not robots.txt or security.txt: those speak to crawlers and researchers, and robots.txt's comments name the AI
     training crawlers it addresses, which is the one place that word belongs."""
     return sorted({f for cmd in _makefile_commands() for f in re.findall(r'aws s3 cp (llms[\w-]*\.txt)\b', cmd)})
+
+
+def published_json():
+    """The JSON files the Makefile uploads (audit M-27, 2026-11-13): panels draw sentences from them (a planes rule, a
+    station's name, a file's note), and two live notes said "DEFRA measured" with no gate reading them. Many are
+    gitignored builder outputs a fresh clone lacks, so a file is read where it exists; the published list is still
+    the Makefile's, never a list typed here."""
+    files = set()
+    for cmd in _makefile_commands():
+        files.update(re.findall(r'aws s3 cp ([\w./-]+\.json)\b', cmd))
+        for folder in re.findall(r'aws s3 sync ([\w./-]+/) ', cmd):
+            if '"*.json"' in cmd or '--include' not in cmd:
+                files.update(p.relative_to(ROOT).as_posix() for p in (ROOT / folder).rglob('*.json'))
+    return sorted(f for f in files if (ROOT / f).is_file())
+
+
+def json_strings(value):
+    """Every string VALUE in a JSON document, in order (keys are names, never shown)."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from json_strings(v)
+    elif isinstance(value, list):
+        for v in value:
+            yield from json_strings(v)
 
 
 def _decode_js(raw):
@@ -230,6 +257,9 @@ def shown_from_source(path, source):
         parts, ld = script_strings(source), []
     elif path.endswith('.txt'):
         parts, ld = [source], []
+    elif path.endswith('.json'):
+        # Values joined by a mark no pattern crosses: two fields are never one sentence.
+        parts, ld = [' ¦ '.join(json_strings(json.loads(source)))], []
     else:
         parser = ShownText()
         parser.feed(source)
@@ -256,7 +286,7 @@ def shown(path):
 
 
 def everything():
-    return published_pages() + published_pdfs() + published_modules() + published_texts()
+    return published_pages() + published_pdfs() + published_modules() + published_texts() + published_json()
 
 
 def allowed_for(path, allowed):
@@ -449,7 +479,9 @@ class WordingTests(unittest.TestCase):
         # DEFRA's noise and air maps are MODELS; only an instrument's reading is measured (the API's provenance,
         # 2026-10-23). The front page's answer said "DEFRA, measured" for aircraft noise until 2026-11-03, in a
         # template string no rule read for that. A DEFRA MONITOR's reading is measured, and is worded "monitor".
-        found = hits(r'\bDEFRA\b[\s,·]{0,6}measured\b|\bmeasured by DEFRA\b|\bDEFRA(?:\'s)? measurements?\b',
+        # An adverb between is the same claim: aircraft-quiet-london.json's note said "DEFRA actually measured"
+        # (audit M-27, 2026-11-13).
+        found = hits(r'\bDEFRA\b[\s,·]{0,6}(?:\w+ly\s+)?measured\b|\bmeasured by DEFRA\b|\bDEFRA(?:\'s)? measurements?\b',
                      everything(), re.I)
         self.assertEqual(found, {}, "a DEFRA map called measured (say modelled; only a monitor's reading is measured):\n"
                          + fmt(found))
@@ -545,6 +577,11 @@ class RulesCatchTheirDefectsTests(unittest.TestCase):
          '# Sky Score\n\n> AI-powered property insight for every UK postcode.\n'),
         (PriceTests, 'test_our_prices_appear_only_on_pricing', 'llms.txt',
          '- [Pricing](https://skyscore.co.uk/pricing): plans from GBP 499\n'),
+        # Uploaded JSON is read by its string values (audit M-27, 2026-11-13), nested ones too.
+        (WordingTests, 'test_a_defra_map_is_never_called_measured', 'data/aircraft-quiet-london.json',
+         '{"count":1,"note":"Quiet scores for the London postcodes DEFRA actually measured."}'),
+        (WordingTests, 'test_no_page_says_how_often_planes_pass', 'data/aircraft-quiet-regions.json',
+         '{"airports":[{"code":"LHR","rules":["About 120 planes a day pass over."]}]}'),
     ]
 
     def test_each_rule_fails_on_its_defect(self):
