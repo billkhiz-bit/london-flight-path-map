@@ -132,7 +132,12 @@ to 1.00 to 6 Oct 2025 (full days among short ones) and holds 0.97 to 1.01 from 7
 to 1.02 from 5 Nov. A step like that is a receiver coming online near each field, not traffic. So 2025 counts every take-off at
 LHR from 7 Oct and at LGW from 5 Nov; before those days, likely (not yet measured) the missed departures are still heard higher
 up, which is what N65 at a home needs: measure that (a point under a departure route, before and after the step) before
-earlier 2025 months are used for N65 there. Gatwick in April is a different fault: landings were short too (55% and 43% of
+earlier 2025 months are used for N65 there. **MEASURED 15 Nov 2026** (branch `n65`, `docs/lessons/n65.md` "2025's
+coverage and rule 6"): they ARE heard, first over the runway itself at about 410 to 630 ft above the field, 1 to 2 km from
+its centre (not "from ~8 km out": 8 km was the ring the test counted at). That is just above the counter's `LOW_ABOVE_FT`
+(400 ft), so it counted no take-off. N65's rule 6 (Bill's pick) joins each to its runway: on 28 days, take-offs over
+landings before the steps went from 0.861 to 1.002 at Heathrow and from 0.869 to 1.005 at Gatwick. The counter is
+unchanged, and so are the planes figures it feeds, which count January to August 2026, after both steps. Gatwick in April is a different fault: landings were short too (55% and 43% of
 half), so whole aircraft were missing. Also failing: CWL every month (71 to 86%), MME July to October (67 to 83%; November neither reading fits), NCL (89 to
 95%, passing September and October), LPL (91 to 95%, passing July only).
 **The year so far, 2026-10-21:** the fetch finished at 289 of 291 days (adsb.lol's 5 May archive is near-empty,
