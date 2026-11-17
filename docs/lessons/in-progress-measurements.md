@@ -479,6 +479,21 @@ has no gap inside its run, its next reading is hours later. The gap from the las
 from the one before the first) must count, so "heard all through" means heard climbing away. The corrected replay was
 stopped unfinished on Bill's ruling. If it is ever built: it changes `movements()`, so every day file is recounted into a
 NEW folder and the movement rule goes into each day file's `definition` (`one_definition()` then refuses a mix).
+**BUILT AND MEASURED 17 Nov (Bill: "Run A first"), NOT SHIPPED (his "Go with recommended": it cannot bring Leeds Bradford
+back).** `low_pass()` in `movements()`, H 100 ft and G 30 s set BEFORE any verdict was looked at (real landings come within
+~50 ft of the measured field; the helicopters bottom out at 160 ft and up; a lost landing's next reading is minutes away),
+`MOVEMENT_RULE` in the day files' definition, 9 new tests, 8 of 8 mutants red (the inside-only gap among them). The
+corrected replay over all 271 days of January to September 2026 (every record checked equal to `movements()`), scored
+through the averages' own month verdicts: **Leeds Bradford's September 108.1% -> 107.2%, still over the ceiling, and every
+H (60-200 ft) and G (10-30 s) tried leaves it at 107.1-107.2%.** The nine published airports move by 0.5 points at most;
+Luton loses 162 movements in nine months (the trap avoided); Cardiff (unpublished) falls from ~97% to 70-90%: its return
+seems to count practice approaches. **Why it cannot work: the excess is mostly AIRLINERS.** The CAA's Table 03 row for
+Leeds Bradford: August 4,315 against our 4,314; September 3,877 against our 4,192. Our fixed-wing movements WITH a ground
+report fell 2.4% (3,894 -> 3,802) where the CAA's `air_transport` fell 7.5% (3,742 -> 3,460): a five-point gap in aircraft
+heard on the runway, which no low-pass rule can touch. Helicopters rose 135 -> 235 (+74%; the CAA's `test_and_training`
+156 -> 100): about a third of the excess. Kept, gitignored, in `data/adsb/lowpass-2026-11-17/` (the patch, the replay and
+scorer, `score-2026-11-17.txt`, `lba_breakdown.py`). **Next for Leeds Bradford:** the CAA's October table (~mid-December),
+or a revised September; or, read-only, September's airliner gap per day (diversions, positioning, day boundaries).
 
 **The roll's one red preflight check was a typed share** (2026-11-16): `tests/uk-city-panel.mjs` held SW5 9HP's chart to
 Heathrow's "56% of days" westerly, January to August's figure; September made it 60, the panel showed 60, and the test

@@ -49,8 +49,7 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > against Heathrow's 16.8), and `tests/front-page.mjs`'s stubbed airports.json counted Heathrow alone, so C named London
 > City as not counted and its expected planes headline went. Fixed in the TEST: the stub counts London City as the real
 > file does, and a new check (M22 5RX, Manchester not counted in the stub) holds the box against the Nearby row's own
-> distance, proven red with the wiring cut; front page 450 of 450. **Second full preflight: PASS.** Then Bill's word to
-> commit and deploy (`web-deploy` alone: every changed file is under `js/` or the map).
+> distance, proven red with the wiring cut; front page 450 of 450. **Second full preflight: PASS**; live below.
 >
 > **N65, Heathrow 19 Sep 2025 (rules 6 + 7, `n65` `1a3f3bd2`):** both rules work (87 of 89 late take-offs computed; field
 > 83 ft AD 2.2 moved by 36 METARs). But only 194 of 623 ARRIVALS were computed: 410 failed `approach_track()`'s "the
@@ -71,9 +70,18 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > C in a stash, back byte for byte by checksum after): PASS but for the live e2e stage, one slow first load of `/map/`;
 > that spec passed 5 of 5 alone and the whole stage 36 of 36 on its rerun.
 >
+> **C LIVE `017876e6`** (Bill: "Deploy"): `web-deploy`, drift PASS, checked live at 1366 and 390 (LS1 2AD, L24 0AA, NE1 1AE
+> name their airport with the Nearby row's own distance; NE1's headline keeps the question; TW9 unchanged; the map's tile).
+>
+> **Leeds Bradford's fix (Bill: "Run A first"): BUILT, MEASURED, NOT SHIPPED.** The low-pass rule (H 100 ft, G 30 s, set
+> before any verdict) leaves September at 107.2% (every setting 107.1-107.2%): most of the excess is AIRLINERS heard on the
+> runway (ours -2.4% August to September, the CAA's air transport -7.5%), helicopters about a third. Bill: leave it off,
+> look again at the CAA's October (~mid-December). Story and numbers: `docs/lessons/in-progress-measurements.md`, "The
+> September 2026 roll"; the patch and replay in gitignored `data/adsb/lowpass-2026-11-17/`.
+>
 > **Leicester brief v2** (Desktop) updated, marked [17 Nov]: the `--check` and `--verify-caa` re-runs hold, PCM 2024 still the
 > newest, LE1 7RH unchanged, section 9 now Jan-Sep and nine airports.
-> **Next:** C's preflight PASSED (second run): Bill's word to commit and deploy it (`web-deploy`); then N65 step 6 (fetch January to March 2026, then the 2025 year on Bill's OK); `/audit` in a fresh session (~19 Nov); FAA 2612 and the Leicester
+> **Next:** N65 step 6, the 2025 year, on Bill's OK (every day is ON DISK already: only the CAA's March 2025 table and 12 `--air` weather files to fetch); Leeds Bradford at the CAA's October (~mid-December); `/audit` in a fresh session (~19 Nov); FAA 2612 and the Leicester
 > call on 26 Nov; Leeds Bradford's fix only on Bill's word.
 
 > ## START HERE (2026-11-16)
