@@ -1210,3 +1210,16 @@ descriptions were already over 160 characters; touched, each was fitted. M-29's 
 looks were drawn on the live page with one rule injected, each edge measured against the panel: A the focus orange
 3.84:1, B the dark edge with an orange halo 17.6:1, C the ink orange 5.10:1 (claude.ai/artifact/WRf3FYJeGDYXYgQbsKg6F4,
 Bill's pick).
+
+## "Under 1 a day" in the planes tiles (2026-11-16, Bill's pick A)
+
+The September planes roll took Leeds Bradford off (it failed the CAA check), so every West Yorkshire postcode became a
+"none": under 1 a day from each counted airport on every kind of day. The front page drew that as one sentence, while every
+other planes answer is three tiles. Bill, comparing the live and built screenshots: "I prefer the visual with the
+containers". Two options rendered IN THE REAL PAGE (the variant nodes swapped into `#ans-planes` by Playwright, so the
+fonts and spacing are the page's own; claude.ai/artifact/Bd3oMrmm2g7JdgERuTfn4x): A three tiles, "Under 1 a day" / Flying
+west, Both ways, Flying east / "from each airport"; B one wide tile. He picked A. `planesModel()` carries `noneKinds`
+(true of each kind, because `none` means every airport's every kind reads under 1) and `planesNodes()` draws it with the
+airports' own tile code; the sentence (`model.none`) stays for the surfaces that print one (the map's tile, the street
+report). `tests/planes-model.mjs` holds it with a stand-in document (`planesNodes` takes one), red on the sentence alone
+and on tiles with the sentence beside them.

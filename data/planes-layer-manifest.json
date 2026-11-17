@@ -8,20 +8,20 @@
   "md5": "ba7775b8c162b4b2354a67b24739ad9f"
  },
  "bristol-easterly.png": {
-  "bytes": 16245,
-  "md5": "52b2670bcf0b90474a65ffc25cdbcb51"
+  "bytes": 16256,
+  "md5": "855eef6312afadd0a32b3e767865dbaa"
  },
  "bristol-mixed.png": {
-  "bytes": 23753,
-  "md5": "e1c1d8b0df14ebd109b1667a3f383c20"
+  "bytes": 24131,
+  "md5": "e88ebed221f717a61a9b55045d7a2867"
  },
  "bristol-westerly.png": {
-  "bytes": 24585,
-  "md5": "4aaefe351dd3e63680c6146e4d989569"
+  "bytes": 24930,
+  "md5": "3555b2cea55000d8e71190270718b130"
  },
  "index.json": {
-  "bytes": 4048,
-  "md5": "f47ee7ef6102afd11fcb4b29f879efeb"
+  "bytes": 3648,
+  "md5": "9f6a3b12910318b2ea648ff527a47b49"
  },
  "leicester-district-ids.json": {
   "bytes": 180136,
@@ -32,16 +32,16 @@
   "md5": "a212c5d7ceb778bfe0c1865f656cf3e4"
  },
  "leicester-easterly.png": {
-  "bytes": 16681,
-  "md5": "6cf320b4348392cf18abf38c4d7d0a8a"
+  "bytes": 16790,
+  "md5": "fd1d91da03c9bea36af53f65c834e1fa"
  },
  "leicester-mixed.png": {
-  "bytes": 15796,
-  "md5": "70e61e875f1dc2bdd81f7b50f961dd68"
+  "bytes": 15928,
+  "md5": "a41c4e9d5d1eef46d30d1d553c02ab10"
  },
  "leicester-westerly.png": {
-  "bytes": 14649,
-  "md5": "94a21a0c986be76993904e585e4b3f0f"
+  "bytes": 14893,
+  "md5": "7563c3d49863e25fbe946b51639765ec"
  },
  "london-district-ids.json": {
   "bytes": 197601,
@@ -53,15 +53,15 @@
  },
  "london-easterly.png": {
   "bytes": 54891,
-  "md5": "4d2e7744ebe4f521a3105f19b0dbb6bd"
+  "md5": "aa3edfa1da7f68d67f0647dc29722196"
  },
  "london-mixed.png": {
-  "bytes": 70320,
-  "md5": "be9f5181681a998bb67ace8569248be6"
+  "bytes": 70268,
+  "md5": "3072bdff51515d1460ef08f9643507b1"
  },
  "london-westerly.png": {
-  "bytes": 57403,
-  "md5": "316c201dd3bbbf7f4b2bfbda4bc9111b"
+  "bytes": 57371,
+  "md5": "d5e38b8d052234110e38b87171c8784b"
  },
  "manchester-district-ids.json": {
   "bytes": 141362,
@@ -72,16 +72,16 @@
   "md5": "5477e976687f93794a8fa3dfdd9c7e18"
  },
  "manchester-easterly.png": {
-  "bytes": 28276,
-  "md5": "76db4fef5b58bbd4da1010f01352d0ec"
+  "bytes": 28204,
+  "md5": "d68c928cd8c83dec640da2f7ef3e6f1d"
  },
  "manchester-mixed.png": {
   "bytes": 37938,
   "md5": "e95d7b6527f4c9ec69a46b78032ddff2"
  },
  "manchester-westerly.png": {
-  "bytes": 39347,
-  "md5": "a80b6102615083729136c90405a62450"
+  "bytes": 39357,
+  "md5": "1cf45b87e31294b22fbcc57546f198e3"
  },
  "merseyside-district-ids.json": {
   "bytes": 80357,
@@ -93,15 +93,15 @@
  },
  "merseyside-easterly.png": {
   "bytes": 9561,
-  "md5": "86784da4afa27495dbaafdbf46e62714"
+  "md5": "d6e7afa8391028580eafc3839cf15c29"
  },
  "merseyside-mixed.png": {
   "bytes": 5687,
   "md5": "7156733f9efc35b8b7e26230248be4d5"
  },
  "merseyside-westerly.png": {
-  "bytes": 3590,
-  "md5": "aae39c92a8033bf253033c350799dbbd"
+  "bytes": 3541,
+  "md5": "75b7ec47b410d4267993a827636206a0"
  },
  "westmidlands-district-ids.json": {
   "bytes": 103616,
@@ -112,35 +112,15 @@
   "md5": "c4d1f848769668ef9d04b44c2f6854b0"
  },
  "westmidlands-easterly.png": {
-  "bytes": 22972,
-  "md5": "fc24f61bea02993f07ad6f2abb750628"
+  "bytes": 23146,
+  "md5": "39def63006b9a7e424391d8ace15f30a"
  },
  "westmidlands-mixed.png": {
-  "bytes": 24884,
-  "md5": "4ebf84ae7a0c57e5f8de8d607ae780a1"
+  "bytes": 24847,
+  "md5": "63cac33dadf9c377a0b85daa7c629c74"
  },
  "westmidlands-westerly.png": {
-  "bytes": 12961,
-  "md5": "74836cc467d15bee186f97e48b564d69"
- },
- "westyorkshire-district-ids.json": {
-  "bytes": 224374,
-  "md5": "556bffd479ee6c39933d8c1757234348"
- },
- "westyorkshire-districts.png": {
-  "bytes": 23545,
-  "md5": "93b03e925ea0d5da20bb1a4187f28515"
- },
- "westyorkshire-easterly.png": {
-  "bytes": 14412,
-  "md5": "12bd2d5b265df2623fb0eb49400b1025"
- },
- "westyorkshire-mixed.png": {
-  "bytes": 16890,
-  "md5": "f04b08db8a51ae06c2ac11a222641d9f"
- },
- "westyorkshire-westerly.png": {
-  "bytes": 24181,
-  "md5": "b46f991c40d9c69e4a31dd10ab7f0a31"
+  "bytes": 12839,
+  "md5": "4f5c7f28a31fae77fa519228cfcbf7a9"
  }
 }

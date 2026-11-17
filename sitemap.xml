@@ -87,7 +87,7 @@
   <url><loc>https://skyscore.co.uk/area/london/bexley/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/london/brent/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/london/bromley/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://skyscore.co.uk/area/london/camden/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skyscore.co.uk/area/london/camden/</loc><lastmod>2026-11-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/london/city-of-london/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/london/croydon/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/london/ealing/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
@@ -117,7 +117,7 @@
   <url><loc>https://skyscore.co.uk/area/london/westminster/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/manchester/bolton/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/manchester/bury/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://skyscore.co.uk/area/manchester/manchester/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skyscore.co.uk/area/manchester/manchester/</loc><lastmod>2026-11-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/manchester/oldham/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/manchester/rochdale/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/manchester/salford/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
@@ -163,9 +163,9 @@
   <url><loc>https://skyscore.co.uk/area/westmidlands/solihull/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/westmidlands/walsall/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/westmidlands/wolverhampton/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://skyscore.co.uk/area/westyorkshire/bradford/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skyscore.co.uk/area/westyorkshire/bradford/</loc><lastmod>2026-11-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://skyscore.co.uk/area/westyorkshire/calderdale/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://skyscore.co.uk/area/westyorkshire/kirklees/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://skyscore.co.uk/area/westyorkshire/leeds/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
-  <url><loc>https://skyscore.co.uk/area/westyorkshire/wakefield/</loc><lastmod>2026-11-13</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skyscore.co.uk/area/westyorkshire/kirklees/</loc><lastmod>2026-11-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skyscore.co.uk/area/westyorkshire/leeds/</loc><lastmod>2026-11-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skyscore.co.uk/area/westyorkshire/wakefield/</loc><lastmod>2026-11-16</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>
