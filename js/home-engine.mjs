@@ -1770,10 +1770,15 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
     // As for the station and the air: a later search owns the block. Not tied to the map's cities: the files
     // cover every council the score covers (Nottingham's are under East Midlands' flights), and say who is in.
     const seq = ++planesSeq;
+    // The airport the Nearby list names (routesText()'s nearest, its distance in the same words), so the block can say
+    // when it is one we do not count (Bill's pick C, 2026-11-17) and the two never disagree.
+    const nearAp = state.proc && Number.isFinite(lat) && Number.isFinite(lon)
+      ? routesNear(state.proc, plane(lat, lon), AIRPORT_SCOPE_KM).scope[0] : null;
+    const nearest = nearAp ? { code: nearAp.code, distance: km(nearAp.dist) } : null;
     // The layer's steps (option C's heading) never fail: without them it is [] and the planes do not lead.
     Promise.all([loadPlanes(postcode), loadPlanesIndex(), layerSteps()]).then(([[file, info], index, steps]) => {
       if (seq !== planesSeq) return;
-      const model = planesModel(file, info, postcode);
+      const model = planesModel(file, info, postcode, undefined, nearest);
       leadFrom(model, steps);
       if (!model) return;
       planes.append(...planesNodes(model, document, planesLinks(index, postcode, model)));

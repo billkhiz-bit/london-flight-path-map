@@ -14716,7 +14716,9 @@
         withFindings(req, (m) => placeFinding(m, slot, m.nearestFinding(slot, label, rating, nearestListed(containerId), ctx)));
       }
       let _planesInfoLoad = null;
-      async function loadPanelPlanes(postcode) {
+      // `nearest` ({ code, distance }): the airport KEY FACTS names, so the planes tile can say when it is one we do not
+      // count (Bill's pick C, 2026-11-17; js/planes.mjs planesModel).
+      async function loadPanelPlanes(postcode, nearest = null) {
         const json = (path) =>
           fetch(path, { cache: 'no-cache' })
             .then((r) => (r.ok ? r.json() : null))
@@ -14728,7 +14730,7 @@
           if (!_planesInfoLoad) _planesInfoLoad = json('/data/planes/airports.json');
           const [file, info] = await Promise.all([json(`/data/planes/${district}.json`), _planesInfoLoad]);
           if (!info) _planesInfoLoad = null; // a failed load is retried on the next search
-          return p.planesModel(file, info, postcode);
+          return p.planesModel(file, info, postcode, undefined, nearest);
         } catch (e) {
           console.warn('[Sky Score] planes overhead not shown:', e);
           return null;
@@ -14756,7 +14758,11 @@
               ? 'less progress between 11 and 16 than'
               : 'about as much progress between 11 and 16 as';
         // The planes model and the planes layer's steps feed both the planes tile and the headline: each fetched once.
-        const planes = fullUkPostcode ? loadPanelPlanes(analysis.postcode) : Promise.resolve(null);
+        // The nearest airport as the Nearest airport card prints it (airportsShown[0], one decimal), within the 30 km the
+        // plane altitude reads routes over (planeAltitude): farther away it says nothing about this postcode's sky.
+        const nearAp = analysis.airportsShown && analysis.airportsShown[0];
+        const nearest = nearAp && nearAp.code && nearAp.dist <= 30 ? { code: nearAp.code, distance: `${nearAp.dist.toFixed(1)} km` } : null;
+        const planes = fullUkPostcode ? loadPanelPlanes(analysis.postcode, nearest) : Promise.resolve(null);
         const steps = fullUkPostcode
           ? loadPlanesLayerIndex().then((idx) => (idx && Array.isArray(idx.steps) ? idx.steps : []))
           : Promise.resolve([]);

@@ -770,7 +770,7 @@ export function reportParts(spec, f) {
           flown.map((a) => `<div class="blk">${flown.length > 1 ? `<p class="from">From ${esc(a.name)}</p>` : ''}${planesChart(a, steps)}</div>`).join('') +
           `<p class="cap">${esc([pm.rules.overhead, `${periods.length === 1 ? periods[0] : flown.map((a) => `${a.name}: ${a.period}`).join('; ')}.`].filter(Boolean).join(' '))}</p>`
         : `<h2>${esc(pm.heading)}</h2><p class="cap">${esc([pm.none, pm.rules.overhead].filter(Boolean).join(' '))}</p>`) +
-      [pm.edge, pm.approx, pm.other].filter(Boolean).map((s) => `<p class="cap">${esc(s)}</p>`).join('')
+      [pm.uncounted, pm.edge, pm.approx, pm.other].filter(Boolean).map((s) => `<p class="cap">${esc(s)}</p>`).join('')
     : '';
   // "Under 1 a day" is a figure too (audit A-9, 2026-11-12): it carries the overhead rule above and the other rules and
   // the flight tracks' credit here, as a counted airport's chart does, or 158,748 postcodes' figure went out bare.

@@ -134,9 +134,9 @@ export function aircraftFinding({ score, word, modelled = false, source } = {}) 
 /** Planes overhead, only ever from planesModel() (js/planes.mjs): the wording rule allows no other route. */
 export function planesFindings(model, { steps = [] } = {}) {
   if (!model) return [];
-  // A caveat that changes what a figure means stays with the figure, never in the fold (a range, a place that is only
-  // approximate, other flying over a quiet count).
-  const caveats = [model.edge, model.approx, model.other].filter(Boolean);
+  // A caveat that changes what a figure means stays with the figure, never in the fold (a nearest airport we do not count,
+  // first: Bill's pick C, 2026-11-17; a range, a place that is only approximate, other flying over a quiet count).
+  const caveats = [model.uncounted, model.edge, model.approx, model.other].filter(Boolean);
   // THE TILE NAMES ITS MAIN SOURCE; THE FOLD NAMES THEM ALL (Bill, 2026-11-09: "quite a lot of text"). Four credits ran to
   // five lines under three bars, and planesNotes() already lists every one under "About these figures", which the panel
   // places in the LAST airport tile, so the tile said them twice. The flight tracks, with their licence, stay in sight on

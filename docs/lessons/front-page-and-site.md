@@ -1223,3 +1223,31 @@ west, Both ways, Flying east / "from each airport"; B one wide tile. He picked A
 airports' own tile code; the sentence (`model.none`) stays for the surfaces that print one (the map's tile, the street
 report). `tests/planes-model.mjs` holds it with a stand-in document (`planesNodes` takes one), red on the sentence alone
 and on tiles with the sentence beside them.
+
+## A nearest airport we do not count, said by name (2026-11-17, Bill's pick C)
+
+Checking the roll live: LS1 2AD read "Under 1 a day ... from each airport" directly above "Under the Leeds Bradford 32
+final approach, aircraft at about 1,700 ft". Both true (Leeds Bradford is not one of the nine), but nothing said so, and
+the heading "From the nine airports we count" names none. Measuring the other places with an airport we do not count
+found it wider: Speke (L24 0AA), 0.7 km from Liverpool's runway, showed Manchester's figures alone with no word about
+Liverpool, and Newcastle (NE1) and Middlesbrough (TS1) read "Under 1 a day" with no other-flying box at all (their files
+carry no `other` list). Mock-up claude.ai/artifact/T2HNJU7E3m29LVAcywEZeo: A leave it, B name the nine in the
+sub-heading, C name the one we leave out; Bill: "Go with recommended" (C).
+**Built:** `planesModel(file, info, postcode, names, nearest)` takes the CALLER's own nearest airport (`{ code, distance }`,
+the distance as that page prints it), and `uncounted` says "Leeds Bradford, 9.7 km away, is not one of the nine airports
+we count." only when that airport is not in airports.json. Each surface passes what its own nearest-airport line shows,
+so the two cannot disagree: the front page `routesNear(..., AIRPORT_SCOPE_KM).scope[0]` and `km()` (the Nearby row's
+`routesText()`), the full map `analysis.airportsShown[0]` within 30 km, one decimal (the Nearest airport card), the street
+report `routes.scope[0]` (its first tile). `planesNodes()` draws ONE warning box: the sentence first, in bold, then other
+flying when there is any (either alone keeps the box); the map's tile and the report list it first among the caveats.
+Like `other`, it changes what the figures mean, so `planesLead()` and `planesBandLead()` claim nothing with it: NE1 1AE
+and TS1 1AD headlined "Fewer than 10 planes a day from each airport we count" live (read 17 Nov), NE1 8.9 km from
+Newcastle's runway, and now keep the question. It is wording, not a figure, so `planesStated()` (the report's reference) is unchanged. Held by
+`tests/planes-model.mjs` (the sentence, the box, both headlines; a counted, missing or distance-less nearest says
+nothing), `tests/panel-findings.mjs` (first among the tile's caveats) and `tests/front-page.mjs` (M22 5RX, where the
+stub does not count Manchester: the box names it with the Nearby row's own distance; proven red with the wiring cut).
+**A stub that counts fewer airports than the real file now changes the answer.** The first full preflight went red on
+"on a phone ... the visitor's lead": SW5 9HP's nearest airport on the map is LONDON CITY (16.4 km, against Heathrow's
+16.8), and `tests/front-page.mjs`'s stubbed airports.json counted Heathrow alone, so C named London City as not counted
+and the planes headline it expected ("Fewer than 10 Heathrow planes ...") correctly went. The stub now counts London City
+as the real file does. Any test stub of airports.json near a postcode must hold the airports the real one counts there.

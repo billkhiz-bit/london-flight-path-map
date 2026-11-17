@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-17 - Planes overhead says when the nearest airport is one we do not count
+
+- **Near an airport we do not count, the planes answer now says so by name**: "Leeds Bradford, 9.7 km away, is not one of the nine airports we count." It comes first in the planes box on the front page, on the full map's planes tile and in the street report, with the same distance as the page's own nearest-airport line. Until now a Leeds postcode read "Under 1 a day from each airport" right above the line saying it is under a Leeds Bradford approach; Speke, beside Liverpool's runway, showed only Manchester's figures; and Newcastle and Middlesbrough postcodes said nothing about their own airports.
+- **No headline claims few planes there**: where that sentence shows, the answer's headline no longer leads with the planes, as already where other flying passes over.
+
 ## 2026-11-16 - Planes overhead counts September, and Leeds Bradford comes off
 
 - **Planes overhead now counts January to September 2026**: the CAA published its September airport figures on 12 November. Nine of the airports we count matched them closely (96.5% to 98.9% of the official totals), so their September days join the counts. Most figures moved by less than one plane a day. Heathrow's mixed-direction days moved most, because only three September days were mixed (Kew on such a day: 168 to 160).

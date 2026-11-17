@@ -184,7 +184,13 @@ for (const need of ['data/planes/airports.json', 'data/planes-layer/index.json']
 }
 const planesInfo = await readJson('data/planes/airports.json');
 const planesFile = resolve(`data/planes/${districtOf(loc.postcode)}.json`);
-const planesHere = existsSync(planesFile) ? planesModel(await readJson(planesFile), planesInfo, loc.postcode) : null;
+// The nearest airport the report names (its first tile: routes.scope[0], "9.7 km"), so the planes block can say when it
+// is one we do not count (Bill's pick C, 2026-11-17).
+const nearAp = routes.scope[0];
+const planesHere = existsSync(planesFile)
+  ? planesModel(await readJson(planesFile), planesInfo, loc.postcode, undefined,
+    nearAp ? { code: nearAp.code, distance: `${nearAp.dist.toFixed(1)} km` } : null)
+  : null;
 const layerSteps = (await readJson('data/planes-layer/index.json')).steps || [];
 
 // THE REFERENCE AND CHECK LINK the free copy carries (js/street_report.mjs, one holder), for the day in UTC as the free

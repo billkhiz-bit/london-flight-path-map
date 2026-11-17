@@ -386,7 +386,9 @@ Or just describe what you need, I have full context of this project.
   (PLANES-PILL markers, `build_planes_pages.py`). The map's box rule is `.mapwrap > svg`, never `.hero svg`: that one
   stretched a tick icon over half the page. No plane glides on the hero map (Bill: "isn't clear"; the mock's was dropped).
 - **The answer after a search is summary first** (Bill's pick B, 2026-11-04: it ran to 495 words): the rows, the planes as tiles
-  (`planesNodes`; a postcode under 1 a day from every airport gets the same three tiles, `noneKinds`: Bill's pick A, 2026-11-16), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
+  (`planesNodes`; a postcode under 1 a day from every airport gets the same three tiles, `noneKinds`: Bill's pick A, 2026-11-16; where the page's
+  own nearest airport is one we do not count, `uncounted` names it first in the warning box, on the map's tile and in the report, from the
+  caller's own nearest-airport line, and no headline then leads with the planes: Bill's pick C, 2026-11-17), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
   say, nothing deleted; a caveat that changes what a figure means stays on the row. A fold with nothing to say hides itself
   (`.ans-fold:has(> [hidden])`). The overhead drawing reads its angle from the file's `definition` (`overheadConeSvg`).
 - **The answer's lower half is TILES** (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): presentation only.
