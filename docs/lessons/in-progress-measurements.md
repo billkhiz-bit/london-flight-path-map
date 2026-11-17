@@ -437,3 +437,51 @@ its 752 postcodes measured, the ones in Westminster and Wandsworth", the post bo
 says "(330 PO boxes and other large-user postcodes left out)". Seven pages went with the sync's `--delete` (SW5, W11, W1G,
 W1J, W1T, W1W, WC1A): nothing linked them. NOT done: the other postcode shares (road, flood, air, transport within 800 m)
 still count large users, and they feed the scores; measure per borough before proposing a methodology change.
+
+## The September 2026 roll: nine airports, Leeds Bradford out (2026-11-16)
+
+The first MONTH ROLL of planes overhead. The CAA published September 2026 on 12 Nov (its "UK airport data 2026" page, Table
+03 CSV; magic bytes and period 202609 checked, same 56 airports as August). Steps, in order: the CSV into `data/caa/`
+(gitignored) as `table_03_aircraft_movements_2026-09.csv`; `adsb_postcode_averages.py --verdicts` (1 s, builds nothing:
+LOOK HERE FIRST, because one failed month removes an airport from everything); back up `data/adsb/postcode-averages.npz`;
+`adsb_postcode_averages.py` (6 min 45 s; nothing recounted, as its docstring promised); compare postcode by postcode;
+`build_planes_overhead.py --write`; `build_planes_layer.py --write` (it deletes a dropped city's pictures itself);
+`build_planes_pages.py --write`; `build_area_pages.py --write`, `git add area/`, again; `llms.txt` by hand (its period and,
+from today, its airport count are held by `tests/test_llms_txt.py`, proven red on "ten"); the sample street report
+regenerated (`address_noise_report.mjs --postcode "TW9 3PZ" --place "Kew" --sample --out
+home/reports/sample-street-report-kew.pdf`, then `build_report_still.py --write`): `check_sample_report.mjs` stayed GREEN on
+the old sample, because a copy made before REF_PLANES_FROM keeps its old recipe, so it cannot see a planes roll in its
+mixed-day figure (Kew 168, now 160) or its "January to August": regenerate it on every planes roll.
+**Leeds Bradford FAILED September: 108.1% of the CAA's figure (106.8% without circuits)**, after 100.2-105.0% every month
+(June exactly on the ceiling). The nine others passed September at 96.5-98.9%. Bill ruled B (16 Nov: follow the year rule,
+roll now): Leeds Bradford is out of every planes surface, so West Yorkshire's 46 district pages went (every BD, LS and WF
+page and HD5); its postcodes are told "Under 1 a day from each of the nine airports we count" WITH the other-flying flag
+(LS1: all 380), as Newcastle's and Liverpool's are. M40 and WC1H went too: their busiest postcode now reads 9 a day, under
+PAGE_FROM. Per postcode the nine barely moved (median change under 0.3 a day in every airport and kind of day; Heathrow's
+mixed days most, max 10, as September added only 3 of them; Kew westerly 310 unchanged); 42,126 postcodes lost a Leeds
+Bradford figure of 1 a day or more (the busiest read 57 a day).
+**WHY it fails, measured (not fixed):** our September count did not fall with the CAA's (CAA -7.2% a kept day against
+August, ours -3.2%; the nine others within 2.3 points of the CAA's change), and every September day reads normally (118-160
+movements, take-offs equal to landings: no stuck transponder as at Luton). A per-movement replay of the counter (scratch,
+outside the repo, mirroring `movements()` and checked equal to it on every record) found the excess in LOW RUNS WITH NO
+GROUND REPORT that bottom out 60-400 ft above the field: 177 rotorcraft movements in September against 93 in August. Two
+training helicopters, G-KNYT (R44, 66) and G-CHPA (R22, 59), bottom out 160-245 ft above the runway, 11-30 s low: practice
+approaches that climb away. Emergency and passing helicopters (Yorkshire Air Ambulance HLE98, police UKP042 and others)
+cross the zone 250-380 ft above the field for seconds: the field is on a hilltop (681 ft), so field + 400 ft is still well
+above the valleys round it. The counter's own docstring already listed "a go-around below the low band reads as a landing
+and a take-off"; Leeds Bradford is where it costs enough to fail. The school's two light aircraft (G-VNEA, G-VNEB) mostly
+send no ground report either, but come down to the field (real touch-and-goes; they fall in September as the CAA's
+training count does).
+**A candidate fix, and a trap in measuring it:** "a low run is no landing when it has no ground report, every reading in it
+at least H ft above the field and no gap over G s". The first replay measured the gaps INSIDE the run only, and cut 10,000
+to 30,000 of Luton's REAL landings (it failed nearly every month at every H and G): a landing the receivers lose at 150 ft
+has no gap inside its run, its next reading is hours later. The gap from the last low reading to the NEXT reading (and
+from the one before the first) must count, so "heard all through" means heard climbing away. The corrected replay was
+stopped unfinished on Bill's ruling. If it is ever built: it changes `movements()`, so every day file is recounted into a
+NEW folder and the movement rule goes into each day file's `definition` (`one_definition()` then refuses a mix).
+
+**The roll's one red preflight check was a typed share** (2026-11-16): `tests/uk-city-panel.mjs` held SW5 9HP's chart to
+Heathrow's "56% of days" westerly, January to August's figure; September made it 60, the panel showed 60, and the test
+went red. It now reads `share_pct` from `data/planes/airports.json`, as the panel does. The other typed shares (Kew's
+56/15/29 in `tests/front-page.mjs`, `tests/planes-model.mjs`, `tests/panel-findings.mjs`) are held to their own FIXTURES and
+do not move on a roll. On the next roll, grep `tests/` for `% of days'` and check each reads a fixture or the file.

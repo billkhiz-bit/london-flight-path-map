@@ -93,6 +93,10 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
       ? `From ${listOf(airports.map((a) => a.name))}, on an average day of each kind, ${periods.join('; ')}`
       : `From the ${WORDS[counted] || counted} airports we count`,
     none: none ? `Under 1 a day from each of the ${WORDS[counted] || counted} airports we count, whichever way they fly.` : null,
+    // The same in the airports' tiles (Bill's pick A, 2026-11-16, claude.ai/artifact/Bd3oMrmm2g7JdgERuTfn4x: "the
+    // containers" of every other answer). True of each kind: a postcode is in `none` only when every airport's every
+    // kind of day reads under 1. The sentence above stays for the surfaces that print one (the map's tile, the report).
+    noneKinds: none ? KINDS.map(([kind, label]) => ({ kind, label, text: 'Under 1 a day', share: 'from each airport' })) : null,
     edge: airports.some((a) => a.rows.some((r) => r.range))
       ? 'A range means this postcode is on the edge of a flight path, where a few metres decide whether a plane counts as overhead: it gives the fewest and the most within 100 m.'
       : null,
@@ -258,18 +262,24 @@ export function planesNodes(model, doc = document, links = []) {
     if (text != null) n.textContent = text;
     return n;
   };
-  const out = [el('h3', 'planes-h', model.heading), el('p', 'planes-sub', model.sub)];
-  for (const a of model.airports) {
-    if (model.airports.length > 1) out.push(el('h4', 'planes-airport', a.name));
+  const tiles = (rows) => {
     const kinds = el('div', 'planes-kinds');
-    for (const r of a.rows) {
+    for (const r of rows) {
       const kind = el('div', 'planes-kind');
       kind.append(el('b', null, r.text), el('span', null, r.label), el('small', null, r.share));
       kinds.append(kind);
     }
-    out.push(kinds, el('p', 'planes-wind', a.windShort));
+    return kinds;
+  };
+  const out = [el('h3', 'planes-h', model.heading), el('p', 'planes-sub', model.sub)];
+  for (const a of model.airports) {
+    if (model.airports.length > 1) out.push(el('h4', 'planes-airport', a.name));
+    out.push(tiles(a.rows), el('p', 'planes-wind', a.windShort));
   }
-  for (const [key, className] of [['none', 'planes-none'], ['edge', 'planes-note'], ['approx', 'planes-note'], ['other', 'planes-warn']]) {
+  // Under 1 a day from every airport: the same tiles (Bill's pick A, 2026-11-16), never a sentence alone.
+  if (model.noneKinds) out.push(tiles(model.noneKinds));
+  else if (model.none) out.push(el('p', 'planes-none', model.none));
+  for (const [key, className] of [['edge', 'planes-note'], ['approx', 'planes-note'], ['other', 'planes-warn']]) {
     if (model[key]) out.push(el('p', className, model[key]));
   }
   for (const l of links) {

@@ -929,7 +929,10 @@ console.log('Findings first');
   check('whose rating it is: said once for Air and flood and Living here, and on the road and price tiles, whose sections mix in this postcode\'s own', JSON.stringify(over.note) === JSON.stringify(['Kensington and Chelsea-wide', 'Kensington and Chelsea-wide'])
     && /Kensington and Chelsea-wide$/.test(over.road) && /Kensington and Chelsea-wide$/.test(over.price), JSON.stringify([over.note, over.road, over.price]));
   check('aircraft says its figure, as an estimate', /^Aircraft noise (Low|Moderate|High) \d+\.\d out of 10$/.test(over.aircraft) && /Our estimate from the published flight routes/.test(over.full.aircraft), `${over.aircraft} | ${over.full.aircraft}`);
-  check('planes come from the postcode\'s own file', /^Heathrow planes overhead \S+ a day flying (west|east)$/.test(over.planes) && JSON.stringify(over.planesChart[0]) === JSON.stringify(['westerly', '56% of days']), `${over.planes} | ${JSON.stringify(over.planesChart)}`);
+  // Heathrow's share of westerly days is READ from airports.json, as the panel reads it: a typed '56% of days' (January to
+  // August) went red on the September 2026 roll, when the file said 60. A roll moves it; the page must move with it.
+  const lhrWest = `${JSON.parse(await readFile(join(ROOT, 'data', 'planes', 'airports.json'), 'utf8')).airports.LHR.share_pct.westerly}% of days`;
+  check('planes come from the postcode\'s own file', /^Heathrow planes overhead \S+ a day flying (west|east)$/.test(over.planes) && JSON.stringify(over.planesChart[0]) === JSON.stringify(['westerly', lhrWest]), `${over.planes} | ${JSON.stringify(over.planesChart)} | file: ${lhrWest}`);
   check('the headline is the front page\'s sentence for this place (js/answer-lead.mjs)', /^Fewer than \d+ Heathrow planes a day pass over SW5 9HP$|^On most days, about \d+ Heathrow planes a day pass over SW5 9HP$/.test(over.head), over.head);
   check('the planes notes keep their credits', /adsb\.lol/.test(await fp.evaluate(() => document.querySelector('[data-find="planes"] details')?.textContent || '')));
   check('crime is set against a typical London borough, in words', /^Crime \w+/.test(over.crime) && /A typical London borough/.test(over.full.crime) && /Kensington and Chelsea has [\d.]+ recorded crimes a year for every 1,000 people\./.test(over.full.crime), over.full.crime);

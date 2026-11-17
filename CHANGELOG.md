@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-16 - Planes overhead counts September, and Leeds Bradford comes off
+
+- **Planes overhead now counts January to September 2026**: the CAA published its September airport figures on 12 November. Nine of the airports we count matched them closely (96.5% to 98.9% of the official totals), so their September days join the counts. Most figures moved by less than one plane a day. Heathrow's mixed-direction days moved most, because only three September days were mixed (Kew on such a day: 168 to 160).
+- **Leeds Bradford is no longer counted**: in September our tracking counted 108% of the CAA's figure there, outside the 95% to 105% every month must meet. We found helicopters passing low near the airfield, and practice approaches that climb away without landing, counted as landings and take-offs. Until that is fixed and checked, there are no planes figures for Leeds Bradford: West Yorkshire's 46 district pages are withdrawn, and postcodes there say that other flying passes over too.
+- **Two more district pages are withdrawn**: M40 in Manchester and WC1H in London. Their busiest postcode now reads 9 a day, under the 10 a day a page needs.
+- **"Under 1 a day" in tiles**: where no counted airport sends a plane a day over a postcode, the front page now shows the same three tiles as any other planes answer (west, both ways, east), not a sentence on its own.
+- **The sample street report is remade** with the new counts.
+
 ## 2026-11-13 (evening) - Area pages lead with the answer, and the example says what each figure is against
 
 - **Every area page opens on its answer**: a dark card at the top, as on the full map, says in one sentence what stands out for that council, then marks each finding worth a look or good here, each linking to its detail lower down. The score and its five parts now sit in the card. Every finding below is word for word as before.

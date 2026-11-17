@@ -101,6 +101,19 @@ class LlmsTxtPlanesPeriodTests(unittest.TestCase):
         line = next(ln for ln in text().splitlines() if '/planes-overhead/' in ln and 'counted from flight tracking' in ln)
         self.assertIn(f'counted from flight tracking, {periods.pop()},', line)
 
+    def test_the_planes_airport_count_is_the_counts_own(self):
+        """The count was typed too: the September 2026 roll published nine (Leeds Bradford failed its September)
+        while this line still said ten. The word is read from js/planes.mjs's WORDS, as the site says it."""
+        import json
+        import re
+
+        airports = json.loads(PLANES.read_text(encoding='utf-8'))['airports']
+        js = (ROOT / 'js' / 'planes.mjs').read_text(encoding='utf-8')
+        words = re.findall(r"'([a-z]+)'", re.search(r'const WORDS = \[([^\]]*)\]', js).group(1))
+        word = words[len(airports)] if len(airports) < len(words) else str(len(airports))
+        line = next(ln for ln in text().splitlines() if '/planes-overhead/' in ln and 'counted from flight tracking' in ln)
+        self.assertIn(f'near {word} UK airports', line)
+
 
 if __name__ == '__main__':
     unittest.main()

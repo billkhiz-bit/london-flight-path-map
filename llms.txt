@@ -15,7 +15,7 @@ How to read the figures:
 - [Check a postcode](https://skyscore.co.uk/): type a UK postcode or a place for the official noise and air figures for that street, with the flight routes that pass it
 - [Full map](https://skyscore.co.uk/map/): every council area covered, with flight paths, aircraft and road noise, flood risk and air quality
 - [Every area](https://skyscore.co.uk/area/): one page per council area, with its published figures, its score and their sources
-- [Planes overhead, district by district](https://skyscore.co.uk/planes-overhead/): how many planes pass over the postcode districts near ten UK airports, on a day each airport flies west, east or both ways; counted from flight tracking, January to August 2026, and checked against the CAA's monthly totals
+- [Planes overhead, district by district](https://skyscore.co.uk/planes-overhead/): how many planes pass over the postcode districts near nine UK airports, on a day each airport flies west, east or both ways; counted from flight tracking, January to September 2026, and checked against the CAA's monthly totals
 - [Heathrow consultation pages](https://skyscore.co.uk/planes-overhead/heathrow-consultation/): for each London council Heathrow's planes cross, the planes over each of its postcode districts today and the borough's noise, air and flood figures; neutral, today's routes only
 - [Reports](https://skyscore.co.uk/reports/): three pages of official figures for a street, or a summary for an area
 - [Bay Area](https://skyscore.co.uk/bay-area/): which of 50 San Francisco Bay Area cities lie under a published landing, arrival or departure route

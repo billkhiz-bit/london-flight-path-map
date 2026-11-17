@@ -11,7 +11,7 @@
 //   node tests/planes-model.mjs
 
 import assert from 'node:assert/strict';
-import { districtOf, overheadConeSvg, period, perDay, planesBandLead, planesChart, planesLead, planesLinks, planesModel, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
+import { districtOf, overheadConeSvg, period, perDay, planesBandLead, planesChart, planesLead, planesLinks, planesModel, planesNodes, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
 
 const NAMES = { LHR: 'Heathrow', LCY: 'London City', MAN: 'Manchester' };
 const INFO = {
@@ -67,6 +67,27 @@ check('measured with nothing reaching 1 a day: told so, no airport rows', () => 
   const m = planesModel(TW9, INFO, 'tw9  9zz', NAMES); // and the postcode is normalised
   assert.deepEqual(m.airports, []);
   assert.equal(m.none, 'Under 1 a day from each of the two airports we count, whichever way they fly.');
+});
+
+// Bill's pick A (2026-11-16, claude.ai/artifact/Bd3oMrmm2g7JdgERuTfn4x): the front page draws this answer in the same
+// three tiles as an airport's figures, never as a sentence alone. planesNodes() takes its document, so a stand-in will do.
+const fakeDoc = {
+  createElement: (tag) => ({ tag, className: '', textContent: null, kids: [], append(...k) { this.kids.push(...k); } }),
+};
+const texts = (n) => [n.textContent, ...n.kids.flatMap(texts)].filter((t) => t != null);
+check('under 1 a day from every airport: three tiles, west, both ways, east, as an airport\'s', () => {
+  const nodes = planesNodes(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES), fakeDoc);
+  const grids = nodes.filter((n) => n.className === 'planes-kinds');
+  assert.equal(grids.length, 1, 'one row of tiles');
+  assert.deepEqual(grids[0].kids.map((k) => [k.className, ...texts(k)]), [
+    ['planes-kind', 'Under 1 a day', 'Flying west', 'from each airport'],
+    ['planes-kind', 'Under 1 a day', 'Both ways', 'from each airport'],
+    ['planes-kind', 'Under 1 a day', 'Flying east', 'from each airport'],
+  ]);
+  assert.ok(!nodes.some((n) => n.className === 'planes-none'), 'no sentence alone beside the tiles');
+  // A postcode with figures is unchanged: its airport's tiles, no "under 1" tiles.
+  const kew = planesNodes(planesModel(TW9, INFO, 'TW9 3PZ', NAMES), fakeDoc);
+  assert.deepEqual(kew.filter((n) => n.className === 'planes-kinds').map((g) => g.kids.map((k) => texts(k)[0])), [['310 a day', '168 a day', '4 a day']]);
 });
 
 check('never measured: nothing at all', () => {

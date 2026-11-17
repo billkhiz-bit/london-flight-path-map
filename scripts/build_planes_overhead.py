@@ -30,8 +30,8 @@ WHAT A POSTCODE IS TOLD, AND WHAT IT IS NOT
   a district's figures are its homes' (SW1P's busiest read 307 a day from post boxes; its homes, 17). `build()` takes
   the set as a REQUIRED argument, read from NSPL by adsb_postcode_averages.large_users(); airports.json says so in
   `postcodes_rule`, which every surface showing the definition shows beside it.
-- `other`: postcodes where flying we cannot count (airfields that are not among the ten, helicopters, transits, the
-  airports that failed the check) is a large part of what passes over: a few from the ten is not a quiet sky
+- `other`: postcodes where flying we cannot count (airfields that are not among those published, helicopters, transits, the
+  airports that failed the check) is a large part of what passes over: a few from those is not a quiet sky
   (Biggin Hill, TN16 3GH). Only the flag is published, never that traffic's figure: it is unchecked.
 
 OUTPUT
@@ -279,7 +279,7 @@ def main():
         if f is None:
             print(f'{pc}: no district file')
             continue
-        told = f['postcodes'].get(pc, 'none from the ten airports' if pc in f['none'] else 'NOT MEASURED')
+        told = f['postcodes'].get(pc, 'none from the airports published' if pc in f['none'] else 'NOT MEASURED')
         flags = [n for n in ('approx', 'other') if pc in f[n]]
         print(f'{pc}: {told}' + (f'  flags: {flags}' if flags else ''))
     return 0

@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-15 - N65's two new rulings built and pushed on `n65` (`1a3f3bd2`): the 2025 take-offs Heathrow and Gatwick heard late are counted, and the field level comes from the published elevation; previously 2026-11-13 - every finding of the 12 Nov audit fixed and live (`8ef25b01`, `3a60b42a`, the sign-up and favourites changeset reviewed and checked from the API); previously 2026-11-10 - the 9 Nov audit's four Important findings closed and live, the air figures reloaded at DEFRA's precision and checked against its file, the outreach sheets rebuilt; previously 2026-11-09 - "All the detail" option 1, the phone cards one to a row and `www` -> the bare name LIVE and pushed; the site called ready for outreach, upkeep only, the four outreach gates set out for Bill; previously 2026-11-07 - the meta CSP's ignored `frame-ancestors` gone LIVE from ten pages; `env-upstream-status` built (a failed postcode lookup is a 503, the gateway's own errors readable); most of the week's 5xx were Lambda throttles at the account's limit of 10; previously 2026-11-06 - About's grid, section links and link colours LIVE; the front page's held point, postcode suggestions and the Heathrow corrections deployed; previously 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+**Last reviewed:** 2026-11-16 - planes overhead rolled to September with nine airports: Leeds Bradford failed its September (108.1% of the CAA's count: low passes counted as movements) and is off every planes surface on Bill's ruling; previously 2026-11-15 - N65's two new rulings built and pushed on `n65` (`1a3f3bd2`): the 2025 take-offs Heathrow and Gatwick heard late are counted, and the field level comes from the published elevation; previously 2026-11-13 - every finding of the 12 Nov audit fixed and live (`8ef25b01`, `3a60b42a`, the sign-up and favourites changeset reviewed and checked from the API); previously 2026-11-10 - the 9 Nov audit's four Important findings closed and live, the air figures reloaded at DEFRA's precision and checked against its file, the outreach sheets rebuilt; previously 2026-11-09 - "All the detail" option 1, the phone cards one to a row and `www` -> the bare name LIVE and pushed; the site called ready for outreach, upkeep only, the four outreach gates set out for Bill; previously 2026-11-07 - the meta CSP's ignored `frame-ancestors` gone LIVE from ten pages; `env-upstream-status` built (a failed postcode lookup is a 503, the gateway's own errors readable); most of the week's 5xx were Lambda throttles at the account's limit of 10; previously 2026-11-06 - About's grid, section links and link colours LIVE; the front page's held point, postcode suggestions and the Heathrow corrections deployed; previously 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
 the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
@@ -25,6 +25,34 @@ next changeset; previously 2026-10-19 - Breathe London's data half built (GLA ke
 in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
+
+> ## START HERE (2026-11-16)
+>
+> **WHERE IT STOPPED (16 Nov, 22:45): the September roll below is BUILT, NOT COMMITTED, NOT DEPLOYED.** 24 changed files in
+> the working tree (`git status`; six area pages already staged). Preflight: the first full run was red on ONE check, a test
+> (`tests/uk-city-panel.mjs` typed Heathrow's westerly share as "56% of days", January to August; September made it 60): it
+> now reads `share_pct` from `data/planes/airports.json` and passes alone. A second run was stopped by Claude Code for low
+> memory (a game open), not a failure; a third was stopped at log-off (Bill: "run it next session"). **First step:** run
+> `sh scripts/preflight.sh` and read its exit code (no game open: it needs the memory); PASS and Bill's word: commit the 24 files by name, push, deploy in the order below, then
+> `check_deploy_drift.sh`, `tests/area-page-freshness.mjs`, live screenshots at 1366 and 390. Anything else: fix, rerun.
+> Review page: claude.ai/artifact/95RW9nj5cmAbewaczqXTHG (v3). Also 16 Nov: Bill SENT the In The Room demo application.
+>
+> **PLANES OVERHEAD: JANUARY TO SEPTEMBER 2026, NINE AIRPORTS** (Bill's ruling B: follow the year rule, roll now). The
+> CAA's September table (published 12 Nov) passed nine airports at 96.5% to 98.9%. **Leeds Bradford failed at 108.1%**
+> (106.8% without circuits), so the year rule took it off every planes surface: West Yorkshire's 46 district pages are
+> withdrawn (with M40 and WC1H, whose busiest postcode now reads 9 a day), and its postcodes are told "under 1 a day" with
+> the other-flying flag, as Newcastle's are. The nine barely moved (median under 0.3 a day; Kew westerly 310 unchanged).
+> **Cause measured, not fixed:** helicopter low passes and practice approaches with no ground report, 60 to 400 ft above a
+> hilltop field, each counted as a landing plus a take-off (two training helicopters made 121 in September). A fix changes
+> `movements()` and needs every day file recounted; the corrected replay was stopped on Bill's word, so it waits for him.
+> The roll's steps, the cause and a measuring trap: `docs/lessons/in-progress-measurements.md`, "The September 2026 roll".
+> `llms.txt`'s airport count is now held by `tests/test_llms_txt.py`; the sample street report was remade (its check cannot
+> see a planes roll on a copy made before 14 Nov). The front page's "under 1 a day" answer is now three tiles like any
+> other (Bill's pick A, claude.ai/artifact/Bd3oMrmm2g7JdgERuTfn4x; `noneKinds`). Deploy order: `planes-deploy`, `planes-layer-deploy`,
+> `planes-pages-deploy`, `area-deploy`, `web-deploy` (js/planes.mjs), `home-deploy`, `meta-deploy`.
+> **Also 16 Nov:** every dataset current; FAA 2612 published (effective 26 Nov). Gatwick's AD 2.2 elevation was checked
+> 15 Nov at 203 ft, so the block below's "check it" is done (into the n65 lesson with the next n65 commit).
+> **Next:** `/audit` in a fresh session; N65's Heathrow 2025 day; FAA 2612 on 26 Nov; Leeds Bradford's fix only on Bill's word.
 
 > ## START HERE (2026-11-15)
 >
