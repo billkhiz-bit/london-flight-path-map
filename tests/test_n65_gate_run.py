@@ -8,7 +8,9 @@ file's JSON round trip; a hybrid run decides nothing; the CLI writes the verdict
 inside each end's 50-event contour are counted from a population file and judged; a contour at the grid's edge refuses
 the count; the CLI refuses a Heathrow run without the file unless --no-population (then "not measured"), and never asks
 for it on Gatwick's. Rule 6 (2026-11-15): --no-airborne-starts takes the take-offs first heard in the air out
-and scales by each day's scale_without_airborne; a day made before rule 6 is refused either way. Offline only.
+and scales by each day's scale_without_airborne; a day made before rule 6 is refused either way. Rule 8 (2026-11-17):
+--no-joined-approaches takes the approaches joined to the threshold out and scales by scale_without_joined (both off,
+scale_without_airborne_or_joined); a day made before rule 8 is refused either way. Offline only.
 """
 import datetime as dt
 import json
@@ -30,19 +32,23 @@ def _meta(day, **over):
     m = {'airport': 'LHR', 'day': day, 'window_local': '07:00-23:00', 'threshold_db': 65.0, 'cell_m': 100.0,
          'grid': {'x0': 0.0, 'y0': 0.0, 'nx': 200, 'ny': 100}, 'computed_share': 0.97, 'scale': 1.0,
          'spread': {'s_db': 2.0, 'z_cut': 5.0, 'floor_db': 55.4605}, 'variant': 'default', 'code': 'c0de',
-         'anp_fingerprint': 'f00d', 'scale_without_airborne': 1.0, 'airborne_takeoffs': {'movements': 0, 'computed': 0}}
+         'anp_fingerprint': 'f00d', 'scale_without_airborne': 1.0, 'airborne_takeoffs': {'movements': 0, 'computed': 0},
+         'scale_without_joined': 1.0, 'scale_without_airborne_or_joined': 1.0,
+         'joined_approaches': {'joined': 0, 'computed': 0, 'not_joined': {}}}
     m.update(over)
     return m
 
 
-def _arrays(arrivals, light=None, heavy=None, spread=None, airborne_light=None, airborne_heavy=None):
+def _arrays(arrivals, light=None, heavy=None, spread=None, airborne_light=None, airborne_heavy=None, joined=None):
     """Plain counts and their spread twins (the spread ones `spread` times the plain, default the same). Rule 6's
-    take-offs first heard in the air are INSIDE the departures and also apart (none unless given)."""
+    take-offs first heard in the air are INSIDE the departures and also apart, and rule 8's approaches joined to the
+    threshold INSIDE the arrivals and also apart (none unless given)."""
     z = np.zeros(N)
     a = {'arrivals': np.asarray(arrivals, float), 'departures_light': z if light is None else np.asarray(light, float),
          'departures_heavy': z if heavy is None else np.asarray(heavy, float),
          'departures_light_airborne': z if airborne_light is None else np.asarray(airborne_light, float),
-         'departures_heavy_airborne': z if airborne_heavy is None else np.asarray(airborne_heavy, float)}
+         'departures_heavy_airborne': z if airborne_heavy is None else np.asarray(airborne_heavy, float),
+         'arrivals_joined': z if joined is None else np.asarray(joined, float)}
     a.update({f'{k}_p': v * (spread if spread is not None else 1.0) for k, v in list(a.items())})
     return a
 
@@ -141,6 +147,58 @@ def test_a_day_made_before_rule_6_is_refused_either_way():
     with pytest.raises(gr.Refused, match='no scale_without_airborne'):
         gr.build_runs([(_meta('2025-03-30', scale_without_airborne=None), _arrays(np.full(N, 40.0)))],
                       airborne=False)
+
+
+def test_rule_8_takes_the_joined_approaches_out_only_when_asked():
+    # 30 arrivals (20 of them joined to the threshold) and 30 departures a day. With them (scale 1.0): 60, reaches 50.
+    # Without them: (60 - 20) times the day's scale_without_joined: 1.2 gives 48 (does not reach 50; left in, 72
+    # would), 1.3 gives 52 (reaches it; scaled by `scale` instead, 40 would not).
+    for without, reaches in ((1.2, False), (1.3, True)):
+        days = [(_meta('2025-03-30', scale=1.0, scale_without_joined=without),
+                 _arrays(np.full(N, 30.0), light=np.full(N, 30.0), joined=np.full(N, 20.0)))]
+        assert gr.build_runs(days)[1]['light']['areas_km2'][50] == pytest.approx(N * 0.01)
+        area = gr.build_runs(days, joined=False)[1]['light']['areas_km2'][50]
+        assert area == (pytest.approx(N * 0.01) if reaches else 0.0), (without, area)
+        for spread in (True, False):  # the plain counts and the 5-12 shares alike
+            assert gr.build_runs(days, joined=False, spread=spread)[1]['light']['areas_km2'][50] == area
+
+
+def test_rule_6_and_rule_8_off_together_take_both_out_and_scale_by_their_own_factor():
+    # 60 a day: 20 arrivals joined, 10 take-offs first heard in the air. Both out: 30 times the scale without both.
+    days = [(_meta('2025-03-30', scale=1.0, scale_without_airborne=9.0, scale_without_joined=9.0,
+                   scale_without_airborne_or_joined=1.7),
+             _arrays(np.full(N, 30.0), light=np.full(N, 30.0), joined=np.full(N, 20.0), airborne_light=np.full(N, 10.0)))]
+    assert gr.build_runs(days, airborne=False, joined=False)[1]['light']['areas_km2'][50] == pytest.approx(N * 0.01)
+    days[0][0]['scale_without_airborne_or_joined'] = 1.6  # 48: does not reach 50
+    assert gr.build_runs(days, airborne=False, joined=False)[1]['light']['areas_km2'][50] == 0.0
+    days[0][0]['scale_without_airborne_or_joined'] = None
+    with pytest.raises(gr.Refused, match='no scale_without_airborne_or_joined'):
+        gr.build_runs(days, airborne=False, joined=False)
+
+
+def test_rule_8_off_is_a_variant_beside_and_the_days_say_what_they_hold():
+    held = {'joined': 400, 'computed': 398, 'not_joined': {'too far out': 4}}
+    days = [(_meta(d, joined_approaches=held), _arrays(_target_counts())) for d in _days('2025-03-30', 3)]
+    result = gr.verdict(days, joined=False)
+    assert not result['ok']
+    assert 'rule 8 (approaches joined to the threshold) OFF: a variant reported beside, never the deciding run' in \
+        result['lines']
+    assert result['about']['rule_8_joined_approaches'] is False
+    assert result['about']['days'][0]['joined_approaches'] == held
+    assert not any('rule 8' in line for line in gr.verdict(days)['lines'])
+
+
+def test_a_day_made_before_rule_8_is_refused_either_way():
+    meta = {k: v for k, v in _meta('2025-03-30').items() if k != 'joined_approaches'}
+    for joined in (True, False):
+        with pytest.raises(gr.Refused, match='made before rule 8'):
+            gr.build_runs([(meta, _arrays(np.full(N, 40.0)))], joined=joined)
+    old = {k: v for k, v in _arrays(np.full(N, 40.0)).items() if 'joined' not in k}
+    for joined in (True, False):
+        with pytest.raises(gr.Refused, match='rule 8: 2025-03-30 has no'):
+            gr.build_runs([(_meta('2025-03-30'), old)], joined=joined)
+    with pytest.raises(gr.Refused, match='no scale_without_joined'):
+        gr.build_runs([(_meta('2025-03-30', scale_without_joined=None), _arrays(np.full(N, 40.0)))], joined=False)
 
 
 def test_both_stage_ends_are_judged():

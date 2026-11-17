@@ -185,6 +185,10 @@ Or just describe what you need, I have full context of this project.
   `n65_gate_run.py --no-airborne-starts` reports the run without them beside (`docs/lessons/n65.md`, rule 6). N65's
   field level is the PUBLISHED elevation moved by the METAR QNH (`published_field()`, rule 7), never the counter's
   from touchdowns heard (too few before those dates: 94 of Heathrow's 177 days); the counter's is a check beside.
+- **N65 joins an approach whose threshold crossing was not heard to the threshold** (frozen rule 8, Bill, 2026-11-17):
+  only if it was last heard on the extended centreline, at most 1 km out and under 300 ft (`n65_tracks.joined_end()`;
+  2025 days missed the runway on 16-98% of Heathrow's arrivals). Counted apart (`arrivals_joined`);
+  `n65_gate_run.py --no-joined-approaches` reports the run without them beside; `n65_day.py --rule8-cut-m` is its check.
 - **National anchors are per POOL** (`pool_of(city)` / site `poolOf`: a city's `pool`, else its currency;
   one per US metro: decision 2 of 2026-10-16, built 2026-10-18): never pool USD with GBP, nor the Bay Area
   with New York. The site needs `BACKEND_ONLY_PRICES` /

@@ -146,7 +146,10 @@ def test_one_is_counted_with_the_departures_and_apart():
 
 def test_rule_1s_scale_with_them_and_without_them():
     # July 2026's 1,245.3 a 16-hour day over 1,200 computed, 60 of them first heard in the air.
+    # (Rule 8's joined approaches, none here, take the other two keys: tests/test_n65_joined_approaches.py.)
     assert nd.rule_scales(1245.3, 1200, 60) == {'scale': round(1245.3 / 1200, 6),
-                                                'scale_without_airborne': round(1245.3 / 1140, 6)}
-    assert nd.rule_scales(1245.3, 0, 0) == {'scale': None, 'scale_without_airborne': None}
+                                                'scale_without_airborne': round(1245.3 / 1140, 6),
+                                                'scale_without_joined': round(1245.3 / 1200, 6),
+                                                'scale_without_airborne_or_joined': round(1245.3 / 1140, 6)}
+    assert set(nd.rule_scales(1245.3, 0, 0).values()) == {None}
     assert nd.rule_scales(1245.3, 60, 60)['scale_without_airborne'] is None

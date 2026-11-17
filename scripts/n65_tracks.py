@@ -19,6 +19,13 @@ THE RULES, each a reading where Doc 29 leaves it to the user:
   the start of the TAKE-OFF RUN (AD 2.13's TORA, Runway.tora_start_m; Bill's ruling of 3 Nov, built 12 Nov), said by
   its label, never a guessed intersection. The landing threshold stands in, said, only for a runway with no TORA start:
   at Heathrow 09L/09R it is displaced ~309 m, which started those rolls late.
+- The THRESHOLD CROSSING an approach is joined at: the first point heard over the runway (within ON_RUNWAY_M of its
+  centreline, between its thresholds), 'threshold-seen'. Rule 8 (Bill, 2026-11-17): when none was heard, the approach is
+  joined straight to the threshold, 'threshold-joined', the same join, if its LAST airborne point heard was on the
+  extended centreline (within ON_RUNWAY_M), at most JOIN_MAX_M before the threshold and under JOIN_MAX_FT above the
+  field (joined_end()). Anything else stays no track, its reason saying where it was last heard. (Heathrow's receivers
+  missed the runway on 16-98% of 2025's arrivals, one day a month; the last point heard sat a median 74-568 m out at
+  65-140 ft, within 4 m of the centreline at p90: docs/lessons/n65.md, "2025's arrivals and rule 8".)
 - The take-off and landing rolls run on the centreline (the runway is straight); the airborne track is the observed
   positions resampled every SPACING_M along their own length, which also smooths the few metres of position noise.
 - The BANK from the track's curvature over BANK_WINDOW_M either side of a node, B-14 with the observed ground speed,
@@ -48,6 +55,13 @@ BANK_LIMIT_DEG = 30.0
 MIN_TRACK_M = 2000.0  # an observed airborne track shorter than this is not a track
 DEPARTURE_AFTER_S = 1800.0  # the trace read after a take-off ...
 APPROACH_BEFORE_S = 1800.0  # ... and before a landing
+# Rule 8 (Bill, 2026-11-17): an approach whose threshold crossing was not heard is joined to the threshold if it was last
+# heard at most this far before it and under this height above the field. From the worst day measured, 15 Apr 2025:
+# its last points sat 958 m out and 215 ft up at p90; a 3-degree glide crossing the threshold at 50 ft is about 220 ft
+# up at 1 km.
+JOIN_MAX_M = 1000.0
+JOIN_MAX_FT = 300.0
+NOT_HEARD = 'no-track: the threshold crossing was not heard'
 
 
 @dataclass(frozen=True)
@@ -220,15 +234,56 @@ def departure_track(pts: list[Pt], rw: Runway, t_takeoff: float, spacing: float 
     return _resample(poly, spacing), how
 
 
+def joined_end(window: list[Pt], rw: Runway) -> tuple[Pt | None, str]:
+    """Rule 8: the approach's last airborne point heard in `window` (in time) when it may be joined straight to the
+    threshold, with '' as the reason; else None and why not, its kind before any colon (JOIN_REFUSED). It may be when it
+    was on the extended centreline (within ON_RUNWAY_M), before the threshold by at most JOIN_MAX_M, and under
+    JOIN_MAX_FT above the field (an unknown height is not under it)."""
+    air = [p for p in window if not p.ground]
+    if not air:
+        return None, 'nothing airborne'
+    last = max(air, key=lambda p: p.t)
+    along, across = rw.along_across(last.x, last.y)
+    if abs(across) > ON_RUNWAY_M:
+        return None, f'off the centreline: last heard {abs(across):.0f} m from it'
+    if along >= 0:
+        return None, 'past the threshold: last heard beyond it, off the runway'
+    if -along > JOIN_MAX_M:
+        return None, f'too far out: last heard {-along:.0f} m before the threshold'
+    if last.height_m is None:
+        return None, 'no height: last heard with none'
+    if last.height_m >= JOIN_MAX_FT * FT:
+        return None, f'too high: last heard {last.height_m / FT:.0f} ft above the field'
+    return last, ''
+
+
+# What rule 8 says of an approach it cannot join (joined_end()'s reasons, before any colon).
+JOIN_REFUSED = ('nothing airborne', 'off the centreline', 'past the threshold', 'too far out', 'no height', 'too high')
+
+
+def join_refusal(reason: str) -> str | None:
+    """The kind of rule 8 refusal in an approach's no-track reason (JOIN_REFUSED), or None if it is not one."""
+    if not reason.startswith(NOT_HEARD + ' ('):
+        return None
+    return reason[len(NOT_HEARD) + 2:].split(':')[0].rstrip(')')
+
+
 def approach_track(pts: list[Pt], rw: Runway, t_landing: float, spacing: float = SPACING_M, roll_m: float = 0.0):
     """The approach's ground track [(s, x, y, gs, h)], s = 0 at the touchdown point, negative before it, running on
-    along the centreline `roll_m` past touchdown for the landing roll. None (with a reason) when the threshold
-    crossing or MIN_TRACK_M of approach was not heard."""
+    along the centreline `roll_m` past touchdown for the landing roll, and how its end was found: 'threshold-seen', or
+    'threshold-joined' (rule 8, joined_end()). None (with a reason) when neither, or MIN_TRACK_M of approach was not
+    heard."""
     window = [p for p in pts if t_landing - APPROACH_BEFORE_S <= p.t <= t_landing + 300]
     crossing = next((p.t for p in window if 0 <= rw.along_across(p.x, p.y)[0] <= rw.length_m
                      and abs(rw.along_across(p.x, p.y)[1]) <= ON_RUNWAY_M), None)
+    how = 'threshold-seen'
     if crossing is None:
-        return None, 'no-track: the threshold crossing was not heard'
+        last, why = joined_end(window, rw)
+        if last is None:
+            return None, f'{NOT_HEARD} ({why})'
+        # Rule 8: the approach runs to its last point heard, then straight to the threshold, as from a crossing heard.
+        # The cut is just after that point's time, so the point itself is in the approach below.
+        crossing, how = math.nextafter(last.t, math.inf), 'threshold-joined'
     # The whole approach in time order (downwind legs past the threshold included), from after any time on the ground.
     on_ground = [p.t for p in window if p.ground and p.t < crossing]
     since = max(on_ground, default=-math.inf)
@@ -246,7 +301,7 @@ def approach_track(pts: list[Pt], rw: Runway, t_landing: float, spacing: float =
     if roll_m > 0:
         ex, ey = rw.point(td + roll_m)
         poly.append((roll_m, ex, ey, None, 0.0))
-    return _resample(poly, spacing, keep=(0.0, -td)), 'threshold-seen'
+    return _resample(poly, spacing, keep=(0.0, -td)), how
 
 
 def bank_angles(track: list[tuple], window_m: float = BANK_WINDOW_M, limit_deg: float = BANK_LIMIT_DEG):

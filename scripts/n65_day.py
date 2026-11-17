@@ -52,6 +52,12 @@ THE FROZEN METHOD (Bill's rulings, 2026-11-12; docs/lessons/n65.md), each varian
   through the day by the METAR QNH, never the counter's level from touchdowns heard (too few were heard before the
   receivers came online, and its level ran 70-290 ft at Heathrow against the published 83). The counter's own is
   reported beside as a check (`field.counter_check`). Fewer than two METAR reports for the day: refused.
+- Rule 8 (Bill, 2026-11-17), approaches whose threshold crossing was not heard (16-98% of Heathrow's arrivals on 2025
+  days, one a month): n65_tracks.joined_end() joins one straight to the threshold when it was last heard on the
+  extended centreline, at most 1 km out and under 300 ft. Its levels are counted with the arrivals AND apart
+  (`arrivals_joined`), and each day carries `scale_without_joined`, so the gate runner reports the run without them
+  beside (--no-joined-approaches). `--rule8-cut-m` is its CHECK only: every arrival whose crossing WAS heard is cut
+  where it came that close to the threshold, so rule 8 must join it; such files are a variant and decide nothing.
 - A day's field level must be shaped by METAR (an uncached month reads stormy mornings low): refused otherwise.
 - Each day file carries the code that made it and its noise tables' fingerprint; combine() and the gate runner refuse
   days that differ in either, or in grid, threshold, window, spread or variant.
@@ -506,14 +512,16 @@ def airborne_takeoffs(rec: dict, ap: dict, field, moves: list) -> list[tuple[str
 
 
 def tally(counts: dict, shares: dict, row: dict, res: dict, labels=('light', 'heavy')) -> None:
-    """Add one computed flight (_fly()'s result) to the day: an arrival to 'arrivals'; a departure to both stage ends'
-    'departures_<end>' and, if it was first heard in the air (rule 6), to their '_airborne' twins as well, so the run
-    without those take-offs is the departures less the twins. The 5-12 shares (rule 2) go the same way. One event per
-    flight per cell: the cells a flight reaches are distinct."""
+    """Add one computed flight (_fly()'s result) to the day: an arrival to 'arrivals' and, if it was joined to the
+    threshold (rule 8), to 'arrivals_joined' as well; a departure to both stage ends' 'departures_<end>' and, if it was
+    first heard in the air (rule 6), to their '_airborne' twins as well. So the run without either is the counts less
+    the twins. The 5-12 shares (rule 2) go the same way. One event per flight per cell: the cells a flight reaches are
+    distinct."""
     if row['op'] == 'A':
-        counts['arrivals'][res['reached']['approach']] += 1
         cells, p = res['spread']['approach']
-        shares['arrivals_p'][cells] += p
+        for key in ('arrivals', 'arrivals_joined') if row.get('track') == 'threshold-joined' else ('arrivals',):
+            counts[key][res['reached']['approach']] += 1
+            shares[f'{key}_p'][cells] += p
         return
     apart = ('', '_airborne') if row.get('heard') == 'airborne' else ('',)
     for label in labels:
@@ -523,12 +531,38 @@ def tally(counts: dict, shares: dict, row: dict, res: dict, labels=('light', 'he
             shares[f'departures_{label}{suffix}_p'][cells] += p
 
 
-def rule_scales(caa_movements: float, computed: int, airborne_computed: int) -> dict:
-    """Rule 1's scale with rule 6's take-offs (the deciding run's) and without them (the run reported beside): the
-    CAA's movements over the movements computed either way; None where nothing was computed."""
-    without = computed - airborne_computed
-    return {'scale': round(caa_movements / computed, 6) if computed else None,
-            'scale_without_airborne': round(caa_movements / without, 6) if without else None}
+# Rule 1's scale for each run, by (rule 6's take-offs in, rule 8's joined approaches in).
+SCALE_KEYS = {(True, True): 'scale', (False, True): 'scale_without_airborne', (True, False): 'scale_without_joined',
+              (False, False): 'scale_without_airborne_or_joined'}
+
+
+def rule_scales(caa_movements: float, computed: int, airborne_computed: int, joined_computed: int = 0) -> dict:
+    """Rule 1's scale with rule 6's take-offs and rule 8's joined approaches (the deciding run's), and without either or
+    both (the runs reported beside): the CAA's movements over the movements computed each way; None where nothing was.
+    SCALE_KEYS names which is which."""
+    def over(n):
+        return round(caa_movements / n, 6) if n else None
+    return {SCALE_KEYS[(True, True)]: over(computed),
+            SCALE_KEYS[(False, True)]: over(computed - airborne_computed),
+            SCALE_KEYS[(True, False)]: over(computed - joined_computed),
+            SCALE_KEYS[(False, False)]: over(computed - airborne_computed - joined_computed)}
+
+
+def cut_approach(pts: list[tuple], rw: tr.Runway, t_landing: float, cut_m: float) -> list[tuple]:
+    """Rule 8's CHECK: an approach's points (tuples, as a job holds them) as if nothing was heard from the moment it
+    first came within `cut_m` of the threshold, on the extended centreline or over the runway (every point from then to
+    the end of approach_track()'s window dropped, the ground's too). Only an approach whose crossing WAS heard is cut;
+    one that was not is returned as heard."""
+    lo, hi = t_landing - tr.APPROACH_BEFORE_S, t_landing + 300
+
+    def near(p, start):
+        along, across = rw.along_across(p[1], p[2])
+        return lo <= p[0] <= hi and abs(across) <= tr.ON_RUNWAY_M and start <= along <= rw.length_m
+
+    if not any(near(p, 0.0) for p in pts):
+        return pts
+    t_cut = min(p[0] for p in pts if near(p, -cut_m))
+    return [p for p in pts if not t_cut <= p[0] <= hi]
 
 
 def code_version(scripts_dir: Path = REPO / 'scripts') -> str:
@@ -729,6 +763,12 @@ def day(a) -> int:
     if a.airport not in TORA_START_M:
         print(f'REFUSED: no take-off run starts for {a.airport} (add its AD 2.13 figures to TORA_START_M)')
         return 2
+    variant = a.variant
+    if a.rule8_cut_m:
+        if a.variant != 'default' or a.rule8_cut_m <= 0:
+            print('REFUSED: --rule8-cut-m (rule 8\'s check) takes a distance over 0 and the default model only')
+            return 2
+        variant = f'rule8-cut-{a.rule8_cut_m:g}m'  # a check: never combined with a real day, never deciding
     day_name = Path(a.extract).name.split('.')[0]
     try:
         caa_movements, caa_how = caa_day_movements(Path(a.caa_month), a.airport, dt.date.fromisoformat(day_name))
@@ -804,15 +844,22 @@ def day(a) -> int:
                          'anp_id': res.candidate.anp_id if res.candidate else None,
                          'delta': res.candidate.delta(op) if res.candidate else 0.0,
                          'runway': rw_name, 'pts': pts})
+    if a.rule8_cut_m:  # rule 8's check: each arrival whose crossing was heard, cut, so rule 8 must join it
+        for j in jobs:
+            if j['op'] == 'A' and j['runway'] in rw_objects:
+                j['pts'] = cut_approach(j['pts'], rw_objects[j['runway']], j['ts_runway'], a.rule8_cut_m)
     if a.limit:
         jobs = jobs[: a.limit]
     print(f'{a.airport} {Path(a.extract).name}: field {float(field):.0f} ft ({how_field}); {len(traces)} traces; '
           f'{len(jobs)} movements 07:00-23:00 local ({outside} outside); read in {time.time() - t0:.0f} s')
     cfg = {'anp': [str(p) for p in a.anp], 'grid': (g.x0, g.y0, g.nx, g.ny, g.cell), 'air': str(a.air),
-           'runways': runways, 'elevation_ft': elev_ft, 'variant': a.variant}
+           'runways': runways, 'elevation_ft': elev_ft, 'variant': variant}
     labels = ('light', 'heavy')
     counts = {'arrivals': np.zeros(g.size, np.int32), 'departures_light': np.zeros(g.size, np.int32),
               'departures_heavy': np.zeros(g.size, np.int32),
+              # Rule 8: the approaches joined to the threshold, ALSO counted in the arrivals above, kept apart so the
+              # gate runner can report the run without them beside (--no-joined-approaches).
+              'arrivals_joined': np.zeros(g.size, np.int32),
               # Rule 6: the take-offs first heard in the air, ALSO counted in the departures above, kept apart so the
               # gate runner can report the run without them beside (--no-airborne-starts).
               'departures_light_airborne': np.zeros(g.size, np.int32),
@@ -839,6 +886,11 @@ def day(a) -> int:
     computed = sum(1 for r in rows if 'not_computed' not in r)
     airborne = {'movements': sum(1 for j in jobs if j['heard'] == 'airborne'),
                 'computed': sum(1 for r in rows if r['heard'] == 'airborne' and 'not_computed' not in r)}
+    joined = {'joined': sum(1 for r in rows if r.get('track') == 'threshold-joined'),
+              'computed': sum(1 for r in rows if r.get('track') == 'threshold-joined' and 'not_computed' not in r),
+              # and the arrivals rule 8 could not join, by why (n65_tracks.JOIN_REFUSED)
+              'not_joined': dict(Counter(tr.join_refusal(r['not_computed']) for r in rows
+                                         if tr.join_refusal(r.get('not_computed', '')) is not None))}
     n65 = {label: counts['arrivals'] + counts[f'departures_{label}'] for label in labels}
     n65_spread = {label: shares['arrivals_p'] + shares[f'departures_{label}_p'] for label in labels}
     fingerprint = anp_fingerprint(*a.anp)
@@ -849,12 +901,14 @@ def day(a) -> int:
         'movements': len(jobs), 'outside_window': outside, 'computed': computed,
         'computed_share': round(computed / len(jobs), 4) if jobs else None,
         # Rule 1: the CAA's movements for this day over the movements computed, applied by scripts/n65_gate_run.py.
-        'caa': caa_how, **rule_scales(caa_movements, computed, airborne['computed']),
+        'caa': caa_how, **rule_scales(caa_movements, computed, airborne['computed'], joined['computed']),
         # Rule 6: the take-offs first heard in the air, inside every count above; the gate runner's
         # --no-airborne-starts takes them out and scales by scale_without_airborne instead.
         'airborne_takeoffs': airborne,
+        # Rule 8: the approaches joined to the threshold, likewise; --no-joined-approaches takes them out.
+        'joined_approaches': joined,
         'spread': {'s_db': SPREAD_S_DB, 'z_cut': SPREAD_Z_CUT, 'floor_db': round(SPREAD_FLOOR_DB, 4)},
-        'variant': a.variant, 'code': code_version(), 'anp_fingerprint': fingerprint,
+        'variant': variant, 'code': code_version(), 'anp_fingerprint': fingerprint,
         'by_op': {op: {'movements': sum(1 for j in jobs if j['op'] == op),
                        'computed': sum(1 for r in rows if r['op'] == op and 'not_computed' not in r)} for op in 'AD'},
         'type_how': dict(by_how),
@@ -871,7 +925,7 @@ def day(a) -> int:
         'seconds': round(time.time() - t0),
     }
     out.mkdir(parents=True, exist_ok=True)
-    stem = f"{a.airport}-{summary['day']}" + ('' if a.variant == 'default' else f'-{a.variant}')
+    stem = f"{a.airport}-{summary['day']}" + ('' if variant == 'default' else f'-{variant}')
     np.savez_compressed(out / f'{stem}-n65.npz', meta=json.dumps(summary), **counts,
                         **{k: v.astype(np.float32) for k, v in shares.items()})
     (out / f'{stem}-summary.json').write_text(json.dumps(summary, indent=1), encoding='utf-8')
@@ -942,6 +996,9 @@ def main(argv=None) -> int:
                    help="the CAA's Table 03 CSV for the day's month (rule 1's yardstick; data/caa/)")
     d.add_argument('--variant', choices=('default', 'hybrid'), default='default',
                    help="'hybrid' flies the default power at the observed heights: rule 4's UPPER BOUND, never the model")
+    d.add_argument('--rule8-cut-m', type=float, default=0.0,
+                   help="rule 8's CHECK: cut each arrival whose threshold crossing was heard where it came this close, "
+                        'so rule 8 must join it; the files are a variant and decide nothing')
     d.add_argument('--out', required=True)
     d.add_argument('--flights-out', help='per-flight rows (EASA-derived): a path outside the repo')
     d.add_argument('--half-x-km', type=float, default=32.0)

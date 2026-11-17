@@ -19,6 +19,9 @@ year, and the CAA's own figures failed after one JSON round trip (the 12 Nov rev
 - rule 3: BOTH stage ends, lightest and heaviest, each judged at every level;
 - rule 6: the take-offs first heard in the air (n65_day.airborne_takeoffs()), joined to the runway, unless
   `--no-airborne-starts`, which takes their counts out and scales by each day's `scale_without_airborne`;
+- rule 8: the approaches whose threshold crossing was not heard, joined to the threshold (n65_tracks.joined_end()),
+  unless `--no-joined-approaches`, which takes their counts out and scales by `scale_without_joined` (both off:
+  `scale_without_airborne_or_joined`; n65_day.SCALE_KEYS);
 - the DATABASE is n65_gate.database_label() of the files' noise-table fingerprint, never a label;
 - days made by other code, noise tables, grid, threshold, window, spread or variant are refused (n65_day.incompatible).
 
@@ -27,7 +30,7 @@ One airport's verdict decides nothing alone: n65_gate.publish_verdict needs both
 Nothing here is published, and the files it reads and writes are EASA-derived: outside the repo or gitignored only.
 
     python -B scripts/n65_gate_run.py --day <dir>/LHR-2025-*.npz [--unscaled] [--no-spread] [--no-airborne-starts]
-        [--out <dir>]
+        [--no-joined-approaches] [--out <dir>]
 """
 from __future__ import annotations
 
@@ -73,7 +76,7 @@ def day_kind(period: tuple[str, str]) -> str:
 
 
 def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bool = True, airborne: bool = True,
-               population: dict | None = None) -> tuple[str, dict, dict]:
+               joined: bool = True, population: dict | None = None) -> tuple[str, dict, dict]:
     """(airport, {'light': run, 'heavy': run}, about) from loaded day files, or Refused. `population` is
     n65_population.load()'s file: with it, each stage end counts the people inside its 50-event contour (item 3);
     without it the run carries None and the gate says "not measured" (a fail, never a guess)."""
@@ -94,7 +97,12 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
         # Either way: such a day neither holds those take-offs nor can say how many it left out.
         raise Refused(f'rule 6: {", ".join(before_6)} made before rule 6 (take-offs first heard in the air, '
                       '2026-11-15): run them again')
-    scale_key = 'scale' if airborne else 'scale_without_airborne'
+    before_8 = [m['day'] for m in metas if 'joined_approaches' not in m]
+    if before_8:
+        # Either way: such a day dropped those approaches and kept no count of them apart.
+        raise Refused(f'rule 8: {", ".join(before_8)} made before rule 8 (approaches joined to the threshold, '
+                      '2026-11-17): run them again')
+    scale_key = nd.SCALE_KEYS[(airborne, joined)]
     if scaled:
         unscaled = [m['day'] for m in metas if not isinstance(m.get(scale_key), (int, float))]
         if unscaled:
@@ -103,6 +111,7 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
     keys = [f'{k}_p' if spread else k for k in ('arrivals', 'departures_light', 'departures_heavy')]
     apart = {end: (f'departures_{end}_airborne_p' if spread else f'departures_{end}_airborne') for end in ('light',
                                                                                                          'heavy')}
+    joined_key = 'arrivals_joined_p' if spread else 'arrivals_joined'
     for meta, arrays in days:
         lacking = [k for k in keys if k not in arrays]
         if lacking:
@@ -111,6 +120,8 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
         lacking = [k for k in apart.values() if k not in arrays]
         if lacking:
             raise Refused(f'rule 6: {meta["day"]} has no {", ".join(lacking)} (made before rule 6; run it again)')
+        if joined_key not in arrays:
+            raise Refused(f'rule 8: {meta["day"]} has no {joined_key} (made before rule 8; run it again)')
     period = (min(names), max(names))
     missing = gate.missing_days(period, names)
     levels = list(gate.TARGETS[airport]['areas_km2'])
@@ -123,6 +134,8 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
             n = arrays[keys[0]].astype(np.float64) + arrays[keys[1 if end == 'light' else 2]]
             if not airborne:
                 n = n - arrays[apart[end]]
+            if not joined:
+                n = n - arrays[joined_key]
             n = n * (meta[scale_key] if scaled else 1.0)
             total = n if total is None else total + n
         mean = total / len(days)
@@ -140,10 +153,12 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
         }
     about = {
         'airport': airport, 'days': [{'day': m['day'], 'computed_share': m.get('computed_share'),
-                                      'scale': m.get(scale_key), 'airborne_takeoffs': m['airborne_takeoffs']}
+                                      'scale': m.get(scale_key), 'airborne_takeoffs': m['airborne_takeoffs'],
+                                      'joined_approaches': m['joined_approaches']}
                                      for m in metas],
         'missing_days': missing, 'variant': metas[0].get('variant', 'default'),
         'rule_1_scaled': scaled, 'rule_2_spread': spread, 'rule_6_airborne_starts': airborne,
+        'rule_8_joined_approaches': joined,
         'database': gate.database_label(metas[0].get('anp_fingerprint')),
         'code': metas[0].get('code'),
         'population': ({'source': population['meta']['source'], 'census_sha256': population['meta']['census_sha256'],
@@ -153,9 +168,10 @@ def build_runs(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bo
 
 
 def verdict(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bool = True, airborne: bool = True,
-            population: dict | None = None) -> dict:
+            joined: bool = True, population: dict | None = None) -> dict:
     """{'ok': this airport passes on the deciding database, 'lines': every line, 'runs', 'about'}."""
-    airport, runs, about = build_runs(days, scaled=scaled, spread=spread, airborne=airborne, population=population)
+    airport, runs, about = build_runs(days, scaled=scaled, spread=spread, airborne=airborne, joined=joined,
+                                      population=population)
     ok, lines = gate.bracket_verdict(airport, runs)
     if about['variant'] != 'default':
         ok = False
@@ -164,7 +180,8 @@ def verdict(days: list[tuple[dict, dict]], *, scaled: bool = True, spread: bool 
         ok = False
         lines.append(f"built with {about['database']!r}: a building run, never a deciding one")
     for name, on in (('rule 1 (scaled to the CAA movements)', scaled), ('rule 2 (Doc 29 level distribution)', spread),
-                     ('rule 6 (take-offs first heard in the air)', airborne)):
+                     ('rule 6 (take-offs first heard in the air)', airborne),
+                     ('rule 8 (approaches joined to the threshold)', joined)):
         if not on:
             ok = False
             lines.append(f'{name} OFF: a variant reported beside, never the deciding run')
@@ -179,6 +196,8 @@ def main(argv=None) -> int:
     p.add_argument('--no-spread', action='store_true', help='rule 2 off: the variant reported beside')
     p.add_argument('--no-airborne-starts', action='store_true',
                    help='rule 6 off (take-offs first heard in the air left out): the variant reported beside')
+    p.add_argument('--no-joined-approaches', action='store_true',
+                   help='rule 8 off (approaches joined to the threshold left out): the variant reported beside')
     p.add_argument('--out', help='where the verdict goes (default: beside the first day file)')
     p.add_argument('--population', default=str(pop.DEFAULT_FILE),
                    help='the people file (n65_population.py build); missing = refused, unless --no-population')
@@ -192,7 +211,7 @@ def main(argv=None) -> int:
                                 is not None)
         people = pop.load(Path(a.population)) if needs and not a.no_population else None
         result = verdict(days, scaled=not a.unscaled, spread=not a.no_spread, airborne=not a.no_airborne_starts,
-                         population=people)
+                         joined=not a.no_joined_approaches, population=people)
     except (Refused, pop.Refused, OSError, KeyError) as e:
         print(f'REFUSED: {e}')
         return 2
@@ -202,7 +221,7 @@ def main(argv=None) -> int:
         return 2
     first, last = result['runs']['light']['period']
     tag = (('scaled' if not a.unscaled else 'unscaled') + ('-spread' if not a.no_spread else '-nospread')
-           + ('' if not a.no_airborne_starts else '-noairborne'))
+           + ('' if not a.no_airborne_starts else '-noairborne') + ('' if not a.no_joined_approaches else '-nojoined'))
     name = f"gate-{result['about']['airport']}-{first}_{last}-{result['about']['variant']}-{tag}.json"
     out.mkdir(parents=True, exist_ok=True)
     (out / name).write_text(json.dumps(result, indent=1), encoding='utf-8')
