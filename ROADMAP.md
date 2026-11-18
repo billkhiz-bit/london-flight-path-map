@@ -26,6 +26,28 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-18)
+>
+> **THE SEPTEMBER 2026 HPI ROLL IS LIVE** (Bill: "Do the roll", then "deploy" on the reviewed changeset). HM Land Registry's
+> September index moved 84 of 97 UK prices and 97 of 97 trends in BOTH holders (`build_hpi_prices.py --write --city X` for all
+> 13), `SNAPSHOT_VINTAGE_LABEL` 'September 2026', `CPIH_12M_PCT['2026-Q3']` 3.6 and `SNAPSHOT_CPIH_PCT` 3.6 (read from ONS L55O
+> by `cost_real_growth.cpih_for`, which also gave July 3.1 and August 3.3 = what we held), `DEFAULT_VINTAGE` 2026-09-01; the
+> quarter key stays 2026-Q3. Rebuilt: How it works, 152 area pages (98 changed) + sitemap + open data. METHODOLOGY s6 re-derived
+> from the engine against SW11 1AA's REAL raster row (scratchpad `derive_s6.py`, one read-only GetItem): 5.1 -> 5.0, afford 0.3
+> -> 0.1 (the national p95 fell 732,271 -> 700,172: the City of London left the top six, so Wandsworth itself is now the sixth),
+> growth 2.6 -> 3.0 (Westminster's -21.3% the steepest real fall again); its two ungated stale lines fixed (spread 1.2 -> 2.1,
+> `methodologyVersion` 5.1 -> 5.7). Effect: balanced 36 of 97 by 0.1 (35 down), investor 71 of 97 (Calderdale 8.3 -> 7.0,
+> Sunderland 7.5 -> 8.7). Nine backend tests moved: eight data pins re-pinned with dated notes, and
+> `CompositeRenormalisationTests`, which rebuilt scores from ROUNDED components (City of London quietlife landed on exactly
+> 5.05; the engine's total is 5.0429, site == API on all 1,128 borough-persona pairs), now reads the engine's own total
+> through the new `weighted_total()` (behaviour-identical: 1,368 of 1,368 full results equal; a mutated rescale turns it red).
+> Preflight: one red, "area pages match the live API" (36 stale = the 36 balanced movers), as a roll must be before its
+> deploy; everything else blocking green. Changeset: ScoreFunction Code the only static change (Chat role/function and the
+> API "Dynamic" on its ARN, no replacement). After it: area freshness 152/152, SW11 1AA live = s6 to the digit, then
+> web (94), area (153), meta (7), open-data (2); drift PASS, score sanity 29/29, site == API 6/6; live pages say September 2026.
+> NEXT: N65's 2025 year restarts (Bill's word, same message); `/audit` ~19 Nov in a fresh session; FAA 2612 + Leicester 26 Nov.
+> October's HPI (~mid-Dec) moves the quarter key: the three-step roll in memory `project-trends-feature.md`.
+>
 > ## START HERE (2026-11-17)
 >
 > **THE SEPTEMBER PLANES ROLL IS LIVE** (`a2aeabb1`, pushed). Full preflight exit 0, "PASS (INCOMPLETE)" on one ADVISORY row

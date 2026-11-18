@@ -181,8 +181,9 @@ class TrendsFeatureTests(unittest.TestCase):
         # place and left Q2 at May, so the previous price did not move.
         # 686,076 under July; 694,210 under August (2026-10-22), because the
         # August roll refreshed 2026-Q3 in place again and Wandsworth's average
-        # rose 1.2%; Q2 still holds May's 660,000.
-        self.assertEqual(body['context']['avgPriceGbp'], 694210)
+        # rose 1.2%; Q2 still holds May's 660,000. 692,067 under September
+        # (2026-11-18), down 0.3%, Q2 again untouched.
+        self.assertEqual(body['context']['avgPriceGbp'], 692067)
         self.assertEqual(comp['scoreChange'], round(body['score'] - comp['previousScore'], 1))
         # Under v3.3 the balanced persona does not weight growth, so
         # Wandsworth's growth signal still contributes nothing. The movement
@@ -226,7 +227,12 @@ class TrendsFeatureTests(unittest.TestCase):
         # attributed movement is still affordability 0.2 -> 0.3 (+0.03
         # weighted). Adding the same +0.08 to both raw totals moved them across
         # a 1dp rounding boundary: previous 4.6, current 4.7.
-        self.assertEqual(comp['scoreChange'], 0.1)
+        #
+        # RE-PINNED 0.1 -> 0.0 at the September HPI roll (2026-11-18), checked
+        # the same way: `env` 6.2 in both vintages, and the only attributed
+        # movement is affordability, now 0.2 -> 0.1 (-0.03 weighted) because
+        # the national p95 fell 732,271 -> 700,172. Both totals publish 4.6.
+        self.assertEqual(comp['scoreChange'], 0.0)
         # Asserted so the 0.0 above cannot pass on a comparison that computed
         # nothing: the vintages genuinely differ and the comparison must have
         # seen it. A bare 0.0 is indistinguishable from a broken comparison,
@@ -254,12 +260,15 @@ class TrendsFeatureTests(unittest.TestCase):
         # affordability a little - and national_price_bounds() already records
         # that the previous-vintage pool is today's pool with London's slice
         # swapped, so this row moves whenever any other city's price does.
+        # Under September (2026-11-18) the current vintage reads 0.1 (692,067
+        # against a p95 of 700,172), the previous one still 0.2, and growth
+        # moves 3.5 -> 3.0 (Westminster's -21.3% the steepest fall again).
         previous = app.calc_score(
             'Wandsworth', 'london', app.PERSONAS['balanced'],
             boroughs_override=app.previous_dataset('london'),
         )
         self.assertEqual(previous['components']['afford'], 0.2)
-        self.assertEqual(body['components']['afford'], 0.3)
+        self.assertEqual(body['components']['afford'], 0.1)
         self.assertNotEqual(previous['components']['growth'], body['components']['growth'])
         self.assertEqual([u['factor'] for u in comp['why']['unweighted']], ['growth'])
         self.assertIn('did not change the score', comp['why']['unweighted'][0]['note'])
@@ -406,7 +415,11 @@ class TrendsFeatureTests(unittest.TestCase):
         # 3.6 -> 4.2 under August (2026-10-22): Newham fell again to 388,045
         # (+0.04 on its own) and the national p95 ceiling rose 716,131 ->
         # 732,271 (+0.09 on its own), both raising affordability.
-        self.assertIn('3.6 → 4.2', afford['title'])
+        # 3.6 -> 3.9 under September (2026-11-18): Newham ROSE to 391,492 and
+        # the national p95 ceiling FELL 732,271 -> 700,172 (the City of
+        # London's average fell 8.7%), both lowering it against August. Its
+        # price is still below Q2's, so it still rose against Q2: the property.
+        self.assertIn('3.6 → 3.9', afford['title'])
         self.assertTrue(any('price here fell' in st for st in afford['steps']), afford['steps'])
 
     def test_changes_publishes_weights_so_attribution_is_checkable(self):
@@ -450,7 +463,11 @@ class TrendsFeatureTests(unittest.TestCase):
         # July's -3.42% and past Q2's. The July shape (trend down, scores up)
         # is held by the CONSTRUCTED
         # test_market_context_sentence_counts_scores_not_trend, not by live data.
-        self.assertGreater(m['meanTrendPct'], m['previousMeanTrendPct'])
+        # Under September (2026-11-18) it FELL again, -3.08% -> -3.51%, below
+        # Q2's -3.35%: the City of London (-14.6% -> -17.3%), Westminster
+        # (-14.3% -> -18.5%) and Kensington and Chelsea (-13.8% -> -15.6%)
+        # fell further.
+        self.assertLess(m['meanTrendPct'], m['previousMeanTrendPct'])
         self.assertEqual(m['previousFallingAreas'], 20)
         # 21 under July; 22 under August (2026-10-22): Hounslow, Lewisham,
         # Southwark and Haringey turned negative, and Hillingdon, Merton and
@@ -466,8 +483,11 @@ class TrendsFeatureTests(unittest.TestCase):
         # +6.3% -> +3.0% real and Calderdale rose +1.2% -> +4.4%. Both vintages
         # still resolve to it, since no London borough beats +4.4% in either
         # (Kingston upon Thames +1.5% now, Waltham Forest +0.1% in Q2).
-        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Calderdale (West Yorkshire)')
-        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Calderdale (West Yorkshire)')
+        # Sunderland (Tyne and Wear) under September (2026-11-18): +4.7% real,
+        # Calderdale having eased +4.4% -> +1.1%. Both vintages resolve to it;
+        # London's best is Barking and Dagenham's +1.4%.
+        self.assertEqual(m['benchmarks']['strongestGrowthArea'], 'Sunderland (Tyne and Wear)')
+        self.assertEqual(m['previousBenchmarks']['strongestGrowthArea'], 'Sunderland (Tyne and Wear)')
         # ...and that "previous" Trafford figure is JULY's (Calderdale's
         # AUGUST figure since 2026-10-22): no city outside London is held at
         # the previous vintage. Audit I-1 (2026-09-25): the
@@ -537,7 +557,9 @@ class TrendsFeatureTests(unittest.TestCase):
         # City of London again under August (2026-10-22): -17.3% real against
         # Westminster's -17.0%, Westminster's nominal fall having eased -20.7%
         # -> -14.3%. Newham (-7.7% real) still sits in the falling tail.
-        self.assertIn('City of London', growth['workings'])
+        # Westminster again under September (2026-11-18): -21.3% real against
+        # the City of London's -20.2%. Newham (-8.4% real) is still falling.
+        self.assertIn('Westminster', growth['workings'])
         self.assertIn('steepest fall', growth['workings'])
         # = 4.9 under v5.0 (nominal -1.4% against -25.4%); v5.1 works in real
         # terms (-4.1% against -27.4%, = 4.4). DERIVED from the driver's own
@@ -606,11 +628,12 @@ class TrendsFeatureTests(unittest.TestCase):
         # Kingston upon Thames rose +0.2% -> +1.5% real and passed Barking,
         # which eased +2.1% -> +1.4%. Barking still moved 14th -> 2nd and the
         # steps still name both ranks, which is the property, so the subject
-        # stays and its rank is re-pinned.
-        self.assertEqual(growth['rank'], 2)
+        # stays and its rank is re-pinned. 1st again under September
+        # (2026-11-18): Kingston fell +1.5% -> -1.7% real while Barking held +1.4%.
+        self.assertEqual(growth['rank'], 1)
         self.assertEqual(growth['rankOf'], 33)
         steps = ' '.join(growth['steps'])
-        self.assertIn('14th of 33 to 2nd of 33', steps)
+        self.assertIn('14th of 33 to 1st of 33', steps)
 
     def test_why_explains_amplification_when_area_was_the_benchmark(self):
         """The main reason a big move looks extreme: the area WAS the yardstick.
@@ -766,15 +789,21 @@ class TrendsFeatureTests(unittest.TestCase):
         # pool's steepest and scores 0.0. Ealing (+1.8% nominal, -1.5% real,
         # 4.6) and K&C (-13.8% nominal, -16.6% real, 0.2) still qualify, so
         # only the severe subject moved; the assertions are unchanged.
-        ealing, kc, col = (
-            growth_of('Ealing'), growth_of('Kensington and Chelsea'), growth_of('City of London')
+        #
+        # RE-AIMED City of London -> Westminster at the September roll
+        # (2026-11-18): Westminster's -18.5% nominal (-21.3% real) is the pool's
+        # steepest again and scores 0.0; the City of London's -17.3% (-20.2%
+        # real) scores 0.3. Ealing (+1.3% nominal, -2.2% real, 4.5) and K&C
+        # (-15.6% nominal, -18.5% real, 0.7) still qualify.
+        ealing, kc, steepest = (
+            growth_of('Ealing'), growth_of('Kensington and Chelsea'), growth_of('Westminster')
         )
-        self.assertLess(col, kc)
+        self.assertLess(steepest, kc)
         self.assertLess(kc, ealing)
         # All are falling, so all sit below the 5.0 flat-market anchor.
         self.assertLess(ealing, 5.0)
         # Only the steepest faller in the cohort may sit on the floor.
-        self.assertEqual(col, 0.0)
+        self.assertEqual(steepest, 0.0)
 
         # The workings must name the benchmark the tail is scaled against rather
         # than assert a floor that no longer exists.
@@ -1029,15 +1058,20 @@ class CalcScoreTests(unittest.TestCase):
         # crossed a rounding boundary. The other four components are unchanged,
         # which is the invariant: an air-quality roll may move `env` and the
         # total, and nothing else.
+        # 4.7 -> 4.6 at the September HPI roll (2026-11-18): affordability
+        # 0.35 -> 0.08 (the national p95 fell 732,271 -> 700,172, now 1.2%
+        # above Wandsworth's own price) took 0.07 at 0.27 of `balanced` across
+        # a rounding boundary. env and quiet did not move.
         weights = app.PERSONAS['balanced']
         result = app.calc_score('Wandsworth', 'london', weights)
-        self.assertEqual(result['score'], 4.7)
+        self.assertEqual(result['score'], 4.6)
         self.assertEqual(result['components']['env'], 6.2)
         self.assertEqual(result['components']['quiet'], 5.0)
         # 6.7 under the May vintage, 6.5 under June's, 0.4 under the v5.0
         # national log anchor, 0.3 at the July roll (686,076 against a p95 of
         # the same month). The vintage moved the cohort; v5.0 replaced it.
-        self.assertEqual(result['components']['afford'], 0.3)
+        # 0.1 at the September roll (2026-11-18): 692,067 against a p95 of 700,172.
+        self.assertEqual(result['components']['afford'], 0.1)
         # 4.3 until 2026-08-10: Wandsworth's trend was -4.2%, and correcting
         # London to HM Land Registry HPI 2026-05 put it at -6.1%. The headline
         # assertion above is unchanged at 6.4, which is the invariant this
@@ -1052,7 +1086,9 @@ class CalcScoreTests(unittest.TestCase):
         # trend did not move (-5.3% deflated by 3.3 is -8.3% again), but the
         # steepest fall the tail is scaled against eased from Westminster's
         # -23.1% to City of London's -17.3%: 5.0 - 8.3 / 17.3 x 5 = 2.6.
-        self.assertEqual(result['components']['growth'], 2.6)
+        # 3.0 under September (2026-11-18): -5.2% deflated by 3.6 is -8.5%,
+        # against Westminster's -21.3%: 5.0 - 8.5 / 21.3 x 5 = 3.0.
+        self.assertEqual(result['components']['growth'], 3.0)
         # live 7.9 -> 8.0 on 2026-08-03, when the crime rates were re-verified
         # against ONS Table C4 in full rather than by spot check. Wandsworth held
         # 82 per 1,000 against a published 76.4, so crime_to_score moves 7.87 ->
@@ -1071,8 +1107,8 @@ class CalcScoreTests(unittest.TestCase):
         self.assertEqual(result['components']['live'], 7.8)
         # 660000 under the May vintage; 680105 under June; 686076 under July;
         # 694210 under August (2026-10-22), the August HPI roll's Wandsworth
-        # average (+1.2%).
-        self.assertEqual(result['context']['avgPriceGbp'], 694210)
+        # average (+1.2%); 692067 under September (2026-11-18), down 0.3%.
+        self.assertEqual(result['context']['avgPriceGbp'], 692067)
         self.assertEqual(result['context']['noiseImpactBand'], 'moderate')
 
     def test_growth_clamped_to_scale(self):
@@ -4428,28 +4464,66 @@ class CompositeRenormalisationTests(unittest.TestCase):
     Math.round now break ties identically in both holders - so what is left is a
     score decided by noise rather than by data. This asserts it stays that way
     instead of leaving it as a note nobody re-runs.
+
+    READS THE ENGINE'S OWN TOTAL since 2026-11-18. Until then it rebuilt the score
+    from the ROUNDED published components, but the engine weights quiet, afford and
+    growth unrounded (METHODOLOGY s6, "three unrounded inputs against five"), so the
+    rebuild was a proxy. The September 2026 HPI roll put City of London `quietlife`'s
+    rounded components (7.5 / 0.4 / 0.3 / 4.8 / 3.3) on exactly 5.05, and the proxy
+    called a score moved whose real total is 5.0429 either way, published 5.0 by the
+    API and the site alike (all 1,128 borough-persona pairs compared that day). The
+    total now comes from `app.weighted_total`, wrapped, so it is what calc_score used.
+    The constructed case below keeps the comparison able to go red.
     """
 
+    def _totals(self):
+        """(label, parts, weights, engine total) for every complete borough/persona."""
+        seen = []
+        real = app.weighted_total
+
+        def spy(parts, weights):
+            out = real(parts, weights)
+            seen.append((dict(parts), weights, out[0]))
+            return out
+
+        rows = []
+        with patch.object(app, 'weighted_total', side_effect=spy):
+            for city_id, cfg in app.CITIES.items():
+                for name in cfg['boroughs']:
+                    for persona, weights in app.PERSONAS.items():
+                        seen.clear()
+                        app.calc_score(name, city_id, weights)
+                        self.assertEqual(len(seen), 1, f'{city_id}/{name}: one weighting per score')
+                        parts, used, total = seen[0]
+                        rows.append((f'{city_id}/{name}/{persona}', parts, used, total))
+        return rows
+
+    @staticmethod
+    def _moved(parts, weights, total):
+        """True if the rescale decided the published digit: the total rounds differently
+        from the same parts under the persona's own weights, not divided by their sum."""
+        present = {k: weights.get(k, 0.0) for k in parts}
+        if abs(sum(present.values()) - 1.0) > 1e-12:
+            return False  # genuinely incomplete: redistribution is real
+        plain = sum(parts[k] * present[k] for k in parts)
+        return app.round_1dp(total) != app.round_1dp(plain)
+
     def test_renormalising_a_complete_set_changes_no_published_score(self):
-        moved = []
-        for city_id, cfg in app.CITIES.items():
-            for name in cfg['boroughs']:
-                for persona, weights in app.PERSONAS.items():
-                    result = app.calc_score(name, city_id, weights)
-                    present = {
-                        k: v for k, v in weights.items() if k in result['components']
-                    }
-                    scale = sum(present.values())
-                    if abs(scale - 1.0) > 1e-12:
-                        continue  # genuinely incomplete: redistribution is real
-                    comps = result['components']
-                    renormalised = sum(comps[k] * (present[k] / scale) for k in present)
-                    plain = sum(comps[k] * present[k] for k in present)
-                    if app.round_1dp(renormalised) != app.round_1dp(plain):
-                        moved.append(f'{city_id}/{name}/{persona}')
+        rows = self._totals()
+        self.assertGreater(len(rows), 1000, 'compared too few scores to mean anything')
+        moved = [label for label, parts, weights, total in rows if self._moved(parts, weights, total)]
         self.assertEqual(
             moved, [], 'renormalising a complete weight set moved a published score'
         )
+
+    def test_the_comparison_can_see_a_rescale_decide_a_tie(self):
+        """Red on purpose: parts on an exact .05 tie under `quietlife`, where dividing
+        by 0.9999999999999999 lifts 5.049999999999999 to 5.05 (the rounded components
+        that fooled the old proxy). A comparison that cannot see this proves nothing."""
+        parts = {'quiet': 7.5, 'afford': 0.4, 'growth': 0.3, 'live': 4.8, 'env': 3.3}
+        weights = app.PERSONAS['quietlife']
+        total, _ = app.weighted_total(parts, weights)
+        self.assertTrue(self._moved(parts, weights, total))
 
     def test_the_gate_compared_something(self):
         """A per-unit floor, not a global one: a check that skips every borough
