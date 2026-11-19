@@ -21,7 +21,6 @@ Usage:
 """
 
 import argparse
-import calendar
 import csv
 import datetime as dt
 import io
@@ -53,11 +52,21 @@ def finished(y, m, today=None):
     return (y, m) < (today.year, today.month)
 
 
+def request_end(last):
+    """(year2, month2, day2) for a request through the month `last`: the FIRST day of the month after it, because
+    IEM's end date is exclusive. Asking for the month's last day dropped that day from the last month of every request
+    (18 Nov 2026: 46 cached months were a day short; September 2025's -air file ended 29 Sep, so N65 flew none of 30
+    Sep's 1,284 flights). Rows are filed by their own month, so the end never adds a day to any file."""
+    y, m = map(int, last.split('-'))
+    return (y + 1, 1, 1) if m == 12 else (y, m + 1, 1)
+
+
 def fetch(station, first, last):
     """[(valid 'YYYY-MM-DD HH:MM' UTC, alti inHg string)] for station over the months first..last, from IEM."""
-    (y1, m1), (y2, m2) = map(int, first.split('-')), map(int, last.split('-'))
+    y1, m1 = map(int, first.split('-'))
+    y2, m2, d2 = request_end(last)
     q = {'station': station, 'data': 'alti', 'year1': y1, 'month1': m1, 'day1': 1, 'year2': y2, 'month2': m2,
-         'day2': calendar.monthrange(y2, m2)[1], 'tz': 'Etc/UTC', 'format': 'onlycomma', 'latlon': 'no',
+         'day2': d2, 'tz': 'Etc/UTC', 'format': 'onlycomma', 'latlon': 'no',
          'missing': 'M', 'trace': 'T', 'direct': 'no', 'report_type': '3'}
     req = urllib.request.Request(f'{ARCHIVE}?{urllib.parse.urlencode(q)}', headers={'User-Agent': 'Mozilla/5.0'})
     text = urllib.request.urlopen(req, timeout=180).read().decode('utf-8', 'replace')

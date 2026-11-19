@@ -49,6 +49,23 @@ def test_a_station_with_no_readings_is_refused():
         fetch_metar.fetch('KXXX', '2026-02', '2026-02')
 
 
+def test_a_request_runs_to_the_last_day_of_its_last_month():
+    # IEM's end date is exclusive (18 Nov 2026): asking for the 30th of September returned up to 29 Sep 23:59, so the
+    # last month of every request lost its last day. The end is the first of the month after, December into January.
+    asked = []
+
+    def urlopen(req, timeout):
+        asked.append(dict(fetch_metar.urllib.parse.parse_qsl(fetch_metar.urllib.parse.urlsplit(req.full_url).query)))
+        return Answer('station,valid,alti\nEGLL,2025-09-30 23:50,30.33\n')
+
+    with mock.patch.object(fetch_metar.urllib.request, 'urlopen', urlopen):
+        fetch_metar.fetch('EGLL', '2025-09', '2025-09')
+        fetch_metar.fetch('EGLL', '2025-01', '2025-12')
+    ends = [(q['year2'], q['month2'], q['day2']) for q in asked]
+    assert ends == [('2025', '10', '1'), ('2026', '1', '1')]
+    assert [(q['year1'], q['month1'], q['day1']) for q in asked] == [('2025', '9', '1'), ('2025', '1', '1')]
+
+
 def test_every_counted_airport_has_a_station():
     import adsb_movements as mv
     assert set(mv.load_airports()) == set(mv.METAR_STATION)
