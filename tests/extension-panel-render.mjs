@@ -130,6 +130,107 @@ async function render(env, notices) {
   check('neither: no Road noise row at all', !rows.some((r) => /^Road noise/.test(r.name)), JSON.stringify(rows.map((r) => r.name)));
 }
 
+// 5. Air measured nearby (2026-11-18, Bill's pick A): a block UNDER the modelled rows. The block is the API's own
+// answer for the SW5 listing the e2e uses (build_air_nearby at 51.49423, -0.18825 on the 13 Nov files); the API side
+// is held by backend/tests/test_air_nearby.py, which runs the site's own nearestSensor/nearestMonitor against it.
+const SW5_NEARBY = {
+  scopeKm: 5,
+  sensor: {
+    network: 'Breathe London', siteCode: 'BL0118', name: 'Kensington High Street', distanceKm: 0.88,
+    setting: 'roadside', kerbDistanceM: 0.9, no2MeanUgm3: 18.3, pm25MeanUgm3: 7.1,
+    period: { from: '2025-11-01', to: '2026-10-31' },
+    note: 'Display only, never scored.',
+    source: 'Contains Breathe London data licensed under the Open Government License v3.0',
+    sourceLink: 'https://www.breathelondon.org/',
+  },
+  monitor: {
+    network: 'DEFRA AURN', siteCode: 'KC1', name: 'London N. Kensington', distanceKm: 3.45,
+    setting: 'urban background', no2MeanUgm3: 15.4, pm25MeanUgm3: 7.2,
+    period: { from: '2024-01-01', to: '2024-12-31' },
+    note: 'Display only, never scored.',
+    source: '© Crown 2026 copyright Defra via uk-air.defra.gov.uk, licenced under the Open Government Licence (OGL).',
+    sourceLink: 'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/',
+  },
+};
+const MODELLED = { no2AnnualMeanUgm3: 24.0, no2WhoGuidelineUgm3: 10, pm25AnnualMeanUgm3: 9.6, pm25WhoGuidelineUgm3: 5 };
+
+async function nearbyView(env) {
+  return page.evaluate((e) => {
+    const box = window.__render(e, []);
+    const block = box.querySelector('.c33-nearby');
+    const notes = [...box.querySelectorAll('.c33-note-body')];
+    return {
+      heading: block?.querySelector('h4')?.textContent || null,
+      blockIsLast: block ? block.previousElementSibling?.matches('ul.c33-list') && !block.querySelector('.c33-bar') : null,
+      modelled: [...box.querySelectorAll(':scope > ul.c33-list > .c33-item .c33-name')].map((n) => n.textContent.trim()),
+      items: block
+        ? [...block.querySelectorAll('.c33-item')].map((i) => ({
+            name: i.querySelector('.c33-name')?.textContent,
+            dist: i.querySelector('.c33-dist')?.textContent,
+            sub: i.querySelector('.c33-rownote')?.textContent,
+            vals: i.querySelector('.c33-vals')?.textContent,
+          }))
+        : [],
+      fold: box.querySelector('.c33-note-sum')?.textContent || '',
+      links: notes.flatMap((p) => [...p.querySelectorAll('a')].map((a) => ({ text: a.textContent, href: a.getAttribute('href'), rel: a.rel, target: a.target }))),
+      foldText: notes.map((p) => p.textContent).join(' | '),
+      text: box.textContent,
+      html: box.innerHTML,
+    };
+  }, env);
+}
+
+{
+  const v = await nearbyView({ ...MODELLED, airMeasuredNearby: SW5_NEARBY });
+  check('nearby: one "Measured nearby" heading', v.heading === 'Measured nearby', v.heading);
+  check('nearby: the modelled rows are unchanged', JSON.stringify(v.modelled) === JSON.stringify(['Nitrogen dioxide', 'Fine particles (PM2.5)']), JSON.stringify(v.modelled));
+  check('nearby: sits under the modelled rows, with no bar', v.blockIsLast === true);
+  check('nearby: sensor first, then monitor', v.items.map((i) => i.name).join(' / ') === 'Kensington High Street / London N. Kensington', JSON.stringify(v.items.map((i) => i.name)));
+  check('nearby: distances as the site words them', v.items.map((i) => i.dist).join(' / ') === '880 m / 3.5 km', JSON.stringify(v.items.map((i) => i.dist)));
+  check('nearby: the sensor names its network and setting', v.items[0]?.sub === 'Breathe London sensor · roadside, 0.9 m from the kerb', v.items[0]?.sub);
+  check('nearby: the monitor names its network and setting', v.items[1]?.sub === 'DEFRA monitor · urban background', v.items[1]?.sub);
+  check('nearby: the sensor readings and period', v.items[0]?.vals === 'NO2 18.3 · PM2.5 7.1 ug/m3 · 12 months to Oct 2026', v.items[0]?.vals);
+  check('nearby: the monitor readings and year', v.items[1]?.vals === 'NO2 15.4 · PM2.5 7.2 ug/m3 · 2024', v.items[1]?.vals);
+  check('nearby: the fold counts the two lines it gained', /\(2\)$/.test(v.fold.trim()), v.fold);
+  check('nearby: each credit word for word, linked to its address', v.links.length === 2
+    && v.links[0].text === SW5_NEARBY.sensor.source && v.links[0].href === SW5_NEARBY.sensor.sourceLink
+    && v.links[1].text === SW5_NEARBY.monitor.source && v.links[1].href === SW5_NEARBY.monitor.sourceLink, JSON.stringify(v.links));
+  check('nearby: links open apart and send nothing back', v.links.every((l) => l.target === '_blank' && /noopener/.test(l.rel) && /noreferrer/.test(l.rel)));
+  check('nearby: never ranked, and says so', /not ranked/.test(v.foldText), v.foldText.slice(0, 120));
+}
+
+{
+  const v = await nearbyView({ ...MODELLED, airMeasuredNearby: { scopeKm: 5, monitor: SW5_NEARBY.monitor } });
+  check('nearby, monitor only: one line, the monitor', v.items.length === 1 && v.items[0].name === 'London N. Kensington', JSON.stringify(v.items));
+  check('nearby, monitor only: one credit', v.links.length === 1 && v.links[0].href === SW5_NEARBY.monitor.sourceLink, JSON.stringify(v.links));
+}
+
+{
+  const v = await nearbyView({ ...MODELLED });
+  check('no block: no heading, no lines', v.heading === null && v.items.length === 0);
+  check('no block: nothing says "none nearby"', !/none nearby|no sensor|no monitor/i.test(v.text), v.text.slice(0, 120));
+  check('no block: the fold gains nothing', !/not ranked/.test(v.foldText));
+}
+
+{
+  const noReading = { ...SW5_NEARBY.monitor };
+  delete noReading.no2MeanUgm3;
+  delete noReading.pm25MeanUgm3;
+  const v = await nearbyView({ ...MODELLED, airMeasuredNearby: { scopeKm: 5, monitor: noReading } });
+  check('an entry with no reading draws nothing', v.heading === null && v.items.length === 0, JSON.stringify(v.items));
+}
+
+{
+  const hostile = {
+    scopeKm: 5,
+    sensor: { ...SW5_NEARBY.sensor, name: '<img src=x onerror="window.__pwned=1">', sourceLink: 'javascript:window.__pwned=1' },
+  };
+  const v = await nearbyView({ ...MODELLED, airMeasuredNearby: hostile });
+  const pwned = await page.evaluate(() => window.__pwned === 1);
+  check('hostile text is text, never markup', !/<img/i.test(v.html.replace(/&lt;img/g, '')) && v.items[0]?.name === hostile.sensor.name && !pwned);
+  check('a link that is not https stays text', v.links.length === 0 && v.foldText.includes(hostile.sensor.source), JSON.stringify(v.links));
+}
+
 await browser.close();
 
 let failed = 0;

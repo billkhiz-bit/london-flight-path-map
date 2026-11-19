@@ -57,7 +57,13 @@ class EveryValueHasItsSource(unittest.TestCase):
             prov, _ = app.build_provenance(body)
             section = 'context' if 'context' in body else 'environment'
             values = {f'{section}.{k}' for k in body[section]
-                      if not k.endswith(('Source', 'Resolution', 'Coverage')) and k not in app._DESCRIBES_ITSELF}
+                      if not k.endswith(('Source', 'Resolution', 'Coverage')) and k not in app._DESCRIBES_ITSELF
+                      and k != 'airMeasuredNearby'}
+            # /v1/environment's measured block (2026-11-18): its values one level down, by name.
+            for kind, entry in body[section].get('airMeasuredNearby', {}).items():
+                if isinstance(entry, dict):
+                    values |= {f'{section}.airMeasuredNearby.{kind}.{k}' for k in entry
+                               if k not in app.AIR_NEARBY_DESCRIBES}
             values |= {f'components.{k}' for k in body.get('components', {})}
             values |= {'score'} if 'score' in body else set()
             self.assertEqual(values - set(prov), set(), name)
@@ -102,13 +108,17 @@ class ItCreditsWhatAnswered(unittest.TestCase):
 
     def test_defra_and_the_ea_are_modelled_and_nothing_in_a_score_is_measured(self):
         # Only an instrument's reading is "measured"; /v1/score serves none today (AURN and Breathe London are
-        # display only). When one is scored, this test changes WITH the methodology, on purpose.
+        # display only). When one is scored, this test changes WITH the methodology, on purpose. Since
+        # 2026-11-18 /v1/environment carries them, display only, in `airMeasuredNearby` and nowhere else.
         for name, body in fixtures().items():
             prov, index = app.build_provenance(body)
-            self.assertFalse(any(e.get('method') == 'measured' for e in prov.values()), name)
+            self.assertFalse(any(e.get('method') == 'measured' for k, e in prov.items()
+                                 if not k.startswith('environment.airMeasuredNearby.')), name)
             for i in index:
+                # DEFRA's AURN monitors are its one MEASURED source (an instrument), named so the rule cannot
+                # redden the first fixture that carries a monitor (review 2026-11-19).
                 if i.startswith(('defra-', 'ea-')):
-                    self.assertEqual(index[i]['method'], 'modelled', i)
+                    self.assertEqual(index[i]['method'], 'measured' if i == 'defra-aurn' else 'modelled', i)
 
     def test_a_period_agrees_with_the_line_the_same_response_carries(self):
         # The prose beside a figure and its provenance are two holders of one year: they must not disagree.

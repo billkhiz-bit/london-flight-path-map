@@ -48,6 +48,16 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > NEXT: N65's 2025 year restarts (Bill's word, same message); `/audit` ~19 Nov in a fresh session; FAA 2612 + Leicester 26 Nov.
 > October's HPI (~mid-Dec) moves the quarter key: the three-step roll in memory `project-trends-feature.md`.
 >
+> **LATER 18 NOV.** (1) **Breathe London + DEFRA monitors in `/v1/environment`** (`airMeasuredNearby`, Bill's pick A; plan
+> step 5) and the extension's "Measured nearby" block: BUILT, NOT COMMITTED OR DEPLOYED; preflight at 21:41 was red only on
+> the Bay Area page's phone colour check (passes alone 2 of 2), so it runs again. The deploy is a reviewed changeset on
+> Bill's word, before or after Breathe London's 24 Nov meeting. (2) **N65: Heathrow's 2025 year RAN** (350 days; the 15 the
+> source never published are now the gate's `KNOWN_SOURCE_GAPS`) and its first gate run (a building run) says NO: 20-35%
+> short at 100 and 200 events at both stage ends; the 7 days scaled over 1.25 change nothing; cause not measured
+> (`docs/lessons/n65.md` on the branch). (3) **The weather fetcher lost the last day of every request** (IEM's end date is
+> exclusive): fixed on master and n65, 46 cached months refetched (`docs/lessons/in-progress-measurements.md`, last
+> section). **Owed: recount 30 Sep 2026 at the next planes roll.**
+>
 > ## START HERE (2026-11-17)
 >
 > **THE SEPTEMBER PLANES ROLL IS LIVE** (`a2aeabb1`, pushed). Full preflight exit 0, "PASS (INCOMPLETE)" on one ADVISORY row
@@ -2192,7 +2202,10 @@ update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
    TW9 3PZ (sensor yes, monitor 7.6 km no) and M22 5RX (no sensor, monitor yes), each proven red.
    **The full map's postcode panel too** (same day, Bill): `renderAirNearby()` in `index.html`, gated by
    `tests/uk-city-panel.mjs` (SW11 1AA both, three cities a monitor, New York none).
-   **Next: step 5** (`/v1/environment`) after the line has run a month.
+   **Step 5 BUILT 2026-11-18** (Bill's pick A of claude.ai/artifact/JeB4h7h36j33mTx9N8w6PX, route 1):
+   `environment.airMeasuredNearby` on `/v1/environment`, read from the site's own two files, the site's rules held
+   by `backend/tests/test_air_nearby.py`, the route documented in the spec for the first time. Deploy on Bill's
+   word; then the Chrome extension's row (mock-up from a screenshot first).
 2. **The same for AURN, every city** (`scripts/fetch_aurn.py`, keyless): the nearest official
    monitor's annual mean and site type. Same release, so London is not the only city with a
    measurement. **DATA HALF BUILT 2026-10-13, nothing displays it yet:** `data/aurn-sites.json`
@@ -3064,6 +3077,11 @@ and 103 area-page links assume the map at `/`); build under "Sky Score" or
 after the rename. Audiences on every version follow the Constraints above.
 
 ### Parked idea: Breathe London readings in the Chrome extension (raised by Bill, 2026-10-29)
+
+**BUILT 2026-11-18** with route (a): `/v1/environment`'s `airMeasuredNearby` (ROADMAP plan step 5), and the
+panel's "Measured nearby" block under the modelled rows (Bill's pick A, claude.ai/artifact/TCm9QFhok8sAQaFbJdtZVW;
+AURN included, so a listing outside London gets its monitor). It shows once the API is deployed; before that the
+block is absent and the panel is unchanged. The text below is the plan as parked.
 
 Checked on the laptop before the Deen Developers demo: the extension's two air rows ("Nitrogen dioxide", "Fine
 particles (PM2.5)", `extension/content/panel.js:779-780`) are DEFRA PCM only, the modelled 2024 annual mean on a

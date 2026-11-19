@@ -13,6 +13,7 @@ thresholds, or component formulas should bump METHODOLOGY_VERSION and be
 documented in the methodology changelog.
 """
 
+import http.client
 import inspect
 import json
 import logging
@@ -22,7 +23,9 @@ import re
 import threading
 import time
 from collections import OrderedDict
-from datetime import UTC, datetime
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, date, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -10505,6 +10508,286 @@ def parse_weights(raw):
 
 
 # ---------------------------------------------------------------------------
+# Air measured nearby (ROADMAP "The plan for Breathe London", step 5; Bill's pick A, 2026-11-18,
+# claude.ai/artifact/JeB4h7h36j33mTx9N8w6PX). /v1/environment only.
+#
+# The nearest Breathe London sensor (London's low-cost network) and the nearest DEFRA AURN reference monitor
+# (every UK city), each within AIR_SCOPE_KM of the POINT ASKED (the listing the extension reads, not the
+# postcode's centre), as `environment.airMeasuredNearby`. DISPLAY ONLY, NEVER SCORED: no score, weight or
+# methodology version reads it (rule 1 of ROADMAP "Breathe London is London-only").
+#
+# ONE HOLDER: THE SITE'S OWN FILES (Bill's pick, route 1). The Lambda reads data/breathe-london-sensors.json and
+# data/aurn-sites.json from the site, as its pages do, and keeps each for AIR_FILE_TTL_S. So the API cannot name
+# a different sensor than the site for the same point, and the monthly Breathe London refresh reaches the API
+# with `data-deploy`, no Lambda deploy. A copy built in here would be a second holder (mirrored data drifts).
+# Read through the CloudFront distribution's own address, which the rename does not change (the custom domain
+# will); check_deploy_drift.sh reads the site at the same address, and the test holds the two equal.
+#
+# THE RULES ARE THE SITE'S, from `nearestSensor()` / `nearestMonitor()` in js/street_report.mjs, and
+# backend/tests/test_air_nearby.py reads each from that file: AIR_SCOPE_KM, SENSOR_STALE_DAYS, the distance (its
+# haversine on a 6371.0088 km radius: haversine_km above uses 6371.0, which moves the 5 km edge by 7 mm, little
+# but a disagreement all the same) and the first-nearest-wins order. Beyond the scope NOTHING is said, never "no sensor nearby": the
+# files hold only instruments that captured 75% of the period's hours, so a nearer one may exist and have been
+# left out. An absent block, entry or reading is an ABSENT KEY, never null. A copy past its window, or one that
+# could not be read, is said in `notices`: that is a fact about our copy, not about the place.
+# ---------------------------------------------------------------------------
+
+AIR_SCOPE_KM = 5
+SENSOR_STALE_DAYS = 45
+AIR_FILES = {
+    'sensor': 'https://d1oe4ftwutjpf.cloudfront.net/data/breathe-london-sensors.json',
+    'monitor': 'https://d1oe4ftwutjpf.cloudfront.net/data/aurn-sites.json',
+}
+AIR_FILE_TTL_S = 3600         # a good copy is kept this long
+# After a failed read, try again no sooner than this. With a good copy held it serves meanwhile, so the wait is
+# longer: each try costs a live caller up to AIR_FILE_TIMEOUT_S (the two files are read side by side, air_files).
+AIR_FILE_RETRY_S = 60
+AIR_FILE_RETRY_HELD_S = 600
+AIR_FILE_TIMEOUT_S = 2        # each file is under 100 KB from CloudFront; it answers in well under a second
+AIR_FILE_MAX_BYTES = 2_000_000  # anything this size is not ours
+# Where an UNREAD sensor copy is worth a notice: within this many km of Charing Cross, a circle holding every
+# Breathe London sensor with AIR_SCOPE_KM to spare (test_air_nearby holds it against the site's file). A point
+# outside every covered borough can still be within 5 km of a sensor (Epsom and a Sutton sensor), so the route's
+# city alone missed it (review 2026-11-19). A superset: a notice there says only that our copy was not read.
+AIR_SENSOR_REACH = (51.5074, -0.1278, 40)
+_AIR_NETWORK = {'sensor': 'Breathe London', 'monitor': 'DEFRA AURN'}
+_AIR_MISSING = {'sensor': 'The nearest Breathe London sensor', 'monitor': 'The nearest DEFRA AURN monitor'}
+_AIR_FILE_CACHE = {}  # kind -> {'data': the last good copy or None, 'next': monotonic time to read again}
+
+
+class AirFileRefused(ValueError):
+    """A sensor or monitor file that is not the shape the site's builders write: refused whole, never half-read
+    (skipping a bad row could make a farther instrument the 'nearest')."""
+
+
+def _finite(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def _iso_day(v, what):
+    # YYYY-MM-DD only: Python 3.11's fromisoformat also takes '20261031' and '2026-W44-6', which the site's
+    # Date.parse(`${to}T00:00:00Z`) refuses, so the two would disagree on whether a copy is stale.
+    if not isinstance(v, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', v):
+        raise AirFileRefused(f'{what} is not a date')
+    try:
+        return date.fromisoformat(v)
+    except ValueError as exc:
+        raise AirFileRefused(f'{what} is not a date') from exc
+
+
+def check_air_file(kind, data):
+    """`data` as read, or AirFileRefused naming the first thing wrong with it. The builders' own --check holds the
+    files before they ship; this holds what the Lambda was actually served."""
+    if not isinstance(data, dict) or not isinstance(data.get('sites'), list) or not data['sites']:
+        raise AirFileRefused('no sites')
+    if not isinstance(data.get('attribution'), str) or not data['attribution'].strip():
+        raise AirFileRefused('no attribution')
+    link = data.get('attributionLink') if kind == 'sensor' else data.get('licence')
+    if not isinstance(link, str) or not link.startswith('https://'):
+        raise AirFileRefused('no credit link')
+    if kind == 'sensor':
+        window = data.get('window') if isinstance(data.get('window'), dict) else {}
+        if _iso_day(window.get('from'), 'window.from') > _iso_day(window.get('to'), 'window.to'):
+            raise AirFileRefused('the window ends before it starts')
+    elif not (isinstance(data.get('year'), int) and 1990 <= data['year'] <= 2100):
+        raise AirFileRefused('no year')
+    setting = 'classification' if kind == 'sensor' else 'type'
+    for row in data['sites']:
+        if not isinstance(row, dict):
+            raise AirFileRefused('a site is not an object')
+        name = row.get('code', '?')
+        if not (_finite(row.get('lat')) and -90 <= row['lat'] <= 90 and _finite(row.get('lon')) and -180 <= row['lon'] <= 180):
+            raise AirFileRefused(f'{name}: no position')
+        for key in ('code', 'name', setting):
+            if not isinstance(row.get(key), str) or not row[key].strip():
+                raise AirFileRefused(f'{name}: no {key}')
+        means = [row.get(p) for p in ('no2', 'pm25')]
+        if not any(m is not None for m in means):
+            raise AirFileRefused(f'{name}: no reading')
+        for m in means:
+            if m is not None and not (isinstance(m, dict) and _finite(m.get('mean')) and m['mean'] >= 0):
+                raise AirFileRefused(f'{name}: a reading is not a number')
+        if row.get('kerbDistanceM') is not None and not _finite(row['kerbDistanceM']):
+            raise AirFileRefused(f'{name}: kerb distance is not a number')
+        if kind == 'monitor' and row.get('closed') is not None:
+            # A site that closed before the file's year holds no mean for it: the file is not what it says.
+            if _iso_day(row['closed'], f'{name}: closed') < date(data['year'], 1, 1):
+                raise AirFileRefused(f'{name}: closed before {data["year"]}')
+    return data
+
+
+def _air_body(r, deadline):
+    """The whole body, or AirFileRefused past AIR_FILE_MAX_BYTES, or TimeoutError past `deadline`. urlopen's timeout
+    is per socket read, so a body arriving a few bytes at a time could hold a live caller far past it; read1 makes at
+    most one socket read, so the wait is at most the deadline plus one read's timeout (review 2026-11-19)."""
+    chunks, size = [], 0
+    while chunk := r.read1(65536):
+        size += len(chunk)
+        if size > AIR_FILE_MAX_BYTES:
+            raise AirFileRefused('larger than any file of ours')
+        if time.monotonic() > deadline:
+            raise TimeoutError('the file took longer than its deadline')
+        chunks.append(chunk)
+    return b''.join(chunks)
+
+
+def air_file(kind, now=None):
+    """The site's file for `kind` ('sensor' or 'monitor') as last read well, or None when no good copy has been read.
+
+    Read at most once per AIR_FILE_TTL_S. After a failed read, no sooner than AIR_FILE_RETRY_S, or
+    AIR_FILE_RETRY_HELD_S while the last good copy serves: a failed refresh does not throw away readings that were
+    right an hour ago (the sensor copy's own window still decides whether it is current: SENSOR_STALE_DAYS)."""
+    now = time.monotonic() if now is None else now
+    held = _AIR_FILE_CACHE.get(kind)
+    if held and now < held['next']:
+        return held['data']
+    try:
+        req = Request(AIR_FILES[kind], headers={'Accept': 'application/json', 'User-Agent': 'SkyScoreAPI/1.0'})
+        deadline = time.monotonic() + AIR_FILE_TIMEOUT_S  # real time, whatever `now` a test passes
+        with urlopen(req, timeout=AIR_FILE_TIMEOUT_S) as r:  # noqa: S310 - a fixed https URL of our own site
+            raw = _air_body(r, deadline)
+        data = check_air_file(kind, json.loads(raw.decode('utf-8')))
+    # URLError and timeouts are OSError; a connection cut mid-body is http.client.IncompleteRead (an HTTPException,
+    # not an OSError); bad JSON and AirFileRefused are ValueError; JSON nested past the parser's depth, RecursionError.
+    # Each is "not read": the route still answers, with a notice, never a 500.
+    except (OSError, ValueError, http.client.HTTPException, RecursionError) as exc:
+        logger.warning('air nearby: %s file not read: %s', kind, exc if isinstance(exc, AirFileRefused) else type(exc).__name__)
+        last = held['data'] if held else None
+        _AIR_FILE_CACHE[kind] = {'data': last, 'next': now + (AIR_FILE_RETRY_HELD_S if last else AIR_FILE_RETRY_S)}
+        return last
+    _AIR_FILE_CACHE[kind] = {'data': data, 'next': now + AIR_FILE_TTL_S}
+    return data
+
+
+def air_files(now=None):
+    """{kind: air_file(kind)} for both files. When both are due a read they are read side by side, so a slow or
+    failing site costs a caller one timeout, not one per file; the reads already held cost nothing."""
+    now = time.monotonic() if now is None else now
+    due = [k for k in AIR_FILES if not (_AIR_FILE_CACHE.get(k) and now < _AIR_FILE_CACHE[k]['next'])]
+    if len(due) < 2:
+        return {k: air_file(k, now) for k in AIR_FILES}
+    with ThreadPoolExecutor(max_workers=len(due)) as pool:
+        futures = {k: pool.submit(air_file, k, now) for k in AIR_FILES}
+        return {k: f.result() for k, f in futures.items()}
+
+
+def site_km(lat1, lon1, lat2, lon2):
+    """js/street_report.mjs `haversineKm`, line for line (radius 6371.0088): the site's distance, so the API's
+    nearest instrument and its scope edge are the site's."""
+    r = math.pi / 180
+    d_lat, d_lon = (lat2 - lat1) * r, (lon2 - lon1) * r
+    h = math.sin(d_lat / 2) ** 2 + math.cos(lat1 * r) * math.cos(lat2 * r) * math.sin(d_lon / 2) ** 2
+    return 2 * 6371.0088 * math.asin(math.sqrt(h))
+
+
+def nearest_within(rows, lat, lon):
+    """(row, km) of the nearest row within AIR_SCOPE_KM, or None: `nearestWithin` in js/street_report.mjs (the
+    first of equal distances wins, as there)."""
+    best = None
+    for row in rows:
+        km = site_km(lat, lon, row['lat'], row['lon'])
+        if best is None or km < best[1]:
+            best = (row, km)
+    return best if best is not None and best[1] <= AIR_SCOPE_KM else None
+
+
+def shown_km(km):
+    """The distance as the site shows it (js/street_report.mjs `stationDistance`), as a number: to 10 m under 1 km,
+    to 0.1 km from 1 km, each rounded from the RAW distance as the site rounds it. Sent at that precision so a caller
+    formatting it the site's way (the extension's nearbyDistance) gets the site's words: rounded to 10 m and then
+    again to 0.1 km, 1.0451 km read "1.1 km" where the site says "1.0 km" (review 2026-11-19; test_air_nearby
+    runs stationDistance on both)."""
+    y = km * 100
+    whole = math.floor(y)
+    m = (whole + (1 if y - whole >= 0.5 else 0)) * 10  # JS Math.round: a half goes up
+    if m < 1000:
+        return m / 1000
+    # JS toFixed(1) rounds the exact binary value, a half up; Decimal(km) is that exact value.
+    return float(Decimal(km).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+
+
+def air_period_words(period):
+    """'12 months to October 2026', '2024', else 'from-to': the period of one reading, worded as the site words it."""
+    f, t = date.fromisoformat(period['from']), date.fromisoformat(period['to'])
+    if f.year == t.year and (f.month, f.day) == (1, 1) and (t.month, t.day) == (12, 31):
+        return str(f.year)
+    if f.day == 1 and t + timedelta(days=1) == date(f.year + 1, f.month, 1):
+        return f'12 months to {t.strftime("%B %Y")}'
+    return f'{f.isoformat()} to {t.isoformat()}'
+
+
+def _air_readings(row):
+    # The file's own figures, unrounded: a caller rounds once, as the site does from the same file. Rounded here
+    # too, Python's ties-to-even and JS's toFixed (a half up) could print one reading two ways (review 2026-11-19).
+    out = {}
+    for key, field in (('no2', 'no2MeanUgm3'), ('pm25', 'pm25MeanUgm3')):
+        if row.get(key) is not None:
+            out[field] = row[key]['mean']
+    return out
+
+
+def _air_entry(kind, data, row, km):
+    entry = {
+        'network': _AIR_NETWORK[kind],
+        'siteCode': row['code'],
+        'name': row['name'],
+        'distanceKm': shown_km(km),
+        'setting': (row['classification'] if kind == 'sensor' else row['type']).lower(),
+    }
+    if kind == 'sensor':
+        if row.get('kerbDistanceM') is not None:
+            entry['kerbDistanceM'] = row['kerbDistanceM']  # the network's own figure (1-2 dp), as the site reads it
+        period = {'from': data['window']['from'], 'to': data['window']['to']}
+        link = data['attributionLink']
+    else:
+        year = data['year']
+        closed = row.get('closed')
+        # A site that closed during the year has its mean over the days to its closing day (fetch_aurn.py).
+        to = closed if closed and closed.startswith(f'{year}-') else f'{year}-12-31'
+        period = {'from': f'{year}-01-01', 'to': to}
+        link = data['licence']
+    entry.update(_air_readings(row))
+    entry['period'] = period
+    if isinstance(data.get('note'), str) and data['note'].strip():
+        entry['note'] = data['note']
+    entry['source'] = data['attribution']
+    entry['sourceLink'] = link
+    return entry
+
+
+def build_air_nearby(lat, lon, city=None, today=None):
+    """(the `airMeasuredNearby` block or None, notices) for the point asked. None when nothing is within the scope:
+    the key is then absent, and nothing is said about the place.
+
+    An unread copy is said only where it could matter: the sensor copy for a London point (`city`, as the route
+    derived it) or one within AIR_SENSOR_REACH, the monitor copy anywhere. A Manchester answer is never told a
+    London network is missing."""
+    today = today or datetime.now(UTC).date()
+    block, notices = {}, []
+    held = air_files()
+    near_london = city == 'london' or site_km(lat, lon, *AIR_SENSOR_REACH[:2]) <= AIR_SENSOR_REACH[2]
+    for kind in ('sensor', 'monitor'):
+        data = held[kind]
+        if data is None:
+            if kind == 'monitor' or near_london:
+                notices.append(f'{_AIR_MISSING[kind]} is missing from this answer: Sky Score could not read its copy '
+                               'of their readings just now. Try again shortly.')
+            continue
+        near = nearest_within(data['sites'], lat, lon)
+        if near is None:
+            continue
+        if kind == 'sensor' and (today - date.fromisoformat(data['window']['to'])).days > SENSOR_STALE_DAYS:
+            words = air_period_words(data['window'])
+            words = f'the {words}' if words.startswith('12 months') else words
+            notices.append(f'A Breathe London sensor is within {AIR_SCOPE_KM} km, but its reading is withheld: Sky '
+                           f"Score's copy covers {words}, which ended more than {SENSOR_STALE_DAYS} days ago, so it "
+                           'is not given as current.')
+            continue
+        block[kind] = _air_entry(kind, data, near[0], near[1])
+    return ({'scopeKm': AIR_SCOPE_KM, **block} if block else None), notices
+
+
+# ---------------------------------------------------------------------------
 # Per-field provenance (2026-10-23; Bill, after reading Mireye's per-field citations: "can and should we do
 # something similar"). `sources` and `sourceBreakdown` stay byte for byte: they are prose for people and a
 # contract integrators already carry through (terms.html). `provenance` adds, per value, WHICH source answered,
@@ -10631,6 +10914,16 @@ PROVENANCE_SOURCES = {
                        'European Region (2018)', 'method': 'reference', 'period': '2018'},
     'who-aq-2021': {'publisher': 'World Health Organization', 'dataset': 'Global air quality guidelines (2021)',
                     'method': 'reference', 'period': '2021'},
+    # /v1/environment's airMeasuredNearby (2026-11-18): the API's first instrument readings. Each reading's period
+    # comes from the copy that answered (the entry's own `period`), so the record holds none.
+    'breathe-london': {'publisher': 'Greater London Authority', 'dataset': 'Breathe London sensor network, hourly '
+                       'NO2 and PM2.5 averaged by Sky Score over the period given', 'licence': OGL,
+                       'method': 'measured', 'resolution': f'the nearest sensor within {AIR_SCOPE_KM} km',
+                       'period': None, 'note': 'given with each reading', 'caveat': 'low-cost sensors: provisional '
+                       'values, recalibrated over time'},
+    'defra-aurn': {'publisher': 'DEFRA', 'dataset': 'Automatic Urban and Rural Network (AURN), ratified annual means',
+                   'licence': OGL, 'method': 'measured', 'resolution': f'the nearest monitor within {AIR_SCOPE_KM} km',
+                   'period': None, 'note': 'given with each reading'},
 }
 
 # A credit line (in `sources`, or a figure's own *Source line) -> the registry ids it names. Matched from the
@@ -10696,6 +10989,31 @@ _COMPONENT_LINES = {
 _LIVEABILITY_INPUTS = (('Progress 8', 'dfe-ks4'), ('Table C4', 'ons-crime-c4'), ('NaPTAN', 'dft-naptan'),
                        ('NHS Organisation Data Service', 'nhs-ods'), ('OpenJustice', 'ca-doj-openjustice'),
                        ('National Transit Map', 'bts-transit-stops'))
+
+
+# airMeasuredNearby: which registry source each entry is, and the keys that describe the INSTRUMENT or the response
+# (where it is, what kind, its credit) rather than a figure about the place. Every other key in the block is a value
+# and must have an entry: backend/tests/test_air_nearby.py fails on a new key in neither list.
+AIR_NEARBY_SOURCE = {'sensor': 'breathe-london', 'monitor': 'defra-aurn'}
+AIR_NEARBY_DESCRIBES = ('scopeKm', 'network', 'siteCode', 'name', 'setting', 'kerbDistanceM', 'period', 'note',
+                        'source', 'sourceLink')
+
+
+def _air_nearby_provenance(block):
+    out = {}
+    for kind, entry in (block or {}).items():
+        if kind not in AIR_NEARBY_SOURCE or not isinstance(entry, dict):
+            continue
+        sid, base = AIR_NEARBY_SOURCE[kind], f'environment.airMeasuredNearby.{kind}'
+        period = air_period_words(entry['period'])
+        for field in ('no2MeanUgm3', 'pm25MeanUgm3'):
+            if field in entry:
+                out[f'{base}.{field}'] = {'sources': [sid], 'method': 'measured',
+                                          'resolution': PROVENANCE_SOURCES[sid]['resolution'], 'period': period}
+        if 'distanceKm' in entry:
+            # No `basis`: the spec's ProvenanceEntry.basis is the quiet tier's enum (raster, postcode, borough).
+            out[f'{base}.distanceKm'] = _derived([sid])
+    return out
 
 
 def provenance_line_ids(line):
@@ -10779,6 +11097,9 @@ def build_provenance(body):
     inflation = _ids_for(sources, ('Inflation',))
     for key in ctx:
         path = f'{section}.{key}'
+        if key == 'airMeasuredNearby' and section == 'environment':
+            out.update(_air_nearby_provenance(ctx[key]))
+            continue
         if key.endswith(('Source', 'Resolution', 'Coverage')) or key in _DESCRIBES_ITSELF:
             continue
         own = ctx.get(_OWN_SOURCE_LINE.get(key, ''))
@@ -11786,6 +12107,13 @@ def handle_environment(event):
         )
     elif 'roadNoiseLdenDb' not in env:
         notices.append(_road_absence_notice(city))
+
+    # Measured nearby, from the point ASKED (the listing), never in place of DEFRA's model above: beside it.
+    # Display only; absent when nothing is within the scope (build_air_nearby).
+    nearby, nearby_notices = build_air_nearby(lat, lon, city)
+    if nearby:
+        env['airMeasuredNearby'] = nearby
+    notices.extend(nearby_notices)
 
     return response(
         200,

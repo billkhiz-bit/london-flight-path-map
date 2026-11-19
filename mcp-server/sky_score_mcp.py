@@ -14,7 +14,8 @@ Tools (all read-only, each one API call or a few):
   compare_areas    /v1/score for two to five places, side by side (one call each: the free plan refuses batch)
   list_regions     /v1/regions, the cities and boroughs covered (no key)
   score_changes    /v1/changes, London's quarter-on-quarter movement (no key)
-  environment_at   /v1/environment, DEFRA's modelled air quality and road and aircraft noise at a point (no key)
+  environment_at   /v1/environment, DEFRA's modelled air quality and road and aircraft noise at a point, and
+                   the nearest measured sensor and monitor within 5 km (no key)
 
   python mcp-server/sky_score_mcp.py      run over stdio (what Claude does; see mcp-server/README.md)
 """
@@ -285,8 +286,12 @@ def score_changes() -> dict[str, Any]:
 @mcp.tool(title='Environment at a point', annotations=READ_ONLY)
 def environment_at(lat: float, lon: float) -> dict[str, Any]:
     """Air quality and road and aircraft noise at a coordinate (UK coverage), with their sources.
-    Every value comes from DEFRA's published maps, which are MODELLED, not sensor readings: say so, and say
-    each map's year from its source line. Values in units only: no score, no weights, and no flood value.
+    Every value but one block comes from DEFRA's published maps, which are MODELLED, not sensor readings: say
+    so, and say each map's year from its source line. The exception is `airMeasuredNearby`: the nearest
+    Breathe London sensor (London only) and DEFRA AURN monitor within 5 km of the point, MEASURED by an
+    instrument, each with its distance, setting, period and the credit to quote. They are display only: never
+    rank a kerbside sensor against a background monitor, and when the block or an entry is absent say nothing
+    about the place (never "no sensor nearby"). Values in units only: no score, no weights, and no flood value.
     """
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise ToolError('lat must be -90..90 and lon -180..180')

@@ -154,7 +154,7 @@ where no key can travel.
 | `GET` | `/v1/regions` | Discovery, list supported cities, boroughs, postcode formats |
 | `POST` | `/v1/chat` | Retrieval-only assistant; answers are discarded if they contain a number the retrieved data does not |
 | `GET` | `/v1/changes` | **Public.** What moved between data vintages, and why |
-| `GET` | `/v1/environment` | **Public.** Aircraft/road Lden, NO2 and PM2.5 for a coordinate, each against its WHO guideline. A postcode DEFRA surveyed and found under its lowest mapped road level returns the bound `roadNoiseBelowDb` ("under 40 dB"), not silence. No weights, no persona, no composite score |
+| `GET` | `/v1/environment` | **Public.** Aircraft/road Lden, NO2 and PM2.5 for a coordinate, each against its WHO guideline. A postcode DEFRA surveyed and found under its lowest mapped road level returns the bound `roadNoiseBelowDb` ("under 40 dB"), not silence. Since 2026-11-18 also `airMeasuredNearby`: the nearest Breathe London sensor (London) and DEFRA AURN monitor within 5 km of the point, MEASURED, display only. No weights, no persona, no composite score |
 | `GET` | `/badge` | **Public.** An embeddable SVG score badge for a postcode. Served as an `<img>`, not a script, so it renders on listing pages behind strict CSP. Reuses the same scoring path, so it cannot show a score `/v1/score` would not |
 
 Free tier: **10,000 requests/month**, 5/sec burst, 2/sec sustained. One request is one address — `/v1/score/batch` is denied per-method on the free plan, so requests and scores are the same unit and the ceiling is 10,000 scores. (Until 2026-08-21 the same ceiling was reached by a much smaller request quota multiplied by a 100-address batch - an afternoon of one live listings page. The superseded figure is deliberately not restated: a reader skimming for the limit cannot tell a quoted historical number from a live one, and neither can the drift gate that now reads this file.) Paid tiers introduced when the first paying integrator commits.
@@ -369,6 +369,8 @@ grids contain:
 | Aircraft Lden | ~9% of London postcodes | DEFRA's contours are localised lobes around airports. Outside them there is no reading, and the endpoint **omits the key** rather than returning a default |
 | Road Lden | Complete across the London raster | Finished 2026-08-08. Was missing everything from `UB6` onward — `W`, `WC`, `WD` — for two days before that |
 | NO₂ / PM2.5 | **Loading, ~57% of UK postcodes as at 2026-08-11** | The pass runs in postcode-alphabetical order over the whole UK, so early-alphabet regions have figures well before London does. **The borough-level `airQuality` band does not depend on this** - it is computed from the DEFRA grid CSVs directly and is complete for every city |
+
+| Air measured nearby (`airMeasuredNearby`, 2026-11-18) | A Breathe London sensor within 4 km of 90% of London places; an AURN monitor within 5 km of about half of places outside it (both measured 2026-10-19) | The only INSTRUMENT readings the API carries, read from the site's own `data/` files; display only, never scored; the block, an entry or a reading is absent when not held |
 
 A missing key means "not measured here", never "measured and fine" — the
 distinction is deliberate, and it is also what let an unrun loader look

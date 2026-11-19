@@ -233,6 +233,7 @@ Or just describe what you need, I have full context of this project.
 - **`.no-result-yet`, not `.empty-state`**, marks "nothing searched yet".
 - **Air measured nearby is ONE pair of functions** (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`)
   for the front page, the full map's panel (dynamic import) and both reports: 5 km, never "none nearby", a stale sensor file hidden, credits linked.
+  **`/v1/environment` carries them as `airMeasuredNearby`** (Bill's pick A, 2026-11-18): the Lambda reads the SITE'S OWN two files (cached 1 h, never a copy) and `build_air_nearby` mirrors the JS, from the point asked; `backend/tests/test_air_nearby.py` runs the JS in node on the same files and holds every rule to it. Its figures go out as the file holds them and `distanceKm` as the site shows it (`shown_km`), so a caller rounds ONCE (review 2026-11-19: 1.0451 km read "1.1 km" in the extension).
   **The full map's panel is "Air quality nearby", side by side** (Bill, 2026-11-03, refined B): DEFRA's MODEL for the
   postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
   if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
@@ -513,7 +514,10 @@ Or just describe what you need, I have full context of this project.
   (`adsb_movements.py`, `adsb_overflights.py`) run under the system Python: they need tzdata, numpy and pyproj.
 - **The plane counter's field level follows the day's METAR QNH** (`adsb_movements.FieldLevel`, 2026-10-24): cache
   every month you count with `python scripts/fetch_metar.py <first> <last>` FIRST; an uncached month silently falls
-  back to the aircraft alone and reads stormy mornings low. `data/us-runway-use.json` and the NYC yardsticks are
+  back to the aircraft alone and reads stormy mornings low. **IEM's end date is EXCLUSIVE**: `request_end()` asks through
+  the 1st of the month after (until 2026-11-18 the LAST month of every request lost its last day: 46 months refetched, the
+  old ones in `data/metar-set-aside-2026-11-18/`; 30 Sep 2026's planes counts are owed a recount at the next roll). A month
+  fetched while it runs stays partial until fetched again (October 2026 held 24 days). `data/us-runway-use.json` and the NYC yardsticks are
   built from this counter: rebuilding them now re-derives published US inputs, so do it as a reviewed change.
 - **The overflight cone stands on the ground under the aircraft** (OS Terrain 50, 2026-10-26): run
   `python -I scripts/build_ground_grid.py` before counting (a missing grid refuses, never sea level); the 7,000 ft
