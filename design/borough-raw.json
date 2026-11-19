@@ -2,234 +2,201 @@
  "london": {
   "Hounslow": {
    "impact": "severe",
-   "avg_price": 512888,
-   "trend": 1.1,
-   "note": "Directly under Heathrow flight paths. The most noise-affected borough in London - you will hear planes constantly, especially in the western parts around Cranford, Heston and Feltham.",
-   "property": "Prices are lower here because of noise. Chiswick (eastern end) is pricier but also quieter. If you can tolerate noise, this is one of the more affordable west London boroughs."
+   "avg_price": 513853,
+   "trend": -3.6,
+   "note": "Directly under Heathrow flight paths, especially in the western parts around Cranford, Heston and Feltham."
   },
   "Hillingdon": {
    "impact": "severe",
-   "avg_price": 474665,
-   "trend": -0.6,
-   "note": "Heathrow airport sits inside this borough. The south is severely affected by aircraft noise, but the north (Ruislip, Ickenham, Uxbridge) is surprisingly quiet.",
-   "property": "The north is excellent value - leafy suburbs with good schools, far enough from the runways. Avoid anything south of the A4 if noise matters to you."
+   "avg_price": 480044,
+   "trend": 1.3,
+   "note": "Heathrow airport sits inside this borough. The south is severely affected by aircraft noise, but the north (Ruislip, Ickenham, Uxbridge) is surprisingly quiet."
   },
   "Richmond upon Thames": {
    "impact": "high",
-   "avg_price": 818949,
-   "trend": -0.3,
-   "note": "A beautiful borough on the Thames, but it sits under several Heathrow arrival and departure paths. The eastern side (Twickenham, Isleworth) gets more noise than the west.",
-   "property": "You pay a premium for the parks and river, but use noise as a bargaining chip - many buyers don't check flight paths before viewing. Visit on a busy flying day before making an offer."
+   "avg_price": 796378,
+   "trend": -2.6,
+   "note": "A beautiful borough on the Thames, but it sits under several Heathrow arrival and departure paths. The eastern side (Twickenham, Isleworth) gets more noise than the west."
   },
   "Ealing": {
    "impact": "high",
-   "avg_price": 575814,
-   "trend": -2.7,
-   "note": "Southern Ealing (Southall, Hanwell) is under Heathrow paths. Northern Ealing and Pitshanger Lane are much quieter and have benefited from the Elizabeth Line.",
-   "property": "North Ealing is a sweet spot - quiet skies, Elizabeth Line access, and prices well below neighbouring Chiswick. Southall is affordable but expect regular aircraft noise."
+   "avg_price": 578526,
+   "trend": 1.3,
+   "note": "Southern Ealing (Southall, Hanwell) is under Heathrow paths. Northern Ealing and Pitshanger Lane are much quieter and have benefited from the Elizabeth Line."
   },
   "Wandsworth": {
    "impact": "moderate",
-   "avg_price": 680105,
+   "avg_price": 692067,
    "trend": -5.2,
-   "note": "One of the more noise-affected boroughs due to its position under Heathrow's final approach during westerly operations (~70% of the time). The London Heliport in Battersea also generates low-altitude helicopter traffic during business hours. The borough also gets some higher-altitude Gatwick and City airport traffic.",
-   "property": "Tooting offers the best value. Battersea regen pushed prices up but noise from both Heathrow AND the Battersea Heliport is a real factor - use as negotiation leverage. Tooting and Balham are the sweet spots for less noise."
+   "note": "One of the more noise-affected boroughs due to its position under Heathrow's final approach during westerly operations (~70% of the time). The London Heliport in Battersea also generates low-altitude helicopter traffic during business hours. The borough also gets some higher-altitude Gatwick and City airport traffic."
   },
   "Lambeth": {
    "impact": "moderate",
-   "avg_price": 548034,
-   "trend": -3.3,
-   "note": "Heathrow arrivals pass over at roughly 4,000ft. You'll hear them on calm days with windows open, but it's not a dominant feature. Brixton and Clapham are in the approach corridor.",
-   "property": "Brixton is gentrifying rapidly. Streatham offers family-sized homes at more affordable prices. Noise is a background factor here, not a dealbreaker."
+   "avg_price": 534608,
+   "trend": -6.8,
+   "note": "Heathrow arrivals pass over at roughly 4,000ft. You'll hear them on calm days with windows open, but it's not a dominant feature. Brixton and Clapham are in the approach corridor."
   },
   "Lewisham": {
    "impact": "low-moderate",
-   "avg_price": 491259,
-   "trend": 0.6,
-   "note": "Very little aircraft noise. Some London City traffic at altitude, and Heathrow arrivals are high overhead. Most residents never notice planes.",
-   "property": "One of inner London's best-kept secrets for buyers. Ladywell, Brockley and Catford all offer good value with excellent transport links and quiet skies."
+   "avg_price": 498548,
+   "trend": 0.1,
+   "note": "Very little aircraft noise. Some London City traffic at altitude, and Heathrow arrivals are high overhead."
   },
   "Greenwich": {
    "impact": "moderate",
-   "avg_price": 465132,
-   "trend": -0.5,
-   "note": "Under the London City Airport approach corridor. The steep descent means noise is concentrated in a narrow band near the river. Blackheath and Eltham are quieter.",
-   "property": "Woolwich has boomed since the Elizabeth Line opened. Blackheath is premium but quiet. The areas right under the LCY approach are noticeably noisier."
+   "avg_price": 472682,
+   "trend": 1.1,
+   "note": "Under the London City Airport approach corridor. The steep descent means noise is concentrated in a narrow band near the river. Blackheath and Eltham are quieter."
   },
   "Tower Hamlets": {
    "impact": "low-moderate",
-   "avg_price": 456898,
-   "trend": -13.1,
-   "note": "Some London City traffic audible around Canary Wharf and the Isle of Dogs. Otherwise not significantly affected by aircraft noise.",
-   "property": "Canary Wharf has oversupply of new-build flats - good for negotiating. Bow and Mile End offer better value and are away from LCY paths."
+   "avg_price": 456306,
+   "trend": -10.5,
+   "note": "Some London City traffic audible around Canary Wharf and the Isle of Dogs. Otherwise not significantly affected by aircraft noise."
   },
   "Camden": {
    "impact": "low",
-   "avg_price": 833067,
-   "trend": -7.1,
-   "note": "Not under any major flight paths. One of the quietest boroughs for aircraft noise in London. You're unlikely to notice planes here.",
-   "property": "A premium borough - you pay for the quiet skies plus the location. Kentish Town and Gospel Oak are the relative value spots. Hampstead is ultra-premium."
+   "avg_price": 789180,
+   "trend": -10.0,
+   "note": "Not under any major flight paths. One of the quietest boroughs for aircraft noise in London. You're unlikely to notice planes here."
   },
   "Islington": {
    "impact": "low",
-   "avg_price": 673384,
-   "trend": -8.1,
-   "note": "Well away from all major approach corridors. Minimal aircraft noise. A genuinely quiet borough from an aviation perspective.",
-   "property": "Desirable and quiet. Holloway Road is the most affordable entry point. Angel and Upper Street are premium. Good schools throughout."
+   "avg_price": 672151,
+   "trend": -4.9,
+   "note": "Well away from all major approach corridors. Minimal aircraft noise. A genuinely quiet borough from an aviation perspective."
   },
   "Hackney": {
    "impact": "low",
-   "avg_price": 605442,
-   "trend": 0.4,
-   "note": "Not under any significant flight paths. Quiet skies across the borough.",
-   "property": "A creative hub that has gentrified significantly. Clapton and Hackney Wick are the next areas seeing growth. Good transport links to the City."
+   "avg_price": 630415,
+   "trend": -3.2,
+   "note": "Not under any significant flight paths. Quiet skies across the borough."
   },
   "Barnet": {
    "impact": "low-moderate",
-   "avg_price": 603753,
-   "trend": -2.9,
-   "note": "Some Luton arrivals pass over at high altitude, but this is barely noticeable at ground level. Most of the borough has quiet skies.",
-   "property": "Good suburban living with reliable schools. East Finchley and Friern Barnet offer solid value. Mill Hill is the premium end."
+   "avg_price": 592892,
+   "trend": -3.2,
+   "note": "Some Luton arrivals pass over at high altitude, but this is barely noticeable at ground level. Most of the borough has quiet skies."
   },
   "Croydon": {
    "impact": "moderate",
-   "avg_price": 394736,
-   "trend": -1.9,
-   "note": "Under the Gatwick approach corridor and the Heathrow Biggin Hill arrival stack. Noise varies by area - south Croydon gets more Gatwick traffic.",
-   "property": "The most affordable borough in London. Major regeneration underway. Tramlink gives good connectivity. Best borough for first-time buyers who want space."
+   "avg_price": 394870,
+   "trend": -0.7,
+   "note": "Under the Gatwick approach corridor and the Heathrow Biggin Hill arrival stack. Noise varies by area - south Croydon gets more Gatwick traffic."
   },
   "Bromley": {
    "impact": "low",
-   "avg_price": 518235,
-   "trend": -1.4,
-   "note": "Biggin Hill business airport is nearby but handles very few flights. The rest of the borough has quiet skies.",
-   "property": "Excellent schools including grammar schools. Chislehurst is the premium village. Penge and Anerley are the affordable entry points with good rail links."
+   "avg_price": 523668,
+   "trend": 1.1,
+   "note": "Biggin Hill business airport is nearby but handles very few flights. The rest of the borough has quiet skies."
   },
   "Newham": {
    "impact": "moderate-high",
-   "avg_price": 403032,
-   "trend": -0.7,
-   "note": "London City Airport is located here. The Royal Docks and areas near the airport experience significant noise. Stratford and Forest Gate are much quieter.",
-   "property": "Fastest-growing property prices in London, driven by Olympic legacy and Elizabeth Line. Avoid Royal Docks if noise is a concern. Stratford and Forest Gate are the sweet spots."
+   "avg_price": 391492,
+   "trend": -5.1,
+   "note": "London City Airport is located here. The Royal Docks and areas near the airport experience significant noise. Stratford and Forest Gate are much quieter."
   },
   "Southwark": {
    "impact": "low-moderate",
-   "avg_price": 582473,
-   "trend": 2.2,
-   "note": "Some Heathrow approach paths pass overhead at altitude, but noise levels are generally acceptable. Not a major aircraft noise concern.",
-   "property": "SE1 (Borough, Bermondsey) is premium riverside. Peckham and Camberwell offer great value with vibrant culture. Canada Water regeneration is creating new opportunities."
+   "avg_price": 559311,
+   "trend": -5.5,
+   "note": "Some Heathrow approach paths pass overhead at altitude, but noise levels are generally acceptable. Not a major aircraft noise concern."
   },
   "Hammersmith and Fulham": {
    "impact": "moderate-high",
-   "avg_price": 725562,
-   "trend": -13.3,
-   "note": "Under Heathrow easterly departure paths. Planes climb out at relatively low altitude over Chiswick and Hammersmith. Noisier than you might expect for the price.",
-   "property": "Fulham is premium. Shepherd's Bush and White City offer relative value with regeneration. Use the noise factor to negotiate - many sellers don't disclose it."
+   "avg_price": 732590,
+   "trend": -6.8,
+   "note": "Under Heathrow easterly departure paths. Planes climb out at relatively low altitude over Chiswick and Hammersmith."
   },
   "Kensington and Chelsea": {
    "impact": "moderate",
-   "avg_price": 1250149,
-   "trend": -14.7,
-   "note": "Under some Heathrow paths at medium altitude. You'll notice planes in summer with windows open, but noise rarely affects prices here.",
-   "property": "London's most expensive borough. Prices are driven by prestige, so noise barely registers as a factor. North Kensington is the only relative value area."
+   "avg_price": 1170938,
+   "trend": -15.6,
+   "note": "Under some Heathrow paths at medium altitude. You'll notice planes in summer with windows open, but noise rarely affects prices here."
   },
   "Brent": {
    "impact": "low-moderate",
-   "avg_price": 544174,
-   "trend": -3.4,
-   "note": "Some Heathrow departure paths at altitude. Wembley occasionally hears planes but it's not a significant issue for most residents.",
-   "property": "Wembley Park regeneration is transforming the area. Kilburn offers quick access to central London. Queens Park is the premium pocket."
+   "avg_price": 567223,
+   "trend": 1.1,
+   "note": "Some Heathrow departure paths at altitude. Wembley occasionally hears planes."
   },
   "Haringey": {
    "impact": "low",
-   "avg_price": 634000,
-   "trend": 2.5,
-   "note": "Well away from all major flight corridors. One of the quieter boroughs for aircraft noise.",
-   "property": "Crouch End is a premium car-free village (no tube). Tottenham is seeing major regeneration. Wood Green offers genuine value."
+   "avg_price": 606907,
+   "trend": -5.4,
+   "note": "Well away from all major flight corridors. One of the quieter boroughs for aircraft noise."
   },
   "Waltham Forest": {
    "impact": "low",
-   "avg_price": 522743,
-   "trend": 2.5,
-   "note": "No significant aircraft noise at all. Completely away from all airport approaches. One of the quietest boroughs in London.",
-   "property": "Walthamstow Village is trendy and popular. Leyton and Leytonstone are more affordable. The marshes provide green space. Victoria Line gives fast access to central London."
+   "avg_price": 532212,
+   "trend": 0.0,
+   "note": "No significant aircraft noise at all. Completely away from all airport approaches. One of the quietest boroughs in London."
   },
   "Merton": {
    "impact": "low-moderate",
-   "avg_price": 612681,
-   "trend": 0.5,
-   "note": "Some Heathrow paths pass over at high altitude. Wimbledon Common acts as a noise buffer. Generally a quiet borough.",
-   "property": "Wimbledon is premium with excellent schools. Mitcham and Morden are the affordable end. Colliers Wood is up-and-coming with good transport."
+   "avg_price": 614462,
+   "trend": -1.6,
+   "note": "Some Heathrow paths pass over at high altitude. Wimbledon Common acts as a noise buffer. Generally a quiet borough."
   },
   "Redbridge": {
    "impact": "low",
-   "avg_price": 496000,
-   "trend": 3.6,
-   "note": "Away from main flight corridors. The Lambourne arrival stack passes north at high altitude, barely noticeable.",
-   "property": "Family-oriented borough. South Woodford is leafy and desirable. Ilford has been boosted by the Elizabeth Line. Wanstead is the premium area."
+   "avg_price": 493066,
+   "trend": -2.1,
+   "note": "Away from main flight corridors. The Lambourne arrival stack passes north at high altitude, barely noticeable."
   },
   "Enfield": {
    "impact": "low",
-   "avg_price": 471019,
-   "trend": 0.3,
-   "note": "Far from all airport flight paths. Consistently quiet skies across the entire borough. One of the best for noise-sensitive buyers.",
-   "property": "Affordable north London with lots of green space. Enfield Town has a pleasant centre. Palmers Green has a strong community feel. Excellent value for families."
+   "avg_price": 472238,
+   "trend": -0.2,
+   "note": "Far from all airport flight paths. Consistently quiet skies across the entire borough."
   },
   "Kingston upon Thames": {
    "impact": "low-moderate",
-   "avg_price": 594498,
-   "trend": 2.9,
-   "note": "Some Heathrow Ockham arrivals pass to the north, but they're high and typically not bothersome. Generally quiet.",
-   "property": "Has a riverside town feel rather than a London suburb. Good schools. Surbiton is popular with commuters. New Malden offers good value."
+   "avg_price": 591640,
+   "trend": 1.8,
+   "note": "Some Heathrow Ockham arrivals pass to the north, but they're high and typically not bothersome. Generally quiet."
   },
   "Sutton": {
    "impact": "low",
-   "avg_price": 446775,
-   "trend": 0.4,
-   "note": "Between the Heathrow and Gatwick corridors but not directly under either. Quiet skies throughout.",
-   "property": "Excellent grammar schools - a major draw for families. Carshalton has a village feel. Cheam is popular. One of the most affordable boroughs for the quality of life."
+   "avg_price": 447982,
+   "trend": -0.4,
+   "note": "Between the Heathrow and Gatwick corridors but not directly under either. Quiet skies throughout."
   },
   "Westminster": {
    "impact": "moderate",
-   "avg_price": 854198,
-   "trend": -25.4,
-   "note": "Under the Lambourne arrival stack at roughly 3,000\u20134,000ft. You will hear planes, especially from a balcony or terrace. Indoor noise is manageable with good glazing.",
-   "property": "Central London premium. Pimlico and Maida Vale offer relative value compared to Mayfair. Noise is a factor but rarely a dealbreaker at these prices."
+   "avg_price": 861130,
+   "trend": -18.5,
+   "note": "Under the Lambourne arrival stack at roughly 3,000\u20134,000ft."
   },
   "City of London": {
    "impact": "low-moderate",
-   "avg_price": 712958,
-   "trend": -20.4,
-   "note": "Some London City and Heathrow paths at altitude. Background city noise typically masks aircraft.",
-   "property": "Very limited residential stock. The Barbican is the main residential community. Golden Lane offers relative value."
+   "avg_price": 663585,
+   "trend": -17.3,
+   "note": "Some London City and Heathrow paths at altitude. Background city noise typically masks aircraft."
   },
   "Barking": {
    "impact": "low",
-   "avg_price": 371030,
-   "trend": 4.3,
-   "note": "Well away from major flight paths. Occasional Stansted or London City traffic at high altitude, barely noticeable.",
-   "property": "One of London's most affordable boroughs. Barking Riverside is a major regeneration scheme. Good transport links via District Line and c2c. Strong rental yields."
+   "avg_price": 372551,
+   "trend": 5.1,
+   "note": "Well away from major flight paths. Occasional Stansted or London City traffic at high altitude, barely noticeable."
   },
   "Havering": {
    "impact": "low",
-   "avg_price": 456759,
-   "trend": 3.9,
-   "note": "Far from Heathrow and Gatwick paths. Minimal aircraft noise throughout the borough.",
-   "property": "Suburban Essex-border borough. Romford is the commercial centre. Upminster and Hornchurch are leafy and family-friendly. Elizabeth Line has boosted connectivity."
+   "avg_price": 443269,
+   "trend": 0.5,
+   "note": "Far from Heathrow and Gatwick paths. Minimal aircraft noise throughout the borough."
   },
   "Bexley": {
    "impact": "low",
-   "avg_price": 405477,
-   "trend": 1.2,
-   "note": "Away from all major flight corridors. One of the quietest boroughs in London for aircraft noise.",
-   "property": "Affordable outer London. Bexleyheath has good shopping. Sidcup is popular with families. Good road links but limited rail connections compared to other boroughs."
+   "avg_price": 416683,
+   "trend": 1.4,
+   "note": "Away from all major flight corridors. One of the quietest boroughs in London for aircraft noise."
   },
   "Harrow": {
    "impact": "low",
-   "avg_price": 524160,
+   "avg_price": 531211,
    "trend": -1.4,
-   "note": "Some distant Heathrow departure noise possible but minimal. Generally quiet skies.",
-   "property": "Suburban borough with good schools. Harrow on the Hill has character. Pinner is a sought-after area. Metropolitan Line gives direct access to central London."
+   "note": "Some distant Heathrow departure noise possible but minimal. Generally quiet skies."
   }
  },
  "nyc": {
@@ -237,329 +204,324 @@
    "impact": "severe",
    "avg_price": 620000,
    "trend": 4.5,
-   "note": "JFK and LaGuardia are both in Queens. Southern Queens (Howard Beach, Ozone Park) is under JFK paths. Northern Queens (Flushing, Jackson Heights) gets LaGuardia traffic. Forest Hills and Rego Park are relatively quieter.",
-   "property": "Diverse and affordable by NYC standards. Astoria and Long Island City have seen rapid gentrification. Jamaica is a transport hub with good value. Avoid Howard Beach and South Ozone Park if noise matters."
+   "note": "JFK and LaGuardia are both in Queens. LaGuardia's routes pass within about a kilometre of Jackson Heights, Forest Hills and Ozone Park, JFK's runway 22L approach of Rosedale, and Howard Beach sits beside JFK. Bayside and Douglaston, in the north-east, are furthest from the routes."
   },
   "Brooklyn": {
-   "impact": "high",
+   "impact": "moderate-high",
    "avg_price": 850000,
    "trend": 3.8,
-   "note": "Southern Brooklyn (Flatbush, Marine Park) is under JFK approach paths. Downtown Brooklyn and DUMBO get some helicopter traffic. Park Slope and Williamsburg are less affected by aircraft.",
-   "property": "Brooklyn has seen massive price growth. Bushwick and Bed-Stuy still offer relative value. Park Slope is family-friendly but expensive. Red Hook is a hidden gem with some flood risk."
+   "note": "LaGuardia's runway 4 approach and its departure routes pass within about a kilometre of Bed-Stuy, Prospect Heights, East New York, Park Slope and Bushwick. Bay Ridge, in the south-west, is further from them. Downtown Brooklyn and DUMBO get some helicopter traffic."
   },
   "Manhattan": {
    "impact": "moderate",
    "avg_price": 1200000,
    "trend": 2.0,
-   "note": "LaGuardia approach paths cross East Harlem and the Upper East Side at altitude. Helicopter traffic along the Hudson and East Rivers is a bigger noise factor. Midtown has high ambient noise that masks aircraft.",
-   "property": "The most expensive real estate in the US. Harlem and Washington Heights offer relative value. Hudson Yards is new luxury. East Village and Lower East Side have character. Helicopter noise is a growing complaint."
+   "note": "LaGuardia approach paths cross East Harlem and the Upper East Side at altitude. Helicopter traffic along the Hudson and East Rivers is a bigger noise factor. Midtown has high ambient noise that masks aircraft."
   },
   "Bronx": {
-   "impact": "low-moderate",
+   "impact": "moderate",
    "avg_price": 420000,
    "trend": 5.5,
-   "note": "Some LaGuardia departures pass over the South Bronx. Northern areas like Riverdale and Pelham Bay are very quiet. Aircraft noise is minimal compared to road and rail noise.",
-   "property": "Most affordable borough in NYC. Riverdale is leafy and suburban. South Bronx is seeing major regeneration. Excellent value for families priced out of Manhattan. Metro-North gives fast commute from north Bronx."
+   "note": "LaGuardia's runway 22 approach passes within about a kilometre of the south-east Bronx (Castle Hill, Pelham Bay, Westchester Square). The north-west, Riverdale and Fordham, is well away from the routes."
   },
   "Staten Island": {
-   "impact": "low",
+   "impact": "low-moderate",
    "avg_price": 550000,
    "trend": 3.0,
-   "note": "Well away from major flight paths. Some Newark departures pass at high altitude. The quietest borough for aircraft noise in NYC.",
-   "property": "Most suburban and car-dependent borough. Feels more like a suburb than NYC. St. George area is near the free ferry. Todt Hill is the premium area. Limited public transport beyond the ferry and one rail line."
+   "note": "Newark departures from runway 22 heading south-west (the PORTT route) cross the north-west of the borough a few kilometres after take-off, still climbing. The rest is away from major flight paths, and it is the quietest borough for aircraft noise in NYC."
   }
  },
  "westmidlands": {
   "Birmingham": {
    "impact": "moderate-high",
-   "avg_price": 234150,
-   "trend": 2.2
+   "avg_price": 234867,
+   "trend": 0.5
   },
   "Coventry": {
    "impact": "low",
-   "avg_price": 223731,
-   "trend": 3.7
+   "avg_price": 227043,
+   "trend": 3.5
   },
   "Dudley": {
    "impact": "low",
-   "avg_price": 230781,
-   "trend": 5.0
+   "avg_price": 233819,
+   "trend": 2.8
   },
   "Sandwell": {
    "impact": "low",
-   "avg_price": 205743,
-   "trend": 0.6
+   "avg_price": 212235,
+   "trend": 1.8
   },
   "Solihull": {
    "impact": "moderate-high",
-   "avg_price": 334966,
-   "trend": 4.2
+   "avg_price": 332022,
+   "trend": -0.8
   },
   "Walsall": {
    "impact": "low",
-   "avg_price": 214577,
-   "trend": 2.2
+   "avg_price": 220855,
+   "trend": 5.6
   },
   "Wolverhampton": {
    "impact": "low",
-   "avg_price": 216339,
-   "trend": 8.2
+   "avg_price": 216494,
+   "trend": 2.3
   }
  },
  "westyorkshire": {
   "Bradford": {
    "impact": "low",
-   "avg_price": 185028,
-   "trend": 6.0
+   "avg_price": 185948,
+   "trend": 1.7
   },
   "Calderdale": {
    "impact": "low",
-   "avg_price": 191540,
-   "trend": 9.4
+   "avg_price": 194844,
+   "trend": 4.7
   },
   "Kirklees": {
    "impact": "low",
-   "avg_price": 205971,
-   "trend": 5.4
+   "avg_price": 214579,
+   "trend": 7.4
   },
   "Leeds": {
    "impact": "moderate",
-   "avg_price": 249394,
-   "trend": 5.9
+   "avg_price": 249295,
+   "trend": 2.7
   },
   "Wakefield": {
    "impact": "low",
-   "avg_price": 198519,
-   "trend": 4.8
+   "avg_price": 198717,
+   "trend": 1.7
   }
  },
  "southyorkshire": {
   "Barnsley": {
    "impact": "low",
-   "avg_price": 175733,
-   "trend": 6.0
+   "avg_price": 175039,
+   "trend": 2.3
   },
   "Doncaster": {
    "impact": "low",
-   "avg_price": 170784,
-   "trend": 4.4
+   "avg_price": 174374,
+   "trend": 4.5
   },
   "Rotherham": {
    "impact": "low",
-   "avg_price": 190069,
-   "trend": 2.4
+   "avg_price": 192034,
+   "trend": 1.0
   },
   "Sheffield": {
    "impact": "low",
-   "avg_price": 219539,
-   "trend": 5.0
+   "avg_price": 219177,
+   "trend": 1.0
   }
  },
  "merseyside": {
   "Knowsley": {
-   "impact": "moderate",
-   "avg_price": 188727,
-   "trend": 3.6
+   "impact": "low",
+   "avg_price": 193829,
+   "trend": 2.0
   },
   "Liverpool": {
    "impact": "moderate",
-   "avg_price": 185307,
-   "trend": 7.2
+   "avg_price": 189281,
+   "trend": 5.3
   },
   "St Helens": {
    "impact": "low",
-   "avg_price": 186435,
-   "trend": 11.1
+   "avg_price": 185799,
+   "trend": 4.7
   },
   "Sefton": {
    "impact": "low",
-   "avg_price": 225433,
-   "trend": 5.2
+   "avg_price": 222763,
+   "trend": 3.0
   },
   "Wirral": {
    "impact": "low",
-   "avg_price": 215575,
-   "trend": 7.8
+   "avg_price": 221849,
+   "trend": 3.7
   }
  },
  "tyneandwear": {
   "Gateshead": {
    "impact": "low",
-   "avg_price": 158254,
-   "trend": 7.8
+   "avg_price": 156753,
+   "trend": 3.6
   },
   "Newcastle upon Tyne": {
    "impact": "moderate-high",
-   "avg_price": 208589,
-   "trend": 6.7
+   "avg_price": 211255,
+   "trend": 5.3
   },
   "North Tyneside": {
-   "impact": "low",
-   "avg_price": 203813,
-   "trend": 6.0
+   "impact": "moderate",
+   "avg_price": 202879,
+   "trend": 1.8
   },
   "South Tyneside": {
    "impact": "low",
-   "avg_price": 161372,
-   "trend": 4.8
+   "avg_price": 164563,
+   "trend": 6.3
   },
   "Sunderland": {
    "impact": "low",
-   "avg_price": 143216,
-   "trend": 4.6
+   "avg_price": 150440,
+   "trend": 8.5
   }
  },
  "leicester": {
   "Leicester": {
    "impact": "low",
-   "avg_price": 228618,
-   "trend": 1.7
+   "avg_price": 234330,
+   "trend": 0.1
   },
   "Blaby": {
    "impact": "low",
-   "avg_price": 282918,
-   "trend": 0.3
+   "avg_price": 294274,
+   "trend": 3.9
   },
   "Charnwood": {
    "impact": "low-moderate",
-   "avg_price": 276865,
-   "trend": 3.8
+   "avg_price": 272877,
+   "trend": 0.7
   },
   "Harborough": {
    "impact": "low",
-   "avg_price": 346278,
-   "trend": 9.7
+   "avg_price": 339482,
+   "trend": 2.6
   },
   "Hinckley and Bosworth": {
    "impact": "low",
-   "avg_price": 261584,
-   "trend": 2.9
+   "avg_price": 255915,
+   "trend": -1.4
   },
   "Melton": {
    "impact": "low",
-   "avg_price": 283892,
-   "trend": 2.2
+   "avg_price": 296707,
+   "trend": 3.7
   },
   "North West Leicestershire": {
    "impact": "moderate",
-   "avg_price": 282239,
-   "trend": 6.5
+   "avg_price": 282397,
+   "trend": 0.0
   },
   "Oadby and Wigston": {
    "impact": "low",
-   "avg_price": 259734,
-   "trend": -1.7
+   "avg_price": 262847,
+   "trend": 1.8
   }
  },
  "teesside": {
   "Hartlepool": {
    "impact": "low",
-   "avg_price": 130271,
-   "trend": 0.8
+   "avg_price": 139174,
+   "trend": 7.2
   },
   "Middlesbrough": {
    "impact": "low",
-   "avg_price": 138122,
+   "avg_price": 140207,
    "trend": 2.0
   },
   "Redcar and Cleveland": {
    "impact": "low",
-   "avg_price": 153205,
-   "trend": 8.1
+   "avg_price": 150625,
+   "trend": 0.0
   },
   "Stockton-on-Tees": {
    "impact": "moderate",
-   "avg_price": 170923,
-   "trend": 3.9
+   "avg_price": 172698,
+   "trend": 2.3
   },
   "Darlington": {
    "impact": "moderate",
-   "avg_price": 158188,
-   "trend": 3.8
+   "avg_price": 159988,
+   "trend": 2.7
   }
  },
  "bristol": {
   "City of Bristol": {
    "impact": "low",
-   "avg_price": 356824,
-   "trend": 3.5
+   "avg_price": 350229,
+   "trend": -0.2
   },
   "Bath and North East Somerset": {
    "impact": "moderate",
-   "avg_price": 404480,
-   "trend": -0.1
+   "avg_price": 407914,
+   "trend": -3.1
   },
   "North Somerset": {
    "impact": "moderate-high",
-   "avg_price": 314628,
-   "trend": 7.5
+   "avg_price": 313405,
+   "trend": 3.8
   },
   "South Gloucestershire": {
    "impact": "low",
-   "avg_price": 340401,
-   "trend": 2.3
+   "avg_price": 335572,
+   "trend": 0.8
   }
  },
  "manchester": {
   "Manchester": {
    "impact": "moderate",
-   "avg_price": 251250,
-   "trend": 2.9,
+   "avg_price": 254604,
+   "trend": 1.4,
    "note": "Manchester Airport sits inside the city boundary at Wythenshawe. Noise is concentrated in the south of the borough; the city centre and the north are a long way from the runways."
   },
   "Stockport": {
    "impact": "moderate-high",
-   "avg_price": 314495,
-   "trend": 3.5,
-   "note": "Directly beneath the 23 approach, the prevailing arrival configuration. Prices are the second highest in the city-region and rising."
+   "avg_price": 321895,
+   "trend": 5.2,
+   "note": "Directly beneath the 23 approach, the prevailing arrival configuration."
   },
   "Trafford": {
    "impact": "moderate",
-   "avg_price": 396811,
-   "trend": 9.7,
-   "note": "The dearest and fastest-rising borough in Greater Manchester. West of the airport and off the main approach axis."
+   "avg_price": 393897,
+   "trend": 4.7,
+   "note": "West of the airport and off the main approach axis."
   },
   "Tameside": {
    "impact": "low",
-   "avg_price": 211304,
-   "trend": 2.2,
+   "avg_price": 215409,
+   "trend": 2.4,
    "note": "North-east of the airport under the extended 23 approach, but far enough out that aircraft are high overhead."
   },
   "Salford": {
    "impact": "low",
-   "avg_price": 231890,
-   "trend": -2.4,
+   "avg_price": 226019,
+   "trend": -1.6,
    "note": "The only borough in the city-region with falling prices. Off the approach axis, north of the airport."
   },
   "Oldham": {
    "impact": "low",
-   "avg_price": 214850,
-   "trend": 5.1,
+   "avg_price": 216189,
+   "trend": 2.7,
    "note": "North-east of the city, well clear of the approach corridors."
   },
   "Rochdale": {
    "impact": "low",
-   "avg_price": 210083,
-   "trend": 4.6,
+   "avg_price": 212685,
+   "trend": 4.1,
    "note": "The far north-east of the city-region, beyond the reach of airport noise."
   },
   "Bury": {
    "impact": "low",
-   "avg_price": 238266,
+   "avg_price": 245206,
    "trend": 3.3,
    "note": "North of the city and clear of both approach corridors."
   },
   "Bolton": {
    "impact": "low",
-   "avg_price": 202770,
-   "trend": 4.9,
+   "avg_price": 202170,
+   "trend": 2.8,
    "note": "North-west of the city-region, off every flight path."
   },
   "Wigan": {
    "impact": "low",
-   "avg_price": 195557,
-   "trend": 6.6,
-   "note": "The cheapest borough in the city-region, furthest from the airport, and rising strongly."
+   "avg_price": 198228,
+   "trend": 4.0,
+   "note": ""
   }
  }
 }

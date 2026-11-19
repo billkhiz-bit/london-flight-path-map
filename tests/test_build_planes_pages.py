@@ -664,3 +664,125 @@ def test_the_consultation_pack_reads_the_same_figure():
     assert bpp.district_cell([318, 150])[0] == 'up to 318 a day'
     assert bpp.district_cell(['<1', 0]) == ['under 1 a day', 'at all 2 postcodes']
     assert bpp.district_cell([None]) == ['not measured']
+
+
+# ----------------------------------------------------------------- a nearest airport we do not count (pick C, 2026-11-19)
+
+PROC = json.loads((REPO / 'data' / 'flight-procedures.json').read_text(encoding='utf-8'))
+
+
+def _points():
+    """Rings round every airport in the record, out past the 30 km reach and across it, plus four places
+    tests/planes-model.mjs pins: the rule is tested where its answer changes, not only where it is easy."""
+    import math
+    import random
+    rnd = random.Random(20261119)  # noqa: S311 - a seeded sweep of test points, not a secret
+    pts = [(53.549643, -2.628246), (53.416774, -2.763941), (53.551173, -1.483635), (51.476982, -0.285639)]
+    for ap in PROC['airports'].values():
+        lat0, lon0 = next(iter(ap['runways'].values()))['thr']
+        for km in (0, 0.4, 1.5, 3, 7, 12, 18, 24, 27.5, 29.5, 29.95, 30.05, 30.5, 33, 38):
+            for k in range(16):
+                b = (k / 16 + rnd.random() / 32) * 2 * math.pi
+                pts.append((lat0 + km * math.cos(b) / 111.19, lon0 + km * math.sin(b) / (111.32 * math.cos(math.radians(lat0)))))
+    return pts
+
+
+def test_the_nearest_airport_is_the_maps_own_rule_on_every_point():
+    """bpp.nearest_airport() against js/planes.mjs planesNearest() itself, on ~3,600 points: the same airport (or none)
+    and the same printed distance, so a district page can never name what the front page would not."""
+    pts = _points()
+    js = (f"import {{ planesNearest }} from '{(REPO / 'js' / 'planes.mjs').as_uri()}';\n"
+          "import { readFileSync } from 'node:fs';\n"
+          f"const proc = JSON.parse(readFileSync({json.dumps(str(REPO / 'data' / 'flight-procedures.json'))}, 'utf8'));\n"
+          "const pts = JSON.parse(readFileSync(0, 'utf8'));\n"  # stdin: 3,600 points overflow a Windows command line
+          'console.log(JSON.stringify(pts.map(([la, lo]) => planesNearest(proc, la, lo))));')
+    run = subprocess.run(['node', '--input-type=module', '-e', js], capture_output=True, text=True,  # noqa: S603, S607
+                         encoding='utf-8', check=True, cwd=REPO, input=json.dumps(pts))
+    said_js = json.loads(run.stdout)
+    km = bpp.nearest_km()
+    said_py = [(lambda n: n and {'code': n[0], 'distance': f'{bpp.shown_km(n[1])} km'})(bpp.nearest_airport(PROC, la, lo, km))
+               for la, lo in pts]
+    differ = [(p, j, y) for p, j, y in zip(pts, said_js, said_py, strict=True) if j != y]
+    assert not differ, f'{len(differ)} of {len(pts)} points answer differently, e.g. {differ[:3]}'
+    assert sum(j is None for j in said_js) > 200 and sum(j is not None for j in said_js) > 2000, 'both sides of the reach'
+    assert said_py[:4] == [{'code': 'LPL', 'distance': '27.5 km'}, {'code': 'LPL', 'distance': '10.2 km'}, None,
+                           {'code': 'LHR', 'distance': '10.2 km'}]
+
+
+def test_the_reach_and_the_number_words_are_read_from_the_site():
+    src = (REPO / 'js' / 'planes.mjs').read_text(encoding='utf-8')
+    assert bpp.nearest_km() == float(re.search(r'PLANES_NEAREST_KM = (\d+)', src).group(1))
+    assert bpp.count_words()[:3] == ('no', 'one', 'two') and bpp.counted_in_words(9) == 'nine'
+    assert bpp.counted_in_words(13) == '13', "past 'twelve' the figure, as planesModel()'s `WORDS[counted] || counted`"
+    assert [bpp.reciprocal(r) for r in ('09L', '27R', '05', '23', '18C', '36')] == ['27R', '09L', '23', '05', '36C', '18']
+
+
+def test_every_airport_the_rule_can_name_has_a_name():
+    """A page would print the bare code ("LPL is the nearest airport ...") for an airport AIRPORT_NAME lacks, as the
+    front page would: so the record may hold no airport the site's name table does not (review, 2026-11-19)."""
+    unnamed = set(PROC['airports']) - set(bpp.airport_names())
+    assert not unnamed, f'airports in flight-procedures.json with no AIRPORT_NAME: {sorted(unnamed)}'
+
+
+def test_the_build_passes_the_positions_it_reads():
+    """Without `places`, build() names no uncounted airport: main() must pass what inputs() reads, or the 12 pages
+    beside Liverpool lose their box and nothing fails (review, 2026-11-19)."""
+    src = (REPO / 'scripts' / 'build_planes_pages.py').read_text(encoding='utf-8')
+    body = src[src.index('def inputs('):src.index('MANIFEST = ')]
+    assert 'read_nspl(files, measured,' in body and body.rstrip().endswith('kinds(), places')
+    main = src[src.index('def main('):]
+    assert 'order, places = inputs(root)' in main and 'build(meta, files, ctx, totals, names, order, places=places)' in main
+
+
+def test_a_distance_is_printed_as_the_front_page_prints_it():
+    values = [4.25, 4.35, 0.05, 0.15, 9.95, 10.04999, 10.05, 27.45, 29.95, 1.0000000000000002]
+    js = f'console.log(JSON.stringify({json.dumps(values)}.map((x) => x.toFixed(1))));'
+    run = subprocess.run(['node', '-e', js], capture_output=True, text=True, encoding='utf-8', check=True)  # noqa: S603, S607
+    assert [bpp.shown_km(x) for x in values] == json.loads(run.stdout)
+    assert bpp.shown_km(4.25) == '4.3', "a true tie goes up, as toFixed does (Python's own format gives 4.2)"
+
+
+def _l35(n=30):
+    f = _district('L35', n=n)
+    places = {pc: (53.4168 + k * 0.001, -2.7639) for k, pc in enumerate([*f['postcodes'], *f['none']])}
+    return f, places
+
+
+def test_a_district_beside_an_uncounted_airport_says_so_first():
+    f, places = _l35()
+    near = bpp.uncounted(f, places, PROC, set(META['airports']), bpp.nearest_km())
+    assert [a['code'] for a in near] == ['LPL'] and near[0]['postcodes'] == 30
+    n = len(f['postcodes'])
+    m = bpp.model('L35', f, META, _ctx(n), (n, 0), {**NAMES, 'LPL': 'Liverpool'}, [], ORDER, near)
+    lo, hi = bpp.shown_km(near[0]['lo']), bpp.shown_km(near[0]['hi'])
+    assert m['uncounted'] == [f"Liverpool is the nearest airport to all 30 of L35's measured postcodes, {lo} to {hi} km "
+                              'away, and it is not one of the two airports we count.']
+    page = bpp.render(m)
+    sub = page.index('<p class="sub">')
+    assert page.index('<p class="warn"><strong>Liverpool is the nearest') > sub, 'under the heading line'
+    assert page.index('class="warn"') < page.index('<form class="check"'), 'before anything else on the page'
+    assert '.warn {' in page and 'var(--orange)' in page and '#' not in page[page.index('.warn {'):].split('}')[0]
+
+
+def test_some_of_a_districts_postcodes_is_said_as_a_count():
+    a = {'code': 'LPL', 'postcodes': 524, 'lo': 20.46, 'hi': 24.0}
+    assert bpp.uncounted_line('WA3', a, 743, {'LPL': 'Liverpool'}, 'nine') == (
+        "Liverpool is the nearest airport to 524 of WA3's 743 measured postcodes, 20.5 to 24.0 km away, and it is not "
+        'one of the nine airports we count.')
+    one = {**a, 'lo': 10.21, 'hi': 10.24}
+    assert '10.2 km away' in bpp.uncounted_line('X1', one, 743, {}, 'nine'), 'one figure when both ends print alike'
+
+
+def test_a_district_whose_nearest_airports_are_counted_says_nothing_and_keeps_its_bytes():
+    f = _district('TW9')
+    places = {pc: (51.4770, -0.2856) for pc in [*f['postcodes'], *f['none']]}
+    assert bpp.uncounted(f, places, PROC, {'LHR', 'LCY'}, bpp.nearest_km()) == [], 'Heathrow is counted'
+    _, page = _page(f)
+    assert 'class="warn"' not in page and '.warn' not in page, 'no rule added to a page without the box (no re-dating)'
+
+
+def test_a_measured_postcode_with_no_position_stops_the_build():
+    f, places = _l35()
+    places.pop(f['none'][0] if f['none'] else next(iter(f['postcodes'])))
+    with pytest.raises(SystemExit, match='no NSPL position'):
+        bpp.uncounted(f, places, PROC, set(META['airports']), bpp.nearest_km())

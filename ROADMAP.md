@@ -38,10 +38,13 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > one `planesNearest()` for every surface, I-3 the free report's failed downloads, I-4 one decimal on the report's aircraft
 > card (sample regenerated, XRQT-RHB3), I-5 CI red since 2 Nov (scipy, tzdata, `ubuntu-24.04`), I-6 the 7 US stations'
 > short METAR months (refetched) and a cache rule that heals them. 7 Minor fixed; M-5 needs a SAM deploy.
-> **THE BOROUGH ANSWER CARD** (Bill's pick A of claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY): BUILT, NOT DEPLOYED. A borough
-> click opens the card and tiles, saying what its area page says (`councilLead()`, held on every borough by
-> `tests/test_borough_card.py`; five built pages by `tests/uk-city-panel.mjs`). NEXT: preflight, screenshots to Bill at 1366
-> and 390, the notes' before/after, his word, then commit, SAM (M-5) and web/home deploys.
+> **THE BOROUGH ANSWER CARD IS LIVE** (`f0d7904c`, pushed; Bill's pick A of claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY, his
+> "deploy" on the screenshots): a borough click opens the card and tiles, saying what its area page says (`councilLead()`,
+> held on every borough by `tests/test_borough_card.py`). Shipped with every audit fix: reviewed changeset (ScoreFunction
+> code only, M-5), web and home deploys, drift PASS, sample XRQT-RHB3 ok, sanity 29/29, parity 6/6; CI GREEN for the first
+> time since 2 Nov (I-5). THEN, on his "delete" and "yes to district pages": the 38 curated `property` notes deleted
+> (a test refuses one back), and the 12 district planes pages where Liverpool is the nearest airport now say so, first
+> (`build_planes_pages.nearest_airport()`, the rule's Python twin, held equal to `planesNearest()` on ~3,600 points).
 > **Also 19 Nov:** the three old worktrees removed (wt-detail's work kept as branch `rescue/wt-detail-2026-11-19`); master
 > merged into n65 (`38c803f1`), its 3 pending files waiting for their preflight; N65's first look at WHERE the shortfall
 > sits (neither arrivals nor departures alone: `docs/lessons/n65.md` on the branch); Leicester's call moved to TUE 24 NOV.

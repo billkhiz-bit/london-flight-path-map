@@ -71,6 +71,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import functools
 import hashlib
 import json
 import math
@@ -78,6 +79,7 @@ import re
 import sys
 from collections import Counter
 from datetime import UTC, datetime
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import NamedTuple
 
@@ -131,6 +133,111 @@ def kinds(src: Path = PLANES_JS) -> list[tuple[str, str]]:
     if len(found) != 3:
         raise SystemExit(f'{src.name}: KINDS has changed shape: {line.group(1)}')
     return found
+
+
+# ----------------------------------------------------------------- the nearest airport, when it is not counted
+
+PROCEDURES = REPO / 'data' / 'flight-procedures.json'  # TRACKED: the UK AIP record the map and front page read
+
+
+def nearest_km(src: Path = PLANES_JS) -> float:
+    """js/planes.mjs PLANES_NEAREST_KM: how far the one nearest-airport rule looks (audit 2026-11-19 I-2)."""
+    m = re.search(r'^export const PLANES_NEAREST_KM = (\d+(?:\.\d+)?);$', src.read_text(encoding='utf-8'), re.M)
+    if not m:
+        raise SystemExit(f'{src.name}: PLANES_NEAREST_KM not found')
+    return float(m.group(1))
+
+
+@functools.cache
+def count_words(src: Path = PLANES_JS) -> tuple[str, ...]:
+    """js/planes.mjs WORDS ('no', 'one', ... 'twelve'): "the nine airports we count" in the answer's own words.
+    Read once a build."""
+    line = re.search(r'^const WORDS = \[(.*)\];$', src.read_text(encoding='utf-8'), re.M)
+    words = tuple(re.findall(r"'(\w+)'", line.group(1))) if line else ()
+    if not words or words[0] != 'no':
+        raise SystemExit(f'{src.name}: WORDS not found')
+    return words
+
+
+def counted_in_words(n: int) -> str:
+    """`WORDS[counted] || counted`, as planesModel() says it: past 'twelve', the figure."""
+    words = count_words()
+    return words[n] if n < len(words) else str(n)
+
+
+def reciprocal(rwy: str) -> str:
+    """js/flight_geometry.mjs reciprocal(): 09L <-> 27R, the other end of the same strip."""
+    n = (int(re.match(r'[0-9]+', rwy).group()) + 17) % 36 + 1
+    side = {'L': 'R', 'R': 'L', 'C': 'C'}.get(re.sub(r'[0-9]', '', rwy), '')
+    return f'{n:02d}{side}'
+
+
+def nearest_airport(proc: dict, lat: float, lon: float, km: float) -> tuple[str, float] | None:
+    """js/planes.mjs planesNearest(), step for step: (code, km) of the airport whose RUNWAY STRIP (threshold to
+    reciprocal threshold, flight_geometry.mjs routesNear's scope) is nearest, within `km`; None beyond. The same flat
+    plane (plane()), the same nearest point on a segment (closest()), the same first-listed winner of a tie (a stable
+    sort). tests/test_build_planes_pages.py runs the JS on the same points and holds every answer equal.
+
+    One shortcut, which cannot change an answer: an airport whose thresholds' box is already beyond `km` in this plane
+    is skipped, since its strips lie inside that box (11 of 15 airports for most postcodes)."""
+    kx, ky = 111.32 * math.cos(lat * math.pi / 180), 111.19
+
+    def xy(p):
+        return ((p[1] - lon) * kx, (p[0] - lat) * ky)
+
+    best = None
+    for code, ap in proc['airports'].items():
+        lats = [r['thr'][0] for r in ap['runways'].values()]
+        lons = [r['thr'][1] for r in ap['runways'].values()]
+        gap_x = max(min(lons) - lon, 0, lon - max(lons)) * kx
+        gap_y = max(min(lats) - lat, 0, lat - max(lats)) * ky
+        if math.hypot(gap_x, gap_y) > km:
+            continue
+        d = math.inf
+        for rwy, r in ap['runways'].items():
+            a, b = xy(r['thr']), xy((ap['runways'].get(reciprocal(rwy)) or r)['thr'])
+            ab = (b[0] - a[0], b[1] - a[1])
+            t = max(0, min(1, ((0 - a[0]) * ab[0] + (0 - a[1]) * ab[1]) / ((ab[0] * ab[0] + ab[1] * ab[1]) or 1)))
+            d = min(d, math.hypot(0 - (a[0] + ab[0] * t), 0 - (a[1] + ab[1] * t)))
+        if d <= km and (best is None or d < best[1]):
+            best = (code, d)
+    return best
+
+
+def shown_km(km: float) -> str:
+    """A distance as the pages print it, JS toFixed(1): half up on the double's exact value (Python's own format
+    rounds a tie to even)."""
+    return str(Decimal(km).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP))
+
+
+def uncounted(f: dict, places: dict, proc: dict, counted: set, km: float) -> list[dict]:
+    """The airports nearest to some of a district's measured postcodes that airports.json does not count (Bill's pick
+    C, 2026-11-17, on these pages from 2026-11-19: L35's page showed Manchester's figures and never named Liverpool,
+    4.8 km from it). [{'code', 'postcodes', 'lo', 'hi'}], most postcodes first; [] when every one is counted or none is
+    within reach. A measured postcode with no position is refused: left out, it would shrink a count unsaid."""
+    pcs = [*f['postcodes'], *f['none']]
+    if lost := [pc for pc in pcs if pc not in places]:
+        raise SystemExit(f"{f.get('district', '?')}: {len(lost)} measured postcodes have no NSPL position "
+                         f'({", ".join(lost[:3])}): rerun with the NSPL the planes files were built from')
+    by: dict[str, list[float]] = {}
+    for pc in pcs:
+        near = nearest_airport(proc, *places[pc], km)
+        if near and near[0] not in counted:
+            by.setdefault(near[0], []).append(near[1])
+    return [{'code': c, 'postcodes': len(ds), 'lo': min(ds), 'hi': max(ds)}
+            for c, ds in sorted(by.items(), key=lambda kv: (-len(kv[1]), kv[0]))]
+
+
+def uncounted_line(district: str, a: dict, measured: int, names: dict, counted_words: str) -> str:
+    """The front page's sentence ("Leeds Bradford, 9.7 km away, is not one of the two airports we count.") for a
+    district: its postcodes are many, so the distance is a range and the sentence says how many of them it is
+    nearest to."""
+    lo, hi = shown_km(a['lo']), shown_km(a['hi'])
+    away = f'{lo} km' if lo == hi else f'{lo} to {hi} km'
+    whose = (f"all {measured:,} of {district}'s measured postcodes" if a['postcodes'] == measured
+             else f"{a['postcodes']:,} of {district}'s {measured:,} measured postcodes")
+    return (f"{names.get(a['code'], a['code'])} is the nearest airport to {whose}, {away} away, and it is not one "
+            f'of the {counted_words} airports we count.')
 
 
 def one(v) -> str:
@@ -359,12 +466,20 @@ def district_context(path: Path = AVERAGES, skip: frozenset = frozenset()) -> di
 
 def district_totals(districts, nspl: Path = NSPL) -> dict[str, tuple[int, int]]:
     """{district: (live postcodes, of them large users)} from NSPL, for the districts asked about."""
-    want, live, large = set(districts), Counter(), Counter()
+    return read_nspl(districts, frozenset(), nspl)[0]
+
+
+def read_nspl(districts, wanted: frozenset | set, nspl: Path = NSPL):
+    """One pass of NSPL (2.7 million rows): district_totals() for `districts`, and {postcode: (lat, lon)} for the
+    `wanted` postcodes (the nearest-airport rule's points, as postcodes.io gives the front page: NSPL's lat/long).
+    A postcode NSPL gives no position (lat 99.999999) is left out, and uncounted() refuses it by name."""
+    want, live, large, places = set(districts), Counter(), Counter(), {}
     with nspl.open(newline='', encoding='utf-8-sig') as fh:
         reader = csv.reader(fh)
         header = next(reader)
         try:
             ip, it, iu = header.index('pcds'), header.index('doterm'), header.index('usrtypind')
+            ilat, ilon = header.index('lat'), header.index('long')
         except ValueError as exc:
             raise SystemExit(f'{nspl.name}: {exc}: NSPL has changed') from exc
         for r in reader:
@@ -372,7 +487,14 @@ def district_totals(districts, nspl: Path = NSPL) -> dict[str, tuple[int, int]]:
             if d in want and not r[it].strip():
                 live[d] += 1
                 large[d] += r[iu].strip() == '1'
-    return {d: (live[d], large[d]) for d in want}
+            if wanted and r[ip] in wanted:
+                try:
+                    lat, lon = float(r[ilat]), float(r[ilon])
+                except ValueError:  # a blank or unreadable position is no position: uncounted() names the postcode
+                    continue
+                if lat <= 90:
+                    places[r[ip]] = (lat, lon)
+    return {d: (live[d], large[d]) for d in want}, places
 
 
 # ----------------------------------------------------------------- which districts, and what each says
@@ -425,8 +547,8 @@ def councils(lads: Counter) -> list[tuple[str, str, str | None]]:
 
 
 def model(name: str, f: dict, meta: dict, ctx: dict, totals: tuple[int, int], names: dict, nearby: list[str],
-          order: list[tuple[str, str]]) -> dict:
-    """Everything a district's page says, before any HTML."""
+          order: list[tuple[str, str]], not_counted: list[dict] = ()) -> dict:
+    """Everything a district's page says, before any HTML. `not_counted` is uncounted()'s answer for it."""
     col = {c: i for i, c in enumerate(meta['classes'])}
     figs = figures_by_airport(f)
     sectors: dict[str, list[str]] = {}
@@ -474,6 +596,9 @@ def model(name: str, f: dict, meta: dict, ctx: dict, totals: tuple[int, int], na
         'definition': f"{meta['definition']} {meta['direction_rule']} {meta['postcodes_rule']}",  # required: the builder writes it
         'credits': meta['credits'], 'licence': meta['licence'],
         'nearby': nearby,
+        # Said first, in a box under the heading, as the front page's warning box says it first (pick C).
+        'uncounted': [uncounted_line(name, a, measured, names, counted_in_words(len(meta['airports'])))
+                      for a in not_counted],
     }
 
 
@@ -551,9 +676,13 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
     nearby = ' '.join(f'<a href="{URL_ROOT}{e(n.lower())}/">{e(n)}</a>' for n in m['nearby'])
     first_period = m['periods'][0] if len(m['periods']) == 1 else '; '.join(m['periods'])
     respond = respond_line(list(packs), until)
+    # Only on the pages that carry it, like .respond: a rule in STYLE would change, and re-date, every page.
+    warn = ''.join(f'<p class="warn"><strong>{e(line)}</strong></p>\n' for line in m.get('uncounted', ()))
     return PAGE.format(
-        extra_style='\n  .respond { font-weight:600; }' if respond else '',
-        respond=respond,
+        extra_style=('\n  .respond { font-weight:600; }' if respond else '')
+        + ('\n  .warn { max-width:66ch; margin:0 0 20px; padding:10px 14px; background:var(--paper);'
+           ' border-left:4px solid var(--orange); }' if warn else ''),
+        respond=respond, warn=warn,
         title=e(area.page_title(f'Planes overhead in {d}: flight paths over {council_names[0]}',
                                 f'Planes overhead in {d}, {council_names[0]}', f'Planes overhead in {d}')),
         description=e(area.fit(
@@ -747,7 +876,7 @@ PAGE = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky Sco
 <main data-district="{district}">
 <h1>Planes overhead in {district}</h1>
 <p class="sub">{where}, {city_label}. {measured}, {period}.</p>
-{respond}
+{warn}{respond}
 <form class="check" action="/" method="get">
 <label for="postcode">See the figures for one postcode in {district}</label>
 <div class="row"><input id="postcode" name="postcode" type="text" autocomplete="postal-code" autocapitalize="characters" spellcheck="false" maxlength="8" required placeholder="{example}" /><button type="submit">Check</button></div>
@@ -1112,13 +1241,19 @@ def is_district_page(path: str) -> bool:
     return len(parts) == 3 and parts[1] != PACK_DIR and path != INDEX_PATH
 
 
-def build(meta, files, ctx, totals, names, order, today: str | None = None):
-    """({repo path: page text}, {district: reason it has no page}) from the inputs."""
+def build(meta, files, ctx, totals, names, order, today: str | None = None, places: dict | None = None):
+    """({repo path: page text}, {district: reason it has no page}) from the inputs. `places` ({postcode: (lat, lon)},
+    read_nspl()) lets each page name a nearest airport we do not count; without it, none is named."""
     today = today or datetime.now(UTC).strftime('%Y-%m-%d')
     reasons = {d: verdict(f, totals[d]) for d, f in files.items()}
     with_page = sorted((d for d, why in reasons.items() if why is None), key=pc_key)
     at = {d: ctx[d]['at'] for d in with_page}
-    models = [model(d, files[d], meta, ctx[d], totals[d], names, nearest(d, at, with_page), order)
+    if places is not None:
+        proc, km = json.loads(PROCEDURES.read_text(encoding='utf-8')), nearest_km()
+        near = {d: uncounted(files[d], places, proc, set(meta['airports']), km) for d in with_page}
+    else:
+        near = {}
+    models = [model(d, files[d], meta, ctx[d], totals[d], names, nearest(d, at, with_page), order, near.get(d, ()))
               for d in with_page]
     index = council_index(with_page, ctx)
     c = consultation()
@@ -1323,7 +1458,9 @@ def inputs(root: Path = REPO):
     meta, files = read_planes(root / 'data' / 'planes')
     import adsb_postcode_averages as pa  # rule A's one holder of the large-user list  # pylint: disable=import-outside-toplevel
     ctx = district_context(root / 'data' / 'adsb' / 'postcode-averages.npz', skip=pa.large_users(root / 'data' / 'nspl.csv'))
-    return meta, files, ctx, district_totals(files, root / 'data' / 'nspl.csv'), airport_names(), kinds()
+    measured = frozenset(pc for f in files.values() for pc in (*f['postcodes'], *f['none']))
+    totals, places = read_nspl(files, measured, root / 'data' / 'nspl.csv')
+    return meta, files, ctx, totals, airport_names(), kinds(), places
 
 
 MANIFEST = REPO / 'data' / 'planes-pages-manifest.json'
@@ -1435,13 +1572,13 @@ def main() -> int:
         print(('INCONCLUSIVE: ' if soft else 'FAIL: ') + 'missing ' + '; '.join(missing)
               + ('' if soft else ' (the front page\'s band alone: --write --home)'))
         return 0 if soft else 1
-    meta, files, ctx, totals, names, order = inputs(root)
+    meta, files, ctx, totals, names, order, places = inputs(root)
     if a.list:
         for d in sorted(files, key=pc_key):
             print(f'  {d:6} {verdict(files[d], totals[d]) or "PAGE"}')
         if not (a.write or a.check):
             return 0
-    pages, without = build(meta, files, ctx, totals, names, order)
+    pages, without = build(meta, files, ctx, totals, names, order, places=places)
     # From the pages this run WRITES (each at planes-overhead/<district, lower case>/), so an area page can never
     # link a district page that is not built, whatever build() comes to filter.
     districts = [path.split('/')[1].upper() for path in pages if is_district_page(path)]

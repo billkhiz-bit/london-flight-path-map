@@ -244,7 +244,8 @@ Or just describe what you need, I have full context of this project.
   `roadFinding({ whole })`, schools only from Progress 8), the pills from the tiles (`tidyCard`), the headline from `councilLead()`: what the borough's
   AREA PAGE says, word for word (`tests/test_borough_card.py` runs it on every borough against `card_lead()`; `tests/uk-city-panel.mjs` reads five built
   pages). The old sections sit closed under "All the detail"; no advice: `getVerdict()` is gone, "Property advice" is "Prices", the curated
-  `property` notes are not drawn, and no `note` may advise or claim an ungated superlative (audit I-1). It `cancelSearch()`es first: its slots
+  `property` notes are DELETED (38: London's 33, New York's 5; Bill, 2026-11-19; `tests/test_borough_card.py` refuses one
+  back), and no `note` may advise or claim an ungated superlative (audit I-1). It `cancelSearch()`es first: its slots
   would otherwise take a postcode's late answers.
 - **The full map's postcode panel is findings first** (Bill's pick, 2026-11-04: Stitch's draft): four `.find-group`s, then every earlier section unchanged in
   `#panel-all` ("All the detail"), closed; ids stay, so the loaders fill them there. `js/panel-findings.mjs` words each finding, pure text, null when there is
@@ -397,7 +398,7 @@ Or just describe what you need, I have full context of this project.
 - **The answer after a search is summary first** (Bill's pick B, 2026-11-04: it ran to 495 words): the rows, the planes as tiles
   (`planesNodes`; a postcode under 1 a day from every airport gets the same three tiles, `noneKinds`: Bill's pick A, 2026-11-16; where the page's
   own nearest airport is one we do not count, `uncounted` names it first in the warning box, on the map's tile and in the report, from the
-  nearest airport by ONE rule, `planesNearest()` in js/planes.mjs (every UK airport with routes, by runway strip, within 30 km; the map, the front page, the report, its PDF and the sample check all call it, `tests/planes-model.mjs` holds it: audit I-2, 2026-11-19, Wigan's map said Manchester where the report said Liverpool), and no headline then leads with the planes: Bill's pick C, 2026-11-17), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
+  nearest airport by ONE rule, `planesNearest()` in js/planes.mjs (every UK airport with routes, by runway strip, within 30 km; the map, the front page, the report, its PDF and the sample check all call it, `tests/planes-model.mjs` holds it: audit I-2, 2026-11-19, Wigan's map said Manchester where the report said Liverpool; the DISTRICT pages say it too, in a box under the heading, through `build_planes_pages.nearest_airport()`, its Python twin, held equal to it on ~3,600 points by `tests/test_build_planes_pages.py`: 12 pages, all Liverpool, Bill's yes 2026-11-19), and no headline then leads with the planes: Bill's pick C, 2026-11-17), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
   say, nothing deleted; a caveat that changes what a figure means stays on the row. A fold with nothing to say hides itself
   (`.ans-fold:has(> [hidden])`). The overhead drawing reads its angle from the file's `definition` (`overheadConeSvg`).
 - **The answer's lower half is TILES** (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): presentation only.

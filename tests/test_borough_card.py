@@ -6,7 +6,9 @@ area page builder's) and held to the page's sentence word for word. That the map
 data is held in a browser by tests/uk-city-panel.mjs ("A borough's answer card").
 
 Also the advice (audit 2026-11-19 I-1): the card draws each borough's aircraft `note`, so no note may give advice or make
-a superlative no gate holds ("the fastest-growing", "you will hear", "Avoid"). The curated `property` notes are not drawn.
+a superlative no gate holds ("the fastest-growing", "you will hear", "Avoid"). The curated `property` notes (38: London's
+33 and New York's 5, buying advice on where to negotiate and what to avoid) were deleted on Bill's word, 2026-11-19: no
+borough record may carry one again, nor the design snapshot derived from them (design/borough-raw.json).
 """
 import importlib.util
 import json
@@ -97,3 +99,15 @@ def test_the_card_never_draws_the_curated_property_notes():
     assert fn, 'updateSidebar() not found'
     assert 'data.property' not in fn.group(0)
     assert 'getVerdict' not in MAP and 'PROPERTY ADVICE' not in MAP
+
+
+def test_no_borough_record_carries_a_property_note():
+    # Any key spelling: bare, quoted, value on the same line or the next. `transition-property:` (CSS) and
+    # `<meta property="og:...">` are not keys.
+    keys = re.findall(r"""(?<![-\w.])['"]?property['"]?\s*:(?!\s*['"]?[a-z-]+\s*;)""", MAP)
+    assert not keys, f'{len(keys)} `property` notes are back in the borough records'
+    # The design pages' snapshot of the same records (scripts/extract_airports_paths.py) kept all 38 after the map
+    # lost them (review, 2026-11-19): the repo is public, so a stale copy still publishes them.
+    snapshot = json.loads((REPO / 'design' / 'borough-raw.json').read_text(encoding='utf-8'))
+    stale = [f'{city}/{b}' for city, recs in snapshot.items() for b, rec in recs.items() if 'property' in rec]
+    assert not stale, f'design/borough-raw.json still carries {len(stale)} property notes, e.g. {stale[:3]}'

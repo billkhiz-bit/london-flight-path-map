@@ -1251,3 +1251,21 @@ stub does not count Manchester: the box names it with the Nearby row's own dista
 16.8), and `tests/front-page.mjs`'s stubbed airports.json counted Heathrow alone, so C named London City as not counted
 and the planes headline it expected ("Fewer than 10 Heathrow planes ...") correctly went. The stub now counts London City
 as the real file does. Any test stub of airports.json near a postcode must hold the airports the real one counts there.
+
+**The district pages (2026-11-19, audit I-2, Bill's "yes to district pages").** The audit found L35, WA9-WA12 and
+WN1-WN6 showing Manchester's figures and never naming Liverpool. Measured before wording it: the map's own
+`planesNearest()` run in node on all 285,285 measured postcodes of the 410 pages put an uncounted airport nearest to some
+postcodes of 12 pages, every one Liverpool; 8 wholly (L35 at 4.8 to 11.2 km), 4 in part (WA3 524 of 743, the rest nearest
+Manchester; WN1, WN2 and WN6 the rest with no airport within 30 km). So a district's sentence carries a RANGE and a COUNT:
+"Liverpool is the nearest airport to all 732 of L35's measured postcodes, 4.8 to 11.2 km away, and it is not one of the
+nine airports we count." In a box under the heading, as the front page says it first. The builder is Python, so the rule
+has a twin, `nearest_airport()`, step for step (flat plane, strip, stable first-listed tie), with one shortcut that cannot
+change an answer (an airport whose thresholds' box is beyond reach is skipped); `tests/test_build_planes_pages.py` runs
+`planesNearest()` itself on ~3,600 points in rings across the 30 km edge and holds every airport and printed distance
+equal (red on a nearest-END distance and on a 40 km reach). Distances print as `toFixed(1)` does, half up on the double's
+exact value (`shown_km()`; Python's format rounds a true tie such as 4.25 to even). The box's rule goes in the page's
+`extra_style`, never STYLE: a shared rule would change all 410 pages and re-date them in the sitemap; the manifest moved
+12 dates. Two slips worth keeping: the review page quoted "Liverpool John Lennon", but the site's name table
+(`AIRPORT_NAME`) says "Liverpool", as every other surface prints it; and I told Bill "20 property notes" from a search that
+missed the 38 whose text starts on the line after the key. Count with a parser that knows the file's shapes, never one
+grep.
