@@ -51,9 +51,14 @@ BUILDING_DATABASE = 'easa-anp-building'  # any other set of noise tables: a buil
 # EASA says what its whole database is (the open question of 29 Oct: are v2.3 + v9 all of it?); adding one is Bill's call.
 FULL_DATABASE_FINGERPRINTS: frozenset[str] = frozenset()
 STAGE_ENDS = ('light', 'heavy')  # rule 3: the bracket, both ends judged
-# Days the track source never published, said in every verdict and never filled (adsb.lol's globe_history_2025 has no
-# 31 Dec 2025 release: docs/lessons/n65.md step 6). Any other day missing from a run's period fails it.
-KNOWN_SOURCE_GAPS = frozenset({'2025-12-31'})
+# Days the track source never published, said in every verdict and never filled: adsb.lol's globe_history_2025 has no
+# release for 28 May to 10 Jun 2025 (checked 13 Nov 2026) or for 31 Dec 2025 (docs/lessons/n65.md step 6). Any other
+# day missing from a run's period fails it. Each day is written out, so a search for a date finds it.
+KNOWN_SOURCE_GAPS = frozenset({
+    '2025-05-28', '2025-05-29', '2025-05-30', '2025-05-31', '2025-06-01', '2025-06-02', '2025-06-03',
+    '2025-06-04', '2025-06-05', '2025-06-06', '2025-06-07', '2025-06-08', '2025-06-09', '2025-06-10',
+    '2025-12-31',
+})
 _EPS = 1e-9  # 184.8 x 0.9 is not exactly 166.32 in floating point: an exact edge must pass
 
 # The CAA's published N65 contours. Each figure is held against the report's text by tests/test_n65_gate.py.

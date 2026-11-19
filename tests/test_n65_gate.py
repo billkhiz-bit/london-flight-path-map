@@ -95,6 +95,20 @@ def test_a_missing_day_fails_unless_the_source_never_published_it():
     assert not ok and any('1 day(s) of the period missing: 2025-07-04' in line for line in lines)
 
 
+def test_the_source_gaps_are_the_days_adsb_lol_never_published():
+    # 18 Nov 2026: 28 May to 10 Jun 2025 (none published, checked 13 Nov) joined 31 Dec 2025. Exactly these 15 days:
+    # a day added here passes a run that lacks it, so the list is held whole, and a gap day is said, never filled.
+    assert gate.KNOWN_SOURCE_GAPS == {*gate.missing_days(('2025-05-27', '2025-06-11'), ['2025-05-27', '2025-06-11']),
+                                      '2025-12-31'}
+    assert len(gate.KNOWN_SOURCE_GAPS) == 15
+    runs = _both()
+    for end in gate.STAGE_ENDS:
+        runs['LHR'][end]['missing_days'] = ['2025-06-01', '2025-12-31']
+    ok, lines = gate.publish_verdict(runs, FULL)
+    assert ok and any('2 day(s) the track source never published, said, not filled: 2025-06-01, 2025-12-31' in line
+                      for line in lines), lines
+
+
 def test_missing_days_are_every_date_of_the_period_without_a_file():
     assert gate.missing_days(('2025-12-30', '2026-01-02'), ['2025-12-30', '2026-01-02']) == ['2025-12-31', '2026-01-01']
     assert gate.missing_days(('2025-03-30', '2025-03-30'), ['2025-03-30']) == []
