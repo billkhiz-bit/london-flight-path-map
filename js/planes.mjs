@@ -60,8 +60,15 @@ function barOf(v, full) {
 /**
  * What `postcode` is told, from its district's file and airports.json; null when it is in neither list (not
  * measured: say nothing). `names` is the airport-name table (AIRPORT_NAME), passed in for tests.
+ *
+ * `nearest` ({ code, distance }) is the nearest airport the CALLER's own page names for this postcode, its distance as
+ * that page prints it ("9.7 km"), or null where the page names none. When it is not an airport airports.json counts,
+ * `uncounted` says so by name (Bill's pick C, 2026-11-17, claude.ai/artifact/T2HNJU7E3m29LVAcywEZeo): "Under 1 a day
+ * from each airport" sat under a Leeds Bradford approach with nothing to say Leeds Bradford was not counted, and Speke
+ * showed Manchester's figures beside Liverpool's runway. Taken from the page's own nearest-airport line, so the two can
+ * never disagree.
  */
-export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
+export function planesModel(file, info, postcode, names = AIRPORT_NAME, nearest = null) {
   if (!file || !info?.airports) return null;
   const pc = normalPostcode(postcode);
   const listed = file.postcodes?.[pc];
@@ -85,6 +92,8 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
   // to say, so say nothing, as for a postcode never measured. An empty block would read as a measurement.
   if (!airports.length && !none) return null;
   const periods = [...new Set(airports.map((a) => a.period))];
+  const near = nearest && typeof nearest.code === 'string' && typeof nearest.distance === 'string' && nearest.distance
+    && !info.airports[nearest.code] ? nearest : null;
   return {
     postcode: pc,
     airports,
@@ -106,6 +115,7 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME) {
     other: (file.other || []).includes(pc)
       ? 'Other flying passes over here too, from airfields, helicopters and airports we cannot check against official counts, so few planes from the airports we count does not mean a quiet sky.'
       : null,
+    uncounted: near ? `${names[near.code] || near.code}, ${near.distance} away, is not one of the ${WORDS[counted] || counted} airports we count.` : null,
     // The large-user rule (2026-11-10) only when the file carries it: a cached older airports.json mid-deploy never
     // prints "undefined" (scripts/build_planes_overhead.py POSTCODES_RULE).
     definition: [info.definition, info.direction_rule, info.postcodes_rule].filter((s) => typeof s === 'string' && s).join(' '),
@@ -220,11 +230,12 @@ export function planesWalk(model, steps = []) {
  * airports never reads as the sum of them. Only where the full map's planes layer would colour that figure (`steps`, the
  * layer's index.json, through stepColour()): under its first step the layer leaves a postcode blank, and a few planes a day
  * must not out-rank, say, a road far over its guideline; without the steps, never. Never with a caveat that changes what
- * the figure means, because a headline cannot carry one: a position ONS only estimates, or other flying the count cannot
- * see (the answer below keeps both, on their rows). Null in every such case, and the headline leads with something else.
+ * the figure means, because a headline cannot carry one: a position ONS only estimates, other flying the count cannot
+ * see, or a nearer airport we do not count (the answer below keeps each, on its row). Null in every such case, and the
+ * headline leads with something else.
  */
 export function planesLead(model, steps = []) {
-  if (!model?.airports?.length || model.approx || model.other) return null;
+  if (!model?.airports?.length || model.approx || model.other || model.uncounted) return null;
   const { a, lead, leadWords } = leadDay(model);
   if (!lead || (lead.sharePct ?? 0) <= 50 || !said(leadWords) || !stepColour(lead.value, steps)) return null;
   return `On most days, ${leadWords} ${a.name} planes a day pass over ${model.postcode}`;
@@ -236,12 +247,13 @@ export function planesLead(model, steps = []) {
  * first step, read from `steps`, never typed), never a single figure. Only when it is true on every kind of day for every
  * airport the file lists: a kind not measured, or a range whose top reaches the step, is not "fewer than" and claims
  * nothing. The airports are only those airports.json publishes (the year rule's passers); a postcode with other flying
- * the count cannot see, or a position ONS only estimates, claims nothing. Per airport, never a sum: one airport is named,
+ * the count cannot see, a nearest airport we do not count, or a position ONS only estimates, claims nothing. Per airport,
+ * never a sum: one airport is named,
  * several are each held to the band and said so; a postcode measured with nothing reaching 1 a day says it of each airport
  * we count. Null otherwise.
  */
 export function planesBandLead(model, steps = []) {
-  if (!model || model.approx || model.other) return null;
+  if (!model || model.approx || model.other || model.uncounted) return null;
   const firsts = (steps || []).map((s) => s?.from).filter((n) => typeof n === 'number' && n > 0);
   if (!firsts.length) return null;
   const floor = Math.min(...firsts);
@@ -279,8 +291,17 @@ export function planesNodes(model, doc = document, links = []) {
   // Under 1 a day from every airport: the same tiles (Bill's pick A, 2026-11-16), never a sentence alone.
   if (model.noneKinds) out.push(tiles(model.noneKinds));
   else if (model.none) out.push(el('p', 'planes-none', model.none));
-  for (const [key, className] of [['edge', 'planes-note'], ['approx', 'planes-note'], ['other', 'planes-warn']]) {
+  for (const [key, className] of [['edge', 'planes-note'], ['approx', 'planes-note']]) {
     if (model[key]) out.push(el('p', className, model[key]));
+  }
+  // One box for what the count cannot see (Bill's pick C, 2026-11-17): a nearest airport we do not count, by name and
+  // first, then other flying. Either alone keeps the box.
+  if (model.uncounted || model.other) {
+    const warn = el('p', 'planes-warn');
+    if (model.uncounted) warn.append(el('strong', null, model.uncounted));
+    if (model.uncounted && model.other) warn.append(' ');
+    if (model.other) warn.append(model.other);
+    out.push(warn);
   }
   for (const l of links) {
     const p = el('p', 'planes-more');

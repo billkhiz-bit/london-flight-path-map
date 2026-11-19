@@ -12,11 +12,14 @@ info:
     rescaled rather than the missing one being treated as zero.
 
     **Authentication.** Most endpoints require an API key passed in the
-    `X-Api-Key` header. Three do not: `/v1/signup`, which is how you get a key;
+    `X-Api-Key` header. Of the routes this spec documents, four do not:
+    `/v1/signup`, which is how you get a key;
     `/v1/changes`, which is deliberately public so anyone can audit what
-    moved between data vintages without holding one; and `/v1/regions`, the
+    moved between data vintages without holding one; `/v1/regions`, the
     discovery endpoint, which is public for the same reason - a client needs
-    to know what is covered before it has a key to ask with. Free tier provides 10,000 requests/month, 5/sec burst,
+    to know what is covered before it has a key to ask with; and
+    `/v1/environment`, the readings for a point (no score, no weights), which
+    the browser extension reads. Free tier provides 10,000 requests/month, 5/sec burst,
     2/sec sustained. `/v1/score/batch` is NOT available on the free tier - it is
     denied per-method - so one request is one address and the free ceiling is
     10,000 scores/month, the same number by a simpler route.
@@ -67,6 +70,8 @@ security:
 tags:
   - name: Score
     description: Single-postcode and bulk property scoring.
+  - name: Environment
+    description: Readings for a point. No key, no score.
 
 paths:
   /v1/signup:
@@ -324,6 +329,90 @@ paths:
                   steepestFallStandIn: true in previousBenchmarks when that
                   yardstick comes from a city whose earlier vintage is not
                   held, so its figure is the current one standing in.
+
+  /v1/environment:
+    get:
+      tags: [Environment]
+      # UNAUTHENTICATED, like /v1/regions: the browser extension reads it, and
+      # anything bundled in an extension is public. Held against template.yaml
+      # both ways by OpenApiAuthMatchesTemplateTests. Undocumented here until
+      # 2026-11-18, when it gained airMeasuredNearby.
+      security: []
+      summary: Environmental readings for a point (no API key).
+      description: |
+        Turns a coordinate into the nearest UK postcode and returns what Sky
+        Score holds for it: DEFRA's modelled road and aircraft noise (Lden)
+        and air pollution (PCM annual means on a 1 km grid), each beside its
+        WHO guideline, and, where DEFRA does not map a postcode's aircraft
+        noise, Sky Score's estimate, labelled as one. No score, weights or
+        persona: the scoring engine stays behind the key. Every key is absent
+        where its figure is not held, never null or zero, and `notices` says
+        why in words.
+
+        **Air measured nearby** (`environment.airMeasuredNearby`, since
+        2026-11-18): the nearest Breathe London sensor (London's low-cost
+        network) and the nearest DEFRA AURN reference monitor (every UK
+        city), each within 5 km of the point asked, with its distance,
+        setting, period, the publisher's note and the credit it requires.
+        Display only, never scored. `sensor` is London-only and absent
+        elsewhere. An entry, or the whole block, is absent when nothing is
+        within 5 km: the files hold only instruments that captured 75% of
+        the period's hours, so a nearer one may exist and have been left
+        out, and an absent entry says nothing about the place. A kerbside
+        sensor and a background monitor measure different things, so they
+        are never ranked. Our copy of the sensor readings is withheld once
+        its window ended more than 45 days ago, and `notices` says so, as it
+        does when a copy could not be read.
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+        - name: lon
+          in: query
+          required: true
+          schema:
+            type: number
+            minimum: -180
+            maximum: 180
+      responses:
+        '200':
+          description: The readings held for the nearest postcode.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvironmentResponse'
+        '400':
+          description: lat and lon are missing, not numbers, or out of range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No UK postcode near those coordinates. `location` echoes the point.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  location:
+                    type: object
+                    properties:
+                      lat:
+                        type: number
+                      lon:
+                        type: number
+        '429':
+          description: Too many requests. The route carries its own throttle.
+        '502':
+          description: The postcode lookup answered with something unreadable.
+        '503':
+          description: The postcode lookup is unavailable just now. Retry after the `Retry-After` header's seconds.
 
   /v1/score:
     get:
@@ -1434,6 +1523,157 @@ components:
           items:
             type: string
           description: What this place IS scored on, beside a weights refusal.
+    EnvironmentResponse:
+      type: object
+      required: [location, environment, notices, apiVersion, methodologyVersion]
+      properties:
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+            lon:
+              type: number
+            postcode:
+              type: string
+              description: The nearest postcode to the point, which DEFRA's figures are read for.
+        environment:
+          type: object
+          description: Every key is absent where its figure is not held, never null or zero.
+          properties:
+            roadNoiseLdenDb:
+              type: number
+              description: DEFRA's modelled road noise at the postcode, Lden dB (Round 4, which maps 2021, a COVID-affected year).
+            roadNoiseBelowDb:
+              type: number
+              description: Surveyed by DEFRA and under the lowest level its road map records. A bound, not a reading, and never sent with roadNoiseLdenDb.
+            roadNoiseWhoGuidelineDb:
+              type: number
+              description: The WHO 2018 guideline for road traffic, 53 dB Lden.
+            roadNoiseSource:
+              type: string
+            no2AnnualMeanUgm3:
+              type: number
+              description: DEFRA's modelled annual mean NO2 on its 1 km grid (PCM), µg/m³.
+            no2WhoGuidelineUgm3:
+              type: number
+            pm25AnnualMeanUgm3:
+              type: number
+              description: DEFRA's modelled annual mean PM2.5 on its 1 km grid (PCM), µg/m³.
+            pm25WhoGuidelineUgm3:
+              type: number
+            airQualitySource:
+              type: string
+            aircraftNoiseLdenDb:
+              type: number
+              description: DEFRA's modelled aircraft noise at the postcode, where DEFRA maps it, Lden dB.
+            aircraftNoiseWhoGuidelineDb:
+              type: number
+            aircraftNoiseSource:
+              type: string
+            aircraftQuiet:
+              type: number
+              description: Quiet Skies, 0-10 (10 = quietest), from aircraftNoiseLdenDb.
+            aircraftQuietEstimated:
+              type: number
+              description: Sky Score's 0-10 estimate from published flight paths where DEFRA does not map the postcode. An estimate, not a noise reading.
+            aircraftQuietBasis:
+              type: string
+              description: What the estimate rests on, as a noun phrase.
+            aircraftQuietCoverage:
+              type: string
+              enum: [modelled, city, outside]
+              description: modelled = DEFRA's map; city = an estimate on a covered city's geometry; outside = the nearest airports we hold, outside every covered city.
+            airMeasuredNearby:
+              $ref: '#/components/schemas/AirMeasuredNearby'
+        notices:
+          type: array
+          items:
+            type: string
+        apiVersion:
+          type: string
+        methodologyVersion:
+          type: string
+        provenance:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ProvenanceEntry'
+        sourceIndex:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Source'
+
+    AirMeasuredNearby:
+      type: object
+      description: >-
+        The nearest instruments within `scopeKm` of the point asked. Display
+        only, never scored. Absent when neither is within reach; each entry is
+        absent when its own is not.
+      required: [scopeKm]
+      properties:
+        scopeKm:
+          type: number
+          description: How far from the point asked an instrument may be, in km (5).
+        sensor:
+          allOf:
+            - $ref: '#/components/schemas/AirInstrument'
+          description: The nearest Breathe London sensor. London only.
+        monitor:
+          allOf:
+            - $ref: '#/components/schemas/AirInstrument'
+          description: The nearest DEFRA AURN reference monitor, in any UK city.
+
+    AirInstrument:
+      type: object
+      required: [network, siteCode, name, distanceKm, setting, period, source, sourceLink]
+      properties:
+        network:
+          type: string
+          enum: [Breathe London, DEFRA AURN]
+        siteCode:
+          type: string
+          description: The network's own code for the site.
+        name:
+          type: string
+        distanceKm:
+          type: number
+          description: From the point asked (not the postcode's centre), as Sky Score shows it - to 10 m under 1 km, to 0.1 km from 1 km - so a caller who formats it the same way never rounds twice.
+        setting:
+          type: string
+          description: The network's classification, in lower case (for example urban background, roadside, kerbside, suburban industrial).
+        kerbDistanceM:
+          type: number
+          description: A sensor's distance from the kerb, where the network gives it, as the network gives it (not rounded).
+        no2MeanUgm3:
+          type: number
+          description: Mean NO2 over `period`, µg/m³, as the published file holds it (not rounded again). Absent when the instrument has no mean for it.
+        pm25MeanUgm3:
+          type: number
+          description: Mean PM2.5 over `period`, µg/m³, as the published file holds it (not rounded again). Absent when the instrument has no mean for it.
+        period:
+          type: object
+          description: >-
+            A sensor: the 12 whole months before Sky Score's latest fetch, each
+            mean resting on at least 75% of the hours. A monitor: the calendar
+            year (to its closing day for a site that closed in it), ratified,
+            the year DEFRA's PCM model above is calibrated on.
+          properties:
+            from:
+              type: string
+              format: date
+            to:
+              type: string
+              format: date
+        note:
+          type: string
+          description: The network's note on how to read it, from the file that answered.
+        source:
+          type: string
+          description: The credit the publisher requires, word for word ("License" is Breathe London's own spelling).
+        sourceLink:
+          type: string
+          format: uri
+
     ZipResidents:
       type: object
       description: >-

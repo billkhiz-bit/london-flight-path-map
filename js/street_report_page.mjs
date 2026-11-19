@@ -174,7 +174,11 @@ async function make(raw, check = null) {
     const made = new Date().toISOString().slice(0, 10);
     // Worked out before the report too, which states it in its details (the check block below says it again, with the link).
     // The planes figures the copy prints are part of its reference from REF_PLANES_FROM (audit M-4): one model for both.
-    const planesHere = planesModel(planesFile, planesInfo, loc.postcode);
+    // The nearest airport the report names (its first tile: routes.scope[0], "9.7 km"), so the planes block can say when
+    // it is one we do not count (Bill's pick C, 2026-11-17).
+    const nearAp = routes.scope[0];
+    const planesHere = planesModel(planesFile, planesInfo, loc.postcode, undefined,
+      nearAp ? { code: nearAp.code, distance: `${nearAp.dist.toFixed(1)} km` } : null);
     const ref = await reportReference(loc.postcode, made, proc.airac, env, planesHere);
     const html = reportDocument(
       { postcode: loc.postcode, made, ref },

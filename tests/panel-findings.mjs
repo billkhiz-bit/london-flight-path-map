@@ -128,6 +128,12 @@ check('a caveat that changes what a figure means stays with the figure', () => {
   assert.match(tileHtml(found[1]), /Other flying passes over here too/);
   const none = planesFindings({ ...MODEL, airports: [], none: 'Under 1 a day.', other: 'Other flying.' });
   assert.deepEqual(none[0].caveats, ['Other flying.']);
+  // A nearest airport we do not count leads them, on the "under 1" tile and beside an airport's figures alike (Bill's
+  // pick C, 2026-11-17): Speke's Manchester figures sit beside Liverpool's runway.
+  const uncounted = 'Leeds Bradford, 9.7 km away, is not one of the nine airports we count.';
+  assert.deepEqual(planesFindings({ ...MODEL, airports: [], none: 'Under 1 a day.', other: 'Other flying.', uncounted })[0].tile.notes,
+    [uncounted, 'Other flying.']);
+  assert.deepEqual(planesFindings({ ...two, uncounted }).at(-1).caveats, [uncounted, 'A range.', 'Approximate.', 'Other flying passes over here too.']);
 });
 
 check('the notes fold, escaped: the rule beside its drawing, the points, the way to the method and to every source', () => {

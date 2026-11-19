@@ -2,7 +2,7 @@
 
 > **Living document.** Updated as Sky Score evolves. For Claude session instructions see `CLAUDE.md`. This roadmap is the *what next* across all tracks. (The buildathon plan lives at `archive/BUILDATHON_PLAN_2026.md` since 2026-08-24.)
 
-**Last reviewed:** 2026-11-16 - planes overhead rolled to September with nine airports: Leeds Bradford failed its September (108.1% of the CAA's count: low passes counted as movements) and is off every planes surface on Bill's ruling; previously 2026-11-15 - N65's two new rulings built and pushed on `n65` (`1a3f3bd2`): the 2025 take-offs Heathrow and Gatwick heard late are counted, and the field level comes from the published elevation; previously 2026-11-13 - every finding of the 12 Nov audit fixed and live (`8ef25b01`, `3a60b42a`, the sign-up and favourites changeset reviewed and checked from the API); previously 2026-11-10 - the 9 Nov audit's four Important findings closed and live, the air figures reloaded at DEFRA's precision and checked against its file, the outreach sheets rebuilt; previously 2026-11-09 - "All the detail" option 1, the phone cards one to a row and `www` -> the bare name LIVE and pushed; the site called ready for outreach, upkeep only, the four outreach gates set out for Bill; previously 2026-11-07 - the meta CSP's ignored `frame-ancestors` gone LIVE from ten pages; `env-upstream-status` built (a failed postcode lookup is a 503, the gateway's own errors readable); most of the week's 5xx were Lambda throttles at the account's limit of 10; previously 2026-11-06 - About's grid, section links and link colours LIVE; the front page's held point, postcode suggestions and the Heathrow corrections deployed; previously 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
+**Last reviewed:** 2026-11-17 - the September planes roll committed (`a2aeabb1`), deployed and checked from the origin; N65's Heathrow 2025 day found most arrivals never heard over the runway, and rule 8 (joining them to the threshold) was built and accepted by Bill; a planes answer near an airport we do not count now names it (Bill's pick C, built, not yet live); previously 2026-11-16 - planes overhead rolled to September with nine airports: Leeds Bradford failed its September (108.1% of the CAA's count: low passes counted as movements) and is off every planes surface on Bill's ruling; previously 2026-11-15 - N65's two new rulings built and pushed on `n65` (`1a3f3bd2`): the 2025 take-offs Heathrow and Gatwick heard late are counted, and the field level comes from the published elevation; previously 2026-11-13 - every finding of the 12 Nov audit fixed and live (`8ef25b01`, `3a60b42a`, the sign-up and favourites changeset reviewed and checked from the API); previously 2026-11-10 - the 9 Nov audit's four Important findings closed and live, the air figures reloaded at DEFRA's precision and checked against its file, the outreach sheets rebuilt; previously 2026-11-09 - "All the detail" option 1, the phone cards one to a row and `www` -> the bare name LIVE and pushed; the site called ready for outreach, upkeep only, the four outreach gates set out for Bill; previously 2026-11-07 - the meta CSP's ignored `frame-ancestors` gone LIVE from ten pages; `env-upstream-status` built (a failed postcode lookup is a 503, the gateway's own errors readable); most of the week's 5xx were Lambda throttles at the account's limit of 10; previously 2026-11-06 - About's grid, section links and link colours LIVE; the front page's held point, postcode suggestions and the Heathrow corrections deployed; previously 2026-11-05 - the API page's "Try a request", About, How it works and the Bay Area LIVE (`c415f9af`, drift PASS); previously 2026-11-04 - the panel, Pricing and all area and planes pages live on Stitch's layouts and one palette held by a test, `modelled` and the 1,024 MB score Lambda live; previously 2026-11-03 - the full map's Planes overhead layer (B2) finished after its review's six fixes, and
 the company's LinkedIn page linked from the main pages; previously 2026-11-02 - the Heathrow consultation pack, the planes index by council and the 3-column
 /bay-area/ table LIVE; `nhs-all-cities` merged with the AIRAC 2026-10-29 roll, LIVE as one SAM changeset; previously
 2026-10-28 - planes overhead district pages BUILT (464 static pages, branch
@@ -25,6 +25,96 @@ next changeset; previously 2026-10-19 - Breathe London's data half built (GLA ke
 in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (evening) - pool key done, US crime and road scales LINEAR (Bill) and built,
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
+
+> ## START HERE (2026-11-18)
+>
+> **THE SEPTEMBER 2026 HPI ROLL IS LIVE** (Bill: "Do the roll", then "deploy" on the reviewed changeset). HM Land Registry's
+> September index moved 84 of 97 UK prices and 97 of 97 trends in BOTH holders (`build_hpi_prices.py --write --city X` for all
+> 13), `SNAPSHOT_VINTAGE_LABEL` 'September 2026', `CPIH_12M_PCT['2026-Q3']` 3.6 and `SNAPSHOT_CPIH_PCT` 3.6 (read from ONS L55O
+> by `cost_real_growth.cpih_for`, which also gave July 3.1 and August 3.3 = what we held), `DEFAULT_VINTAGE` 2026-09-01; the
+> quarter key stays 2026-Q3. Rebuilt: How it works, 152 area pages (98 changed) + sitemap + open data. METHODOLOGY s6 re-derived
+> from the engine against SW11 1AA's REAL raster row (scratchpad `derive_s6.py`, one read-only GetItem): 5.1 -> 5.0, afford 0.3
+> -> 0.1 (the national p95 fell 732,271 -> 700,172: the City of London left the top six, so Wandsworth itself is now the sixth),
+> growth 2.6 -> 3.0 (Westminster's -21.3% the steepest real fall again); its two ungated stale lines fixed (spread 1.2 -> 2.1,
+> `methodologyVersion` 5.1 -> 5.7). Effect: balanced 36 of 97 by 0.1 (35 down), investor 71 of 97 (Calderdale 8.3 -> 7.0,
+> Sunderland 7.5 -> 8.7). Nine backend tests moved: eight data pins re-pinned with dated notes, and
+> `CompositeRenormalisationTests`, which rebuilt scores from ROUNDED components (City of London quietlife landed on exactly
+> 5.05; the engine's total is 5.0429, site == API on all 1,128 borough-persona pairs), now reads the engine's own total
+> through the new `weighted_total()` (behaviour-identical: 1,368 of 1,368 full results equal; a mutated rescale turns it red).
+> Preflight: one red, "area pages match the live API" (36 stale = the 36 balanced movers), as a roll must be before its
+> deploy; everything else blocking green. Changeset: ScoreFunction Code the only static change (Chat role/function and the
+> API "Dynamic" on its ARN, no replacement). After it: area freshness 152/152, SW11 1AA live = s6 to the digit, then
+> web (94), area (153), meta (7), open-data (2); drift PASS, score sanity 29/29, site == API 6/6; live pages say September 2026.
+> NEXT: N65's 2025 year restarts (Bill's word, same message); `/audit` ~19 Nov in a fresh session; FAA 2612 + Leicester 26 Nov.
+> October's HPI (~mid-Dec) moves the quarter key: the three-step roll in memory `project-trends-feature.md`.
+>
+> **LATER 18 NOV.** (1) **Breathe London + DEFRA monitors in `/v1/environment`** (`airMeasuredNearby`, Bill's pick A; plan
+> step 5) and the extension's "Measured nearby" block: BUILT, NOT COMMITTED OR DEPLOYED; preflight at 21:41 was red only on
+> the Bay Area page's phone colour check (passes alone 2 of 2), so it runs again. The deploy is a reviewed changeset on
+> Bill's word, before or after Breathe London's 24 Nov meeting. (2) **N65: Heathrow's 2025 year RAN** (350 days; the 15 the
+> source never published are now the gate's `KNOWN_SOURCE_GAPS`) and its first gate run (a building run) says NO: 20-35%
+> short at 100 and 200 events at both stage ends; the 7 days scaled over 1.25 change nothing; cause not measured
+> (`docs/lessons/n65.md` on the branch). (3) **The weather fetcher lost the last day of every request** (IEM's end date is
+> exclusive): fixed on master and n65, 46 cached months refetched (`docs/lessons/in-progress-measurements.md`, last
+> section). **Owed: recount 30 Sep 2026 at the next planes roll.**
+>
+> ## START HERE (2026-11-17)
+>
+> **THE SEPTEMBER PLANES ROLL IS LIVE** (`a2aeabb1`, pushed). Full preflight exit 0, "PASS (INCOMPLETE)" on one ADVISORY row
+> only: `check_data_freshness.py`'s DEFRA noise maps timed out, and again when re-run alone (the 12 Nov hang; accepted then
+> too). Deployed in order: planes (915 files), planes layer (West Yorkshire's 5 pictures deleted), planes pages (446 up, 48
+> deleted: West Yorkshire's 46, M40, WC1H), area, web, home, meta. `check_deploy_drift.sh` PASS (55 pages, 42 data files, 153
+> area pages, planes 25/25, pages 25/25, layer 31/31); `tests/area-page-freshness.mjs` OK, 152 of 152 (it needs the key:
+> `set -a; . ./.env; set +a` in the same call). Live at 1366 and 390: TW9 3PZ reads 310 / 160 / 4, "January to September
+> 2026"; LS1 2AD gets the three "Under 1 a day" tiles and the other-flying line, no sideways scroll, no console errors.
+> LS1 4DY gets no planes block at all: it is in neither of LS1's lists (by design, `planesModel()` returns null).
+> **Then BUILT, Bill's pick C** ("Go with recommended", claude.ai/artifact/T2HNJU7E3m29LVAcywEZeo): LS1 2AD's tiles said
+> "Under 1 a day ... from each airport" right above "Under the Leeds Bradford 32 final approach"; Speke (L24 0AA) showed
+> Manchester's figures 0.7 km from Liverpool's runway; NE1 1AE and TS1 1AD HEADLINED "Fewer than 10 planes a day from each
+> airport we count". Now `planesModel(..., nearest)` names a nearest airport we do not count ("Leeds Bradford, 9.7 km away,
+> is not one of the nine airports we count.") from each page's OWN nearest-airport line, first in the box, the map's tile
+> and the report, and no headline leads with the planes there (`docs/lessons/front-page-and-site.md`, last section).
+> Checked locally at 1366 and 390 (LS1 2AD, L24 0AA, NE1 1AE, TW9 3PZ unchanged; the map's tile). NOT committed.
+> **Its first full preflight was RED on 3 gates** (scratchpad `preflight-2026-11-17c.out`): the full map's panel and search
+> guide on "CONNECTION ISSUE" / "NOT FOUND" for plain searches (each passes alone: 152 checks, 90 of 90: live lookups
+> blipped), and ONE real check of the front page's 449: SW5 9HP's nearest airport on the map is London City (16.4 km
+> against Heathrow's 16.8), and `tests/front-page.mjs`'s stubbed airports.json counted Heathrow alone, so C named London
+> City as not counted and its expected planes headline went. Fixed in the TEST: the stub counts London City as the real
+> file does, and a new check (M22 5RX, Manchester not counted in the stub) holds the box against the Nearby row's own
+> distance, proven red with the wiring cut; front page 450 of 450. **Second full preflight: PASS**; live below.
+>
+> **N65, Heathrow 19 Sep 2025 (rules 6 + 7, `n65` `1a3f3bd2`):** both rules work (87 of 89 late take-offs computed; field
+> 83 ft AD 2.2 moved by 36 METARs). But only 194 of 623 ARRIVALS were computed: 410 failed `approach_track()`'s "the
+> threshold crossing was not heard" (no point over the runway), so rule 1 scaled the day x1.55 and arrivals weigh about
+> half. One day a month, Apr 2025 to Mar 2026: 16% to 98% of arrivals unheard over the runway (15 Jul 2026: 2%); last heard
+> a median 74-568 m short at 65-140 ft, on the glide path. **Rule 8 BUILT on Bill's "Go with recommended"** (option A,
+> claude.ai/artifact/WhCzw3niJ8ehrZH2HrMdtW) in the n65 worktree, NOT committed: `n65_tracks.joined_end()` joins an
+> approach last heard on the extended centreline (100 m), at most 1 km out and under 300 ft; `arrivals_joined` apart,
+> `--no-joined-approaches` beside, `--rule8-cut-m` its check; 267 N65 + counter tests pass, 24 of 24 mutants red.
+> **19 Sep 2025 with rule 8:** arrivals 194 -> 599 of 623 computed (405 joined, 5 refused), scale x1.55 -> x1.035.
+> **Its check FAILED AS WRITTEN** (8 and 15 Jul 2026, every heard arrival cut 300/600/900 m out; the bar, written first:
+> every area within 1% and every cut arrival joined; worst +5.47%): with rule 1's scale held, the 300 and 600 m count
+> areas move +0.00% (the joins reproduce the grid); the misses are rule 1's scale step on whole counts and, at 900 m, the
+> rule's own refusals (points 70-350 m apart leave the last one past 1 km). **Bill accepted it as such** (option A, "Go
+> with recommended", decision page v2). Nothing re-run, bar unchanged; `data/n65/rule8-check/rule8-check.txt` and
+> `rule8-why.txt`. **COMMITTED `7a8d4ae4` and PUSHED on `n65`**, on master merged in (`62fde062`, so the branch has the
+> roll's test fix). Full preflight in this clone, parked on the merge with rule 8's 8 files copied in byte for byte (master's
+> C in a stash, back byte for byte by checksum after): PASS but for the live e2e stage, one slow first load of `/map/`;
+> that spec passed 5 of 5 alone and the whole stage 36 of 36 on its rerun.
+>
+> **C LIVE `017876e6`** (Bill: "Deploy"): `web-deploy`, drift PASS, checked live at 1366 and 390 (LS1 2AD, L24 0AA, NE1 1AE
+> name their airport with the Nearby row's own distance; NE1's headline keeps the question; TW9 unchanged; the map's tile).
+>
+> **Leeds Bradford's fix (Bill: "Run A first"): BUILT, MEASURED, NOT SHIPPED.** The low-pass rule (H 100 ft, G 30 s, set
+> before any verdict) leaves September at 107.2% (every setting 107.1-107.2%): most of the excess is AIRLINERS heard on the
+> runway (ours -2.4% August to September, the CAA's air transport -7.5%), helicopters about a third. Bill: leave it off,
+> look again at the CAA's October (~mid-December). Story and numbers: `docs/lessons/in-progress-measurements.md`, "The
+> September 2026 roll"; the patch and replay in gitignored `data/adsb/lowpass-2026-11-17/`.
+>
+> **Leicester brief v2** (Desktop) updated, marked [17 Nov]: the `--check` and `--verify-caa` re-runs hold, PCM 2024 still the
+> newest, LE1 7RH unchanged, section 9 now Jan-Sep and nine airports.
+> **Next:** N65 step 6, the 2025 year, on Bill's OK (every day is ON DISK already: only the CAA's March 2025 table and 12 `--air` weather files to fetch); Leeds Bradford at the CAA's October (~mid-December); `/audit` in a fresh session (~19 Nov); FAA 2612 and the Leicester
+> call on 26 Nov; Leeds Bradford's fix only on Bill's word.
 
 > ## START HERE (2026-11-16)
 >
@@ -2112,7 +2202,10 @@ update rhythm for that API: ~~not yet read~~ **read 2026-10-11, below.**
    TW9 3PZ (sensor yes, monitor 7.6 km no) and M22 5RX (no sensor, monitor yes), each proven red.
    **The full map's postcode panel too** (same day, Bill): `renderAirNearby()` in `index.html`, gated by
    `tests/uk-city-panel.mjs` (SW11 1AA both, three cities a monitor, New York none).
-   **Next: step 5** (`/v1/environment`) after the line has run a month.
+   **Step 5 BUILT 2026-11-18** (Bill's pick A of claude.ai/artifact/JeB4h7h36j33mTx9N8w6PX, route 1):
+   `environment.airMeasuredNearby` on `/v1/environment`, read from the site's own two files, the site's rules held
+   by `backend/tests/test_air_nearby.py`, the route documented in the spec for the first time. Deploy on Bill's
+   word; then the Chrome extension's row (mock-up from a screenshot first).
 2. **The same for AURN, every city** (`scripts/fetch_aurn.py`, keyless): the nearest official
    monitor's annual mean and site type. Same release, so London is not the only city with a
    measurement. **DATA HALF BUILT 2026-10-13, nothing displays it yet:** `data/aurn-sites.json`
@@ -2984,6 +3077,11 @@ and 103 area-page links assume the map at `/`); build under "Sky Score" or
 after the rename. Audiences on every version follow the Constraints above.
 
 ### Parked idea: Breathe London readings in the Chrome extension (raised by Bill, 2026-10-29)
+
+**BUILT 2026-11-18** with route (a): `/v1/environment`'s `airMeasuredNearby` (ROADMAP plan step 5), and the
+panel's "Measured nearby" block under the modelled rows (Bill's pick A, claude.ai/artifact/TCm9QFhok8sAQaFbJdtZVW;
+AURN included, so a listing outside London gets its monitor). It shows once the API is deployed; before that the
+block is absent and the panel is unchanged. The text below is the plan as parked.
 
 Checked on the laptop before the Deen Developers demo: the extension's two air rows ("Nitrogen dioxide", "Fine
 particles (PM2.5)", `extension/content/panel.js:779-780`) are DEFRA PCM only, the modelled 2024 annual mean on a

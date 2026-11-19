@@ -231,6 +231,13 @@ geocode server-side, which is the one thing the extension cannot do for itself.
   works in postcode-string order, so coverage arrives alphabetically - East
   London before South West - and a listing showing no air quality mid-load is
   the frontier, not a fault
+- **Measured nearby** (2026-11-18, Bill's pick A of claude.ai/artifact/TCm9QFhok8sAQaFbJdtZVW) - from the
+  endpoint's `airMeasuredNearby`: the nearest Breathe London sensor (London) and DEFRA AURN monitor within 5 km
+  of the listing, each with its place, distance (as the site words it), setting, NO2 / PM2.5 means and period,
+  in a block UNDER the modelled rows, never in their place. No bars: a sensor and a monitor are never ranked,
+  and the fold says so. The publishers' credits sit in the fold, word for word, linked (https only, opened
+  apart). An absent block or entry draws nothing: never "none nearby". Held by
+  `tests/extension-panel-render.mjs` (SW5's real answer, monitor only, none, an empty entry, hostile text).
 
 Every row appears only where a real measurement exists. Absent means the key is
 missing, never null and never a default - and what was NOT measured is stated in

@@ -336,11 +336,11 @@ all then clamped to 0–10, with `trend` read as the real-terms figure from v5.1
 
 **Why the midpoint is absolute and the tails are relative.** The 5.0 anchor is a real-world fact (0% price movement), so it does not drift when the pool is re-based at a refresh. The extremes are pool-relative, which keeps the scale usable when the whole market moves. This is the same relative reasoning applied to both directions rather than only upward.
 
-**Why the tails are scaled separately.** The London cohort's trends ran from −28.1% to +3.1% as of the 2026-Q2 snapshot (the sterling pool's real trends run −17.3% to +4.4% at August 2026). A single symmetric map across that range would compress every rising borough into the top fifth of the scale, making +3.1% nearly indistinguishable from +0.4%. Scaling each side to its own extreme keeps both tails legible.
+**Why the tails are scaled separately.** The London cohort's trends ran from −28.1% to +3.1% as of the 2026-Q2 snapshot (the sterling pool's real trends run −21.3% to +4.7% at September 2026). A single symmetric map across that range would compress every rising borough into the top fifth of the scale, making +3.1% nearly indistinguishable from +0.4%. Scaling each side to its own extreme keeps both tails legible.
 
 **What this replaced (v3.2–v3.3).** The previous formula was `clamp((trend / max_trend) × 10, 0, 10)`, scaled against the fastest riser alone. Every falling borough therefore floored at 0: **fourteen of the thirty-three London boroughs shared one value**, and Ealing scored identically to the City of London despite a difference of nearly thirty percentage points. The component carried no signal for 42% of the map, and the API had to publish a caveat stating that growth "cannot tell a slight dip apart from a steep fall". Under v3.4 the same cohort yields 21 distinct values, and only the steepest faller sits on the floor. See §20 for the full changelog entry.
 
-For the London cohort as of the 2026-Q2 snapshot, `max_trend` was +3.1% (Waltham Forest) and `min_trend` −28.1% (City of London); **twenty** boroughs carried negative 12-month trends. For the sterling pool at August 2026 (v5.2), `max_trend` is +4.4% real (Calderdale) and `min_trend` −17.3% real (City of London); the London comparison on `/v1/changes` names those yardsticks, qualifying one outside London with its city.
+For the London cohort as of the 2026-Q2 snapshot, `max_trend` was +3.1% (Waltham Forest) and `min_trend` −28.1% (City of London); **twenty** boroughs carried negative 12-month trends. For the sterling pool at September 2026 (v5.2), `max_trend` is +4.7% real (Sunderland) and `min_trend` −21.3% real (Westminster); the London comparison on `/v1/changes` names those yardsticks, qualifying one outside London with its city.
 
 > **Corrected 2026-08-10.** The figures above previously read −28.2% to +5.0%, with fourteen boroughs negative. Those came from London's held `trend` values, which matched **no** month of HM Land Registry HPI — while the same test identified the *price* source at 33 of 33. The 2026-07-24 quarterly refresh (§18) rolled prices to May 2026 HPI and did not roll trends with them. The values are now HPI 2026-05 throughout, verified by `scripts/build_hpi_prices.py --check`, which is a blocking preflight gate. The distinct-value count fell from 28 to 21 because the corrected cohort is more tightly clustered, not because the formula changed.
 
@@ -1384,7 +1384,8 @@ Display values in the response are rounded to one decimal place for components a
 A real end-to-end calculation at **methodology v5.1**, using `SW11 1AA`
 (Battersea, in the London Borough of Wandsworth). Every figure below was taken
 from the live API on 2026-09-07 and re-derived from the engine; the growth
-working and the persona table were re-derived for v5.1 on 2026-09-15.
+working and the persona table were re-derived for v5.1 on 2026-09-15, and every
+price, growth and score figure again at the September 2026 HPI roll (2026-11-18).
 
 > **This section is now GATED.** `scripts/check_worked_example.py` re-derives
 > every number here from `backend/lambdas/score/app.py` and fails if any of them
@@ -1417,9 +1418,9 @@ Wandsworth's scored inputs, as `CITIES['london']['boroughs']['Wandsworth']`
 holds them:
 
 ```
-avgPrice:             694210      # HM Land Registry UK HPI, 2026-08 vintage
-trend:                -5.3        # annualised %, same source (nominal)
-trendReal:            -8.3        # v5.1: after CPIH of 3.3% for August 2026 (ONS L55O)
+avgPrice:             692067      # HM Land Registry UK HPI, 2026-09 vintage
+trend:                -5.2        # annualised %, same source (nominal)
+trendReal:            -8.5        # v5.1: after CPIH of 3.6% for September 2026 (ONS L55O)
 p8:                   0.49        # DfE Key Stage 4 Progress 8, 2023/24 Revised
 crimeRate:            76.6        # ONS Table C4, offences per 1,000 (year ending June 2026)
 transport:            'good'      # NaPTAN, share of postcodes within 800 m
@@ -1445,29 +1446,29 @@ carries `measuredAtLocation: true` here, meaning READ AT this postcode rather th
 > That was the mechanism behind two of the three corrections. **Check
 > `quietResolution` before hand-deriving quiet for any postcode.**
 
-**Affordability = 0.3.** Log scale against the NATIONAL price band (§4.2) since
+**Affordability = 0.1.** Log scale against the NATIONAL price band (§4.2) since
 methodology v5.0, not the London cohort: the 5th and 95th percentiles of all 97
-borough medians in the sterling pool, `p5 = 159,100`, `p95 = 732,271`:
+borough medians in the sterling pool, `p5 = 159,341`, `p95 = 700,172`:
 
 ```
-afford = ln(732,271 / 694,210) / ln(732,271 / 159,100) x 10
-       = 0.05338 / 1.52662 x 10
-       = 0.3496...
-       -> 0.3
+afford = ln(700,172 / 692,067) / ln(700,172 / 159,341) x 10
+       = 0.01164 / 1.48028 x 10
+       = 0.0787...
+       -> 0.1
 ```
 
 (The pool grew from 94 to 97 on 2026-09-27, when Greater Norwich joined the API.
 It moved both anchors - p5 158,435 -> 159,100, p95 720,241 -> 716,131 - and
-Wandsworth's affordability stayed 0.3. A new city always moves the national
+Wandsworth's affordability then stayed 0.3. A new city always moves the national
 band; that is the anchor doing what §4.2 says.)
 
 This is the figure that moves most at v5.0, and the direction is the point.
-Wandsworth's GBP 694,210 is mid-table among 33 London boroughs and under the
+Wandsworth's GBP 692,067 is mid-table among 33 London boroughs and under the
 old within-city scale scored **6.5**; it sits just under the national 95th
-percentile and scores **0.3**. Nothing about Wandsworth changed - it is now
+percentile and scores **0.1**. Nothing about Wandsworth changed - it is now
 priced against the country rather than against its neighbours. Its within-city
 standing is published separately as `context.priceRankInCity`, which for
-Wandsworth is 27 of 33.
+Wandsworth is 28 of 33.
 
 (At the June 2026 vintage this read 0.4 from GBP 680,105 against a band of
 158,231 to 717,369. Both the price and the band moved at the July roll, which
@@ -1475,34 +1476,37 @@ is what a national anchor means: every borough's affordability depends on every
 other borough's price, so a vintage roll moves the whole table, not the seven
 boroughs whose own price moved most. At the July vintage it read 0.3 from GBP
 686,076 against 159,100 to 716,131; the August roll raised Wandsworth 1.2% and
-the band's top 2.3%, so the figure rose 0.285 -> 0.350 and still publishes 0.3.)
+the band's top 2.3%, so the figure rose 0.285 -> 0.350 and still published 0.3.
+The September roll lowered Wandsworth 0.3% and the band's top 4.4%, to within
+1.2% of Wandsworth's own price, so the figure fell 0.350 -> 0.079 and publishes 0.1.)
 
-**Growth = 2.6.** Real-terms trend first (§4.3): `((1 − 0.053) / (1 + 0.033) − 1) × 100 = −8.33 → −8.3`.
+**Growth = 3.0.** Real-terms trend first (§4.3): `((1 − 0.052) / (1 + 0.036) − 1) × 100 = −8.49 → −8.5`.
 Then the dual anchor against the STERLING POOL's REAL-terms extremes (§4.3,
 methodology v5.2 - every one of the 94 boroughs in the pool, not the London
-cohort): `min = -17.3` (City of London), `max = 4.4` (Calderdale, West
-Yorkshire); Wandsworth is falling, so it is scaled against the steepest fall:
+cohort): `min = -21.3` (Westminster), `max = 4.7` (Sunderland, Tyne and
+Wear); Wandsworth is falling, so it is scaled against the steepest fall:
 
 ```
-growth = 5 - (-8.3 / -17.3) x 5
-       = 5 - 2.399
-       = 2.601
-       -> 2.6
+growth = 5 - (-8.5 / -21.3) x 5
+       = 5 - 1.995
+       = 3.005
+       -> 3.0
 ```
 
-The City of London is both London's and the pool's steepest faller, so for a
+Westminster is both London's and the pool's steepest faller, so for a
 falling London borough v5.2 changes nothing in this arithmetic; a RISING London
-borough is scaled against Calderdale's +4.4% rather than London's own leader,
-and a rising Teesside borough against the same +4.4% rather than its own city's
+borough is scaled against Sunderland's +4.7% rather than London's own leader,
+and a rising Teesside borough against the same +4.7% rather than its own city's
 leader - which is the point (§4.3). The within-city standing is
-published beside the score as `context.growthRankInCity`, 26 of 33 for
+published beside the score as `context.growthRankInCity`, 24 of 33 for
 Wandsworth.
 
-(Nominal, this would be 3.2 from −5.3% against a nominal pool of −14.6 to
-+7.8. The 0.6 the borough loses is inflation. Wandsworth's own real trend did
+(Nominal, this would be 3.6 from −5.2% against a nominal pool of −18.5 to
++8.5. The 0.6 the borough loses is inflation. Wandsworth's own real trend did
 not move between July and August (−8.3% both); its growth fell 3.2 -> 2.6
 because the fall it is scaled against eased, Westminster's −23.1% giving way
-to the City of London's −17.3%. At the June vintage, under the London cohort,
+to the City of London's −17.3%. In September it fell to −8.5% and its growth
+ROSE 2.6 -> 3.0, because Westminster, at −21.3%, is the steepest fall again. At the June vintage, under the London cohort,
 the real figure was 3.6, from −7.8% against −27.4 to +1.5.)
 
 Growth carries **weight 0.00** in every persona but `investor` (§5.1), so it
@@ -1559,44 +1563,45 @@ Balanced weights are `quiet 0.32 / afford 0.27 / growth 0.00 / live 0.27 /
 env 0.14`:
 
 ```
-score = 6.4 x 0.32 + 0.3 x 0.27 + 2.6 x 0.00 + 7.8 x 0.27 + 6.2 x 0.14
-      = 2.048 + 0.081 + 0.000 + 2.106 + 0.868
-      = 5.103
-      -> 5.1
+score = 6.4 x 0.32 + 0.1 x 0.27 + 3.0 x 0.00 + 7.8 x 0.27 + 6.2 x 0.14
+      = 2.048 + 0.027 + 0.000 + 2.106 + 0.868
+      = 5.049
+      -> 5.0
 ```
 
-Since v4.0's 6.7, affordability has taken 1.7 points (6.5 -> 0.3): Wandsworth
+Since v4.0's 6.7, affordability has taken 1.7 points (6.5 -> 0.1): Wandsworth
 is now priced against the country instead of against the other 32 London
 boroughs. The October 2026 air-quality roll gave 0.1 back. (The July 2026 roll moved affordability
 0.4 -> 0.3 and growth 3.6 -> 3.2; the total held at 5.0 because growth carries
 no weight here and 0.027 of affordability did not cross a rounding boundary.
 The August 2026 roll moved growth 3.2 -> 2.6 and the total not at all. The October 2026 crime roll, ONS
 year ending June 2026, moved Wandsworth's rate 76.4 -> 76.6 and its crime sub-score 8.24 -> 8.23;
-liveability stayed 7.8.)
+liveability stayed 7.8. The September 2026 roll moved affordability 0.3 -> 0.1 and the total
+5.1 -> 5.0: the engine weights the unrounded 0.079, so the total is 5.043.)
 
 ### Step 5, Verification against the live API
 
 ```
 GET /v1/score?postcode=SW11+1AA
 -> {
-     "score": 5.1,
-     "components": { "quiet": 6.4, "afford": 0.3, "growth": 2.6,
+     "score": 5.0,
+     "components": { "quiet": 6.4, "afford": 0.1, "growth": 3.0,
                      "live": 7.8, "env": 6.2 },
      "weights":    { "quiet": 0.32, "afford": 0.27, "growth": 0.00,
                      "live": 0.27, "env": 0.14 },
      "context": {
-       "avgPriceGbp": 694210,
-       "priceTrendPct": -5.3,
-       "priceTrendRealPct": -8.3,
-       "inflationPct": 3.3,
+       "avgPriceGbp": 692067,
+       "priceTrendPct": -5.2,
+       "priceTrendRealPct": -8.5,
+       "inflationPct": 3.6,
        "growthBasis": "real",
-       "priceRankInCity": { "rank": 27, "of": 33 },
+       "priceRankInCity": { "rank": 28, "of": 33 },
        "noiseImpactBand": "moderate",
        "quietResolution": "raster",
        "liveResolution": "measured",
        "environmentResolution": "measured"
      },
-     "methodologyVersion": "5.1"
+     "methodologyVersion": "5.7"
    }
 ```
 
@@ -1633,24 +1638,24 @@ after, so the honest contrast is three unrounded inputs against five.)
 
 ### Comparison: same postcode, every persona
 
-All eight re-derived from the engine at the August 2026 roll (2026-10-22),
+All eight re-derived from the engine at the September 2026 roll (2026-11-18),
 with the live raster reading for `quiet`, and each reproduces from the
 components above under its own weights:
 
 | Persona | q / a / g / l / e | Score | Why it differs |
 |---|---|---|---|
-| `balanced` | 0.32 / 0.27 / 0.00 / 0.27 / 0.14 | **5.1** | Default |
-| `commuter` | 0.21 / 0.30 / 0.00 / 0.35 / 0.14 | **5.0** | Liveability at 0.35 offsets the 0.30 on a 0.3 affordability |
-| `family` | 0.18 / 0.18 / 0.00 / 0.46 / 0.18 | **5.9** | Liveability at 0.46, and excellent healthcare |
-| `firsttime` | 0.16 / 0.43 / 0.00 / 0.27 / 0.14 | **4.1** | Affordability at 0.43, and 0.3 is near the national floor |
-| `investor` | 0.09 / 0.26 / 0.34 / 0.17 / 0.14 | **3.7** | Lowest: the only persona weighting growth, and the real trend is -8.3% |
-| `laterlife` | 0.36 / 0.14 / 0.00 / 0.32 / 0.18 | **6.0** | Highest: quiet-leaning and the lightest affordability weight |
-| `quietlife` | 0.48 / 0.19 / 0.00 / 0.19 / 0.14 | **5.5** | Nearly half the weight on a 6.4 |
-| `renter` | 0.26 / 0.30 / 0.00 / 0.30 / 0.14 | **5.0** | Sits between firsttime and balanced |
+| `balanced` | 0.32 / 0.27 / 0.00 / 0.27 / 0.14 | **5.0** | Default |
+| `commuter` | 0.21 / 0.30 / 0.00 / 0.35 / 0.14 | **5.0** | Liveability at 0.35 offsets the 0.30 on a 0.1 affordability |
+| `family` | 0.18 / 0.18 / 0.00 / 0.46 / 0.18 | **5.9** | Joint highest: liveability at 0.46, and excellent healthcare |
+| `firsttime` | 0.16 / 0.43 / 0.00 / 0.27 / 0.14 | **4.0** | Affordability at 0.43, and 0.1 is all but the national floor |
+| `investor` | 0.09 / 0.26 / 0.34 / 0.17 / 0.14 | **3.8** | Lowest: the only persona weighting growth, and the real trend is -8.5% |
+| `laterlife` | 0.36 / 0.14 / 0.00 / 0.32 / 0.18 | **5.9** | Joint highest: quiet-leaning and the lightest affordability weight |
+| `quietlife` | 0.48 / 0.19 / 0.00 / 0.19 / 0.14 | **5.4** | Nearly half the weight on a 6.4 |
+| `renter` | 0.26 / 0.30 / 0.00 / 0.30 / 0.14 | **4.9** | Sits between firsttime and balanced |
 
-> This table was stale from v5.0 (2026-09-09) until 2026-09-15: it still carried the pre-v5.0 within-city affordability of 6.5, so every row was about 1.7 too high while the block above it said 5.0. Re-derived from the engine's own rounding with the five components above; it is not yet gated. It was stale again from the 2026-10-01 air-quality roll (+0.1 on seven rows; `balanced` read 5.0 beside step 4's 5.1) until the August roll re-derived all eight.
+> This table was stale from v5.0 (2026-09-09) until 2026-09-15: it still carried the pre-v5.0 within-city affordability of 6.5, so every row was about 1.7 too high while the block above it said 5.0. Re-derived from the engine's own rounding with the five components above; it is not yet gated. It was stale again from the 2026-10-01 air-quality roll (+0.1 on seven rows; `balanced` read 5.0 beside step 4's 5.1) until the August roll re-derived all eight. Its closing line said "1.2 points" from before v5.0 until 2026-11-18; the spread was 2.3 at August.
 
-The spread is **1.2 points on one postcode**, entirely from weighting. That is
+The spread is **2.1 points on one postcode**, entirely from weighting. That is
 the persona system doing its job, and it is why a single headline number is
 always published alongside the weights that produced it.
 
@@ -2399,6 +2404,7 @@ A city that is scoreable but has no provenance entry is a test failure (`test_ev
 
 ## 20. Changelog
 
+- **2026-11-18 (no version change)**, **monthly vintage roll to September 2026 HPI, all thirteen UK cities, the third roll inside a quarter.** `avgPrice`/`trend` moved to HPI 2026-09 in BOTH holders (84 of 97 prices, 97 of 97 trends), the deflator to ONS CPIH for September (3.6%, from August's 3.3%); every area page, `/how-it-works/` and the open-data CSV were rebuilt and §6 re-derived from the engine. The quarter key stays `2026-Q3` and the previous snapshot May. Effects: `balanced` moves 36 of 97 scores by 0.1; `investor` moves 71 of 97, the largest Calderdale 8.3 -> 7.0. The national p95 fell 732,271 -> 700,172: it interpolates between the fifth and sixth dearest of 97, the City of London (726,633 -> 663,585) left the top six and Hammersmith and Fulham fell 754,825 -> 732,590, so Wandsworth, now the sixth, reads 0.1 for affordability. The pool's growth anchors moved: steepest real fall Westminster's -21.3% (the City of London's -17.3% in August), fastest rise Sunderland's +4.7% (Calderdale's +4.4%). §6 also corrects two lines no gate reads: the persona spread (it said 1.2 points; it was 2.3 at August and is 2.1 now) and the verification block's `methodologyVersion` (it said 5.1; the API says 5.7). *Tests:* `CompositeRenormalisationTests` rebuilt each score from the ROUNDED published components, a proxy the engine does not use (it weights quiet, afford and growth unrounded); this roll put City of London `quietlife`'s rounded components on exactly 5.05 while the engine's total is 5.0429, published 5.0 by the API and the site alike (all 1,128 borough-persona pairs compared). The weighting moved into `weighted_total()` unchanged (1,368 full results compared before and after, 0 differ) and the test reads the engine's own total from it; a constructed tie keeps it able to go red, and a mutated rescale turns it red. *Effect on scores:* the roll's only.
 - **2026-11-01 (no version change)**, **the COVID-year comparison rolled to the CAA's 2025 Heathrow contours.** ERCD Report 2601 (August 2026, Table 12) replaces ERCD 2501's 2024 figures in `scripts/measure_covid_understatement.py`: the 55 dB Lden area 148.4 → **142.4 km²** (the CAA attributes the 4% fall to quieter types and more easterly operation, 37% against 27%), so DEFRA's 2021 map (75.6 km², re-measured, unchanged) is **1.9x** smaller, still about half. The other levels: 60 dB 59.0, 65 dB 21.4, 70 dB 7.0, 75 dB 2.7 km². The JSON's CAA keys lost their year (`caa_km2`, `caa_year`), so the next edition is a change to the script alone; `--check` now also fails a JSON written for another edition, and `--verify-caa` a PDF whose Table 12 is titled for another year (both proven red). *Effect on scores:* none; the ratio is a caveat, never a correction (rule below).
 - **2026-10-23 (no version change; live 2026-10-29)**, **crime rates rolled to ONS year ending June 2026, the first quarterly crime roll.** ONS Table C4 (released 22 October 2026, still on mid-2024 population) moved 91 of the 93 borough rates it publishes for our thirteen UK cities, most by 0-3 offences per 1,000 (Westminster 355.5 -> 342.1, its crime sub-score already 0). Written into BOTH holders by code for the first time: `refresh_crime_from_ons.py --write-lambda --all` (the Lambda's copy, through build_borough_bands' city-scoped writer), then `--write --all` (the site's); `--check --all` and tests/test_borough_data_parity.py agree. Effects: liveability moves on 31 of 97 UK boroughs and the `balanced` score on 8, each by 0.1 (Rotherham 7.9 -> 7.8, City of Bristol 6.8 -> 6.9, Ealing 3.9 -> 3.8); section 6's Wandsworth moves 76.4 -> 76.6 and 8.24 -> 8.23, liveability still 7.8, total still 5.1. The edition every credit line names is now one constant, `CRIME_EDITION_LABEL`, derived like the site's `crimeVintage` from the script's EDITION: the site's label had been typed text and would have said March over June's rates.
 - **2026-10-23 (no version change; live 2026-10-29)**, **every value says where it came from (`provenance`, `sourceIndex`).** (1) *Gap:* provenance was prose for people (`sources`, `sourceBreakdown`), with each dataset's period inside a sentence, so an integrator or an AI agent could not pass a figure's source, method and year through without parsing English. (2) *Fix:* each response gains `provenance`, one entry per value (its `sources`, its `method`: measured, modelled, statistic, register, curated, estimated, derived or reference; and, for a source's own figure, `resolution` and `period`), and `sourceIndex`, the sources used. It is built from what answered (the city's credit lines, the quiet tier, the line beside a figure), from the full response and then cut to the fields sent; a batch carries `sourceIndex` once. Periods are held equal to the loaders' own settings by a test. (3) *Effect:* additive; no existing field, value or score changes, so no version bump.

@@ -55,7 +55,8 @@ function metres(d) {
 function disclosure(summaryText, paragraphs) {
   const box = el('details', 'c33-note');
   box.appendChild(el('summary', 'c33-note-sum', summaryText));
-  for (const p of paragraphs) box.appendChild(el('p', 'c33-note-body', p));
+  // A paragraph is text, or a node built here (the measured readings' linked credits): never markup from a response.
+  for (const p of paragraphs) box.appendChild(p instanceof Node ? p : el('p', 'c33-note-body', p));
   return box;
 }
 
@@ -676,6 +677,92 @@ function renderNhs(result) {
   return section;
 }
 
+// --- Air measured nearby (2026-11-18; Bill's pick A, claude.ai/artifact/TCm9QFhok8sAQaFbJdtZVW) -----------------
+// /v1/environment sends `airMeasuredNearby` {scopeKm, sensor, monitor}: the nearest Breathe London sensor (London)
+// and DEFRA AURN monitor within 5 km of the point asked, MEASURED by an instrument, display only. Drawn as a block
+// UNDER the modelled rows, never in their place, so those rows do not change. Each reading keeps its place,
+// distance and setting, which change what it means (a sensor 0.9 m from a kerb reads that road); the two are never
+// ranked. An absent block or entry draws nothing and says nothing: never "none nearby" (the API holds only
+// instruments that captured 75% of the period's hours, so a nearer one may have been left out).
+const NEARBY_KIND = { sensor: 'Breathe London sensor', monitor: 'DEFRA monitor' };
+
+// As the site words a distance (js/street_report.mjs stationDistance): to 10 m, in km from 1,000 m.
+function nearbyDistance(km) {
+  const m = Math.round(km * 100) * 10;
+  return m < 1000 ? `${m} m` : `${km.toFixed(1)} km`;
+}
+
+// "2024" for a calendar year, "12 months to Oct 2026" for a 12-month window, else the two dates as sent.
+function nearbyPeriod(p) {
+  if (!p || !/^\d{4}-\d{2}-\d{2}$/.test(p.from) || !/^\d{4}-\d{2}-\d{2}$/.test(p.to)) return '';
+  const [fy, fm, fd] = p.from.split('-').map(Number);
+  const [ty, tm, td] = p.to.split('-').map(Number);
+  if (fy === ty && fm === 1 && fd === 1 && tm === 12 && td === 31) return String(fy);
+  const after = new Date(Date.UTC(ty, tm - 1, td + 1));
+  if (fd === 1 && after.getUTCFullYear() === fy + 1 && after.getUTCMonth() === fm - 1 && after.getUTCDate() === 1) {
+    const month = new Date(Date.UTC(ty, tm - 1, 1)).toLocaleDateString('en-GB', {
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+    return `12 months to ${month}`;
+  }
+  return `${p.from} to ${p.to}`;
+}
+
+function nearbyItem(kind, e) {
+  if (!e || typeof e.name !== 'string' || typeof e.distanceKm !== 'number') return null;
+  const means = [
+    typeof e.no2MeanUgm3 === 'number' ? `NO2 ${e.no2MeanUgm3.toFixed(1)}` : null,
+    typeof e.pm25MeanUgm3 === 'number' ? `PM2.5 ${e.pm25MeanUgm3.toFixed(1)}` : null,
+  ].filter(Boolean);
+  // An entry with no reading has nothing to say about the air: drawn as nothing, not as an empty line.
+  if (!means.length) return null;
+  const item = el('li', 'c33-item');
+  const row = el('div', 'c33-row');
+  row.appendChild(el('span', 'c33-name', e.name));
+  row.appendChild(el('span', 'c33-dist', nearbyDistance(e.distanceKm)));
+  item.appendChild(row);
+  const kerb = typeof e.kerbDistanceM === 'number' ? `${Number(e.kerbDistanceM.toFixed(1))} m from the kerb` : null;
+  const setting = [typeof e.setting === 'string' ? e.setting : null, kerb].filter(Boolean).join(', ');
+  item.appendChild(el('div', 'c33-rownote', [NEARBY_KIND[kind], setting].filter(Boolean).join(' · ')));
+  item.appendChild(el('div', 'c33-vals', [`${means.join(' · ')} ug/m3`, nearbyPeriod(e.period)].filter(Boolean).join(' · ')));
+  return item;
+}
+
+function renderMeasuredNearby(block) {
+  if (!block || typeof block !== 'object') return null;
+  const items = ['sensor', 'monitor'].map((k) => nearbyItem(k, block[k])).filter(Boolean);
+  if (!items.length) return null;
+  const box = el('div', 'c33-nearby');
+  box.appendChild(el('h4', 'c33-h4', 'Measured nearby'));
+  const list = el('ul', 'c33-list');
+  for (const item of items) list.appendChild(item);
+  box.appendChild(list);
+  return box;
+}
+
+// The credit each publisher requires, word for word from the response, linked to the address it gives. Only an
+// https link is made a link; anything else stays text.
+function nearbyCredits(block) {
+  const entries = ['sensor', 'monitor'].map((k) => block?.[k]).filter((e) => e && typeof e.source === 'string');
+  if (!entries.length) return null;
+  const p = el('p', 'c33-note-body');
+  entries.forEach((e, i) => {
+    if (i) p.appendChild(document.createTextNode(' · '));
+    if (typeof e.sourceLink === 'string' && /^https:\/\//.test(e.sourceLink)) {
+      const a = el('a', 'c33-link', e.source);
+      a.href = e.sourceLink;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      p.appendChild(a);
+    } else {
+      p.appendChild(document.createTextNode(e.source));
+    }
+  });
+  return p;
+}
+
 function renderEnvironment(result) {
   if (!result.ok) {
     return unavailable('Environment', result.error);
@@ -839,6 +926,10 @@ function renderEnvironment(result) {
     section.appendChild(list);
   }
 
+  // Measured nearby: under the model, never in its place (renderMeasuredNearby).
+  const nearby = renderMeasuredNearby(env.airMeasuredNearby);
+  if (nearby) section.appendChild(nearby);
+
   // The vintage caveat travels with the reading, not just in the footer.
   //
   // DEFRA Round 4 was published in 2022 and maps 2021 — a year its own
@@ -883,6 +974,14 @@ function renderEnvironment(result) {
   explanations.push(
     ...(data.notices || []).filter((n) => !(inlinedAircraftNotice && n === aircraftNotice))
   );
+  if (nearby) {
+    explanations.push(
+      'Measured nearby means read by the instrument named, not at this home. Instruments in different settings ' +
+        '(kerbside, roadside, background) measure different things, so they are not ranked.'
+    );
+    const credits = nearbyCredits(env.airMeasuredNearby);
+    if (credits) explanations.push(credits);
+  }
 
   if (explanations.length) {
     // The summary names the count so it is obvious something was left out,
@@ -894,7 +993,7 @@ function renderEnvironment(result) {
     section.appendChild(disclosure(label, explanations));
   }
 
-  if (!rows.length && !explanations.length) {
+  if (!rows.length && !nearby && !explanations.length) {
     section.appendChild(el('p', 'c33-none', 'No environmental measurements here'));
   }
 

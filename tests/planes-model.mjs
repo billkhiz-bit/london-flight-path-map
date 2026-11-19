@@ -333,4 +333,43 @@ check("cone: the drawing's angle is the rule's own, and no angle means no drawin
   assert.equal(overheadConeSvg('Overhead means close by.'), '');
 });
 
+// Bill's pick C (2026-11-17, claude.ai/artifact/T2HNJU7E3m29LVAcywEZeo): where the nearest airport the page names is one
+// we do not count, the block says so by name, with the distance in the page's own words, so the two cannot disagree.
+const NAMES_C = { ...NAMES, LBA: 'Leeds Bradford' };
+const LBA_NEAR = { code: 'LBA', distance: '9.7 km' };
+const flat = (n) => (typeof n === 'string' ? [n] : [n.textContent, ...n.kids.flatMap(flat)].filter((t) => t != null));
+check('a nearest airport we do not count is named, with the page\'s own distance; a counted one, or none, says nothing', () => {
+  assert.equal(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES_C, LBA_NEAR).uncounted,
+    'Leeds Bradford, 9.7 km away, is not one of the two airports we count.');
+  assert.match(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C, LBA_NEAR).uncounted, /^Leeds Bradford, 9\.7 km away/, 'beside an airport\'s figures too');
+  assert.equal(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C, { code: 'LHR', distance: '10.2 km' }).uncounted, null, 'a counted airport');
+  assert.equal(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C).uncounted, null, 'no nearest airport named');
+  assert.equal(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C, { code: 'LBA' }).uncounted, null, 'no distance, no sentence');
+  assert.equal(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C, { code: 'LBA', distance: '' }).uncounted, null, 'an empty distance');
+  assert.equal(planesModel(TW9, INFO, 'TW9 1AA', NAMES_C, LBA_NEAR), null, 'never measured stays nothing at all');
+  assert.match(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES, { code: 'XYZ', distance: '3.0 km' }).uncounted, /^XYZ, 3\.0 km away/, 'no name: its code, never "undefined"');
+});
+
+check('the block: it leads the one warning box, in bold, other flying after it; either alone keeps the box', () => {
+  const warnings = (file, pc, near) => planesNodes(planesModel(file, INFO, pc, NAMES_C, near), fakeDoc).filter((n) => n.className === 'planes-warn');
+  const both = warnings({ ...TW9, other: ['TW9 9ZZ'] }, 'TW9 9ZZ', LBA_NEAR);
+  assert.equal(both.length, 1, 'one box, never two');
+  assert.equal(both[0].kids[0].tag, 'strong');
+  assert.equal(flat(both[0].kids[0]).join(''), 'Leeds Bradford, 9.7 km away, is not one of the two airports we count.');
+  assert.match(flat(both[0]).join(''), /we count\. Other flying passes over here too, .* does not mean a quiet sky\.$/);
+  const alone = warnings(TW9, 'TW9 9ZZ', LBA_NEAR);
+  assert.deepEqual(alone.map((b) => b.kids.map((k) => k.tag)), [['strong']], 'Newcastle and Middlesbrough: no other flying, still said');
+  const otherOnly = warnings({ ...TW9, other: ['TW9 9ZZ'] }, 'TW9 9ZZ', null);
+  assert.equal(otherOnly.length, 1);
+  assert.ok(!otherOnly[0].kids.some((k) => k.tag === 'strong'), 'other flying alone, as before');
+  assert.deepEqual(warnings(TW9, 'TW9 9ZZ', null), [], 'neither: no box');
+});
+
+check('headline: a nearest airport we do not count keeps the planes out of it, as other flying does', () => {
+  assert.ok(planesLead(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C), STEPS), 'Kew leads without it');
+  assert.equal(planesLead(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C, LBA_NEAR), STEPS), null);
+  assert.ok(planesBandLead(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES_C), STEPS), 'the band leads without it');
+  assert.equal(planesBandLead(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES_C, LBA_NEAR), STEPS), null);
+});
+
 console.log(`planes model: ${passed} checks passed`);

@@ -458,6 +458,37 @@
   color: #12263f;
 }
 
+/* Air measured nearby (2026-11-18, Bill's pick A): a sub-heading inside Environment, under its modelled rows,
+ * quieter than the section heading (.c33-h3) it sits beneath. */
+#cubitt33-panel .c33-nearby {
+  margin-top: 8px;
+}
+
+#cubitt33-panel .c33-h4 {
+  margin: 0 0 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--c33-muted);
+}
+
+#cubitt33-panel .c33-vals {
+  margin-top: 3px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+#cubitt33-panel .c33-link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+#cubitt33-panel .c33-link:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
 #cubitt33-panel .c33-fold-sum:focus-visible {
   outline: 2px solid #1a73e8;
   outline-offset: 2px;

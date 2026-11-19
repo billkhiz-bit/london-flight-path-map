@@ -16,6 +16,44 @@ never ranked (UK-AIR: "not scientifically sound"). Shown since 2026-10-19 (built
 `front-page-and-site.md`, "AIR MEASURED NEARBY"): within 5 km only, so Greater Norwich (nearest NO2 clearing the
 floor 77 km away) says nothing.
 
+**THE API CARRIES THEM TOO (2026-11-18, ROADMAP plan step 5; Bill's pick A, claude.ai/artifact/JeB4h7h36j33mTx9N8w6PX).**
+`/v1/environment` answers `environment.airMeasuredNearby` {`scopeKm`, `sensor`, `monitor`}, each entry the instrument's
+code, name, distance FROM THE POINT ASKED (the extension's listing, not the postcode's centre), setting (the network's
+classification, lower case), kerb distance (sensors), the means it holds, `period`, the file's own `note`, and the credit
+word for word. Route 1, Bill's pick: the Lambda reads the SITE'S OWN `data/breathe-london-sensors.json` and
+`data/aurn-sites.json` through the distribution's own address (`d1oe4ftwutjpf.cloudfront.net`, which the rename does not
+change; the drift check reads the site there and the test holds the two equal). `air_file()`: kept 1 h; after a failure
+retried in a minute, or in ten while the last good copy serves; both files read side by side (`air_files()`), so a slow
+site costs a caller one 2 s timeout; read whole or refused whole by `check_air_file()` (YYYY-MM-DD dates only, as the
+site's Date.parse reads them). So a monthly re-fetch reaches the API with `data-deploy` and no Lambda deploy.
+Absent block, entry or reading = absent key (never null); a copy past its window (45 days) is said in `notices`, an
+unreadable one only where it matters (the sensor copy for a London point, the monitor copy anywhere), and nothing is
+said beyond 5 km. A connection cut mid-body is `http.client.IncompleteRead`, NOT an OSError: caught, or the route 500s. TWO TRAPS FOUND BUILDING IT: the Lambda's `haversine_km` uses a 6371.0 km radius
+and the site's 6371.0088 (the 5 km edge moves 7 mm), so `site_km()` mirrors the site's line for line; and the spec's
+`ProvenanceEntry.basis` is an enum (raster, postcode, borough), so the distance's entry carries none. Provenance: the
+means are `measured` (the API's first), the distance `derived`; `AIR_NEARBY_DESCRIBES` names every other key.
+`backend/tests/test_air_nearby.py` runs the site's `nearestSensor`/`nearestMonitor` in node on the same files at ~1,000
+points (a London grid, a UK grid, 0.5 m either side of real instruments' 5 km edge) and the staleness edge; 35 mutants
+red (the build, the review's fixes, the spec). `backend/tests/conftest.py` stubs the block for every older suite (they
+assert notices exactly) and guards `urllib.request.urlopen`, so a module imported inside a test that reads either file
+fails by name instead of reaching the network. The route was never in `score-demo/openapi.yaml` until this: now documented, `security: []`.
+**THE REVIEW BEFORE ITS COMMIT (2026-11-19, `/code-review`, 9 findings, 5 fixed):** (1) the distance went out at 2 dp and
+the extension rounded it again to 0.1 km: 1.0451 km read "1.1 km" where the site says "1.0 km" (about 2.5% of distances
+over 1 km). `distanceKm` is now `shown_km()`, the site's `stationDistance` as a number (10 m under 1 km, 0.1 km from it,
+each from the RAW distance with JS's half-up), and the test runs `stationDistance` on 5,020 raw distances and on what the
+API sends, and holds the extension's two lines equal to the site's. (2) The means and kerb distance went out through
+Python's `round()`, ties to even, where the site's `toFixed` takes a half up: both now go out as the file holds them, so
+the caller rounds once. (3) urlopen's timeout is per socket read, so a dripping body could hold a caller past 2 s:
+`_air_body()` reads with `read1` against a whole-read deadline. (4) An unread sensor copy was said only for the route's
+`city == 'london'`; Stanwell (Spelthorne) is in no covered borough and 4 km from Heathrow Bath Road's sensor, so the
+notice now also covers `AIR_SENSOR_REACH`, 40 km round Charing Cross (the farthest sensor is 25.05 km out; the test holds
+the circle against the file). (5) `test_provenance`'s "every `defra-` id is modelled" names `defra-aurn`, the one
+measured. NOT changed: `setting` stays the network's own classification (the spec says so; the site's "background" is its
+display word), the extension's "Oct 2026" and "ug/m3" are its own narrow-panel forms (its test pins them), and the
+explanation count already counted paragraphs, not readings. **A mutant the same length as the line it replaced, restored
+in the same second, ran from a STALE `__pycache__`** (CPython checks a .pyc by source mtime in whole seconds and size):
+run mutation scripts with `PYTHONDONTWRITEBYTECODE=1`, and clear `backend/lambdas/*/__pycache__` before a SAM build.
+
 **BREATHE LONDON'S SENSORS ARE HELD, not shown (2026-10-19).** `scripts/fetch_breathe_london.py --fetch` writes
 `data/breathe-london-sensors.json` (checked in; the raw API answers, ~15 MB gzipped, in ignored
 `data/breathe-london/<fetch day>/`, so a re-run the same day resumes and `--verify` re-derives exactly). The GLA key is
@@ -479,9 +517,53 @@ has no gap inside its run, its next reading is hours later. The gap from the las
 from the one before the first) must count, so "heard all through" means heard climbing away. The corrected replay was
 stopped unfinished on Bill's ruling. If it is ever built: it changes `movements()`, so every day file is recounted into a
 NEW folder and the movement rule goes into each day file's `definition` (`one_definition()` then refuses a mix).
+**BUILT AND MEASURED 17 Nov (Bill: "Run A first"), NOT SHIPPED (his "Go with recommended": it cannot bring Leeds Bradford
+back).** `low_pass()` in `movements()`, H 100 ft and G 30 s set BEFORE any verdict was looked at (real landings come within
+~50 ft of the measured field; the helicopters bottom out at 160 ft and up; a lost landing's next reading is minutes away),
+`MOVEMENT_RULE` in the day files' definition, 9 new tests, 8 of 8 mutants red (the inside-only gap among them). The
+corrected replay over all 271 days of January to September 2026 (every record checked equal to `movements()`), scored
+through the averages' own month verdicts: **Leeds Bradford's September 108.1% -> 107.2%, still over the ceiling, and every
+H (60-200 ft) and G (10-30 s) tried leaves it at 107.1-107.2%.** The nine published airports move by 0.5 points at most;
+Luton loses 162 movements in nine months (the trap avoided); Cardiff (unpublished) falls from ~97% to 70-90%: its return
+seems to count practice approaches. **Why it cannot work: the excess is mostly AIRLINERS.** The CAA's Table 03 row for
+Leeds Bradford: August 4,315 against our 4,314; September 3,877 against our 4,192. Our fixed-wing movements WITH a ground
+report fell 2.4% (3,894 -> 3,802) where the CAA's `air_transport` fell 7.5% (3,742 -> 3,460): a five-point gap in aircraft
+heard on the runway, which no low-pass rule can touch. Helicopters rose 135 -> 235 (+74%; the CAA's `test_and_training`
+156 -> 100): about a third of the excess. Kept, gitignored, in `data/adsb/lowpass-2026-11-17/` (the patch, the replay and
+scorer, `score-2026-11-17.txt`, `lba_breakdown.py`). **Next for Leeds Bradford:** the CAA's October table (~mid-December),
+or a revised September; or, read-only, September's airliner gap per day (diversions, positioning, day boundaries).
 
 **The roll's one red preflight check was a typed share** (2026-11-16): `tests/uk-city-panel.mjs` held SW5 9HP's chart to
 Heathrow's "56% of days" westerly, January to August's figure; September made it 60, the panel showed 60, and the test
 went red. It now reads `share_pct` from `data/planes/airports.json`, as the panel does. The other typed shares (Kew's
 56/15/29 in `tests/front-page.mjs`, `tests/planes-model.mjs`, `tests/panel-findings.mjs`) are held to their own FIXTURES and
 do not move on a roll. On the next roll, grep `tests/` for `% of days'` and check each reads a fixture or the file.
+
+## The weather cache lost the last day of every request (2026-11-18)
+
+**Found by N65, not by the counter.** Heathrow's 2025 N65 year (branch `n65`) ran 350 days and said "failed 0", but 30 Sep
+2025 found 1,284 flights and flew none: each one stopped "no-air", because September's `-air` weather file ended at 29 Sep
+23:50 (697 rows; a 30-day month has 721). **The cause: IEM's end date is exclusive.** `fetch_metar.py` asked for
+`day2` = the month's last day, so the LAST month of any request came back a day short, while a month in the middle of a
+range came whole. That is why it looked random: September 2025 had been fetched alone (17 Nov); months inside a longer range came whole.
+**Fixed on master and on n65 alike**: `request_end()` asks through the first of the month after (rows are filed by their
+own month, so no file gains a day it should not hold); `tests/test_fetch_metar.py` checks the request itself, December
+into January too, and is red on the old end.
+
+**What it touched in the counter's cache** (`data/metar/<station>-<YYYY-MM>.csv`): 46 files a day short: December 2025,
+September 2026 and October 2026 for all 15 UK stations, plus `EGLL-2026-07-air.csv`. All refetched (Bill's "run 1",
+18 Nov), the old files copied first to `data/metar-set-aside-2026-11-18/`; every old row is in the new files, none
+changed, no duplicates. October 2026 was ALSO partial for another reason: fetched on 24 Oct while the month ran and
+never fetched again (2,654 rows added, 24 to 31 Oct); `finished()` refetches a running month only when someone runs the
+fetcher again. **Before any roll, run the fetcher for the roll's months: it is what refreshes a partial month.**
+
+**Live effect: one day.** The planes counts live since 17 Nov (January to September 2026) counted 30 Sep 2026 with that
+day's reports missing. The counter did not fall back to the aircraft alone: `metar_qnh()` reads six hours either side of
+the UTC day, so it held the evening before (and the morning after, where October was cached) and `_interp` drew a STRAIGHT
+LINE across the day's pressure. One day of about 270 in each average, wrong only as far as that day's pressure moved.
+**Owed: recount 30 Sep 2026 at the next planes roll** (Bill's call, 18 Nov: with the roll, not alone). 31 Dec 2025 had no
+track release, and `-air` files are N65's alone (the counter never reads them).
+
+**The lesson for every runner: a day that computes nothing is not a result.** The N65 runner counted a failure only when
+the day's script exited non-zero, so 0 of 1,284 flown was written as a reading. A missing input must surface as a
+failure, never as a zero.

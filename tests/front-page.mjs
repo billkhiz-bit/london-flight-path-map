@@ -2818,14 +2818,19 @@ const makeReport = async (pc) => {
   const planesAsked = [];
   const PLANES = {
     'airports.json': {
-      classes: ['westerly', 'easterly', 'mixed'], districts: ['SW5', 'TW3', 'TW9'], bar_full: 400,
+      classes: ['westerly', 'easterly', 'mixed'], districts: ['M22', 'SW5', 'TW3', 'TW9'], bar_full: 400,
       definition: 'Overhead means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA\'s definition of an overflight (CAP 1498).',
       direction_rule: 'A day counts as one way when 80% of its flights used that way.',
       // The builder's POSTCODES_RULE (2026-11-10), as it writes it: the fold sets it as a point, word for word.
       postcodes_rule: 'PO boxes and other postcodes for organisations that receive a lot of post are left out: they sit at a delivery office or a business, not at homes.',
-      airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] } },
+      // London City as the real file counts it (2026-11-17): it is SW5 9HP's nearest airport on the map (16.4 km against
+      // Heathrow's 16.8), and an airport we do not count there is named and keeps the planes out of the heading (Bill's
+      // pick C). Manchester is left out on purpose: M22 5RX is where the stub holds an airport we do not count.
+      airports: { LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] },
+        LCY: { share_pct: { westerly: 47, easterly: 35, mixed: 18 }, months: ['202601', '202608'] } },
       credits: ['Flight tracks: adsb.lol (ODbL 1.0)'],
     },
+    'M22.json': { district: 'M22', postcodes: {}, none: ['M22 5RX'], approx: [], other: [] },
     'TW9.json': { district: 'TW9', postcodes: { 'TW9 3PZ': { LHR: [310, 4, 168] } }, none: [], approx: [], other: [] },
     'TW3.json': { district: 'TW3', postcodes: { 'TW3 3QL': { LHR: [[7, 339], 0, 3] } }, none: [], approx: [], other: [] },
     // SW5 9HP's real figures (2026-11-07): under the planes layer's first step on every kind of day.
@@ -3240,6 +3245,24 @@ const makeReport = async (pc) => {
   const edgeHead = await headlineOf();
   ok(edgeHead.lead === 'Aircraft noise at TW3 3QL is over the WHO guideline' && edgeHead.question === 'hidden',
     'option C: a range is never the heading: on a flight path\'s edge it leads with DEFRA\'s aircraft noise', JSON.stringify(edgeHead));
+  // Bill's pick C (2026-11-17): where the airport the Nearby list names is one we do not count, the planes box names it
+  // first, with the Nearby row's OWN distance (the two read one rule), and the heading never leads with the planes. The
+  // stub counts Heathrow and London City only, so Manchester is one we do not count HERE (the real file counts it).
+  await ep.fill('#pc', 'M22 5RX');
+  await ep.press('#pc', 'Enter');
+  await ep.waitForFunction(() => document.getElementById('ans-title').textContent === 'M22 5RX' && !document.getElementById('ans-planes').hidden, null, { timeout: 10000 }).catch(() => {});
+  await ep.waitForTimeout(500);
+  const notCounted = await ep.evaluate(() => {
+    const warn = document.querySelector('#ans-planes .planes-warn');
+    const row = [...document.querySelectorAll('#ans-routes .fact')].find((f) => f.querySelector('.k')?.textContent === 'Airport');
+    return { strong: warn?.querySelector('strong')?.textContent ?? null, boxes: document.querySelectorAll('#ans-planes .planes-warn').length, airport: row?.querySelector('.k + span')?.textContent ?? null };
+  });
+  const nearbyKm = /^Manchester, ([\d.]+ km) to the /.exec(notCounted.airport || '')?.[1];
+  const notCountedHead = await headlineOf();
+  ok(Boolean(nearbyKm) && notCounted.strong === `Manchester, ${nearbyKm} away, is not one of the two airports we count.` && notCounted.boxes === 1
+    && !/planes/i.test(notCountedHead.lead || ''),
+    'planes overhead: an airport we do not count is named first in the box, with the Nearby row\'s own distance, and never headlined (Bill\'s pick C)',
+    JSON.stringify({ notCounted, notCountedHead }));
   // Outside our city regions there is nothing true to lead with: the question comes back, and nothing is said.
   await ep.fill('#pc', 'EX1 1HS');
   await ep.press('#pc', 'Enter');
