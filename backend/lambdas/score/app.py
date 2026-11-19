@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 from urllib.request import Request, urlopen
 
 logger = logging.getLogger()
@@ -10550,6 +10550,13 @@ AIR_FILE_MAX_BYTES = 2_000_000  # anything this size is not ours
 # outside every covered borough can still be within 5 km of a sensor (Epsom and a Sutton sensor), so the route's
 # city alone missed it (review 2026-11-19). A superset: a notice there says only that our copy was not read.
 AIR_SENSOR_REACH = (51.5074, -0.1278, 40)
+# Bounds on the files' TEXT, which reaches every answer, integrators and the MCP tool's model context (audit 2026-11-19
+# M-5): the builders check their own output, but what the Lambda is SERVED is checked here. Today's longest: a name
+# 51, a note 224, a credit 103. Each credit links only to its own publisher, so a bad deploy cannot point the
+# extension's credit (clickable inside Rightmove's page) anywhere else.
+AIR_TEXT_MAX = {'name': 120, 'note': 600, 'attribution': 300}
+AIR_SETTING_RE = re.compile(r'[A-Za-z][A-Za-z ]{0,39}')
+AIR_LINK_HOST = {'sensor': 'www.breathelondon.org', 'monitor': 'www.nationalarchives.gov.uk'}
 _AIR_NETWORK = {'sensor': 'Breathe London', 'monitor': 'DEFRA AURN'}
 _AIR_MISSING = {'sensor': 'The nearest Breathe London sensor', 'monitor': 'The nearest DEFRA AURN monitor'}
 _AIR_FILE_CACHE = {}  # kind -> {'data': the last good copy or None, 'next': monotonic time to read again}
@@ -10582,9 +10589,13 @@ def check_air_file(kind, data):
         raise AirFileRefused('no sites')
     if not isinstance(data.get('attribution'), str) or not data['attribution'].strip():
         raise AirFileRefused('no attribution')
+    if len(data['attribution']) > AIR_TEXT_MAX['attribution']:
+        raise AirFileRefused('the attribution is longer than any credit of ours')
+    if data.get('note') is not None and (not isinstance(data['note'], str) or len(data['note']) > AIR_TEXT_MAX['note']):
+        raise AirFileRefused('the note is not a note')
     link = data.get('attributionLink') if kind == 'sensor' else data.get('licence')
-    if not isinstance(link, str) or not link.startswith('https://'):
-        raise AirFileRefused('no credit link')
+    if not isinstance(link, str) or not link.startswith('https://') or urlsplit(link).hostname != AIR_LINK_HOST[kind]:
+        raise AirFileRefused('no credit link to its publisher')
     if kind == 'sensor':
         window = data.get('window') if isinstance(data.get('window'), dict) else {}
         if _iso_day(window.get('from'), 'window.from') > _iso_day(window.get('to'), 'window.to'):
@@ -10601,6 +10612,10 @@ def check_air_file(kind, data):
         for key in ('code', 'name', setting):
             if not isinstance(row.get(key), str) or not row[key].strip():
                 raise AirFileRefused(f'{name}: no {key}')
+        if len(row['name']) > AIR_TEXT_MAX['name']:
+            raise AirFileRefused(f'{name}: the name is longer than any place name')
+        if not AIR_SETTING_RE.fullmatch(row[setting]):
+            raise AirFileRefused(f'{name}: the {setting} is not a setting')
         means = [row.get(p) for p in ('no2', 'pm25')]
         if not any(m is not None for m in means):
             raise AirFileRefused(f'{name}: no reading')

@@ -64,7 +64,7 @@ import {
   reportDocument,
   reportReference,
 } from '../js/street_report.mjs';
-import { districtOf, planesModel } from '../js/planes.mjs';
+import { districtOf, planesModel, planesNearest } from '../js/planes.mjs';
 
 const API = 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/environment';
 
@@ -184,12 +184,10 @@ for (const need of ['data/planes/airports.json', 'data/planes-layer/index.json']
 }
 const planesInfo = await readJson('data/planes/airports.json');
 const planesFile = resolve(`data/planes/${districtOf(loc.postcode)}.json`);
-// The nearest airport the report names (its first tile: routes.scope[0], "9.7 km"), so the planes block can say when it
-// is one we do not count (Bill's pick C, 2026-11-17).
-const nearAp = routes.scope[0];
+// The nearest airport by planesNearest(), the one rule every surface names (audit 2026-11-19 I-2), so the planes block
+// can say when it is one we do not count (Bill's pick C, 2026-11-17).
 const planesHere = existsSync(planesFile)
-  ? planesModel(await readJson(planesFile), planesInfo, loc.postcode, undefined,
-    nearAp ? { code: nearAp.code, distance: `${nearAp.dist.toFixed(1)} km` } : null)
+  ? planesModel(await readJson(planesFile), planesInfo, loc.postcode, undefined, planesNearest(proc, loc.latitude, loc.longitude))
   : null;
 const layerSteps = (await readJson('data/planes-layer/index.json')).steps || [];
 

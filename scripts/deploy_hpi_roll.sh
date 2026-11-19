@@ -5,7 +5,8 @@
 # it is a production change - and the alternative was five commands retyped
 # from three documents. Run from the repo root in Git Bash:
 #
-#     sh scripts/deploy_hpi_roll.sh
+#     sh scripts/deploy_hpi_roll.sh                    # builds and creates the SAM changeset, then stops for review
+#     sh scripts/deploy_hpi_roll.sh --after-backend    # once it is executed: web, area, meta, open data, then verify
 #
 # WHY BACKEND FIRST. index.html computes every score locally (v5.0 pools the
 # national price band, v5.1 deflates growth), so a frontend-first deploy puts
@@ -46,11 +47,21 @@ echo "prices == HPI: green on the tree"
 # /how-it-works/ bakes Hounslow's worked example and the price month (2026-10-22): a roll moves both.
 python scripts/build_how_it_works.py --check >/dev/null || { echo "how-it-works is behind the engine: run python scripts/build_how_it_works.py --write first"; exit 1; }
 
-step "1. backend (SAM) - the API moves first"
-( cd backend && rm -rf .aws-sam \
-  && AWS_PROFILE=flightmap sam build \
-  && AWS_PROFILE=flightmap sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
-       --parameter-overrides EpcBearerToken="$EPC_BEARER_TOKEN" )
+if [ "${1:-}" != "--after-backend" ]; then
+  # A CHANGESET FOR REVIEW, NEVER A BLIND DEPLOY (CLAUDE.md "SAM deploys go through a reviewed changeset"; audit
+  # 2026-11-19 M-12: this script still ran `sam deploy --no-confirm-changeset`). It stops here: read the changeset
+  # (a roll moves ScoreFunction's code only; the Chat role/function and the API show "Dynamic" on its ARN), execute it,
+  # wait for UPDATE_COMPLETE, then run this script again with --after-backend for steps 2 to 5.
+  step "1. backend (SAM) - the API moves first: a changeset to review"
+  ( cd backend && rm -rf .aws-sam \
+    && AWS_PROFILE=flightmap sam build \
+    && AWS_PROFILE=flightmap sam deploy --no-execute-changeset --no-fail-on-empty-changeset \
+         --parameter-overrides EpcBearerToken="$EPC_BEARER_TOKEN" )
+  echo ""
+  echo "Read the changeset above (aws cloudformation describe-change-set --change-set-name <its arn>), execute it,"
+  echo "wait for UPDATE_COMPLETE, then:   sh scripts/deploy_hpi_roll.sh --after-backend"
+  exit 0
+fi
 
 step "2. the gate that was red before the deploy must be green now"
 node tests/area-page-freshness.mjs
@@ -58,8 +69,8 @@ node tests/area-page-freshness.mjs
 step "3. web (index.html + the funnel pages) - the site follows"
 python scripts/make.py web-deploy
 
-step "4. area pages (they BAKE scores) + sitemap"
-python scripts/make.py area-deploy meta-deploy
+step "4. area pages (they BAKE scores) + sitemap + open data (every price roll rewrites its CSV; audit 2026-11-19 M-12)"
+python scripts/make.py area-deploy meta-deploy open-data-deploy
 
 step "5. verify FROM THE ORIGIN, never from the exit codes above"
 echo "-- invalidations still in progress (should drain within a few minutes):"

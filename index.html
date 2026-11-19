@@ -3166,6 +3166,21 @@
       .panel-all:not([open]) > :not(summary) {
         display: none;
       }
+      /* A borough card's way to its area page (2026-11-19): under the fold, in the fold summary's colour and size. */
+      .ac-area-link {
+        margin: 0;
+        padding: 14px 24px 20px;
+        font-family: var(--font-sans);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .ac-area-link a {
+        color: var(--orange-text);
+      }
+      .ac-area-link a:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
       .station-lines {
         display: flex;
         flex-wrap: wrap;
@@ -6655,13 +6670,13 @@
           impact: 'moderate-high',
           avg_price: 321895,
           trend: 5.2,
-          note: 'Directly beneath the 23 approach, the prevailing arrival configuration. Prices are the second highest in the city-region and rising.',
+          note: 'Directly beneath the 23 approach, the prevailing arrival configuration.',
         },
         Trafford: {
           impact: 'moderate',
           avg_price: 393897,
           trend: 4.7,
-          note: 'The dearest and fastest-rising borough in Greater Manchester. West of the airport and off the main approach axis.',
+          note: 'West of the airport and off the main approach axis.',
         },
         Tameside: {
           impact: 'low',
@@ -6679,7 +6694,7 @@
         Rochdale: { impact: 'low', avg_price: 212685, trend: 4.1, note: 'The far north-east of the city-region, beyond the reach of airport noise.' },
         Bury: { impact: 'low', avg_price: 245206, trend: 3.3, note: 'North of the city and clear of both approach corridors.' },
         Bolton: { impact: 'low', avg_price: 202170, trend: 2.8, note: 'North-west of the city-region, off every flight path.' },
-        Wigan: { impact: 'low', avg_price: 198228, trend: 4.0, note: 'The cheapest borough in the city-region, furthest from the airport, and rising strongly.' },
+        Wigan: { impact: 'low', avg_price: 198228, trend: 4.0, note: '' },
       };
 
       // Deliberately empty: no schools, crime, transport or healthcare data has
@@ -7647,7 +7662,7 @@
           impact: 'severe',
           avg_price: 513853,
           trend: -3.6,
-          note: 'Directly under Heathrow flight paths. The most noise-affected borough in London - you will hear planes constantly, especially in the western parts around Cranford, Heston and Feltham.',
+          note: 'Directly under Heathrow flight paths, especially in the western parts around Cranford, Heston and Feltham.',
           property:
             'Prices are lower here because of noise. Chiswick (eastern end) is pricier but also quieter. If you can tolerate noise, this is one of the more affordable west London boroughs.',
         },
@@ -7695,7 +7710,7 @@
           impact: 'low-moderate',
           avg_price: 498548,
           trend: 0.1,
-          note: 'Very little aircraft noise. Some London City traffic at altitude, and Heathrow arrivals are high overhead. Most residents never notice planes.',
+          note: 'Very little aircraft noise. Some London City traffic at altitude, and Heathrow arrivals are high overhead.',
           property:
             "One of inner London's best-kept secrets for buyers. Ladywell, Brockley and Catford all offer good value with excellent transport links and quiet skies.",
         },
@@ -7783,7 +7798,7 @@
           impact: 'moderate-high',
           avg_price: 732590,
           trend: -6.8,
-          note: 'Under Heathrow easterly departure paths. Planes climb out at relatively low altitude over Chiswick and Hammersmith. Noisier than you might expect for the price.',
+          note: 'Under Heathrow easterly departure paths. Planes climb out at relatively low altitude over Chiswick and Hammersmith.',
           property:
             "Fulham is premium. Shepherd's Bush and White City offer relative value with regeneration. Use the noise factor to negotiate - many sellers don't disclose it.",
         },
@@ -7799,7 +7814,7 @@
           impact: 'low-moderate',
           avg_price: 567223,
           trend: 1.1,
-          note: "Some Heathrow departure paths at altitude. Wembley occasionally hears planes but it's not a significant issue for most residents.",
+          note: "Some Heathrow departure paths at altitude. Wembley occasionally hears planes.",
           property:
             'Wembley Park regeneration is transforming the area. Kilburn offers quick access to central London. Queens Park is the premium pocket.',
         },
@@ -7839,7 +7854,7 @@
           impact: 'low',
           avg_price: 472238,
           trend: -0.2,
-          note: 'Far from all airport flight paths. Consistently quiet skies across the entire borough. One of the best for noise-sensitive buyers.',
+          note: 'Far from all airport flight paths. Consistently quiet skies across the entire borough.',
           property:
             'Affordable north London with lots of green space. Enfield Town has a pleasant centre. Palmers Green has a strong community feel. Excellent value for families.',
         },
@@ -7863,7 +7878,7 @@
           impact: 'moderate',
           avg_price: 861130,
           trend: -18.5,
-          note: 'Under the Lambourne arrival stack at roughly 3,000\u20134,000ft. You will hear planes, especially from a balcony or terrace. Indoor noise is manageable with good glazing.',
+          note: 'Under the Lambourne arrival stack at roughly 3,000\u20134,000ft.',
           property:
             'Central London premium. Pimlico and Maida Vale offer relative value compared to Mayfair. Noise is a factor but rarely a dealbreaker at these prices.',
         },
@@ -9778,10 +9793,18 @@
         const proc = isUkCity(city) ? FLIGHT_GEO?.proc : FLIGHT_GEO_US;
         if (!g || !proc) return fallback;
         const pl = g.plane(analysis.lat, analysis.lon);
-        const strip = Object.fromEntries(g.routesNear(proc, pl, Infinity).scope.map((s) => [s.code, s.dist]));
-        const airportsShown = analysis.airportDists
-          .map((a) => (a.code in strip ? { ...a, dist: strip[a.code] } : a))
-          .sort((a, b) => a.dist - b.dist);
+        const scope = g.routesNear(proc, pl, Infinity).scope;
+        const strip = Object.fromEntries(scope.map((s) => [s.code, s.dist]));
+        // A UK CITY NAMES EVERY UK AIRPORT WITH PUBLISHED ROUTES, as the front page and the report do (audit 2026-11-19
+        // I-2): from the city's own list, Wigan's card said Manchester was nearest with Liverpool 27.5 km away, and the
+        // planes tile, reading this card, led with Manchester's planes where the report said Liverpool is not counted.
+        // Words only, as above: the estimate still reads airportDists. New York keeps its own list (its routes file).
+        const own = new Map(analysis.airportDists.map((a) => [a.code, a]));
+        const listed = isUkCity(city)
+          ? [...scope.map((s) => ({ ...(own.get(s.code) || { code: s.code, name: g.AIRPORT_NAME[s.code] || s.code }), dist: s.dist })),
+             ...analysis.airportDists.filter((a) => !(a.code in strip))]
+          : analysis.airportDists.map((a) => (a.code in strip ? { ...a, dist: strip[a.code] } : a));
+        const airportsShown = listed.sort((a, b) => a.dist - b.dist);
         let pathShown = { path: null, dist: Infinity };
         getActiveFlightPaths().forEach((fp) => {
           const pts = fp.coordinates.map(([lon, lat]) => pl.xy(lat, lon));
@@ -13953,38 +13976,6 @@
       // ============================================================
       // SIDEBAR
       // ============================================================
-      function getVerdict(data) {
-        const s = data.score;
-        const q = data.scores?.quiet ?? 5;
-        const a = data.scores?.afford ?? 5;
-        // Growth is said only from the GROWTH score, and only where there is one (audit I-2, 2026-11-12): the clauses below
-        // read the affordability score, so 19 councils scoring under 5 on growth were told "and strong growth" (Redcar and
-        // Cleveland 3.2, prices down 3%). The Bay Area has no growth score at all: it says nothing of growth.
-        const g = data.scores?.growth;
-        const growthAt = (n) => typeof g === 'number' && Number.isFinite(g) && g >= n;
-        if (s >= 7.5) {
-          if (q < 5)
-            return `<strong>Great value despite noise.</strong> ${data.name} scores highly on affordability${growthAt(7) ? ' and growth' : ''}, but aircraft noise is significant. Visit before committing.`;
-          return `<strong>Excellent pick.</strong> ${data.name} combines quiet skies with affordable prices${growthAt(7) ? ' and strong growth' : ''}.`;
-        }
-        if (s >= 6) {
-          if (q >= 7 && a < 5)
-            return `<strong>Quiet but pricey.</strong> ${data.name} has peaceful skies, but you'll pay above average for property here.`;
-          if (q < 5 && a >= 5)
-            return `<strong>Affordable but noisy.</strong> ${data.name} has competitive prices, but aircraft noise is a real factor. Visit before committing.`;
-          if (q < 5)
-            return `<strong>Noisy area.</strong> Aircraft noise is significant in ${data.name}. Check the noise overlay and visit at peak times before buying.`;
-          return `<strong>Solid option.</strong> ${data.name} offers a reasonable balance of quiet skies${growthAt(5) ? ', affordability, and growth' : ' and affordability'}.`;
-        }
-        if (s >= 4) {
-          if (q < 3)
-            return `<strong>Noise is a concern.</strong> Aircraft regularly fly over this area. Check the noise overlay and visit at peak times before buying.`;
-          if (q < 5)
-            return `<strong>Mixed picture.</strong> ${data.name} scores well on some factors but aircraft noise is a drawback.`;
-          return `<strong>Mixed picture.</strong> ${data.name} scores well on some factors but is held back by ${a < 5 ? 'high prices' : 'some trade-offs'}.`;
-        }
-        return `<strong>Think carefully.</strong> This area scores low because of ${q < 3 ? 'significant aircraft noise' : 'very high prices'}${q < 3 && a < 3 ? ' combined with high prices' : ''}. Only buy here if you have specific reasons.`;
-      }
 
       // Score-bar and map fills. Bright by design and NOT safe as text - see
       // scoreTextColor below before reaching for this one.
@@ -14096,6 +14087,14 @@
         // 2026-11-07 carries the API's score on US scales above the flight-path
         // facts: every route here - a click, a search, a ranking row - goes there.
         if (data && data.facts) return renderPlaceFacts(data, { switchToAnalysis, reveal });
+        // A BOROUGH IS AN ANSWER TOO (Bill's pick A, 2026-11-19, claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY): a borough click,
+        // a Rankings row, a Find areas result or a ?borough= link opened the old panel while a postcode got the answer card.
+        // It now gets the card and tiles, saying what its area page says (js/panel-findings.mjs councilLead and the council
+        // findings; tests/test_borough_card.py and tests/uk-city-panel.mjs hold them to /area/ word for word). The old
+        // sections stay, unchanged but for the advice (audit 2026-11-19 I-1), under "All the detail".
+        // Its tiles fill slots a postcode's late answers would also find, so it supersedes any search on its way.
+        cancelSearch();
+        const req = { token: searchSeq };
         panelSubject = { kind: 'borough' };
         setPanelSubject(data.name);
         announceResult('Results loaded for ' + data.name + '.');
@@ -14105,6 +14104,9 @@
         // decides whether to auto-open it now or leave the user to tap up.
         if (reveal) revealSheetIfMobile();
 
+        const uk = isUkCity(currentCity);
+        const area = uk ? 'council' : 'borough';
+        const extra = getExtraData(data.name);
         const priceFull = formatPrice(data.avg_price, currentCity);
         const noiseClass =
           data.impact === 'severe' || data.impact === 'high' || data.impact === 'moderate-high'
@@ -14147,23 +14149,68 @@
             presentKeys.includes(k) && presentTotal > 0 ? Math.round((nominal[k] / presentTotal) * 1e6) / 1e6 : 0,
           ])
         );
+        // The card's score: the parts at the precision the total was made from (calcScores' scoresRaw), as the postcode's.
+        const raw = (k) => data.scoresRaw?.[k] ?? data.scores?.[k] ?? null;
+        const scoreHtml = answerScoreHtml({
+          pcScore: data.score,
+          parts: [['quiet', 'Quiet skies', raw('quiet')], ['live', 'Everyday living', raw('live')], ['env', 'Environment', raw('env')], ['afford', 'Affordability', raw('afford')], ['growth', 'Price growth', raw('growth')]],
+          weights: nominal,
+          boroughName: data.name,
+          place: data.name,
+          whose: `Every part is ${data.name}’s, for the whole ${area}.`,
+        });
+        // "Hounslow · one of 33 London council areas", as its area page names it.
+        const count = Object.keys(getActiveBoroughData() || {}).length;
+        // From the registry, never a city by name (tests/test_us_city_branches.py): "33 London council areas", "New York City's 5 boroughs".
+        const unit = uk ? `${count} ${cityOf(currentCity).label} council areas` : `${cityOf(currentCity).label}’s ${count} boroughs`;
+        const areaHref = `/area/${encodeURIComponent(currentCity)}/${data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/`;
 
         document.getElementById('sidebar-content').innerHTML = `
-    <div class="sidebar-section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="summary-card" style="flex:1;margin-bottom:0;">
-          <div class="summary-verdict" style="color:${scoreTextColor(data.score)};"><span aria-hidden="true">${scoreLabel(data.score).glyph}</span> ${data.score}/10 - ${scoreLabel(data.score).word} · ${PERSONAS[currentPersona].label}</div>
-          ${getVerdict(data)}
-        </div>
-        <button class="fav-btn ${isFavourite(data.name) ? 'saved' : ''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact || 'unknown').toUpperCase())}" data-fav-score="${data.score}" style="margin-left:10px;">
+    <section class="answer-card" aria-labelledby="ac-head">
+      <div class="ac-top">
+        <span class="ac-where">${escapeHtml(data.name)} · one of ${escapeHtml(unit)}</span>
+        <button class="fav-btn ${isFavourite(data.name) ? 'saved' : ''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact || 'unknown').toUpperCase())}" data-fav-score="${data.score}">
           <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(data.name) ? 'SAVED' : 'SAVE'}
         </button>
       </div>
-    </div>
-
+      <h3 class="ac-head" id="ac-head">${escapeHtml(data.name)}</h3>
+      <div class="ac-pills" id="ac-pills" role="group" aria-label="What stands out here" hidden></div>
+      ${scoreHtml}
+    </section>
+    ${boroughDataNotice()}
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>${FIND_GROUPS[0].title}</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="aircraft" class="tile-slot"></div>
+        <div data-find="road" class="tile-slot"></div>
+      </div>
+    </section>
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>${FIND_GROUPS[1].title}</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="air" class="tile-slot"></div>
+        <div data-find="flood" class="tile-slot"></div>
+      </div>
+    </section>
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>${FIND_GROUPS[2].title}</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="crime" class="tile-slot"></div>
+        <div data-find="schools" class="tile-slot"></div>
+        <div data-find="transport" class="tile-slot"></div>
+        <div data-find="healthcare" class="tile-slot"></div>
+      </div>
+    </section>
+    <section class="sidebar-section find-group">
+      <div class="sec-head"><h3>${FIND_GROUPS[3].title}</h3><small class="sec-wide" hidden></small></div>
+      <div class="tiles">
+        <div data-find="price" class="tile-slot"></div>
+      </div>
+    </section>
+    <details class="panel-all" id="panel-all">
+    <summary>All the detail</summary>
     <div class="sidebar-section">
       <h3>SCORE BREAKDOWN <span style="font-weight:400;font-size:11px;color:var(--mid);">${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} PROFILE</span></h3>
-      ${boroughDataNotice()}
       <p class="property-note" style="margin-top:0;margin-bottom:12px;">${factorCount(lv, ev)} factors, weighted for <strong>${PERSONAS[currentPersona].label.toLowerCase()}</strong> buyers. <button type="button" onclick="switchTab('ranking')" style="background:none;border:none;border-bottom:1px dotted var(--orange-text);color:var(--orange-text);cursor:pointer;padding:0;font:inherit;">Change profile</button></p>
       <div class="score-breakdown">
         <div class="score-row">
@@ -14225,16 +14272,14 @@
     </div>
 
     <div class="sidebar-section">
-      <h3>PROPERTY ADVICE</h3>
+      <h3>PRICES</h3>
       <div class="stat-grid">
         <div class="stat"><div class="stat-value">${priceFull}</div><div class="stat-label">AVG PRICE</div></div>
         <div class="stat"><div class="stat-value">${data.trend_pct || data.trend}</div><div class="stat-label">ANNUAL GROWTH</div></div>
       </div>
-      ${data.property ? `<p class="property-note" style="margin-top:12px;">${escapeHtml(data.property)}</p>` : ''}
     </div>
 
     ${(() => {
-      const extra = getExtraData(data.name);
       if (!extra) return '';
       return (
         `
@@ -14261,7 +14306,60 @@
         <strong>Want nearest stations &amp; ${cityOf(currentCity).localDataLabel}?</strong><br>
         Use the area search above for precise, location-specific ${cityOf(currentCity).localDataSources} data.
       </p>
-    </div>`;
+    </div>
+    </details>
+    <p class="ac-area-link"><a href="${escapeHtmlAttr(areaHref)}">Open ${escapeHtml(data.name)}’s area page</a></p>`;
+
+        // THE TILES AND THE HEADLINE, from the council's own figures through the postcode panel's builders, so the two panels
+        // word one borough alike; the pills follow from the tiles (tidyCard), the headline from councilLead().
+        withFindings(req, (m) => {
+          const council = data.name;
+          const schoolText = extra ? schoolBadge(extra).text : null;
+          const findings = [
+            ['aircraft', m.councilAircraftFinding({ band: data.impact, council, area, note: data.note || null, source: uk ? 'Sky Score estimate from published flight routes' : null })],
+            ['road', m.roadFinding({ council, band: extra && extra.roadNoise, abovePct: extra && extra.roadNoiseAboveWhoPct, area, spot: uk ? 'postcode' : 'ZIP code', source: uk ? 'DEFRA noise map (modelled)' : null, whole: true })],
+            ['air', m.ratingFinding('air', 'Air quality', extra && extra.airQuality, { council, area, source: uk ? 'DEFRA air quality model' : null })],
+            ['flood', m.ratingFinding('flood', 'Flood risk', extra && extra.flood, {
+              council,
+              area,
+              tip: uk ? 'Check the exact address on GOV.UK’s long term flood risk service.' : null,
+              source: uk ? 'Environment Agency' : null,
+            })],
+            ['crime', m.crimeFinding({
+              band: extra && extra.crime,
+              rate: extra && extra.crimeRate,
+              median: londonCrimeMedian(),
+              comparable: uk,
+              area,
+              estimated: uk && Boolean(extra) && !extra.crimeVintage,
+              council,
+              note: extra ? crimeNote(extra, { figures: false }) : null,
+            })],
+            // From Progress 8 only, as the area page (card_items): New York's curated word stays in "All the detail".
+            ['schools', extra && extra.p8 !== undefined && extra.p8 !== null ? m.ratingFinding('schools', 'Schools', schoolText, {
+              council,
+              area,
+              notes: extra.schoolNote ? [extra.schoolNote] : [],
+              source: 'Department for Education (Progress 8)',
+            }) : null],
+            ['transport', m.ratingFinding('transport', 'Transport', extra && extra.transport, { council, area, source: uk ? 'Stations: NaPTAN' : null })],
+            ['healthcare', m.ratingFinding('healthcare', 'Healthcare', extra && extra.healthcare, { council, area, source: uk ? 'GP practices: NHS' : null })],
+            ['price', m.priceFinding({
+              price: priceFull,
+              trend: data.trend_pct,
+              area,
+              council,
+              afford: raw('afford'),
+              source: uk ? 'UK House Price Index' : null,
+            })],
+          ];
+          for (const [slot, f] of findings) placeFinding(m, slot, f);
+          // What stands out, in the card's order, watch first: the area page's card_items, read from the tiles just placed.
+          const stood = findings.map(([, f]) => f).filter((f) => f && f.tile && f.tile.stand).map((f) => ({ key: f.key, stand: f.tile.stand, word: f.tile.level }));
+          const lead = m.councilLead([...stood.filter((i) => i.stand === 'watch'), ...stood.filter((i) => i.stand === 'good')]);
+          const head = document.getElementById('ac-head');
+          if (head && lead) head.textContent = lead;
+        });
       }
 
       // The word for an aircraft noise figure out of 10: its one holder, for the analysis and for the panel.
@@ -14631,7 +14729,8 @@
       // the points it can give, and the profile switch in place. `.summary-verdict` and `.score-breakdown .score-row` keep
       // their names: tests/site-api-parity.mjs reads the total from the one, four render gates count the other.
       const PERSONA_FOR = { balanced: 'a balanced buyer', family: 'a family', investor: 'an investor', firsttime: 'a first-time buyer', quietlife: 'a quiet life', renter: 'a renter', commuter: 'a commuter', laterlife: 'later life' };
-      function answerScoreHtml({ pcScore, parts, weights, boroughName, place }) {
+      // `whose`: the sentence saying whose the parts are; a postcode's by default, a borough's card passes its own.
+      function answerScoreHtml({ pcScore, parts, weights, boroughName, place, whose = null }) {
         const persona = PERSONAS[currentPersona];
         const label = scoreLabel(pcScore);
         // Weights rescaled over what is counted, as combineWeighted() does: the parts' points add up to the score.
@@ -14670,7 +14769,7 @@
           <div class="ac-key">Each part’s own score, and how much it counts for this buyer</div>
           <div class="score-breakdown">${rows}</div>
           <div class="ac-profs" role="group" aria-label="Score it for">${chips}</div>
-          <p class="ac-whose">Quiet skies is this ${isUkCity(currentCity) ? 'postcode' : 'ZIP code'}’s own; the other parts are ${escapeHtml(boroughName)}’s.</p>
+          <p class="ac-whose">${whose ? escapeHtml(whose) : `Quiet skies is this ${isUkCity(currentCity) ? 'postcode' : 'ZIP code'}’s own; the other parts are ${escapeHtml(boroughName)}’s.`}</p>
         </div>
       </details>`;
       }
@@ -14716,9 +14815,9 @@
         withFindings(req, (m) => placeFinding(m, slot, m.nearestFinding(slot, label, rating, nearestListed(containerId), ctx)));
       }
       let _planesInfoLoad = null;
-      // `nearest` ({ code, distance }): the airport KEY FACTS names, so the planes tile can say when it is one we do not
-      // count (Bill's pick C, 2026-11-17; js/planes.mjs planesModel).
-      async function loadPanelPlanes(postcode, nearest = null) {
+      // The nearest airport from js/planes.mjs planesNearest() at the point, so the planes tile can say when it is one we
+      // do not count (Bill's pick C, 2026-11-17), by the rule every surface shares (audit 2026-11-19 I-2).
+      async function loadPanelPlanes(postcode, lat, lon) {
         const json = (path) =>
           fetch(path, { cache: 'no-cache' })
             .then((r) => (r.ok ? r.json() : null))
@@ -14730,7 +14829,8 @@
           if (!_planesInfoLoad) _planesInfoLoad = json('/data/planes/airports.json');
           const [file, info] = await Promise.all([json(`/data/planes/${district}.json`), _planesInfoLoad]);
           if (!info) _planesInfoLoad = null; // a failed load is retried on the next search
-          return p.planesModel(file, info, postcode, undefined, nearest);
+          // fillFindings() waits for the geometry before asking (ensureFlightGeometry), so the UK routes are held here.
+          return p.planesModel(file, info, postcode, undefined, p.planesNearest(FLIGHT_GEO?.proc, lat, lon));
         } catch (e) {
           console.warn('[Sky Score] planes overhead not shown:', e);
           return null;
@@ -14758,11 +14858,9 @@
               ? 'less progress between 11 and 16 than'
               : 'about as much progress between 11 and 16 as';
         // The planes model and the planes layer's steps feed both the planes tile and the headline: each fetched once.
-        // The nearest airport as the Nearest airport card prints it (airportsShown[0], one decimal), within the 30 km the
-        // plane altitude reads routes over (planeAltitude): farther away it says nothing about this postcode's sky.
-        const nearAp = analysis.airportsShown && analysis.airportsShown[0];
-        const nearest = nearAp && nearAp.code && nearAp.dist <= 30 ? { code: nearAp.code, distance: `${nearAp.dist.toFixed(1)} km` } : null;
-        const planes = fullUkPostcode ? loadPanelPlanes(analysis.postcode, nearest) : Promise.resolve(null);
+        // The nearest airport by js/planes.mjs planesNearest(), the one rule every surface names (audit 2026-11-19 I-2),
+        // which the Nearest airport card follows too (shownDistances lists every UK airport with published routes).
+        const planes = fullUkPostcode ? loadPanelPlanes(analysis.postcode, analysis.lat, analysis.lon) : Promise.resolve(null);
         const steps = fullUkPostcode
           ? loadPlanesLayerIndex().then((idx) => (idx && Array.isArray(idx.steps) ? idx.steps : []))
           : Promise.resolve([]);

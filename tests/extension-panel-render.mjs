@@ -231,6 +231,18 @@ async function nearbyView(env) {
   check('a link that is not https stays text', v.links.length === 0 && v.foldText.includes(hostile.sensor.source), JSON.stringify(v.links));
 }
 
+{
+  // Audit 2026-11-19 M-5: an https credit link to any host but the publisher's own stays text, as the API refuses it.
+  const elsewhere = {
+    scopeKm: 5,
+    sensor: { ...SW5_NEARBY.sensor, sourceLink: 'https://example.org/breathe' },
+    monitor: { ...SW5_NEARBY.monitor, sourceLink: 'https://www.nationalarchives.gov.uk.example.org/' },
+  };
+  const v = await nearbyView({ ...MODELLED, airMeasuredNearby: elsewhere });
+  check("a credit linking anywhere but its publisher's own site stays text", v.links.length === 0
+    && v.foldText.includes(elsewhere.sensor.source) && v.foldText.includes(elsewhere.monitor.source), JSON.stringify(v.links));
+}
+
 await browser.close();
 
 let failed = 0;

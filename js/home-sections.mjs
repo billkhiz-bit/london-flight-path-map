@@ -262,7 +262,7 @@ async function fillWalk() {
     writeAir(boxes.air, airPanel(e, prov, sensor, monitor));
   }).catch(() => settle(boxes.air, [el('p', 'walk-wait', FAILED)]));
   Promise.all([engine.planesFilesFor(geo.postcode), layerSteps()]).then(([[file, info], steps]) => {
-    writePlanes(boxes.planes, planesWalk(planesModel(file, info, geo.postcode), steps));
+    writePlanes(boxes.planes, planesWalk(planesModel(file, info, geo.postcode, undefined, engine.planesNearestAt(geo.latitude, geo.longitude)), steps));
   }).catch((err) => {
     // As the answer above: a file the model cannot read is said in the console, so the page tests still see it.
     console.error('The walkthrough\'s planes step is empty: its files could not be read.', err);

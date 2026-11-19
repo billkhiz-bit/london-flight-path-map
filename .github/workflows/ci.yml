@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   lint-frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned (audit I-5, 2026-11-19): ubuntu-latest moved to 26.04, where Playwright 1.58 cannot install Chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -33,7 +33,7 @@ jobs:
         continue-on-error: true
 
   lint-backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned (audit I-5, 2026-11-19): ubuntu-latest moved to 26.04, where Playwright 1.58 cannot install Chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -49,7 +49,7 @@ jobs:
   # chaining them meant the only signal that matters could be withheld by
   # the one that does not. They now run in parallel.
   test-backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned (audit I-5, 2026-11-19): ubuntu-latest moved to 26.04, where Playwright 1.58 cannot install Chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -94,7 +94,12 @@ jobs:
       # wording rules; pinned to the version it was proven on.
       # pypdfium2 (2026-11-13, audit M-6): tests/test_report_text_floor.py measures each character's size in the sample
       # street report (pypdf cannot); pinned to the version the floor was proven on.
-      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml mcp==1.23.3 pypdf==6.7.0 pypdfium2==5.5.0
+      # scipy (2026-11-19, audit I-5): tests/test_build_planes_layer.py imports scripts/build_planes_layer.py, which needs
+      # scipy.spatial; without it the root suite stopped at collection and ran NO tests from 3 Nov to 19 Nov, unseen.
+      # Pinned to the version the suite passes with locally. tzdata (same day): the plane counter's 18 tests read
+      # Europe/London through zoneinfo; Ubuntu ships the system database, but a runner or image without it would fail
+      # them as a Windows venv with CI's packages did (measured 19 Nov), so the suite no longer depends on the image.
+      - run: pip install pytest pytest-mock boto3 numpy pillow pyproj pyyaml mcp==1.23.3 pypdf==6.7.0 pypdfium2==5.5.0 scipy==1.16.3 tzdata==2025.2
       # backend/tests — the maintained suite (the same one /preflight runs).
       - run: python -m pytest tests/ -v --tb=short
         working-directory: backend
@@ -109,7 +114,7 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-2
 
   test-e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned (audit I-5, 2026-11-19): ubuntu-latest moved to 26.04, where Playwright 1.58 cannot install Chromium
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

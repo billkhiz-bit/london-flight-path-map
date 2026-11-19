@@ -99,10 +99,10 @@ const count = (s, needle) => s.split(needle).length - 1;
   const { body, css } = doc(f);
   const lead = answerLead(f.env, 'TW9 3PZ', f.planes.model, steps);
   ok(Boolean(lead) && body.includes(`<p class="lead">${m.esc(lead)}</p>`), "the headline is answerLead()'s sentence for this place, the full map's and the front page's", lead);
-  ok(!body.includes('<h2>What this shows</h2>'), 'a measured postcode under an approach has no "What this shows": each of its lines repeated a tile, a row or a chart');
+  ok(!body.includes('<h3>What this shows</h3>') && !body.includes('<h2>What this shows</h2>'), 'a measured postcode under an approach has no "What this shows": each of its lines repeated a tile, a row or a chart');
   ok(/<div class="district">[\s\S]*<p class="cap fact">Of the 597 postcodes in TW9 on DEFRA's map, <strong>61% are quieter<\/strong> than this one and 29% are louder\.<\/p><\/div>/.test(body),
     "the district's shares are its chart's caption, word for word as the line said them");
-  ok(count(body, 'data-planes-chart=') === 1 && body.includes('<h2>Planes overhead a day, from Heathrow</h2>'), 'one counted airport: one planes chart, named in its heading');
+  ok(count(body, 'data-planes-chart=') === 1 && body.includes('<h3>Planes overhead a day, from Heathrow</h3>'), 'one counted airport: one planes chart, named in its heading');
   ok(count(body, OVERHEAD.slice(0, 40)) === 1, 'the overhead rule is said once, under the chart');
   ok(['A day counts as one way', 'PO boxes and other postcodes', "checked against the CAA's monthly totals"].every((t) => body.includes(m.esc(t))),
     "the planes' other rules are reading points, word for word from airports.json");
@@ -130,7 +130,7 @@ const count = (s, needle) => s.split(needle).length - 1;
   const { body } = doc(f);
   const order = [...body.matchAll(/data-planes-chart="([A-Z]+)"/g)].map((x) => x[1]);
   ok(order.join() === 'LHR,LCY', 'the busier airport comes first, the one the headline names, whatever order the file lists them in', order.join());
-  ok(count(body, '<h2>Planes overhead a day</h2>') === 1 && body.includes('<p class="from">From Heathrow</p>') && body.includes('<p class="from">From London City</p>'),
+  ok(count(body, '<h3>Planes overhead a day</h3>') === 1 && body.includes('<p class="from">From Heathrow</p>') && body.includes('<p class="from">From London City</p>'),
     'two airports share one heading, each chart labelled');
   ok(count(body, OVERHEAD.slice(0, 40)) === 1, 'the overhead rule is said once for both');
 }
@@ -188,13 +188,24 @@ const cardsOf = (body) => [...body.matchAll(/<div class="card (\w+)" data-card="
   const c = cardsOf(doc(base()).body);
   ok(c.map((x) => x.key).join() === 'aircraft,planes,road,air', 'Kew has four cards, in the order of the pages', c.map((x) => x.key).join());
   const by = Object.fromEntries(c.map((x) => [x.key, x]));
-  ok(by.aircraft.stand === 'watch' && by.aircraft.fig === "57 dB on DEFRA&#39;s map, over the WHO guideline of 45", 'aircraft noise: DEFRA\'s own figure over the WHO guideline is "Worth a look", in whole dB as the key figure gives it', JSON.stringify(by.aircraft));
+  ok(by.aircraft.stand === 'watch' && by.aircraft.fig === "57.2 dB on DEFRA&#39;s map, over the WHO guideline of 45", 'aircraft noise: DEFRA\'s own figure over the WHO guideline is "Worth a look", to one decimal as the key figure and the API give it', JSON.stringify(by.aircraft));
   ok(by.planes.stand === 'watch' && by.planes.fig === 'Heathrow: 310 a day when flying west', 'planes: the map\'s own watch step (310 is past the layer\'s third step, 300)', JSON.stringify(by.planes));
+  // Audit 2026-11-19 M-1: the planes card has no "Next step:" (its first line, about the wind, is not an action).
+  const planesCard = (doc(base()).body.match(/<div class="card \w+" data-card="planes">[\s\S]*?<div class="ref">/) || [''])[0];
+  ok(planesCard && !planesCard.includes('Next step'), 'the planes card prints no "Next step:" (the wind sentence is not a step)', planesCard.slice(0, 300));
   ok(by.road.stand === 'good' && by.road.fig === '50.5 dB, under the WHO guideline of 53', 'road: the postcode\'s own figure under the WHO guideline is "Good here"', JSON.stringify(by.road));
   ok(by.air.stand === 'none', 'air never gets a verdict: "For context"', JSON.stringify(by.air));
   const body = doc(base()).body;
   ok(body.includes('<i aria-hidden="true">!</i>Worth a look') && body.includes('<i aria-hidden="true">✓</i>Good here') && body.includes('<i aria-hidden="true">–</i>For context'),
     'each verdict is a mark and a word, never colour alone');
+}
+{
+  // Audit 2026-11-19 I-4: the figure printed is the one the verdict reads. In whole dB, 45.2 printed "45 dB ... over the
+  // WHO guideline of 45" and 44.6 "45 dB ... under" it.
+  for (const [lden, want] of [[45.2, '45.2 dB on DEFRA&#39;s map, over the WHO guideline of 45'], [44.6, '44.6 dB on DEFRA&#39;s map, under the WHO guideline of 45']]) {
+    const c = cardsOf(doc(base({ env: { ...measuredEnv, aircraftNoiseLdenDb: lden } })).body).find((x) => x.key === 'aircraft');
+    ok(c && c.fig === want, `aircraft card at ${lden} dB says the figure it judges`, JSON.stringify(c));
+  }
 }
 {
   // The map's rule: aircraft noise is never "Good here" beside planes that are a watch item.
@@ -259,6 +270,15 @@ const cardsOf = (body) => [...body.matchAll(/<div class="card (\w+)" data-card="
   ok(a !== e, 'from the planes day a copy without a planes block has its own reference', `${a} / ${e}`);
   ok(JSON.stringify(m.planesStated({ none: 'Under 1 a day ...', airports: [] })) === '["none"]' && m.planesStated(null) === null,
     '"Under 1 a day" and no planes block are stated as themselves');
+}
+
+// ---- 9. The outline (audit 2026-11-19 M-2): each page's head is its one h2, and the sections under it are h3, so a screen
+// reader (and the tagged PDF) groups them by page. Every heading the report draws, Kew's and the two-airport copy's.
+for (const f of [base(), base({ planes: { model: planesModel(twoFile, info, 'TW9 3PZ'), steps } })]) {
+  const { body } = doc(f);
+  const h2 = [...body.matchAll(/<h2(?: class="([^"]*)")?>/g)].map((x) => x[1] || '');
+  ok(h2.length === 2 && h2.every((c) => c === 'pagehead') && count(body, '<h3>') >= 4,
+    'the page heads are the only h2s and the sections under them are h3', JSON.stringify({ h2, h3: count(body, '<h3>') }));
 }
 
 console.log(`street report: ${passed} checks passed${failed ? `, ${failed} FAILED` : ''}`);

@@ -52,6 +52,28 @@ def finished(y, m, today=None):
     return (y, m) < (today.year, today.month)
 
 
+def reaches_month_end(path, y, m):
+    """True when the cached file holds a reading on the month's last day (UTC). finished() alone kept a short month for
+    good once it ended: one fetched while it ran, or by a request that ended a day early (until 2026-11-18). Audit
+    2026-11-19 I-6: the 7 US stations kept three short months each after the UK stations were refetched. A station
+    that truly reported nothing on its last day is asked again each run: one request, never a wrong month."""
+    last = (dt.date(y + 1, 1, 1) if m == 12 else dt.date(y, m + 1, 1)) - dt.timedelta(days=1)
+    try:
+        with open(path, encoding='utf-8') as fh:
+            tail = fh.read().rstrip().rsplit('\n', 1)[-1]
+    except OSError:
+        return False
+    return tail.startswith(last.isoformat())
+
+
+def due(station, wanted, refresh=False, today=None):
+    """The months of `wanted` to fetch for `station`: all with --refresh; else any not yet ended, and any ended month
+    whose cached file is missing or does not reach the month's last day."""
+    return [(y, m) for y, m in wanted
+            if refresh or not finished(y, m, today)
+            or not reaches_month_end(METAR_DIR / f'{station}-{y}-{m:02d}.csv', y, m)]
+
+
 def request_end(last):
     """(year2, month2, day2) for a request through the month `last`: the FIRST day of the month after it, because
     IEM's end date is exclusive. Asking for the month's last day dropped that day from the last month of every request
@@ -89,8 +111,7 @@ def main():
     METAR_DIR.mkdir(parents=True, exist_ok=True)
     for code in sorted(a.airport or METAR_STATION):
         station = METAR_STATION[code]
-        todo = [(y, m) for y, m in wanted
-                if a.refresh or not finished(y, m) or not (METAR_DIR / f'{station}-{y}-{m:02d}.csv').exists()]
+        todo = due(station, wanted, a.refresh)
         if not todo:
             print(f'{code} ({station}): cached')
             continue

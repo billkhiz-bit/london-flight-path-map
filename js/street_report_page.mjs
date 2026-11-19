@@ -22,7 +22,7 @@ import {
   reportReference,
 } from '/js/street_report.mjs';
 // MIT, Kazuhiko Arase; vendored unmodified, version in the name (LICENSING.md, code shipped to browsers).
-import { districtOf, planesModel } from '/js/planes.mjs';
+import { districtOf, planesModel, planesNearest } from '/js/planes.mjs';
 import qrcode from '/js/vendor/qrcode-generator-2.0.4.mjs';
 
 const byId = (id) => document.getElementById(id);
@@ -66,6 +66,20 @@ async function getJson(url, what) {
   } catch {
     throw new Error(`${what} could not be reached. Check your connection and try again.`);
   }
+  if (!r.ok) throw new Error(`${what} answered ${r.status}. Try again in a minute.`);
+  return r.json();
+}
+// A district's planes file: a 404 is the one answer that means "this district is not counted" (null). Any other
+// failure refuses, as getJson does: read as "not counted", an outage dropped a copy's planes without a word and carried
+// that into its reference, and a check during one told a genuine copy it had been changed (audit 2026-11-19 I-3).
+async function countedJson(url, what) {
+  let r;
+  try {
+    r = await fetch(url);
+  } catch {
+    throw new Error(`${what} could not be reached. Check your connection and try again.`);
+  }
+  if (r.status === 404) return null;
   if (!r.ok) throw new Error(`${what} answered ${r.status}. Try again in a minute.`);
   return r.json();
 }
@@ -134,10 +148,11 @@ async function make(raw, check = null) {
       maybeJson('/data/breathe-london-sensors.json'),
       maybeJson('/data/aurn-sites.json'),
       // Planes overhead (Bill's pick C, 2026-11-11), through js/planes.mjs as every surface: a district with no file
-      // is not counted, so its report says nothing of planes.
-      maybeJson('/data/planes/airports.json'),
-      maybeJson(`/data/planes/${encodeURIComponent(districtOf(loc.postcode))}.json`),
-      maybeJson('/data/planes-layer/index.json'),
+      // (a 404) is not counted, so its report says nothing of planes. The planes figures are part of the copy's
+      // reference, so a file that failed to load stops the copy rather than leaving its planes out (audit I-3).
+      getJson('/data/planes/airports.json', 'The planes file'),
+      countedJson(`/data/planes/${encodeURIComponent(districtOf(loc.postcode))}.json`, "The district's planes file"),
+      getJson('/data/planes-layer/index.json', 'The planes picture index'),
     ]);
     const pl = plane(loc.latitude, loc.longitude);
     const routes = routesNear(proc, pl, SCOPE_KM);
@@ -174,11 +189,9 @@ async function make(raw, check = null) {
     const made = new Date().toISOString().slice(0, 10);
     // Worked out before the report too, which states it in its details (the check block below says it again, with the link).
     // The planes figures the copy prints are part of its reference from REF_PLANES_FROM (audit M-4): one model for both.
-    // The nearest airport the report names (its first tile: routes.scope[0], "9.7 km"), so the planes block can say when
-    // it is one we do not count (Bill's pick C, 2026-11-17).
-    const nearAp = routes.scope[0];
-    const planesHere = planesModel(planesFile, planesInfo, loc.postcode, undefined,
-      nearAp ? { code: nearAp.code, distance: `${nearAp.dist.toFixed(1)} km` } : null);
+    // The nearest airport by planesNearest(), the one rule every surface names (audit 2026-11-19 I-2), so the planes block
+    // can say when it is one we do not count (Bill's pick C, 2026-11-17).
+    const planesHere = planesModel(planesFile, planesInfo, loc.postcode, undefined, planesNearest(proc, loc.latitude, loc.longitude));
     const ref = await reportReference(loc.postcode, made, proc.airac, env, planesHere);
     const html = reportDocument(
       { postcode: loc.postcode, made, ref },

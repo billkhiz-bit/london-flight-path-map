@@ -1990,7 +1990,8 @@ const makeReport = async (pc) => {
   const ready = /ready below/.test(said);
   const h1 = ready ? await sheetDoc().locator('h1').textContent({ timeout: 5000 }) : `(no report: ${said})`;
   const tiles = ready ? await sheetDoc().locator('.key .n').allTextContents() : [];
-  ok(/ready below/.test(said) && h1 === 'Aircraft noise at TW9 3PZ' && tiles[0] === '56 dB' && tiles[1] === '3.9/10', 'a measured postcode makes a report with DEFRA\'s level and the Quiet Skies score from the endpoint', `${said} | ${h1} | ${tiles.join(' ')}`);
+  // One decimal, as the API sends it and the verdict reads it (audit 2026-11-19 I-4: "45 dB ... over 45" for 45.2).
+  ok(/ready below/.test(said) && h1 === 'Aircraft noise at TW9 3PZ' && tiles[0] === '56.0 dB' && tiles[1] === '3.9/10', 'a measured postcode makes a report with DEFRA\'s level and the Quiet Skies score from the endpoint', `${said} | ${h1} | ${tiles.join(' ')}`);
   // ON SCREEN ONLY (Bill, 2026-10-06): the PDF is the paid report for firms. No print
   // button, and printing - the browser's route to "Save as PDF" - prints the firms note
   // instead, from the page AND from inside the report's frame.
@@ -2036,7 +2037,7 @@ const makeReport = async (pc) => {
           // draws none here: its caption is held by tests/street-report.mjs, and here only where a chart is drawn.
           district: d.querySelectorAll('.district').length,
           fact: d.querySelector('.district .cap.fact')?.textContent || '',
-          shows: [...d.querySelectorAll('h2')].some((h) => h.textContent === 'What this shows'),
+          shows: [...d.querySelectorAll('h2, h3')].some((h) => h.textContent === 'What this shows'),
         };
       })
     : {};
@@ -2223,7 +2224,7 @@ const makeReport = async (pc) => {
       const d = f?.contentDocument;
       if (!d?.querySelector('h1')) return { made: false };
       const map = d.querySelector('.map-scroll');
-      const words = [...d.querySelectorAll('h1, h2, p, li, td, .key')].filter((e) => !e.closest('.map-scroll'));
+      const words = [...d.querySelectorAll('h1, h2, h3, p, li, td, .key')].filter((e) => !e.closest('.map-scroll'));
       const pin = map?.querySelector('.pin')?.getBoundingClientRect();
       const box = map?.getBoundingClientRect();
       const height = d.querySelector('tbody td:nth-child(4)');
@@ -2282,6 +2283,22 @@ const makeReport = async (pc) => {
   ok(/outside the city regions/.test(outside) && !(await page.locator('#result').evaluate((r) => r.classList.contains('is-open'))), 'a postcode outside every city is told so and gets no report (the endpoint\'s 10.0 is from nothing nearby)', outside);
   const bad = await makeReport('NOT A PC!');
   ok(/does not look like a UK postcode/.test(bad), 'a string that is not a postcode is refused before anything is asked of the network', bad);
+  // AN OUTAGE IS NOT "NOT COUNTED" (audit 2026-11-19 I-3): the planes figures are part of a copy's reference, so a planes
+  // file that fails to load stops the copy and says why; only a district file's 404 means the district is not counted.
+  const failing = '**/data/planes/airports.json';
+  await page.route(failing, (r) => r.fulfill({ status: 503, body: 'down' }));
+  const down = await makeReport('TW9 3PZ');
+  await page.unroute(failing);
+  ok(/The planes file answered 503/.test(down) && !(await page.locator('#result').evaluate((r) => r.classList.contains('is-open'))),
+    'a planes file that fails to load stops the copy and says so, never a copy made without its planes', down);
+  const uncountedDistrict = '**/data/planes/TW9.json';
+  await page.route(uncountedDistrict, (r) => r.fulfill({ status: 404, body: 'Not found' }));
+  const uncounted = await makeReport('TW9 3PZ');
+  await page.unroute(uncountedDistrict);
+  const planesCharts = /ready below/.test(uncounted)
+    ? await page.evaluate(() => document.getElementById('sheet').contentDocument.querySelectorAll('.planes svg[data-planes-chart]').length)
+    : -1;
+  ok(/ready below/.test(uncounted) && planesCharts === 0, 'a district with no planes file (a 404) is not counted: the copy is made, with no planes chart', `${uncounted} | charts ${planesCharts}`);
 }
 
 // 18b. ENGAGEMENT IS COUNTED, ONCE, AND ONLY FOR A PERSON'S ACTIONS (ROADMAP 3b, 2026-10-07).

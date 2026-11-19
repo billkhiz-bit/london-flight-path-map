@@ -22,7 +22,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { answerLead } from '../js/answer-lead.mjs';
-import { districtOf, planesModel } from '../js/planes.mjs';
+import { districtOf, planesModel, planesNearest } from '../js/planes.mjs';
 import { REF_PLANES_FROM, reportReference } from '../js/street_report.mjs';
 
 const SAMPLE = resolve('home/reports/sample-street-report-kew.pdf');
@@ -48,9 +48,11 @@ if (!printedRef || !printedDay || !MONTHS.includes(printedDay[2])) {
 const made = `${printedDay[3]}-${String(MONTHS.indexOf(printedDay[2]) + 1).padStart(2, '0')}-${printedDay[1].padStart(2, '0')}`;
 
 let env;
+let point = null; // the postcode's point, for planesNearest() as the report itself asks (audit 2026-11-19 M-7)
 try {
   const geo = await (await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(POSTCODE)}`, { signal: AbortSignal.timeout(20000) })).json();
   const { latitude, longitude } = geo.result;
+  point = { latitude, longitude };
   const body = await (await fetch(`${API}/v1/environment?lat=${latitude}&lon=${longitude}`, { signal: AbortSignal.timeout(20000) })).json();
   env = body.environment;
   if (!env) throw new Error('no environment in the answer');
@@ -61,7 +63,8 @@ try {
 
 const proc = await readJson('data/flight-procedures.json');
 const planesFile = `data/planes/${districtOf(POSTCODE)}.json`;
-const model = existsSync(resolve(planesFile)) ? planesModel(await readJson(planesFile), await readJson('data/planes/airports.json'), POSTCODE) : null;
+const model = existsSync(resolve(planesFile)) ? planesModel(await readJson(planesFile), await readJson('data/planes/airports.json'), POSTCODE, undefined,
+  planesNearest(proc, point?.latitude, point?.longitude)) : null;
 // From REF_PLANES_FROM a copy's reference takes its planes figures (audit M-4): without the counts (gitignored) that
 // half cannot be recomputed, which is not the same as a stale sample.
 if (made >= REF_PLANES_FROM && !existsSync(resolve(planesFile))) {

@@ -28,7 +28,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
  * council has none. `belowDb` is a surveyed-quiet bound, which is NOT a reading (DEFRA mapped none at or above it), so
  * it gets no bar and no figure of its own. Without either, the council's rating, named as such.
  */
-export function roadFinding({ db, belowDb, who, period, council, band, abovePct, area = 'council', spot = 'postcode', source } = {}) {
+export function roadFinding({ db, belowDb, who, period, council, band, abovePct, area = 'council', spot = 'postcode', source, whole = false } = {}) {
   if (isNum(db) && isNum(who)) {
     const side = db > who ? 'over' : db < who ? 'under' : 'at';
     return {
@@ -82,7 +82,8 @@ export function roadFinding({ db, belowDb, who, period, council, band, abovePct,
     return {
       key: 'road',
       head: `Road noise in ${council} is ${words(band)}`,
-      detail: `A rating for the whole ${area}${share}. There is no figure for this ${spot}.`,
+      // `whole`: the borough's own card (2026-11-19), where no postcode was asked, so none is said to be missing.
+      detail: whole ? `A rating for the whole ${area}${share}.` : `A rating for the whole ${area}${share}. There is no figure for this ${spot}.`,
       tile: {
         name: 'Road noise',
         level: cap(words(band)),
@@ -95,7 +96,9 @@ export function roadFinding({ db, belowDb, who, period, council, band, abovePct,
           strip('road', words(band), toneOf(band)),
           isNum(abovePct) ? { kind: 'share', pct: abovePct, of: `${council} ${spot}s louder than the World Health Organization (WHO) recommends` } : null,
         ],
-        say: [`We have no reading for this ${spot === 'postcode' ? 'street' : spot}, so this is for ${council} as a whole.`],
+        say: [whole
+          ? `A rating for ${council} as a whole. Search a ${spot} for its own figure: one street can be much louder or quieter.`
+          : `We have no reading for this ${spot === 'postcode' ? 'street' : spot}, so this is for ${council} as a whole.`],
         tip: 'Visit at rush hour to hear it for yourself.',
         source: source || null,
       },
@@ -346,6 +349,68 @@ export function priceFinding({ price, trend, area = 'council', council, afford, 
       source: source || null,
     },
   };
+}
+
+// ---- A BOROUGH'S ANSWER CARD (Bill's pick A, 2026-11-19, claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY) ----------------------
+// A borough click opened the old panel while a postcode got the card; it now gets the card and tiles too, saying what the
+// borough's area page says (scripts/build_area_pages.py card_items / card_lead), held to it word for word by
+// tests/test_borough_card.py and, through the map, by tests/uk-city-panel.mjs.
+
+/** The council's aircraft noise band has six words; only these three are a verdict (build_area_pages AIRCRAFT_BAND_TONE). */
+export const AIRCRAFT_BAND_TONE = { low: 'good', high: 'bad', severe: 'bad' };
+
+/**
+ * The council's aircraft noise band as a tile (CITY_DATA `impact`: low, low-moderate, moderate, moderate-high, high,
+ * severe). A band, not a figure: no picture, since its words are not one of SCALES' (a word outside its scale draws none).
+ */
+export function councilAircraftFinding({ band, council, area = 'council', note, source } = {}) {
+  const w = band ? words(band) : '';
+  if (!w || w === 'unknown') return null;
+  const tone = AIRCRAFT_BAND_TONE[w] || null;
+  return {
+    key: 'aircraft',
+    head: `Aircraft noise is ${w}`,
+    tile: {
+      name: 'Aircraft noise',
+      level: cap(w),
+      sub: wide(council, area),
+      shared: true,
+      tone,
+      stand: standOf(tone),
+      pill: 'Aircraft noise',
+      visual: [],
+      say: [`A band for ${placeName(council, area)} as a whole, estimated from its distance to the airports and their routes, scaled by the size of each airport's DEFRA noise map.`,
+        'Search a postcode for its own figure: one street can be much quieter or louder than its council area.'],
+      notes: note ? [note] : [],
+      source: source || null,
+    },
+  };
+}
+
+// The headline's words for each finding, as the area page's card says them (CARD_RATED and card_items' phrases).
+const CARD_PHRASE = {
+  aircraft: 'aircraft noise is {w}', road: 'road noise is {w}', air: 'air quality is {w}', flood: 'flood risk is {w}',
+  crime: 'crime is {w}', schools: 'schools are {w}', transport: 'transport access is {w}', healthcare: 'healthcare access is {w}',
+  price: 'prices are high',
+};
+// What is good is named in the order a home-buyer asks (build_area_pages LEAD_GOOD_ORDER), at most two of each side.
+const LEAD_GOOD_ORDER = ['crime', 'schools', 'transport', 'healthcare', 'flood', 'air', 'road', 'aircraft'];
+const LEAD_MOST = 2;
+
+/**
+ * The borough card's one sentence: up to two things worth a look in the card's order, then up to two good ones in a
+ * buyer's order; null when nothing stands out (no headline, as on the area page). `items`: [{ key, stand, word }], each
+ * stand 'watch' or 'good', in the card's order (watch first). build_area_pages.card_lead, word for word.
+ */
+export function councilLead(items) {
+  const said = (i) => CARD_PHRASE[i.key].replace('{w}', words(i.word ?? ''));
+  const watch = (items || []).filter((i) => i && i.stand === 'watch' && CARD_PHRASE[i.key]).slice(0, LEAD_MOST).map(said);
+  const good = (items || []).filter((i) => i && i.stand === 'good' && CARD_PHRASE[i.key])
+    .sort((a, b) => LEAD_GOOD_ORDER.indexOf(a.key) - LEAD_GOOD_ORDER.indexOf(b.key)).slice(0, LEAD_MOST).map(said);
+  const parts = [watch, good].filter((p) => p.length).map((p) => p.join(' and '));
+  if (!parts.length) return null;
+  const text = `${parts.join('; ')}.`;
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /** The latest standard sale of a home here: only a known home type in category A may carry the label; unknown is not a home. */

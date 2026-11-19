@@ -251,9 +251,10 @@ export function glanceCards({ env = {}, model = null, steps = [], resolvedAs = n
   if (db !== null) {
     cards.push({
       key: 'aircraft', topic: 'Aircraft noise', stand: awho !== null ? verdict(db, awho) : null,
-      // Whole decibels, as the key figure under the cards gives it, so page 1 never states one figure two ways; the
-      // verdict is decided on the figure itself.
-      figure: `${Math.round(db)} dB on DEFRA's map${awho !== null ? `, ${side(db, awho)} the WHO guideline of ${awho}` : ''}`,
+      // One decimal, as the road card, the key figure under the cards and the front page's tile give it, so page 1
+      // never states one figure two ways and the verdict is decided on the figure printed (audit 2026-11-19 I-4: whole
+      // decibels printed "45 dB on DEFRA's map, over the WHO guideline of 45" for 45.2).
+      figure: `${db.toFixed(1)} dB on DEFRA's map${awho !== null ? `, ${side(db, awho)} the WHO guideline of ${awho}` : ''}`,
       step: webtrak, page: 2,
     });
   } else if (env.aircraftQuietCoverage !== 'outside' && num(env.aircraftQuietEstimated) !== null) {
@@ -278,7 +279,9 @@ export function glanceCards({ env = {}, model = null, steps = [], resolvedAs = n
         const level = /^(Not measured|None)$/.test(t.level) ? t.level.toLowerCase() : t.level;
         cards.push({
           key: 'planes', topic: 'Planes overhead', stand: t.stand === 'watch' ? 'watch' : null,
-          figure: `${a.name}: ${level}${t.sub ? ` when ${t.sub}` : ''}`, step: (t.say && t.say[0]) || null, page: 2,
+          // No step: the tile's first line is a statement ("The wind decides which way Heathrow flies..."), and printed
+          // under "Next step:" it promised an action it was not (audit 2026-11-19 M-1). Page 2 carries the chart.
+          figure: `${a.name}: ${level}${t.sub ? ` when ${t.sub}` : ''}`, step: null, page: 2,
         });
       }
     }
@@ -655,7 +658,7 @@ export function reportParts(spec, f) {
   const tiles = [];
   if (measured) {
     tiles.push([
-      `${Math.round(db)} dB`,
+      `${db.toFixed(1)} dB`,
       `average aircraft noise outdoors across a year (Lden), on DEFRA's official map. The WHO guideline is ${who} dB`,
     ]);
   }
@@ -766,10 +769,10 @@ export function reportParts(spec, f) {
   const periods = [...new Set(flown.map((a) => a.period))];
   const planesBlock = pm
     ? (flown.length
-        ? `<h2>Planes overhead a day${flown.length === 1 ? `, from ${esc(flown[0].name)}` : ''}</h2>` +
+        ? `<h3>Planes overhead a day${flown.length === 1 ? `, from ${esc(flown[0].name)}` : ''}</h3>` +
           flown.map((a) => `<div class="blk">${flown.length > 1 ? `<p class="from">From ${esc(a.name)}</p>` : ''}${planesChart(a, steps)}</div>`).join('') +
           `<p class="cap">${esc([pm.rules.overhead, `${periods.length === 1 ? periods[0] : flown.map((a) => `${a.name}: ${a.period}`).join('; ')}.`].filter(Boolean).join(' '))}</p>`
-        : `<h2>${esc(pm.heading)}</h2><p class="cap">${esc([pm.none, pm.rules.overhead].filter(Boolean).join(' '))}</p>`) +
+        : `<h3>${esc(pm.heading)}</h3><p class="cap">${esc([pm.none, pm.rules.overhead].filter(Boolean).join(' '))}</p>`) +
       [pm.uncounted, pm.edge, pm.approx, pm.other].filter(Boolean).map((s) => `<p class="cap">${esc(s)}</p>`).join('')
     : '';
   // "Under 1 a day" is a figure too (audit A-9, 2026-11-12): it carries the overhead rule above and the other rules and
@@ -793,9 +796,9 @@ export function reportParts(spec, f) {
     : roadFinding({ db: num(env.roadNoiseLdenDb), belowDb: num(env.roadNoiseBelowDb), who: num(env.roadNoiseWhoGuidelineDb), period: roadPeriod });
   const roadPictures = road ? road.tile.visual.filter(Boolean).map((v) => pictureHtml(v)).join('') : '';
   const roadBlock = road
-    ? `<div class="road blk"><h2>Road noise at this postcode</h2><div class="road-row">${roadPictures ? `<div class="road-pics">${roadPictures}</div>` : ''}<p class="cap">${esc(road.tile.say[0])}${typeof env.roadNoiseLdenDb === 'number' ? ` DEFRA's modelled figure${roadPeriod ? ` for ${roadPeriod}` : ''}.` : ''}</p></div></div>`
+    ? `<div class="road blk"><h3>Road noise at this postcode</h3><div class="road-row">${roadPictures ? `<div class="road-pics">${roadPictures}</div>` : ''}<p class="cap">${esc(road.tile.say[0])}${typeof env.roadNoiseLdenDb === 'number' ? ` DEFRA's modelled figure${roadPeriod ? ` for ${roadPeriod}` : ''}.` : ''}</p></div></div>`
     : neighbourRoad
-      ? `<div class="road blk"><h2>Road noise at this postcode</h2><p class="cap">DEFRA's road noise figure we hold here is for ${esc(f.resolvedAs)}, the nearest postcode, not ${esc(f.postcode)}. Road noise can differ by 20 dB between neighbouring postcodes, so it is not given for this one.</p></div>`
+      ? `<div class="road blk"><h3>Road noise at this postcode</h3><p class="cap">DEFRA's road noise figure we hold here is for ${esc(f.resolvedAs)}, the nearest postcode, not ${esc(f.postcode)}. Road noise can differ by 20 dB between neighbouring postcodes, so it is not given for this one.</p></div>`
       : '';
 
   // AIR (Bill's pick C): the full map's charts, DEFRA's model for the postcode's own square beside the nearest sensor
@@ -819,7 +822,7 @@ export function reportParts(spec, f) {
     ...(f.sensor || f.monitor ? airNoteList(f.sensor, f.monitor).filter((n) => n.key === 'roadside' || n.key === 'capture').map((n) => n.text) : []),
   ].filter(Boolean);
   const airBlock = airCharts.length
-    ? `<div class="blk"><h2>Air at this postcode, against the WHO guideline</h2><div class="air-two"><div class="air-charts">${airCharts.join('')}</div><ul class="air-key">${airKey.join('')}</ul></div></div>${airPoints.length ? `<ul class="pts">${airPoints.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`
+    ? `<div class="blk"><h3>Air at this postcode, against the WHO guideline</h3><div class="air-two"><div class="air-charts">${airCharts.join('')}</div><ul class="air-key">${airKey.join('')}</ul></div></div>${airPoints.length ? `<ul class="pts">${airPoints.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`
     : '';
   const stationLine = f.station ? `<p class="note"><strong>Nearest station:</strong> ${esc(f.station.name)}, ${stationDistance(f.station.km)} in a straight line.</p>` : '';
   // Where to have your say: the airport whose route passes nearest, only if its pages were verified (HAVE_YOUR_SAY),
@@ -893,7 +896,7 @@ export function reportParts(spec, f) {
   h1 { font-size: 18pt; line-height: 1.15; margin: 0 0 3px; }
   .tag { font-size: 8pt; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 1px 6px; vertical-align: middle; margin-left: 8px; }
   .sub { color: var(--muted); margin: 0 0 9px; }
-  h2 { font-size: 12pt; margin: 10px 0 4px; }
+  h2, h3 { font-size: 12pt; margin: 10px 0 4px; }
   .lead { margin: 0 0 9px; padding: 6px 10px; background: var(--band); border-left: 3px solid var(--accent); font-size: 11.5pt; font-weight: 600; line-height: 1.3; }
   .keys { display: grid; grid-template-columns: repeat(${tiles.length}, 1fr); gap: 7px; margin: 0 0 9px; }
   .key { background: var(--band); border-radius: 6px; padding: 8px 10px; }
@@ -931,7 +934,7 @@ export function reportParts(spec, f) {
      figures, map, details), page 2 the aircraft and road detail, page 3 the air and how to read it. Within a page each
      section stays whole and no heading is left at its foot; scripts/address_noise_report.mjs refuses a fourth page. */
   .page { break-after: page; } .page:last-child { break-after: auto; }
-  .blk, .district, figure, li, tr, .card { break-inside: avoid; } h2 { break-after: avoid; }
+  .blk, .district, figure, li, tr, .card { break-inside: avoid; } h2, h3 { break-after: avoid; }
   .page h2.pagehead { font-size: 13pt; margin: 0 0 6px; padding-bottom: 3px; border-bottom: 2px solid var(--accent); }
   .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 10px; }
   .card { border: 1px solid var(--rule); border-radius: 7px; padding: 8px 10px; display: grid; gap: 3px; align-content: start; }
@@ -972,7 +975,7 @@ ${details}
 </section>
 <section class="page">
 <h2 class="pagehead">${roadBlock ? 'Aircraft and road noise in detail' : 'Aircraft noise in detail'}</h2>
-<h2>Published routes within ${ROUTE_RADIUS_KM} km</h2>
+<h3>Published routes within ${ROUTE_RADIUS_KM} km</h3>
 ${
   rows.length
     ? `<table><thead><tr><th>Route</th><th>Used when aircraft are</th><th>Closest point to this postcode</th><th>Height</th></tr></thead><tbody>
@@ -981,7 +984,7 @@ ${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('\n
 }
 <p class="cap">${scopeLine}</p>
 ${runwaySide}
-${planesBlock || district ? `<div class="cols">${planesBlock ? `<div class="planes">${planesBlock}</div>` : ''}${district ? `<div class="district"><h2>How it compares within ${esc(district.outcode)}</h2><p class="cap">Quiet Skies scores of the ${district.n.toLocaleString('en-GB')} postcodes on DEFRA's map. This postcode's band is in orange.</p>${districtSvg(district)}<p class="cap fact">${districtFact}</p></div>` : ''}</div>` : ''}
+${planesBlock || district ? `<div class="cols">${planesBlock ? `<div class="planes">${planesBlock}</div>` : ''}${district ? `<div class="district"><h3>How it compares within ${esc(district.outcode)}</h3><p class="cap">Quiet Skies scores of the ${district.n.toLocaleString('en-GB')} postcodes on DEFRA's map. This postcode's band is in orange.</p>${districtSvg(district)}<p class="cap fact">${districtFact}</p></div>` : ''}</div>` : ''}
 ${roadBlock}
 ${sayBlock}
 </section>
@@ -989,7 +992,7 @@ ${sayBlock}
 <h2 class="pagehead">${airBlock ? 'Air, and how to read this report' : 'How to read this report'}</h2>
 ${airBlock}
 ${stationLine}
-<h2>Reading this report</h2>
+<h3>Reading this report</h3>
 <ul class="pts"><li>Lden is a yearly average of the outdoor level, with evening and night flights weighted more heavily; it does not describe single loud events or the number of flights.</li><li>${vintage}</li><li>The route lines are the published centre lines: aircraft fly either side of them, and the path to joining a final approach is directed by air traffic control and is not drawn.</li>${planesPoints.map((t) => `<li>${t}</li>`).join('')}<li>This is information, not a survey or an environmental search; visit at different times of day before deciding.</li><li>It is not a conveyancing search under the Search Code. Our terms: skyscore.co.uk/terms.</li></ul>
 <footer>Sources: DEFRA Strategic Noise Mapping Round 4 (${aircraftMap ? 'aircraft and road' : 'road'}, Lden, 2021 traffic) and DEFRA background pollution maps, Open Government Licence v3.0; flight routes from the UK Aeronautical Information Publication (NATS), AIRAC ${esc(airac)}; ${c55 ? `${esc(String(covid.caa || 'CAA ERCD').split(',')[0])}; ` : ''}WHO Environmental Noise Guidelines for the European Region (2018) and Global Air Quality Guidelines (2021); postcode positions from postcodes.io (ONS).${planesCredits}${airCredits} Compiled with Sky Score (skyscore.co.uk). Prepared ${when}.</footer>
 </section>

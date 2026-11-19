@@ -385,7 +385,8 @@ console.log('The audit\'s map-state faults');
   });
   await page.waitForFunction(() => /TRAFFORD/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
   const panel = await page.evaluate(() => document.getElementById('sidebar-content')?.innerText || '');
-  ok(typeof want === 'number' && panel.includes(`${want.toFixed(1)}/10`) && /Investor/.test(panel),
+  // "Score for an investor" since the borough's answer card (2026-11-19): the profile's name in the sentence, not a label.
+  ok(typeof want === 'number' && panel.includes(`${want.toFixed(1)}/10`) && /\binvestor\b/i.test(panel),
     'Trafford clicked after choosing Investor shows the Investor score, as the ranking has it', `want ${want} | ${panel.slice(0, 160).replace(/\s+/g, ' ')}`);
   await ctx.close();
 }

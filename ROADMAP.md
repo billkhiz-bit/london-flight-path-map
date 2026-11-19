@@ -26,6 +26,26 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-19)
+>
+> **MEASURED AIR IN `/v1/environment` IS LIVE** (`f8715f75`, pushed; Bill's "run all"; reviewed changeset, ScoreFunction code
+> only): `airMeasuredNearby`, after a `/code-review` whose 5 real findings were fixed before the commit (the extension's
+> double-rounded distance, ties rounded two ways, a whole-read deadline, the unread-copy notice past London's edge, a
+> provenance rule). Checked live at SW11 1AA, LE1 7RH (the University of Leicester's own monitor, 140 m) and EX1 1HS.
+> The weather fetcher's end-date fix committed (`e2af43c9`).
+> **AUDIT 19 NOV** (`AUDIT_REPORT_2026-11-19.md`, claude.ai/artifact/V6yvem3j1TCukfCusdQRyY): 0 Critical, 6 Important (all
+> verified), 13 Minor. All 6 Important fixed IN SOURCE the same day, not yet committed: I-1 the borough panel's advice, I-2
+> one `planesNearest()` for every surface, I-3 the free report's failed downloads, I-4 one decimal on the report's aircraft
+> card (sample regenerated, XRQT-RHB3), I-5 CI red since 2 Nov (scipy, tzdata, `ubuntu-24.04`), I-6 the 7 US stations'
+> short METAR months (refetched) and a cache rule that heals them. 7 Minor fixed; M-5 needs a SAM deploy.
+> **THE BOROUGH ANSWER CARD** (Bill's pick A of claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY): BUILT, NOT DEPLOYED. A borough
+> click opens the card and tiles, saying what its area page says (`councilLead()`, held on every borough by
+> `tests/test_borough_card.py`; five built pages by `tests/uk-city-panel.mjs`). NEXT: preflight, screenshots to Bill at 1366
+> and 390, the notes' before/after, his word, then commit, SAM (M-5) and web/home deploys.
+> **Also 19 Nov:** the three old worktrees removed (wt-detail's work kept as branch `rescue/wt-detail-2026-11-19`); master
+> merged into n65 (`38c803f1`), its 3 pending files waiting for their preflight; N65's first look at WHERE the shortfall
+> sits (neither arrivals nor departures alone: `docs/lessons/n65.md` on the branch); Leicester's call moved to TUE 24 NOV.
+>
 > ## START HERE (2026-11-18)
 >
 > **THE SEPTEMBER 2026 HPI ROLL IS LIVE** (Bill: "Do the roll", then "deploy" on the reviewed changeset). HM Land Registry's

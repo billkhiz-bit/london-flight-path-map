@@ -11,7 +11,8 @@
 //   node tests/planes-model.mjs
 
 import assert from 'node:assert/strict';
-import { districtOf, overheadConeSvg, period, perDay, planesBandLead, planesChart, planesLead, planesLinks, planesModel, planesNodes, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
+import { readFileSync } from 'node:fs';
+import { PLANES_NEAREST_KM, districtOf, overheadConeSvg, period, perDay, planesBandLead, planesChart, planesLead, planesLinks, planesModel, planesNearest, planesNodes, planesWalk, shortFigure, stepColour } from '../js/planes.mjs';
 
 const NAMES = { LHR: 'Heathrow', LCY: 'London City', MAN: 'Manchester' };
 const INFO = {
@@ -370,6 +371,29 @@ check('headline: a nearest airport we do not count keeps the planes out of it, a
   assert.equal(planesLead(planesModel(TW9, INFO, 'TW9 3PZ', NAMES_C, LBA_NEAR), STEPS), null);
   assert.ok(planesBandLead(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES_C), STEPS), 'the band leads without it');
   assert.equal(planesBandLead(planesModel(TW9, INFO, 'TW9 9ZZ', NAMES_C, LBA_NEAR), STEPS), null);
+});
+
+// ONE RULE FOR "THE NEAREST AIRPORT" ON EVERY SURFACE (audit 2026-11-19 I-2): the map took its city's own list within
+// 30 km, the front page every airport within 30, the report every airport within 40, so Wigan's map card led with
+// Manchester's planes where the front page and the report said Liverpool is not counted. Real routes, real points.
+const PROC = JSON.parse(readFileSync(new URL('../data/flight-procedures.json', import.meta.url), 'utf8'));
+check('nearest: every UK airport with routes, by its runway strip, within 30 km, worded as the pages print it', () => {
+  assert.equal(PLANES_NEAREST_KM, 30);
+  assert.deepEqual(planesNearest(PROC, 53.549643, -2.628246), { code: 'LPL', distance: '27.5 km' }, 'WN1 1AE: Liverpool, not its city\'s Manchester');
+  assert.deepEqual(planesNearest(PROC, 53.416774, -2.763941), { code: 'LPL', distance: '10.2 km' }, 'L35 0LA');
+  assert.equal(planesNearest(PROC, 53.551173, -1.483635), null, 'S70 1AH: Leeds Bradford is 36.1 km away, past the 30 km');
+  assert.deepEqual(planesNearest(PROC, 51.476982, -0.285639), { code: 'LHR', distance: '10.2 km' }, 'TW9 3PZ');
+  assert.equal(planesNearest(null, 51.48, -0.29), null, 'no routes file: no claim');
+  assert.equal(planesNearest(PROC, Number.NaN, -0.29), null, 'no point: no claim');
+});
+check('nearest: every surface that builds a planes answer asks planesNearest(), and none keeps its own rule', () => {
+  const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  for (const p of ['js/home-engine.mjs', 'js/street_report_page.mjs', 'scripts/address_noise_report.mjs', 'scripts/check_sample_report.mjs', 'index.html']) {
+    const src = read(p);
+    assert.ok(/planesNearest(At)?\(/.test(src), `${p} does not ask planesNearest()`);
+    assert.ok(!/routes\.scope\[0\]|airportsShown\[0\]/.test(src), `${p} still picks its own nearest airport`);
+  }
+  assert.ok(/planesNearestAt\(/.test(read('js/home-sections.mjs')), 'the walkthrough builds its planes answer as the page does');
 });
 
 console.log(`planes model: ${passed} checks passed`);

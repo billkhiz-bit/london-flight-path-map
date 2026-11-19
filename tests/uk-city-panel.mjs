@@ -539,6 +539,56 @@ console.log('Search guide after a borough click');
   console.log('');
 }
 
+// A BOROUGH'S ANSWER CARD (Bill's pick A, 2026-11-19, claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY): a borough opens the card
+// and tiles, not the old panel, and says what its area page says: the headline and the pills, read here from the built
+// area page itself (tests/test_borough_card.py holds the rule over every borough; this holds the map's own data reaching
+// it). The old sections sit closed under "All the detail", without the advice (audit 2026-11-19 I-1). A fresh page,
+// so nothing opens the fold for it.
+console.log("A borough's answer card");
+{
+  const b = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const unescape = (s) => s.replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  for (const [city, borough] of [['london', 'Hounslow'], ['london', 'Camden'], ['manchester', 'Trafford'], ['westyorkshire', 'Leeds'], ['nyc', 'Brooklyn']]) {
+    const slug = borough.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    const page = await readFile(join(ROOT, 'area', city, slug, 'index.html'), 'utf-8');
+    const lead = page.match(/<p class="card-lead">([^<]*)<\/p>/);
+    const want = {
+      head: lead ? unescape(lead[1]) : borough,
+      pills: [...page.matchAll(/<a class="pill (watch|good)" href="#[^"]*">[\s\S]*?<\/svg>([^<]*)<span class="visually-hidden">/g)].map((m) => `${m[1]}:${unescape(m[2])}`),
+    };
+    await b.goto(`${url}?city=${city}&borough=${encodeURIComponent(borough)}`, { waitUntil: 'domcontentloaded' });
+    const got = await b
+      .waitForFunction(() => {
+        const tiles = document.querySelectorAll('#sidebar-content .answer-card ~ .find-group details.tile').length;
+        if (tiles < 5) return false;
+        const box = document.getElementById('sidebar-content');
+        return {
+          head: document.getElementById('ac-head')?.textContent.trim(),
+          pills: [...document.querySelectorAll('#ac-pills button')].map((x) => `${x.classList.contains('watch') ? 'watch' : 'good'}:${x.childNodes[1]?.textContent ?? ''}`),
+          where: document.querySelector('.ac-where')?.textContent.trim(),
+          foldClosed: document.getElementById('panel-all')?.open === false,
+          oldSections: [...document.querySelectorAll('#panel-all h3')].map((h) => h.textContent.trim().split(' ')[0]),
+          advice: /Think carefully|Only buy here|PROPERTY ADVICE|Visit before committing|negotiat|bargaining/i.test(box.textContent),
+          rows: box.querySelectorAll('.score-breakdown .score-row').length,
+          link: document.querySelector('.ac-area-link a')?.getAttribute('href'),
+          verdict: !!box.querySelector('.answer-card .summary-verdict'),
+        };
+      }, null, { timeout: 20000 })
+      .then((h) => h.jsonValue())
+      .catch(() => null);
+    const tag = `${borough} (${city})`;
+    check(`${tag}: a borough opens the answer card, with the score in it and the old sections closed under "All the detail"`,
+      !!got && got.verdict && got.rows > 0 && got.foldClosed && ['SCORE', 'AIRCRAFT', 'PRICES'].every((h) => got.oldSections.includes(h)),
+      JSON.stringify(got));
+    check(`${tag}: its headline is its area page's, word for word`, !!got && got.head === want.head, `map "${got?.head}" | area page "${want.head}"`);
+    check(`${tag}: its pills are its area page's, in order`, !!got && got.pills.join() === want.pills.join(), `map ${JSON.stringify(got?.pills)} | area page ${JSON.stringify(want.pills)}`);
+    check(`${tag}: no advice anywhere in the panel, the fold included`, !!got && !got.advice, JSON.stringify(got?.where));
+    check(`${tag}: it links its own area page, which exists`, !!got && got.link === `/area/${city}/${slug}/`, `link ${got?.link}`);
+  }
+  await b.close();
+  console.log('');
+}
+
 // THE PANEL'S DISTANCES ARE THE FRONT PAGE'S (2026-10-08). For TW3 1ES the panel said
 // Heathrow 6.3 km and a flight path 0.6 km away - the airport's reference point, and the
 // nearest corridor POINT (1 km apart) - while the front page said 4.9 km, and 0.3 km from

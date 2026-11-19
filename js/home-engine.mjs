@@ -15,7 +15,7 @@
    /v1/environment. The runway geometry is js/flight_geometry.mjs, the one
    holder the two report generators use. */
 import { AIRPORT_NAME, closest, compass, finalOverhead, plane, reciprocal, roundFt, routesNear, towards, unglidedOverhead } from '/js/flight_geometry.mjs';
-import { districtOf, planesLinks, planesModel, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
+import { districtOf, planesLinks, planesModel, planesNearest, planesNodes, planesNotes, planesWalk } from '/js/planes.mjs';
 import { EXAMPLE, bindPlaceBox, noPointSaid, postcodeCompletions } from '/js/place-box.mjs';
 import { airFigure, airPanel, answerLead, exampleFigures, layerSteps } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
@@ -1678,6 +1678,8 @@ export function exampleAnswer() {
 }
 /** [district file, airports.json] for a postcode, from the answer's own loaders (fetched once, kept). */
 export const planesFilesFor = (postcode) => loadPlanes(postcode);
+// The nearest airport by the one rule (planesNearest, audit 2026-11-19 I-2/M-7), from the routes this page holds.
+export const planesNearestAt = (lat, lon) => planesNearest(state.proc, lat, lon);
 /** [Breathe London sensors, DEFRA monitors], the answer's own files (fetched once, kept). */
 export const airFiles = () => Promise.all([loadSensors(), loadMonitors()]);
 
@@ -1770,11 +1772,9 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
     // As for the station and the air: a later search owns the block. Not tied to the map's cities: the files
     // cover every council the score covers (Nottingham's are under East Midlands' flights), and say who is in.
     const seq = ++planesSeq;
-    // The airport the Nearby list names (routesText()'s nearest, its distance in the same words), so the block can say
-    // when it is one we do not count (Bill's pick C, 2026-11-17) and the two never disagree.
-    const nearAp = state.proc && Number.isFinite(lat) && Number.isFinite(lon)
-      ? routesNear(state.proc, plane(lat, lon), AIRPORT_SCOPE_KM).scope[0] : null;
-    const nearest = nearAp ? { code: nearAp.code, distance: km(nearAp.dist) } : null;
+    // The nearest airport by planesNearest(), the one rule every surface names (audit 2026-11-19 I-2), so the block can
+    // say when it is one we do not count (Bill's pick C, 2026-11-17); routesText()'s Nearby line reads the same scope.
+    const nearest = planesNearest(state.proc, lat, lon);
     // The layer's steps (option C's heading) never fail: without them it is [] and the planes do not lead.
     Promise.all([loadPlanes(postcode), loadPlanesIndex(), layerSteps()]).then(([[file, info], index, steps]) => {
       if (seq !== planesSeq) return;

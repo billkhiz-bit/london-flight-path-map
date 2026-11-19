@@ -23,14 +23,28 @@ def area_postcodes() -> dict[str, str]:
     html = (REPO / 'index.html').read_text(encoding='utf-8')
     start = html.index('const LONDON_AREA_MAP = {')
     body = html[start:html.index('\n      };', start)]
-    pairs = re.findall(r"^\s*(?:'([^']+)'|([A-Za-z][\w ]*?)):\s*'([A-Z0-9]{2,4} [0-9][A-Z]{2})',", body, re.M)
-    return {(q or b): pc for q, b, pc in pairs}
+    # Single-quoted, double-quoted ("Shepherd's Bush") or bare keys. Until audit 2026-11-19 M-9 the double-quoted three were
+    # never read, and the >= 100 floor hid it: every entry line must parse now (an unread line is said by name).
+    pat = re.compile(r"""^\s*(?:'([^']+)'|"([^"]+)"|([A-Za-z][\w ]*?)):\s*'([A-Z0-9]{2,4} [0-9][A-Z]{2})',""")
+    pairs, unread = {}, []
+    for line in body.splitlines()[1:]:
+        if not line.strip() or line.strip().startswith('//'):
+            continue
+        m = pat.match(line)
+        if m:
+            pairs[m.group(1) or m.group(2) or m.group(3)] = m.group(4)
+        else:
+            unread.append(line.strip())
+    assert not unread, f'LONDON_AREA_MAP lines this test cannot read: {unread[:5]}'
+    return pairs
 
 
 def test_the_map_lists_its_area_names():
     found = area_postcodes()
     assert len(found) >= 100, f'only {len(found)} area names read from LONDON_AREA_MAP: the parse is broken'
     assert found.get('Mayfair') and found.get('Hendon')
+    # The three a single-quote-only parse skipped (audit 2026-11-19 M-9).
+    assert {"Shepherd's Bush", "St John's Wood", "Regent's Park"} <= set(found)
 
 
 @pytest.mark.skipif(not NSPL.exists(), reason='data/nspl.csv is not on this machine (the NSPL roll, HANDOVER)')

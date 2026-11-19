@@ -36,7 +36,9 @@ def fixtures():
 
 class EveryValueHasItsSource(unittest.TestCase):
     def test_the_fixtures_are_all_there(self):
-        self.assertEqual(len(fixtures()), 11)
+        # 12 since 2026-11-19: environment-sw11-nearby is a live answer WITH airMeasuredNearby (audit M-10: no fixture had
+        # it, so the every-value loop below never saw the block).
+        self.assertEqual(len(fixtures()), 12)
 
     def test_every_credit_line_is_known(self):
         unknown = {(name, line[:60]) for name, body in fixtures().items()
@@ -53,6 +55,7 @@ class EveryValueHasItsSource(unittest.TestCase):
     def test_every_value_in_the_body_has_an_entry(self):
         # The SET of value fields a body carries == the set provenance describes: a new context field with no rule
         # shows up here by name instead of going out uncredited.
+        nearby_seen = 0
         for name, body in fixtures().items():
             prov, _ = app.build_provenance(body)
             section = 'context' if 'context' in body else 'environment'
@@ -64,9 +67,11 @@ class EveryValueHasItsSource(unittest.TestCase):
                 if isinstance(entry, dict):
                     values |= {f'{section}.airMeasuredNearby.{kind}.{k}' for k in entry
                                if k not in app.AIR_NEARBY_DESCRIBES}
+                    nearby_seen += 1
             values |= {f'components.{k}' for k in body.get('components', {})}
             values |= {'score'} if 'score' in body else set()
             self.assertEqual(values - set(prov), set(), name)
+        self.assertGreaterEqual(nearby_seen, 2, 'no fixture carried airMeasuredNearby: the loop checked none of it')
 
     def test_the_index_holds_exactly_the_sources_used(self):
         for name, body in fixtures().items():

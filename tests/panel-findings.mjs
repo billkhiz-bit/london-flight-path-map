@@ -431,26 +431,43 @@ check('every tile escapes what it is given', () => {
   assert.equal(T.tileHtml(null), '');
 });
 
-// The map's verdict line (audit I-2, 2026-11-12): growth is said only from the GROWTH score. getVerdict() is lifted from
-// index.html and run on its own, so the words tested are the words served; its claims read affordability until that day.
+// THE BOROUGH'S ANSWER CARD (Bill's pick A, 2026-11-19). The old verdict box (getVerdict: "Think carefully ... Only buy
+// here if you have specific reasons", "Visit before committing") is gone with its function: the product is information,
+// not advice (audit 2026-11-19 I-1). The card's builders say what the area page says (tests/test_borough_card.py holds
+// councilLead to build_area_pages.card_lead over every borough).
 {
-  const src = INDEX.match(/\r?\n( *)function getVerdict\(data\) \{[\s\S]*?\r?\n\1\}\r?\n/); // CRLF in a Windows checkout
-  assert.ok(src, 'getVerdict() found in index.html');
-  const getVerdict = new Function(`${src[0]}; return getVerdict;`)();
-  const say = (scores, score) => getVerdict({ name: 'Here', score, scores });
-  check('"strong growth" only with a strong growth score, never from affordability', () => {
-    assert.doesNotMatch(say({ quiet: 8, afford: 9, growth: 3.2 }, 8), /growth/);
-    assert.match(say({ quiet: 8, afford: 9, growth: 7.4 }, 8), /and strong growth/);
-    assert.doesNotMatch(say({ quiet: 8, afford: 9 }, 8), /growth/, 'no growth score (the Bay Area): nothing said of growth');
+  check('the old verdict and its advice are gone from the map', () => {
+    assert.doesNotMatch(INDEX, /function getVerdict\(|Think carefully|Only buy here|Visit before committing|PROPERTY ADVICE/);
+    // The curated buying notes are not drawn (each record keeps its text until Bill rules on it).
+    const fn = INDEX.match(/function updateSidebar\(data[\s\S]*?\n {6}\}\r?\n/);
+    assert.ok(fn, 'updateSidebar() found');
+    assert.doesNotMatch(fn[0], /data\.property/);
   });
-  check('"scores highly on affordability and growth" only with a high growth score', () => {
-    assert.doesNotMatch(say({ quiet: 3, afford: 9, growth: 4 }, 8), /and growth/);
-    assert.match(say({ quiet: 3, afford: 9, growth: 8 }, 8), /affordability and growth/);
+  check("the council's aircraft band: only Low, High and Severe are a verdict, as on the area pages", () => {
+    const stand = (band) => T.councilAircraftFinding({ band, council: 'Hounslow' })?.tile.stand ?? null;
+    assert.deepEqual(['low', 'low-moderate', 'moderate', 'moderate-high', 'high', 'severe'].map(stand), ['good', null, null, null, 'watch', 'watch']);
+    assert.equal(T.councilAircraftFinding({ band: 'unknown' }), null, 'an unknown band says nothing');
+    assert.equal(T.councilAircraftFinding({ band: 'Severe', council: 'Hounslow' }).tile.level, 'Severe');
+    assert.deepEqual(T.councilAircraftFinding({ band: 'severe', council: 'Hounslow' }).tile.visual, [], 'a band is not a figure: no picture');
   });
-  check('"a balance of ... growth" only with a middling growth score or better', () => {
-    assert.match(say({ quiet: 6, afford: 6, growth: 2 }, 6.5), /balance of quiet skies and affordability\./);
-    assert.match(say({ quiet: 6, afford: 6, growth: 5.5 }, 6.5), /quiet skies, affordability, and growth\./);
-    assert.match(say({ quiet: 6, afford: 6 }, 6.5), /balance of quiet skies and affordability\./);
+  check("the card's headline: two worth a look, then two good in a buyer's order; none when nothing stands out", () => {
+    const hounslow = [
+      { key: 'aircraft', stand: 'watch', word: 'Severe' }, { key: 'flood', stand: 'good', word: 'Low' },
+      { key: 'schools', stand: 'good', word: 'Above average' }, { key: 'transport', stand: 'good', word: 'Good' },
+      { key: 'healthcare', stand: 'good', word: 'Good' }, { key: 'price', stand: 'watch', word: '£513,853' },
+    ];
+    // The area page's own sentence for Hounslow (area/london/hounslow/, 19 Nov 2026).
+    assert.equal(T.councilLead([...hounslow.filter((i) => i.stand === 'watch'), ...hounslow.filter((i) => i.stand === 'good')]),
+      'Aircraft noise is severe and prices are high; schools are above average and transport access is good.');
+    assert.equal(T.councilLead([{ key: 'crime', stand: 'good', word: 'Low' }]), 'Crime is low.');
+    assert.equal(T.councilLead([]), null);
+    assert.equal(T.councilLead([{ key: 'road', stand: null, word: 'Moderate' }]), null, 'a middling rating is not a headline');
+  });
+  check('road noise for a whole borough says so, and never that a postcode lacks a figure', () => {
+    const f = T.roadFinding({ council: 'Hounslow', band: 'Moderate', abovePct: 62.7, whole: true });
+    assert.match(f.detail, /^A rating for the whole council: 63% of its postcodes are over the WHO guideline\.$/);
+    assert.match(f.tile.say[0], /^A rating for Hounslow as a whole\./);
+    assert.doesNotMatch(f.detail + f.tile.say.join(' '), /no figure for this|no reading for this/);
   });
 }
 

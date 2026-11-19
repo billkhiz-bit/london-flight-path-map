@@ -14,8 +14,23 @@
  * textContent only. Runs in the browser and in Node alike.
  */
 
-import { AIRPORT_NAME } from './flight_geometry.mjs';
+import { AIRPORT_NAME, plane, routesNear } from './flight_geometry.mjs';
 import { esc } from './street_report.mjs';
+
+/**
+ * THE NEAREST AIRPORT A PLANES ANSWER NAMES, ONE RULE FOR EVERY SURFACE (audit 2026-11-19 I-2). The map took its city's
+ * own airports within 30 km, the front page every airport within 30 km, the report every airport within 40: so Wigan's
+ * map card led "about 39 Manchester planes a day" where the front page and the report said Liverpool, 27.5 km away, is not
+ * counted. Now: the nearest UK airport with published procedures, by its runway strip (routesNear's scope, the distance
+ * every page's own nearest-airport line prints), within PLANES_NEAREST_KM; null beyond, or without the routes file.
+ * `{ code, distance }`, the distance as the pages print it ("27.5 km"), for planesModel()'s `nearest`.
+ */
+export const PLANES_NEAREST_KM = 30;
+export function planesNearest(proc, lat, lon) {
+  if (!proc || !proc.airports || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  const s = routesNear(proc, plane(lat, lon), PLANES_NEAREST_KM).scope[0];
+  return s ? { code: s.code, distance: `${s.dist.toFixed(1)} km` } : null;
+}
 
 /** The rows, in the mock-up's order: the file's own order is westerly, easterly, mixed (airports.json classes). */
 const KINDS = [['westerly', 'Flying west', 'west'], ['mixed', 'Both ways', null], ['easterly', 'Flying east', 'east']];
@@ -65,8 +80,8 @@ function barOf(v, full) {
  * that page prints it ("9.7 km"), or null where the page names none. When it is not an airport airports.json counts,
  * `uncounted` says so by name (Bill's pick C, 2026-11-17, claude.ai/artifact/T2HNJU7E3m29LVAcywEZeo): "Under 1 a day
  * from each airport" sat under a Leeds Bradford approach with nothing to say Leeds Bradford was not counted, and Speke
- * showed Manchester's figures beside Liverpool's runway. Taken from the page's own nearest-airport line, so the two can
- * never disagree.
+ * showed Manchester's figures beside Liverpool's runway. Every caller passes planesNearest() (above), the rule its own
+ * nearest-airport line follows, so the page and the warning never disagree and no two pages pick a different airport.
  */
 export function planesModel(file, info, postcode, names = AIRPORT_NAME, nearest = null) {
   if (!file || !info?.airports) return null;

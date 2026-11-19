@@ -77,7 +77,7 @@ Or just describe what you need, I have full context of this project.
   cross-project state is `%USERPROFILE%\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
-- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-12.md`; suggest `/audit` when it is >7 days old.
+- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-19.md`; suggest `/audit` when it is >7 days old.
 
 ## The product, in facts safe to repeat
 
@@ -169,7 +169,8 @@ Or just describe what you need, I have full context of this project.
   (copied from the ONS page, never its `current` folder), then `--write-lambda --all`, `--write --all`,
   `--check --all`, `build_area_pages.py --write`, and re-derive METHODOLOGY s6 (`check_worked_example.py`);
   `CRIME_EDITION_LABEL` must equal `edition_label()` (tests/test_crime_edition.py).
-- **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh`; it must move `SNAPSHOT_VINTAGE_LABEL`,
+- **Monthly HPI roll**: `sh scripts/deploy_hpi_roll.sh` (stops at the SAM changeset for review; after executing it,
+  `--after-backend` ships web, area, meta and open data: audit M-12, 2026-11-19); it must move `SNAPSHOT_VINTAGE_LABEL`,
   `CPIH_12M_PCT[current]` and `SNAPSHOT_CPIH_PCT` together (`build_hpi_prices.py --check --all` reds otherwise).
 - **DEFRA Round 4 maps 2021, a COVID year.** Never apply an estimated correction for it.
 - **National anchors are per POOL** (`pool_of(city)` / site `poolOf`: a city's `pool`, else its currency;
@@ -238,6 +239,13 @@ Or just describe what you need, I have full context of this project.
   postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
   if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
   `airChart()` (pure; `tests/air-chart.mjs`); the model is a hollow ring, never "measured"; `AIR_WHO_2021` equals the API's.
+- **A BOROUGH opens the answer card too** (Bill's pick A, 2026-11-19, claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY): `updateSidebar()` (a click, a Rankings or
+  Find areas row, `?borough=`, a profile change) draws the card, then council tiles through the postcode panel's builders (`councilAircraftFinding`,
+  `roadFinding({ whole })`, schools only from Progress 8), the pills from the tiles (`tidyCard`), the headline from `councilLead()`: what the borough's
+  AREA PAGE says, word for word (`tests/test_borough_card.py` runs it on every borough against `card_lead()`; `tests/uk-city-panel.mjs` reads five built
+  pages). The old sections sit closed under "All the detail"; no advice: `getVerdict()` is gone, "Property advice" is "Prices", the curated
+  `property` notes are not drawn, and no `note` may advise or claim an ungated superlative (audit I-1). It `cancelSearch()`es first: its slots
+  would otherwise take a postcode's late answers.
 - **The full map's postcode panel is findings first** (Bill's pick, 2026-11-04: Stitch's draft): four `.find-group`s, then every earlier section unchanged in
   `#panel-all` ("All the detail"), closed; ids stay, so the loaders fill them there. `js/panel-findings.mjs` words each finding, pure text, null when there is
   nothing true to say (`tests/panel-findings.mjs`); `fillFindings()` places them. Road noise leads with the council's rating over the postcode's own figure
@@ -328,7 +336,7 @@ Or just describe what you need, I have full context of this project.
   the planes `planesChart()` (busiest airport first, the overhead rule once), the district chart, the road `roadFinding()` +
   `pictureHtml()` (the postcode against the WHO; the council's rating stays on the map) and "Have your say"; page 3 the air (the
   map's charts and key, `airSquare`/`airModelOf`/`airRows`/`sensorKeyNote` in js/street_report.mjs: one holder), the station, the
-  reading notes and the sources. **The cards' verdict has ONE rule, `glanceCards()`**: a postcode's own figure against its WHO
+  reading notes and the sources. **The cards' verdict has ONE rule, `glanceCards()`**, each figure to one decimal, the one it judges (audit I-4, 2026-11-19: "45 dB ... over 45" for 45.2); section headings are `h3` under each page's `h2` (M-2); the planes card has no "Next step" (M-1): a postcode's own figure against its WHO
   guideline (road; aircraft where DEFRA gives one), the planes from the map's watch step, air and estimates "For context", never
   aircraft "Good here" beside a planes watch; a card can differ from a map pill (the map bands aircraft noise and rates road by
   council). "What this shows" is GONE: its lines sit under the key figures (why no DEFRA figure) and the routes table (beside a
@@ -389,7 +397,7 @@ Or just describe what you need, I have full context of this project.
 - **The answer after a search is summary first** (Bill's pick B, 2026-11-04: it ran to 495 words): the rows, the planes as tiles
   (`planesNodes`; a postcode under 1 a day from every airport gets the same three tiles, `noneKinds`: Bill's pick A, 2026-11-16; where the page's
   own nearest airport is one we do not count, `uncounted` names it first in the warning box, on the map's tile and in the report, from the
-  caller's own nearest-airport line, and no headline then leads with the planes: Bill's pick C, 2026-11-17), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
+  nearest airport by ONE rule, `planesNearest()` in js/planes.mjs (every UK airport with routes, by runway strip, within 30 km; the map, the front page, the report, its PDF and the sample check all call it, `tests/planes-model.mjs` holds it: audit I-2, 2026-11-19, Wigan's map said Manchester where the report said Liverpool), and no headline then leads with the planes: Bill's pick C, 2026-11-17), one "Nearby" list (`factRow`), then folds holding what `planesNotes()`, `#ans-air`, `#ans-say` and `#ans-wrong`
   say, nothing deleted; a caveat that changes what a figure means stays on the row. A fold with nothing to say hides itself
   (`.ans-fold:has(> [hidden])`). The overhead drawing reads its angle from the file's `definition` (`overheadConeSvg`).
 - **The answer's lower half is TILES** (Bill's pick A, 2026-11-10; mock-up claude.ai/artifact/WjbLCMob4cqNPxVKHmMT1H): presentation only.
@@ -516,8 +524,10 @@ Or just describe what you need, I have full context of this project.
   every month you count with `python scripts/fetch_metar.py <first> <last>` FIRST; an uncached month silently falls
   back to the aircraft alone and reads stormy mornings low. **IEM's end date is EXCLUSIVE**: `request_end()` asks through
   the 1st of the month after (until 2026-11-18 the LAST month of every request lost its last day: 46 months refetched, the
-  old ones in `data/metar-set-aside-2026-11-18/`; 30 Sep 2026's planes counts are owed a recount at the next roll). A month
-  fetched while it runs stays partial until fetched again (October 2026 held 24 days). `data/us-runway-use.json` and the NYC yardsticks are
+  old ones in `data/metar-set-aside-2026-11-18/`; 30 Sep 2026's planes counts are owed a recount at the next roll; the 7 US
+  stations' 21 short months only on 2026-11-19, audit I-6, `data/metar-set-aside-2026-11-19/`). A finished month counts as
+  cached only if its file reaches the month's last day (`due()`, `reaches_month_end()`): a month fetched while it ran, or
+  short for any reason, is fetched again by a plain run (October 2026 had held 24 days). `data/us-runway-use.json` and the NYC yardsticks are
   built from this counter: rebuilding them now re-derives published US inputs, so do it as a reviewed change.
 - **The overflight cone stands on the ground under the aircraft** (OS Terrain 50, 2026-10-26): run
   `python -I scripts/build_ground_grid.py` before counting (a missing grid refuses, never sea level); the 7,000 ft

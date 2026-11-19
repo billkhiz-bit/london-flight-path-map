@@ -76,3 +76,20 @@ def test_a_month_still_running_is_fetched_again():
     today = dt.date(2026, 10, 24)
     assert fetch_metar.finished(2026, 9, today)
     assert not fetch_metar.finished(2026, 10, today)  # cached on the 24th, it would keep only 24 days for good
+
+
+def test_a_finished_month_that_stops_short_of_its_last_day_is_fetched_again(tmp_path, monkeypatch):
+    # Audit 2026-11-19 I-6: JFK's September 2026 ended 29 Sep 23:51 (the old exclusive-end bug) and October 24 Oct (fetched
+    # while it ran); once each month had ended, "the file exists" kept both short for good.
+    monkeypatch.setattr(fetch_metar, 'METAR_DIR', tmp_path)
+    (tmp_path / 'JFK-2026-09.csv').write_text('valid,alti\n2026-09-29 23:51,30.01\n', encoding='utf-8')
+    (tmp_path / 'JFK-2026-10.csv').write_text('valid,alti\n2026-10-24 14:51,29.98\n', encoding='utf-8')
+    (tmp_path / 'JFK-2026-08.csv').write_text('valid,alti\n2026-08-31 23:51,29.90\n', encoding='utf-8')
+    (tmp_path / 'JFK-2025-12.csv').write_text('valid,alti\n2025-12-31 23:51,30.10\n', encoding='utf-8')
+    wanted = [(2025, 12), (2026, 8), (2026, 9), (2026, 10), (2026, 11)]
+    today = fetch_metar.dt.date(2026, 11, 19)
+    # Complete Dec and Aug are cached; short Sep and Oct, and the running November, are due.
+    assert fetch_metar.due('JFK', wanted, today=today) == [(2026, 9), (2026, 10), (2026, 11)]
+    assert fetch_metar.due('JFK', wanted, refresh=True, today=today) == wanted
+    # A missing file is due too.
+    assert fetch_metar.due('SFO', [(2026, 8)], today=today) == [(2026, 8)]

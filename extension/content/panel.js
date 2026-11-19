@@ -743,16 +743,28 @@ function renderMeasuredNearby(block) {
 }
 
 // The credit each publisher requires, word for word from the response, linked to the address it gives. Only an
-// https link is made a link; anything else stays text.
+// https link to that publisher's own site is made a link (audit 2026-11-19 M-5: the API holds the same two hosts, so a
+// bad deploy cannot point a credit inside Rightmove's page anywhere else); anything else stays text.
+const NEARBY_CREDIT_HOST = { sensor: 'www.breathelondon.org', monitor: 'www.nationalarchives.gov.uk' };
+function creditHref(kind, link) {
+  if (typeof link !== 'string' || !/^https:\/\//.test(link)) return null;
+  try {
+    return new URL(link).hostname === NEARBY_CREDIT_HOST[kind] ? link : null;
+  } catch {
+    return null;
+  }
+}
 function nearbyCredits(block) {
-  const entries = ['sensor', 'monitor'].map((k) => block?.[k]).filter((e) => e && typeof e.source === 'string');
+  const entries = ['sensor', 'monitor']
+    .map((k) => block?.[k] && { ...block[k], href: creditHref(k, block[k].sourceLink) })
+    .filter((e) => e && typeof e.source === 'string');
   if (!entries.length) return null;
   const p = el('p', 'c33-note-body');
   entries.forEach((e, i) => {
     if (i) p.appendChild(document.createTextNode(' · '));
-    if (typeof e.sourceLink === 'string' && /^https:\/\//.test(e.sourceLink)) {
+    if (e.href) {
       const a = el('a', 'c33-link', e.source);
-      a.href = e.sourceLink;
+      a.href = e.href;
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       p.appendChild(a);
