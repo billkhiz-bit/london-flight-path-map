@@ -148,7 +148,8 @@
         /* TEXT variants, added 2026-08-12. The three above are safe as fills,
            borders and swatches; as TEXT they fail WCAG 1.4.3 on one or both of
            our backgrounds. Measured against --white #fafaf9 and the darker
-           --bg #e4e3e0 that .metric-card uses:
+           --bg #e4e3e0 that .metric-card used (that card went on 2026-11-20 with a borough's old
+           "All the detail"; the measure is kept because these tokens still exist for it):
 
              --orange  2.60 : 1   /  2.11 : 1     both fail
              --yellow  4.73 : 1   /  3.85 : 1     fails on the card
@@ -1072,11 +1073,6 @@
         color: var(--mid);
         margin-bottom: 12px;
       }
-      .stat-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
       .stat {
         display: flex;
         flex-direction: column;
@@ -1093,38 +1089,6 @@
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-top: 4px;
-      }
-      .noise-bar {
-        width: 100%;
-        height: 6px;
-        background: var(--bg);
-        margin-top: 8px;
-        position: relative;
-      }
-      .noise-bar-fill {
-        height: 100%;
-        transition: width 0.4s ease;
-      }
-      .noise-indicator {
-        display: inline-block;
-        padding: 3px 10px;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        border: 1px solid;
-      }
-      .noise-high {
-        color: var(--orange-text);
-        border-color: var(--orange);
-      }
-      .noise-moderate {
-        color: var(--yellow-text);
-        border-color: var(--yellow);
-      }
-      .noise-low {
-        color: var(--green-text);
-        border-color: var(--green);
       }
       .property-note {
         font-family: var(--font-sans);
@@ -1683,18 +1647,6 @@
         font-family: var(--font-sans);
       }
 
-      .defra-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 3px 8px;
-        background: var(--bg);
-        font-size: 10px;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        margin-top: 8px;
-      }
-
       .noise-detail-row {
         display: flex;
         justify-content: space-between;
@@ -2025,11 +1977,6 @@
       }
 
       /* Crime display */
-      .crime-summary {
-        display: flex;
-        gap: 12px;
-        margin: 8px 0;
-      }
       .crime-stat {
         flex: 1;
         padding: 10px;
@@ -2128,67 +2075,6 @@
       }
 
       /* Metric cards row */
-      .metric-cards {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 6px;
-        margin-bottom: 12px;
-      }
-      .metric-card {
-        padding: 10px 8px;
-        background: var(--bg);
-        text-align: center;
-        cursor: pointer;
-        border: 1px solid transparent;
-        transition: all 0.15s;
-        position: relative;
-        /* Reset native button chrome - these are real <button>s now (audit
-           F-A11y-3) so keyboard activation + screen-reader semantics work.
-           Without these resets they'd inherit user-agent button styling. */
-        font-family: inherit;
-        font-size: inherit;
-        color: inherit;
-        width: 100%;
-      }
-      .metric-card:hover {
-        border-color: var(--dark);
-      }
-      .metric-card:focus-visible {
-        outline: 2px solid var(--focus);
-        outline-offset: -2px;
-      }
-      .metric-card.expanded {
-        border-color: var(--dark);
-        background: var(--white);
-      }
-      .metric-card-icon {
-        font-size: 16px;
-        margin-bottom: 4px;
-      }
-      .metric-card-label {
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--mid);
-        margin-bottom: 3px;
-      }
-      .metric-card-value {
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
-      .metric-detail {
-        display: none;
-        padding: 12px 24px;
-        border-bottom: 1px solid var(--bg);
-        font-size: 12px;
-        font-family: var(--font-sans);
-        line-height: 1.5;
-        color: #555;
-      }
-      .metric-detail.visible {
-        display: block;
-      }
 
       /* Property listings */
       .property-links {
@@ -3121,6 +3007,11 @@
       details.drow > summary:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
       details.drow:not([open]) > .drow-body { display: none; }
       .drow-body { padding: 0 24px 16px; }
+      /* A borough's "Where these numbers come from" (option A, 2026-11-20): the tiles' own source lines, once each. */
+      .bd-sources { margin: 0 0 8px; padding-left: 18px; font-family: var(--font-sans); font-size: 13.5px; line-height: 1.5; color: var(--dark); }
+      /* Its links take the panel's link colour (the air credits' rule, audit 2026-10-22 M-12: never browser blue). */
+      #bd-planes .info-note a, #bd-sources .info-note a { color: var(--orange-text); }
+      #bd-planes .info-note a:focus-visible, #bd-sources .info-note a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
       /* ON A PHONE, ONE CARD A ROW (Bill, 2026-11-09: "do what's best for the phone view"). At 390 px a half card is
          ~170 px, too narrow for its list, so an open card took the row and left its neighbour alone beside a gap. One
          column means opening a card only pushes the rest down: nothing moves sideways, the order seen is the order
@@ -3817,8 +3708,7 @@
         .persona-btn,
         .fav-btn,
         .city-btn,
-        .tab,
-        .metric-card {
+        .tab {
           /* min-width matters as much as min-height and was missing, so this
              dismiss control rendered 17x44 on every phone: the touch target was
              raised to Apple's 44px guideline vertically and left at the glyph's
@@ -4346,8 +4236,7 @@
         /* Persona, favourite, tab buttons: bump to 40px tap height. */
         .persona-btn,
         .fav-btn,
-        .tab,
-        .metric-card {
+        .tab {
           min-height: 40px;
         }
 
@@ -8057,13 +7946,10 @@
           // "DEFRA" in the map badge, "government" in the how-to-read panel.
           // Preserved rather than unified: changing user-facing wording is a
           // separate decision from removing the ternaries.
-          healthSource: 'NHS TRUST DATA (CURATED)',
           searchNotFound: 'Area or borough not found. Try e.g. Chelsea, Twickenham, SW11 1AA, or Hounslow.',
           mapLabelFontSize: '6px',
           noiseAuthority: 'DEFRA',
           noiseAuthorityPlain: 'government',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'TfL and EPC',
           runwayNote: 'Heathrow alternates runways',
           currencyHtml: '&pound;',
           // Map chrome, applied by applyCityChrome(). These were ~20 DOM
@@ -8078,7 +7964,6 @@
           // The Try chips (2026-11-11): places this city's own hint names, so each leads to an answer here
           // (tests/search-guide.mjs searches every one); phones show the first three.
           tryExamples: ['SW11 1AA', 'Hounslow', 'Camden', 'Wandsworth'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'HEATHROW FLIGHT PATHS',
           legendPath2: 'LONDON CITY FLIGHT PATHS',
           legendHeli: true,
@@ -8127,13 +8012,10 @@
           center: [-73.97, 40.75],
           scale: 55000,
           country: 'United States',
-          healthSource: 'NYC HEALTH+HOSPITALS DATA (CURATED)',
           searchNotFound: 'Area or borough not found. Try e.g. Astoria, Williamsburg, or Queens.',
           mapLabelFontSize: '8px',
           noiseAuthority: 'FAA/BTS',
           noiseAuthorityPlain: 'FAA/BTS',
-          localDataLabel: 'property data',
-          localDataSources: 'transit and listing',
           runwayNote: 'airports operate on different runway configurations',
           currencyHtml: '$',
           subtitle: 'NEW YORK · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8141,7 +8023,6 @@
           emptyStateHint:
             'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.',
           tryExamples: ['Astoria', 'Williamsburg', 'Queens'],
-          contourBadge: 'ZOOM INTO MAP TO SEE CURATED FAA/BTS NOISE CONTOURS',
           legendPath1: 'JFK ROUTES',
           legendPath2: 'LGA, NEWARK AND TETERBORO ROUTES',
           legendHeli: false,
@@ -8202,13 +8083,10 @@
           center: [-122.017, 37.4391],
           scale: 26500,
           country: 'United States',
-          healthSource: 'NOT SOURCED',
           searchNotFound: 'Not found. Try a Bay Area city (San Bruno, Oakland, Palo Alto) or a ZIP such as 94301.',
           mapLabelFontSize: '6px',
           noiseAuthority: 'FAA/BTS',
           noiseAuthorityPlain: 'FAA/BTS',
-          localDataLabel: 'flight-path facts',
-          localDataSources: 'FAA and BTS',
           runwayNote: 'which runways are used depends on the wind',
           currencyHtml: '$',
           subtitle: 'SAN FRANCISCO BAY AREA · SCORED ON US SCALES',
@@ -8216,7 +8094,6 @@
           emptyStateHint:
             'Search a city (San Bruno, Oakland, Palo Alto) or a ZIP (94301) - or click the map - to see its score and which published flight paths pass over it. Bay Area scores are on US scales, not comparable with a UK score.',
           tryExamples: ['San Bruno', 'Oakland', 'Palo Alto', '94301'],
-          contourBadge: 'ZOOM INTO MAP TO SEE THE FEDERAL AIRCRAFT NOISE MAP',
           legendPath1: 'SFO ROUTES',
           legendPath2: 'OAK AND SJC ROUTES',
           legendHeli: false,
@@ -8256,13 +8133,10 @@
           center: [-1.8154, 52.5052],
           scale: 52000,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Solihull, Coventry or Dudley.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'Birmingham runs one runway on a 148/328 alignment',
           currencyHtml: '&pound;',
           subtitle: 'WEST MIDLANDS · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8270,7 +8144,6 @@
           emptyStateHint:
             'Search by borough (Solihull, Coventry or Dudley) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Solihull', 'Coventry', 'Dudley'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'BIRMINGHAM FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -8310,13 +8183,10 @@
           center: [-1.6861, 53.7415],
           scale: 41500,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Leeds, Bradford or Wakefield.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'Leeds Bradford runs one runway on a 138/318 alignment',
           currencyHtml: '&pound;',
           subtitle: 'WEST YORKSHIRE · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8324,7 +8194,6 @@
           emptyStateHint:
             'Search by borough (Leeds, Bradford or Wakefield) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Leeds', 'Bradford', 'Wakefield'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'LEEDS BRADFORD FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -8364,13 +8233,10 @@
           center: [-1.344, 53.4814],
           scale: 42500,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Sheffield, Doncaster or Barnsley.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'NO AIRPORT',
           noiseAuthorityPlain: 'not applicable',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'no commercial airport operates in South Yorkshire',
           currencyHtml: '&pound;',
           subtitle: 'SOUTH YORKSHIRE · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8378,7 +8244,6 @@
           emptyStateHint:
             'Search by borough (Sheffield, Doncaster or Barnsley) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Sheffield', 'Doncaster', 'Barnsley'],
-          contourBadge: 'NO COMMERCIAL AIRPORT IN THIS CITY REGION',
           legendPath1: '',
           legendPath2: '',
           legendHeli: false,
@@ -8418,13 +8283,10 @@
           center: [-2.9029, 53.4973],
           scale: 46000,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Liverpool, Wirral or Sefton.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'Liverpool runs one runway on an 086/266 alignment',
           currencyHtml: '&pound;',
           subtitle: 'MERSEYSIDE · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8432,7 +8294,6 @@
           emptyStateHint:
             'Search by borough (Liverpool, Wirral or Sefton) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Liverpool', 'Wirral', 'Sefton'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'LIVERPOOL FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -8472,13 +8333,10 @@
           center: [-1.6, 54.9392],
           scale: 64000,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Newcastle, Gateshead or Sunderland.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'Newcastle runs one runway on an 065/245 alignment',
           currencyHtml: '&pound;',
           subtitle: 'TYNE AND WEAR · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8486,7 +8344,6 @@
           emptyStateHint:
             'Search by borough (Newcastle, Gateshead or Sunderland) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Newcastle', 'Gateshead', 'Sunderland'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'NEWCASTLE FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -8538,13 +8395,10 @@
           center: [-1.1308, 52.6849],
           scale: 32500,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Leicester, Loughborough or Hinckley.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'East Midlands runs one runway on an 087/267 alignment',
           currencyHtml: '&pound;',
           subtitle: 'LEICESTER · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8552,7 +8406,6 @@
           emptyStateHint:
             'Search by borough (Leicester, Charnwood or Hinckley and Bosworth) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Leicester', 'Charnwood', 'Hinckley and Bosworth'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'EAST MIDLANDS FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -8600,13 +8453,10 @@
           center: [-1.249, 54.5892],
           scale: 44000,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. Middlesbrough, Stockton-on-Tees or Darlington.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'Teesside International runs one runway on a 048/228 alignment',
           currencyHtml: '&pound;',
           subtitle: 'TEESSIDE · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8614,7 +8464,6 @@
           emptyStateHint:
             'Search by borough (Middlesbrough, Stockton-on-Tees or Redcar and Cleveland) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Middlesbrough', 'Stockton-on-Tees', 'Redcar and Cleveland'],
-          contourBadge: 'ZOOM INTO MAP TO SEE ESTIMATED NOISE CONTOURS (RUNWAY GEOMETRY, NOT DEFRA)',
           legendPath1: 'TEESSIDE FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -8654,13 +8503,10 @@
           center: [-2.6836, 51.4752],
           scale: 47000,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (NOT SOURCED)',
           searchNotFound: 'Borough not found. Try e.g. City of Bristol, Bath or North Somerset.',
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'Bristol runs one runway on an 087/267 alignment',
           currencyHtml: '&pound;',
           subtitle: 'BRISTOL · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8668,7 +8514,6 @@
           emptyStateHint:
             'Search by borough (City of Bristol, Bath or North Somerset) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['City of Bristol', 'Bath', 'North Somerset'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'BRISTOL AIRPORT FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -8714,7 +8559,6 @@
           center: [-2.32, 53.52],
           scale: 47000,
           country: 'United Kingdom',
-          healthSource: 'NHS TRUST DATA (CURATED)',
           searchNotFound: 'Borough not found. Try e.g. Trafford, Stockport, or Wigan.',
           mapLabelFontSize: '7px',
           // Runway geometry, NOT DEFRA. Said plainly because the London label
@@ -8722,8 +8566,6 @@
           // a measurement this city has not had.
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          localDataLabel: 'energy ratings',
-          localDataSources: 'EPC',
           runwayNote: 'Manchester runs both runways on one 052/232 alignment',
           currencyHtml: '&pound;',
           subtitle: 'GREATER MANCHESTER · INDEPENDENT NOISE + LIVEABILITY DATA',
@@ -8732,7 +8574,6 @@
           emptyStateHint:
             'Search by borough (Trafford, Stockport, Wigan) - or click the map - to get noise analysis and a value score.',
           tryExamples: ['Trafford', 'Stockport', 'Wigan'],
-          contourBadge: 'ZOOM INTO MAP TO SEE OFFICIAL DEFRA NOISE CONTOURS',
           legendPath1: 'MANCHESTER FLIGHT PATHS',
           legendPath2: '',
           legendHeli: false,
@@ -9045,7 +8886,8 @@
           names.length > 1
             ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
             : names[0];
-        return ` &middot; ${list} only here, so not comparable with a fully-measured borough`;
+        // Plain words: the card escapes them (2026-11-20, moved from the old score breakdown's HTML).
+        return `Environment: ${list} only here, so not comparable with a fully-measured borough.`;
       }
 
       const IMPACT_TO_QUIET = {
@@ -11609,163 +11451,6 @@
         return 'rating-high';
       }
 
-      function metricColor(rating) {
-        const r = (rating || '').toLowerCase();
-        if (r === 'low' || r === 'good' || r === 'excellent') return 'var(--green-text)';
-        if (r === 'medium' || r === 'moderate') return 'var(--yellow-text)';
-        return 'var(--orange-text)';
-      }
-
-      function buildOptionalSections(extra, sectionId) {
-        if (!extra) return '';
-        const id = sectionId || 'opt-' + Math.random().toString(36).slice(2, 8);
-
-        // EVERY CARD IS CONDITIONAL NOW, and the reason is what the
-        // unconditional ones printed. `${extra.flood}` on a borough with no
-        // flood data interpolates the literal string "undefined", which
-        // .metric-card-value uppercases into a confident "UNDEFINED" sitting in
-        // the same grid as a neighbouring borough's "LOW". Measured 2026-08-11:
-        // Liverpool and Birmingham both rendered FLOOD RISK UNDEFINED and AIR
-        // QUALITY UNDEFINED. Healthcare was already guarded; the other three
-        // were not, and only London and NYC carry all of them.
-        //
-        // The badge text is DERIVED from the record rather than hardcoded to
-        // "(CURATED)": air quality is now script-derived from DEFRA for every
-        // UK borough, so a fixed "CURATED" caption would understate it, exactly
-        // as the fixed one overstated the boroughs that had nothing.
-        const cards = [];
-        const details = [];
-
-        const add = (key, label, value, badge, note, source) => {
-          if (!value) return;
-          cards.push(`
-        <button type="button" class="metric-card" aria-expanded="false" aria-controls="${id}-${key}" onclick="toggleMetricDetail('${id}-${key}')">
-          <div class="metric-card-label">${label}</div>
-          <div class="metric-card-value" style="color:${metricColor(value)}">${value}</div>
-        </button>`);
-          details.push(`
-      <div class="metric-detail" id="${id}-${key}">
-        <span class="rating-badge ${ratingBadgeClass(badge)}">${value}</span>
-        ${note ? `<p class="info-note">${note}</p>` : ''}
-        <div class="defra-badge" style="margin-top:8px;">${source}</div>
-      </div>`);
-        };
-
-        add(
-          'road',
-          'Road Noise',
-          extra.roadNoise,
-          extra.roadNoise === 'high' ? 'high' : extra.roadNoise === 'moderate' ? 'medium' : 'low',
-          extra.roadNoiseLdenMedian
-            ? `Median ${extra.roadNoiseLdenMedian} dB Lden across this borough's postcodes. The WHO guideline for road traffic is 53 dB Lden.`
-            : '',
-          extra.roadNoiseVintage
-            ? `SOURCE: ${extra.roadNoiseVintage}`
-            : 'TOGGLE "ROAD NOISE" ON MAP · BOROUGH-LEVEL RATING'
-        );
-        add(
-          'flood',
-          'Flood Risk',
-          extra.flood,
-          extra.flood,
-          // The defence caveat is not a footnote, it is the reason the number
-          // often surprises. RoFRS is the Environment Agency's assessment of
-          // risk AFTER existing defences, so heavily defended Thames-side
-          // boroughs read low while the natural floodplain beneath them does
-          // not. A reader who expects "by the river therefore high" needs that
-          // sentence in front of them, not in METHODOLOGY.md.
-          extra.floodMediumOrHighPct !== undefined
-            ? `${extra.floodMediumOrHighPct}% of this borough's postcodes sit at Medium or High risk, meaning a 1% or greater chance of flooding from rivers or the sea in any year. This is risk <em>after</em> existing flood defences, so a defended riverside area can read low while still sitting on a floodplain.`
-            : extra.floodNote,
-          extra.floodVintage
-            ? `SOURCE: ${extra.floodVintage}`
-            : 'TOGGLE "FLOOD RISK ZONES" ON MAP · BOROUGH-LEVEL RATING (CURATED)'
-        );
-        add(
-          'aq',
-          'Air Quality',
-          extra.airQuality,
-          extra.airQuality,
-          // Measured figures FIRST, then any curated note - the flood row above
-          // does the same. Until 2026-09-29 this was `aqNote || measured`, so
-          // all 33 London boroughs (the only ones with a curated note) hid
-          // their DEFRA NO2/PM2.5 behind a sentence, while every other city
-          // showed the numbers.
-          [
-            extra.no2AnnualMeanUgm3
-              ? `NO2 ${extra.no2AnnualMeanUgm3} and PM2.5 ${extra.pm25AnnualMeanUgm3} ug/m3 annual mean. WHO 2021 guidelines are 10 and 5.`
-              : '',
-            extra.aqNote || '',
-          ]
-            .filter(Boolean)
-            .join(' '),
-          extra.airQualityVintage
-            ? `SOURCE: ${extra.airQualityVintage}`
-            : 'TOGGLE "AIR QUALITY" ON MAP · BOROUGH-LEVEL RATING (CURATED)'
-        );
-        add(
-          'transport',
-          'Transport',
-          extra.transport,
-          extra.transport === 'excellent' ? 'low' : extra.transport === 'good' ? 'medium' : 'high',
-          extra.transportNote,
-          // Was 'TOGGLE "TRANSPORT" ON MAP TO SEE STATIONS'. That layer was
-          // removed on 2026-08-12 - its markers could not be clicked, because
-          // the borough path underneath took the event - so the hint pointed at
-          // a control that is not there. Stations now live in the panel's
-          // nearest-stations section, which every city reaches.
-          'SHARE OF POSTCODES WITHIN 800 M OF A RAIL, METRO OR TRAM NODE (NaPTAN)'
-        );
-        add(
-          'nhs',
-          'Healthcare',
-          extra.healthcare,
-          extra.healthcare === 'excellent' ? 'low' : extra.healthcare === 'good' ? 'medium' : 'high',
-          extra.healthcareNote,
-          // The record's own source, as the air card reads its own (audit I-12, 2026-11-12): every UK record carries
-          // healthcareVintage (the NHS Organisation Data Service) and the share it rates, while the registry's typed label
-          // said "NOT SOURCED" in nine cities. The registry's line stands only where a record names no source (New York).
-          extra.healthcareVintage
-            ? `SHARE OF POSTCODES WITHIN 500 M OF A GP PRACTICE · SOURCE: ${extra.healthcareVintage}`
-            : `SOURCE: ${cityOf(currentCity).healthSource}`
-        );
-
-        // A borough with none of these gets no section at all, rather than an
-        // "ADDITIONAL INSIGHTS" heading over an empty grid.
-        if (!cards.length) return '';
-
-        return `
-    <div class="sidebar-section">
-      <h3>ADDITIONAL INSIGHTS</h3>
-      <p class="info-note" style="margin-top:0;margin-bottom:8px;">Click any card to expand details.</p>
-      <div class="metric-cards" style="grid-template-columns:1fr 1fr;">${cards.join('')}
-      </div>${details.join('')}
-    </div>`;
-      }
-
-      function toggleMetricDetail(id) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const wasVisible = el.classList.contains('visible');
-        // Close all siblings + reset their aria-expanded
-        el.parentElement.querySelectorAll('.metric-detail').forEach((d) => d.classList.remove('visible'));
-        el.parentElement.querySelectorAll('.metric-card').forEach((c) => {
-          c.classList.remove('expanded');
-          c.setAttribute('aria-expanded', 'false');
-        });
-        if (!wasVisible) {
-          el.classList.add('visible');
-          // Highlight the card + set aria-expanded=true on the matching card
-          const cards = el.parentElement.querySelectorAll('.metric-card');
-          const details = el.parentElement.querySelectorAll('.metric-detail');
-          const idx = Array.from(details).indexOf(el);
-          if (cards[idx]) {
-            cards[idx].classList.add('expanded');
-            cards[idx].setAttribute('aria-expanded', 'true');
-          }
-        }
-      }
-
       // ============================================================
       // PROPERTY LISTINGS (Land Registry + external links)
       // ============================================================
@@ -13975,11 +13660,6 @@
       }
 
       const FACTOR_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six'];
-      function factorCount(live, env) {
-        const n = 3 + (live !== null && live !== undefined ? 1 : 0) + (env !== null && env !== undefined ? 1 : 0);
-        const word = FACTOR_WORDS[n] || String(n);
-        return word.charAt(0).toUpperCase() + word.slice(1);
-      }
 
       // The browser tab, the window list, the bookmark name and the history
       // entry all read `document.title`, and it never changed (audit D8,
@@ -14046,67 +13726,48 @@
         const area = uk ? 'council' : 'borough';
         const extra = getExtraData(data.name);
         const priceFull = formatPrice(data.avg_price, currentCity);
-        const noiseClass =
-          data.impact === 'severe' || data.impact === 'high' || data.impact === 'moderate-high'
-            ? 'noise-high'
-            : data.impact === 'moderate'
-              ? 'noise-moderate'
-              : 'noise-low';
-        const noisePct =
-          { severe: 100, high: 80, 'moderate-high': 65, moderate: 50, 'low-moderate': 30, low: 15 }[data.impact] || 20;
-        const noiseCol =
-          noiseClass === 'noise-high' ? '#F27D26' : noiseClass === 'noise-moderate' ? '#F2B826' : '#26F27D';
-
-        const q = data.scores?.quiet ?? 5,
-          a = data.scores?.afford ?? 5,
-          gr = data.scores?.growth ?? 5,
-          // null rather than 5 when the borough publishes no liveability score.
-          // The row below renders "no data" instead of painting a bar at a
-          // value nothing measured - the display half of the same rule.
-          lv = data.scores?.live ?? null,
-          // v3.9. null, never 5, wherever the borough has neither input -
-          // NYC, Cardiff and Nottingham. Same rule as lv above.
-          ev = data.scores?.env ?? null;
-        // THE APPLIED WEIGHTS, NOT THE PERSONA'S NOMINAL ROW (2026-09-13 audit,
-        // I20). The panel printed `pw.env * 100` beside "Environment: no data"
-        // on Brooklyn, so the displayed weights (32/27/0/27/14) did not
-        // reproduce the displayed score (4.0 - the rescaled sum; the nominal
-        // arithmetic gives 3.5). combineWeighted() drops an absent component
-        // and rescales the rest, exactly as the engine does, and the API
-        // stopped publishing the nominal row on 2026-09-09 for this reason.
-        // The same table, derived the same way, at the same 6dp.
-        const nominal = PERSONAS[currentPersona].weights;
-        const presentKeys = [
-          ['quiet', data.scores?.quiet], ['afford', data.scores?.afford],
-          ['growth', data.scores?.growth], ['live', lv], ['env', ev],
-        ].filter(([, v]) => v !== null && v !== undefined).map(([k]) => k);
-        const presentTotal = presentKeys.reduce((a, k) => a + nominal[k], 0);
-        const pw = Object.fromEntries(
-          Object.keys(nominal).map((k) => [
-            k,
-            presentKeys.includes(k) && presentTotal > 0 ? Math.round((nominal[k] / presentTotal) * 1e6) / 1e6 : 0,
-          ])
-        );
+        // The council's full name, as its outline and its area page give it (councilFullName): "Barking" is London's key
+        // for Barking and Dagenham, and /area/london/barking/ never existed (found 2026-11-20 by tests/uk-city-panel.mjs).
+        // Every word a reader sees on the card uses it; `data.name` stays the key for lookups, favourites and redraws.
+        const features = cityOf(currentCity).features() || [];
+        const fullName = councilFullName(data.name, features);
+        // DRAWN BEFORE THE OUTLINES LANDED (review, 2026-11-20): with no outline to read, the key stands in and the planes
+        // row cannot find its codes, so the card is drawn again, through the redraw path (M-3: the visitor's place kept),
+        // once the map is built, if this borough's card is still the one on screen and the outlines are there by then.
+        if (!features.length && !redraw) {
+          mapBuilt.then(() => {
+            // The card on screen names its borough on its save button (data-fav-name), whichever way it was opened.
+            const shown = document.querySelector('#sidebar-content .answer-card .fav-btn')?.dataset.favName;
+            if (shown === data.name && panelSubject.kind === 'borough' && (cityOf(currentCity).features() || []).length) {
+              keepPlace(() => updateSidebar(data, { switchToAnalysis: false, reveal: false, redraw: true }));
+            }
+          });
+        }
         // The card's score: the parts at the precision the total was made from (calcScores' scoresRaw), as the postcode's.
+        // answerScoreHtml() rescales the weights over the parts present, as combineWeighted() does (audit I20, 2026-09-13).
+        const nominal = PERSONAS[currentPersona].weights;
         const raw = (k) => data.scoresRaw?.[k] ?? data.scores?.[k] ?? null;
         const scoreHtml = answerScoreHtml({
           pcScore: data.score,
           parts: [['quiet', 'Quiet skies', raw('quiet')], ['live', 'Everyday living', raw('live')], ['env', 'Environment', raw('env')], ['afford', 'Affordability', raw('afford')], ['growth', 'Price growth', raw('growth')]],
           weights: nominal,
-          boroughName: data.name,
-          place: data.name,
-          whose: `Every part is ${data.name}’s, for the whole ${area}.`,
+          boroughName: fullName,
+          place: fullName,
+          whose: `Every part is ${fullName}’s, for the whole ${area}.`,
+          // Moved here from the old score breakdown (2026-11-20, option A): an Environment made of fewer than its three
+          // inputs says which, beside the score it qualifies (tests/panel-caveat.mjs builds a 2-of-3 borough to reach it).
+          caveat: envCaveat(data.name, currentCity, data.scores?.env ?? null),
         });
         // "Hounslow · one of 33 London council areas", as its area page names it.
         const count = Object.keys(getActiveBoroughData() || {}).length;
         // From the registry, never a city by name (tests/test_us_city_branches.py): "33 London council areas", "New York City's 5 boroughs".
         const unit = uk ? `${count} ${cityOf(currentCity).label} council areas` : `${cityOf(currentCity).label}’s ${count} boroughs`;
-        const areaHref = `/area/${encodeURIComponent(currentCity)}/${data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/`;
+        const areaHref = `/area/${encodeURIComponent(currentCity)}/${fullName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/`;
 
         document.getElementById('sidebar-content').innerHTML = `
     <section class="answer-card" aria-labelledby="ac-head">
       <div class="ac-top">
-        <span class="ac-where">${escapeHtml(data.name)} · one of ${escapeHtml(unit)}</span>
+        <span class="ac-where">${escapeHtml(fullName)} · one of ${escapeHtml(unit)}</span>
         <button class="fav-btn ${isFavourite(data.name) ? 'saved' : ''}" data-fav-name="${escapeHtmlAttr(data.name)}" data-fav-impact="${escapeHtmlAttr((data.impact || 'unknown').toUpperCase())}" data-fav-score="${data.score}">
           <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>${isFavourite(data.name) ? 'SAVED' : 'SAVE'}
         </button>
@@ -14147,111 +13808,19 @@
     </section>
     <details class="panel-all" id="panel-all">
     <summary>All the detail</summary>
-    <div class="sidebar-section">
-      <h3>SCORE BREAKDOWN <span style="font-weight:400;font-size:11px;color:var(--mid);">${PERSONAS[currentPersona].icon} ${PERSONAS[currentPersona].label.toUpperCase()} PROFILE</span></h3>
-      <p class="property-note" style="margin-top:0;margin-bottom:12px;">${factorCount(lv, ev)} factors, weighted for <strong>${PERSONAS[currentPersona].label.toLowerCase()}</strong> buyers. <button type="button" onclick="switchTab('ranking')" style="background:none;border:none;border-bottom:1px dotted var(--orange-text);color:var(--orange-text);cursor:pointer;padding:0;font:inherit;">Change profile</button></p>
-      <div class="score-breakdown">
-        <div class="score-row">
-          <span class="score-row-label">Quiet Skies</span>
-          <div class="score-bar-track"><div class="score-bar-fill" style="width:${q * 10}%;background:${scoreColor(q)};"></div></div>
-          <span class="score-row-value">${q}/10</span>
-        </div>
-        <div class="score-explain">Freedom from aircraft noise, outdoors. Weight: <strong>${Math.round(pw.quiet * 100)}%</strong></div>
-
-        <div class="score-row" style="margin-top:10px;">
-          <span class="score-row-label">Affordability</span>
-          <div class="score-bar-track"><div class="score-bar-fill" style="width:${a * 10}%;background:${scoreColor(a)};"></div></div>
-          <span class="score-row-value">${a}/10</span>
-        </div>
-        <!-- v5.0: this said "Cheapest=10, priciest=0", which described the
-             within-city min-max scale and became false the moment the anchor
-             went national. It is not a cohort ranking any more, so it no longer
-             claims to be one - the within-city standing is the rank line below,
-             which says what it is. -->
-        <div class="score-explain">${priceFull} average, scored against borough prices nationally. Weight: <strong>${Math.round(pw.afford * 100)}%</strong></div>
-
-        <div class="score-row" style="margin-top:10px;">
-          <span class="score-row-label">Growth</span>
-          <div class="score-bar-track"><div class="score-bar-fill" style="width:${gr * 10}%;background:${scoreColor(gr)};"></div></div>
-          <span class="score-row-value">${gr}/10</span>
-        </div>
-        <div class="score-explain">Annual price growth (${data.trend_pct || data.trend}${data.trend_real != null && String(data.trend_real) !== String(data.trend) ? `, ${data.trend_real >= 0 ? '+' : ''}${data.trend_real}% after inflation` : ''}), scored against every covered borough, not just this city. Weight: <strong>${Math.round(pw.growth * 100)}%</strong></div>
-
-        <div class="score-row" style="margin-top:10px;">
-          <span class="score-row-label">Liveability</span>
-          ${
-            lv === null
-              ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
-              : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${lv * 10}%;background:${scoreColor(lv)};"></div></div>
-          <span class="score-row-value">${lv}/10</span>`
-          }
-        </div>
-        <div class="score-explain">Schools, crime, transport, healthcare combined. Weight: <strong>${Math.round(pw.live * 100)}%</strong></div>
-
-        <div class="score-row" style="margin-top:10px;">
-          <span class="score-row-label">Environment</span>
-          ${
-            ev === null
-              ? `<div class="score-bar-track"></div><span class="score-row-value">no data</span>`
-              : `<div class="score-bar-track"><div class="score-bar-fill" style="width:${ev * 10}%;background:${scoreColor(ev)};"></div></div>
-          <span class="score-row-value">${ev}/10</span>`
-          }
-        </div>
-        <div class="score-explain">Air quality, road noise and flood risk. Weight: <strong>${Math.round(pw.env * 100)}%</strong>${envCaveat(data.name, currentCity, ev)}</div>
-      </div>
-    </div>
-
-    <div class="sidebar-section">
-      <h3>AIRCRAFT NOISE</h3>
-      <span class="noise-indicator ${noiseClass}">${(data.impact || 'UNKNOWN').toUpperCase()}</span>
-      <div class="noise-bar"><div class="noise-bar-fill" style="width:${noisePct}%;background:${noiseCol};"></div></div>
-      ${data.note ? `<p class="property-note">${escapeHtml(data.note)}</p>` : ''}
-      <div class="defra-badge">${escapeHtml(cityOf(currentCity).contourBadge)}</div>
-    </div>
-
-    <div class="sidebar-section">
-      <h3>PRICES</h3>
-      <div class="stat-grid">
-        <div class="stat"><div class="stat-value">${priceFull}</div><div class="stat-label">AVG PRICE</div></div>
-        <div class="stat"><div class="stat-value">${data.trend_pct || data.trend}</div><div class="stat-label">ANNUAL GROWTH</div></div>
-      </div>
-    </div>
-
-    ${(() => {
-      if (!extra) return '';
-      return (
-        `
-    <div class="sidebar-section">
-      <h3>CRIME</h3>
-      ${extra.crime ? `<span class="rating-badge ${ratingBadgeClass(extra.crime)}">${escapeHtml(extra.crime)}</span>` : ''}
-      <div class="crime-summary">
-        <div class="crime-stat"><div class="crime-stat-value">${escapeHtml(String(extra.crimeRate))}</div><div class="crime-stat-label">PER 1,000 RESIDENTS/YR (${escapeHtml(extra.name)} BOROUGH)</div></div>
-      </div>
-      <p class="info-note">${escapeHtml(crimeNote(extra))}</p>
-    </div>
-
-    <div class="sidebar-section">
-      <h3>SCHOOLS</h3>
-      <span class="rating-badge ${schoolBadge(extra).cls}">${escapeHtml(schoolBadge(extra).text)}</span>
-      ${extra.schoolNote ? `<p class="info-note" style="margin-top:6px;">${escapeHtml(extra.schoolNote)}</p>` : ''}
-    </div>
-    ` + buildOptionalSections(extra, 'bor')
-      );
-    })()}
-
-    <div class="sidebar-section" style="background:rgba(242,125,38,0.05);border-left:3px solid var(--orange);padding-left:21px;">
-      <p class="info-note" style="margin:0;font-size:10px;line-height:1.5;">
-        <strong>Want nearest stations &amp; ${cityOf(currentCity).localDataLabel}?</strong><br>
-        Use the area search above for precise, location-specific ${cityOf(currentCity).localDataSources} data.
-      </p>
+    <!-- Option A (Bill's pick, 2026-11-20): what the area page has and the tiles do not. Never a figure said twice. -->
+    <div class="drows">
+    <details class="drow" id="bd-planes" hidden><summary>Planes overhead, district by district</summary><div class="drow-body" id="bd-planes-body"></div></details>
+    <details class="drow" id="bd-sources"><summary>Where these numbers come from</summary><div class="drow-body" id="bd-sources-body">${boroughAllSources(fullName, areaHref)}</div></details>
     </div>
     </details>
-    <p class="ac-area-link"><a href="${escapeHtmlAttr(areaHref)}">Open ${escapeHtml(data.name)}’s area page</a></p>`;
+    <p class="ac-area-link"><a href="${escapeHtmlAttr(areaHref)}">Open ${escapeHtml(fullName)}’s area page</a></p>`;
+        fillBoroughPlanes(data.name, fullName, document.getElementById('bd-planes'));
 
         // THE TILES AND THE HEADLINE, from the council's own figures through the postcode panel's builders, so the two panels
         // word one borough alike; the pills follow from the tiles (tidyCard), the headline from councilLead().
         withFindings(req, (m) => {
-          const council = data.name;
+          const council = fullName; // the reader's name for it (data.name stays the lookup key)
           const schoolText = extra ? schoolBadge(extra).text : null;
           const findings = [
             ['aircraft', m.councilAircraftFinding({ band: data.impact, council, area, note: data.note || null, source: uk ? 'Sky Score estimate from published flight routes' : null })],
@@ -14273,11 +13842,11 @@
               council,
               note: extra ? crimeNote(extra, { figures: false }) : null,
             })],
-            // From Progress 8 only, as the area page (card_items): New York's curated word stays in "All the detail".
+            // From Progress 8 only, as the area page (card_items). New York has none, so no schools tile, as its area page has
+            // none: its curated word sat only in the old "All the detail", which went on 2026-11-20 (option A).
             ['schools', extra && extra.p8 !== undefined && extra.p8 !== null ? m.ratingFinding('schools', 'Schools', schoolText, {
               council,
               area,
-              notes: extra.schoolNote ? [extra.schoolNote] : [],
               source: 'Department for Education (Progress 8)',
             }) : null],
             ['transport', m.ratingFinding('transport', 'Transport', extra && extra.transport, { council, area, source: uk ? 'Stations: NaPTAN' : null })],
@@ -14285,6 +13854,7 @@
             ['price', m.priceFinding({
               price: priceFull,
               trend: data.trend_pct,
+              real: data.trend_real ?? null,
               area,
               council,
               afford: raw('afford'),
@@ -14292,11 +13862,89 @@
             })],
           ];
           for (const [slot, f] of findings) placeFinding(m, slot, f);
+          // "Where these numbers come from": each tile's own source line, once, in the tiles' order, then every source with its
+          // licence (How it works). Read from the findings just placed, so the row cannot name a source no tile uses. Crime's
+          // tile says its source inside its note, from `crimeVintage` (crimeNote(): never defaulted, so an estimate names none).
+          const said = [...new Set(findings.map(([slot, f]) => f && (slot === 'crime' ? extra && extra.crimeVintage : f.tile && f.tile.source)).filter(Boolean))];
+          const sourcesBody = document.getElementById('bd-sources-body');
+          if (sourcesBody) {
+            sourcesBody.innerHTML = (said.length ? `<ul class="bd-sources">${said.map((s) => `<li>${escapeHtml(s)}</li>`).join('')}</ul>` : '') + boroughAllSources(fullName, areaHref);
+          }
           // What stands out, in the card's order, watch first: the area page's card_items, read from the tiles just placed.
           const stood = findings.map(([, f]) => f).filter((f) => f && f.tile && f.tile.stand).map((f) => ({ key: f.key, stand: f.tile.stand, word: f.tile.level }));
           const lead = m.councilLead([...stood.filter((i) => i.stand === 'watch'), ...stood.filter((i) => i.stand === 'good')]);
           const head = document.getElementById('ac-head');
           if (head && lead) head.textContent = lead;
+        });
+      }
+
+      // A BOROUGH'S "ALL THE DETAIL" (Bill's pick A, 2026-11-20, claude.ai/artifact/CT9F6yrWJgLCEn17ggoSFw). The old sections
+      // repeated the card and tiles word for word; the fold now holds what the borough's AREA PAGE has and the tiles do not:
+      // its planes overhead block and where the numbers come from. Never a figure said twice.
+      // A function, hoisted: a borough drawn before the script reaches this line (a deep link) must not meet a const's dead zone.
+      // The borough's own area page lists every source behind its figures (the API's, per borough): the one list that covers
+      // New York too, whose tiles name no source (review, 2026-11-20). Then every source we use, with its licence.
+      function boroughAllSources(fullName, areaHref) {
+        return `<p class="info-note">Every source behind ${escapeHtml(fullName)}’s figures is on <a href="${escapeHtmlAttr(areaHref)}">its area page</a>.`
+          + ' <a href="/how-it-works/#credits">All sources</a>, each with its licence.</p>';
+      }
+      // An outline's ONS code: London's file is 2013's (LAD13CD), the other cities' carry `code`.
+      function getCode(f) {
+        const p = f.properties || {};
+        return p.code || p.LAD24CD || p.LAD21CD || p.LAD13CD || null;
+      }
+      // Postcode order, TW2 before TW10: build_area_pages._district_order, line for line.
+      function districtKey(d) {
+        const m = /^([A-Z]+)(\d+)(.*)$/.exec(d);
+        return m ? [m[1], Number(m[2]), m[3]] : [d, 0, ''];
+      }
+      function districtOrder(a, b) {
+        const x = districtKey(a);
+        const y = districtKey(b);
+        for (let i = 0; i < 3; i++) {
+          if (x[i] < y[i]) return -1;
+          if (x[i] > y[i]) return 1;
+        }
+        return 0;
+      }
+      // The area page's planes_section() and consultation_line() (scripts/build_area_pages.py), from the same index
+      // (data/planes-districts-by-council.json, the planes builder's), keyed on the ONS codes read off the borough's own
+      // outlines, never its name: every code the borough covers, their districts once each in postcode order, and the
+      // consultation's page for it only while the consultation is open (UTC day, as the builder dates it) and only if
+      // exactly one. Pure on its inputs; tests/uk-city-panel.mjs holds it to every built area page.
+      function councilPlanes(name, pages, features, today = new Date().toISOString().slice(0, 10)) {
+        const codes = new Set((features || []).filter((f) => boroughNameMatches(name, getName(f))).map(getCode).filter(Boolean));
+        const districts = [...new Set([...codes].flatMap((c) => (Array.isArray(pages?.councils?.[c]) ? pages.councils[c] : [])))].sort(districtOrder);
+        const c = pages?.consultation;
+        const packs = c && c.until && today <= c.until ? [...new Set([...codes].map((k) => c.councils?.[k]).filter(Boolean))] : [];
+        return { districts, pack: packs.length === 1 ? packs[0] : null, until: c?.until || null };
+      }
+      // The council's full name, from its outline: the map's key where it IS the outline's name, else the outline's name
+      // when the key is only its first words ("Barking" for Barking and Dagenham, as boroughNameMatches() accepts), which
+      // is the name the API and the area pages use. One outline only, or the key stands.
+      function councilFullName(name, features) {
+        const names = [...new Set((features || []).filter((f) => boroughNameMatches(name, getName(f))).map(getName))];
+        const full = names.length === 1 ? names[0] : null;
+        return full && full.toLowerCase().startsWith(`${String(name).toLowerCase()} `) ? full : name;
+      }
+      // The row stays hidden (no heading at all, as the area page) when no district page covers the borough, or the index
+      // cannot load. `row` is the one this draw made: a redraw makes a new one, so a late answer never fills an old card.
+      function fillBoroughPlanes(name, fullName, row) {
+        const city = currentCity;
+        if (!row) return;
+        planesPagesIndex().then((pages) => {
+          if (!row.isConnected || city !== currentCity || !pages) return;
+          const { districts, pack, until } = councilPlanes(name, pages, cityOf(city).features());
+          const body = row.querySelector('.drow-body');
+          if (!districts.length || !body) return;
+          const day = new Date(`${until}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+          const links = districts.map((d) => `<a href="/planes-overhead/${encodeURIComponent(d.toLowerCase())}/">${escapeHtml(d)}</a>`).join(', ');
+          // The words name the council as its area page does (fullName), the lookup uses the map's own key (name).
+          body.innerHTML = (pack
+            ? `<p class="info-note"><strong>Heathrow's expansion consultation is open until ${escapeHtml(day)}.</strong> <a href="${escapeHtmlAttr(pack)}">The planes over ${escapeHtml(fullName)} today, for the consultation</a>, district by district.</p>`
+            : '')
+            + `<p class="info-note">Planes overhead pages for the postcode districts covering ${escapeHtml(fullName)}: ${links}.</p>`;
+          row.hidden = false;
         });
       }
 
@@ -14781,7 +14429,7 @@
       // their names: tests/site-api-parity.mjs reads the total from the one, four render gates count the other.
       const PERSONA_FOR = { balanced: 'a balanced buyer', family: 'a family', investor: 'an investor', firsttime: 'a first-time buyer', quietlife: 'a quiet life', renter: 'a renter', commuter: 'a commuter', laterlife: 'later life' };
       // `whose`: the sentence saying whose the parts are; a postcode's by default, a borough's card passes its own.
-      function answerScoreHtml({ pcScore, parts, weights, boroughName, place, whose = null }) {
+      function answerScoreHtml({ pcScore, parts, weights, boroughName, place, whose = null, caveat = '' }) {
         const persona = PERSONAS[currentPersona];
         const label = scoreLabel(pcScore);
         // Weights rescaled over what is counted, as combineWeighted() does: the parts' points add up to the score.
@@ -14819,6 +14467,7 @@
           ${scoreCompareHtml(pcScore, place)}
           <div class="ac-key">Each part’s own score, and how much it counts for this buyer</div>
           <div class="score-breakdown">${rows}</div>
+          ${caveat ? `<p class="ac-whose ac-env-caveat">${escapeHtml(caveat)}</p>` : ''}
           <div class="ac-profs" role="group" aria-label="Score it for">${chips}</div>
           <p class="ac-whose">${whose ? escapeHtml(whose) : `Quiet skies is this ${isUkCity(currentCity) ? 'postcode' : 'ZIP code'}’s own; the other parts are ${escapeHtml(boroughName)}’s.`}</p>
         </div>
@@ -14974,7 +14623,6 @@
                 council,
                 area,
                 say: progress ? [`Pupils in ${council} make ${progress} similar pupils across England.`] : undefined,
-                notes: extra.schoolNote ? [extra.schoolNote] : [],
                 source: hasP8 ? 'Department for Education (Progress 8)' : null,
               })
               : null,
@@ -14983,6 +14631,7 @@
             ? m.priceFinding({
               price: formatPrice(boroughData.avg_price, currentCity),
               trend: boroughData.trend_pct,
+              real: boroughData.trend_real ?? null,
               area,
               council: boroughData.name,
               afford: boroughData.scoresRaw?.afford ?? boroughData.scores?.afford,

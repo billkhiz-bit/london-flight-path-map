@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-11-20 - A council area's detail says what its area page adds, and no school claims
+
+- **"All the detail" for a council area, rebuilt**: on the full map, a council area's "All the detail" repeated the
+  answer card and tiles above it, word for word. It now holds what the council's area page has and the tiles do not:
+  the planes overhead pages for its postcode districts (with the Heathrow consultation link while it is open), and
+  where the numbers come from. Both are the area page's own, checked against every council's page. The price tile now
+  also says how prices moved after inflation, the change the price growth score reads, which only the old section said.
+- **No more hand-written school claims**: the Schools tile no longer shows the 38 hand-written notes on London and
+  New York schools ("Best state schools in London", "Major draw for families" and the like), which no source backed.
+  It still shows the Department for Education's Progress 8 rating, which is what the score uses.
+- **Barking and Dagenham's link works**: the map's "Open its area page" link for Barking and Dagenham led nowhere.
+  It now opens the council's page, and the card names the council in full.
+- **The front page's example holds still on phones**: on most phones the example's three tiles grew a line taller as
+  their figures arrived. The room is now kept from the start.
+- **A closed air monitor's dates**: where the nearest DEFRA monitor closed during the year (Canterbury, 4 November
+  2024), the site and the API now both say its readings cover 1 January to 4 November 2024, not the whole year.
+
 ## 2026-11-19 - A council area opens on its answer, and the map gives no buying advice
 
 - **A council area opens on its answer, as a postcode does**: on the full map, a click on a council area, a Rankings or

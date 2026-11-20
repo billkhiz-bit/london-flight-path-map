@@ -542,7 +542,9 @@ console.log('Search guide after a borough click');
 // A BOROUGH'S ANSWER CARD (Bill's pick A, 2026-11-19, claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY): a borough opens the card
 // and tiles, not the old panel, and says what its area page says: the headline and the pills, read here from the built
 // area page itself (tests/test_borough_card.py holds the rule over every borough; this holds the map's own data reaching
-// it). The old sections sit closed under "All the detail", without the advice (audit 2026-11-19 I-1). A fresh page,
+// it). "All the detail" is option A since 2026-11-20 (Bill's pick, claude.ai/artifact/CT9F6yrWJgLCEn17ggoSFw): the old
+// sections, which repeated the card and tiles, are gone; two rows hold what the area page has and the tiles do not, its
+// planes overhead block (held here to the built page's, word for word) and where the numbers come from. A fresh page,
 // so nothing opens the fold for it.
 console.log("A borough's answer card");
 {
@@ -552,22 +554,31 @@ console.log("A borough's answer card");
     const slug = borough.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     const page = await readFile(join(ROOT, 'area', city, slug, 'index.html'), 'utf-8');
     const lead = page.match(/<p class="card-lead">([^<]*)<\/p>/);
+    // The area page's planes overhead block as text (planes_section: the consultation line, then the districts), or ''.
+    const planesBlock = page.match(/<h2>Planes overhead<\/h2>\s*([\s\S]*?)\s*<h2>/);
     const want = {
       head: lead ? unescape(lead[1]) : borough,
       pills: [...page.matchAll(/<a class="pill (watch|good)" href="#[^"]*">[\s\S]*?<\/svg>([^<]*)<span class="visually-hidden">/g)].map((m) => `${m[1]}:${unescape(m[2])}`),
+      // Paragraph by paragraph: the page has a newline between them where the map's HTML has none.
+      planes: planesBlock ? [...planesBlock[1].matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) => unescape(m[1].replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim()).join(' | ') : '',
+      planesLinks: planesBlock ? [...planesBlock[1].matchAll(/href="([^"]+)"/g)].map((m) => m[1]) : [],
     };
     await b.goto(`${url}?city=${city}&borough=${encodeURIComponent(borough)}`, { waitUntil: 'domcontentloaded' });
     const got = await b
       .waitForFunction(() => {
         const tiles = document.querySelectorAll('#sidebar-content .answer-card ~ .find-group details.tile').length;
         if (tiles < 5) return false;
+        // The sources row fills with the tiles; the planes row from the districts index, a fetch of its own.
+        if (!document.querySelector('#bd-sources-body a[href="/how-it-works/#credits"]')) return false;
         const box = document.getElementById('sidebar-content');
         return {
           head: document.getElementById('ac-head')?.textContent.trim(),
           pills: [...document.querySelectorAll('#ac-pills button')].map((x) => `${x.classList.contains('watch') ? 'watch' : 'good'}:${x.childNodes[1]?.textContent ?? ''}`),
           where: document.querySelector('.ac-where')?.textContent.trim(),
           foldClosed: document.getElementById('panel-all')?.open === false,
-          oldSections: [...document.querySelectorAll('#panel-all h3')].map((h) => h.textContent.trim().split(' ')[0]),
+          oldSections: [...document.querySelectorAll('#panel-all h3, #panel-all .sidebar-section')].map((h) => h.textContent.trim().slice(0, 20)),
+          foldRows: [...document.querySelectorAll('#panel-all > .drows > details.drow')].map((d) => d.id),
+          sources: [...document.querySelectorAll('#bd-sources-body li')].map((li) => li.textContent.trim()),
           advice: /Think carefully|Only buy here|PROPERTY ADVICE|Visit before committing|negotiat|bargaining/i.test(box.textContent),
           rows: box.querySelectorAll('.score-breakdown .score-row').length,
           link: document.querySelector('.ac-area-link a')?.getAttribute('href'),
@@ -577,14 +588,102 @@ console.log("A borough's answer card");
       .then((h) => h.jsonValue())
       .catch(() => null);
     const tag = `${borough} (${city})`;
-    check(`${tag}: a borough opens the answer card, with the score in it and the old sections closed under "All the detail"`,
-      !!got && got.verdict && got.rows > 0 && got.foldClosed && ['SCORE', 'AIRCRAFT', 'PRICES'].every((h) => got.oldSections.includes(h)),
+    check(`${tag}: a borough opens the answer card, with the score in it and "All the detail" closed`,
+      !!got && got.verdict && got.rows > 0 && got.foldClosed,
       JSON.stringify(got));
+    check(`${tag}: "All the detail" is option A, two rows and none of the old sections that repeated the tiles`,
+      !!got && got.oldSections.length === 0 && got.foldRows.join() === 'bd-planes,bd-sources',
+      `old ${JSON.stringify(got?.oldSections)} | rows ${JSON.stringify(got?.foldRows)}`);
+    // A UK borough's tiles name their sources; New York's tiles carry none, so its row holds only the link to all of them.
+    check(`${tag}: "Where these numbers come from" lists its tiles' own sources once each, then every source`,
+      !!got && (city === 'nyc' ? got.sources.length === 0 : got.sources.length >= 6 && new Set(got.sources).size === got.sources.length
+        && got.sources.includes('DEFRA noise map (modelled)') && got.sources.some((s) => /^ONS Table C4, /.test(s))),
+      JSON.stringify(got?.sources));
+    // The planes row says what the area page's "Planes overhead" block says, word for word and link for link, or is
+    // hidden where the page has no such block.
+    const planes = await b
+      .waitForFunction((wantAny) => {
+        const row = document.getElementById('bd-planes');
+        if (!row) return { missing: true };
+        if (wantAny && row.hidden) return false;
+        const body = row.querySelector('.drow-body');
+        const text = [...body.querySelectorAll('p')].map((p) => p.textContent.replace(/\s+/g, ' ').trim()).join(' | ');
+        return { hidden: row.hidden, text, links: [...body.querySelectorAll('a')].map((a) => a.getAttribute('href')) };
+      }, Boolean(want.planes), { timeout: 15000 })
+      .then((h) => h.jsonValue())
+      .catch(() => null);
+    if (!want.planes) await b.waitForTimeout(1500); // a hidden row must STAY hidden once the index has answered
+    const planesNow = want.planes ? planes : await b.evaluate(() => ({ hidden: document.getElementById('bd-planes')?.hidden }));
+    check(want.planes ? `${tag}: the planes row is the area page's planes block, word for word and link for link`
+      : `${tag}: no district page covers it, so the planes row stays hidden, as the area page has no block`,
+      want.planes
+        ? !!planes && !planes.hidden && planes.text === want.planes && planes.links.join() === want.planesLinks.join()
+        : !!planesNow && planesNow.hidden === true,
+      want.planes ? `map "${planes?.text}" | area page "${want.planes}"` : JSON.stringify(planesNow));
     check(`${tag}: its headline is its area page's, word for word`, !!got && got.head === want.head, `map "${got?.head}" | area page "${want.head}"`);
     check(`${tag}: its pills are its area page's, in order`, !!got && got.pills.join() === want.pills.join(), `map ${JSON.stringify(got?.pills)} | area page ${JSON.stringify(want.pills)}`);
     check(`${tag}: no advice anywhere in the panel, the fold included`, !!got && !got.advice, JSON.stringify(got?.where));
     check(`${tag}: it links its own area page, which exists`, !!got && got.link === `/area/${city}/${slug}/`, `link ${got?.link}`);
   }
+  await b.close();
+  console.log('');
+}
+
+// EVERY UK BOROUGH'S PLANES ROW IS ITS AREA PAGE'S (option A, 2026-11-20). The map's councilPlanes() reads a borough's ONS
+// codes off its own outlines (LAD13CD for London, `code` elsewhere) and the districts index; the area page reads the Lambda's
+// LAD_TO_BOROUGH. Two roads to one list, so held equal on every borough of every UK city the map shows, against the built
+// pages themselves, districts in order and the consultation link. A borough with no built page fails: the card's "Open ...
+// area page" link would be broken too.
+console.log("Every UK borough's planes row is its area page's");
+{
+  const b = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await b.goto(url, { waitUntil: 'domcontentloaded' });
+  await b.waitForFunction(() => typeof councilPlanes === 'function' && typeof CITY_DATA === 'object', null, { timeout: 20000 });
+  const cities = await b.evaluate(() => Object.keys(CITY_DATA).filter((c) => isUkCity(c)));
+  const wrong = [];
+  let compared = 0;
+  let withDistricts = 0;
+  for (const city of cities) {
+    // Each borough's card drawn for real: its planes row as text, and the area page link the card itself carries.
+    const got = await b.evaluate(async (c) => {
+      if (c !== currentCity) await switchCity(c);
+      const pages = await planesPagesIndex();
+      const rows = [];
+      for (const name of Object.keys(getActiveBoroughData() || {})) {
+        updateSidebar(matchBorough(name), { reveal: false });
+        await new Promise((r) => setTimeout(r, 30)); // the index is held, so its answer lands at once
+        const row = document.getElementById('bd-planes');
+        const text = row && !row.hidden ? [...row.querySelectorAll('.drow-body p')].map((p) => p.textContent.replace(/\s+/g, ' ').trim()).join(' | ') : '';
+        const link = document.querySelector('.ac-area-link a')?.getAttribute('href') || null;
+        rows.push({ name, text, link, ...councilPlanes(name, pages, cityOf(c).features()) });
+      }
+      return { pagesLoaded: !!pages?.councils, rows };
+    }, city);
+    if (!got.pagesLoaded) wrong.push(`${city}: the districts index did not load`);
+    const unescape = (s) => s.replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    for (const row of got.rows) {
+      let html;
+      try {
+        if (!/^\/area\/[a-z]+\/[a-z0-9-]+\/$/.test(row.link || '')) throw new Error('no link');
+        html = await readFile(join(ROOT, row.link, 'index.html'), 'utf-8');
+      } catch {
+        wrong.push(`${city}/${row.name}: the card's area link ${row.link} reaches no built page`);
+        continue;
+      }
+      const block = html.match(/<h2>Planes overhead<\/h2>\s*([\s\S]*?)\s*<h2>/);
+      const districts = block ? [...(block[1].match(/covering [^:]*: ([\s\S]*?)\.<\/p>/)?.[1] || '').matchAll(/>([A-Z0-9]+)<\/a>/g)].map((m) => m[1]) : [];
+      const pack = block?.[1].match(/<a href="([^"]+)">The planes over [^<]* today, for the consultation<\/a>/)?.[1] || null;
+      const text = block ? [...block[1].matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) => unescape(m[1].replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim()).join(' | ') : '';
+      compared++;
+      if (districts.length) withDistricts++;
+      if (row.districts.join() !== districts.join() || row.pack !== pack || row.text !== text) {
+        wrong.push(`${city}/${row.name}: map [${row.districts}] ${row.pack} "${row.text}" | page [${districts}] ${pack} "${text}"`);
+      }
+    }
+  }
+  // 91 boroughs in 11 UK city regions today; 30+ covered by a district page (London's alone are most of them).
+  check(`every UK borough's planes districts and consultation link equal its area page's (${compared} compared, ${withDistricts} with districts)`,
+    compared >= 85 && withDistricts >= 30 && wrong.length === 0, wrong.slice(0, 6).join(' || ') || `${compared} compared`);
   await b.close();
   console.log('');
 }

@@ -1328,3 +1328,60 @@ it is the race 2026-10-05 fixed for `switchCity()` ("reading 'center'"), on anot
 `mapBuilt` before drawing that answer, and the test holds `/data/london-boroughs.json` (what `init()` waits on) until the
 lookup has answered: red without the wait (the same error), green with it. A one-off red under load is a race to reach
 on purpose, not a flake to re-run past.
+
+## A borough's "All the detail" is option A, and the school notes went (2026-11-20, Bill's picks)
+
+Screenshots of the live map showed a borough's "All the detail" was the old sidebar under a new heading: the score
+breakdown, aircraft noise, prices, crime, schools, and five of the ratings again as small boxes. Every figure in it was
+already one tap away in a tile (opened, the tiles carried even the crime driver, Mossbourne and the price change). A
+postcode's "All the detail" holds things its tiles do not. Bill picked option A of three drawn at the panel's width
+(claude.ai/artifact/CT9F6yrWJgLCEn17ggoSFw): the fold holds what the borough's AREA PAGE has and the tiles do not.
+
+- **Planes overhead, district by district**: the area page's `planes_section()` and `consultation_line()`, mirrored by
+  `councilPlanes()` from the same `data/planes-districts-by-council.json` the map already loaded for the planes tap card.
+  The map held no ONS code for a borough, only names; the outlines do (`LAD13CD` in London's 2013 file, `code` in the
+  others), so `getCode()` reads them and the borough's name never keys the lookup. Districts in postcode order
+  (`districtOrder`, `_district_order` line for line), the consultation's page only while open and only if exactly one.
+  Hidden where no district page covers the borough, as the area page has no heading then.
+- **Where these numbers come from**: each placed tile's own `tile.source`, once, then `/how-it-works/#credits`. Crime's
+  tile says its source inside its note, so the list reads `crimeVintage`, the note's own holder (never defaulted).
+- **The env caveat** (`envCaveat`) lived only in the old score breakdown; it is now a line in the card's score
+  (`answerScoreHtml({ caveat })`). `tests/panel-caveat.mjs` reads it there and still builds a 2-of-3 borough to reach it.
+
+THE CHECK THAT HOLDS IT FOUND A LIVE FAULT. `tests/uk-city-panel.mjs` draws every UK borough's card for real (86), follows
+the card's own area link to the built page, and compares the planes row word for word. London's key "Barking" made the
+link `/area/london/barking/`, which never existed: the page is `barking-and-dagenham`. `councilFullName()` takes the
+outline's name where the key is only its first words (the prefix rule `boroughNameMatches()` already accepts), for the
+link, the card's place line and the planes words. Proven red on both mutants (plain sort; the full name removed).
+
+Dead with the old sections, grepped by NAME: `buildOptionalSections`, `metricColor`, `toggleMetricDetail`, `factorCount`
+(`FACTOR_WORDS` stays: the Bay Area card), and four registry fields only that block read (`localDataLabel`,
+`localDataSources`, `contourBadge`, `healthSource`, 48 lines over 12 cities). `tests/panel-findings.mjs` had lifted
+`buildOptionalSections()` out of the page to test it; its data half (every rated UK healthcare record names its source)
+stays.
+
+THE SCHOOL NOTES. The 38 hand-written `schoolNote`s (London's 33, New York's 5) all carried a judgement of ours on top of
+any Ofsted grade ("Best state schools in London", "Major draw for families", "improved significantly"), drawn in the
+Schools tile of every borough AND every postcode in those boroughs. The audit's I-1 test read only the aircraft `note:`
+fields in `index.html`, so it never saw them. Deleted (Bill's "go with recommended"); `build_borough_bands.py`'s
+FOREIGN_KEYS no longer lists the key, so its `--check` refuses one coming back, and `tests/test_borough_card.py` does too
+(red on the old data). Neither the area pages nor the API carried them. New York has no Progress 8, so no schools tile, as
+its area page has none.
+
+## The example's yardstick lines kept too little room on most phones (audit M-4, 2026-11-20)
+
+The audit read it from font metrics at 320 px. Measured in a browser it was worse: the short forms wrap to three lines once
+the row of tiles is under about 315 px, and a 390 px phone's row is 305, so on the commonest phone the three tiles grew
+16 px as the figures landed. The page's layout-shift check stayed under 0.02 throughout: a whole-page score cannot see one
+row growing. Three lines are now kept in a row of 330 px or less (a container query, never the screen), and
+`tests/front-page.mjs` holds each line's height to the skeleton's at 320, 360, 375, 390, 412 and 430 px, on a page of its
+own: measured on the page the search check then uses, the resizes counted as shifts there. Red without the rule.
+
+THE REVIEW BEFORE THE PREFLIGHT (`/code-review` medium, 2026-11-20) found three things the option A change itself lost or
+opened, all fixed: (1) `councilFullName()` and `councilPlanes()` read the outlines, so a card drawn before they land would
+link Barking to the old 404 and hide the planes row; the card is drawn again after `mapBuilt` (through `keepPlace()`, only
+if the same borough's card is on screen, checked by its save button's `data-fav-name`, not `selectedBorough`, which only a
+click sets). (2) New York's tiles name no source, so its sources row held only the credits link; every borough's row now
+points to its own area page, whose list is the API's per borough. (3) The price change after inflation, the figure the
+growth score reads, was said only in the old breakdown; `priceFinding({ real })` says it in the price tile, borough and
+postcode, only where it differs from the plain change. Deleting a section deletes what it ALONE said: list those first.

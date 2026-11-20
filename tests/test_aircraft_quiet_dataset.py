@@ -136,3 +136,19 @@ def test_shipped_file_holds_ramp_outputs_only(path):
     stray = sorted(values - producible)
     assert not stray, f'{os.path.basename(path)} holds values the ramp cannot produce: {stray[:10]}'
     assert payload['count'] == len(payload['quiet'])
+
+
+@pytest.mark.parametrize('path', DATA_FILES, ids=os.path.basename)
+def test_shipped_file_says_what_its_builder_says(path):
+    """The file's own words are the builder's, not a hand edit (audit 2026-11-19 M-13).
+
+    The 13 Nov wording edits were made by hand in the builder AND in both files, held only by the wording gate. The
+    builder now keeps them as constants and `--check` rebuilds both files whole (rasters and NSPL: by hand, at a roll);
+    this is the part cheap enough for every preflight.
+    """
+    with open(path, encoding='utf-8') as fh:
+        payload = json.load(fh)
+    regions = os.path.basename(path) == 'aircraft-quiet-regions.json'
+    assert payload['source'] == (builder.REGION_SOURCE if regions else builder.LONDON_SOURCE)
+    assert payload['note'] == (builder.REGION_NOTE if regions else builder.LONDON_NOTE)
+    assert set(payload) == {'ramp', 'source', 'note', 'count', 'quiet'}, f'unexpected keys: {sorted(payload)}'

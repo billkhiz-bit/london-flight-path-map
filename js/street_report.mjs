@@ -118,10 +118,19 @@ export function sensorReadings(s) {
 }
 /** "suburban industrial" */
 export const monitorSetting = (m) => String(m.type).toLowerCase();
-/** "2024": the monitor file's year. */
-export const monitorPeriod = (m) => String(m.year);
+/** "2024": the monitor file's year; for a site that closed during it, the days its mean covers, "1 January to 4 November
+ * 2024" (audit M-8, 2026-11-20: Canterbury's read "in 2024" here and "2024-01-01 to 2024-11-04" in the API). The API's
+ * air_period_words() words the same period the same way; backend/tests/test_air_nearby.py runs this in node to hold it. */
+export function monitorPeriod(m) {
+  const closed = typeof m.closed === 'string' && m.closed.startsWith(`${m.year}-`) && m.closed !== `${m.year}-12-31` ? m.closed : null;
+  if (!closed) return String(m.year);
+  const day = new Date(`${closed}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  return `1 January to ${day}`;
+}
+/** "in 2024", or "from 1 January to 4 November 2024" for a site that closed during its year. */
+const monitorWhen = (m) => `${/^\d{4}$/.test(monitorPeriod(m)) ? 'in' : 'from'} ${monitorPeriod(m)}`;
 /** "nitrogen dioxide 14.2 µg/m³ in 2024" */
-export const monitorReadings = (m) => `${pollutants(m)} in ${monitorPeriod(m)}`;
+export const monitorReadings = (m) => `${pollutants(m)} ${monitorWhen(m)}`;
 /** "Nearest Breathe London sensor: George Street, 1.5 km away (roadside, 0.7 m from the kerb): nitrogen dioxide 18.7 µg/m³ and fine particles 7.5 µg/m³ over the 12 months to September 2026." */
 /** The short forms for the answer's Nearby list: the place, how far, and the readings; the full line sits in its fold. */
 export const sensorFact = (s) => `${s.name}, ${stationDistance(s.km)}: ${sensorReadings(s)}`;
@@ -456,7 +465,7 @@ const capFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
 /** The key's words for a sensor: what it is, its setting, its period. */
 export const sensorKeyNote = (s) => `Breathe London sensor, low-cost, provisional. ${capFirst(sensorSetting(s))}. Over the ${sensorPeriod(s)}.`;
 /** The key's words for a monitor. */
-export const monitorKeyNote = (m) => `Official DEFRA monitor, ratified. ${capFirst(monitorSetting(m))}. In ${monitorPeriod(m)}.`;
+export const monitorKeyNote = (m) => `Official DEFRA monitor, ratified. ${capFirst(monitorSetting(m))}. ${capFirst(monitorWhen(m))}.`;
 /** One pollutant's rows for airChart(): the model, the sensor and the monitor, each where present. */
 export function airRows(p, { model, sensor, monitor }) {
   const reading = (r) => (r && r[p] && typeof r[p].mean === 'number' ? r[p].mean : null);

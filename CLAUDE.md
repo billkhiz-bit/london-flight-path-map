@@ -236,7 +236,7 @@ Or just describe what you need, I have full context of this project.
 - **`.no-result-yet`, not `.empty-state`**, marks "nothing searched yet".
 - **Air measured nearby is ONE pair of functions** (`nearestSensor` / `nearestMonitor` in `js/street_report.mjs`)
   for the front page, the full map's panel (dynamic import) and both reports: 5 km, never "none nearby", a stale sensor file hidden, credits linked.
-  **`/v1/environment` carries them as `airMeasuredNearby`** (Bill's pick A, 2026-11-18): the Lambda reads the SITE'S OWN two files (cached 1 h, never a copy) and `build_air_nearby` mirrors the JS, from the point asked; `backend/tests/test_air_nearby.py` runs the JS in node on the same files and holds every rule to it. Its figures go out as the file holds them and `distanceKm` as the site shows it (`shown_km`), so a caller rounds ONCE (review 2026-11-19: 1.0451 km read "1.1 km" in the extension).
+  **`/v1/environment` carries them as `airMeasuredNearby`** (Bill's pick A, 2026-11-18): the Lambda reads the SITE'S OWN two files (cached 1 h, never a copy) and `build_air_nearby` mirrors the JS, from the point asked; `backend/tests/test_air_nearby.py` runs the JS in node on the same files and holds every rule to it. Its figures go out as the file holds them and `distanceKm` as the site shows it (`shown_km`), so a caller rounds ONCE (review 2026-11-19: 1.0451 km read "1.1 km" in the extension). A monitor that closed during its year is worded by both as the days its mean covers, "1 January to 4 November 2024" (`monitorPeriod()` / `air_period_words()`, audit M-8, 2026-11-20; Canterbury had read "in 2024").
   **The full map's panel is "Air quality nearby", side by side** (Bill, 2026-11-03, refined B): DEFRA's MODEL for the
   postcode's own 1 km square (from `/v1/environment`, read with its provenance; the council average stands in, named so,
   if it cannot load) beside the sensor and monitor on ONE scale per pollutant to 4x the WHO 2021 guideline, by
@@ -245,10 +245,19 @@ Or just describe what you need, I have full context of this project.
   Find areas row, `?borough=`, a profile change) draws the card, then council tiles through the postcode panel's builders (`councilAircraftFinding`,
   `roadFinding({ whole })`, schools only from Progress 8), the pills from the tiles (`tidyCard`), the headline from `councilLead()`: what the borough's
   AREA PAGE says, word for word (`tests/test_borough_card.py` runs it on every borough against `card_lead()`; `tests/uk-city-panel.mjs` reads five built
-  pages). The old sections sit closed under "All the detail"; no advice: `getVerdict()` is gone, "Property advice" is "Prices", the curated
-  `property` notes are DELETED (38: London's 33, New York's 5; Bill, 2026-11-19; `tests/test_borough_card.py` refuses one
-  back), and no `note` may advise or claim an ungated superlative (audit I-1). It `cancelSearch()`es first: its slots
-  would otherwise take a postcode's late answers.
+  pages). No advice: `getVerdict()` is gone, the curated `property` notes are DELETED (38: London's 33, New York's 5; Bill, 2026-11-19)
+  and so are the curated `schoolNote`s (38, "Best state schools in London" and the like; Bill, 2026-11-20; `tests/test_borough_card.py`
+  refuses either back, `build_borough_bands.py --check` the key), and no `note` may advise or claim an ungated superlative (audit I-1).
+  It `cancelSearch()`es first: its slots would otherwise take a postcode's late answers.
+  **Its "All the detail" is option A** (Bill's pick, 2026-11-20, claude.ai/artifact/CT9F6yrWJgLCEn17ggoSFw): the old sections repeated the tiles
+  and are GONE; two `drow`s hold what the AREA PAGE has and the tiles do not: "Planes overhead, district by district" (`councilPlanes()`: the
+  area page's planes block from `planes-districts-by-council.json`, keyed on the ONS codes read off the borough's outlines, never its name,
+  hidden where no district page covers it) and "Where these numbers come from" (the tiles' own sources, crime's from `crimeVintage`, then
+  the borough's area page, whose list covers New York too, and `/how-it-works/#credits`). Every UK borough's row is held to its built page
+  word for word by `tests/uk-city-panel.mjs`. The environment caveat (`envCaveat`) moved into the card's score; the price tile says the
+  change after inflation (`priceFinding({ real })`), which only the old breakdown said. The card names the council as its outline does
+  (`councilFullName()`: "Barking" is the map's key for Barking and Dagenham, whose area link was broken until 2026-11-20); a card drawn
+  before the outlines land is drawn again after `mapBuilt`, through `keepPlace()`.
 - **The full map's postcode panel is findings first** (Bill's pick, 2026-11-04: Stitch's draft): four `.find-group`s, then every earlier section unchanged in
   `#panel-all` ("All the detail"), closed; ids stay, so the loaders fill them there. `js/panel-findings.mjs` words each finding, pure text, null when there is
   nothing true to say (`tests/panel-findings.mjs`); `fillFindings()` places them. Road noise leads with the council's rating over the postcode's own figure
@@ -422,7 +431,8 @@ Or just describe what you need, I have full context of this project.
   card rule through ONE holder, `whoSide()` (js/street_report.mjs): DEFRA's own aircraft figure over/under the answer's WHO guideline (never an
   estimate's), the air guideline as context with no verdict, and how often the airport flew that way from the planes file's `sharePct`
   (`planesWalk().lead`). A narrow row of tiles shows the short forms by a container query on `.ans-tiles`, never the screen; every line,
-  the skeleton's too, keeps two lines of room, or the frame grows when the figures land.
+  the skeleton's too, keeps two lines of room, THREE in a row of 330 px or less (audit M-4, 2026-11-20: a 390 px phone's row is 305 and its
+  short forms took three), or the frame grows when the figures land; `tests/front-page.mjs` holds each line to the skeleton's at six widths.
 - **The answer's folds are pictures and points, not paragraphs** (Bill, 2026-11-11: "still text heavy"; mock-up
   claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2; planes fold 162 words to 92, air 97 to 75). Planes: `planesChart()` (js/planes.mjs,
   the air chart's twin, banded and coloured by the planes layer's index.json steps), the overhead rule beside `overheadConeSvg()`

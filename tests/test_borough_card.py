@@ -111,3 +111,28 @@ def test_no_borough_record_carries_a_property_note():
     snapshot = json.loads((REPO / 'design' / 'borough-raw.json').read_text(encoding='utf-8'))
     stale = [f'{city}/{b}' for city, recs in snapshot.items() for b, rec in recs.items() if 'property' in rec]
     assert not stale, f'design/borough-raw.json still carries {len(stale)} property notes, e.g. {stale[:3]}'
+
+
+def _keys_anywhere(obj, key, path=''):
+    """Every path in `obj` holding `key`, at any depth (a parser that knows the file's shape, never one grep)."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            here = f'{path}/{k}'
+            if k == key:
+                yield here
+            yield from _keys_anywhere(v, key, here)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            yield from _keys_anywhere(v, key, f'{path}[{i}]')
+
+
+def test_no_borough_record_carries_a_school_note():
+    # The 38 curated school notes (London's 33, New York's 5) were deleted on Bill's word, 2026-11-20: every one carried a
+    # judgement of ours no gate held ("Best state schools in London", "Major draw for families", "improved significantly"),
+    # drawn in the Schools tile of every borough and every postcode in those boroughs. The tile keeps its Progress 8 band
+    # and its Department for Education source. scripts/build_borough_bands.py --check refuses the key too (FOREIGN_KEYS).
+    extra = json.loads((REPO / 'data' / 'borough-extra.json').read_text(encoding='utf-8'))
+    back = list(_keys_anywhere(extra, 'schoolNote'))
+    assert not back, f'{len(back)} school notes are back in data/borough-extra.json, e.g. {back[:3]}'
+    assert 'schoolNote' not in MAP, 'the map reads a school note again'
+    assert 'schoolNote' not in (REPO / 'backend' / 'lambdas' / 'score' / 'app.py').read_text(encoding='utf-8')

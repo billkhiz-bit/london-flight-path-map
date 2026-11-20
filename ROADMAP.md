@@ -26,6 +26,29 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-20)
+>
+> **M-3 COMMITTED AND PUSHED** (`cd534073`; preflight PASS once the PC had memory). **Bill's three picks** (claude.ai/artifact/CT9F6yrWJgLCEn17ggoSFw,
+> "go with recommended"): (1) a borough's "All the detail" is **option A**: the old sections, which repeated the card and tiles,
+> are gone; two rows hold the area page's planes block (`councilPlanes()`, ONS codes off the outlines, held to every UK
+> borough's built page by `tests/uk-city-panel.mjs`) and the tiles' sources; the env caveat moved into the card. That check
+> found **Barking and Dagenham's area link broken** (the map keys it "Barking"): `councilFullName()` names it from its outline.
+> Dead with the old sections: `buildOptionalSections`, `metricColor`, `toggleMetricDetail`, `factorCount` and four registry
+> fields (`localDataLabel`, `localDataSources`, `contourBadge`, `healthSource`, 48 lines). (2) **The 38 curated `schoolNote`s
+> DELETED** (data, the map's two reads, the bands builder's FOREIGN_KEYS; `tests/test_borough_card.py` refuses one back).
+> (3) **The top bar stays**; read the counts again ~20 Dec (4-20 Nov: Full map 15, About 6 from the last slot, Reports 4,
+> Pricing 4, How it works 2, API 0; Book a demo 0; Google referrers up). **The 19 Nov audit's Minors are all closed**: M-4
+> (worse than read: 390 px phones too; three lines kept at 330 px or less, held at six widths), M-8 (Canterbury's period,
+> one wording), M-11 (measured, no change: worst 83 ft, in closure hours), M-13 (`--check` + a cheap pytest). The stale
+> `extract_airports_paths.py` follows New York's aliases again (`design/airports-paths.json` regenerated, a month stale).
+> **`/code-review` (medium) before the preflight**: 3 important, all fixed: a card drawn before the outlines landed is drawn
+> again after `mapBuilt` (through `keepPlace`); New York's sources row points to its area page's list; the price tile says the
+> change after inflation (`priceFinding({ real })`, borough and postcode). 5 nits fixed (names on the card, `--check` runs
+> both files, the extractor stops on an unknown alias chain, `air_period_words`' new branch is monitor-shaped only, 19 dead
+> CSS blocks).
+> **Then: preflight, commit, push, deploy** (Bill's "run the above and deploy": data, web, home, and a reviewed SAM changeset
+> for M-8's wording).
+>
 > ## START HERE (2026-11-19)
 >
 > **MEASURED AIR IN `/v1/environment` IS LIVE** (`f8715f75`, pushed; Bill's "run all"; reviewed changeset, ScoreFunction code

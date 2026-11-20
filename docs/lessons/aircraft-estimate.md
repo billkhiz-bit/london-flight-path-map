@@ -148,3 +148,12 @@ For 41 days (26 Sep to 6 Nov) the map and `/api/` said DEFRA's 2021 Heathrow map
 against it ("2% below the 2019 level") and every page repeated that; 2019's ANNUAL figure is 1,312.9 (ERCD 2101 Table C6,
 calendar 2019), so 2025 matched 2019. Read a CAA comparison's two periods before quoting it, even when the sentence is the
 CAA's own; the served pages may not cite ERCD 2101 by number (`check_editions` refuses any report but the current one).
+
+## The aircraft quiet files get a --check (audit M-13, 2026-11-20)
+
+`build_aircraft_quiet_dataset.py` had no `--check`, and its 13 Nov wording edits were made by hand in the builder and in
+both JSON files, held only by the wording gate. The files' `source` and `note` are now constants in the builder;
+`--check` rebuilds both files in memory from the rasters and NSPL and compares them whole, writing nothing (both equal on
+20 Nov; red on a one-word edit to London's note). It needs `rasterio`, the rasters and NSPL and takes a few minutes, so
+it is run by hand at a roll; the cheap half, the shipped `source` and `note` equal to the builder's constants and no
+other keys, runs on every preflight in `tests/test_aircraft_quiet_dataset.py`.

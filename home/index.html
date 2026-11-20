@@ -248,6 +248,10 @@
       .ans-yard.is-over { font-weight: 600; color: var(--orange-ink); }
       .ans-yard .yd-s { display: none; }
       @container (max-width: 420px) { .ans-yard .yd-l { display: none; } .ans-yard .yd-s { display: inline; } }
+      /* THREE LINES KEPT IN A NARROW ROW (audit M-4, measured 2026-11-20): the short forms wrap to three lines once the row
+         is under about 315 px (a 390 px phone's is 305, a 320 px phone's 235), so the tiles grew 16 px as the figures landed.
+         330 gives the wording some room; tests/front-page.mjs holds every line to the skeleton's at six phone widths. */
+      @container (max-width: 330px) { .ans-yard { min-height: calc(3.9em + 7px); } }
       .ans-show { margin: 8px 0 0; font-size: 13px; }
       .ans-show[hidden] { display: none; }
       .ans-show button { min-height: 24px; padding: 2px 0; font: 600 13px var(--font-body); color: var(--orange-ink); background: none; border: 0; cursor: pointer; }

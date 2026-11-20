@@ -897,12 +897,13 @@ FOREIGN_KEYS = frozenset(
         # build_progress8.py (DfE KS4)
         'p8',
         'schoolsVintage',
-        # Curated London/NYC editorial, hand-written, no script behind them.
+        # Curated London/NYC editorial, hand-written, no script behind them. `schoolNote` is NOT here: the 38 were
+        # deleted on Bill's word, 2026-11-20 ("Best state schools in London" and the like, claims no gate held), so
+        # --check now refuses one coming back as an unknown key (tests/test_borough_card.py too).
         'aqNote',
         'crime',
         'floodNote',
         'healthcareNote',
-        'schoolNote',
         'schools',
         'transportNote',
     }

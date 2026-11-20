@@ -10722,12 +10722,18 @@ def shown_km(km):
 
 
 def air_period_words(period):
-    """'12 months to October 2026', '2024', else 'from-to': the period of one reading, worded as the site words it."""
+    """'12 months to October 2026', '2024', '1 January to 4 November 2024' (a monitor that closed during its year: audit
+    M-8, 2026-11-20, where the site said "in 2024" and this said '2024-01-01 to 2024-11-04'), else 'from-to': the period
+    of one reading, worded as the site words it (js/street_report.mjs sensorPeriod / monitorPeriod, held by the tests)."""
     f, t = date.fromisoformat(period['from']), date.fromisoformat(period['to'])
     if f.year == t.year and (f.month, f.day) == (1, 1) and (t.month, t.day) == (12, 31):
         return str(f.year)
     if f.day == 1 and t + timedelta(days=1) == date(f.year + 1, f.month, 1):
         return f'12 months to {t.strftime("%B %Y")}'
+    # Only a monitor's shape, 1 January to its closing day: a sensor window is always worded as 12 months by the site
+    # (sensorPeriod), so a short one stays in ISO dates here rather than in words the site never uses (review, 2026-11-20).
+    if f.year == t.year and (f.month, f.day) == (1, 1) and f <= t:
+        return f'1 January to {t.day} {t.strftime("%B")} {t.year}'
     return f'{f.isoformat()} to {t.isoformat()}'
 
 

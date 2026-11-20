@@ -39,7 +39,8 @@ does. The ramp is not mirrored here any more either - it is the Lambda's own
 function, loaded from backend/lambdas/score/app.py.
 
   pip install rasterio pyproj
-  python scripts/build_aircraft_quiet_dataset.py
+  python scripts/build_aircraft_quiet_dataset.py            # London's file (then --regions for the others)
+  python scripts/build_aircraft_quiet_dataset.py --check    # both files equal to a rebuild? writes nothing
 """
 
 import csv
@@ -85,6 +86,50 @@ REGION_RASTERS = [
     'liverpool', 'manchester', 'newcastle',
 ]
 REGION_OUT = ROOT / 'data' / 'aircraft-quiet-regions.json'
+
+# WHAT EACH FILE SAYS OF ITSELF, held here (audit 2026-11-19 M-13). The 13 Nov wording edits were made by hand in this
+# builder AND in both JSON files, with nothing to say the three agreed. tests/test_aircraft_quiet_dataset.py now holds the
+# shipped files' `source` and `note` to these on every preflight, and `--check` rebuilds both files in memory and compares
+# them whole (it needs the rasters and NSPL, so it is run by hand at a roll, not by preflight).
+LONDON_SOURCE = 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden'
+LONDON_NOTE = (
+    "Quiet scores for the London postcodes inside DEFRA's modelled aircraft noise map. "
+    'Postcodes absent from this file have no aircraft contour and fall '
+    'back to flight-path geometry.'
+)
+REGION_SOURCE = 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden, per-airport coverages'
+REGION_NOTE = (
+    "Quiet scores for the postcodes inside DEFRA's modelled aircraft noise maps around Birmingham, "
+    'Bristol, East Midlands, Leeds Bradford, Liverpool, Manchester and '
+    'Newcastle airports. London is in aircraft-quiet-london.json. '
+    'Postcodes absent from both have no aircraft contour and fall back '
+    'to flight-path geometry.'
+)
+
+
+def finish(path, payload, check):
+    """Write `payload` to `path`, or with --check compare it with what is there and write nothing. 0 when written or
+    equal, 1 when --check finds a difference (each differing top-level key named, and how many postcodes differ)."""
+    if not check:
+        path.write_text(json.dumps(payload, separators=(',', ':')), encoding='utf-8')
+        return 0
+    try:
+        shipped = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError) as e:
+        print(f'  CHECK FAIL {path.name}: cannot read it ({type(e).__name__})')
+        return 1
+    if shipped == payload:
+        print(f'  CHECK OK {path.name}: equal to a rebuild ({payload["count"]:,} postcodes)')
+        return 0
+    for key in sorted(set(shipped) | set(payload)):
+        if key == 'quiet':
+            a, b = shipped.get('quiet') or {}, payload.get('quiet') or {}
+            moved = sum(1 for k in set(a) | set(b) if a.get(k) != b.get(k))
+            if moved:
+                print(f'  CHECK FAIL {path.name}: {moved:,} postcodes differ from a rebuild')
+        elif shipped.get(key) != payload.get(key):
+            print(f'  CHECK FAIL {path.name}: `{key}` differs from a rebuild')
+    return 1
 
 # Per-airport coverages declare nodata as -3.4e38, where the London region
 # export uses +3.4e38. A one-sided test catches one and writes the other as a
@@ -157,8 +202,8 @@ def ramp_identity(app):
     }
 
 
-def build_regions():
-    """Per-airport coverages for every city except London. One NSPL pass."""
+def build_regions(check=False):
+    """Per-airport coverages for every city except London. One NSPL pass. `check`: compare, write nothing."""
     import rasterio
     from pyproj import Transformer
 
@@ -241,22 +286,18 @@ def build_regions():
 
     payload = {
         'ramp': ramp_identity(app),
-        'source': 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden, per-airport coverages',
-        'note': (
-            "Quiet scores for the postcodes inside DEFRA's modelled aircraft noise maps around Birmingham, "
-            'Bristol, East Midlands, Leeds Bradford, Liverpool, Manchester and '
-            'Newcastle airports. London is in aircraft-quiet-london.json. '
-            'Postcodes absent from both have no aircraft contour and fall back '
-            'to flight-path geometry.'
-        ),
+        'source': REGION_SOURCE,
+        'note': REGION_NOTE,
         'count': len(quiet),
         'quiet': quiet,
     }
-    REGION_OUT.write_text(json.dumps(payload, separators=(',', ':')), encoding='utf-8')
     for name in REGION_RASTERS:
         print(f'  {name:14} {per_raster[name]:6,} postcodes')
-    print(f'  wrote {REGION_OUT} ({REGION_OUT.stat().st_size / 1024:.0f} KB, '
-          f'{len(quiet):,} postcodes)')
+    if finish(REGION_OUT, payload, check):
+        return 1
+    if not check:
+        print(f'  wrote {REGION_OUT} ({REGION_OUT.stat().st_size / 1024:.0f} KB, '
+              f'{len(quiet):,} postcodes)')
     return 0
 
 
@@ -268,8 +309,11 @@ def main():
         print('Install with: pip install rasterio pyproj')
         return 1
 
+    # --check: rebuild in memory and compare with the shipped file(s), writing nothing (audit M-13). With --regions, the
+    # regions file only; without, London's and then the regions'.
+    check = '--check' in sys.argv
     if '--regions' in sys.argv:
-        return build_regions()
+        return build_regions(check)
 
     for path in (GEOTIFF, NSPL):
         if not path.exists():
@@ -316,22 +360,24 @@ def main():
 
     payload = {
         'ramp': ramp_identity(app),
-        'source': 'DEFRA Strategic Noise Mapping Round 4 (2022), aircraft, Lden',
-        'note': (
-            "Quiet scores for the London postcodes inside DEFRA's modelled aircraft noise map. "
-            'Postcodes absent from this file have no aircraft contour and fall '
-            'back to flight-path geometry.'
-        ),
+        'source': LONDON_SOURCE,
+        'note': LONDON_NOTE,
         'count': len(quiet),
         'quiet': quiet,
     }
-    OUT.write_text(json.dumps(payload, separators=(',', ':')), encoding='utf-8')
 
     pct = 100 * len(quiet) / considered if considered else 0
     print(f'considered {considered:,} London-bbox postcodes')
     print(f'  with a real reading: {len(quiet):,} ({pct:.1f}%)')
-    print(f'  wrote {OUT} ({OUT.stat().st_size / 1024:.0f} KB)')
-    return 0
+    if not check:
+        finish(OUT, payload, check)
+        print(f'  wrote {OUT} ({OUT.stat().st_size / 1024:.0f} KB)')
+        return 0
+    # A check covers both files, so a hand edit to either is caught by one command: both always run (review, 2026-11-20:
+    # `london or build_regions()` stopped at London's difference and never looked at the regions file).
+    london = finish(OUT, payload, check)
+    regions = build_regions(check)
+    return 1 if (london or regions) else 0
 
 
 if __name__ == '__main__':

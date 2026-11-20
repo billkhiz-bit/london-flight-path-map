@@ -337,7 +337,38 @@ class TheBlock(unittest.TestCase):
     def test_the_period_is_worded_as_the_site_words_it(self):
         self.assertEqual(app.air_period_words({'from': '2025-11-01', 'to': '2026-10-31'}), '12 months to October 2026')
         self.assertEqual(app.air_period_words({'from': '2024-01-01', 'to': '2024-12-31'}), '2024')
-        self.assertEqual(app.air_period_words({'from': '2024-01-01', 'to': '2024-06-30'}), '2024-01-01 to 2024-06-30')
+        # A monitor that closed during its year (audit M-8, 2026-11-20): the days its mean covers, in words.
+        self.assertEqual(app.air_period_words({'from': '2024-01-01', 'to': '2024-06-30'}), '1 January to 30 June 2024')
+        self.assertEqual(app.air_period_words({'from': '2023-12-01', 'to': '2024-06-30'}), '2023-12-01 to 2024-06-30')
+        # A short sensor window inside one year is not a monitor's shape: never words the site's sensorPeriod() never says.
+        self.assertEqual(app.air_period_words({'from': '2026-03-01', 'to': '2026-10-31'}), '2026-03-01 to 2026-10-31')
+
+    def test_a_closed_monitor_is_worded_by_the_api_as_the_site_words_it(self):
+        # Audit M-8 (2026-11-20): Canterbury (CANT) closed on 4 November 2024; the site said "in 2024" and the API
+        # "2024-01-01 to 2024-11-04". The site's own monitorPeriod(), run in node on every monitor of the real file (and on
+        # each one made to close mid-year), must equal the API's words for the period the API sends.
+        monitor = files('monitor')
+        year = monitor['year']
+        rows = [dict(r) for r in monitor['sites']]
+        rows += [dict(r, closed=day) for r, day in zip(rows[:4], (f'{year}-01-31', f'{year}-06-30', f'{year}-11-04', f'{year}-12-30'), strict=True)]
+        js = (
+            "import { readFileSync } from 'node:fs';"
+            "import { monitorPeriod } from './js/street_report.mjs';"
+            "const { year, rows } = JSON.parse(readFileSync(0, 'utf8'));"
+            "console.log(JSON.stringify(rows.map((r) => monitorPeriod({ ...r, year }))));"
+        )
+        site = json.loads(subprocess.run(  # noqa: S603 - node with our own fixed script
+            ['node', '--input-type=module', '-e', js],  # noqa: S607 - node from PATH, as preflight runs it
+            cwd=REPO, input=json.dumps({'year': year, 'rows': rows}),
+            capture_output=True, text=True, encoding='utf-8', check=True,
+        ).stdout)
+        api = []
+        for row in rows:
+            entry = app._air_entry('monitor', dict(monitor, sites=[row]), row, 1.0)
+            api.append(app.air_period_words(entry['period']))
+        self.assertEqual(site, api)
+        self.assertIn(f'1 January to 4 November {year}', site)
+        self.assertIn(str(year), site)
 
 
 class AFileIsReadWholeOrNotAtAll(unittest.TestCase):

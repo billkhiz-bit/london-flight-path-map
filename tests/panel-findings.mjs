@@ -404,6 +404,15 @@ check('price: a watch item under 3 of 10 affordability, and the change said in w
   assert.deepEqual(t.say, ['The average price of a home in Wandsworth, 5.3% less than a year ago.', 'That gives it an affordability score of 0.3 out of 10.']);
   assert.equal(priceFinding({ price: '£1', afford: 3 }).tile.stand, null);
   assert.equal(priceFinding({ price: '£1' }).tile.visual[0], null, 'no affordability: no bar, never a zero');
+  // The change after inflation (review, 2026-11-20: the old score breakdown was the only place it was said).
+  const real = (r, trend = '-3.2%') => priceFinding({ price: '£630,415', trend, real: r, council: 'Hackney', afford: 0.7 }).tile.say;
+  assert.deepEqual(real(-6.6), ['The average price of a home in Hackney, 3.2% less than a year ago.',
+    'After inflation it is 6.6% less than a year ago, the change the price growth score reads.',
+    'That gives it an affordability score of 0.7 out of 10.']);
+  assert.equal(real(1.4, '+5%')[1], 'After inflation it is 1.4% more than a year ago, the change the price growth score reads.');
+  assert.equal(real(0, '+3.6%')[1], 'After inflation it is the same as a year ago, the change the price growth score reads.');
+  assert.equal(real(-3.2).length, 2, 'the same as the change above: not said twice');
+  assert.equal(real(null).length, 2, 'no figure after inflation: nothing said, never a zero');
 });
 check('a rating outside its own scale draws no strip: never a wrong picture', () => {
   const legacy = ratingFinding('schools', 'Schools', 'good', { council: 'Queens', area: 'borough' }).tile;
@@ -511,26 +520,16 @@ check('every tile escapes what it is given', () => {
   passed += 4; // centre taken, a listed council only, failure kept working, one council asks nothing more
 }
 
-// The Healthcare card names the record's own source (audit I-12, 2026-11-12): it printed the registry's "NOT SOURCED" in
-// nine UK cities while every record named the NHS Organisation Data Service. Both halves held: the data, and the card.
-check('every rated UK healthcare record names its source, and the card reads it', () => {
+// Every rated UK healthcare record names its source (audit I-12, 2026-11-12: the old "Additional insights" card printed the
+// registry's "NOT SOURCED" in nine UK cities while every record named the NHS Organisation Data Service). That card, the
+// registry's `healthSource` and every other old section of a borough's "All the detail" went on 2026-11-20 (option A: they
+// repeated the tiles); the data half still holds, and nothing of the old card may come back to print a stale source.
+check('every rated UK healthcare record names its source, and the old card with its registry line is gone', () => {
   const extra = JSON.parse(readFileSync(new URL('../data/borough-extra.json', import.meta.url), 'utf8'));
   const missing = Object.entries(extra).filter(([city]) => city !== 'nyc').flatMap(([city, block]) =>
     Object.entries(block || {}).filter(([, r]) => r && typeof r === 'object' && r.healthcare && !r.healthcareVintage).map(([name]) => `${city}/${name}`));
   assert.deepEqual(missing, [], 'a UK record rated for healthcare without its source');
-  // The card as drawn: buildOptionalSections() lifted from index.html and run on real records (a text match on the source
-  // passed with the line broken, 2026-11-12).
-  const src = INDEX.match(/\r?\n( *)function buildOptionalSections\(extra, sectionId\) \{[\s\S]*?\r?\n\1\}\r?\n/);
-  assert.ok(src, 'buildOptionalSections() found in index.html');
-  const REGISTRY = { westmidlands: 'NHS TRUST DATA (NOT SOURCED)', nyc: 'NYC HEALTH+HOSPITALS DATA (CURATED)' };
-  const build = (city) => new Function('metricColor', 'ratingBadgeClass', 'cityOf', 'currentCity', `${src[0]}; return buildOptionalSections;`)(
-    () => '#000', () => '', (c) => ({ healthSource: REGISTRY[c] }), city);
-  const healthLine = (html) => (html.match(/id="[^"]*-nhs">[\s\S]*?<div class="defra-badge"[^>]*>([^<]*)<\/div>/) || [])[1] || '';
-  const brum = Object.values(extra.westmidlands).find((r) => r && r.healthcare);
-  const line = healthLine(build('westmidlands')(brum, 'test'));
-  assert.ok(/NHS Organisation Data Service/.test(line) && !/NOT SOURCED/.test(line), `a West Midlands card names the NHS register: ${line}`);
-  const nyc = Object.values(extra.nyc).find((r) => r && r.healthcare);
-  assert.equal(healthLine(build('nyc')(nyc, 'test')), 'SOURCE: NYC HEALTH+HOSPITALS DATA (CURATED)', 'New York, with no source of its own, keeps its line');
+  assert.doesNotMatch(INDEX, /function buildOptionalSections\(|healthSource|NOT SOURCED|ADDITIONAL INSIGHTS/);
 });
 
 console.log(`PASS ${passed} of ${passed}`);

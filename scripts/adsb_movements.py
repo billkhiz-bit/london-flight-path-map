@@ -302,7 +302,15 @@ def metar_qnh(code, day):
 
 
 def _interp(series, t):
-    """Linear between the readings either side of t, clamped at the ends."""
+    """Linear between the readings either side of t, clamped at the ends.
+
+    ACROSS A GAP TOO, ON PURPOSE (audit 2026-11-19 M-11, measured 2026-11-20). The cached months hold 115 gaps over 6 h.
+    Nearly all are the airport's own closure, when no METAR is issued: Leeds Bradford overnight (6.5-8 h, ~100 of them),
+    London City's weekend (21 h, 4 Oct 2025), Leeds Bradford's Christmas (34.5 h), Teesside and Norwich overnight. Against
+    the nearest station reporting through the same hours (61-113 km away), the straight line strays at most 3.05 hPa
+    (Teesside, 7 Dec 2025, 8 h), so 83 ft of field level, and under 30 ft in most: inside LOW_ABOVE_FT's 400 and in hours
+    with few or no movements. Luton's February storm, the case FieldLevel exists for, moved the field 300-570 ft. So no
+    flag and no change; a gap during OPENING hours, or a strayed line much past 100 ft, would reopen it."""
     i = bisect.bisect_left(series, (t, -math.inf))
     if i == 0:
         return series[0][1]

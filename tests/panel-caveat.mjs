@@ -82,20 +82,19 @@ async function check(city, country, borough, expectCaveat, drop = null, mustName
     let text, panel = '';
     try {
       updateSidebar(d);
-      const rows = [...document.querySelectorAll('.score-explain')];
-      const row = rows.find((r) => /Air quality, road noise and flood risk/.test(r.textContent));
-      // NOT-FOUND IS A FAILURE, NOT A STRING (2026-09-07 audit, I14).
+      // THE CAVEAT SITS IN THE ANSWER CARD'S SCORE since 2026-11-20 (option A: the borough's old score breakdown, where
+      // it was a `.score-explain` row, went with the rest of the old "All the detail"). It is drawn only when there is
+      // one, so its absence is the right answer for a fully-measured borough.
       //
-      // This used to fall back to the literal '(no environment row)', which
-      // contains no 'undefined', no 'only here' and matches any name regex
-      // by vacuity - so THREE of the four cases below went green having
-      // rendered nothing. The row is found by a copy string
-      // (/Air quality, road noise and flood risk/); rewording that sentence
-      // or renaming .score-explain would silently switch off the only gate
-      // that has ever opened the borough detail panel - the gate written
-      // because 'undefined only here' shipped to production.
-      if (!row) return { err: `no environment row rendered (found ${rows.length} .score-explain rows). The row is located by its copy string; if that wording changed, update this test - do not let it pass` };
-      text = row.textContent.trim();
+      // NOT-FOUND IS STILL A FAILURE, NOT A PASS (2026-09-07 audit, I14). An absent caveat proves nothing unless the
+      // card drew the score it qualifies, so the five score rows must be there (else three of these cases go green
+      // having rendered nothing, as they once did); and the constructed 2-of-3 case below fails if the caveat is not
+      // found, so renaming `.ac-env-caveat` cannot switch this gate off silently.
+      const card = document.getElementById('ac-score');
+      if (card) card.open = true; // so the whole-panel read below sees the card's body too
+      const rows = document.querySelectorAll('#ac-score .score-breakdown .score-row').length;
+      if (rows !== 5) return { err: `the answer card drew ${rows} score rows, not 5: the caveat cannot be judged` };
+      text = document.querySelector('#ac-score .ac-env-caveat')?.textContent.trim() || '';
       // THE WHOLE PANEL, NOT JUST THIS ROW (2026-09-11).
       //
       // updateSidebar() renders the entire sidebar and this gate then threw

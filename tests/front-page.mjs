@@ -2962,7 +2962,37 @@ const makeReport = async (pc) => {
       && after.size === before.size && after.above === 0,
       'option C: on a phone a search keeps the heading\'s room and the box in place, the skeleton line while it waits, then the visitor\'s lead at the example\'s size',
       JSON.stringify({ waited, before, after }));
+    // EACH YARDSTICK LINE FITS THE ROOM ITS FRAME KEPT (audit M-4, 2026-11-20). The whole-page shift above stays under 0.02
+    // even when the tiles grow, so it could not see this: at 390 the short forms took three lines where the frame kept two,
+    // and the tiles grew 16 px as the figures landed. Measured per line, at six phone widths, against the skeleton's own
+    // lines in the same row width (the frame shown again for the measure, then put back). A page of its own: the resizes
+    // and the frame shown again would count as shifts on `held`, and a search there has replaced the example's tiles.
     await held.close();
+    const yp = await context.newPage();
+    await yp.setViewportSize({ width: 390, height: 844 });
+    await yp.route((u) => u.pathname.endsWith('/v1/environment'), stubOffsite);
+    await yp.route('**/data/planes/*.json', planesRoute);
+    await yp.route('**/data/planes-layer/index.json', layerRoute);
+    await yp.goto(BASE, { waitUntil: 'domcontentloaded' });
+    await yp.waitForFunction(() => document.querySelectorAll('#ans-tiles .ans-tile:not(.is-waiting) .ans-yard').length >= 3, null, { timeout: 10000 }).catch(() => {});
+    const yards = [];
+    for (const w of [320, 360, 375, 390, 412, 430]) {
+      await yp.setViewportSize({ width: w, height: 844 });
+      yards.push(await yp.evaluate((width) => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => {
+        const rows = (sel) => [...document.querySelectorAll(`${sel} .ans-yard`)].map((y) => Math.round(y.getBoundingClientRect().height * 2) / 2);
+        const real = rows('#ans-tiles');
+        const realW = Math.round(document.getElementById('ans-tiles').getBoundingClientRect().width);
+        const panel = document.querySelector('.panel');
+        panel.classList.add('is-loading');
+        const frame = rows('.ans-skeleton');
+        const frameW = Math.round(document.querySelector('.ans-skeleton .ans-tiles').getBoundingClientRect().width);
+        panel.classList.remove('is-loading');
+        done({ width, realW, frameW, real, frame });
+      }))), w));
+    }
+    ok(yards.every((y) => y.real.length === 3 && y.frame.length === 3 && y.realW === y.frameW && y.real.every((h, i) => h === y.frame[i])),
+      'every yardstick line fits the two or three lines its frame kept, at 320, 360, 375, 390, 412 and 430 px (audit M-4)', JSON.stringify(yards));
+    await yp.close();
   }
   // The point is held (Bill's yes, 2026-11-05): privacy s2b covers a search, not a lookup nobody asked for.
   const toPostcodes = [];

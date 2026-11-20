@@ -162,16 +162,51 @@ def js_to_json(src):
     return json.loads(text)
 
 
+# NEW YORK'S CONSTANTS ARE ALIASES since 2026-10-16: `const NYC_AIRPORTS = US_QUIET_NYC.airports;` and
+# `const NYC_FLIGHT_PATHS = US_QUIET_NYC.paths.map((fp) => ({ ...fp, type: ... }))`, the map drawing what the fitted
+# block scores. The script stopped on "nyc: could not find NYC_AIRPORTS" from then until 2026-11-20 (audit 2026-11-19
+# housekeeping), so design/airports-paths.json was a month stale. An alias is followed into the generated object; the one
+# `.map()` the map applies is re-applied only while its source is exactly the rule below, else this stops, never guesses.
+# The alias must END at its `;`, or go on only into the one `.map(` checked below: anything else (`.filter(`, `.slice(`)
+# stops the script, which never returns a raw list the map draws differently (review, 2026-11-20).
+ALIAS = re.compile(r'const\s+(?P<name>[A-Z][A-Z0-9_]*)\s*=\s*(?P<base>[A-Z][A-Z0-9_]*)\.(?P<prop>\w+)(?P<map>\.map\()?')
+PATH_TYPE_RULE = "type: fp.kind === 'departure' ? 'departure' : 'arrival',"
+
+
+def resolve(text, name):
+    """The JSON value of `const <name>`: a literal, or an alias `<BASE>.<prop>` into an object literal; None if neither."""
+    src = slice_literal(text, name)
+    if src is not None:
+        return js_to_json(src)
+    m = next((a for a in ALIAS.finditer(text) if a.group('name') == name), None)
+    if not m:
+        return None
+    base = slice_literal_obj(text, m.group('base'))
+    if base is None:
+        raise SystemExit(f'{name} aliases {m.group("base")}, which is not an object literal')
+    value = js_to_json(base).get(m.group('prop'))
+    if not isinstance(value, list):
+        raise SystemExit(f'{name} aliases {m.group("base")}.{m.group("prop")}, which is not a list')
+    if not m.group('map') and not re.match(r'\s*;', text[m.end():]):
+        rest = ' '.join(text[m.end():text.find(';', m.end())].split())[:80]
+        raise SystemExit(f'{name}: the alias goes on past {m.group("base")}.{m.group("prop")} ({rest}), which this script does not know')
+    if m.group('map'):
+        body = text[m.end():text.find(';', m.end())]
+        if ' '.join(body.split()) != f"(fp) => ({{ ...fp, {PATH_TYPE_RULE} }}))":
+            raise SystemExit(f'{name}: the map applies a rule this script does not know: {" ".join(body.split())[:120]}')
+        value = [{**p, 'type': 'departure' if p.get('kind') == 'departure' else 'arrival'} for p in value]
+    return value
+
+
 def main():
     text = SRC.read_text(encoding='utf-8')
     data, report = {}, []
     for city, prefix in CITY_PREFIX.items():
         a_name = f'{prefix}_AIRPORTS' if prefix else 'AIRPORTS'
         p_name = f'{prefix}_FLIGHT_PATHS' if prefix else 'FLIGHT_PATHS'
-        a_src, p_src = slice_literal(text, a_name), slice_literal(text, p_name)
-        if a_src is None or p_src is None:
+        airports, paths = resolve(text, a_name), resolve(text, p_name)
+        if airports is None or paths is None:
             raise SystemExit(f'{city}: could not find {a_name} or {p_name}')
-        airports, paths = js_to_json(a_src), js_to_json(p_src)
         data[city] = {'airports': airports, 'flightPaths': paths}
         coords = sum(len(p.get('coordinates') or []) for p in paths)
         report.append((city, len(airports), len(paths), coords))

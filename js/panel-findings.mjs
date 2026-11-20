@@ -327,11 +327,17 @@ export function nearestFinding(key, name, rating, nearest, ctx = {}) {
 }
 
 /** The council's average price and its trend. `trend` is the record's own text, such as "-13.8%". */
-export function priceFinding({ price, trend, area = 'council', council, afford, source } = {}) {
+export function priceFinding({ price, trend, real = null, area = 'council', council, afford, source } = {}) {
   if (!price) return null;
   const m = /^([+-]?)(\d+(?:\.\d+)?)%$/.exec(String(trend ?? '').trim());
   const moved = m ? (Number(m[2]) === 0 ? 'unchanged in a year.' : `${m[1] === '-' ? 'down' : 'up'} ${m[2]}% in a year.`) : null;
   const since = m ? (Number(m[2]) === 0 ? 'the same as a year ago' : `${m[2]}% ${m[1] === '-' ? 'less' : 'more'} than a year ago`) : null;
+  // THE CHANGE AFTER INFLATION, what the price growth score reads (review, 2026-11-20: a borough's old score breakdown was
+  // the only place it was said, "-3.2%, -6.6% after inflation"). Said only where it differs from the change above.
+  const nominal = m ? Number(`${m[1]}${m[2]}`) : null;
+  const realSaid = isNum(real) && real !== nominal
+    ? `After inflation it is ${real === 0 ? 'the same as a year ago' : `${Math.abs(real)}% ${real < 0 ? 'less' : 'more'} than a year ago`}, the change the price growth score reads.`
+    : null;
   return {
     key: 'price', label: `Average price in the ${area === 'council' ? 'council area' : area}`, big: price, detail: moved,
     tile: {
@@ -345,7 +351,8 @@ export function priceFinding({ price, trend, area = 'council', council, afford, 
       pill: 'High prices',
       visual: [isNum(afford) ? { kind: 'score', name: 'Affordability', value: afford } : null],
       say: [`The average price of a home in ${placeName(council, area)}${since ? `, ${since}` : ''}.`,
-        isNum(afford) ? `That gives it an affordability score of ${afford.toFixed(1)} out of 10.` : null],
+        realSaid,
+        isNum(afford) ? `That gives it an affordability score of ${afford.toFixed(1)} out of 10.` : null].filter(Boolean),
       source: source || null,
     },
   };

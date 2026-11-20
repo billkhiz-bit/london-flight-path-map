@@ -567,3 +567,23 @@ track release, and `-air` files are N65's alone (the counter never reads them).
 **The lesson for every runner: a day that computes nothing is not a result.** The N65 runner counted a failure only when
 the day's script exited non-zero, so 0 of 1,284 flown was written as a reading. A missing input must surface as a
 failure, never as a zero.
+
+## Gaps in the weather record, measured (audit M-11, 2026-11-20)
+
+The counter's field level takes the day's SHAPE from METAR QNH and draws a straight line across any gap. The audit flagged
+gaps over 6 h as unmeasured. Measured over every cached month: 115 gaps, nearly all the airport's own closure (no METAR is
+issued then): Leeds Bradford overnight about 100 times, London City's weekend (21 h, 4 Oct 2025), Leeds Bradford's
+Christmas (34.5 h), Teesside and Norwich overnight. For each, the nearest station reporting through the same hours
+(61-113 km away) drew its own straight line over the same interval and its real readings were compared with it: at most
+3.05 hPa (Teesside, 7 Dec 2025, 8 h), so 83 ft of field level, under 30 ft in most. That is inside `LOW_ABOVE_FT` (400)
+and falls in hours with few or no movements; Luton's February storm, the case FieldLevel exists for, moved the field
+300-570 ft. No change; the figures sit on `_interp`. A gap during opening hours, or a line straying much past 100 ft,
+reopens it.
+
+## A monitor that closed during its year (audit M-8, 2026-11-20)
+
+Canterbury's AURN site closed on 4 November 2024, so its 2024 mean covers 1 January to 4 November. The API sent the right
+period but worded it "2024-01-01 to 2024-11-04"; the site said "in 2024". Both now say "1 January to 4 November 2024"
+(the site: "from 1 January to 4 November 2024"), `monitorPeriod()` in js/street_report.mjs and `air_period_words()` in
+the Lambda. `backend/tests/test_air_nearby.py` runs the site's function in node on every monitor in the file and four made
+to close mid-year, against the API's words for the period the API sends; red on the old rule.
