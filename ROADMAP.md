@@ -46,8 +46,12 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > change after inflation (`priceFinding({ real })`, borough and postcode). 5 nits fixed (names on the card, `--check` runs
 > both files, the extractor stops on an unknown alias chain, `air_period_words`' new branch is monitor-shaped only, 19 dead
 > CSS blocks).
-> **Then: preflight, commit, push, deploy** (Bill's "run the above and deploy": data, web, home, and a reviewed SAM changeset
-> for M-8's wording).
+> **ALL LIVE 20 Nov** (`3f2abeef`, pushed; preflight PASS but for one ruff B905 in the new M-8 test, fixed and re-run green):
+> the reviewed SAM changeset (ScoreFunction code only, plus the usual Dynamic knock-ons), then data, web and home; drift
+> check PASS (55 pages, 42 data files, 153 area pages). Checked live: Barking and Dagenham's card (5 districts + the
+> consultation link, 9 sources, its area link 200), Hackney at 390, Brooklyn (no planes row, sources to its area page), the
+> front page's yardstick lines at 390, and `/v1/environment` near Canterbury ("1 January to 4 November 2024").
+> **Next**: read the top bar's counts again ~20 Dec.
 >
 > ## START HERE (2026-11-19)
 >
