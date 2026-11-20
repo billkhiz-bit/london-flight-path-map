@@ -221,6 +221,8 @@ Or just describe what you need, I have full context of this project.
   old postcode in a new city; a late redraw passes the card's own options and checks it is still on screen. A covered council's
   WHOLE name opens it from any city (`councilElsewhere`), never a prefix. `LONDON_AREA_MAP` postcodes must be LIVE in NSPL
   (`tests/test_london_area_postcodes.py`: nine had been retired). Each is reached on purpose in `tests/search-guide.mjs` 7.
+  Anything a search draws ON THE MAP waits for `mapBuilt` when `g` is not made yet: `switchCity()` (2026-10-05) and the
+  outside-coverage answer (2026-11-19, preflight under load; `tests/outside-coverage.mjs` holds the outlines to reach it).
   A REDRAW is not a result: `setPersona()` passes `reveal: false` (I-18: a phone was thrown from Rankings to Search). One key,
   one effect: the Layers popover's Escape marks the key used and the result card's Escape steps aside (M-14).
 - **Every outline focus ring on a page that defines `--focus` is drawn in it** (M-16, `tests/test_focus_ring_contrast.py`).
@@ -268,6 +270,14 @@ Or just describe what you need, I have full context of this project.
 - **A late answer never moves the visitor** (audit I-4, 2026-11-10; WCAG 2.4.3): `placeFinding()` leaves a slot drawn the same alone and, when it changes,
   keeps the open tiles and the tile the focus was in; the pills rebuild only when their list changes (focus kept by `data-pill-key`), and a pill opens its tile
   as it is NOW (`_pillTile`). `tests/uk-city-panel.mjs` holds TfL and the NHS back to test it.
+  **A REDRAW keeps the visitor's place too** (audit M-3, 2026-11-19): `redrawPanelSubject()` (the borough data landing, `late: true`; a profile change) and San
+  Francisco's neighbourhood list go through `keepPlace()`: what was open, the focus, the scroll and typed text, by NAME (a details' id, a tile's slot and place, a
+  data key, else a control's kind and words), put back after the draw, as its tiles land (`applyKeep()` in `tidyCard`) and on the next frame, each once, the focus only
+  while it has nowhere else to be; the keep lasts to the NEXT FRAME and only while `panelSubject` is the one it drew, so it never reaches another answer. A redraw
+  asks no route again (`answerOnce()`, by token and place; a new search asks afresh), so its tiles are back in the same task; it keeps its own search's token
+  (`panelSubject.token`), current in `isCurrentSearch()` (`redraw: true`) only while that answer is the one shown; it never says "Results loaded" again
+  (`redraw`), never cancels a search on its way, and redraws a borough card only if one is ON SCREEN (`selectedBorough` outlives NOT FOUND). A profile change
+  says the new score (postcode and borough). Held by `tests/search-guide.mjs` 7, each reached on purpose and red on its own mutant.
 - **"All the detail" is option 1** (Bill's pick, 2026-11-08; live 2026-11-09): the 1 km picture (a full postcode only), then `details.dcard`s, then `details.drow`s.
   `js/detail-near.mjs` words it, pure (`tests/detail-near.mjs`); `fillDetail()` takes each loader's answer as it lands. Every loader's container keeps its id in a card
   body, line status in `#postcode-line-status` (`renderTransportData` writes there when it exists). An unasked kind has no line and no card; asked and none within 1 km

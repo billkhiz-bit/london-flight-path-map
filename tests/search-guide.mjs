@@ -477,6 +477,250 @@ for (const [what, q, want] of [['a postcode', 'TW9 3PZ', /TW9 3PZ/], ['a borough
   await ctx.close();
 }
 
+{
+  // M-3 (audit 2026-11-19): A REDRAW KEEPS THE VISITOR'S PLACE. The borough data landing drew the postcode panel again
+  // whole: an open tile shut, the focus fell to <body>, a typed email went, "Results loaded" was said a second time and
+  // every route was asked again. Reached on purpose: the data file is held until every first answer is in and a tile is
+  // open and focused, then let go; the redraw is proven to have happened (the card on screen is a new element).
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`M-3: ${e.message}`));
+  await stubLiveApi(page);
+  let release;
+  const hold = new Promise((r) => { release = r; });
+  let heldIt = false;
+  await page.route('**/data/borough-extra.json*', async (route) => {
+    heldIt = true;
+    await hold;
+    await route.continue().catch(() => {});
+  });
+  const asked = [];
+  // Every request to the API and to /data/ but the held file itself (the review: a list of routes leaves out the planes
+  // layer's index and the air files), so "asks nothing again" is the SET of new requests being empty, whatever they are.
+  const ROUTES = /execute-api\.eu-west-2\.amazonaws\.com\/prod\/|\/data\/(?!borough-extra\.json)/;
+  page.on('request', (r) => { if (ROUTES.test(r.url())) asked.push(r.url().replace(/\?.*/, '')); });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#search-input', { timeout: 20000 });
+  const envAnswered = page.waitForResponse((r) => /\/v1\/environment\?/.test(r.url()), { timeout: 25000 }).then(() => true, () => false);
+  await page.evaluate(() => triggerSearch('TW9 3PZ'));
+  const first = await answered(page);
+  // Every route has answered (or said it could not), so a request after this can only be the redraw's own.
+  const settled = await page.waitForFunction(() => {
+    const done = (id) => { const el = document.getElementById(id); return el && !el.querySelector('.crime-loading'); };
+    return ['postcode-transport-data', 'postcode-nhs-data', 'postcode-epc-data', 'sold-prices-data'].every(done)
+      && document.querySelector('#sidebar-content details.tile[data-finding="planes"]');
+  }, null, { timeout: 25000 }).then(() => envAnswered, () => false);
+  await page.waitForTimeout(300);
+  const before = await page.evaluate(() => {
+    const tile = document.querySelector('#sidebar-content details.tile[data-finding="path"]');
+    if (tile) {
+      tile.open = true;
+      tile.querySelector('summary').focus();
+    }
+    const fold = document.getElementById('panel-all');
+    if (fold) fold.open = true;
+    const email = document.getElementById('notify-email');
+    if (email) email.value = 'kept@example.com';
+    const card = document.querySelector('#sidebar-content .answer-card');
+    if (card) card.dataset.before = '1';
+    document.getElementById('result-status').textContent = 'HELD';
+    return { kind: panelSubject.kind, focus: document.activeElement?.closest('details.tile')?.dataset.finding || null };
+  });
+  const askedBefore = asked.length;
+  release();
+  await page.waitForFunction(() => !document.querySelector('#sidebar-content .answer-card[data-before]'), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  const after = await page.evaluate(() => {
+    const tile = document.querySelector('#sidebar-content details.tile[data-finding="path"]');
+    const a = document.activeElement;
+    return {
+      redrawn: !document.querySelector('#sidebar-content .answer-card[data-before]') && !!document.querySelector('#sidebar-content .answer-card'),
+      hydrated: !!getExtraData(panelSubject.analysis?.borough),
+      kind: panelSubject.kind,
+      open: !!tile?.open,
+      fold: !!document.getElementById('panel-all')?.open,
+      focus: tile && a === tile.querySelector('summary') ? 'the path tile' : a === document.body ? '<body>' : a?.outerHTML.slice(0, 80),
+      email: document.getElementById('notify-email')?.value,
+      said: document.getElementById('result-status')?.textContent,
+    };
+  });
+  const reached = heldIt && settled && /TW9 3PZ/.test(first) && before.kind === 'postcode' && before.focus === 'path' && after.redrawn && after.hydrated;
+  const why = reached ? '' : `not reached: ${JSON.stringify({ heldIt, settled, first, before, redrawn: after.redrawn, hydrated: after.hydrated })}`;
+  ok(reached && after.kind === 'postcode' && after.open && after.fold, 'the borough data landing keeps an open tile and the open detail open', why || JSON.stringify(after));
+  ok(reached && after.focus === 'the path tile', 'the borough data landing leaves the focus on the tile it was on, never <body>', why || after.focus);
+  ok(reached && after.email === 'kept@example.com', 'the borough data landing keeps a typed email', why || String(after.email));
+  ok(reached && after.said === 'HELD', 'the borough data landing says nothing again ("Results loaded" was said twice)', why || after.said);
+  ok(reached && asked.length === askedBefore, 'the borough data landing asks no route again', why || asked.slice(askedBefore).join(', '));
+
+  // A profile change from outside the panel (the Rankings tab's buttons call setPersona): the same place kept, the new
+  // score said, nothing asked again.
+  const askedProfile = asked.length;
+  await page.evaluate(() => {
+    const t = document.querySelector('#sidebar-content details.tile[data-finding="aircraft"]');
+    if (t) t.open = true;
+    document.getElementById('result-status').textContent = 'HELD';
+    setPersona('family');
+  });
+  await page.waitForTimeout(600);
+  const prof = await page.evaluate(() => {
+    const path = document.querySelector('#sidebar-content details.tile[data-finding="path"]');
+    return {
+      aircraft: !!document.querySelector('#sidebar-content details.tile[data-finding="aircraft"]')?.open,
+      path: !!path?.open,
+      focus: !!path && document.activeElement === path.querySelector('summary'),
+      said: document.getElementById('result-status')?.textContent,
+      persona: currentPersona,
+    };
+  });
+  ok(reached && prof.persona === 'family' && prof.aircraft && prof.path && prof.focus,
+    'a profile change keeps the open tiles open and the focus where it was', why || JSON.stringify(prof));
+  ok(reached && /out of 10 for .+ buyer profile\.$/.test(prof.said) && !/Results loaded/.test(prof.said),
+    'a profile change says the new score, not "Results loaded"', why || prof.said);
+  ok(reached && asked.length === askedProfile, 'a profile change asks no route again', why || asked.slice(askedProfile).join(', '));
+
+  // A redraw while a NEWER search is on its way (the review, 19 Nov): the answer on screen redraws whole, its tiles drawn
+  // and not left waiting, and nothing kept for it reaches the next answer when that lands. The next postcode's lookup is
+  // held until the profile change is made.
+  let releaseNext;
+  const holdNext = new Promise((r) => { releaseNext = r; });
+  let heldNext = false;
+  await page.route('**/api.postcodes.io/postcodes/SW1P*', async (route) => {
+    heldNext = true;
+    await holdNext;
+    await route.continue().catch(() => {});
+  });
+  await page.evaluate(() => {
+    const t = document.querySelector('#sidebar-content details.tile[data-finding="path"]');
+    if (t) {
+      t.open = true;
+      t.querySelector('summary').focus();
+    }
+    triggerSearch('SW1P 3JA');
+  });
+  const inFlight = await page.waitForFunction(() => panelSubject.kind === 'postcode' && searchSeq !== panelSubject.token, null, { timeout: 5000 }).then(() => true, () => false);
+  await page.evaluate(() => setPersona('investor'));
+  await page.waitForTimeout(400);
+  const during = await page.evaluate(() => ({
+    shows: panelSubject.analysis?.postcode,
+    waiting: document.querySelectorAll('#sidebar-content [data-find].is-waiting').length,
+    planes: !!document.querySelector('#sidebar-content details.tile[data-finding="planes"]'),
+    path: !!document.querySelector('#sidebar-content details.tile[data-finding="path"]')?.open,
+  }));
+  releaseNext();
+  await page.waitForFunction(() => /SW1P 3JA/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  const next = await page.evaluate(() => {
+    const t = document.querySelector('#sidebar-content details.tile[data-finding="path"]');
+    return { title: document.getElementById('sidebar-title')?.textContent.trim(), pathOpen: !!t?.open, focusInPath: !!t && t.contains(document.activeElement) };
+  });
+  const nextReached = reached && heldNext && inFlight && during.shows === 'TW9 3PZ';
+  const nextWhy = nextReached ? '' : `not reached: ${JSON.stringify({ reached, heldNext, inFlight, shows: during.shows })}`;
+  ok(nextReached && during.waiting === 0 && during.planes && during.path,
+    'a redraw while a newer search is on its way draws the answer on screen whole, nothing left waiting', nextWhy || JSON.stringify(during));
+  ok(nextReached && /SW1P 3JA/.test(next.title) && !next.pathOpen && !next.focusInPath,
+    'what a redraw kept never reaches the next answer', nextWhy || JSON.stringify(next));
+
+  // A profile change after NOT FOUND keeps NOT FOUND (the review): the council last chosen stays chosen, and its card was
+  // drawn over the message, its score said.
+  await page.evaluate(() => triggerSearch('qqqq'));
+  await page.waitForFunction(() => /NOT FOUND/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 15000 }).catch(() => {});
+  const nf = await page.evaluate(() => {
+    const before = { title: document.getElementById('sidebar-title')?.textContent.trim(), chosen: selectedBorough };
+    document.getElementById('result-status').textContent = 'HELD';
+    setPersona('family');
+    return before;
+  });
+  await page.waitForTimeout(400);
+  const nfAfter = await page.evaluate(() => ({ title: document.getElementById('sidebar-title')?.textContent.trim(), said: document.getElementById('result-status')?.textContent, card: !!document.querySelector('#sidebar-content .answer-card') }));
+  ok(/NOT FOUND/.test(nf.title) && nf.chosen && /NOT FOUND/.test(nfAfter.title) && !nfAfter.card && nfAfter.said === 'HELD',
+    'a profile change after NOT FOUND keeps NOT FOUND and says no council\'s score',
+    !nf.chosen ? `not reached: no council chosen (${JSON.stringify(nf)})` : JSON.stringify(nfAfter));
+  await ctx.close();
+}
+{
+  // The data landing while a BOROUGH card is on screen and a postcode search is on its way (the review, 19 Nov): the
+  // card's redraw cancelled the search, so the visitor's postcode never answered. Both the data and the lookup are held.
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`M-3 borough: ${e.message}`));
+  await stubLiveApi(page);
+  let releaseData;
+  const holdData = new Promise((r) => { releaseData = r; });
+  let releaseLookup;
+  const holdLookup = new Promise((r) => { releaseLookup = r; });
+  const held = { data: false, lookup: false };
+  await page.route('**/data/borough-extra.json*', async (route) => {
+    held.data = true;
+    await holdData;
+    await route.continue().catch(() => {});
+  });
+  await page.route('**/api.postcodes.io/postcodes/SW11*', async (route) => {
+    held.lookup = true;
+    await holdLookup;
+    await route.continue().catch(() => {});
+  });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#search-input', { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelectorAll('path.borough').length > 20, null, { timeout: 20000 }).catch(() => {});
+  await page.evaluate(() => selectBoroughByName('Camden'));
+  const card = await page.waitForFunction(() => panelSubject.kind === 'borough' && /CAMDEN/i.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 10000 }).then(() => true, () => false);
+  // Not awaited: the search waits on the held lookup, and evaluate() would wait with it until the lookup's 5 s limit.
+  await page.evaluate(() => { triggerSearch('SW11 1AA'); });
+  const sent = await page.waitForFunction(() => /SEARCHING/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 5000 }).then(() => true, () => false);
+  const landed = page.waitForResponse((r) => r.url().includes('/data/borough-extra.json'), { timeout: 15000 }).then(() => true, () => false);
+  releaseData();
+  const arrived = await landed;
+  await page.waitForTimeout(800);
+  releaseLookup();
+  const title = await page.waitForFunction(() => /SW11 1AA/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 15000 })
+    .then(() => page.locator('#sidebar-title').textContent(), () => page.locator('#sidebar-title').textContent());
+  const reachedB = card && sent && held.data && held.lookup && arrived;
+  ok(reachedB && /SW11 1AA/.test(title), "the data landing over a borough's card leaves a search on its way to answer",
+    reachedB ? `the panel says "${title.trim()}"` : `not reached: ${JSON.stringify({ card, sent, ...held, arrived })}`);
+  await ctx.close();
+}
+{
+  // M-3: San Francisco's card keeps the focus when its neighbourhood list arrives and draws the card again (its buttons
+  // carry no id: a control is kept by its kind and its words). The list is held until the focus is on the card.
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 }, serviceWorkers: 'block' });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => errors.push(`M-3 bay: ${e.message}`));
+  await stubLiveApi(page);
+  let release;
+  const hold = new Promise((r) => { release = r; });
+  let heldIt = false;
+  await page.route('**/data/us-sf-neighbourhoods.json*', async (route) => {
+    heldIt = true;
+    await hold;
+    await route.continue().catch(() => {});
+  });
+  await page.goto(BASE + '?city=bayarea', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#search-input', { timeout: 20000 });
+  await page.waitForFunction(() => currentCity === 'bayarea' && document.querySelectorAll('path.borough').length > 20, null, { timeout: 20000 }).catch(() => {});
+  await page.evaluate(() => triggerSearch('94103'));
+  await page.waitForFunction(() => /ZIP 94103/.test(document.getElementById('sidebar-title')?.textContent || ''), null, { timeout: 15000 }).catch(() => {});
+  const before = await page.evaluate(() => {
+    const b = document.querySelector('#sidebar-content .bay-change-profile');
+    b?.focus();
+    document.getElementById('result-status').textContent = 'HELD';
+    return { button: !!b, focused: !!b && document.activeElement === b, listed: !!document.querySelector('#sidebar-content .place-nhoods') };
+  });
+  release();
+  await page.waitForFunction(() => !!document.querySelector('#sidebar-content .place-nhoods'), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => ({
+    listed: !!document.querySelector('#sidebar-content .place-nhoods'),
+    focus: document.activeElement?.matches?.('.bay-change-profile') ? 'Change profile' : document.activeElement === document.body ? '<body>' : document.activeElement?.outerHTML.slice(0, 80),
+    zip: /ZIP 94103/.test(document.getElementById('sidebar-content')?.innerText || ''),
+    said: document.getElementById('result-status')?.textContent,
+  }));
+  const reached = heldIt && before.button && before.focused && !before.listed && after.listed;
+  ok(reached && after.focus === 'Change profile' && after.zip && after.said === 'HELD',
+    "San Francisco's neighbourhood list arriving keeps the card's focus and says nothing",
+    reached ? JSON.stringify(after) : `not reached: ${JSON.stringify({ heldIt, before, listed: after.listed })}`);
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 ok(errors.length === 0, 'no page errors', errors.join(' | '));

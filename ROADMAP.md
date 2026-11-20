@@ -34,10 +34,28 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > provenance rule). Checked live at SW11 1AA, LE1 7RH (the University of Leicester's own monitor, 140 m) and EX1 1HS.
 > The weather fetcher's end-date fix committed (`e2af43c9`).
 > **AUDIT 19 NOV** (`AUDIT_REPORT_2026-11-19.md`, claude.ai/artifact/V6yvem3j1TCukfCusdQRyY): 0 Critical, 6 Important (all
-> verified), 13 Minor. All 6 Important fixed IN SOURCE the same day, not yet committed: I-1 the borough panel's advice, I-2
-> one `planesNearest()` for every surface, I-3 the free report's failed downloads, I-4 one decimal on the report's aircraft
-> card (sample regenerated, XRQT-RHB3), I-5 CI red since 2 Nov (scipy, tzdata, `ubuntu-24.04`), I-6 the 7 US stations'
-> short METAR months (refetched) and a cache rule that heals them. 7 Minor fixed; M-5 needs a SAM deploy.
+> verified), 13 Minor. All 6 Important fixed and LIVE the same day (`f0d7904c`, `f084dc49`): I-1 the borough panel's
+> advice, I-2 one `planesNearest()` for every surface, I-3 the free report's failed downloads, I-4 one decimal on the
+> report's aircraft card (sample regenerated, XRQT-RHB3), I-5 CI red since 2 Nov (scipy, tzdata, `ubuntu-24.04`), I-6 the 7
+> US stations' short METAR months (refetched) and a cache rule that heals them. 7 Minor fixed (M-5 live by the SAM deploy);
+> M-6 accepted (the console step). **M-3 FIXED IN SOURCE late 19 Nov** (Bill's "go with recommended"; not yet committed):
+> every redraw keeps the visitor's place (`keepPlace()`), asks no route again (`answerOnce()`) and says nothing again;
+> `/code-review` found the keep could reach the next answer and two older redraw bugs, all fixed (103 of 103 in
+> `tests/search-guide.mjs`, each part red on its own mutant). Screenshots: claude.ai/artifact/Hb3yvC3jJXLbpqgfb14So1.
+> Preflight run 2 found two real reds, both fixed: `tests/detail-near.mjs` builds `fillDetail()` from source (an
+> `applyKeep()` there went), and an OLDER race, a search outside coverage answered before `init()` made the map's `g`
+> (now waits for `mapBuilt`; `tests/outside-coverage.mjs` holds the outlines to reach it, red without the wait). Runs 1
+> and 3 were STOPPED by Claude Code for low memory (a game took 8.3 GB), run 3 at "map fits its box" with 57 PASS, 0 FAIL.
+> **NEXT: a full preflight with the PC free, then commit + push; deploy on Bill's word.**
+> **THEN, REMIND BILL AT THE START (his words, late 19 Nov: "all the detail for areas/boroughs need to be updated as
+> well"):** a borough's "All the detail" on the map still holds the OLD sidebar sections (SCORE BREAKDOWN with weights and
+> the rest, `index.html` ~14148), where a postcode's is option 1 (the 1 km picture, `details.dcard`s, `details.drow`s,
+> `fillDetail()`, live 2026-11-09). Screenshot both at desktop and 390 px, ask whether the `/area/` pages are meant too,
+> then a mock-up for his pick before building.
+> **OPEN, none urgent:** M-4 (measure
+> the front page's yardstick lines at 320 px in a browser before changing anything), M-8 (Canterbury's closed monitor
+> worded two ways), M-11 (the plane counter bridges METAR gaps over 6 h unflagged; measure the effect first), M-13's
+> `--check` for `build_aircraft_quiet_dataset.py` (its other half, n65 lacking the fetcher fix, closed: `3224f702`).
 > **THE BOROUGH ANSWER CARD IS LIVE** (`f0d7904c`, pushed; Bill's pick A of claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY, his
 > "deploy" on the screenshots): a borough click opens the card and tiles, saying what its area page says (`councilLead()`,
 > held on every borough by `tests/test_borough_card.py`). Shipped with every audit fix: reviewed changeset (ScoreFunction
@@ -46,8 +64,11 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > (a test refuses one back), and the 12 district planes pages where Liverpool is the nearest airport now say so, first
 > (`build_planes_pages.nearest_airport()`, the rule's Python twin, held equal to `planesNearest()` on ~3,600 points).
 > **Also 19 Nov:** the three old worktrees removed (wt-detail's work kept as branch `rescue/wt-detail-2026-11-19`); master
-> merged into n65 (`38c803f1`), its 3 pending files waiting for their preflight; N65's first look at WHERE the shortfall
-> sits (neither arrivals nor departures alone: `docs/lessons/n65.md` on the branch); Leicester's call moved to TUE 24 NOV.
+> merged into n65 (`38c803f1`), then n65 pushed (`3224f702`): N65's first look at WHERE the shortfall sits (neither
+> arrivals nor departures alone: `docs/lessons/n65.md` on the branch; next, the CAA ERCD 2601 N65 map's centreline
+> extents); Leicester's call moved to TUE 24 NOV 12:30 (re-run the quoted checks Mon 23). **CHANGELOG.md** carries the
+> day's visitor-facing summary. At the iOS rebuild: the app still holds the old map (notes and all) until then, and
+> `/mobile`'s `addressable` gem needs a hand bump (Dependabot cannot read fastlane's `eval_gemfile`).
 >
 > ## START HERE (2026-11-18)
 >

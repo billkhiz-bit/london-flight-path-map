@@ -9842,8 +9842,9 @@
             }
           }
           // What the panel shows, redrawn as itself (audit M-15, 2026-11-13): a postcode answer stays a postcode answer.
+          // Late: the visitor's place kept and nothing said again (audit M-3, 2026-11-19).
           try {
-            redrawPanelSubject();
+            redrawPanelSubject({ late: true });
           } catch (e) {
             /* sidebar not in analysis mode */
           }
@@ -9863,7 +9864,7 @@
           console.warn('borough-extra hydration failed; scores are incomplete:', err);
           try {
             if (typeof renderBoroughRanking === 'function') renderBoroughRanking();
-            redrawPanelSubject(); // as above (audit M-15)
+            redrawPanelSubject({ late: true }); // as above (audit M-15, M-3)
           } catch (e) {
             /* nothing rendered yet - the notice appears on first render instead */
           }
@@ -10559,7 +10560,12 @@
       // True only while `search` is still the newest search. Anything that
       // paints after an await must check this first.
       function isCurrentSearch(search) {
-        return !!search && search.token === searchSeq;
+        if (!search) return false;
+        if (search.token === searchSeq) return true;
+        // A REDRAW of the answer on screen (audit M-3, 2026-11-19) keeps its own search's token. While a newer search is on
+        // its way it is still current for as long as that answer is the one shown, and never once anything else is drawn:
+        // with the newest token it could paint this postcode's late answers into the next one's panel.
+        return search.redraw === true && panelSubject.kind === 'postcode' && panelSubject.token === search.token;
       }
 
       // An aborted fetch means "you were superseded", not "the API failed" -
@@ -13146,6 +13152,10 @@
         }
 
         if (outsideCoverage) {
+          // It clears the map's pins and selection, so it waits for the map as switchCity() does (2026-10-05): under the
+          // preflight's load a search answered before init() drew threw "reading 'selectAll'" (2026-11-19).
+          if (!g) await mapBuilt;
+          if (!isCurrentSearch(search)) return;
           renderOutsideCoverage(result);
           return;
         }
@@ -14004,23 +14014,28 @@
 
       // `reveal: false` redraws without moving a phone to the Search view: a profile change is not a new result
       // (audit I-18, 2026-11-12: tapping "Family" in Rankings threw the phone back to Search over the map).
-      function updateSidebar(data, { switchToAnalysis = true, reveal = true } = {}) {
+      // `redraw`: the card on screen drawn again (a profile change, the data landing), which is not a new result and is
+      // not announced as one (audit M-3, 2026-11-19).
+      function updateSidebar(data, { switchToAnalysis = true, reveal = true, redraw = false } = {}) {
         endSearchGuide(); // a borough click or ?borough= link is a result too
         // The Bay Area's places land on their own card (2026-10-05), which since
         // 2026-11-07 carries the API's score on US scales above the flight-path
         // facts: every route here - a click, a search, a ranking row - goes there.
-        if (data && data.facts) return renderPlaceFacts(data, { switchToAnalysis, reveal });
+        if (data && data.facts) return renderPlaceFacts(data, { switchToAnalysis, reveal, redraw });
         // A BOROUGH IS AN ANSWER TOO (Bill's pick A, 2026-11-19, claude.ai/artifact/JVVPZGk5tjmhrawL3ZHUFY): a borough click,
         // a Rankings row, a Find areas result or a ?borough= link opened the old panel while a postcode got the answer card.
         // It now gets the card and tiles, saying what its area page says (js/panel-findings.mjs councilLead and the council
         // findings; tests/test_borough_card.py and tests/uk-city-panel.mjs hold them to /area/ word for word). The old
         // sections stay, unchanged but for the advice (audit 2026-11-19 I-1), under "All the detail".
-        // Its tiles fill slots a postcode's late answers would also find, so it supersedes any search on its way.
-        cancelSearch();
+        // Its tiles fill slots a postcode's late answers would also find, so it supersedes any search on its way. Not a
+        // REDRAW of the card on screen (review of audit M-3, 2026-11-19): the data landing or a profile change would abort
+        // the search a visitor has just sent; no search on its way has drawn yet (else the panel would be its answer), and
+        // the card's own tiles land in the same task.
+        if (!redraw) cancelSearch();
         const req = { token: searchSeq };
         panelSubject = { kind: 'borough' };
         setPanelSubject(data.name);
-        announceResult('Results loaded for ' + data.name + '.');
+        if (!redraw) announceResult('Results loaded for ' + data.name + '.');
         if (switchToAnalysis) switchTab('analysis');
         // Audit F-A11Y-4 hook: a result has just landed. On phones the
         // sheet starts in 'peek' so the map stays visible - TODO below
@@ -14518,6 +14533,118 @@
           return [`${k}#${seen.get(k)}`, t];
         });
       }
+      // A REDRAW KEEPS THE VISITOR'S PLACE (audit M-3, 2026-11-19; WCAG 2.4.3; "a late answer never moves the visitor").
+      // The borough data landing and a profile change draw the panel on screen again, and San Francisco's neighbourhood
+      // list draws its card again: each rebuilt the panel whole, so an open tile shut, the focus fell to <body>, the
+      // scroll and any typed email went with them. keepPlace() takes them BY NAME before the draw and puts them back
+      // after it, as its tiles land (tidyCard) and on the next frame. A redraw draws from answers it already has (answerOnce),
+      // so its tiles are back in the same task: the keep lasts until the next frame, and only while the panel is still
+      // the one it drew (`subject`), so it can never reach another answer or pull the focus back later (review, 19 Nov).
+      let _keep = null;
+      const KEEP_FOCUSABLE = 'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
+      const KEEP_ANCHOR = '[data-pill-key], [data-persona-chip], [data-nhood], [data-city-facts], [data-fav-postcode], details, [id]';
+      // A <details> by its id, a tile by its slot and place (tilesByKey), any other by its kind and its summary's words.
+      function keyOfDetails(d) {
+        if (d.id) return `#${d.id}`;
+        const slot = d.matches('details.tile') && d.closest('[data-find]');
+        if (slot) {
+          const k = tilesByKey(slot).find(([, t]) => t === d)?.[0];
+          return k ? `tile:${slot.dataset.find}:${k}` : null;
+        }
+        const s = d.querySelector(':scope > summary');
+        return s ? `${d.classList[0] || 'details'}:${s.textContent.trim()}` : null;
+      }
+      function keyOfAnchor(a) {
+        if (a.matches('details')) return keyOfDetails(a);
+        for (const k of ['pillKey', 'personaChip', 'nhood', 'cityFacts', 'favPostcode']) if (a.dataset[k] !== undefined) return `${k}=${a.dataset[k]}`;
+        return a.id ? `#${a.id}` : null;
+      }
+      // A control with nothing named round it (the Bay Area card's buttons) by its kind, its words and which of the
+      // panel's controls with both it is.
+      const controlSig = (c) => `ctl:${c.tagName}.${c.className}:${c.textContent.trim().slice(0, 80)}`;
+      const controlsLike = (root, sig) => [...root.querySelectorAll(KEEP_FOCUSABLE)].filter((c) => controlSig(c) === sig);
+      function keyOfControl(el, root) {
+        const sig = controlSig(el);
+        return `${sig}#${controlsLike(root, sig).indexOf(el)}`;
+      }
+      // Where the focus is: the nearest named thing round it, and which of that thing's controls it is (-1: the thing).
+      function keyOfFocus(root) {
+        const el = document.activeElement;
+        if (!el || el === root || !root.contains(el)) return null;
+        for (let a = el.closest(KEEP_ANCHOR); a && a !== root && root.contains(a); a = a.parentElement?.closest(KEEP_ANCHOR)) {
+          const key = keyOfAnchor(a);
+          if (key) return { key, at: a === el ? -1 : [...a.querySelectorAll(KEEP_FOCUSABLE)].indexOf(el) };
+        }
+        return { key: keyOfControl(el, root), at: -1 };
+      }
+      function findKept(root, key) {
+        if (key.startsWith('ctl:')) {
+          const cut = key.lastIndexOf('#');
+          return controlsLike(root, key.slice(0, cut))[Number(key.slice(cut + 1))] || null;
+        }
+        return [...root.querySelectorAll(KEEP_ANCHOR)].find((x) => keyOfAnchor(x) === key) || null;
+      }
+      function scrollersOf(root) {
+        const out = [];
+        for (let el = root; el; el = el.parentElement) if (el.scrollHeight > el.clientHeight) out.push(el);
+        if (document.scrollingElement && !out.includes(document.scrollingElement)) out.push(document.scrollingElement);
+        return out;
+      }
+      function keepPlace(draw) {
+        const root = document.getElementById('sidebar-content');
+        // Typed text: the panel's text boxes only (the notify email), never a hidden or ticked field's value.
+        const TYPED = 'input[id][type="email"], input[id][type="text"], input[id][type="search"], textarea[id]';
+        const was = root && {
+          open: new Set([...root.querySelectorAll('details[open]')].map(keyOfDetails).filter(Boolean)),
+          focus: keyOfFocus(root),
+          typed: [...root.querySelectorAll(TYPED)].filter((i) => i.value).map((i) => [i.id, i.value]),
+          scroll: scrollersOf(root).map((el) => [el, el.scrollTop]),
+        };
+        const drawn = draw();
+        if (was) {
+          _keep = { ...was, subject: panelSubject };
+          for (const [id, value] of was.typed) {
+            const i = document.getElementById(id);
+            if (i && root.contains(i) && i.matches(TYPED) && !i.value) i.value = value;
+          }
+          applyKeep();
+          // Its tiles are in by now, before the frame is painted: put back what is still to be, then let go, so nothing
+          // kept can act on what the visitor does next.
+          const kept = _keep;
+          requestAnimationFrame(() => {
+            applyKeep();
+            if (_keep === kept) _keep = null;
+          });
+        }
+        return drawn;
+      }
+      // Each kept thing is put back once: a tile the visitor shuts after the redraw stays shut. The focus only while it
+      // has nowhere else to be, so it never takes a visitor back from somewhere they have gone.
+      function applyKeep() {
+        if (!_keep) return;
+        // Anything else drawn since (another answer, a borough, the empty panel) is not the redraw's to touch.
+        if (_keep.subject !== panelSubject) {
+          _keep = null;
+          return;
+        }
+        const root = document.getElementById('sidebar-content');
+        if (!root) return;
+        for (const d of root.querySelectorAll('details')) {
+          const key = !d.open && _keep.open.size ? keyOfDetails(d) : null;
+          if (key && _keep.open.delete(key)) d.open = true;
+        }
+        for (const [el, top] of _keep.scroll) if (el.isConnected) el.scrollTop = top;
+        const f = _keep.focus;
+        const lost = !document.activeElement || document.activeElement === document.body || document.activeElement === root;
+        if (f && lost) {
+          const a = findKept(root, f.key);
+          const target = a && (f.at < 0 ? a : a.querySelectorAll(KEEP_FOCUSABLE)[f.at] || a.querySelector('summary') || a);
+          if (target) {
+            target.focus({ preventScroll: true });
+            if (document.activeElement === target) _keep.focus = null;
+          }
+        } else if (f && !lost) _keep.focus = null;
+      }
       function placeFinding(m, slot, findings) {
         const el = document.querySelector(`#sidebar-content [data-find="${slot}"]`);
         if (!el) return null;
@@ -14646,6 +14773,7 @@
         const air = document.getElementById('postcode-air-section');
         const airBody = root.querySelector('details.tile[data-finding="air"] .t-body');
         if (air && airBody && air.parentElement !== airBody) airBody.appendChild(air);
+        applyKeep(); // a tile kept open across a redraw opens as it lands (audit M-3)
       }
 
       // THE SCORE, IN THE CARD (Bill, 2026-11-08): whose score it is, how it compares, the points each part earns out of
@@ -14737,6 +14865,21 @@
         };
         withFindings(req, (m) => placeFinding(m, slot, m.nearestFinding(slot, label, rating, nearestListed(containerId), ctx)));
       }
+      // A REDRAW OF THE SAME SEARCH ASKS NOTHING AGAIN (audit M-3, 2026-11-19): a profile change and the borough data
+      // landing draw the postcode panel again for the search on screen, and every route was asked again (the environment,
+      // TfL, the NHS, EPC, sold prices, the district's planes file), so each of their tiles went back to waiting and shut,
+      // the card shrank and grew, and each route was spent twice. One answer per route per search, by its token and place:
+      // a new search, even of the same postcode, asks afresh, so trying again still asks again.
+      const _answers = { at: '', got: new Map() };
+      function answerOnce(req, analysis, route, ask) {
+        const at = `${req.token}|${currentCity}|${analysis.postcode}`;
+        if (_answers.at !== at) {
+          _answers.at = at;
+          _answers.got = new Map();
+        }
+        if (!_answers.got.has(route)) _answers.got.set(route, ask());
+        return _answers.got.get(route);
+      }
       let _planesInfoLoad = null;
       // The nearest airport from js/planes.mjs planesNearest() at the point, so the planes tile can say when it is one we
       // do not count (Bill's pick C, 2026-11-17), by the rule every surface shares (audit 2026-11-19 I-2).
@@ -14783,7 +14926,9 @@
         // The planes model and the planes layer's steps feed both the planes tile and the headline: each fetched once.
         // The nearest airport by js/planes.mjs planesNearest(), the one rule every surface names (audit 2026-11-19 I-2),
         // which the Nearest airport card follows too (shownDistances lists every UK airport with published routes).
-        const planes = fullUkPostcode ? loadPanelPlanes(analysis.postcode, analysis.lat, analysis.lon) : Promise.resolve(null);
+        const planes = fullUkPostcode
+          ? answerOnce(req, analysis, 'planes', () => loadPanelPlanes(analysis.postcode, analysis.lat, analysis.lon))
+          : Promise.resolve(null);
         const steps = fullUkPostcode
           ? loadPlanesLayerIndex().then((idx) => (idx && Array.isArray(idx.steps) ? idx.steps : []))
           : Promise.resolve([]);
@@ -14882,9 +15027,11 @@
         });
       }
 
-      function updateSidebarPostcode(analysis, boroughData, search, { reveal = true } = {}) {
+      function updateSidebarPostcode(analysis, boroughData, search, { reveal = true, redraw = false } = {}) {
         const req = search || { token: searchSeq };
-        panelSubject = { kind: 'postcode', analysis };
+        // The search it answers, by token, so a redraw is of THIS search (audit M-3): with the newest token it could take a
+        // search still on its way as its own, and paint this postcode's late answers into that one's panel.
+        panelSubject = { kind: 'postcode', analysis, token: req.token };
         setPanelSubject(analysis.label || analysis.postcode);
         // ANNOUNCED (2026-09-13 audit, I22). The borough panel and the
         // not-found branch both feed #result-status; this one never did, so
@@ -14892,7 +15039,8 @@
         // "Results loaded for Camden" from an earlier borough click while the
         // panel showed SW11 1AA. The one outcome the search box's own
         // placeholder asks for was the one a screen-reader user never heard.
-        announceResult('Results loaded for ' + (analysis.label || analysis.postcode) + '.');
+        // Not for a REDRAW of the answer on screen (audit M-3, 2026-11-19): the borough data landing said it again.
+        if (!redraw) announceResult('Results loaded for ' + (analysis.label || analysis.postcode) + '.');
         switchTab('analysis');
         if (reveal) revealSheetIfMobile(); // not for a profile change (audit I-18)
 
@@ -15203,7 +15351,7 @@
         // One request serves the road finding and the air chart. An area search has no postcode to ask about.
         const environment =
           isUkCity(currentCity) && !analysis.isOutcode
-            ? fetchPostcodeEnvironment(analysis.lat, analysis.lon)
+            ? answerOnce(req, analysis, 'environment', () => fetchPostcodeEnvironment(analysis.lat, analysis.lon))
             : Promise.resolve(null);
         fillFindings(analysis, boroughData, extra, aircraft, environment, req);
 
@@ -15217,13 +15365,13 @@
         // invisible to the reader - every callback re-checks the token.
         const signal = req.signal;
         if (currentCity === 'london') {
-          fetchTransportData(analysis.lat, analysis.lon, signal).then((data) => {
+          answerOnce(req, analysis, 'transport', () => fetchTransportData(analysis.lat, analysis.lon, signal)).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderTransportData('postcode-transport-data', data);
             showNearest(req, 'transport', 'Transport', extra && extra.transport, 'postcode-transport-data', extra);
             fillDetail(req, analysis, 'transport', data);
           });
-          fetchNhsData(analysis.lat, analysis.lon, signal).then((data) => {
+          answerOnce(req, analysis, 'nhs', () => fetchNhsData(analysis.lat, analysis.lon, signal)).then((data) => {
             if (!isCurrentSearch(req)) return;
             renderNhsData('postcode-nhs-data', data);
             showNearest(req, 'healthcare', 'Healthcare', extra && extra.healthcare, 'postcode-nhs-data', extra);
@@ -15257,13 +15405,13 @@
 
         if (isUkCity(currentCity)) {
           if (!analysis.isOutcode) {
-            fetchSoldPrices(analysis.postcode, signal).then((soldData) => {
+            answerOnce(req, analysis, 'sold', () => fetchSoldPrices(analysis.postcode, signal)).then((soldData) => {
               if (!isCurrentSearch(req)) return;
               renderSoldPrices('sold-prices-data', soldData, analysis.postcode);
               const pounds = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
               withFindings(req, (m) => placeFinding(m, 'sold', m.soldFinding(soldData, (n) => pounds.format(n))));
             });
-            fetchEpcData(analysis.postcode, signal).then((data) => {
+            answerOnce(req, analysis, 'epc', () => fetchEpcData(analysis.postcode, signal)).then((data) => {
               if (!isCurrentSearch(req)) return;
               renderEpcData('postcode-epc-data', data);
               withFindings(req, (m) => placeFinding(m, 'epc', m.epcFinding(data)));
@@ -16450,7 +16598,8 @@
         renderBoroughRanking();
         // Said for the new buyer (audit M-12, 2026-11-09; WCAG 4.1.3): the redraw announced "Results loaded for SW5 9HP",
         // all a screen reader heard of a changed profile. The card's own verdict label says the score, never retyped here.
-        if (redrawPanelSubject() === 'postcode') {
+        // A borough's card too (audit M-3, 2026-11-19): its redraw no longer says "Results loaded", so it says the score.
+        if (['postcode', 'borough'].includes(redrawPanelSubject())) {
           const verdict = document.querySelector('#sidebar-content .summary-verdict[aria-label]');
           if (verdict) announceResult(`${verdict.getAttribute('aria-label')}.`);
         }
@@ -16461,11 +16610,19 @@
       // ONE rule for a profile change and the late borough-data load (audit M-15, 2026-11-13): the load redrew
       // selectedBorough, which a postcode search sets to its council, so an answer given before the data arrived became
       // the council's panel. Never a new result: reveal: false (audit I-18) keeps a phone where it is.
-      function redrawPanelSubject() {
+      // A REDRAW keeps the visitor's place and says nothing again (audit M-3, 2026-11-19): `keepPlace` puts back what was
+      // open, the focus and the scroll; `redraw` keeps "Results loaded" from being said a second time. A profile change
+      // says the new score: setPersona() reads it off a postcode's or a borough's card, and the Bay Area's card, which
+      // has no score label to read, says it itself unless the redraw is `late` (data landing, when nothing changed for
+      // the visitor and nothing is said).
+      function redrawPanelSubject({ late = false } = {}) {
+        return keepPlace(() => redrawPanelSubjectNow(late));
+      }
+      function redrawPanelSubjectNow(late) {
         if (panelSubject.kind === 'postcode') {
           const a = panelSubject.analysis;
           const activeTab = document.querySelector('.tab.active')?.dataset.tab;
-          updateSidebarPostcode(a, matchBorough(a.borough) || null, undefined, { reveal: false });
+          updateSidebarPostcode(a, matchBorough(a.borough) || null, { token: panelSubject.token, redraw: true }, { reveal: false, redraw: true });
           if (activeTab) switchTab(activeTab);
           return 'postcode';
         }
@@ -16475,12 +16632,14 @@
           // so a card left behind by another city is never redrawn over the new one.
           const { p, ...opts } = panelSubject.bay;
           const fresh = opts.tier === 'city' ? getActiveBoroughData()[p.name] : null;
-          renderPlaceFacts(fresh || p, { ...opts, switchToAnalysis: false, reveal: false });
+          renderPlaceFacts(fresh || p, { ...opts, switchToAnalysis: false, reveal: false, redraw: late });
           return 'bay';
         }
-        if (selectedBorough) {
+        // Only a borough card ON SCREEN (review of audit M-3, 2026-11-19): selectedBorough outlives a NOT FOUND and a closed
+        // result, and a profile change then drew the council's card over them and said its score.
+        if (panelSubject.kind === 'borough' && selectedBorough) {
           const data = getActiveBoroughData()[selectedBorough];
-          if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false, reveal: false });
+          if (data) updateSidebar({ name: selectedBorough, ...data }, { switchToAnalysis: false, reveal: false, redraw: true });
           return 'borough';
         }
         return 'none';
@@ -17118,8 +17277,9 @@
               // The SAME card, with the same options, and only while it is still the one on screen (audit I-17): the bare
               // redraw replaced the first San Francisco ZIP of a session with the city card, its ZIP and rows gone.
               const shown = panelSubject.bay;
+              // Its place kept too (audit M-3, 2026-11-19): a focused button or an open fold survives the list arriving.
               if (currentCity === 'bayarea' && shown && shown.p === p && shown.zip === zip && shown.tier === tier) {
-                renderPlaceFacts(p, { switchToAnalysis: false, zip, zipArea, tier, redraw: true });
+                keepPlace(() => renderPlaceFacts(p, { switchToAnalysis: false, zip, zipArea, tier, redraw: true }));
               }
             })
             .catch(() => {});

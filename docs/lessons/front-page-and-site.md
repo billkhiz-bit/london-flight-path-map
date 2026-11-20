@@ -1269,3 +1269,62 @@ exact value (`shown_km()`; Python's format rounds a true tie such as 4.25 to eve
 (`AIRPORT_NAME`) says "Liverpool", as every other surface prints it; and I told Bill "20 property notes" from a search that
 missed the 38 whose text starts on the line after the key. Count with a parser that knows the file's shapes, never one
 grep.
+
+## A redraw keeps the visitor's place (audit 2026-11-19 M-3, Bill's "go with recommended")
+
+I-4 (2026-11-10) made a late ANSWER keep the open tiles and the focus, slot by slot. It left the late REDRAW: the borough
+data landing (`redrawPanelSubject()`, M-15) and a profile change set the whole panel's `innerHTML` again, and San
+Francisco's neighbourhood list does the same to its card. So an open tile shut, the focus fell to `<body>`, a typed email
+went, and the data landing said "Results loaded for TW9 3PZ" a second time. Reading the code found a second cost: the
+postcode redraw asked every route again (environment, TfL, the NHS, EPC, sold prices, the district's planes file), so each
+of those tiles went back to waiting, the card shrank and grew, and each throttled route was spent twice per redraw.
+
+The fix has three parts, each red on its own mutant in `tests/search-guide.mjs` 7:
+- **`answerOnce(req, analysis, route, ask)`**: one answer per route per search, keyed by the search's token, the city and
+  the postcode. A redraw of the same search draws from answers it already has, so its tiles are back in the same task,
+  before the frame is painted. A new search, even of the same postcode, asks afresh, so trying again still asks again.
+  The one thing given up: a profile change no longer happens to retry a route that failed.
+- **`keepPlace(draw)`**: before the draw, what is open, where the focus is, the scroll and typed text, all BY NAME (a
+  details' id; a tile's slot and place, as `tilesByKey()` names it; a data key such as `data-pill-key`; else a control's
+  kind and words and which of the panel's controls with both it is, because the Bay Area card's buttons have no id). After
+  the draw, again as its tiles land (`applyKeep()` at the end of `tidyCard()`) and on the next frame, each kept thing is
+  put back ONCE, so a tile the visitor shuts afterwards stays shut. The focus is put back only while it has nowhere else to
+  be (`<body>` or the panel), never taken from somewhere the visitor has gone since. The keep lasts until the NEXT FRAME,
+  and only while `panelSubject` is the very object the redraw drew (see the review below).
+- **`redraw`**: `updateSidebarPostcode()` and `updateSidebar()` say nothing on a redraw. A profile change says the new score
+  from the card's own `.summary-verdict` label, for a borough too now (it used to say "Results loaded for Camden"). The Bay
+  Area card has no such label, so its profile change still says its own score sentence; only a `late` redraw is silent.
+
+A redraw used `{ token: searchSeq }`, the NEWEST token. With a search still on its way, that is the new search's token,
+so the redraw's late answers for the old postcode could paint into the new one's panel. `panelSubject` now carries the
+token its answer was drawn with, and the redraw uses that one. The M-15 test's scene, extended: borough-extra.json held
+until every first answer is in, the Flight path tile opened and focused, `#panel-all` open, an email typed, then let go.
+The redraw is PROVEN to have happened (the answer card on screen is a new element), not assumed, and every request to
+the API and to `/data/` after the hold is listed: the set must be empty.
+
+**The review before the preflight found the first version wrong in the way it was meant to be right.** The keep was keyed
+to the NEWEST search token and lasted 10 s, and the redraw kept its OWN token: with a newer search on its way, the redraw's
+tiles were refused (`isCurrentSearch`) and left waiting, the keep was never used up, and when the newer answer landed its
+`tidyCard()` matched the newest token and opened the OLD postcode's tile in it, focus and all (reproduced: SW1P 3JA opened
+with TW9 3PZ's Flight path tile open and focused). Two changes: the keep is tied to the `panelSubject` OBJECT the redraw
+drew (any later draw makes a new one) and ends at the next frame, which is enough because a redraw's tiles now land in the
+same task; `isCurrentSearch()` counts a request marked `redraw: true` as current while `panelSubject` is still that
+postcode under that token, and never once anything else is drawn. The two cut-offs are redundant on purpose: the leak
+test is red only with BOTH removed, which is why each is not proven red alone. The same review found two older bugs the
+redraw now reached: `selectedBorough` outlives NOT FOUND and a closed result, so a profile change drew the last council's
+card over the message and said its score (the borough branch now needs `panelSubject.kind === 'borough'`); and a
+borough card's redraw called `cancelSearch()`, so the data landing aborted a postcode a visitor had just sent (a redraw
+no longer cancels; no search on its way has drawn yet). Both red on the old code. Declined: redrawing in place instead of
+whole, which would mean a second holder of the panel's markup. A test-writing slip worth keeping: `page.evaluate(() =>
+triggerSearch(q))` RETURNS the search's promise, so with the lookup held, evaluate waited for the 5 s limit and the test
+read "CONNECTION ISSUE" as the fix failing. Fire a held search in a block body.
+
+**The preflight then found two things.** `tests/detail-near.mjs` builds `fillDetail()` from its source with a fixed set
+of names, so an `applyKeep()` call added there was a ReferenceError: it went (the next frame already covers the cards,
+which a redraw draws in the same task). And `tests/outside-coverage.mjs` failed once in landscape with "reading
+'selectAll'": under the preflight's load the stubbed lookup answered before `init()` had made the map's group `g`, and
+`renderOutsideCoverage()` clears pins and the selection on it, so the panel stuck on SEARCHING. Nothing in M-3 caused it;
+it is the race 2026-10-05 fixed for `switchCity()` ("reading 'center'"), on another path. The search now waits for
+`mapBuilt` before drawing that answer, and the test holds `/data/london-boroughs.json` (what `init()` waits on) until the
+lookup has answered: red without the wait (the same error), green with it. A one-off red under load is a race to reach
+on purpose, not a flake to re-run past.

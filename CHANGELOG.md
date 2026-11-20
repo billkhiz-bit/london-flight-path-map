@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-11-19 - A council area opens on its answer, and the map gives no buying advice
+
+- **A council area opens on its answer, as a postcode does**: on the full map, a click on a council area, a Rankings or
+  Find areas row, or a link to one now opens the dark answer card: one sentence on what stands out, each finding marked
+  worth a look or good here, and the score. The sentence is the council's own area page's, word for word. Everything
+  the panel said before is still there, under "All the detail".
+- **No buying advice**: the panel's "Property advice" notes are gone, all 38 of them (London's 33 and New York's 5).
+  They told readers where to negotiate and what to avoid. The section is now "Prices". Nine notes about aircraft were
+  cut back to plain facts.
+- **One way to find the nearest airport, everywhere**: the full map, the front page and the street report now name
+  the nearest airport by one rule: every UK airport with published routes, measured to its runway, within 30 km.
+  Wigan's map had said Manchester where its report said Liverpool.
+- **Twelve planes pages near Liverpool say so first**: L35, WA3, WA9 to WA12 and WN1 to WN6 now open with a box under
+  the heading, for example "Liverpool is the nearest airport to all 732 of L35's measured postcodes, 4.8 to 11.2 km
+  away, and it is not one of the nine airports we count."
+- **The free street report**: a copy made while a planes file could not be downloaded now stops and says so. Until
+  now it left the planes out, as if the district were not counted. Its aircraft card prints the figure to one decimal,
+  the same figure it compares with the WHO guideline (45.2 dB had printed "45 dB ..., over the WHO guideline of 45").
+  The planes card no longer shows a "Next step" that was not a step, and each page's section headings now sit under
+  that page's heading for screen readers. The sample report is remade.
+- **The full map keeps your place when it draws an answer again**: when the council figures arrive after an answer is
+  already showing, or you change the buyer profile, the panel used to be drawn again from scratch. Any tile you had open
+  shut, the keyboard focus jumped to the top of the page, a typed email went, and a screen reader heard "Results loaded"
+  a second time. Now the open tiles stay open, the focus stays where it was, nothing is said again, and the answers it
+  already has are not asked for again. A profile change says the new score. Two older faults went with it: changing the
+  profile after a search found nothing brought back the last council you had looked at, and a postcode sent while a
+  council's card was showing and the council figures were still arriving was dropped without a word. And a search for
+  a postcode outside our areas, sent before the map had finished drawing, no longer sticks on "Searching".
+- **For developers**: `/v1/environment` now returns `airMeasuredNearby`, the nearest Breathe London sensor and DEFRA
+  monitor within 5 km of the point, with their readings as the site shows them. These are measured, shown only, and
+  never scored.
+
 ## 2026-11-18 - House prices are September 2026's
 
 - **House prices are now September 2026's** (HM Land Registry's index; inflation 3.6%, ONS). 84 of 97 UK council

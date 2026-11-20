@@ -83,7 +83,7 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | What | URL |
 |---|---|
 | Front page: search beside the live map, the API shown working (since 2026-10-06, rebuilt 2026-11-04) | <https://skyscore.co.uk/> |
-| Full map (the consumer app; `/` until 2026-10-06): a postcode opens on an answer card, each finding a tile with a plain explanation (since 2026-11-08) | <https://skyscore.co.uk/map/> |
+| Full map (the consumer app; `/` until 2026-10-06): a postcode opens on an answer card, each finding a tile with a plain explanation (since 2026-11-08), and a council area on the same card, headlined as its area page (since 2026-11-19) | <https://skyscore.co.uk/map/> |
 | Free street report: one page of official figures for your own home, made in the browser | <https://skyscore.co.uk/reports/street/> |
 | Reports (samples; their prices are on /pricing) | <https://skyscore.co.uk/reports/> |
 | Pricing (every price since 2026-10-06: councils, platforms, firms' reports) | <https://skyscore.co.uk/pricing> |

@@ -261,6 +261,47 @@ for (const vp of VIEWPORTS) {
   console.log(`  ${cfOk ? 'ok  ' : 'FAIL'} ${vp.label.padEnd(9)} an unreachable lookup is SHOWN, with its retry button`);
 }
 
+// AN ANSWER THAT LANDS BEFORE THE MAP IS DRAWN WAITS FOR IT (2026-11-19). Under the preflight's load a search answered
+// before init() had made the map's group, and renderOutsideCoverage() threw "reading 'selectAll'", the panel left on
+// SEARCHING. It waits for the map, as switchCity() does (2026-10-05). Reached on purpose: the outlines init() waits on
+// are held until the lookup has answered.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+  const page = await ctx.newPage();
+  const pageErrors = [];
+  page.on('pageerror', (e) => pageErrors.push(e.message));
+  let release;
+  const hold = new Promise((r) => { release = r; });
+  let heldIt = false;
+  await page.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
+    const m = route.request().url().match(/api\.postcodes\.io\/postcodes\/([A-Z0-9]+)$/i);
+    if (m && STUBS[m[1].toUpperCase()]) {
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ status: 200, result: STUBS[m[1].toUpperCase()] }) });
+    }
+    return route.abort();
+  });
+  await page.route('**/data/london-boroughs.json*', async (route) => {
+    heldIt = true;
+    await hold;
+    await route.continue().catch(() => {});
+  });
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => typeof triggerSearch === 'function', null, { timeout: 20000 });
+  // Not awaited: the search waits for the held map.
+  const undrawn = await page.evaluate(() => { triggerSearch('EX1 1HS'); return !g; });
+  await page.waitForTimeout(800);
+  const meanwhile = await page.evaluate(() => document.getElementById('sidebar-title').textContent.trim());
+  release();
+  await page.waitForFunction(() => !/SEARCHING/.test(document.getElementById('sidebar-title').textContent), null, { timeout: 20000 }).catch(() => {});
+  const title = await page.evaluate(() => document.getElementById('sidebar-title').textContent.trim());
+  await ctx.close();
+  checks++;
+  const reached = heldIt && undrawn;
+  const okEarly = reached && title === 'NOT COVERED YET' && pageErrors.length === 0;
+  if (!okEarly) failures.push(reached ? `an answer before the map: title "${title}" (meanwhile "${meanwhile}"), errors ${pageErrors.join(' | ') || 'none'}` : `an answer before the map: not reached (held ${heldIt}, map undrawn ${undrawn})`);
+  console.log(`  ${okEarly ? 'ok  ' : 'FAIL'} an answer that lands before the map is drawn waits for it and is SHOWN`);
+}
+
 await browser.close();
 server.close();
 
