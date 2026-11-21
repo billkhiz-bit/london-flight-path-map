@@ -230,6 +230,26 @@ OPERATIONS.md s3.9 is the runbook, and privacy.html s2a changes in the SAME
 deploy as the flip, not before. **The code is DEPLOYED (2026-09-15, same SAM
 deploy as v5.1): the table exists, the route answers, the flag is off.**
 
+**The send counters, before the flip (2026-11-21, branch `signup-verify-on`).**
+The 5 Oct audit's M-3 left two holes in the per-address cap of three a day: it
+counted the address STRING, so `name+1@`, `name+2@` and `n.ame@gmail.com`
+each had their own three at one inbox, and nothing bounded the day as a
+whole, so a script cycling made-up addresses could spend the account's SES
+reputation (SES judges the sender on its bounces and complaints) at ~86k a
+day through the route throttle. Now `mailbox_key()` counts by INBOX, for
+counting only (the email goes to, and the register stores, the address as
+typed): the `+tag` goes for every domain, dots only where Google ignores
+them, and googlemail.com is gmail.com. A day row (`sendcap#all#<day>`, 200 by
+default) bounds everything sent. Two choices in it are deliberate, each held
+by a test: (1) the day row counts only emails really SENT, so hammering one
+capped address cannot lock everyone else out for the day; (2) over the
+ceiling the reply SAYS so (503, logged, so the 5xx alarm fires), and says it
+to every address alike: a capped inbox reads the day row without adding to
+it, because a silent 201 for a capped address beside a 503 for a fresh one
+would tell a prober which addresses had been asked for three times today.
+The per-address cap itself stays a silent 201: that one is per address, so
+saying it would be the oracle I17 closed.
+
 ## Per-field provenance (2026-10-23)
 
 **Why.** Bill read Mireye's pitch (US-only, "every returned field carries a source name and a confidence level") and

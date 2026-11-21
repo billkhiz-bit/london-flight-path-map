@@ -92,6 +92,25 @@ SEND_CAP_PER_DAY = 3
 # Counter rows share the pending table under a key TOKEN_PATTERN can never
 # match ('#' is outside it), so no confirm link can ever reach one.
 SEND_COUNTER_PREFIX = 'sendcap#'
+# Confirmation emails to ALL addresses per UTC day: the residual of audit M-3
+# (5 Oct) that OPERATIONS.md s3.9 put before the flip. The per-address cap
+# bounds what one inbox can be sent; this bounds what the sender can be made to
+# send, because SES judges the whole account on its bounces and complaints, and
+# a script cycling made-up addresses got three each, ~86k a day at the route
+# throttle. 200 is far above any day the site has had and far under SES's
+# 50,000; the env var raises it without a code change. Over it, the reply says
+# so in words (a 503, logged as one), the same for every address.
+SEND_CEILING_PER_DAY = int(os.environ.get('SEND_CEILING_PER_DAY', '200'))
+# The ceiling's row: 'all' can never be a sha256 hex digest, so it cannot
+# collide with an address's row.
+SEND_CEILING_ROW = 'all'
+SEND_CEILING_MESSAGE = (
+    'We have sent as many confirmation emails as we can today. Please try again tomorrow.'
+)
+# Domains that deliver every dotted spelling of a local part to one inbox,
+# each mapped to the domain it is an alias of. Only Google does this; for any
+# other domain `a.b@` and `ab@` can be two people, so their dots are kept.
+DOT_BLIND_DOMAINS = {'gmail.com': 'gmail.com', 'googlemail.com': 'gmail.com'}
 # A UK postcode SHAPE. Only a match goes into the email body: the field is
 # free text, and a mail client auto-links anything domain-shaped.
 UK_POSTCODE = re.compile(r'^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$')
@@ -737,7 +756,15 @@ def start_verification(email, name, source, postcode, event):
         },
         event,
     )
-    if not send_allowed(email):
+    decision = send_decision(email)
+    if decision == 'full':
+        # Said in words, because the person asking is most likely real: a
+        # silent 201 would leave them waiting for an email that never comes.
+        # send_decision() answers 'full' for every address alike, so this
+        # reply says nothing about the address it was asked for.
+        logger.warning('[SIGNUP_SEND_CEILING] ceiling=%d/day', SEND_CEILING_PER_DAY)
+        return response(503, {'error': SEND_CEILING_MESSAGE}, event)
+    if decision == 'skip':
         # Same 201 as a real send: the cap must not become an oracle.
         logger.warning('[SIGNUP_SEND_CAPPED] cap=%d/day', SEND_CAP_PER_DAY)
         return accepted
@@ -782,23 +809,37 @@ def start_verification(email, name, source, postcode, event):
     return accepted
 
 
-def send_allowed(email):
-    """True while this address is under SEND_CAP_PER_DAY for the UTC day.
+def mailbox_key(email):
+    """The address as the INBOX it reaches, for counting sends and nothing else:
+    never for sending, storing, or matching a signup to the register.
 
-    One atomic counter per (address, day), keyed on a HASH of the address so
-    the counter row holds no email, and expiring with the pending rows. Fails
-    OPEN on a DynamoDB error: the route throttle still bounds sends, and
-    failing closed would lock every real signup out whenever the counter was
-    unreadable.
+    `name+anything@` reaches `name@` at Gmail, Outlook, iCloud, Fastmail and
+    Proton, so the tag is dropped for every domain; at worst two people on a
+    system that treats `+` literally share one count of three. Dots are dropped
+    only where Google ignores them (DOT_BLIND_DOMAINS), and googlemail.com counts
+    as gmail.com. Without this, `name+1@`, `name+2@` and `n.ame@` each had their
+    own three sends at one inbox (audit M-3, 5 Oct). Expects the lower-cased,
+    validated address handle_post() passes on.
     """
-    import hashlib
+    local, _, domain = email.rpartition('@')
+    local = local.split('+', 1)[0]
+    if domain in DOT_BLIND_DOMAINS:
+        local = local.replace('.', '')
+        domain = DOT_BLIND_DOMAINS[domain]
+    return f'{local}@{domain}'
 
-    day = datetime.now(UTC).strftime('%Y-%m-%d')
-    digest = hashlib.sha256(email.encode('utf-8')).hexdigest()
+
+def _counter_key(row, day):
+    return {'token': {'S': f'{SEND_COUNTER_PREFIX}{row}#{day}'}}
+
+
+def _count_one(row, day):
+    """Add one to a counter row and return the new count, or None when
+    DynamoDB could not say (the caller then fails open)."""
     try:
         out = ddb.update_item(
             TableName=PENDING_TABLE,
-            Key={'token': {'S': f'{SEND_COUNTER_PREFIX}{digest}#{day}'}},
+            Key=_counter_key(row, day),
             UpdateExpression='ADD sends :one SET expiresAt = if_not_exists(expiresAt, :exp)',
             ExpressionAttributeValues={
                 ':one': {'N': '1'},
@@ -809,8 +850,50 @@ def send_allowed(email):
     except (ClientError, BotoCoreError) as e:
         code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
         logger.warning('[SIGNUP_SEND_COUNTER_FAILED] code=%s (failing open)', code)
-        return True
-    return int(out.get('Attributes', {}).get('sends', {}).get('N', '1')) <= SEND_CAP_PER_DAY
+        return None
+    return int(out.get('Attributes', {}).get('sends', {}).get('N', '1'))
+
+
+def _count_now(row, day):
+    """Read a counter row without adding to it: 0 when it does not exist yet,
+    None when DynamoDB could not say."""
+    try:
+        out = ddb.get_item(TableName=PENDING_TABLE, Key=_counter_key(row, day), ConsistentRead=True)
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.warning('[SIGNUP_SEND_COUNTER_FAILED] code=%s (failing open)', code)
+        return None
+    return int(((out.get('Item') or {}).get('sends') or {}).get('N', '0'))
+
+
+def send_decision(email):
+    """'send', 'skip' (this inbox has had SEND_CAP_PER_DAY today: the same 201,
+    no email) or 'full' (SEND_CEILING_PER_DAY emails have gone today: a 503
+    that says so).
+
+    Two atomic counters per UTC day, both expiring with the pending rows: one
+    per inbox, keyed on a HASH of mailbox_key() so the row holds no address,
+    and one for the whole day. The day's counter counts only emails that are
+    really sent, so a script hammering one capped address cannot use up the
+    day for everyone. An inbox over its cap still READS the day's counter, so
+    that once the day is full every address gets the 503: a 201 for a capped
+    address beside a 503 for a fresh one would say which addresses had been
+    asked for three times today.
+
+    Fails OPEN on a DynamoDB error, either counter: the route throttle still
+    bounds sends, and failing closed would lock every real signup out
+    whenever a counter was unreadable.
+    """
+    import hashlib
+
+    day = datetime.now(UTC).strftime('%Y-%m-%d')
+    digest = hashlib.sha256(mailbox_key(email).encode('utf-8')).hexdigest()
+    sends = _count_one(digest, day)
+    if sends is not None and sends > SEND_CAP_PER_DAY:
+        today = _count_now(SEND_CEILING_ROW, day)
+        return 'full' if today is not None and today >= SEND_CEILING_PER_DAY else 'skip'
+    today = _count_one(SEND_CEILING_ROW, day)
+    return 'full' if today is not None and today > SEND_CEILING_PER_DAY else 'send'
 
 
 def send_confirmation_email(email, source, postcode, link):

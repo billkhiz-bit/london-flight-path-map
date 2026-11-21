@@ -337,18 +337,165 @@ class SendCapTests(unittest.TestCase):
         self.ses.send_email.assert_not_called()
         self.ddb.put_item.assert_not_called()
 
-    def test_the_counter_row_holds_a_hash_not_the_address(self):
+    def test_the_counter_rows_hold_a_hash_not_the_address(self):
         self._sends(1)
         self.app.handler(post({'email': 'someone@example.com'}), None)
-        call = self.ddb.update_item.call_args.kwargs
-        self.assertEqual(call['TableName'], self.app.PENDING_TABLE)
-        self.assertNotIn('someone', json.dumps(call))
-        self.assertTrue(call['Key']['token']['S'].startswith(self.app.SEND_COUNTER_PREFIX))
-        self.assertIn('expiresAt', call['UpdateExpression'])
+        calls = [c.kwargs for c in self.ddb.update_item.call_args_list]
+        self.assertEqual(len(calls), 2, 'one row for the inbox, one for the day')
+        for call in calls:
+            self.assertEqual(call['TableName'], self.app.PENDING_TABLE)
+            self.assertNotIn('someone', json.dumps(call))
+            self.assertTrue(call['Key']['token']['S'].startswith(self.app.SEND_COUNTER_PREFIX))
+            self.assertIn('expiresAt', call['UpdateExpression'])
 
     def test_an_unreadable_counter_fails_open(self):
         self.ddb.update_item.side_effect = ClientError({'Error': {'Code': 'ProvisionedThroughputExceededException', 'Message': ''}}, 'UpdateItem')
         r = self.app.handler(post({'email': 'a@example.com'}), None)
+        self.assertEqual(r['statusCode'], 201)
+        self.ses.send_email.assert_called_once()
+
+    def _inbox_rows(self, *emails):
+        rows = []
+        for email in emails:
+            self.ddb.reset_mock()
+            self._sends(1)
+            self.app.handler(post({'email': email}), None)
+            rows.append(self.ddb.update_item.call_args_list[0].kwargs['Key']['token']['S'])
+        return rows
+
+    def test_tags_and_gmail_dots_count_as_one_inbox(self):
+        # Audit M-3 (5 Oct): each spelling had its own three sends at ONE inbox.
+        rows = self._inbox_rows('bill+1@gmail.com', 'b.i.l.l+news@googlemail.com', 'BILL@Gmail.com', 'bill@gmail.com')
+        self.assertEqual(len(set(rows)), 1, rows)
+        rows = self._inbox_rows('ann+a@example.com', 'ann+b@example.com', 'ann@example.com')
+        self.assertEqual(len(set(rows)), 1, rows)
+
+    def test_dots_still_matter_outside_gmail(self):
+        # a.nn@ and ann@ can be two people anywhere Google does not run the mail.
+        rows = self._inbox_rows('a.nn@example.com', 'ann@example.com')
+        self.assertEqual(len(set(rows)), 2, rows)
+
+
+class MailboxKeyTests(unittest.TestCase):
+    def test_what_one_inbox_looks_like(self):
+        key = load_signup().mailbox_key
+        cases = {
+            'bill@gmail.com': 'bill@gmail.com',
+            'b.ill+x@gmail.com': 'bill@gmail.com',
+            'bill@googlemail.com': 'bill@gmail.com',
+            'ann+tag+more@example.com': 'ann@example.com',
+            'a.nn@example.com': 'a.nn@example.com',
+            'ann@sub.example.com': 'ann@sub.example.com',
+        }
+        for address, inbox in cases.items():
+            self.assertEqual(key(address), inbox, address)
+
+    def test_only_the_count_sees_it(self):
+        # The email still goes to the address as typed, and the pending row (which
+        # becomes the register entry) stores it as typed: normalising is for counting.
+        app = load_signup()
+        ddb, ses = MagicMock(), MagicMock()
+        ddb.update_item.return_value = {'Attributes': {'sends': {'N': '1'}}}
+        with patch.object(app, 'SIGNUP_VERIFY', True), patch.object(app, 'ddb', ddb), patch.object(app, 'ses', ses):
+            app.handler(post({'email': 'B.ill+News@gmail.com'}), None)
+        self.assertEqual(ses.send_email.call_args.kwargs['Destination']['ToAddresses'], ['b.ill+news@gmail.com'])
+        self.assertEqual(ddb.put_item.call_args.kwargs['Item']['email']['S'], 'b.ill+news@gmail.com')
+
+
+class SendCeilingTests(unittest.TestCase):
+    """The day's ceiling: emails to ALL addresses, the residual OPERATIONS.md s3.9
+    held the flip behind. Counters are answered per row, so each test says what
+    the inbox's row and the day's row hold."""
+
+    def setUp(self):
+        self.app = load_signup()
+        self.ddb = MagicMock()
+        self.ses = MagicMock()
+        self.patches = [
+            patch.object(self.app, 'SIGNUP_VERIFY', True),
+            patch.object(self.app, 'ddb', self.ddb),
+            patch.object(self.app, 'ses', self.ses),
+        ]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
+
+    def _rows(self, inbox, day):
+        """inbox: the inbox row's count after this request's ADD; day: the day row's
+        count BEFORE this request (an ADD answers day + 1, a read answers day)."""
+        day_row = f'{self.app.SEND_COUNTER_PREFIX}{self.app.SEND_CEILING_ROW}#'
+
+        def update_item(**kw):
+            row = kw['Key']['token']['S']
+            n = day + 1 if row.startswith(day_row) else inbox
+            return {'Attributes': {'sends': {'N': str(n)}}}
+
+        def get_item(**kw):
+            self.assertTrue(kw['Key']['token']['S'].startswith(day_row), 'only the day row is ever read')
+            return {'Item': {'sends': {'N': str(day)}}} if day else {}
+
+        self.ddb.update_item.side_effect = update_item
+        self.ddb.get_item.side_effect = get_item
+
+    def _ask(self, email='a@example.com'):
+        self.ses.reset_mock()
+        self.ddb.put_item.reset_mock()
+        return self.app.handler(post({'email': email}), None)
+
+    def test_under_the_ceiling_the_email_goes(self):
+        self._rows(inbox=1, day=self.app.SEND_CEILING_PER_DAY - 1)
+        r = self._ask()
+        self.assertEqual(r['statusCode'], 201)
+        self.ses.send_email.assert_called_once()
+
+    def test_over_the_ceiling_nothing_is_sent_and_the_reply_says_why(self):
+        self._rows(inbox=1, day=self.app.SEND_CEILING_PER_DAY)
+        r = self._ask()
+        self.assertEqual(r['statusCode'], 503)
+        self.assertEqual(json.loads(r['body'])['error'], self.app.SEND_CEILING_MESSAGE)
+        self.ses.send_email.assert_not_called()
+        self.ddb.put_item.assert_not_called()
+
+    def test_a_full_day_answers_every_address_alike(self):
+        # A capped inbox must not get a 201 while a fresh one gets the 503: the pair
+        # would say which addresses had been asked for three times today.
+        self._rows(inbox=1, day=self.app.SEND_CEILING_PER_DAY)
+        fresh = self._ask('fresh@example.com')
+        self._rows(inbox=self.app.SEND_CAP_PER_DAY + 1, day=self.app.SEND_CEILING_PER_DAY)
+        capped = self._ask('capped@example.com')
+        self.assertEqual((fresh['statusCode'], fresh['body']), (capped['statusCode'], capped['body']))
+
+    def test_a_capped_inbox_does_not_use_up_the_day(self):
+        # Only a real send adds to the day's row: one script hammering one address
+        # must not lock every other signup out for the day.
+        self._rows(inbox=self.app.SEND_CAP_PER_DAY + 1, day=5)
+        r = self._ask()
+        self.assertEqual(r['statusCode'], 201)
+        self.ses.send_email.assert_not_called()
+        rows = [c.kwargs['Key']['token']['S'] for c in self.ddb.update_item.call_args_list]
+        self.assertFalse(any(f'#{self.app.SEND_CEILING_ROW}#' in row for row in rows), rows)
+
+    def test_the_day_row_cannot_collide_with_an_inbox_row_or_be_confirmed(self):
+        self.assertIsNone(re.fullmatch(r'[0-9a-f]{64}', self.app.SEND_CEILING_ROW))
+        key = f'{self.app.SEND_COUNTER_PREFIX}{self.app.SEND_CEILING_ROW}#2026-11-21'
+        self.assertIsNone(self.app.TOKEN_PATTERN.match(key))
+
+    def test_an_unreadable_day_row_fails_open(self):
+        err = ClientError({'Error': {'Code': 'ProvisionedThroughputExceededException', 'Message': ''}}, 'GetItem')
+        self._rows(inbox=self.app.SEND_CAP_PER_DAY + 1, day=0)
+        self.ddb.get_item.side_effect = err
+        self.assertEqual(self._ask()['statusCode'], 201, 'a capped inbox stays the silent 201')
+
+        def day_fails(**kw):
+            if f'#{self.app.SEND_CEILING_ROW}#' in kw['Key']['token']['S']:
+                raise err
+            return {'Attributes': {'sends': {'N': '1'}}}
+
+        self.ddb.update_item.side_effect = day_fails
+        r = self._ask()
         self.assertEqual(r['statusCode'], 201)
         self.ses.send_email.assert_called_once()
 
@@ -375,7 +522,11 @@ class EmailPostcodeTests(unittest.TestCase):
 class FlagOffTests(unittest.TestCase):
     def test_flag_off_runs_the_pre_i17_path_directly(self):
         app = load_signup()
-        self.assertFalse(app.SIGNUP_VERIFY, 'the template default is off; a fresh clone must not start sending')
+        self.assertFalse(
+            app.SIGNUP_VERIFY,
+            'the CODE default is off: the flag arrives from the template as an env var at deploy time, '
+            'and a bare import of the module must not start sending',
+        )
         with patch.object(app, 'SIGNUP_VERIFY', False), \
              patch.object(app, 'start_verification', side_effect=AssertionError('verification ran with the flag off')), \
              patch.object(app, 'complete_signup', return_value=app.response(201, {'ok': True})) as done:
@@ -394,7 +545,9 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
 # The exact sentences the branch that flips the flag writes into privacy.html
 # s2a. Held here, not re-typed on the page, so the page and the gate cannot
 # describe two different promises.
-CONSENT_BY_LINK = 'by clicking the confirmation link we email you'
+# 'pressing Confirm', not 'clicking the link': since 2026-09-28 a GET of the
+# link renders a button and only the POST consumes the token (audit I-5).
+CONSENT_BY_LINK = 'by pressing Confirm on the page our email links to'
 PENDING_DELETED = 'not confirmed within 24 hours is deleted'
 REGISTER_NOT_SENDING = 'NOT YET SENDING'
 
@@ -448,7 +601,7 @@ class VerifyPagesAndTemplateTests(unittest.TestCase):
         else:
             self.assertFalse(
                 claims,
-                'privacy.html says consent is given by clicking an emailed link while the '
+                'privacy.html says consent is given by pressing Confirm on an emailed link while the '
                 'template default is off - nobody is emailed a link',
             )
 

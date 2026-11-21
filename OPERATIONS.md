@@ -683,6 +683,25 @@ is what caused the 2026-09-03 outage.
 
 ### 3.9 - Turn on verification-first signup (`SignupVerify=on`) - **BUILT 2026-09-15, OFF until this runbook is done**
 
+> **STATUS 2026-11-21: steps 1 to 4 DONE; the flip is branch `signup-verify-on`, waiting on Bill's OK of the
+> privacy wording, then step 5.** Re-probed 21 Nov (`check_aws_permissions.py`, "I17 readiness"): sandbox exit DONE
+> (`ProductionAccessEnabled=True`, granted 10 Nov), identity `skyscore.co.uk` VERIFIED, DKIM SUCCESS; DMARC live 10 Nov.
+> **The 5 Oct residual (audit M-3) is BUILT on that branch**: `mailbox_key()` counts `name+tag@` as `name@` for every
+> domain and drops dots only for gmail.com / googlemail.com (one inbox there, two people anywhere else); a day ceiling,
+> `SEND_CEILING_PER_DAY` (200, env-settable), counts only emails really sent, so one script hammering a capped address
+> cannot use up the day. Over the ceiling the reply is a 503 that says so ("We have sent as many confirmation emails as
+> we can today. Please try again tomorrow."), logged `[SIGNUP_SEND_CEILING]` and as `[5XX]`, so the 5xx alarm sees an
+> attack. It is the SAME reply for every address: a capped inbox reads the day's row (never adds to it) and gets the
+> 503 too once the day is full, or a 201 beside a 503 would say which addresses had been asked for three times today.
+> `SendCapTests`, `MailboxKeyTests`, `SendCeilingTests` in `backend/tests/test_signup_verify.py`; master's code fails 9 of
+> them and each of 10 mutants (tags kept, Gmail dots kept, dots dropped everywhere, googlemail apart, the capped inbox
+> skipping the day read, the day counted first, off by one, failing closed, a silent 201, the raw address) reds at least
+> one. The branch replaces `i17-flip-verification-on` (310 commits behind; its 4 files re-applied, plus the
+> `changes.html` notice step 4 asks for, which it lacked, and the score-update paragraph's mention of the hashed count).
+> **On the deploy day**: move privacy.html's "Last updated" and the `/changes` notice's date to that day together
+> (`tests/test_demo_booking_link.py` holds them equal), then step 5 through a REVIEWED changeset (CLAUDE.md), never the
+> blind `sam deploy` written below. Close draft PR #15 with a pointer to the new branch.
+
 **What it closes:** audit I17. With the flag off, `POST /v1/signup` writes any
 address unverified: a stranger can subscribe your address as a consented
 subscriber, take the row that makes your own later API signup answer 409,
