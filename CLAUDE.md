@@ -384,7 +384,7 @@ Or just describe what you need, I have full context of this project.
 - **`frame-ancestors` never goes in a meta CSP** (removed 2026-11-06, `tests/test_meta_csp.py`): browsers ignore it there and log an error on every load. Framing is refused by CloudFront's `X-Frame-Options: DENY`, which the drift check holds.
 - **Analytics only through `js/count.mjs`**; never GoatCounter's own script (it sends the query string).
   Campaign tags are an allow-list (`CAMPAIGN_KEYS`). The top bar's clicks are counted there too (`nav-<slug>`, `-menu` from the
-  phone menu): reorder the bar from them, not from a guess (Bill, 2026-10-23: read them ~20 Nov). Email buttons
+  phone menu): reorder the bar from them, not from a guess (Bill, 2026-10-23; the first read, 4-20 Nov, was too few clicks to reorder from, so the bar is KEPT, his pick 2026-11-20: read again ~20 Dec). A check of the live site counts too: set `localStorage.skipgc = 't'` from `/llms.txt` (it counts nothing) before any counted page. Email buttons
   too (`email-<page>-<what>`): the what comes from an ALLOW-LIST of our subjects, never the link (the map's
   correction subject holds a postcode), and a link with its own `data-event` is skipped (counted once). The About
   page's film and prototype too (`about-film`, `about-prototype`), from `WATCHED_LINKS`, exact destinations only.

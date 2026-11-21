@@ -1385,3 +1385,16 @@ click sets). (2) New York's tiles name no source, so its sources row held only t
 points to its own area page, whose list is the API's per borough. (3) The price change after inflation, the figure the
 growth score reads, was said only in the old breakdown; `priceFinding({ real })` says it in the price tile, borough and
 postcode, only where it differs from the plain change. Deleting a section deletes what it ALONE said: list those first.
+
+## The top bar's first count read: kept (2026-11-20, Bill's pick)
+
+The read Bill asked for on 23 Oct (above) ran from 4 Nov, when the v3 front page went live, to 20 Nov. Bar clicks over
+those 16 days: Full map 15, About 6 (from the LAST slot), Reports 4, Pricing 4, How it works 2, API 0; every
+`book-demo-*` 0. The front page had 101 views, 53 of them engaged. Two or fewer clicks for half the items is too few to
+rank slots from: one visitor moves an item a place. Bill's pick ("go with recommended") KEPT the bar as it is; read the
+same counts again ~20 Dec (`nav-*`, `book-demo-*`, `approach-*`, `about-film`, `about-prototype`, `api-demo-*`).
+
+A session's own visits count. The screenshots of the live map taken after the deploy (from 13:35 UTC that day) logged
+about 6 map views and 9 tile opens. The read had closed at 11:00, so it was untouched, but a live check DURING a read
+would have moved it. `js/count.mjs` skips a browser whose `localStorage.skipgc` is `'t'` (`skipped()`, GoatCounter's own
+convention), so open `/llms.txt` first (it loads no counter), set it there, then visit the counted pages.
