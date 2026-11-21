@@ -31,6 +31,8 @@ node_modules/
 /reports/
 playwright-report/
 test-results/
+# The Playwright MCP's console logs from screenshot sessions: local only.
+/.playwright-mcp/
 
 # Legacy prototype files — root-anchored so the archived copies in
 # archive/prototype-2026-03/ stay tracked (unanchored patterns match at
