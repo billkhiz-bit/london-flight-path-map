@@ -698,6 +698,10 @@ is what caused the 2026-09-03 outage.
 > skipping the day read, the day counted first, off by one, failing closed, a silent 201, the raw address) reds at least
 > one. The branch replaces `i17-flip-verification-on` (310 commits behind; its 4 files re-applied, plus the
 > `changes.html` notice step 4 asks for, which it lacked, and the score-update paragraph's mention of the hashed count).
+> **The deletion wording is Bill's pick A (21 Nov)**: a pending request "stops working after 24 hours and is deleted
+> automatically within a few days" (at once on Confirm), never "deleted after 24 hours" or "at most 24 hours". The link's
+> 24 h is enforced in code; the row goes by TTL, which AWS says is "typically within a few days" of expiry, sometimes past
+> 48 h. `test_no_page_promises_deletion_at_24_hours` refuses the old phrases on privacy, /changes and SUBPROCESSORS.
 > **On the deploy day**: move privacy.html's "Last updated" and the `/changes` notice's date to that day together
 > (`tests/test_demo_booking_link.py` holds them equal), then step 5 through a REVIEWED changeset (CLAUDE.md), never the
 > blind `sam deploy` written below. Close draft PR #15 with a pointer to the new branch.

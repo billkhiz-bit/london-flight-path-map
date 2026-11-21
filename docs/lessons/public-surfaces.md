@@ -249,6 +249,14 @@ it, because a silent 201 for a capped address beside a 503 for a fresh one
 would tell a prober which addresses had been asked for three times today.
 The per-address cap itself stays a silent 201: that one is per address, so
 saying it would be the oracle I17 closed.
+The same day the privacy wording changed from "deleted after 24 hours" to
+"stops working after 24 hours and is deleted automatically within a few days"
+(Bill's pick A): the code refuses a token past `expiresAt`, but the row is
+removed by DynamoDB's TTL, which AWS describes as "typically within a few
+days" of expiry. A policy's "deleted" is a promise about the storage, not the
+code. The old gate also only checked the deletion claim IF its exact phrase
+was on the page, so rewording the page would have left it skipping, green;
+it now requires the phrase whenever the flag is on.
 
 ## Per-field provenance (2026-10-23)
 

@@ -548,7 +548,12 @@ ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
 # 'pressing Confirm', not 'clicking the link': since 2026-09-28 a GET of the
 # link renders a button and only the POST consumes the token (audit I-5).
 CONSENT_BY_LINK = 'by pressing Confirm on the page our email links to'
-PENDING_DELETED = 'not confirmed within 24 hours is deleted'
+# The deletion clause says what the TTL really does (Bill's pick A, 2026-11-21):
+# the token stops working at 24 h in code, but AWS removes an expired row
+# "typically within a few days", sometimes past 48 h. "Deleted after 24 hours"
+# read as deleted AT 24 hours, so these promises may not come back.
+PENDING_DELETED = 'deleted automatically within a few days'
+RETIRED_PROMISES = ('at most 24 hours', 'deleted after 24 hours', 'within 24 hours is deleted', '24-hour clock')
 REGISTER_NOT_SENDING = 'NOT YET SENDING'
 
 
@@ -609,10 +614,29 @@ class VerifyPagesAndTemplateTests(unittest.TestCase):
         if PENDING_DELETED in self.privacy:
             self.assertTrue(
                 self.pending_ttl,
-                'privacy.html says an unconfirmed request is deleted after 24 hours, '
+                'privacy.html says an unconfirmed request is deleted automatically, '
                 'but SignupPendingTable has no TimeToLiveSpecification - expiry is '
                 'enforced in code and the row is never removed (s3.9 step 3)',
             )
+
+    def test_privacy_says_when_a_pending_request_goes_iff_the_flag_is_on(self):
+        # Without this, rewording the clause would leave the test above
+        # skipping on a phrase that is no longer there, green and blind.
+        says = PENDING_DELETED in self.privacy
+        if self.flag == 'on':
+            self.assertTrue(says, f'SignupVerify is on but privacy.html never says "{PENDING_DELETED}"')
+        else:
+            self.assertFalse(says, 'privacy.html describes pending requests while the template default is off')
+
+    def test_no_page_promises_deletion_at_24_hours(self):
+        notices = read('changes.html')
+        for page, text in (('privacy.html', self.privacy), ('changes.html', notices), ('SUBPROCESSORS.md', self.register)):
+            for promise in RETIRED_PROMISES:
+                self.assertNotIn(
+                    promise, text,
+                    f'{page} says "{promise}", but the TTL deletes a row within a few days of '
+                    'its expiry, not at it (AWS: "typically within a few days")',
+                )
 
     def test_a_ttl_in_the_template_has_the_verbs_that_deploy_it(self):
         if self.pending_ttl:
