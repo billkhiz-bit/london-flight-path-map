@@ -857,8 +857,13 @@ first meeting them inside the flip.
    `sh scripts/check_deploy_drift.sh`. Verify with a real signup to an
    address you own: 201 `pending`, the email arrives with DKIM pass (check
    the headers), the link shows the key once, a second click is a 410.
-6. Optional, later: `CONFIRM_URL_BASE` env on the Lambda if the link should
-   go through the site's own distribution rather than the execute-api host.
+6. DONE 2026-11-22, and NOT optional: the links go through the site's own domain. The first news confirmation
+   (to Hotmail) linked to the raw execute-api host; SES says delivered, and it reached neither the inbox nor
+   Junk. CloudFront's `/v1/signup/*` behaviour (published 2026-11-22: the `/badge` APIGW origin, CachingDisabled,
+   AllViewerExceptHostHeader, the site's response headers, no viewer function) serves the confirm and unsubscribe
+   pages at `https://skyscore.co.uk/v1/signup/...`; the template's `ConfirmUrlBase` (default the site) sets
+   `CONFIRM_URL_BASE`. Pass `ConfirmUrlBase=https://skyscore.co.uk` with the other two flags; rollback is
+   `ConfirmUrlBase=` (empty: the request's own host). `backend/tests/test_confirm_link_host.py` holds it.
 
 **Rollback** is `SignupVerify=off` on the next deploy AND `git revert` of the
 merge, in the same window: the override alone leaves a live privacy page

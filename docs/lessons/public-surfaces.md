@@ -401,3 +401,15 @@ search clears the old line. Also: the button ships `disabled` until the module b
 posted the address to the site). Kept on purpose: ANY unsubscribe link from an email we sent stops all mail to its
 address, even one older than a re-join, because the press is the person's latest word. Not changed: the postcode box
 appearing with a search's answer moves the strip no more than the answer itself already does.
+
+**THE FIRST REAL SIGN-UP NEVER ARRIVED (2026-11-22, the night it went live).** Bill signed up with a Hotmail address.
+The Lambda logged nothing wrong (379 ms), the pending row was written (a failed send deletes it), and SES's CloudWatch
+said Send 1, Delivery 1, Bounce 0, Complaint 0: Microsoft ACCEPTED it. It was in neither the inbox nor Junk. The email
+came from `noreply@skyscore.co.uk` with a token link to `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/...`:
+an AWS address in a token link from another domain is the shape phishing takes, and Microsoft quarantines that
+silently after accepting it, so "Delivery" in SES proves nothing past the receiving server. The fix: a CloudFront
+behaviour `/v1/signup/*` on the site's distribution (Bill published it from the session), and `ConfirmUrlBase` in the
+template, so every link says skyscore.co.uk (`backend/tests/test_confirm_link_host.py`, four mutants red). Two lessons:
+a deliverability check needs a Microsoft inbox and a Gmail one, since SES's own figures stop at the receiving server;
+and the address that tested it must be found before searching (the Gmail searches found nothing because the test
+address was Hotmail). Left open: SPF alignment (a custom MAIL FROM, two Cloudflare DNS records, Bill's).
