@@ -758,7 +758,13 @@ for the count. The detail below is kept as the reasoning.
   goes into the email body (it is truncated and uppercased, not validated, so
   a domain-like string can be auto-linked by a mail client).
 
-**STATUS 2026-09-28: step 1 DONE except SPF/DMARC; step 3 DONE; step 2 NOT YET.**
+**STATUS 2026-09-28: step 1 DONE except SPF/DMARC; step 3 DONE; step 2 NOT YET.
+**UPDATE 2026-11-10: DMARC LIVE** (`v=DMARC1; p=none; rua=` Cloudflare's report address; seen on Cloudflare's and
+Google's resolvers). Keep `p=none` while Bill's own mail leaves as skyscore.co.uk through Gmail's "Send mail as"
+(signed gmail.com, so not aligned). **Step 2 DONE 2026-11-10:** Bill submitted the request in the console (the form now has no use-case box: mail type
+Transactional, website, language, terms); GRANTED within minutes, case 179433521300094, 50,000 a day at 14 a second.
+Nothing sends while `SignupVerify` is off. BEFORE the flip (step 5) the 3.9 residual matters more now that SES can
+send 50,000 a day: a global daily send ceiling and sub-address normalisation for the per-address cap.**
 Identity `skyscore.co.uk` created in eu-west-2, Easy DKIM RSA-2048; the three
 DKIM CNAMEs were published in Cloudflare (DNS only) and the identity reads
 **verified, DKIM SUCCESS** the same hour. The DMARC record is Bill's: the
@@ -842,9 +848,12 @@ first meeting them inside the flip.
      counts a pending 201 as `notify-pending`, not `notify-subscribed`.
 5. **Flip:** merge the branch (`gh pr merge i17-flip-verification-on
    --rebase`; master requires linear history), then
-   `sam deploy --parameter-overrides EpcBearerToken=...` - the default is
-   `on` now, so no `SignupVerify` override is needed and SAM keeps the other
-   parameters - then `make web-deploy` for `privacy.html`, then
+   `sam deploy --parameter-overrides EpcBearerToken=... SignupVerify=on`.
+   PASS IT EVEN THOUGH THE DEFAULT IS `on`: SAM keeps a live stack's
+   parameter values (`UsePreviousValue` for every parameter not overridden),
+   so a changed default never reaches an existing stack; the live value was
+   `off` and this line once said no override was needed (corrected
+   2026-11-22; the 21 Nov flip passed it). Then `make web-deploy` for `privacy.html`, then
    `sh scripts/check_deploy_drift.sh`. Verify with a real signup to an
    address you own: 201 `pending`, the email arrives with DKIM pass (check
    the headers), the link shows the key once, a second click is a 410.
@@ -854,6 +863,53 @@ first meeting them inside the flip.
 **Rollback** is `SignupVerify=off` on the next deploy AND `git revert` of the
 merge, in the same window: the override alone leaves a live privacy page
 describing consent by a link nobody is sent.
+
+### 3.10 - News by email (`UpdatesList=on`) - **BUILT 2026-11-22 on branch `news-by-email`; going live the same night**
+
+**What it is (Bill, 2026-11-22; mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6, colour A):** a strip straight after
+the front page's hero: "News by email. New cities and new data. At most one email a month.", an email box and a dark
+"Sign me up". After a real search (never the example) it offers ONE unticked box, "Also tell me when the figures for
+<postcode> change", whose news goes in the same monthly email. It grew out of the area updates card built 2026-11-10
+(branch `area-updates-list`, Bill's pick A then; its backend kept, its card and the full map's card dropped). It joins
+through `POST /v1/signup` with `source: 'updates'` and `postcode` '' or the ticked postcode (the Lambda refuses the
+source unless `UPDATES_LIST` AND `SIGNUP_VERIFY` are on), lives in its own table `london-flight-map-mail` (`updates#`,
+`unsub#`, `suppress#` items; the signups table's one-row-per-email rules are not touched), stores the words agreed to
+(`consent_wording()`: `NEWS_CONSENT_VERSION`, `NEWS_PROMISE`, plus `AREA_PROMISE` with the postcode when ticked), and
+every email's unsubscribe link is `GET/POST /v1/signup/unsubscribe?token=` (the GET shows a button; the POST, or a mail
+client's RFC 8058 one-click, removes the member and adds the address to the do-not-email list). The do-not-email list
+is read before EVERY send, the confirmation email included: a listed address gets the same 201 and no email (privacy
+s2a promises we never write to it again), and an unreadable list answers 503 rather than risk it. ANY unsubscribe
+link from an email we sent stops all mail to its address, even one older than a re-join (on purpose: the press wins).
+`backend/tests/test_signup_updates.py`, `tests/news-signup.mjs`, `tests/test_news_flags.py`.
+
+**Gates, all met 2026-11-22:** section 3.9 LIVE (DMARC, SES production access, `SignupVerify=on`, the daily ceiling and
+sub-address normalisation, 21 Nov); the ICO fee PAID (ZC299394); Bill's approval of privacy.html s2a's "News by email"
+paragraph (given 22 Nov in the session, from his P11 answers: at most monthly, confirm first).
+
+1. ONE change, held together by `tests/test_news_flags.py`: the strip in `home/index.html` (not `hidden`), the template's
+   `UpdatesList` default `on`, privacy.html s2a's "News by email" paragraph (`id="news"`) with a dated `/changes` line,
+   and SUBPROCESSORS.md's SES row (sending).
+2. Preflight, then the SAM changeset, PASSING THE FLAGS: `--parameter-overrides EpcBearerToken=... SignupVerify=on
+   UpdatesList=on`. SAM keeps a live stack's parameter values (`UsePreviousValue`), so a template default never reaches
+   an existing stack. Read the changeset: the new `MailTable`, the two unsubscribe routes with their 2/5 throttles, the
+   sign-up function's environment and policy, and the API's usual `Body` change; nothing else.
+3. ORDER MATTERS: the backend goes FIRST. The Lambda live before this change reads an unknown source as `'api'` and
+   would start an API-key sign-up for anyone pressing "Sign me up". Then `web-deploy` (js, privacy, changes) and
+   `home-deploy` (the strip), then the drift check.
+4. Verify from the origin: `GET /v1/signup/unsubscribe?token=<43 made-up characters>` answers the button page;
+   `POST /v1/signup` with `source: 'updates'` and a bad postcode answers 400; the live front page draws the strip; the
+   live Lambda shows `UPDATES_LIST=on`. Then end to end with an address Bill owns: the strip, the confirmation email
+   ("Confirm your Sky Score news"), the `updates#` item, and later the unsubscribe link from a test email.
+
+**Rollback:** deploy with `UpdatesList=off` (the POST answers 403 "News by email is not open yet."; a link pressed after
+says the list is closed and saves nothing) AND put `hidden` on the strip with the privacy paragraph's removal, as one
+change (`tests/test_news_flags.py` refuses half of it). Members already confirmed stay in the table until removed.
+
+**NOT BUILT, needed before the FIRST email is sent:** the sender. It reads `updates#` members, skips any address with
+a `suppress#` item, sends from SES with `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`
+headers pointing at the member's own `unsub#` token, says who it is from (Cubitt33 Ltd, Sky Score) and why they are
+getting it, includes a member's postcode section only if they ticked it, never more than once a month, and never sends by
+itself (Bill runs it). Collecting sign-ups does not need it; sending does.
 
 ## 4. Disaster Recovery
 

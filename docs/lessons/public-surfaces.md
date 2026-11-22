@@ -309,3 +309,95 @@ postcodes" with no bar, since "under 10" beneath "Under 1" reads as a second fig
 Bill then asked for more visuals. The panel's lesson set the test: a chart needs a real comparison. So each stat was asked what it can honestly be set against. Road noise and flood hold a share of postcodes (one
 bar, part of a whole); air, crime and price hold a yardstick (two bars from zero); schools, transport and healthcare hold only a rating, so a strip of the rating's own words shows "good" out of what. Aircraft noise and
 the price trend hold nothing to be drawn against and stay words. Mock-ups A (bars) and B (bars and strips) on real Hounslow figures; he chose B.
+
+## The area updates list (2026-11-10, built OFF)
+
+Bill asked to "allow emails on the website" for Heathrow's consultation. The site already collected one kind (the full
+map's score-change alert, privacy s2a); a second purpose needs its own consent, so it is its own card (his pick A of two
+mock-ups, claude.ai/artifact/LfzxhdZ62gm8u5uifTcAnw: B, an extra box on the existing form, put two purposes on one form).
+His answers to privacy draft P11: at most monthly, a confirmation email first (the list stays closed until it can be
+sent), 12 months for addresses given to ask for figures.
+
+Why its own table: the signups table holds one row per address under rules that refuse a second purpose (an address on
+the score-change list is told to contact support for an API key); a list member there would trip them both ways. So
+`london-flight-map-mail` holds `updates#<email>` (the member, the consent wording version and when), `unsub#<token>`
+(the link carries a token, never the address) and `suppress#<email>` (the do-not-email list; cleared only by a new
+confirmed sign-up). The token is written BEFORE the member that names it. The unsubscribe GET changes nothing (mail
+scanners prefetch links, audit I-5 of 25 Sep); the POST, or a mail client's RFC 8058 one-click, does the work.
+
+Proven red: removing the closed-list guard, and dropping the do-not-email write, each failed two tests. On Windows the
+Edit tool rewrote `scripts/preflight.sh` to CRLF from end to end (1,199 lines; git's normalisation hides it in the diff,
+`sh` would not): check `python -c` for `\r\n` after editing a shell script, and put it back to LF.
+Opening it: OPERATIONS.md s3.10. The sender (monthly, List-Unsubscribe headers, skipping suppress#) is not built.
+
+**A feature shipped OFF is a feature no gate draws.** With `OPEN = false` the card never renders, so every browser suite
+passed while, in the full map's sidebar, it was 16 px JetBrains Mono with a browser-blue (`rgb(0, 0, 238)`) link: the
+module writes plain `<p>`s and the map styles its notes by class (`.info-note`). Only a local preview (a scratchpad
+overlay serving the file with `OPEN = true`) showed it, on Bill's ask to see the sign-up. The fix copies `.info-note`
+under `#panel-updates`; `tests/area-updates-render.mjs` now serves the module open and closed through `page.route`
+(whatever the file says, so it holds after the list opens), compares the card's computed styles with the notify
+block's own (never a typed value), and answers `/v1/signup` in the page: the LIVE sign-up Lambda reads an unknown
+`source` as `'api'`, so a real press against it before s3.10 step 2 would start an API-key sign-up. Proven red twice:
+the CSS removed (6 checks), and the example allowed to carry the card (2 checks). TW9 3PZ is used because it is both
+the front page's example and the one postcode `tests/stub-live-api.mjs` answers offline.
+
+**The code review before the first commit (10 Nov) found two real defects, both in what happens part-way through.**
+(1) Unsubscribe deleted the token FIRST: a failure after it left the person subscribed, and the retry, finding no token,
+said "nothing to stop" (a PECR problem). Now: read the token, write `suppress#`, delete the member, delete the token
+LAST, every step safe to repeat. (2) A re-join whose tidy-up failed (retiring the old token) answered 503 to someone
+already on the list and sent them to the API-key page; now anything after the member is written is best effort and
+logged (`[UPDATES_JOIN_TIDY_FAILED]`), and each kind of sign-up has its own way back (`_AGAIN`). Also fixed: the closed
+list answers 403 (a 503 counted in the API's 5xx figures); a link pressed after the list closes saves nothing; the card's
+postcode test equals the Lambda's `UK_POSTCODE` (held by `tests/area-updates.mjs`, which reads app.py); and the render
+test proves the SEARCH was drawn, because TW9 3PZ is also the example. The FakeDdb in `test_signup_updates.py` takes
+`fail = {(op, key prefix)}` to fail one write once: partial failures are now tested, each proven red on the old order.
+
+## News by email (2026-11-22, live the same night)
+
+Bill asked for "an email sign up for newsletters etc that is on the main page". The area updates list above was built
+for one postcode under an answer; it became news by email instead: one strip after the hero, the button is the consent,
+and after a real search ONE unticked box adds that postcode to the same monthly email (one form on the page, not two).
+The backend of 10 Nov was kept (its own table, confirm first, unsubscribe and the do-not-email list); its card, the full
+map's card and their tests were dropped. The member now stores the WORDS agreed to (`consent_wording()`), with the
+postcode's line only when ticked, and a re-join replaces the member (no box this time drops the postcode).
+
+**How the design was reached (mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu, six versions).** Bill picked "in the
+hero" over a card at the page's end and a footer row, and asked for "an obvious form". Stitch (project
+3308334553394711878) proposed the full-width strip; its draft was "a bit over the place" (four pieces strung across 1,255
+px), so the strip was tidied onto the hero's two columns. Then colour: the pale card measured 1.06:1 against the page
+(invisible), black was "too strong" (measured: 10.9% of the first screen against 3.3% for everything dark already there),
+and the map's blue-grey shows by hue, not weight. Stitch quietly drew the map 160 px shorter and the example card shorter,
+so every "fits the first screen" it reported had to be re-measured on the live page.
+
+**A sticky column travels its whole parent.** The strip was first a second row of the hero grid. On arrival every check
+passed; after a search, the long answer let the sticky map column (`.mapcol`, `position: sticky` inside `.hero`) slide
+down over the strip, hiding the email box. Found on a screenshot taken after a search, never by an arrival-only check.
+The strip now sits AFTER the hero, on its own grid repeating the hero's margin, tracks and gap, so its halves still line
+up; `tests/news-signup.mjs` scrolls the strip to the top, middle and bottom of the screen after a long answer and
+measures the map above it (red on the hero-row version: the map's bottom 170 px past the strip's top).
+
+**A class name is a namespace.** The strip was first `class="news"`; the consultation pill above already used `.news`
+(`display: inline-flex`, paper background, and `.news b` an orange badge), so the strip rendered pale and un-gridded and
+the postcode in its box would have been an orange pill. Grep a class before using it: it is now `news-strip`.
+
+**Git Bash's `sed -i` rewrote three CRLF files to LF end to end** (home/index.html, privacy.html, SUBPROCESSORS.md):
+git hides it in the diff (the index is LF), but the working tree here is CRLF. Count `\r\n` against bare `\n` with
+Python after any shell edit, and normalise.
+
+Proven red (nine mutants, each caught by its own test): the example offered the box; an unticked box sent its postcode;
+a tick carried to the next search; the strip's button orange; its link orange-brown; news-only refused; an unticked
+member stored a postcode field; the consent forgot the ticked postcode; the strip open without its privacy paragraph.
+
+**The code review before the first commit (22 Nov) found four real defects; each is now a test, proven red.**
+(1) Nothing READ the do-not-email list, though privacy s2a promises "so we never write to it again": a stranger typing
+an unsubscribed address re-sent it a confirmation. The POST now reads it first, answers the same 201 and sends nothing,
+and fails closed (503) if the list cannot be read. (2) The confirm path had grown to six DynamoDB calls against a
+five-hop budget: the member's PutItem now returns the old member (`ReturnValues='ALL_OLD'`), and the POST's worst case
+(list, two counters, pending write, send, cleanup) is six hops at a 4 s budget (`_SEQUENTIAL_HOPS = 6`, read_timeout 2).
+(3) Counting a sign-up went through `engaged()`, which marks the visitor as having acted, and the example answer stands
+down for that: a sign-up before the example landed left the hero empty. `engaged(way, { acts: false })`. (4) A second
+press sent a second confirmation: the button stays off after a 201 until the address or the box changes, and a new
+search clears the old line. Also: the button ships `disabled` until the module binds it (without the module the form
+posted the address to the site). Kept on purpose: ANY unsubscribe link from an email we sent stops all mail to its
+address, even one older than a re-join, because the press is the person's latest word. Not changed: the postcode box
+appearing with a search's answer moves the strip no more than the answer itself already does.

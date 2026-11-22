@@ -127,6 +127,16 @@ Resources:
           ResourcePath: /v1/signup/confirm
           ThrottlingRateLimit: 2
           ThrottlingBurstLimit: 5
+        # News by email's unsubscribe link and its button (2026-11-10; news since 2026-11-22). Same sizing as the
+        # confirm pair: a person clicks one link from an email, and a 256-bit token makes guessing hopeless.
+        - HttpMethod: GET
+          ResourcePath: /v1/signup/unsubscribe
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
+        - HttpMethod: POST
+          ResourcePath: /v1/signup/unsubscribe
+          ThrottlingRateLimit: 2
+          ThrottlingBurstLimit: 5
         # Per-method override on /epc. This route is intentionally
         # unauthenticated — the consumer site calls it from the browser with
         # no API key, so ApiKeyRequired here would go straight to a dark EPC
@@ -907,6 +917,11 @@ Resources:
           SIGNUP_VERIFY: !Ref SignupVerify
           PENDING_TABLE: !Ref SignupPendingTable
           SES_FROM: !Ref SignupSenderAddress
+          # News by email (Bill, 2026-11-22; the area updates list of 2026-11-10 grown into it). ON since his approval
+          # of privacy.html s2a's "News by email" paragraph, which ships in the SAME deploy; it also needs SignupVerify
+          # on (the Lambda refuses the list without it). SAM keeps a stack's live value: pass UpdatesList=on explicitly.
+          UPDATES_LIST: !Ref UpdatesList
+          MAIL_TABLE: !Ref MailTable
       Policies:
         - DynamoDBWritePolicy:
             TableName: !Ref SignupsTable
@@ -917,6 +932,12 @@ Resources:
         # DeleteItem with ReturnValues needs the read side too.
         - DynamoDBCrudPolicy:
             TableName: !Ref SignupPendingTable
+        # News by email, its unsubscribe tokens and the do-not-email list (2026-11-10). Crud, because it READS
+        # (GetItem: the do-not-email list before every send, the token on unsubscribe), WRITES (PutItem, the member's
+        # with ReturnValues ALL_OLD) and DELETES (DeleteItem: the old token, the member, the list entry). A write-only
+        # policy breaks every sign-up and unsubscribe (code review 2026-11-22 corrected this comment's reason).
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MailTable
         # I17: one plain-text email per signup, from the verified domain
         # identity. SendEmail only; no templates, no lists, no suppression
         # management - the Lambda cannot enumerate or delete anything in SES.
@@ -1076,6 +1097,21 @@ Resources:
             RestApiId: !Ref FlightMapApi
             Path: /v1/signup/confirm
             Method: post
+        # News by email's unsubscribe link (2026-11-10): the GET shows a button and changes nothing (mail
+        # scanners prefetch links); the POST is that button, and a mail client's RFC 8058 one-click POST. No key: a
+        # person clicks it from an email. Throttled in MethodSettings above.
+        SignupUnsubscribeGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup/unsubscribe
+            Method: get
+        SignupUnsubscribePost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref FlightMapApi
+            Path: /v1/signup/unsubscribe
+            Method: post
 
   # NOTE on signup log retention: the log group /aws/lambda/<SignupFunction>
   # was auto-created by Lambda in May 2026, so CloudFormation cannot own it
@@ -1112,6 +1148,27 @@ Resources:
       # the email that requested it. Cost: ~$0.20/GB-month for backup
       # storage; the table is tiny, so the bill is rounding-error money
       # and the DR posture is meaningfully better. See OPERATIONS.md.
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+
+  # --- DynamoDB Table, news by email (2026-11-10; news since 2026-11-22) ---
+  # One table, keyed by `pk`, for three kinds of item (signup/app.py MAIL_TABLE): updates#<email> (a member, who
+  # confirmed by email), unsub#<token> (the unsubscribe link's token -> email) and suppress#<email> (the do-not-email
+  # list). Kept apart from SignupsTable so its one-row-per-email rules are untouched. Retained and PITR-backed like
+  # SignupsTable: it holds consent records and the list that stops us emailing people who said stop.
+  MailTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: london-flight-map-mail
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
 
@@ -1280,6 +1337,11 @@ Parameters:
     Default: 'on'
     AllowedValues: ['on', 'off']
     Description: 'on = every /v1/signup POST writes a pending row and emails a confirm link; nothing reaches the register until it is clicked.'
+  UpdatesList:
+    Type: String
+    Default: 'on'
+    AllowedValues: ['on', 'off']
+    Description: 'on = /v1/signup accepts source "updates" (news by email), only while SignupVerify is also on. Ships with privacy.html s2a "News by email" in the same deploy.'
   SignupSenderAddress:
     Type: String
     Default: 'Sky Score <noreply@skyscore.co.uk>'

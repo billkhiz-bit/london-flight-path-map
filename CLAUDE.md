@@ -400,6 +400,19 @@ Or just describe what you need, I have full context of this project.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
   worker installing everywhere; `/data/` and `/reports/` (the report picture keeps one name, M-26) are network-first; `/badge` passes through; every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
+- **News by email has ONE holder, `js/news-signup.mjs`** (Bill, 2026-11-22; mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6,
+  colour A; it replaced the area updates card of 2026-11-10): the front page's strip straight AFTER the hero, never inside it (the
+  sticky map column slid over it there), on its own grid repeating the hero's tracks so its words sit on the search column and its
+  form on the map's edge; the map's blue-grey, a dark button (the search keeps the ONLY orange), a dark link (orange-brown fails on
+  blue-grey). It opens and closes as ONE change with the template's `UpdatesList` default and privacy s2a's "News by email"
+  paragraph (`tests/test_news_flags.py`, which also holds the strip's words equal to the Lambda's stored `NEWS_PROMISE` /
+  `AREA_PROMISE`). Its list lives in its own table (`london-flight-map-mail`), never the signups table; the address only in a POST
+  body; a postcode only when its UNTICKED box (after a real search, never the example) is ticked; at most one email a month, only
+  after the emailed link is confirmed. `tests/news-signup.mjs` answers `/v1/signup` in the page. Its class is `news-strip`:
+  `.news` is the consultation pill's, and its rules (an orange `b`) landed on the strip when it shared the name. The
+  do-not-email list is read before EVERY send, the confirmation included (privacy: "never write to it again"); the button
+  ships `disabled` until the module binds it; its count passes `engaged(way, { acts: false })`, or a sign-up before the
+  example lands leaves the answer empty (code review 2026-11-22).
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,

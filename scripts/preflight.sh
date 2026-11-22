@@ -786,6 +786,8 @@ check "outside coverage is said, not analysed" node tests/outside-coverage.mjs
 # (/ the front page, /map/ the map) and names any file nothing deploys.
 # postcodes.io and /v1/environment are stubbed with real shapes; no network.
 check "front page is a tool, not a picture" node tests/front-page.mjs
+# News by email (Bill, 2026-11-22): the strip after the hero, measured on the drawn page; /v1/signup answered in the page.
+check "news by email strip"             node tests/news-signup.mjs
 # The front page's two pure modules, held without a browser (2026-11-02). tests/planes-model.mjs had held the planes
 # answer's rules since 2026-10-26 (rows by the way each airport flies, ranges on a cone's edge, never a 0 for "not
 # measured", and since 2026-11-02 its links only to pages the index lists) but NO gate ran it: found when its links

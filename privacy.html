@@ -233,7 +233,7 @@
           </nav>
         </div>
         <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 2026-11-21 · Effective: 2026-05-09</p>
+        <p class="updated">Last updated: 2026-11-22 · Effective: 2026-05-09</p>
       </header>
 
       <main>
@@ -270,8 +270,8 @@
       <p>
         <strong>Browsing and scoring: none.</strong> Using the Sky Score website or apps does not require an account, email address,
         name, phone number, or any other identifying information. <strong>Saving a place is the one exception</strong> and is covered in &sect;2e. There are no payment forms or surveys. Searching a postcode does
-        not collect anything; the optional score-update list described below is the only place the consumer site asks for an
-        address, and it is never a condition of seeing a score.
+        not collect anything; the optional score-update list and news by email, both described below, are the only places the
+        consumer site asks for an address, and neither is ever a condition of seeing a score.
       </p>
       <p>
         <strong>Score-update list (optional, added 21 August 2026):</strong> after you search a postcode you may leave an email
@@ -291,6 +291,25 @@
         <strong>These notes are sent by hand.</strong> We say so because the alternative is implying an automated alerting service
         we have not built: there is no scheduled mail system behind this list today, so a note may follow a data refresh by some
         days rather than arriving the moment a score moves.
+      </p>
+      <!-- Added 2026-11-22 with the front page's news strip (js/news-signup.mjs), wording approved by Bill that day. It
+           opens and closes with the strip and the template's UpdatesList as ONE change (tests/test_news_flags.py). -->
+      <p id="news">
+        <strong>News by email (optional, added 22 November 2026):</strong> you can ask for occasional emails from us about Sky
+        Score: new places we cover, new data, and what the figures show. If you tick the box for it, the same emails also tell
+        you when the figures for a postcode you chose change. You join with the form on our front page; we never add anyone
+        who has not asked.
+        We collect your email address, the postcode if you ticked the box, and when you joined and the words you agreed to,
+        and nothing else. We send at most one email a month. Before the first, we email you once to confirm the address is
+        yours; until you confirm, we send nothing else, and an unconfirmed request stops working after 24 hours and is deleted
+        automatically within a few days. While it waits, the request is held with a random token in a separate pending
+        table, and the confirmation emails sent to the address that day are counted against a one-way hash of it, as for the
+        lists above.
+        Lawful basis: consent (UK GDPR Article 6(1)(a)), which you can withdraw at any time with the unsubscribe link in every
+        email or by emailing <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a>. Never sold or shared.
+        Stored in our AWS account in <code>eu-west-2</code> (London) and sent with Amazon Simple Email Service in
+        <code>eu-west-2</code>. Kept until you unsubscribe; we then delete it, keeping only the address on a do-not-email
+        list so we never write to it again.
       </p>
       <p>
         <strong>API key signup (optional):</strong> if you request a free API key on the

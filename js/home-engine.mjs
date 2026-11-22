@@ -19,6 +19,7 @@ import { districtOf, planesLinks, planesModel, planesNearest, planesNodes, plane
 import { EXAMPLE, bindPlaceBox, noPointSaid, postcodeCompletions } from '/js/place-box.mjs';
 import { airFigure, airPanel, answerLead, exampleFigures, layerSteps } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
+import { offerPostcode, wireNews } from '/js/news-signup.mjs';
 import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
@@ -71,8 +72,10 @@ const engagedWays = new Set();
 // Whether the visitor has done anything yet, counted or not (an ad blocker stops the count, never this):
 // the example answer gives way to it (search()).
 let acted = false;
-export function engaged(way) {
-  acted = true;
+// `acts: false` counts a way in without standing the example down: news by email is below the hero and has nothing to
+// do with the answer, so a sign-up before the example lands must not leave the answer empty (code review 2026-11-22).
+export function engaged(way, { acts = true } = {}) {
+  if (acts) acted = true;
   if (engagedWays.has(way)) return;
   try {
     const gc = window.goatcounter;
@@ -184,7 +187,8 @@ const isUs = (key) => Object.hasOwn(US, key);
 // London's picture is the one file not described by aircraft-noise-rasters.json.
 const LONDON_PNG = { png: `/${LONDON_RASTER.png}`, bbox: LONDON_RASTER.bbox };
 // js/api-base.js is the one holder of the API host; the literal is for a mockup opened without it.
-const ENV = `${window.API_BASE || 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod'}/v1/environment`;
+const API_ROOT = window.API_BASE || 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod';
+const ENV = `${API_ROOT}/v1/environment`;
 const CSV = '/open-data/sky-score-boroughs.csv';
 // How many routes on this map cross each council area, per UK region the map draws: written by
 // scripts/build_area_route_crossings.mjs from routesAcross() below, so the Find list can say so for every
@@ -304,6 +308,8 @@ const setPlaces = byId('pc') && byId('pc-list')
     byId('check')?.requestSubmit();
   }, { lookup: postcodeCompletions })
   : () => {};
+// News by email (Bill, 2026-11-22): the strip under the hero. Bound once; it sends nothing until its button.
+wireNews(byId('news'), { apiBase: API_ROOT, count: (way) => engaged(way, { acts: false }) });
 function fillPlaces() {
   const councils = new Set(state.rows.map((r) => r.borough).filter((n) => typeof n === 'string' && n.trim()));
   const regions = [...state.rows.map((r) => r.city_name), ...CITIES.map(([, n]) => n)].filter((n) => typeof n === 'string' && n.trim() && !councils.has(n));
@@ -1001,6 +1007,7 @@ function selectBorough(name, opts = {}) {
   bringIntoView(svg.selectAll('.boro').filter((d) => featureName(d) === state.selected).node(), { centre: true });
   byId('answer')?.classList.remove('is-open');
   clearExampleTiles();
+  offerPostcode(byId('news'), '');
   // A ZIP search opens its city's card WITH the ZIP's pin; any other way in, the pin's answer has closed.
   if (!opts.zip) clearPin();
   // The tooltip goes with the tap that opened the card: it was left on the map,
@@ -1444,6 +1451,8 @@ async function search(raw, { example = false } = {}) {
   clearLead();
   clearPin();
   hideWant();
+  // The news strip's postcode box belongs to the answer on show: gone until this search draws one (render()).
+  offerPostcode(byId('news'), '');
   // A place name first: a borough, a Bay Area city or a city region.
   const row = rowFor(text);
   if (row) {
@@ -1902,6 +1911,8 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
     wrong.hidden = !city;
     if (city) wrong.append(anchorFor({ href: correctionHref(postcode), text: 'Tell us' }), ': local knowledge is the best check on data like this.');
   }
+  // News by email's box for THIS postcode: only an answer the visitor asked for, never the example; a place we cover.
+  offerPostcode(byId('news'), city && !example ? postcode : '');
   const area = byId('ans-area');
   if (area) {
     const row = city ? rowFor(district) : null;

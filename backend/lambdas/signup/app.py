@@ -78,6 +78,35 @@ SIGNUPS_TABLE = os.environ.get('SIGNUPS_TABLE', 'london-flight-map-signups')
 SIGNUP_VERIFY = os.environ.get('SIGNUP_VERIFY', 'off').strip().lower() == 'on'
 PENDING_TABLE = os.environ.get('PENDING_TABLE', 'london-flight-map-signup-pending')
 SES_FROM = os.environ.get('SES_FROM', 'Sky Score <noreply@skyscore.co.uk>')
+# NEWS BY EMAIL (Bill, 2026-11-22: the front page's strip, mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6; it
+# grew out of the area updates list built 2026-11-10, which it replaces). Sky Score news, AT MOST ONE EMAIL A MONTH, and
+# only after the emailed link is confirmed (his P11 answers). After a search the strip offers ONE unticked box that adds
+# that postcode: its figures' changes go in the same monthly email, so the promise covers both. The request is
+# source 'updates' with `postcode` '' (news only) or a full postcode (the box ticked).
+# It lives in ITS OWN table, not the signups table: that table holds one row per address under rules that refuse a
+# second purpose (an address on the score-change list is told to contact support for an API key), and a list member
+# must not trip them. Items in MAIL_TABLE, all keyed by `pk`:
+#   updates#<email>   a member: its postcode (only if ticked), the consent wording, when consented, its unsubscribe token
+#   unsub#<token>     the token in every email's unsubscribe link -> email (the link never carries the address)
+#   suppress#<email>  the do-not-email list: written on unsubscribe and read before ANY send, the confirmation email
+#                     included (privacy s2a: "so we never write to it again"; code review 2026-11-22). So a listed
+#                     address gets the same 201 and no email; it is cleared only by a link already emailed before
+#                     the unsubscribe and pressed after it (fresh consent), or by hand on a request to support.
+# OFF unless BOTH this and SIGNUP_VERIFY are on: the list exists only with a confirmation email in front of it.
+UPDATES_LIST = os.environ.get('UPDATES_LIST', 'off').strip().lower() == 'on'
+MAIL_TABLE = os.environ.get('MAIL_TABLE', 'london-flight-map-mail')
+# The strip's wording, versioned: stored with every member so the consent can be shown later exactly as it was given.
+# A change to the strip's words or promise (frequency, what is sent) is a new version. NEWS_PROMISE and
+# AREA_PROMISE are js/news-signup.mjs's PROMISE and AREA_LINE word for word (tests/test_news_flags.py holds them).
+NEWS_CONSENT_VERSION = 'news-v1 (2026-11-22)'
+NEWS_PROMISE = 'News by email. New cities and new data. At most one email a month.'
+AREA_PROMISE = 'Also tell me when the figures for {postcode} change.'
+
+
+def consent_wording(postcode=''):
+    """The words this member agreed to, as stored: the strip's promise, plus the ticked box's line naming the postcode."""
+    words = f'{NEWS_CONSENT_VERSION}: {NEWS_PROMISE}'
+    return f'{words} {AREA_PROMISE.format(postcode=postcode)}' if postcode else words
 # A confirm link lives a day. Long enough for an email to sit unread over a
 # night, short enough that a leaked link is not a standing door; the pending
 # table's TTL expires the row on the same clock, so an old token cannot be
@@ -194,14 +223,19 @@ def cors_headers(event):
 # four of them; InnerClientBudgetTests asserts hops x budget < Timeout.
 _BOTO_CONFIG = Config(
     connect_timeout=2,
-    read_timeout=3,
+    read_timeout=2,
     retries={'max_attempts': 1, 'mode': 'standard'},
 )
 # 5 since I17 (2026-09-15): the confirm path CONSUMES the pending row with one
 # DeleteItem(ReturnValues=ALL_OLD) - read and burn in a single call - and then
-# runs the four the key path always made. Five hops at a 5s budget is 25,
-# under the 28s Timeout; InnerClientBudgetTests holds it there.
-_SEQUENTIAL_HOPS = 5
+# runs the four the key path always made.
+# 6 since news by email (2026-11-22, code review): its POST reads the
+# do-not-email list first, then the two send counters, the pending write, the
+# SES send, and on a failed send the pending delete. Its confirm stays at five
+# (the member's PutItem returns the old member, so no separate read). Six hops
+# at a 4s budget (read_timeout 3 -> 2: DynamoDB and SES answer in tens of ms)
+# is 24, under the 28s Timeout; InnerClientBudgetTests holds it there.
+_SEQUENTIAL_HOPS = 6
 apigw = boto3.client('apigateway', region_name=AWS_REGION, config=_BOTO_CONFIG)
 ddb = boto3.client('dynamodb', region_name=AWS_REGION, config=_BOTO_CONFIG)
 # SES in the home region. The identity (skyscore.co.uk) is verified there;
@@ -441,7 +475,9 @@ def handle_post(event):
     # malformed source silently issues an API key to someone who asked for an
     # email alert - so the consumer path is opt-in by exact match, and an
     # unrecognised value falls through to the behaviour that already existed.
-    source = 'consumer' if (body.get('source') or '').strip() == 'consumer' else 'api'
+    # 'updates' (2026-11-10) is news by email (since 2026-11-22), by the same exact match.
+    raw_source = (body.get('source') or '').strip()
+    source = raw_source if raw_source in ('consumer', 'updates') else 'api'
     postcode = (body.get('postcode') or '').strip().upper()[:12]
 
     if not email or not EMAIL_PATTERN.match(email):
@@ -457,6 +493,16 @@ def handle_post(event):
     if len(email) > 254 or len(name) > 200:
         return response(400, {'error': 'Email or name exceeds maximum length.'}, event)
 
+    if source == 'updates':
+        # Closed until the list may open: the same answer for every address, so it says nothing about any of them.
+        # A 403, not a 503: closed is a decision, not a fault, and a 5xx would count in the API's error figures.
+        if not (UPDATES_LIST and SIGNUP_VERIFY):
+            return response(403, {'error': 'News by email is not open yet.'}, event)
+        # No postcode is news only. A postcode (the strip's box, ticked) must be a full one: the email names it, and
+        # only a real postcode shape may reach an email body.
+        if postcode and not UK_POSTCODE.match(postcode):
+            return response(400, {'error': 'That is not a full postcode. Search a full postcode first.'}, event)
+
     if SIGNUP_VERIFY:
         return start_verification(email, name, source, postcode, event)
     return complete_signup(email, name, source, postcode, event)
@@ -467,6 +513,9 @@ def complete_signup(email, name, source, postcode, event):
     entry, the audit row. Called straight from the POST with SIGNUP_VERIFY
     off, and from the confirm link with it on - the ONE holder of the rules,
     so the two modes cannot drift on what a signup means."""
+    if source == 'updates':
+        # Its own table and its own rules: the signups table is not read or written for news by email.
+        return subscribe_updates(email, postcode, event)
     # One key per email. If they already signed up, surface that with a
     # clear message, we cannot re-show the key (APIGW only returns the
     # value at creation time, not on subsequent reads).
@@ -756,6 +805,19 @@ def start_verification(email, name, source, postcode, event):
         },
         event,
     )
+    if source == 'updates':
+        # The do-not-email list comes first, before a counter is touched: an address that unsubscribed is never
+        # written to again (privacy s2a), not even to confirm. The SAME 201, so the list cannot be probed. An
+        # unreadable list fails CLOSED: sending without knowing could break that promise.
+        try:
+            listed = 'Item' in ddb.get_item(TableName=MAIL_TABLE, Key=_mail_key('suppress', email), ConsistentRead=True)
+        except (ClientError, BotoCoreError) as e:
+            code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+            logger.error('[UPDATES_SUPPRESS_LOOKUP_FAILED] code=%s', code)
+            return response(503, {'error': 'Could not start the signup. Please try again later.'}, event)
+        if listed:
+            logger.info('[UPDATES_SUPPRESSED] no confirmation sent to an address on the do-not-email list')
+            return accepted
     decision = send_decision(email)
     if decision == 'full':
         # Said in words, because the person asking is most likely real: a
@@ -908,6 +970,20 @@ def send_confirmation_email(email, source, postcode, link):
             f'Someone - probably you - asked for an email when the Sky Score for '
             f'{shown} changes. Confirm it here:'
         )
+    elif source == 'updates':
+        # News by email; the postcode is named only if the strip's box was ticked AND it is a real postcode shape.
+        if UK_POSTCODE.match(postcode or ''):
+            subject = f'Confirm your Sky Score news and updates for {postcode}'
+            what = (
+                'Someone - probably you - asked for Sky Score news by email (new cities and new data), with word when '
+                f'the figures for {postcode} change. At most one email a month. Confirm it here:'
+            )
+        else:
+            subject = 'Confirm your Sky Score news'
+            what = (
+                'Someone - probably you - asked for Sky Score news by email: new cities and new data, at most one '
+                'email a month. Confirm it here:'
+            )
     else:
         subject = 'Confirm your Sky Score API key request'
         what = 'Someone - probably you - asked for a free Sky Score API key. Confirm the address here:'
@@ -968,8 +1044,17 @@ def html_page(status, title, body):
 _INVALID_LINK = ('That link is not valid',
                  '<p>The confirmation link is incomplete. Open it exactly as it appears in the email.</p>')
 _EXPIRED_LINK = ('That link has expired or was already used',
-                 '<p>Confirmation links work once, for 24 hours. '
-                 '<a href="https://skyscore.co.uk/score-demo/">Request a new one</a>.</p>')
+                 '<p>Confirmation links work once, for 24 hours. Sign up again where you started: '
+                 '<a href="https://skyscore.co.uk/">the front page</a> for news by email, '
+                 '<a href="https://skyscore.co.uk/map/">the full map</a> for score alerts, or '
+                 '<a href="https://skyscore.co.uk/score-demo/">the API page</a> for a key.</p>')
+
+# Where each kind of sign-up starts again (2026-11-10 review: an area-updates sign-up was sent to the API-key page).
+_AGAIN = {
+    'updates': ('https://skyscore.co.uk/', 'Sign up again on the front page'),
+    'consumer': ('https://skyscore.co.uk/map/', 'Sign up again from the map'),
+}
+_AGAIN_DEFAULT = ('https://skyscore.co.uk/score-demo/', 'Request a new link')
 
 
 def _form_token(event):
@@ -1010,8 +1095,14 @@ def handle_confirm_get(event):
         return html_page(503, 'Please try again', '<p>We could not check that link just now. Try it again in a minute.</p>')
     if not row or int(row.get('expiresAt', {}).get('N', '0')) < int(time.time()):
         return html_page(410, *_EXPIRED_LINK)
-    what = ('email updates' if row.get('source', {}).get('S') == 'consumer'
-            else 'a free Sky Score API key')
+    source = row.get('source', {}).get('S')
+    pending_pc = row.get('postcode', {}).get('S', '')
+    if source == 'updates':
+        what = 'Sky Score news by email, at most one email a month'
+        if UK_POSTCODE.match(pending_pc):
+            what += f', with word when the figures for {pending_pc} change'
+    else:
+        what = 'email updates' if source == 'consumer' else 'a free Sky Score API key'
     return html_page(
         200, 'Confirm your email address',
         f'<p>Press the button to confirm this address for {html.escape(what)}.</p>'
@@ -1070,19 +1161,154 @@ def handle_confirm(event):
             200, 'Already signed up',
             f'<p>{html.escape(data.get("error", ""))} {html.escape(data.get("note", ""))}</p>',
         )
+    if source == 'updates' and status == 403:
+        # The list closed again between the email and the click: nothing was saved, and the page says so.
+        return html_page(200, 'News by email is closed', '<p>News by email is not taking sign-ups just now, so nothing '
+                         'was saved and we will not email you about it.</p>')
+    href, label = _AGAIN.get(source, _AGAIN_DEFAULT)
     return html_page(
         503, 'Please try again',
         '<p>Your address is confirmed but the signup could not be completed just now. '
-        '<a href="https://skyscore.co.uk/score-demo/">Request a new link</a> and try again.</p>',
+        f'<a href="{href}">{label}</a> and try again.</p>',
     )
+
+
+def _mail_key(kind, value):
+    return {'pk': {'S': f'{kind}#{value}'}}
+
+
+def subscribe_updates(email, area, event):
+    """Join news by email, once the emailed link has been confirmed (complete_signup() runs only from the confirm
+    button for this source, because the POST refuses 'updates' unless SIGNUP_VERIFY is on). `area` is '' for news
+    only, or the full postcode whose box was ticked; the member stores a postcode only when there is one.
+
+    A confirmed sign-up REPLACES the member: the consent is what was agreed this time, so joining again without the box
+    drops an earlier postcode, and with it ticked moves it.
+
+    A new token for every confirmed sign-up, written BEFORE the member that names it, so a failure part-way leaves at
+    most a token nobody holds, never a member whose emails could carry no working unsubscribe link. A previous token is
+    retired. The do-not-email entry goes: a confirmed sign-up is fresh consent from the person who owns the address.
+
+    Once the member is written the person IS subscribed, so the two tidy-ups after it are best effort, logged, and the
+    answer stays 201 (2026-11-10 review: a failed retire used to answer 503 to someone already on the list). A stale
+    token left behind can only unsubscribe the address it names; a do-not-email entry left behind only stops emails.
+    The list's flag is read again here, because a link emailed while it was open can be pressed after it closes.
+    """
+    if not UPDATES_LIST:
+        return response(403, {'error': 'News by email is not open yet.'}, event)
+    area = area if UK_POSTCODE.match(area or '') else ''
+    token = secrets.token_urlsafe(32)
+    now = datetime.now(UTC).isoformat()
+    member = {
+        **_mail_key('updates', email),
+        'email': {'S': email},
+        'consent': {'S': consent_wording(area)},
+        'consentedAt': {'S': now},
+        'via': {'S': 'website'},
+        'unsubToken': {'S': token},
+    }
+    if area:
+        member['area'] = {'S': area}
+    try:
+        ddb.put_item(TableName=MAIL_TABLE, Item={**_mail_key('unsub', token), 'email': {'S': email}, 'createdAt': {'S': now}})
+        # The old member comes back from the write itself (one hop, not a read then a write: the confirm path's budget
+        # is five calls, _SEQUENTIAL_HOPS; code review 2026-11-22).
+        old = ddb.put_item(TableName=MAIL_TABLE, Item=member, ReturnValues='ALL_OLD').get('Attributes')
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[UPDATES_JOIN_FAILED] code=%s', code)
+        return response(503, {'error': 'Could not save. Please try again later.'}, event)
+    old_token = (old or {}).get('unsubToken', {}).get('S')
+    tidy = [('suppress', email)] + ([('unsub', old_token)] if old_token and old_token != token else [])
+    for kind, value in tidy:
+        try:
+            ddb.delete_item(TableName=MAIL_TABLE, Key=_mail_key(kind, value))
+        except (ClientError, BotoCoreError) as e:
+            code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+            logger.error('[UPDATES_JOIN_TIDY_FAILED] kind=%s code=%s', kind, code)
+    return response(
+        201,
+        {
+            'status': 'subscribed',
+            'area': area,
+            'message': (
+                'Thanks. You are on the list for Sky Score news'
+                + (f', with word when the figures for {area} change' if area else '')
+                + '. At most one email a month, and every email has a link to stop them.'
+            ),
+        },
+        event,
+    )
+
+
+_UNSUB_UNKNOWN = ('You are not on the list',
+                  '<p>That link is no longer active, so there is nothing to stop. If you are still getting our emails, '
+                  'email support@skyscore.co.uk and we will take you off by hand.</p>')
+
+
+def handle_unsubscribe_get(event):
+    """GET /v1/signup/unsubscribe?token= : SHOW the button, change nothing. Mail scanners fetch every link in an email
+    before a person opens it (audit I-5, 25 Sep); a GET that unsubscribed would let a scanner do it. The button's POST
+    does the work, and so does a mail client's RFC 8058 one-click POST to the same address."""
+    token = ((event.get('queryStringParameters') or {}).get('token') or '').strip()
+    if not TOKEN_PATTERN.match(token):
+        return html_page(400, 'That link is not valid',
+                         '<p>The unsubscribe link is incomplete. Open it exactly as it appears in the email.</p>')
+    return html_page(
+        200, 'Stop these emails',
+        '<p>Press the button and we will stop Sky Score news, and not email this address again.</p>'
+        f'<form method="post"><input type="hidden" name="token" value="{html.escape(token)}">'
+        '<button type="submit" style="font:inherit;padding:12px 20px;border-radius:6px;'
+        'border:0;background:#1d4ed8;color:#fff;cursor:pointer">Unsubscribe</button></form>',
+    )
+
+
+def handle_unsubscribe(event):
+    """POST /v1/signup/unsubscribe : the button above, or a mail client's one-click POST (body
+    `List-Unsubscribe=One-Click`, the token in the query string). Idempotent: an unknown or used token says so and
+    changes nothing. The address joins the do-not-email list, then the member goes, then the token LAST (2026-11-10
+    review: deleting the token first meant a failure part-way left the person subscribed, and the retry, finding no
+    token, told them there was nothing to stop). Every step repeats safely, so a retry finishes what a failure left.
+
+    ANY live token stops ALL mail to its address, even one from an email sent before the person re-joined (code review
+    2026-11-22 raised it). On purpose: whoever presses an unsubscribe link in an email we sent wants our emails to stop,
+    and honouring that beats keeping a newer consent the press contradicts (PECR: a refusal must be easy and must work)."""
+    token = _form_token(event) or ((event.get('queryStringParameters') or {}).get('token') or '').strip()
+    if not TOKEN_PATTERN.match(token):
+        return html_page(400, 'That link is not valid',
+                         '<p>The unsubscribe link is incomplete. Open it exactly as it appears in the email.</p>')
+    try:
+        old = ddb.get_item(TableName=MAIL_TABLE, Key=_mail_key('unsub', token), ConsistentRead=True).get('Item')
+        if not old:
+            return html_page(200, *_UNSUB_UNKNOWN)
+        email = old['email']['S']
+        ddb.put_item(
+            TableName=MAIL_TABLE,
+            Item={**_mail_key('suppress', email), 'email': {'S': email}, 'suppressedAt': {'S': datetime.now(UTC).isoformat()}},
+        )
+        ddb.delete_item(TableName=MAIL_TABLE, Key=_mail_key('updates', email))
+        ddb.delete_item(TableName=MAIL_TABLE, Key=_mail_key('unsub', token))
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[UPDATES_UNSUB_FAILED] code=%s', code)
+        return html_page(503, 'Please try again',
+                         '<p>We could not stop the emails just now. Try the link again in a minute, or email '
+                         'support@skyscore.co.uk and we will do it by hand.</p>')
+    return html_page(200, 'You are unsubscribed', '<p>We will not email this address again.</p>')
 
 
 def handler(event, context):
     method = (event.get('httpMethod') or 'POST').upper()
     try:
-        is_confirm = (event.get('path') or '').rstrip('/').endswith('/confirm')
+        path = (event.get('path') or '').rstrip('/')
+        is_confirm = path.endswith('/confirm')
+        is_unsub = path.endswith('/unsubscribe')
         if method == 'OPTIONS':
             return handle_options(event)
+        if method == 'POST' and is_unsub:
+            return handle_unsubscribe(event)
+        if method == 'GET' and is_unsub:
+            return handle_unsubscribe_get(event)
         if method == 'POST' and is_confirm:
             return handle_confirm(event)
         if method == 'POST':
