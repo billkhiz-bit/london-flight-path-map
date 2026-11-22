@@ -1,18 +1,20 @@
-// NEWS BY EMAIL, as a visitor meets it (Bill, 2026-11-22; mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6, colour A).
-// The front page's strip under the hero: one form, the button is the consent, and after a real search one UNTICKED box
-// for that postcode. Held here, measured on the drawn page (never the flags that should draw it):
+// NEWS BY EMAIL, as a visitor meets it (Bill, 2026-11-22; mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6, colour A;
+// news-v2 the same evening, claude.ai/artifact/8v4FMpDJ9Eq8N24zEGhVHz). The front page's strip under the hero: one form,
+// the button is the consent, NEWS ONLY (no postcode box: Bill, "confusing", the page opens on an example). After a
+// sign-up, "Check your inbox" takes the form's place. Held here, measured on the drawn page (never the flags):
 //   - desktop 1366 x 900: the box and button sit in the FIRST screen; the form starts on the map column's own edge and
-//     the words on the search column's (Bill: "a bit over the place" until they did); the strip is the map's blue-grey;
-//     the search keeps the ONLY orange button; the link is dark (the orange-brown fails on blue-grey);
-//   - nothing is sent on arrival; the address goes only in a POST body; no postcode is sent unless its box is ticked;
-//   - the box: never for the example, shown after a search of a full postcode, unticked, gone after a place search, and
-//     a tick never carries to the next search;
-//   - every answer is said in words: no address, 201, 429, the Lambda's own refusal, a network failure;
-//   - counted as front-news-requested / front-news-link-sent, never an address;
-//   - phone 390: after the map, the box and button on one row, nothing off the page; the search button says "Check my
-//     area" with room for the box's hint, and "Check" under 375 px.
+//     the words on the search column's; the strip is the map's blue-grey; the search keeps the ONLY orange button; the
+//     link is dark (the orange-brown fails on blue-grey);
+//   - nothing is sent on arrival; the address goes only in a POST body, alone: no postcode, before or after a search;
+//   - after a 201: the panel names the address mostly hidden, focus moves to it, the form is gone (no second press);
+//     "Send it again" sends the same address at most to the Lambda's three a day and then says so in words; "Use a
+//     different address" brings the form back, empty and focused;
+//   - every answer is said in words: no address, 429, the Lambda's own refusal, a network failure;
+//   - counted as front-news-requested / front-news-link-sent / front-news-resend, never an address;
+//   - phone 390 and 360: after the map, the box and button on one row, nothing off the page, the panel too; the search
+//     button says "Check my area" with room for the box's hint, and "Check" under 375 px.
 // /v1/signup is answered IN THE PAGE: nothing here reaches the live API. TW9 3PZ is the example AND the postcode
-// tests/stub-live-api.mjs answers offline, so one place shows both rules: the example has no box, a search of it does.
+// tests/stub-live-api.mjs answers offline.
 // Run: node tests/news-signup.mjs
 import { chromium } from '@playwright/test';
 import { createServer } from 'node:http';
@@ -50,13 +52,13 @@ const ok = (cond, name, detail = '') => {
   if (cond) { passed += 1; console.log(`  ok   ${name}`); } else { failures += 1; console.log(`  FAIL ${name}${detail ? `: ${detail}` : ''}`); }
 };
 
-// The module's postcode shape is the Lambda's, character for character.
+// The page counts sends up to the Lambda's own cap, read from its source (a capped send answers the same 201).
 {
   const mod = await readFile(join(ROOT, 'js', 'news-signup.mjs'), 'utf8');
   const app = await readFile(join(ROOT, 'backend', 'lambdas', 'signup', 'app.py'), 'utf8');
-  const js = /export const FULL_POSTCODE = \/(.+)\/;/.exec(mod)?.[1];
-  const py = /^UK_POSTCODE = re\.compile\(r'(.+)'\)/m.exec(app)?.[1];
-  ok(js && js === py, 'the strip checks a postcode exactly as the Lambda does', `${js} vs ${py}`);
+  const js = /export const SENDS_PER_DAY = (\d+);/.exec(mod)?.[1];
+  const py = /^SEND_CAP_PER_DAY = (\d+)/m.exec(app)?.[1];
+  ok(js && js === py, 'the page stops resending where the Lambda stops sending', `${js} vs ${py}`);
 }
 
 /** A page with the API stub, every /v1/signup answered here (`answer` decides how), and GoatCounter recorded. */
@@ -80,10 +82,8 @@ async function open(browser, { width, height, answer = () => ({ status: 201, bod
   return { context, page, signups };
 }
 
-// render() rewrites "Spotted something wrong?" (#ans-wrong) on every answer, the example's included: wait for the
-// example's "Tell us", blank it, search, and wait for it to come back, which proves the SEARCH's render ran.
 const exampleDrawn = (page) => page.waitForFunction(() => /Tell us/.test(document.getElementById('ans-wrong')?.textContent || ''), null, { timeout: 30000 });
-async function searchFor(page, text) {
+async function searchPostcode(page) {
   await page.evaluate(() => document.getElementById('ans-wrong').replaceChildren());
   await page.evaluate((q) => {
     const form = document.getElementById('check');
@@ -91,28 +91,41 @@ async function searchFor(page, text) {
     input.value = q;
     input.dispatchEvent(new Event('input', { bubbles: true }));
     form.requestSubmit();
-  }, text);
-}
-async function searchPostcode(page) {
-  await searchFor(page, PC);
+  }, PC);
   await page.waitForFunction(() => /Tell us/.test(document.getElementById('ans-wrong')?.textContent || '')
     && document.getElementById('ans-example')?.hidden === true, null, { timeout: 30000 });
 }
-const boxState = (page) => page.evaluate(() => ({
-  hidden: document.getElementById('news-pc-row').hidden,
-  shown: document.getElementById('news-pc-row').getBoundingClientRect().height > 0,
-  name: document.getElementById('news-pc-name').textContent,
-  ticked: document.getElementById('news-pc').checked,
-}));
+const panel = (page) => page.evaluate(() => {
+  const sent = document.getElementById('news-sent');
+  const form = document.getElementById('news-form');
+  return {
+    shown: !sent.hidden && sent.getBoundingClientRect().height > 0,
+    formShown: !form.hidden && form.getBoundingClientRect().height > 0,
+    to: document.getElementById('news-sent-to').textContent,
+    again: !document.getElementById('news-again').hidden,
+    said: document.getElementById('news-again-said').textContent,
+    focus: document.activeElement?.id || '',
+    result: document.getElementById('news-result').textContent,
+  };
+});
+/** Press Sign me up with an address; wait for the panel or for words in the result line. */
 async function send(page, email) {
-  const before = await page.evaluate(() => document.getElementById('news-result').textContent);
   await page.fill('#news-email', email);
   await page.click('#news-form button[type=submit]');
-  await page.waitForFunction((b) => {
+  await page.waitForFunction(() => {
     const t = document.getElementById('news-result').textContent;
+    return !document.getElementById('news-sent').hidden || (t && t !== 'Sending...');
+  }, null, { timeout: 10000 }).catch(() => {});
+  return panel(page);
+}
+async function resend(page) {
+  const before = await page.evaluate(() => document.getElementById('news-again-said').textContent);
+  await page.click('#news-again');
+  await page.waitForFunction((b) => {
+    const t = document.getElementById('news-again-said').textContent;
     return t && t !== 'Sending...' && t !== b;
   }, before, { timeout: 10000 }).catch(() => {});
-  return page.evaluate(() => document.getElementById('news-result').textContent);
+  return panel(page);
 }
 const bodyOf = (s) => JSON.parse(s.body || '{}');
 
@@ -133,12 +146,14 @@ try {
         .map((el) => el.textContent.trim());
       return {
         news: r(news), words: r(news.querySelector('.news-words h2')), form: r(news.querySelector('.news-row')),
-        row: r(news.querySelector('.news-row')), button: r(news.querySelector('.news-row button')),
+        button: r(news.querySelector('.news-row button')),
         panel: r(document.querySelector('.panel')), map: r(document.querySelector('.mapwrap')), mapcol: r(document.querySelector('.mapcol')),
         bg: getComputedStyle(news).backgroundColor, link: getComputedStyle(news.querySelector('.news-small a')).color,
         buttonBg: getComputedStyle(news.querySelector('.news-row button')).backgroundColor,
         inMapcol: !!news.closest('.mapcol'), afterMap: !!(document.querySelector('.mapcol').compareDocumentPosition(news) & Node.DOCUMENT_POSITION_FOLLOWING),
         orange, search: document.querySelector('form.check button').textContent.trim(),
+        boxes: news.querySelectorAll('input[type=checkbox]').length,
+        sentHidden: document.getElementById('news-sent').hidden,
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     }, { ORANGE });
@@ -152,14 +167,13 @@ try {
     ok(m.link === DARK && m.buttonBg === DARK, 'desktop: its link and button are the dark (the orange-brown fails on blue-grey)', `${m.link} / ${m.buttonBg}`);
     ok(JSON.stringify(m.orange) === JSON.stringify(['Check my area']), 'desktop: the search keeps the only orange button in the first screen', JSON.stringify(m.orange));
     ok(m.search === 'Check my area', 'desktop: the search button says "Check my area"', m.search);
+    ok(m.boxes === 0 && m.sentHidden, 'news only: no tick box, and "Check your inbox" waits hidden', JSON.stringify({ boxes: m.boxes, sentHidden: m.sentHidden }));
     ok(m.overflow <= 0, 'desktop: nothing runs off the page', String(m.overflow));
-    const onExample = await boxState(page);
-    ok(onExample.hidden && !onExample.shown && onExample.name === '', 'the example answer offers no postcode box (nobody asked for it)', JSON.stringify(onExample));
     ok(signups.length === 0, 'nothing is sent on arrival', String(signups.length));
     await context.close();
   }
 
-  // ---- SENDING, after a real search ----
+  // ---- SENDING ----
   {
     let mode = 'ok';
     const answers = {
@@ -177,24 +191,30 @@ try {
     const empty = await page.evaluate(() => document.getElementById('news-result').textContent);
     ok(/Enter your email address/.test(empty) && signups.length === 0, 'no address: said in words, nothing sent', `${empty} / ${signups.length}`);
 
-    const newsOnly = await send(page, 'someone@example.com');
+    // After a real search, still news only: the request carries the address and the list, nothing about the place.
+    await searchPostcode(page);
+    const sentPanel = await send(page, 'someone@example.com');
     const first = signups[0] || {};
-    ok(/Check your inbox/.test(newsOnly), 'a 201 says to check the inbox', newsOnly);
-    // A second press would send a second confirmation email (code review 2026-11-22): the button stays off, and the
-    // handler refuses a submit that gets past it, until the address or the box changes.
-    const afterSent = await page.evaluate(() => document.querySelector('#news-form button[type=submit]').disabled);
-    await page.evaluate(() => document.getElementById('news-form').requestSubmit());
-    await page.waitForTimeout(300);
-    ok(afterSent && signups.length === 1, 'after a sign-up goes through, a second press sends nothing', JSON.stringify({ afterSent, sent: signups.length }));
     ok(first.method === 'POST' && !/someone|example\.com/.test(first.url) && !new URL(first.url || 'http://x').search,
       'the address goes only in a POST body, never the URL', JSON.stringify(first));
-    ok(JSON.stringify(bodyOf(first)) === JSON.stringify({ email: 'someone@example.com', source: 'updates', postcode: '' }),
-      'news only: source "updates", no postcode', first.body);
+    ok(JSON.stringify(bodyOf(first)) === JSON.stringify({ email: 'someone@example.com', source: 'updates' }),
+      'news only, even after a search: the address and the list, no postcode', first.body);
+    ok(sentPanel.shown && !sentPanel.formShown && sentPanel.to === 's•••••@example.com',
+      'a 201 shows "Check your inbox" in the form\'s place, the address mostly hidden', JSON.stringify(sentPanel));
+    ok(sentPanel.focus === 'news-sent-h', 'focus moves to the panel, where the change is', sentPanel.focus);
+    ok(sentPanel.again && signups.length === 1, 'the form is gone, so a second press cannot send; "Send it again" is the one way', JSON.stringify({ again: sentPanel.again, sent: signups.length }));
 
-    await searchPostcode(page);
-    // The answer is long now, and the map column is sticky: scrolled down to the strip, the map must stop above it, never
-    // slide over it (2026-11-22: inside the hero it did, because a sticky box travels its whole parent; found on a
-    // screenshot after a search, which no arrival-only check could see). Measured at the strip's top and its bottom.
+    // The page sends at most the Lambda's three a day to one address, then says so (a capped send answers the same 201).
+    const second = await resend(page);
+    ok(second.said === 'Sent again.' && second.again && signups.length === 2 && bodyOf(signups[1]).email === 'someone@example.com',
+      '"Send it again" sends the same address again', JSON.stringify({ second, sent: signups.length }));
+    const third = await resend(page);
+    ok(/three today/.test(third.said) && !third.again && signups.length === 3, 'after the third, it says so and offers no more', JSON.stringify({ third, sent: signups.length }));
+    await page.evaluate(() => document.getElementById('news-again').click());
+    await page.waitForTimeout(300);
+    ok(signups.length === 3, 'a hidden button sends nothing', String(signups.length));
+
+    // The answer is long now, and the map column is sticky: scrolled down to the strip, the map must stop above it.
     const overlap = [];
     for (const block of ['start', 'center', 'end']) {
       overlap.push(await page.evaluate((b) => {
@@ -205,37 +225,25 @@ try {
       }, block));
     }
     ok(overlap.every((o) => o.long && o.mapBottom <= o.stripTop + 1), 'after a long answer, the sticky map never slides over the strip', JSON.stringify(overlap));
-    await page.evaluate(() => scrollTo(0, 0));
-    const moved = await page.evaluate(() => ({ line: document.getElementById('news-result').textContent, off: document.querySelector('#news-form button[type=submit]').disabled }));
-    ok(moved.line === '' && !moved.off, 'a new search clears the last answer and offers the button again', JSON.stringify(moved));
-    const box = await boxState(page);
-    ok(!box.hidden && box.shown && box.name === PC && !box.ticked, 'a search of a full postcode offers its box, unticked', JSON.stringify(box));
-    await send(page, 'someone@example.com');
-    ok(bodyOf(signups[1] || {}).postcode === '', 'the box unticked sends no postcode', signups[1]?.body);
-    await page.check('#news-pc');
-    await send(page, 'other@example.com');
-    ok(bodyOf(signups[2] || {}).postcode === PC, 'the box ticked sends that postcode', signups[2]?.body);
 
-    // A place search closes the postcode answer, and the box goes with it; the next postcode starts unticked.
-    await searchFor(page, 'Hounslow');
-    await page.waitForFunction(() => document.getElementById('news-pc-row').hidden === true, null, { timeout: 15000 }).catch(() => {});
-    const afterPlace = await boxState(page);
-    ok(afterPlace.hidden && !afterPlace.shown, 'a council search hides the postcode box', JSON.stringify(afterPlace));
-    await searchPostcode(page);
-    const again = await boxState(page);
-    ok(!again.hidden && !again.ticked, 'a tick never carries to the next search', JSON.stringify(again));
+    await page.click('#news-other');
+    const back = await panel(page);
+    const field = await page.evaluate(() => ({ value: document.getElementById('news-email').value, focus: document.activeElement?.id }));
+    ok(!back.shown && back.formShown && field.value === '' && field.focus === 'news-email', '"Use a different address" brings the form back, empty and focused', JSON.stringify({ back, field }));
 
     mode = 'busy';
-    ok(/Busy just now/.test(await send(page, 'a@example.com')), 'a 429 says busy');
+    ok(/Busy just now/.test((await send(page, 'a@example.com')).result), 'a 429 says busy');
     mode = 'refused';
-    ok(/not open yet/.test(await send(page, 'b@example.com')), 'a refusal says the Lambda\'s own words');
+    ok(/not open yet/.test((await send(page, 'b@example.com')).result), 'a refusal says the Lambda\'s own words');
     mode = 'down';
-    ok(/Check your connection/.test(await send(page, 'c@example.com')), 'a network failure says so');
+    const down = await send(page, 'c@example.com');
+    ok(/Check your connection/.test(down.result) && down.formShown && !down.shown, 'a network failure says so, and keeps the form', JSON.stringify(down));
 
     const gc = await page.evaluate(() => window.__gc.slice());
     const news = gc.filter((p) => p.includes('news'));
-    ok(news.includes('event/front-news-requested') && news.includes('event/front-news-link-sent') && news.every((p) => /^event\/front-news-(requested|link-sent)$/.test(p)),
-      'counted as front-news-requested / front-news-link-sent, never an address', JSON.stringify(news));
+    ok(['event/front-news-requested', 'event/front-news-link-sent', 'event/front-news-resend'].every((p) => news.includes(p))
+      && news.every((p) => /^event\/front-news-(requested|link-sent|resend)$/.test(p)),
+    'counted as front-news-requested / -link-sent / -resend, never an address', JSON.stringify(news));
     ok(!gc.some((p) => /@|example\.com|TW9/.test(p)), 'no address or postcode in any count', JSON.stringify(gc));
     await context.close();
   }
@@ -252,7 +260,7 @@ try {
     const early = await page.evaluate(() => /Tell us/.test(document.getElementById('ans-wrong')?.textContent || ''));
     await page.fill('#news-email', 'early@example.com');
     await page.click('#news-form button[type=submit]');
-    await page.waitForFunction(() => /Check your inbox/.test(document.getElementById('news-result').textContent), null, { timeout: 10000 }).catch(() => {});
+    await page.waitForFunction(() => !document.getElementById('news-sent').hidden, null, { timeout: 10000 }).catch(() => {});
     release();
     let drawn = true;
     await exampleDrawn(page).catch(() => { drawn = false; });
@@ -265,22 +273,28 @@ try {
     const { context, page } = await open(browser, { width, height });
     await page.goto(HOME);
     await exampleDrawn(page);
-    const p = await page.evaluate(() => {
+    const measure = () => page.evaluate(() => {
       const r = (el) => { const b = el.getBoundingClientRect(); return { left: Math.round(b.left), right: Math.round(b.right), top: Math.round(b.top + scrollY), bottom: Math.round(b.bottom + scrollY), width: Math.round(b.width), height: Math.round(b.height) }; };
       const btn = document.querySelector('form.check button');
       return {
         news: r(document.getElementById('news')), map: r(document.querySelector('.mapwrap')),
         input: r(document.querySelector('.news-row input')), button: r(document.querySelector('.news-row button')),
+        sent: r(document.getElementById('news-sent')), again: r(document.getElementById('news-again')),
         search: btn.innerText.trim(), pcBox: r(document.getElementById('pc')),
         overflow: document.documentElement.scrollWidth - innerWidth,
       };
     });
+    const p = await measure();
     ok(p.news.top >= p.map.bottom, `${width}: the strip comes after the map`, JSON.stringify({ news: p.news.top, map: p.map.bottom }));
     ok(Math.abs(p.input.top - p.button.top) <= 1 && p.button.height >= 44 && p.input.height >= 44,
       `${width}: the box and button on one row, both at least 44 px tall`, JSON.stringify({ input: p.input, button: p.button }));
     ok(p.overflow <= 0 && p.news.right <= width, `${width}: nothing runs off the page`, JSON.stringify({ overflow: p.overflow, news: p.news }));
     if (width >= 375) ok(p.search === 'Check my area' && p.pcBox.width >= 157, `${width}: "Check my area", and the box keeps room for "Your postcode"`, JSON.stringify({ search: p.search, box: p.pcBox.width }));
     else ok(p.search === 'Check' && p.pcBox.width >= 157, `${width}: "Check" alone, so the box keeps room for its hint`, JSON.stringify({ search: p.search, box: p.pcBox.width }));
+    await send(page, 'phone@example.com');
+    const s = await measure();
+    ok(s.sent.height > 0 && s.overflow <= 0 && s.sent.right <= width - 12 && s.again.height >= 40,
+      `${width}: "Check your inbox" fits, nothing off the page, its button at least 40 px tall`, JSON.stringify({ sent: s.sent, again: s.again, overflow: s.overflow }));
     await context.close();
   }
 } finally {

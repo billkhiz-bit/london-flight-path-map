@@ -19,7 +19,7 @@ import { districtOf, planesLinks, planesModel, planesNearest, planesNodes, plane
 import { EXAMPLE, bindPlaceBox, noPointSaid, postcodeCompletions } from '/js/place-box.mjs';
 import { airFigure, airPanel, answerLead, exampleFigures, layerSteps } from '/js/home-sections.mjs';
 import { readWords } from '/js/find-words.mjs';
-import { offerPostcode, wireNews } from '/js/news-signup.mjs';
+import { wireNews } from '/js/news-signup.mjs';
 import {
   DEFRA_LDEN_SCALE,
   LONDON_RASTER,
@@ -1007,7 +1007,6 @@ function selectBorough(name, opts = {}) {
   bringIntoView(svg.selectAll('.boro').filter((d) => featureName(d) === state.selected).node(), { centre: true });
   byId('answer')?.classList.remove('is-open');
   clearExampleTiles();
-  offerPostcode(byId('news'), '');
   // A ZIP search opens its city's card WITH the ZIP's pin; any other way in, the pin's answer has closed.
   if (!opts.zip) clearPin();
   // The tooltip goes with the tap that opened the card: it was left on the map,
@@ -1451,8 +1450,6 @@ async function search(raw, { example = false } = {}) {
   clearLead();
   clearPin();
   hideWant();
-  // The news strip's postcode box belongs to the answer on show: gone until this search draws one (render()).
-  offerPostcode(byId('news'), '');
   // A place name first: a borough, a Bay Area city or a city region.
   const row = rowFor(text);
   if (row) {
@@ -1911,8 +1908,6 @@ function render(postcode, district, city, e, lat, lon, prov = {}, { example = fa
     wrong.hidden = !city;
     if (city) wrong.append(anchorFor({ href: correctionHref(postcode), text: 'Tell us' }), ': local knowledge is the best check on data like this.');
   }
-  // News by email's box for THIS postcode: only an answer the visitor asked for, never the example; a place we cover.
-  offerPostcode(byId('news'), city && !example ? postcode : '');
   const area = byId('ans-area');
   if (area) {
     const row = city ? rowFor(district) : null;

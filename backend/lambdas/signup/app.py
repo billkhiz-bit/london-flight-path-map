@@ -49,6 +49,8 @@ identity unverified, every signup would 503, so the flip is a runbook step
 SES sandbox - not a deploy.
 """
 
+import base64
+import hashlib
 import html
 import json
 import logging
@@ -78,15 +80,19 @@ SIGNUPS_TABLE = os.environ.get('SIGNUPS_TABLE', 'london-flight-map-signups')
 SIGNUP_VERIFY = os.environ.get('SIGNUP_VERIFY', 'off').strip().lower() == 'on'
 PENDING_TABLE = os.environ.get('PENDING_TABLE', 'london-flight-map-signup-pending')
 SES_FROM = os.environ.get('SES_FROM', 'Sky Score <noreply@skyscore.co.uk>')
+# Replies reach a person (2026-11-22, after Bill's Hotmail put every confirmation in Junk): a no-reply address with
+# nowhere to answer reads as bulk mail to Microsoft's filters. The privacy page's published contact; the From and its
+# DKIM/DMARC alignment are unchanged.
+SES_REPLY_TO = 'Sky Score <support@skyscore.co.uk>'
 # NEWS BY EMAIL (Bill, 2026-11-22: the front page's strip, mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6; it
 # grew out of the area updates list built 2026-11-10, which it replaces). Sky Score news, AT MOST ONE EMAIL A MONTH, and
-# only after the emailed link is confirmed (his P11 answers). After a search the strip offers ONE unticked box that adds
-# that postcode: its figures' changes go in the same monthly email, so the promise covers both. The request is
-# source 'updates' with `postcode` '' (news only) or a full postcode (the box ticked).
+# only after the emailed link is confirmed (his P11 answers). News only since news-v2 (Bill, 2026-11-22): the strip's
+# postcode box is gone, the request is source 'updates' with no postcode, and one sent anyway is dropped.
 # It lives in ITS OWN table, not the signups table: that table holds one row per address under rules that refuse a
 # second purpose (an address on the score-change list is told to contact support for an API key), and a list member
 # must not trip them. Items in MAIL_TABLE, all keyed by `pk`:
-#   updates#<email>   a member: its postcode (only if ticked), the consent wording, when consented, its unsubscribe token
+#   updates#<email>   a member: the consent wording, when consented, its unsubscribe token (a news-v1 member may also
+#                     hold the postcode it ticked; nothing writes one since news-v2)
 #   unsub#<token>     the token in every email's unsubscribe link -> email (the link never carries the address)
 #   suppress#<email>  the do-not-email list: written on unsubscribe and read before ANY send, the confirmation email
 #                     included (privacy s2a: "so we never write to it again"; code review 2026-11-22). So a listed
@@ -97,16 +103,18 @@ UPDATES_LIST = os.environ.get('UPDATES_LIST', 'off').strip().lower() == 'on'
 MAIL_TABLE = os.environ.get('MAIL_TABLE', 'london-flight-map-mail')
 # The strip's wording, versioned: stored with every member so the consent can be shown later exactly as it was given.
 # A change to the strip's words or promise (frequency, what is sent) is a new version. NEWS_PROMISE and
-# AREA_PROMISE are js/news-signup.mjs's PROMISE and AREA_LINE word for word (tests/test_news_flags.py holds them).
-NEWS_CONSENT_VERSION = 'news-v1 (2026-11-22)'
+# NEWS_PROMISE is js/news-signup.mjs's PROMISE word for word (tests/test_news_flags.py holds them).
+# news-v2 (2026-11-22, Bill's pick): the front page offers NEWS ONLY. The postcode box (news-v1's AREA_PROMISE, "Also
+# tell me when the figures for {postcode} change.") is gone: the page opens on an example and suggests places, so most
+# searches are someone looking around, and two offers in one strip confused. Following a place may come back from the
+# full map's result, as its own version. A news-v1 member's stored words stay as they were.
+NEWS_CONSENT_VERSION = 'news-v2 (2026-11-22)'
 NEWS_PROMISE = 'News by email. New cities and new data. At most one email a month.'
-AREA_PROMISE = 'Also tell me when the figures for {postcode} change.'
 
 
-def consent_wording(postcode=''):
-    """The words this member agreed to, as stored: the strip's promise, plus the ticked box's line naming the postcode."""
-    words = f'{NEWS_CONSENT_VERSION}: {NEWS_PROMISE}'
-    return f'{words} {AREA_PROMISE.format(postcode=postcode)}' if postcode else words
+def consent_wording():
+    """The words this member agreed to, as stored: the strip's promise, under its version."""
+    return f'{NEWS_CONSENT_VERSION}: {NEWS_PROMISE}'
 # A confirm link lives a day. Long enough for an email to sit unread over a
 # night, short enough that a leaked link is not a standing door; the pending
 # table's TTL expires the row on the same clock, so an old token cannot be
@@ -498,10 +506,9 @@ def handle_post(event):
         # A 403, not a 503: closed is a decision, not a fault, and a 5xx would count in the API's error figures.
         if not (UPDATES_LIST and SIGNUP_VERIFY):
             return response(403, {'error': 'News by email is not open yet.'}, event)
-        # No postcode is news only. A postcode (the strip's box, ticked) must be a full one: the email names it, and
-        # only a real postcode shape may reach an email body.
-        if postcode and not UK_POSTCODE.match(postcode):
-            return response(400, {'error': 'That is not a full postcode. Search a full postcode first.'}, event)
+        # News only (news-v2, 2026-11-22): the strip sends no postcode and privacy s2a names none, so one sent anyway
+        # is dropped here, never checked, stored or emailed. Same answer either way: nothing to probe.
+        postcode = ''
 
     if SIGNUP_VERIFY:
         return start_verification(email, name, source, postcode, event)
@@ -515,7 +522,7 @@ def complete_signup(email, name, source, postcode, event):
     so the two modes cannot drift on what a signup means."""
     if source == 'updates':
         # Its own table and its own rules: the signups table is not read or written for news by email.
-        return subscribe_updates(email, postcode, event)
+        return subscribe_updates(email, event)
     # One key per email. If they already signed up, surface that with a
     # clear message, we cannot re-show the key (APIGW only returns the
     # value at creation time, not on subsequent reads).
@@ -958,9 +965,63 @@ def send_decision(email):
     return 'full' if today is not None and today > SEND_CEILING_PER_DAY else 'send'
 
 
+CONFIRM_SMALL_PRINT = 'The link works for 24 hours. If this was not you, ignore this email and nothing is stored.'
+CONFIRM_FOOTER = 'Sky Score - https://skyscore.co.uk'
+# Each kind of sign-up's band: its tag, and the strip's promise under the brand where there is one.
+_BAND = {
+    'updates': ('News by email', 'New cities and new data. At most one email a month.'),
+    'consumer': ('Score updates', ''),
+    'api': ('API key', ''),
+}
+
+
+def confirmation_html(source, what, link):
+    """The confirmation email's HTML part (Bill's pick, 2026-11-22: the blue-grey band, Stitch draft S2, rebuilt here):
+    tables and inline styles, as every mail app needs; the site's colours; system fonts; NO images, no remote content,
+    nothing that could track an open. Same words as the plain-text part, and every one of them escaped."""
+    tag, line = _BAND.get(source, _BAND['api'])
+    font = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+    e = html.escape
+    band_line = (f'<div style="margin-top:4px;font:400 14px/1.45 {font};color:#3a4448">{e(line)}</div>' if line else '')
+    return (
+        '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">'
+        f'<title>{e(tag)} - Sky Score</title></head>'
+        '<body style="margin:0;padding:0;background:#f4f3ef">'
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f3ef" '
+        'style="background:#f4f3ef"><tr><td align="center" style="padding:24px 12px">'
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" '
+        'style="max-width:560px;background:#ffffff;border:1px solid #dedcd6;border-radius:18px;border-collapse:separate">'
+        # The band: the brand on the left, the kind of sign-up on the right, the promise under them.
+        '<tr><td bgcolor="#dbe4e8" style="background:#dbe4e8;padding:18px 24px;border-radius:18px 18px 0 0">'
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>'
+        f'<td style="font:700 17px/1.3 {font};color:#141414">Sky Score</td>'
+        f'<td align="right" style="font:400 13px/1.3 {font};color:#3a4448">{e(tag)}</td></tr></table>'
+        f'{band_line}</td></tr>'
+        f'<tr><td style="padding:22px 24px 0;font:700 22px/1.3 {font};color:#141414">Confirm your email</td></tr>'
+        f'<tr><td style="padding:10px 24px 0;font:400 16px/1.55 {font};color:#141414">{e(what)}</td></tr>'
+        # A full-width button that also works in Outlook: the cell carries the colour, the link fills it.
+        '<tr><td style="padding:20px 24px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        'border="0"><tr><td align="center" bgcolor="#141414" style="background:#141414;border-radius:10px">'
+        f'<a href="{e(link, quote=True)}" style="display:block;padding:15px 18px;font:700 16px/1.2 {font};'
+        'color:#ffffff;text-decoration:none;border-radius:10px">Confirm my email</a></td></tr></table></td></tr>'
+        '<tr><td style="padding:20px 24px 0"><div style="border-top:1px solid #dedcd6;font-size:0;line-height:0">'
+        '&nbsp;</div></td></tr>'
+        f'<tr><td style="padding:14px 24px 0;font:400 14px/1.5 {font};color:#55554f">{e(CONFIRM_SMALL_PRINT)}</td></tr>'
+        f'<tr><td style="padding:10px 24px 24px;font:400 13px/1.5 {font};color:#55554f;word-break:break-all">'
+        f'If the button does not work, open this link: <a href="{e(link, quote=True)}" style="color:#141414">'
+        f'{e(link)}</a></td></tr>'
+        '</table>'
+        f'<div style="padding:16px 12px 0;font:400 13px/1.5 {font};color:#55554f">Sky Score - '
+        '<a href="https://skyscore.co.uk" style="color:#55554f">https://skyscore.co.uk</a></div>'
+        '</td></tr></table></body></html>'
+    )
+
+
 def send_confirmation_email(email, source, postcode, link):
-    """One plain-text message. No tracking, no HTML part, no personal data
-    beyond the address it is sent to; the link carries the token alone."""
+    """The confirmation email: the plain-text part (the words Bill approved, unchanged) and, since 2026-11-22, an HTML
+    part in the site's look (confirmation_html). No tracking, no images, no personal data beyond the address it is
+    sent to; the link carries the token alone. News by email names no postcode since news-v2."""
     if source == 'consumer':
         subject = 'Confirm your Sky Score updates'
         # Only a real postcode shape reaches the body; anything else could be
@@ -971,56 +1032,77 @@ def send_confirmation_email(email, source, postcode, link):
             f'{shown} changes. Confirm it here:'
         )
     elif source == 'updates':
-        # News by email; the postcode is named only if the strip's box was ticked AND it is a real postcode shape.
-        if UK_POSTCODE.match(postcode or ''):
-            subject = f'Confirm your Sky Score news and updates for {postcode}'
-            what = (
-                'Someone - probably you - asked for Sky Score news by email (new cities and new data), with word when '
-                f'the figures for {postcode} change. At most one email a month. Confirm it here:'
-            )
-        else:
-            subject = 'Confirm your Sky Score news'
-            what = (
-                'Someone - probably you - asked for Sky Score news by email: new cities and new data, at most one '
-                'email a month. Confirm it here:'
-            )
+        subject = 'Confirm your Sky Score news'
+        what = (
+            'Someone - probably you - asked for Sky Score news by email: new cities and new data, at most one '
+            'email a month. Confirm it here:'
+        )
     else:
         subject = 'Confirm your Sky Score API key request'
         what = 'Someone - probably you - asked for a free Sky Score API key. Confirm the address here:'
-    body = (
-        f'{what}\n\n{link}\n\n'
-        'The link works for 24 hours. If this was not you, ignore this email and '
-        'nothing is stored.\n\nSky Score - https://skyscore.co.uk\n'
-    )
+    body = f'{what}\n\n{link}\n\n{CONFIRM_SMALL_PRINT}\n\n{CONFIRM_FOOTER}\n'
     ses.send_email(
         FromEmailAddress=SES_FROM,
         Destination={'ToAddresses': [email]},
+        ReplyToAddresses=[SES_REPLY_TO],
         Content={
             'Simple': {
                 'Subject': {'Data': subject, 'Charset': 'UTF-8'},
-                'Body': {'Text': {'Data': body, 'Charset': 'UTF-8'}},
+                'Body': {
+                    'Text': {'Data': body, 'Charset': 'UTF-8'},
+                    'Html': {'Data': confirmation_html(source, what, link), 'Charset': 'UTF-8'},
+                },
             }
         },
     )
 
 
+# The pages a person reaches from our emails (confirm, unsubscribe, and their answers) wear the email's look (Bill's
+# pick, 2026-11-22: the blue-grey band, Stitch draft S2): the site's page colour, a white card with the band and the
+# brand, a dark full-width button. The site's own colours (home/index.html: --bg #f4f3ef, --line #dedcd6, --water
+# #dbe4e8, --dark #141414, secondary #55554f, --focus #d35a12). Plain CSS in the page, system fonts, no images.
 _PAGE = (
     '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
     '<meta name="viewport" content="width=device-width,initial-scale=1">'
     '<meta name="robots" content="noindex">'
     '<title>{title} - Sky Score</title>'
-    '<style>body{{font:16px/1.5 system-ui,sans-serif;margin:0;padding:24px;max-width:36rem}}'
-    'code{{display:block;padding:12px;background:#f3f4f6;border-radius:6px;word-break:break-all;'
-    'font-size:15px}}h1{{font-size:22px}}a{{color:#1d4ed8}}</style></head>'
-    '<body><h1>{title}</h1>{body}<p><a href="https://skyscore.co.uk/">skyscore.co.uk</a></p>'
-    '</body></html>'
+    '<style>'
+    'body{{margin:0;background:#f4f3ef;color:#141414;'
+    'font:16px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}}'
+    'main{{max-width:34rem;margin:0 auto;padding:24px 16px 40px}}'
+    '.card{{background:#fff;border:1px solid #dedcd6;border-radius:18px;overflow:hidden}}'
+    '.band{{background:#dbe4e8;padding:16px 24px;font-weight:600}}'
+    '.in{{padding:22px 24px 24px}}'
+    'h1{{font-size:22px;line-height:1.3;margin:0 0 12px}}'
+    'p{{margin:0 0 12px}}a{{color:#141414}}'
+    'button{{display:block;width:100%;font-family:inherit;font-size:16px;font-weight:600;line-height:1.2;padding:14px 18px;'
+    'border:0;border-radius:10px;background:#141414;color:#fff;cursor:pointer}}'
+    'button:focus-visible,a:focus-visible{{outline:3px solid #d35a12;outline-offset:2px}}'
+    'code{{display:block;padding:12px;background:#f4f3ef;border-radius:8px;word-break:break-all;font-size:15px}}'
+    '.foot{{text-align:center;font-size:13px;color:#55554f;margin-top:16px}}.foot a{{color:#55554f}}'
+    '</style></head>'
+    '<body><main><div class="card"><div class="band">Sky Score</div><div class="in"><h1>{title}</h1>{body}</div></div>'
+    '<p class="foot"><a href="https://skyscore.co.uk/">skyscore.co.uk</a></p></main>{script}</body></html>'
 )
 
+# ONE CLICK for news by email (Bill's pick 1, 2026-11-22): the confirm page posts its own form as it opens, so a person
+# who opens the link is confirmed (privacy s2a: "Opening the link in that email confirms it."). A scanner that only
+# FETCHES links (Safe Links, Mimecast, Proofpoint: the 25 Sep incident) runs no script and changes nothing; with script
+# off, the button is there. The page's CSP allows this one script by its hash and nothing else.
+_AUTO_CONFIRM_JS = "document.getElementById('confirm').submit();"
+_AUTO_CONFIRM_HASH = 'sha256-' + base64.b64encode(hashlib.sha256(_AUTO_CONFIRM_JS.encode('utf-8')).digest()).decode('ascii')
 
-def html_page(status, title, body):
+
+def html_page(status, title, body, script=''):
     """A page, not a JSON envelope: the caller is a person who clicked a link
     in an email. Everything interpolated is escaped, including our own
-    strings - the key is the one thing on the page that came from an API."""
+    strings - the key is the one thing on the page that came from an API.
+    `script` is only ever _AUTO_CONFIRM_JS: the CSP names its hash, so no other script could run."""
+    if script and script != _AUTO_CONFIRM_JS:
+        raise ValueError('html_page runs no script but the one-click confirm')
+    csp = "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'"
+    if script:
+        csp += f"; script-src '{_AUTO_CONFIRM_HASH}'"
     if status >= 500:
         # [5XX] (2026-10-27): API Gateway counts a 5xx but cannot say whose, and a handler that RETURNS one logs
         # nothing else; backend/tests/test_5xx_logged.py holds every builder to this line.
@@ -1035,9 +1117,10 @@ def html_page(status, title, body):
             'Referrer-Policy': 'no-referrer',
             # form-action is NOT covered by default-src, so it is named: the
             # confirm button may post back to this origin and nowhere else.
-            'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'",
+            'Content-Security-Policy': csp,
         },
-        'body': _PAGE.format(title=html.escape(title), body=body),
+        'body': _PAGE.format(title=html.escape(title), body=body,
+                             script=f'<script>{script}</script>' if script else ''),
     }
 
 
@@ -1096,19 +1179,22 @@ def handle_confirm_get(event):
     if not row or int(row.get('expiresAt', {}).get('N', '0')) < int(time.time()):
         return html_page(410, *_EXPIRED_LINK)
     source = row.get('source', {}).get('S')
-    pending_pc = row.get('postcode', {}).get('S', '')
+    form = (f'<form method="post" id="confirm"><input type="hidden" name="token" value="{html.escape(token)}">'
+            '<button type="submit">Confirm</button></form>')
     if source == 'updates':
-        what = 'Sky Score news by email, at most one email a month'
-        if UK_POSTCODE.match(pending_pc):
-            what += f', with word when the figures for {pending_pc} change'
-    else:
-        what = 'email updates' if source == 'consumer' else 'a free Sky Score API key'
+        # One click (see _AUTO_CONFIRM_JS): the form posts itself as the page opens; the button is the fallback.
+        return html_page(
+            200, 'Confirming your email',
+            '<p>One moment: confirming this address for Sky Score news by email, at most one email a month.</p>'
+            '<p>If nothing happens, press Confirm.</p>' + form,
+            script=_AUTO_CONFIRM_JS,
+        )
+    # API keys and the map's list keep the button: a key is shown ONCE (a scanner running script would take it), and
+    # that list's privacy paragraph says "Opening the link alone confirms nothing".
+    what = 'email updates' if source == 'consumer' else 'a free Sky Score API key'
     return html_page(
         200, 'Confirm your email address',
-        f'<p>Press the button to confirm this address for {html.escape(what)}.</p>'
-        f'<form method="post"><input type="hidden" name="token" value="{html.escape(token)}">'
-        '<button type="submit" style="font:inherit;padding:12px 20px;border-radius:6px;'
-        'border:0;background:#1d4ed8;color:#fff;cursor:pointer">Confirm</button></form>',
+        f'<p>Press the button to confirm this address for {html.escape(what)}.</p>' + form,
     )
 
 
@@ -1155,7 +1241,8 @@ def handle_confirm(event):
             f'<a href="https://skyscore.co.uk/score-demo/api-docs.html">Docs</a>.</p>',
         )
     if status in (200, 201):
-        return html_page(200, 'Confirmed', f'<p>{html.escape(data.get("message", "Done."))}</p>')
+        title = "You're signed up" if source == 'updates' else 'Confirmed'
+        return html_page(200, title, f'<p>{html.escape(data.get("message", "Done."))}</p>')
     if status == 409:
         return html_page(
             200, 'Already signed up',
@@ -1177,13 +1264,14 @@ def _mail_key(kind, value):
     return {'pk': {'S': f'{kind}#{value}'}}
 
 
-def subscribe_updates(email, area, event):
+def subscribe_updates(email, event):
     """Join news by email, once the emailed link has been confirmed (complete_signup() runs only from the confirm
-    button for this source, because the POST refuses 'updates' unless SIGNUP_VERIFY is on). `area` is '' for news
-    only, or the full postcode whose box was ticked; the member stores a postcode only when there is one.
+    page for this source, because the POST refuses 'updates' unless SIGNUP_VERIFY is on). News only since news-v2
+    (2026-11-22): no postcode is stored, even from a pending row made before the box was removed (privacy s2a names
+    none).
 
-    A confirmed sign-up REPLACES the member: the consent is what was agreed this time, so joining again without the box
-    drops an earlier postcode, and with it ticked moves it.
+    A confirmed sign-up REPLACES the member: the consent is what was agreed this time, so joining again under news-v2
+    drops a news-v1 member's postcode.
 
     A new token for every confirmed sign-up, written BEFORE the member that names it, so a failure part-way leaves at
     most a token nobody holds, never a member whose emails could carry no working unsubscribe link. A previous token is
@@ -1196,19 +1284,16 @@ def subscribe_updates(email, area, event):
     """
     if not UPDATES_LIST:
         return response(403, {'error': 'News by email is not open yet.'}, event)
-    area = area if UK_POSTCODE.match(area or '') else ''
     token = secrets.token_urlsafe(32)
     now = datetime.now(UTC).isoformat()
     member = {
         **_mail_key('updates', email),
         'email': {'S': email},
-        'consent': {'S': consent_wording(area)},
+        'consent': {'S': consent_wording()},
         'consentedAt': {'S': now},
         'via': {'S': 'website'},
         'unsubToken': {'S': token},
     }
-    if area:
-        member['area'] = {'S': area}
     try:
         ddb.put_item(TableName=MAIL_TABLE, Item={**_mail_key('unsub', token), 'email': {'S': email}, 'createdAt': {'S': now}})
         # The old member comes back from the write itself (one hop, not a read then a write: the confirm path's budget
@@ -1230,11 +1315,9 @@ def subscribe_updates(email, area, event):
         201,
         {
             'status': 'subscribed',
-            'area': area,
             'message': (
-                'Thanks. You are on the list for Sky Score news'
-                + (f', with word when the figures for {area} change' if area else '')
-                + '. At most one email a month, and every email has a link to stop them.'
+                'Thanks. You are on the list for Sky Score news. At most one email a month, and every email has '
+                'a link to stop them.'
             ),
         },
         event,
@@ -1258,8 +1341,7 @@ def handle_unsubscribe_get(event):
         200, 'Stop these emails',
         '<p>Press the button and we will stop Sky Score news, and not email this address again.</p>'
         f'<form method="post"><input type="hidden" name="token" value="{html.escape(token)}">'
-        '<button type="submit" style="font:inherit;padding:12px 20px;border-radius:6px;'
-        'border:0;background:#1d4ed8;color:#fff;cursor:pointer">Unsubscribe</button></form>',
+        '<button type="submit">Unsubscribe</button></form>',
     )
 
 

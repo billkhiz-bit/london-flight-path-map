@@ -1,35 +1,45 @@
 // NEWS BY EMAIL (Bill, 2026-11-22; mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6, colour A). The front page's
-// strip under the hero (home/index.html #news): one form, the button is the consent, and after a real search ONE
-// unticked box adds that postcode. It joins through /v1/signup (source 'updates'), which emails a confirmation link
-// first and adds nobody until it is pressed. It grew out of the area updates card built 2026-11-10 (Bill's pick A then),
-// which it replaces: one form on the page, not two.
+// strip under the hero (home/index.html #news): one form, the button is the consent. It joins through /v1/signup
+// (source 'updates'), which emails a confirmation link first and adds nobody until it is opened.
 //
-// The words are the Lambda's, word for word (backend/lambdas/signup/app.py NEWS_PROMISE and AREA_PROMISE, stored with
-// every member as what they agreed to; tests/test_news_flags.py holds them, and the strip's own text, equal). Change
-// one, change all, and the Lambda's NEWS_CONSENT_VERSION.
+// NEWS ONLY since news-v2 (Bill's pick the same evening, claude.ai/artifact/8v4FMpDJ9Eq8N24zEGhVHz): the postcode tick
+// box is gone. The page opens on an example and suggests places, so most searches are someone looking around, and two
+// offers in one strip confused. Following a place may come back from the full map's result, as its own version.
+//
+// After pressing, the strip says where the link went (the address mostly hidden), what to do if it is not there, and
+// offers ONE way to send it again and one to change the address. The Lambda sends at most three a day to one inbox
+// (SEND_CAP_PER_DAY) and answers a capped request with the same 201 as a real send, so the page counts its own sends and
+// says so in words after the third: it never claims a send it cannot know happened.
+//
+// The words are the Lambda's, word for word (backend/lambdas/signup/app.py NEWS_PROMISE, stored with every member as
+// what they agreed to; tests/test_news_flags.py holds them, and the strip's own text, equal). Change one, change both,
+// and the Lambda's NEWS_CONSENT_VERSION.
 export const PROMISE = 'News by email. New cities and new data. At most one email a month.';
-export const AREA_LINE = 'Also tell me when the figures for {postcode} change.';
 
-/** A full UK postcode, exactly as the Lambda checks it (`UK_POSTCODE` in backend/lambdas/signup/app.py, after its
- *  strip and upper-case; tests/news-signup.mjs holds the two equal): an outcode or a place name offers no box. */
-export const FULL_POSTCODE = /^[A-Z]{1,2}[0-9][A-Z0-9]? ?[0-9][A-Z]{2}$/;
+/** Sends one page may ask for: the Lambda's SEND_CAP_PER_DAY (tests/news-signup.mjs reads it from app.py). */
+export const SENDS_PER_DAY = 3;
 
-/** As the box shows and sends it: trimmed, upper case, one space at most. */
-export const normalisePostcode = (postcode) => String(postcode ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
+/** The address as the strip shows it after sending: its first letter, then dots, then the domain in full, so the person
+ *  can tell which address it went to and a passer-by learns little. */
+export function maskAddress(address) {
+  const text = String(address || '').trim();
+  const at = text.lastIndexOf('@');
+  if (at < 1) return '';
+  return `${text.slice(0, 1)}•••••${text.slice(at)}`;
+}
 
-/** Ask to join: the address goes in the POST body, never a URL. `postcode` is '' for news only. Resolves to
+/** Ask to join: the address goes in the POST body, never a URL, and nothing else goes with it. Resolves to
  *  { ok, message } in words for the visitor; never throws. `fetchFn` is the browser's fetch, replaceable in tests. */
-export async function requestNews(apiBase, email, postcode = '', fetchFn = globalThis.fetch) {
+export async function requestNews(apiBase, email, fetchFn = globalThis.fetch) {
   const address = String(email || '').trim();
   if (!address || !address.includes('@')) return { ok: false, message: 'Enter your email address so we know where to send the link.' };
-  const pc = normalisePostcode(postcode);
   try {
     const res = await fetchFn(`${apiBase}/v1/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: address, source: 'updates', postcode: FULL_POSTCODE.test(pc) ? pc : '' }),
+      body: JSON.stringify({ email: address, source: 'updates' }),
     });
-    if (res.status === 201) return { ok: true, message: 'Check your inbox: we have sent a link to confirm. Nothing more comes until you press it.' };
+    if (res.status === 201) return { ok: true, message: '' };
     if (res.status === 429) return { ok: false, message: 'Busy just now. Wait a moment and try again.' };
     const data = await res.json().catch(() => ({}));
     return { ok: false, message: typeof data.error === 'string' && data.error ? data.error : 'That did not go through. Try again in a moment.' };
@@ -38,40 +48,9 @@ export async function requestNews(apiBase, email, postcode = '', fetchFn = globa
   }
 }
 
-/** Offer the postcode box for the place the visitor searched, or hide it ('' or anything short of a full postcode).
- *  A NEW place starts unticked: a tick given for one postcode never carries to another. */
-export function offerPostcode(root, postcode) {
-  const row = root && root.querySelector('#news-pc-row');
-  if (!row) return;
-  const pc = normalisePostcode(postcode);
-  const offer = FULL_POSTCODE.test(pc);
-  const name = row.querySelector('#news-pc-name');
-  const box = row.querySelector('#news-pc');
-  const moved = name.textContent !== (offer ? pc : '');
-  if (!offer || moved) box.checked = false;
-  name.textContent = offer ? pc : '';
-  row.hidden = !offer;
-  // A new place is a new question: last answer's line goes, and the button is offered again (code review 2026-11-22:
-  // "Check your inbox" sat under the next postcode's box, reading as though it had been asked for).
-  if (moved) afresh(root);
-}
-
-/** Clear the result line and, after a sign-up went through, offer the button again. Never while one is on its way. */
-function afresh(root) {
-  const form = root.querySelector('#news-form');
-  const out = root.querySelector('#news-result');
-  if (out) out.textContent = '';
-  if (form && form.dataset.sent) {
-    delete form.dataset.sent;
-    form.querySelector('button[type=submit]').disabled = false;
-  }
-}
-
-/** Bind the strip once. `count(name)` records only that it was used (never the address or the postcode).
+/** Bind the strip once. `count(name)` records only that it was used (never the address).
  *  The button ships DISABLED in the page (code review 2026-11-22): without this module the form would post the address
- *  to the site itself, which the privacy text does not name, so it can be pressed only once this has bound it.
- *  After a sign-up goes through it stays off until the address or the box changes: a second press would send a second
- *  confirmation email and spend the inbox's daily allowance. */
+ *  to the site itself, which the privacy text does not name, so it can be pressed only once this has bound it. */
 export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
   const form = root && root.querySelector('#news-form');
   if (!form || form.dataset.wired) return;
@@ -79,25 +58,71 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
   const out = root.querySelector('#news-result');
   const button = form.querySelector('button[type=submit]');
   const email = form.querySelector('input[type=email]');
+  const sent = root.querySelector('#news-sent');
+  const to = root.querySelector('#news-sent-to');
+  const again = root.querySelector('#news-again');
+  const other = root.querySelector('#news-other');
+  const said = root.querySelector('#news-again-said');
+  let address = '';
+  let sends = 0;
   button.disabled = false;
-  email.addEventListener('input', () => afresh(root));
-  root.querySelector('#news-pc')?.addEventListener('change', () => afresh(root));
+  email.addEventListener('input', () => { out.textContent = ''; });
+
+  const showSent = () => {
+    to.textContent = maskAddress(address);
+    said.textContent = '';
+    again.hidden = sends >= SENDS_PER_DAY;
+    form.hidden = true;
+    sent.hidden = false;
+    // Focus moves to the panel's heading: a keyboard or screen reader user lands on what just changed.
+    root.querySelector('#news-sent-h')?.focus();
+  };
+
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (button.disabled) return;
-    const row = root.querySelector('#news-pc-row');
-    const ticked = row && !row.hidden && root.querySelector('#news-pc').checked;
-    const postcode = ticked ? root.querySelector('#news-pc-name').textContent : '';
     button.disabled = true;
     out.textContent = 'Sending...';
     count('news-requested');
-    const result = await requestNews(apiBase, email.value, postcode, fetchFn);
-    out.textContent = result.message;
-    if (result.ok) {
-      count('news-link-sent');
-      form.dataset.sent = '1';
-    } else {
-      button.disabled = false;
+    const result = await requestNews(apiBase, email.value, fetchFn);
+    button.disabled = false;
+    if (!result.ok) {
+      out.textContent = result.message;
+      return;
     }
+    out.textContent = '';
+    address = email.value.trim();
+    sends = 1;
+    count('news-link-sent');
+    showSent();
+  });
+
+  again.addEventListener('click', async () => {
+    if (again.disabled || sends >= SENDS_PER_DAY) return;
+    again.disabled = true;
+    said.textContent = 'Sending...';
+    count('news-resend');
+    const result = await requestNews(apiBase, address, fetchFn);
+    again.disabled = false;
+    if (!result.ok) {
+      said.textContent = result.message;
+      return;
+    }
+    sends += 1;
+    if (sends >= SENDS_PER_DAY) {
+      again.hidden = true;
+      said.textContent = 'Sent again. That is three today, the most we send to one address. If none arrives, try a different address or come back tomorrow.';
+    } else {
+      said.textContent = 'Sent again.';
+    }
+  });
+
+  other.addEventListener('click', () => {
+    sent.hidden = true;
+    form.hidden = false;
+    email.value = '';
+    address = '';
+    sends = 0;
+    email.focus();
   });
 }

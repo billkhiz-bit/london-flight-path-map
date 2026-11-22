@@ -408,16 +408,24 @@ Or just describe what you need, I have full context of this project.
   sticky map column slid over it there), on its own grid repeating the hero's tracks so its words sit on the search column and its
   form on the map's edge; the map's blue-grey, a dark button (the search keeps the ONLY orange), a dark link (orange-brown fails on
   blue-grey). It opens and closes as ONE change with the template's `UpdatesList` default and privacy s2a's "News by email"
-  paragraph (`tests/test_news_flags.py`, which also holds the strip's words equal to the Lambda's stored `NEWS_PROMISE` /
-  `AREA_PROMISE`). Its list lives in its own table (`london-flight-map-mail`), never the signups table; the address only in a POST
-  body; a postcode only when its UNTICKED box (after a real search, never the example) is ticked; at most one email a month, only
-  after the emailed link is confirmed. `tests/news-signup.mjs` answers `/v1/signup` in the page. Its class is `news-strip`:
+  paragraph (`tests/test_news_flags.py`, which also holds the strip's words equal to the Lambda's stored `NEWS_PROMISE`).
+  Its list lives in its own table (`london-flight-map-mail`), never the signups table; the address only in a POST body, ALONE:
+  **news only since news-v2** (Bill, 2026-11-22: the postcode box was "confusing", the page opens on an example), the Lambda
+  drops any postcode for news, consent words `news-v2`; following a place may return later from the full map's result only.
+  At most one email a month, only after the emailed link is confirmed. **One click confirms news** (`_AUTO_CONFIRM_JS`: the
+  page posts its own form, the CSP allowing that ONE script by its hash; API keys and the map's list keep their button, a key
+  being shown once). The email is Bill's S2 (blue-grey band, `confirmation_html()`: tables, no images, nothing remote) beside
+  the unchanged plain text, with `Reply-To: support@`; after pressing, "Check your inbox" names the address masked and offers
+  "Send it again" to the Lambda's three a day (`SENDS_PER_DAY` == `SEND_CAP_PER_DAY`). `tests/news-signup.mjs` answers
+  `/v1/signup` in the page. Its class is `news-strip`:
   `.news` is the consultation pill's, and its rules (an orange `b`) landed on the strip when it shared the name. The
   do-not-email list is read before EVERY send, the confirmation included (privacy: "never write to it again"); the button
   ships `disabled` until the module binds it; its count passes `engaged(way, { acts: false })`, or a sign-up before the
   example lands leaves the answer empty (code review 2026-11-22). **Every link in our emails says skyscore.co.uk**
-  (`ConfirmUrlBase` -> `CONFIRM_URL_BASE`; CloudFront routes `/v1/signup/*` to the API): the raw execute-api host was
-  delivered to Hotmail and seen nowhere, not even Junk (2026-11-22, `backend/tests/test_confirm_link_host.py`).
+  (`ConfirmUrlBase` -> `CONFIRM_URL_BASE`; CloudFront routes `/v1/signup/*` to the API; `backend/tests/test_confirm_link_host.py`),
+  and SPF aligns through SES's custom MAIL FROM `mail.skyscore.co.uk` (verified 2026-11-22). Hotmail put the first
+  confirmations in JUNK (found there after being called lost: the folder sorted by sender); a new domain's first mail to
+  Outlook lands in Junk until it has a history, so the strip says "Look in Junk or Spam".
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,

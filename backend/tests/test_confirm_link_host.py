@@ -2,8 +2,8 @@
 
 The first news-by-email confirmation went from noreply@skyscore.co.uk with a token link to the raw API Gateway host
 (https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/signup/confirm?token=...). SES delivered it to Hotmail
-(CloudWatch: Send 1, Delivery 1, Bounce 0) and it reached neither the inbox nor Junk: a token link to an AWS address
-in mail from another domain is the shape phishing takes. Since 22 Nov CloudFront routes /v1/signup/* on skyscore.co.uk
+(CloudWatch: Send 1, Delivery 1, Bounce 0), into Junk (it looked lost until found there: the folder sorted by sender).
+A token link to an AWS address in mail from another domain is the shape phishing takes. Since 22 Nov CloudFront routes /v1/signup/* on skyscore.co.uk
 to this API (the `/badge` origin, caching off), and the template's ConfirmUrlBase points the links there.
 
 What this holds: the template's default and the function's environment (a parameter that never reaches the Lambda

@@ -858,8 +858,9 @@ first meeting them inside the flip.
    address you own: 201 `pending`, the email arrives with DKIM pass (check
    the headers), the link shows the key once, a second click is a 410.
 6. DONE 2026-11-22, and NOT optional: the links go through the site's own domain. The first news confirmation
-   (to Hotmail) linked to the raw execute-api host; SES says delivered, and it reached neither the inbox nor
-   Junk. CloudFront's `/v1/signup/*` behaviour (published 2026-11-22: the `/badge` APIGW origin, CachingDisabled,
+   (to Hotmail) linked to the raw execute-api host; SES said delivered and it looked lost, but it was in Junk (found
+   later: the folder sorted by sender). A token link to a bare AWS host is still the shape phishing takes, and SPF now
+   aligns through SES's custom MAIL FROM `mail.skyscore.co.uk` (Cloudflare MX + TXT, verified 2026-11-22). CloudFront's `/v1/signup/*` behaviour (published 2026-11-22: the `/badge` APIGW origin, CachingDisabled,
    AllViewerExceptHostHeader, the site's response headers, no viewer function) serves the confirm and unsubscribe
    pages at `https://skyscore.co.uk/v1/signup/...`; the template's `ConfirmUrlBase` (default the site) sets
    `CONFIRM_URL_BASE`. Pass `ConfirmUrlBase=https://skyscore.co.uk` with the other two flags; rollback is
@@ -869,17 +870,19 @@ first meeting them inside the flip.
 merge, in the same window: the override alone leaves a live privacy page
 describing consent by a link nobody is sent.
 
-### 3.10 - News by email (`UpdatesList=on`) - **BUILT 2026-11-22 on branch `news-by-email`; going live the same night**
+### 3.10 - News by email (`UpdatesList=on`) - **LIVE 2026-11-22 (`82c23557`); news v2 the same night**
 
 **What it is (Bill, 2026-11-22; mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6, colour A):** a strip straight after
 the front page's hero: "News by email. New cities and new data. At most one email a month.", an email box and a dark
-"Sign me up". After a real search (never the example) it offers ONE unticked box, "Also tell me when the figures for
-<postcode> change", whose news goes in the same monthly email. It grew out of the area updates card built 2026-11-10
-(branch `area-updates-list`, Bill's pick A then; its backend kept, its card and the full map's card dropped). It joins
-through `POST /v1/signup` with `source: 'updates'` and `postcode` '' or the ticked postcode (the Lambda refuses the
-source unless `UPDATES_LIST` AND `SIGNUP_VERIFY` are on), lives in its own table `london-flight-map-mail` (`updates#`,
-`unsub#`, `suppress#` items; the signups table's one-row-per-email rules are not touched), stores the words agreed to
-(`consent_wording()`: `NEWS_CONSENT_VERSION`, `NEWS_PROMISE`, plus `AREA_PROMISE` with the postcode when ticked), and
+"Sign me up". NEWS ONLY since v2 (Bill: the postcode box, after a search, was "confusing"): after pressing, the strip
+says "Check your inbox" with the address masked and "Send it again" to the Lambda's three a day. It grew out of the area
+updates card built 2026-11-10 (branch `area-updates-list`). It joins through `POST /v1/signup` with `source: 'updates'`
+and the address alone (the Lambda drops any postcode for this source, and refuses the source unless `UPDATES_LIST` AND
+`SIGNUP_VERIFY` are on), lives in its own table `london-flight-map-mail` (`updates#`, `unsub#`, `suppress#` items; the
+signups table's one-row-per-email rules are not touched), stores the words agreed to (`consent_wording()`:
+`NEWS_CONSENT_VERSION` `news-v2`, `NEWS_PROMISE`; a news-v1 member keeps any postcode it ticked). The confirmation email is
+Bill's S2 design beside the plain text, with `Reply-To: support@`; one click confirms (the page posts itself, one hashed
+script; API keys keep their button), and
 every email's unsubscribe link is `GET/POST /v1/signup/unsubscribe?token=` (the GET shows a button; the POST, or a mail
 client's RFC 8058 one-click, removes the member and adds the address to the do-not-email list). The do-not-email list
 is read before EVERY send, the confirmation email included: a listed address gets the same 201 and no email (privacy
@@ -902,9 +905,12 @@ paragraph (given 22 Nov in the session, from his P11 answers: at most monthly, c
    would start an API-key sign-up for anyone pressing "Sign me up". Then `web-deploy` (js, privacy, changes) and
    `home-deploy` (the strip), then the drift check.
 4. Verify from the origin: `GET /v1/signup/unsubscribe?token=<43 made-up characters>` answers the button page;
-   `POST /v1/signup` with `source: 'updates'` and a bad postcode answers 400; the live front page draws the strip; the
-   live Lambda shows `UPDATES_LIST=on`. Then end to end with an address Bill owns: the strip, the confirmation email
-   ("Confirm your Sky Score news"), the `updates#` item, and later the unsubscribe link from a test email.
+   the live front page draws the strip; the live Lambda shows `UPDATES_LIST=on` and `CONFIRM_URL_BASE`; a GET of
+   `https://skyscore.co.uk/v1/signup/confirm?token=<made-up>` answers 410 (since v2 the news confirm page carries
+   `script-src 'sha256-...'` in its CSP; an API key's does not). (Until v2 a bad postcode answered 400; news now drops
+   any postcode and answers 201.) Then end to end with addresses Bill owns, Gmail AND Hotmail: the strip, the
+   confirmation email ("Confirm your Sky Score news", S2 design), one click to "You're signed up", the `updates#` item,
+   and later the unsubscribe link from a test email. A Hotmail copy in Junk is expected for a new domain: check there.
 
 **Rollback:** deploy with `UpdatesList=off` (the POST answers 403 "News by email is not open yet."; a link pressed after
 says the list is closed and saves nothing) AND put `hidden` on the strip with the privacy paragraph's removal, as one

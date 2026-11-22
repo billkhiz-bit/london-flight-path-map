@@ -35,15 +35,15 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > drift PASS (56 pages, 42 data files, 153 area pages). OPERATIONS s3.10 step 4 from the origin: the live Lambda reads
 > `UPDATES_LIST=on`, `SIGNUP_VERIFY=on`, `MAIL_TABLE=london-flight-map-mail`; a made-up unsubscribe token gets the button page;
 > `source: 'updates'` with a bad postcode answers 400; the strip is on the live front page at 1366 and 390 (no sideways scroll).
-> **Bill's first real sign-up (a Hotmail address) never arrived**: SES says delivered, neither inbox nor Junk. The link
-> pointed at the raw execute-api host. FIXED in the commit after the audit batch: CloudFront `/v1/signup/*` (Bill published
-> it, verified GET and POST through skyscore.co.uk) and `ConfirmUrlBase` (deploy with `ConfirmUrlBase=https://skyscore.co.uk`).
-> LEFT, Bill: sign up again (Hotmail AND Gmail) once that is live; then Claude closes PR #15. SPF alignment (a custom MAIL
-> FROM) is the next lever if Microsoft still hides it. The monthly SENDER is still not built (needed before the first issue only).
-> Gmail DID receive the plain confirmation (Bill, 22 Nov evening), so the pipeline works and the Hotmail loss is Microsoft's filter.
+> **Bill's first real sign-ups (Hotmail) LOOKED lost: they were in his Junk** (SES: delivered; found when the folder, sorted by
+> sender, was sorted by date; marked Not junk, sender in his Safe senders). Fixed on the way: CloudFront `/v1/signup/*` +
+> `ConfirmUrlBase` (`5d63fefa`, LIVE: every link says skyscore.co.uk), and SPF ALIGNED (Cloudflare `mail.skyscore.co.uk` MX + TXT,
+> SES custom MAIL FROM, verified 20:35). Gmail received its copy in the inbox. A new domain's first mail to Outlook lands in
+> Junk until it has a history; DMARC at quarantine waits for a real mailbox on the new domain. LEFT, Bill: a sign-up with
+> Hotmail AND Gmail once v2 is live; then Claude closes PR #15. The monthly SENDER is still not built (first issue only).
 >
-> **NEWS BY EMAIL v2, BUILT, NOT COMMITTED** (branch `news-v2`, worktree `.claude/worktrees/news-v2`, off `82c23557`; patch in
-> that session's scratchpad). Bill's picks the same evening (ideas claude.ai/artifact/8nXjCvYCzLLjAg5WoP2E7n, Stitch drafts
+> **NEWS BY EMAIL v2** (commit after `5d63fefa`, branch `news-v2-ship`; built in worktree `.claude/worktrees/news-v2`, which
+> can then go), plus `Reply-To: support@` on every confirmation email. Bill's picks the same evening (ideas claude.ai/artifact/8nXjCvYCzLLjAg5WoP2E7n, Stitch drafts
 > claude.ai/artifact/KC7pRQW3NQzw4LC8S9bavF, as built claude.ai/artifact/V6bK9hnXXBizpZ4svDVUHt): (1) the confirmation email in the
 > blue-grey band, Stitch draft S2, rebuilt as table HTML beside the unchanged plain text (no images, nothing remote, every word
 > escaped; API key emails get the same look); (2) ONE CLICK for news: the confirm page posts its own form as it opens, the CSP
@@ -54,10 +54,10 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > "News by email"; (6) "Check your inbox" with the address masked, "Send it again" to the Lambda's three a day, then said in
 > words. Privacy s2a: the postcode sentences out and "Opening the link in that email confirms it." in, APPROVED by Bill; a
 > second dated /changes line (the earlier one stays as the record). Tests: backend 676, the strip 40 (1366, 390, 360), flags 5;
-> nine mutants each red. NEXT: once the audit batch is committed, apply v2 onto master, then CLAUDE.md, OPERATIONS s3.10 and
-> the lesson, a full preflight, the reviewed changeset (pass `ConfirmUrlBase=https://skyscore.co.uk SignupVerify=on
-> UpdatesList=on`), web + home deploy; then Bill's Hotmail and Gmail sign-ups. The map's old "consumer" list is unchanged (2
-> entries, both look like Bill's own tests).
+> nine mutants each red. Applied onto master with CLAUDE.md, OPERATIONS s3.9-3.10 and the lesson (which also CORRECT the
+> earlier "not even Junk" claim in four places). Deploy: the reviewed changeset (pass `ConfirmUrlBase=https://skyscore.co.uk
+> SignupVerify=on UpdatesList=on`), backend first, then web + home; then Bill's Hotmail and Gmail sign-ups. The map's old
+> "consumer" list is unchanged (2 entries, both look like Bill's own tests).
 >
 > **Preflight note:** the advisory "Bay Area flood == FEMA NFHL" check hung twice on 22 Nov (FEMA's live service): stopping
 > that one process lets the run finish; it is advisory and cannot block.

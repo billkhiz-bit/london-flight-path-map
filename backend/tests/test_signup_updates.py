@@ -6,7 +6,9 @@ Why each test is here:
   - CLOSED unless both flags are on: the POST refuses source 'updates' unless UPDATES_LIST and SIGNUP_VERIFY are both
     on, with one answer for every address, and writes nothing; the template now ships both ON (Bill's approval);
   - open, a POST only starts the emailed confirmation (a pending row for source 'updates', an email that says "one
-    email a month"); no postcode is news only; a postcode (the strip's ticked box) must be a full one, and is named;
+    email a month"); news only since news-v2: a postcode sent anyway is dropped, never checked, stored or emailed;
+  - the confirm page confirms itself for news (one hashed script, the CSP names it); API keys and the map's list keep
+    the button;
   - the confirm button joins the list in its OWN table: the signups table, with its one-row-per-email rules, is never
     read or written for this source;
   - joining writes the unsubscribe token BEFORE the member that names it, retires an earlier token and clears the
@@ -20,11 +22,14 @@ Offline: the Lambda's ddb and ses clients are replaced at the boundary by an in-
 read what was STORED, not which calls were made.
 """
 
+import base64
+import hashlib
 import importlib.util
 import json
 import os
 import re
 import sys
+import time
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -163,16 +168,28 @@ class ClosedTests(UpdatesBase):
 
 class JoinTests(UpdatesBase):
     def test_the_post_only_starts_the_emailed_confirmation(self):
-        r = self.app.handler(post({'email': 'A@Example.com', 'source': 'updates', 'postcode': 'sw15 1hl'}), None)
+        r = self.app.handler(post({'email': 'A@Example.com', 'source': 'updates', 'postcode': ''}), None)
         self.assertEqual(r['statusCode'], 201)
         self.assertEqual(json.loads(r['body'])['status'], 'pending')
         (row,) = self.db.tables[self.app.PENDING_TABLE].values()
-        self.assertEqual((row['email']['S'], row['source']['S'], row['postcode']['S']), ('a@example.com', 'updates', 'SW15 1HL'))
+        self.assertEqual((row['email']['S'], row['source']['S'], row['postcode']['S']), ('a@example.com', 'updates', ''))
         self.assertEqual(self.db.tables[self.app.MAIL_TABLE], {}, 'nothing joins before the link is confirmed')
         mail = self.ses.send_email.call_args.kwargs['Content']['Simple']
-        self.assertIn('SW15 1HL', mail['Subject']['Data'])
-        self.assertIn('SW15 1HL', mail['Body']['Text']['Data'])
         self.assertIn('one email a month', mail['Body']['Text']['Data'])
+
+    def test_a_postcode_sent_anyway_is_dropped_never_checked_stored_or_emailed(self):
+        # news-v2 (Bill, 2026-11-22): the front page offers news only and privacy s2a names no postcode. Every shape gets
+        # the same 201 (a 400 for a bad one would say what the Lambda still looks at), and none reaches the row or email.
+        for area in ('SW15 1HL', 'sw15 1hl', 'SW15', 'Putney', 'example.com'):
+            self.db.tables[self.app.PENDING_TABLE].clear()
+            r = self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': area}), None)
+            self.assertEqual(r['statusCode'], 201, area)
+            (row,) = self.db.tables[self.app.PENDING_TABLE].values()
+            self.assertEqual(row['postcode']['S'], '', area)
+            mail = self.ses.send_email.call_args.kwargs['Content']['Simple']
+            self.assertEqual(mail['Subject']['Data'], 'Confirm your Sky Score news', area)
+            for part in ('Text', 'Html'):
+                self.assertNotIn(area.upper(), mail['Body'][part]['Data'].upper().replace('SKYSCORE.CO.UK', ''), (area, part))
 
     def test_news_only_needs_no_postcode_and_names_none(self):
         r = self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': ''}), None)
@@ -191,17 +208,24 @@ class JoinTests(UpdatesBase):
         self.assertEqual(page['statusCode'], 200, page['body'])
         self.assertIn('Sky Score news', page['body'])
         member = self.mail('updates', 'a@example.com')
-        self.assertNotIn('area', member, 'no postcode is stored unless the box was ticked')
-        self.assertEqual(member['consent']['S'], self.app.consent_wording(''))
+        self.assertNotIn('area', member, 'no postcode is stored')
+        self.assertEqual(member['consent']['S'], self.app.consent_wording())
         self.assertEqual(member['consent']['S'], f'{self.app.NEWS_CONSENT_VERSION}: {self.app.NEWS_PROMISE}')
+        self.assertTrue(self.app.NEWS_CONSENT_VERSION.startswith('news-v2'), 'the words changed, so did the version')
         self.assertNotIn('figures for', member['consent']['S'])
 
-    def test_joining_again_without_the_box_drops_the_postcode(self):
-        self.join(area='SW15 1HL')
-        self.join(area='')
+    def test_a_pending_row_from_before_the_box_went_stores_no_postcode(self):
+        # A news-v1 link (made before news-v2 shipped, its row naming a postcode) pressed after: news only, as the
+        # privacy page now says.
+        self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': ''}), None)
+        token = next(iter(self.db.tables[self.app.PENDING_TABLE]))
+        self.db.tables[self.app.PENDING_TABLE][token]['postcode'] = {'S': 'SW15 1HL'}
+        page = self.app.handler(form_post('/v1/signup/confirm', token), None)
+        self.assertEqual(page['statusCode'], 200, page['body'])
         member = self.mail('updates', 'a@example.com')
-        self.assertNotIn('area', member, 'the consent is what was agreed this time')
-        self.assertEqual(member['consent']['S'], self.app.consent_wording(''))
+        self.assertNotIn('area', member)
+        self.assertEqual(member['consent']['S'], self.app.consent_wording())
+        self.assertNotIn('SW15 1HL', page['body'])
 
     def test_the_closed_page_after_a_late_click_names_news_by_email(self):
         self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': ''}), None)
@@ -210,28 +234,48 @@ class JoinTests(UpdatesBase):
             page = self.app.handler(form_post('/v1/signup/confirm', token), None)
         self.assertIn('News by email is closed', page['body'])
 
-    def test_a_postcode_given_must_be_a_full_one(self):
-        for area in ('SW15', 'Putney', 'example.com', 'SW15 1HL X'):
-            r = self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': area}), None)
-            self.assertEqual(r['statusCode'], 400, area)
-        self.assertEqual(self.db.writes, [])
-
-    def test_the_confirm_page_names_the_list(self):
-        self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': 'SW15 1HL'}), None)
+    def test_the_confirm_page_names_the_list_and_confirms_itself(self):
+        # One click (Bill's pick 1, 2026-11-22): the page posts its own form as it opens. The GET itself still changes
+        # nothing, so a scanner that only fetches the link (no script) cannot confirm.
+        self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': ''}), None)
         token = next(iter(self.db.tables[self.app.PENDING_TABLE]))
         page = self.app.handler(get('/v1/signup/confirm', token), None)
+        self.assertEqual(page['statusCode'], 200)
         self.assertIn('one email a month', page['body'])
-        self.assertIn('SW15 1HL', page['body'])
         self.assertIn(token, self.db.tables[self.app.PENDING_TABLE], 'the GET changes nothing')
+        self.assertEqual(self.db.tables[self.app.MAIL_TABLE], {}, 'nothing joins on a fetch')
+        # The form the script submits, its button for no-script, and the one script the CSP allows by its hash.
+        self.assertIn('<form method="post" id="confirm">', page['body'])
+        self.assertIn('<button type="submit">Confirm</button>', page['body'])
+        scripts = re.findall(r'<script>(.*?)</script>', page['body'], re.S)
+        self.assertEqual(scripts, [self.app._AUTO_CONFIRM_JS])
+        digest = base64.b64encode(hashlib.sha256(scripts[0].encode('utf-8')).digest()).decode('ascii')
+        self.assertIn(f"script-src 'sha256-{digest}'", page['headers']['Content-Security-Policy'])
+        self.assertIn("default-src 'none'", page['headers']['Content-Security-Policy'])
+
+    def test_only_news_confirms_itself(self):
+        # API keys are shown ONCE (a scanner running script would take one), and the map's list promises "Opening the
+        # link alone confirms nothing": no script, no script-src, the button only.
+        for source in ('api', 'consumer'):
+            row = {'token': {'S': 'T' * 43}, 'email': {'S': 'a@example.com'}, 'source': {'S': source},
+                   'expiresAt': {'N': str(int(time.time()) + 3600)}}
+            self.db.tables[self.app.PENDING_TABLE]['T' * 43] = row
+            page = self.app.handler(get('/v1/signup/confirm', 'T' * 43), None)
+            self.assertEqual(page['statusCode'], 200, source)
+            self.assertNotIn('<script', page['body'], source)
+            self.assertNotIn('script-src', page['headers']['Content-Security-Policy'], source)
+            self.assertIn('<button type="submit">Confirm</button>', page['body'], source)
+        with self.assertRaises(ValueError):
+            self.app.html_page(200, 'x', '<p>x</p>', script='alert(1)')
 
     def test_confirming_joins_the_list_in_its_own_table(self):
         page = self.join()
         self.assertEqual(page['statusCode'], 200)
         self.assertIn('one email a month', page['body'])
+        self.assertIn("You&#x27;re signed up", page['body'])
         member = self.mail('updates', 'a@example.com')
-        self.assertEqual(member['area']['S'], 'SW15 1HL')
-        self.assertEqual(member['consent']['S'], self.app.consent_wording('SW15 1HL'))
-        self.assertIn('Also tell me when the figures for SW15 1HL change.', member['consent']['S'])
+        self.assertNotIn('area', member)
+        self.assertEqual(member['consent']['S'], self.app.consent_wording())
         self.assertEqual(member['via']['S'], 'website')
         self.assertRegex(member['consentedAt']['S'], r'^\d{4}-\d\d-\d\dT')
         token = member['unsubToken']['S']
@@ -244,24 +288,23 @@ class JoinTests(UpdatesBase):
         mail_puts = [w[2] for w in self.db.writes if w[0] == 'put' and w[1] == self.app.MAIL_TABLE]
         self.assertTrue(mail_puts[0].startswith('unsub#') and mail_puts[1].startswith('updates#'), mail_puts)
 
-    def test_joining_again_moves_the_area_and_retires_the_old_token(self):
-        self.join(area='SW15 1HL')
+    def test_joining_again_retires_the_old_token(self):
+        self.join(area='')
         first = self.mail('updates', 'a@example.com')['unsubToken']['S']
-        self.join(area='TW9 3PZ')
+        self.join(area='')
         member = self.mail('updates', 'a@example.com')
-        self.assertEqual(member['area']['S'], 'TW9 3PZ')
         self.assertNotEqual(member['unsubToken']['S'], first)
         self.assertIsNone(self.mail('unsub', first), 'the old link no longer works')
 
     def test_a_failed_tidy_up_after_joining_still_says_subscribed(self):
         # Review 2026-11-10: retiring the old token failed after the member was written, and the person was told 503.
-        self.join(area='SW15 1HL')
+        self.join(area='')
         first = self.mail('updates', 'a@example.com')['unsubToken']['S']
         self.db.fail.add(('delete', f'unsub#{first}'))
-        page = self.join(area='TW9 3PZ')
+        page = self.join(area='')
         self.assertEqual(page['statusCode'], 200, page['body'])
         self.assertIn('one email a month', page['body'])
-        self.assertEqual(self.mail('updates', 'a@example.com')['area']['S'], 'TW9 3PZ')
+        self.assertNotEqual(self.mail('updates', 'a@example.com')['unsubToken']['S'], first)
 
     def test_a_failure_before_joining_points_back_to_the_postcode_search(self):
         self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': 'SW15 1HL'}), None)

@@ -6,7 +6,9 @@ Open means four things at once, and this holds them together so none can go live
   - SignupVerify's default is 'on' (the list exists only behind a confirmation email),
   - privacy.html s2a carries the "News by email" paragraph (id="news"), the wording Bill approved that day.
 And the words a visitor sees are the words the Lambda stores as their consent, word for word: the strip's heading and
-promise, the postcode box's line, js/news-signup.mjs's PROMISE / AREA_LINE and app.py's NEWS_PROMISE / AREA_PROMISE.
+promise, js/news-signup.mjs's PROMISE and app.py's NEWS_PROMISE. News only since news-v2 (Bill, 2026-11-22): no
+postcode box on the page, no postcode in the privacy paragraph, none sent by the module, and the page says what one
+click on the link does.
 (The template's defaults only matter to a new stack: SAM keeps a live stack's values, so a deploy passes
 UpdatesList explicitly, docs/lessons/public-surfaces.md; the defaults record the intended state.)
 """
@@ -63,13 +65,23 @@ def test_the_strip_the_lambda_and_the_privacy_text_open_together():
 
 def test_the_strip_says_what_the_lambda_records():
     assert module_const('PROMISE') == lambda_const('NEWS_PROMISE')
-    assert module_const('AREA_LINE') == lambda_const('AREA_PROMISE')
     page = read('home', 'index.html')
     heading = text_of(re.search(r'<h2 id="news-h">(.*?)</h2>', page, re.S).group(1))
     promise = text_of(re.search(r'<div class="news-words"><h2 id="news-h">.*?</h2><p>(.*?)</p>', page, re.S).group(1))
     assert f'{heading}. {promise}' == module_const('PROMISE'), (heading, promise)
-    line = text_of(re.search(r'<label class="news-pc"[^>]*>(.*?)</label>', page, re.S).group(1))
-    assert f'{line}.' == module_const('AREA_LINE').replace('{postcode} ', ''), line
+
+
+def test_news_only_on_the_page_in_the_module_and_in_the_privacy_paragraph():
+    # news-v2 (Bill, 2026-11-22): each of these, alone, would offer or describe a postcode the others no longer take.
+    page = read('home', 'index.html')
+    strip = re.search(r'<section class="news-strip".*?</section>', page, re.S).group(0)
+    assert 'type="checkbox"' not in strip and 'postcode' not in strip.lower(), 'the strip offers news only'
+    module = read('js', 'news-signup.mjs')
+    assert 'postcode:' not in module and "source: 'updates' }" in module, 'the module sends the address and nothing else'
+    news = re.search(r'<p id="news">(.*?)</p>', read('privacy.html'), re.S).group(1)
+    assert 'postcode' not in news.lower(), 'the privacy paragraph names no postcode'
+    assert 'Opening the link in that email confirms it.' in text_of(news), 'it says what one click does'
+    assert lambda_const('NEWS_CONSENT_VERSION').startswith('news-v2'), 'new words, new version'
 
 
 def test_the_privacy_link_reaches_the_paragraph():

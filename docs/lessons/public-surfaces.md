@@ -402,14 +402,28 @@ posted the address to the site). Kept on purpose: ANY unsubscribe link from an e
 address, even one older than a re-join, because the press is the person's latest word. Not changed: the postcode box
 appearing with a search's answer moves the strip no more than the answer itself already does.
 
-**THE FIRST REAL SIGN-UP NEVER ARRIVED (2026-11-22, the night it went live).** Bill signed up with a Hotmail address.
-The Lambda logged nothing wrong (379 ms), the pending row was written (a failed send deletes it), and SES's CloudWatch
-said Send 1, Delivery 1, Bounce 0, Complaint 0: Microsoft ACCEPTED it. It was in neither the inbox nor Junk. The email
-came from `noreply@skyscore.co.uk` with a token link to `https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/...`:
-an AWS address in a token link from another domain is the shape phishing takes, and Microsoft quarantines that
-silently after accepting it, so "Delivery" in SES proves nothing past the receiving server. The fix: a CloudFront
-behaviour `/v1/signup/*` on the site's distribution (Bill published it from the session), and `ConfirmUrlBase` in the
-template, so every link says skyscore.co.uk (`backend/tests/test_confirm_link_host.py`, four mutants red). Two lessons:
-a deliverability check needs a Microsoft inbox and a Gmail one, since SES's own figures stop at the receiving server;
-and the address that tested it must be found before searching (the Gmail searches found nothing because the test
-address was Hotmail). Left open: SPF alignment (a custom MAIL FROM, two Cloudflare DNS records, Bill's).
+**THE FIRST REAL SIGN-UP LOOKED LOST (2026-11-22, the night it went live).** Bill signed up with a Hotmail address
+and saw nothing, twice. The Lambda logged nothing wrong (379 ms), the pending row was written (a failed send deletes it),
+and SES's CloudWatch said Send 1, Delivery 1, Bounce 0, Complaint 0: Microsoft ACCEPTED it. Both were in his JUNK folder
+all along, found only when the folder was sorted by date (it sorted by sender, so new mail did not rise to the top).
+Fixed on the way, and still right: the email came from `noreply@skyscore.co.uk` with a token link to the raw
+`execute-api.amazonaws.com` host, the shape phishing takes, so a CloudFront behaviour `/v1/signup/*` (Bill published it)
+and `ConfirmUrlBase` make every link say skyscore.co.uk (`backend/tests/test_confirm_link_host.py`, four mutants red);
+SPF was not aligned (SES's default envelope domain), so `mail.skyscore.co.uk` now carries an MX and an SPF TXT in
+Cloudflare and SES's custom MAIL FROM uses it (verified 20:35); and the news email carries `Reply-To: support@`.
+Lessons: SES "Delivery" with nothing in the inbox is Junk FIRST; ask which folder and how it is sorted before calling
+an email lost; find the address that tested it before searching (the Gmail searches found nothing: the address was
+Hotmail). A new domain's first mail to Outlook lands in Junk until it has a history; Bill's "Not junk" trained his own
+mailbox only. The stronger lever, DMARC at quarantine, waits for a real mailbox on the new domain (his own mail through
+Gmail's "Send mail as" would fail it), and the rename starts the domain's reputation again.
+
+**NEWS V2 (2026-11-22, later; Bill's picks, claude.ai/artifact/V6bK9hnXXBizpZ4svDVUHt as built).** News only: the postcode
+box went (Bill: "confusing": the page opens on an example and suggests places, so a "Follow TW9 3PZ" would invite following
+a place nobody chose), the Lambda drops any postcode for news, and the consent words moved to `news-v2` (a v1 member keeps
+theirs). One click: the confirm page posts its own form as it opens; the confirm page's CSP is `default-src 'none'`, so
+the ONE script is allowed by its SHA-256 hash and `html_page()` refuses any other; a scanner that only fetches the link
+runs no script, and API keys keep the button (25 Sep: scanners took the only copy of a key). The email is Stitch's S2,
+rebuilt by hand as tables with inline styles (Stitch's own code is never used), the site's colours checked on Stitch's
+pixels first; the plain text is unchanged beside it. After pressing, the strip shows the address masked and "Send it
+again" up to `SEND_CAP_PER_DAY`, counted by the page because a capped send answers the same 201. Proven red: five
+front-end and four backend mutants.

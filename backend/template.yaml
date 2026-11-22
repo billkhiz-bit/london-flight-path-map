@@ -1350,8 +1350,7 @@ Parameters:
     AllowedPattern: '^.+$'
     Description: 'From address for the confirmation email. Must belong to a verified SES identity.'
   # Where the links in our emails point (2026-11-22). The raw execute-api host in a token link from skyscore.co.uk
-  # mail is the shape phishing takes: SES delivered a confirmation to Hotmail and it reached neither the inbox nor
-  # Junk. CloudFront routes /v1/signup/* on the site's own domain to this API (published 2026-11-22), so the links say
+  # mail is the shape phishing takes: SES delivered the first confirmations to Hotmail, into Junk. CloudFront routes /v1/signup/* on the site's own domain to this API (published 2026-11-22), so the links say
   # skyscore.co.uk. Empty falls back to the request's own host. SAM keeps a live value: pass it explicitly.
   ConfirmUrlBase:
     Type: String

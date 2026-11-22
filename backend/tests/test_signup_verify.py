@@ -133,10 +133,20 @@ class VerifyOnPostTests(unittest.TestCase):
         self.assertEqual(self.ddb.put_item.call_args.kwargs['ConditionExpression'], 'attribute_not_exists(#t)')
         send = self.ses.send_email.call_args.kwargs
         self.assertEqual(send['Destination']['ToAddresses'], ['a@example.com'])
+        # A reply reaches a person (2026-11-22): the privacy page's published contact, never the no-reply sender.
+        self.assertEqual(send['ReplyToAddresses'], ['Sky Score <support@skyscore.co.uk>'])
         text = send['Content']['Simple']['Body']['Text']['Data']
-        self.assertIn(f'https://x.execute-api.eu-west-2.amazonaws.com/prod/v1/signup/confirm?token={token}', text)
+        link = f'https://x.execute-api.eu-west-2.amazonaws.com/prod/v1/signup/confirm?token={token}'
+        self.assertIn(link, text)
         self.assertIn('M1 1AE', text)
-        self.assertNotIn('Html', send['Content']['Simple']['Body'])
+        # Since 2026-11-22 an HTML part goes beside the plain text (Bill's pick: the blue-grey band, Stitch S2): the same
+        # link and words, and nothing that loads from anywhere: no image, no stylesheet, no script, no tracking.
+        page = send['Content']['Simple']['Body']['Html']['Data']
+        self.assertIn(f'href="{link}"', page)
+        self.assertIn('M1 1AE', page)
+        self.assertIn(self.app.CONFIRM_SMALL_PRINT, page)
+        for banned in ('<img', '<link', '<script', 'src=', 'url(', '@import'):
+            self.assertNotIn(banned, page.lower(), banned)
 
     def test_a_failed_send_is_a_503_and_leaves_no_live_token(self):
         self.ses.send_email.side_effect = ClientError(
@@ -285,7 +295,8 @@ class ScannerSafeConfirmTests(unittest.TestCase):
             self.assertEqual(r['statusCode'], 200)
         self.ddb.delete_item.assert_not_called()
         self.assertTrue(self.ddb.get_item.call_args.kwargs['ConsistentRead'])
-        self.assertIn('<form method="post">', r['body'])
+        self.assertIn('<form method="post"', r['body'])
+        self.assertNotIn('<script', r['body'], 'an API key page never posts itself: the key is shown once')
         self.assertIn('name="token" value="' + 'A' * 43 + '"', r['body'])
         self.assertIn("form-action 'self'", r['headers']['Content-Security-Policy'])
 
