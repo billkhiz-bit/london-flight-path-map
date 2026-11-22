@@ -807,7 +807,7 @@ export function reportParts(spec, f) {
   const roadBlock = road
     ? `<div class="road blk"><h3>Road noise at this postcode</h3><div class="road-row">${roadPictures ? `<div class="road-pics">${roadPictures}</div>` : ''}<p class="cap">${esc(road.tile.say[0])}${typeof env.roadNoiseLdenDb === 'number' ? ` DEFRA's modelled figure${roadPeriod ? ` for ${roadPeriod}` : ''}.` : ''}</p></div></div>`
     : neighbourRoad
-      ? `<div class="road blk"><h3>Road noise at this postcode</h3><p class="cap">DEFRA's road noise figure we hold here is for ${esc(f.resolvedAs)}, the nearest postcode, not ${esc(f.postcode)}. Road noise can differ by 20 dB between neighbouring postcodes, so it is not given for this one.</p></div>`
+      ? `<div class="road blk"><h3>Road noise at this postcode</h3><p class="cap">The DEFRA road noise figure we hold here is for ${esc(f.resolvedAs)}, the nearest postcode, not ${esc(f.postcode)}. Road noise can differ by 20 dB between neighbouring postcodes, so it is not given for this one.</p></div>`
       : '';
 
   // AIR (Bill's pick C): the full map's charts, DEFRA's model for the postcode's own square beside the nearest sensor
@@ -827,7 +827,7 @@ export function reportParts(spec, f) {
     f.monitor && `<li>${airKeyMark('monitor')}<span><strong>${esc(f.monitor.name)}</strong> ${esc(stationDistance(f.monitor.km))}. ${esc(monitorKeyNote(f.monitor))}</span></li>`,
   ].filter(Boolean);
   const airPoints = [
-    [airModel, f.sensor, f.monitor].filter(Boolean).length > 1 ? 'They measure in different ways, places and periods, so expect them to differ.' : '',
+    [airModel, f.sensor, f.monitor].filter(Boolean).length > 1 ? 'These figures come from different methods, places and periods, so expect them to differ.' : '',
     ...(f.sensor || f.monitor ? airNoteList(f.sensor, f.monitor).filter((n) => n.key === 'roadside' || n.key === 'capture').map((n) => n.text) : []),
   ].filter(Boolean);
   const airBlock = airCharts.length

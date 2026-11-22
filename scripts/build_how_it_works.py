@@ -133,7 +133,7 @@ def weights_table() -> str:
 
 
 def prices() -> str:
-    return (f'<li><b>House prices</b> are HM Land Registry\'s monthly price index, now for '
+    return (f'<li><b>House prices</b> come from HM Land Registry\'s monthly price index, now for '
             f'{html.escape(app.SNAPSHOT_VINTAGE_LABEL)}. We update them each month.</li>\n')
 
 

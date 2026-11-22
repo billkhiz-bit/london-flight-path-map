@@ -1106,7 +1106,7 @@ console.log('Findings first');
 
   const failed = await search('SW5 9HP', null, loaded);
   check('with no figure the rating names its council, and says so', /^Road noise High Kensington and Chelsea-wide$/.test(failed.road)
-    && /\d+ in every 100 Kensington and Chelsea postcodes louder than the World Health Organization \(WHO\) recommends/.test(failed.full.road)
+    && /\d+ in every 100 Kensington and Chelsea postcodes are louder than the World Health Organization \(WHO\) recommends/.test(failed.full.road)
     && /We have no reading for this street, so this is for Kensington and Chelsea as a whole\./.test(failed.full.road) && !failed.roadBar, failed.full.road);
 
   const area = await search('SW5', environmentWith({ roadNoiseLdenDb: 71.8 }), () => /\S/.test(document.querySelector('[data-find="road"]')?.innerText || ''));

@@ -800,7 +800,7 @@ async function planesPagePaths() {
     ['two airport tables', (h) => (h.match(/<h2 id="[a-z]{3}">From /g) || []).length >= 2],
     ['the edge note', (h) => h.includes('On an edge:')],
     ['estimated positions', (h) => h.includes('a position ONS estimates')],
-    ['uncounted flying', (h) => h.includes('other flying passes too')],
+    ['uncounted flying', (h) => h.includes('other aircraft pass too')],
     ['an airport in one line', (h) => h.includes('Also counted here:')],
   ];
   const chosen = new Map();

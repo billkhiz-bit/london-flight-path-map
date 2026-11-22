@@ -160,7 +160,7 @@ def test_a_quiet_airport_gets_one_line_not_a_table():
     assert [t['code'] for t in m['tables']] == ['LHR']
     assert m['also'] == [{'name': 'London City', 'most': '3 a day'}]
     assert '<h2 id="lhr">From Heathrow</h2>' in html and 'From London City' not in html
-    assert 'London City, at most 3 a day over any of its postcodes' in html
+    assert "London City, at most 3 a day over any postcode in " + m['district'] in html
 
 
 def test_a_page_reads_its_sectors_and_says_how_much_was_measured():

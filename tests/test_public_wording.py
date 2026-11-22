@@ -480,11 +480,20 @@ class WordingTests(unittest.TestCase):
         # 2026-10-23). The front page's answer said "DEFRA, measured" for aircraft noise until 2026-11-03, in a
         # template string no rule read for that. A DEFRA MONITOR's reading is measured, and is worded "monitor".
         # An adverb between is the same claim: aircraft-quiet-london.json's note said "DEFRA actually measured"
-        # (audit M-27, 2026-11-13).
-        found = hits(r'\bDEFRA\b[\s,·]{0,6}(?:\w+ly\s+)?measured\b|\bmeasured by DEFRA\b|\bDEFRA(?:\'s)? measurements?\b',
+        # (audit M-27, 2026-11-13). The word BEFORE is the same claim too: seven map legends and eight API sources lines
+        # said "its measured DEFRA Round 4 55 dB Lden footprint" (English audit, 2026-11-22).
+        found = hits(r'\bDEFRA\b[\s,·]{0,6}(?:\w+ly\s+)?measured\b|\bmeasured by DEFRA\b|\bDEFRA(?:\'s)? measurements?\b'
+                     # Not "...what is measured" + "DEFRA's model ...": the front page's heading meets its paragraph.
+                     r"|\bmeasured\s+DEFRA\b(?!\s+monitor|['’]s\s+model)",
                      everything(), re.I)
         self.assertEqual(found, {}, "a DEFRA map called measured (say modelled; only a monitor's reading is measured):\n"
                          + fmt(found))
+
+    def test_a_factor_of_two_is_never_an_order_of_magnitude(self):
+        # "An order of magnitude" is a factor of ten. The COVID caveat (75.6 against 142.4 km2, x1.9) was called one on
+        # the map, /api/ and the open data's JSON until the English audit (2026-11-22): "a sense of scale" now.
+        found = hits(r'\border(?:s)? of magnitude\b', everything(), re.I)
+        self.assertEqual(found, {}, '"order of magnitude" means a factor of ten:\n' + fmt(found))
 
     def test_the_caa_comparison_names_the_current_edition_everywhere(self):
         # The CAA-vs-DEFRA caveat names the CAA's year and report. The 2025 roll (2026-11-01) checked a hand-kept list of
@@ -580,6 +589,10 @@ class RulesCatchTheirDefectsTests(unittest.TestCase):
         # Uploaded JSON is read by its string values (audit M-27, 2026-11-13), nested ones too.
         (WordingTests, 'test_a_defra_map_is_never_called_measured', 'data/aircraft-quiet-london.json',
          '{"count":1,"note":"Quiet scores for the London postcodes DEFRA actually measured."}'),
+        (WordingTests, 'test_a_defra_map_is_never_called_measured', 'index.html',
+         '<script>const t = "scaled by its measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint";</script>'),
+        (WordingTests, 'test_a_factor_of_two_is_never_an_order_of_magnitude', 'api/index.html',
+         '<p>Both are the CAA\'s model, so that is an order of magnitude, not a correction.</p>'),
         (WordingTests, 'test_no_page_says_how_often_planes_pass', 'data/aircraft-quiet-regions.json',
          '{"airports":[{"code":"LHR","rules":["About 120 planes a day pass over."]}]}'),
     ]

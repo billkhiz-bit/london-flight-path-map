@@ -59,8 +59,8 @@ def render() -> str:
     # (tests/front-page.mjs probed 0 points clear of the card). A native <details> keeps the card one line
     # taller, and the list is one click away before anyone types.
     return (f'{INDENT}{BEGIN}\n'
-            f'{INDENT}<details class="covers"><summary>Which places does it cover?</summary><ul>{items}</ul> '
-            f"council areas, plus New York's {nyc} boroughs and {bay} Bay Area cities.</details>\n"
+            f'{INDENT}<details class="covers"><summary>Which places does it cover?</summary>Council areas in each UK city '
+            f"region:<ul>{items}</ul> Plus New York's {nyc} boroughs and {bay} Bay Area cities.</details>\n"
             f'{INDENT}{END}\n')
 
 

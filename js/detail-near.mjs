@@ -153,7 +153,7 @@ export function healthFace(places) {
 /** The energy card's face from /epc's body, saying which absence it is: none on the register is a reading. */
 export function epcFace(data) {
   if (!data) return null;
-  if (data.fullPostcodeOnly) return { k: 'Energy rating', v: 'Full postcode', unit: '', l: 'The register is searched by full postcode' };
+  if (data.fullPostcodeOnly) return { k: 'Energy rating', v: 'Needs a full postcode', unit: '', l: 'The register is searched by full postcode' };
   if (data.available === false) return { k: 'Energy rating', v: 'Not loaded', unit: '', l: 'The register could not be reached just now' };
   const s = data.count > 0 ? data.summary : null;
   if (!s || !/^[A-G]$/.test(String(s.averageBand))) return { k: 'Energy rating', v: 'None yet', unit: '', l: 'No certificates at this postcode' };

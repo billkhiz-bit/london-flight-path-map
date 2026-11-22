@@ -174,7 +174,7 @@ check('crime against the median, from a true zero', () => {
 });
 check('crime at, and under, the median', () => {
   assert.match(crimeFinding({ band: 'low', rate: 87.6, median: 87.6 }).detail, /close to the London median/);
-  assert.match(crimeFinding({ band: 'low', rate: 40, median: 87.6 }).detail, /2\.2 times lower than the London median/);
+  assert.match(crimeFinding({ band: 'low', rate: 40, median: 87.6 }).detail, /54% below the London median/);
 });
 check('with no band the comparison is the finding, and the figure appears once', () => {
   const f = crimeFinding({ rate: 110, median: 87.6 });
@@ -392,7 +392,7 @@ check('the nearest flight path: a ruler, the way planes fly from its runway, and
 check('crime in plain words, against a typical London borough only where the figures compare', () => {
   const t = crimeFinding({ band: 'medium', rate: 76.6, median: 87.6, council: 'Wandsworth' }).tile;
   assert.deepEqual(t.say, ['Wandsworth has 76.6 recorded crimes a year for every 1,000 people.', 'That is close to a typical London borough.']);
-  assert.match(crimeFinding({ band: 'high', rate: 142.4, median: 87.6, council: 'K' }).tile.say[1], /^That is 1\.6 times a typical London borough\.$/);
+  assert.match(crimeFinding({ band: 'high', rate: 142.4, median: 87.6, council: 'K' }).tile.say[1], /^That is 1\.6 times the rate of a typical London borough\.$/);
   assert.equal(crimeFinding({ band: 'low', rate: 50, median: 87.6, council: 'K' }).tile.say[1], 'That is lower than a typical London borough.');
   const ny = crimeFinding({ band: 'medium', rate: 78, comparable: false, area: 'borough', council: 'Queens' }).tile;
   assert.equal(ny.say.length, 1, 'New York: no London yardstick');
@@ -401,12 +401,12 @@ check('crime in plain words, against a typical London borough only where the fig
 check('price: a watch item under 3 of 10 affordability, and the change said in words', () => {
   const t = priceFinding({ price: '£694,210', trend: '-5.3%', council: 'Wandsworth', afford: 0.3, source: 'UK House Price Index' }).tile;
   assert.deepEqual([t.level, t.sub, t.stand, t.pill], ['£694,210', 'Wandsworth-wide', 'watch', 'High prices']);
-  assert.deepEqual(t.say, ['The average price of a home in Wandsworth, 5.3% less than a year ago.', 'That gives it an affordability score of 0.3 out of 10.']);
+  assert.deepEqual(t.say, ['This is the average price of a home in Wandsworth: 5.3% less than a year ago.', 'That gives it an affordability score of 0.3 out of 10.']);
   assert.equal(priceFinding({ price: '£1', afford: 3 }).tile.stand, null);
   assert.equal(priceFinding({ price: '£1' }).tile.visual[0], null, 'no affordability: no bar, never a zero');
   // The change after inflation (review, 2026-11-20: the old score breakdown was the only place it was said).
   const real = (r, trend = '-3.2%') => priceFinding({ price: '£630,415', trend, real: r, council: 'Hackney', afford: 0.7 }).tile.say;
-  assert.deepEqual(real(-6.6), ['The average price of a home in Hackney, 3.2% less than a year ago.',
+  assert.deepEqual(real(-6.6), ['This is the average price of a home in Hackney: 3.2% less than a year ago.',
     'After inflation it is 6.6% less than a year ago, the change the price growth score reads.',
     'That gives it an affordability score of 0.7 out of 10.']);
   assert.equal(real(1.4, '+5%')[1], 'After inflation it is 1.4% more than a year ago, the change the price growth score reads.');

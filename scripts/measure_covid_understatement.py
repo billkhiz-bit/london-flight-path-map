@@ -28,7 +28,7 @@ Plan 2024-2028 says ERCD produced the 2021 Lden contours and the CAA is the comp
 (pp. 9, 38), and this script's measurement of DEFRA's raster reproduces ERCD 2201's Table 8 to within 0.1 km2. So the gap
 is one model's two years, never "different models", which stood on the live pages until 2026-11-06. Whether the raster
 is ERCD's grid as delivered or a re-run is not known.
-The ratio is a published order of magnitude for a caveat, NEVER a correction
+The ratio is a published sense of scale for a caveat, NEVER a correction
 factor: scaling per-postcode readings by an area ratio would be a number nobody
 measured (see memory project-lcy-airport-weighting). It is also Heathrow only;
 ERCD reports cover Heathrow, Gatwick and Stansted, and this measures one.
@@ -99,7 +99,7 @@ def build(defra):
         'defra': "DEFRA strategic noise mapping Round 4 (2021 traffic), Heathrow Lden coverage, measured by this script",
         'caa': CAA_SOURCE,
         'caa_year': CAA_YEAR,
-        'caveat': 'Different years and inputs; an order of magnitude for a caveat, never a correction factor.',
+        'caveat': 'Different years and inputs; a sense of scale for a caveat, never a correction factor.',
         'rows': rows,
     }
 

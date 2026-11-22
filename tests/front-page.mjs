@@ -345,7 +345,7 @@ ok(before.beside && before.legend === 'visible' && before.mapOpacity === 1 && !b
   const total = covers ? covers.regions.reduce((s, [, n]) => s + n, 0) : 0;
   ok(
     Boolean(covers && fig) && covers.visible && covers.regions.length === Number(fig[2]) && total === Number(fig[1]) &&
-      covers.regions.some(([name]) => name === 'Cardiff') && /plus New York's \d+ boroughs and \d+ Bay Area cities\./.test(covers.text),
+      covers.regions.some(([name]) => name === 'Cardiff') && /Plus New York's \d+ boroughs and \d+ Bay Area cities\./.test(covers.text),
     "before any search one line offers where it covers, and opens to every UK region adding up to the page's own figure, then New York and the Bay Area",
     JSON.stringify(covers && { regions: covers.regions.length, total, figure: covers.figure.slice(0, 50) })
   );
@@ -1030,7 +1030,7 @@ for (const [label, pc, status, body, words] of [
   page.on('request', watch);
   await page.fill('#pc', 'IM1 1AD');
   await page.press('#pc', 'Enter');
-  const words = 'IM1 1AD has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none.';
+  const words = 'IM1 1AD has no map reference, so we cannot look it up on the map. Postcodes in the Isle of Man and the Channel Islands have none.';
   await page.waitForFunction((w) => document.querySelector('#status')?.textContent === w, words, { timeout: 10000 }).catch(() => {});
   const said = await page.locator('#status').textContent();
   page.off('request', watch);
@@ -2536,7 +2536,7 @@ const makeReport = async (pc) => {
   await fp.waitForFunction(() => document.querySelector('#chips button[aria-pressed="true"]')?.dataset.city === 'manchester', null, { timeout: 15000 });
   const noneText = await fp.locator('#fit-count').textContent();
   const misses = await fp.locator('#fit-list .find-miss em').allTextContents();
-  ok(/^None of the 10 council areas in Greater Manchester meets all of these/.test(noneText) && misses.length > 0 && misses.every((m) => /^(more aircraft noise|fewer stations|flight routes cross it): /.test(m)),
+  ok(/^None of the 10 council areas in Greater Manchester meets all of these/.test(noneText) && misses.length > 0 && misses.every((m) => /^(?:(?:more aircraft noise|fewer stations) \(|\d+ flight routes? cross(?:es)? it on the map$)/.test(m)),
     'find: choosing a region moves the map there; when nothing fits, the nearest are named with what they miss and by how much', `${noneText} / ${misses.join(' | ')}`);
   ok((await fp.locator('#map .boro.is-fit').count()) === 0 && await fp.locator('#toggle-fit').isHidden(), 'find: and nothing is shaded, so the switch goes');
   ok((await fp.evaluate(() => location.hash)) === '#find' && (await fp.evaluate(() => location.search)) === '?city=manchester',

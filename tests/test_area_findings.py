@@ -54,7 +54,7 @@ def test_crime_thresholds_are_the_maps():
     assert pages.crime_against_london(median) == 'close to the London median'
     assert pages.crime_against_london(median * 1.14) == 'close to the London median'
     assert pages.crime_against_london(median * 1.6) == '1.6 times the London median'
-    assert pages.crime_against_london(median * 0.5) == '2.0 times lower than the London median'
+    assert pages.crime_against_london(median * 0.5) == '50% below the London median'
 
 
 def test_the_median_is_the_maps():

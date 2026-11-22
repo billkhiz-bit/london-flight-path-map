@@ -5204,7 +5204,7 @@
               DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR,
               LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is
               2021</strong>, when COVID restrictions held air traffic far below normal, and Heathrow's Noise Action Plan says
-              the 2021 results show a highly anomalous situation. Measured, they understate it by about half: Heathrow's 55 dB contour on this 2021 map covers 75.6 km&sup2;, and the CAA's model of 2025, a year with as many Heathrow flights as 2019, covers 142.4 km&sup2;. Both are the CAA's model, run on different years, so read that as an order of magnitude, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date.
+              the 2021 results show a highly anomalous situation. By area, they understate a normal year by about half: Heathrow's 55 dB contour on this 2021 map covers 75.6 km&sup2;, and the CAA's model of 2025, a year with as many Heathrow flights as 2019, covers 142.4 km&sup2;. Both are the CAA's model, run on different years, so read that as a sense of scale, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date.
               Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search
                 gives a 0-10 quiet score for that location, not a decibel reading. All levels are outdoor, at the building's facade: indoors, with the windows shut, it is quieter, though gardens, balconies and open windows are not.
               </div>
@@ -5253,7 +5253,7 @@
               </div>
               <div class="legend-row">
                 <div class="legend-swatch planes-edge"></div>
-                <span>ON AN EDGE: A FEW METRES DECIDE</span>
+                <span>ON AN EDGE: A FEW METRES DECIDE THE COUNT</span>
               </div>
               <div class="legend-row">
                 <div class="legend-swatch planes-clear"></div>
@@ -5399,7 +5399,7 @@
           <span class="sep">·</span>
           <a href="/pricing" data-event="pricing-footer-click" title="Sky Score B2B pricing and paid pilot">Pricing</a>
           <span class="sep">·</span>
-          <a href="/changes" data-event="changes-footer-click" title="Quarter-over-quarter borough score movement">
+          <a href="/changes" data-event="changes-footer-click" title="Quarter-on-quarter borough score movement">
             What changed
           </a>
           <span class="sep">·</span>
@@ -7950,7 +7950,7 @@
           mapLabelFontSize: '6px',
           noiseAuthority: 'DEFRA',
           noiseAuthorityPlain: 'government',
-          runwayNote: 'Heathrow alternates runways',
+          runwayNote: 'Heathrow alternates runways, so noise changes between morning and afternoon',
           currencyHtml: '&pound;',
           // Map chrome, applied by applyCityChrome(). These were ~20 DOM
           // assignments inside switchCity() behind `if (city === 'nyc') ... else
@@ -7970,7 +7970,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and Heathrow's Noise Action Plan says the 2021 results show a highly anomalous situation. Measured, they understate it by about half: Heathrow's 55 dB contour on this 2021 map covers 75.6 km&sup2;, and the CAA's model of 2025, a year with as many Heathrow flights as 2019, covers 142.4 km&sup2;. Both are the CAA's model, run on different years, so read that as an order of magnitude, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading. All levels are outdoor, at the building's facade: indoors, with the windows shut, it is quieter, though gardens, balconies and open windows are not.",
+            "<strong>What this is:</strong> DEFRA Strategic Noise Map (Round 4, published 2022), the long-term average aircraft noise around LHR, LCY and LGW - modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, and Heathrow's Noise Action Plan says the 2021 results show a highly anomalous situation. By area, they understate a normal year by about half: Heathrow's 55 dB contour on this 2021 map covers 75.6 km&sup2;, and the CAA's model of 2025, a year with as many Heathrow flights as 2019, covers 142.4 km&sup2;. Both are the CAA's model, run on different years, so read that as a sense of scale, not a correction. Round 4 is still the latest official round; the Environmental Noise Directive requires mapping every five years, so Round 5 falls due in 2027; DEFRA has not published a date. Used by councils for planning decisions. The overlay shows DEFRA's modelled contours; a postcode search gives a 0-10 quiet score for that location, not a decibel reading. All levels are outdoor, at the building's facade: indoors, with the windows shut, it is quieter, though gardens, balconies and open windows are not.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -7988,7 +7988,7 @@
           // table for one city and leaving the others undescribed would let
           // the coarser ones borrow its credibility.
           neighbourhoodNote:
-            'Named areas with indicative median prices. Aircraft quiet is computed from the coordinates of each area; crime is a relative modifier, not a measured rate.',
+            'Named areas with indicative median prices. The Quiet Skies score is computed from the coordinates of each area; crime is a relative modifier, not a measured rate.',
           airports: () => AIRPORTS,
           flightPaths: () => FLIGHT_PATHS,
           stations: () => stationsFor('london'),
@@ -8016,12 +8016,12 @@
           mapLabelFontSize: '8px',
           noiseAuthority: 'FAA/BTS',
           noiseAuthorityPlain: 'FAA/BTS',
-          runwayNote: 'airports operate on different runway configurations',
+          runwayNote: null,
           currencyHtml: '$',
           subtitle: 'NEW YORK · INDEPENDENT NOISE + LIVEABILITY DATA',
-          searchPlaceholder: 'Search a postcode, area or borough',
+          searchPlaceholder: 'Search a ZIP code, area or borough',
           emptyStateHint:
-            'Search by area (Astoria, Williamsburg), borough (Queens) - or click the map - to get noise analysis, property data and a value score.',
+            'Search by area (Astoria, Williamsburg) or borough (Queens), or click the map, to get noise analysis, property data and a value score.',
           tryExamples: ['Astoria', 'Williamsburg', 'Queens'],
           legendPath1: 'JFK ROUTES',
           legendPath2: 'LGA, NEWARK AND TETERBORO ROUTES',
@@ -8045,7 +8045,7 @@
           areaMap: () => NYC_AREA_MAP,
           neighbourhoodDetail: () => NYC_NEIGHBOURHOOD_DETAIL,
           neighbourhoodNote:
-            'Named neighbourhoods with indicative median prices. Aircraft quiet is computed from the coordinates of each neighbourhood; crime is a relative modifier, not a measured rate.',
+            'Named neighbourhoods with indicative median prices. The Quiet Skies score is computed from the coordinates of each neighbourhood; crime is a relative modifier, not a measured rate.',
           airports: () => NYC_AIRPORTS,
           flightPaths: () => NYC_FLIGHT_PATHS,
           stations: () => stationsFor('nyc'),
@@ -8087,7 +8087,7 @@
           mapLabelFontSize: '6px',
           noiseAuthority: 'FAA/BTS',
           noiseAuthorityPlain: 'FAA/BTS',
-          runwayNote: 'which runways are used depends on the wind',
+          runwayNote: null,
           currencyHtml: '$',
           subtitle: 'SAN FRANCISCO BAY AREA · SCORED ON US SCALES',
           searchPlaceholder: 'Search a Bay Area city or ZIP',
@@ -8137,7 +8137,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'Birmingham runs one runway on a 148/328 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'WEST MIDLANDS · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8150,7 +8150,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Birmingham Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BHX is 0.449 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Birmingham Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Birmingham Airport's runway 15/33 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Birmingham Airport&rsquo;s own <strong>modelled DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BHX is 0.449 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8167,7 +8167,7 @@
             WESTMIDLANDS_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             WESTMIDLANDS_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => WESTMIDLANDS_AIRPORTS,
           flightPaths: () => WESTMIDLANDS_FLIGHT_PATHS,
           stations: () => stationsFor('westmidlands'),
@@ -8187,7 +8187,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'Leeds Bradford runs one runway on a 138/318 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'WEST YORKSHIRE · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8200,7 +8200,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Leeds Bradford Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LBA is 0.275 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Leeds Bradford Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Leeds Bradford Airport's runway 14/32 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Leeds Bradford Airport&rsquo;s own <strong>modelled DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LBA is 0.275 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8217,7 +8217,7 @@
             WESTYORKSHIRE_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             WESTYORKSHIRE_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => WESTYORKSHIRE_AIRPORTS,
           flightPaths: () => WESTYORKSHIRE_FLIGHT_PATHS,
           stations: () => stationsFor('westyorkshire'),
@@ -8237,7 +8237,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'NO AIRPORT',
           noiseAuthorityPlain: 'not applicable',
-          runwayNote: 'no commercial airport operates in South Yorkshire',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'SOUTH YORKSHIRE · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8250,7 +8250,7 @@
           legendNoiseTitle: 'AIRCRAFT NOISE (NO AIRPORT)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> <strong>No commercial airport operates in South Yorkshire.</strong> Doncaster Sheffield closed to commercial flights in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is banded quiet on aircraft noise. That is a measured absence of a noise source, not an unmeasured city.",
+            "<strong>What this is:</strong> <strong>No commercial airport operates in South Yorkshire.</strong> Doncaster Sheffield closed to commercial flights in 2022, and the nearest large airports are Leeds Bradford and Manchester at roughly 50-60 km. Every borough is banded quiet on aircraft noise. That is a known absence of a noise source, not a gap in the data.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8267,7 +8267,7 @@
             SOUTHYORKSHIRE_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             SOUTHYORKSHIRE_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => SOUTHYORKSHIRE_AIRPORTS,
           flightPaths: () => SOUTHYORKSHIRE_FLIGHT_PATHS,
           stations: () => stationsFor('southyorkshire'),
@@ -8287,7 +8287,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'Liverpool runs one runway on an 086/266 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'MERSEYSIDE · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8300,7 +8300,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Liverpool John Lennon Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LPL is 0.312 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Liverpool John Lennon Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Liverpool John Lennon Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Liverpool John Lennon Airport&rsquo;s own <strong>modelled DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: LPL is 0.312 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8317,7 +8317,7 @@
             MERSEYSIDE_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             MERSEYSIDE_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => MERSEYSIDE_AIRPORTS,
           flightPaths: () => MERSEYSIDE_FLIGHT_PATHS,
           stations: () => stationsFor('merseyside'),
@@ -8337,7 +8337,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'Newcastle runs one runway on an 065/245 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'TYNE AND WEAR · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8350,7 +8350,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Newcastle Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: NCL is 0.346 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Newcastle Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Newcastle Airport's runway 07/25 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Newcastle Airport&rsquo;s own <strong>modelled DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: NCL is 0.346 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8367,7 +8367,7 @@
             TYNEANDWEAR_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             TYNEANDWEAR_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => TYNEANDWEAR_AIRPORTS,
           flightPaths: () => TYNEANDWEAR_FLIGHT_PATHS,
           stations: () => stationsFor('tyneandwear'),
@@ -8399,7 +8399,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'East Midlands runs one runway on an 087/267 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'LEICESTER · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8412,7 +8412,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around East Midlands Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>, and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports measured, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around East Midlands Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from East Midlands Airport's runway 09/27 alignment and its extended approach centreline. The airport sits inside North West Leicestershire, which is part of this city-region. Each rung of the distance ladder is scaled by East Midlands Airport&rsquo;s own <strong>modelled DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>, and EMA is <strong>0.705 of Heathrow&rsquo;s</strong>, the second largest of the twelve airports with a DEFRA footprint, because it is a freight hub flying at night rather than a passenger one. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8429,7 +8429,7 @@
             LEICESTER_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             LEICESTER_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => LEICESTER_AIRPORTS,
           flightPaths: () => LEICESTER_FLIGHT_PATHS,
           stations: () => stationsFor('leicester'),
@@ -8457,7 +8457,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'Teesside International runs one runway on a 048/228 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'TEESSIDE · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8487,7 +8487,7 @@
             TEESSIDE_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             TEESSIDE_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => TEESSIDE_AIRPORTS,
           flightPaths: () => TEESSIDE_FLIGHT_PATHS,
           stations: () => stationsFor('teesside'),
@@ -8507,7 +8507,7 @@
           mapLabelFontSize: '7px',
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'Bristol runs one runway on an 087/267 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'BRISTOL · INDEPENDENT NOISE + LIVEABILITY DATA',
           searchPlaceholder: 'Search a postcode, area or borough',
@@ -8520,7 +8520,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Bristol Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BRS is 0.365 of Heathrow&rsquo;s, so the bands no longer reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Bristol Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: bands are derived from Bristol Airport's runway 09/27 alignment and its extended approach centreline. The ladder is calibrated on Heathrow, but each rung is scaled by Bristol Airport&rsquo;s own <strong>modelled DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: BRS is 0.365 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8537,7 +8537,7 @@
             BRISTOL_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             BRISTOL_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published at this geography, so every district carries the rate of its borough.',
           airports: () => BRISTOL_AIRPORTS,
           flightPaths: () => BRISTOL_FLIGHT_PATHS,
           stations: () => stationsFor('bristol'),
@@ -8566,7 +8566,7 @@
           // a measurement this city has not had.
           noiseAuthority: 'ESTIMATED (RUNWAY GEOMETRY)',
           noiseAuthorityPlain: 'estimated',
-          runwayNote: 'Manchester runs both runways on one 052/232 alignment',
+          runwayNote: null,
           currencyHtml: '&pound;',
           subtitle: 'GREATER MANCHESTER · INDEPENDENT NOISE + LIVEABILITY DATA',
           // No area map for this city, so do not invite an area search.
@@ -8584,7 +8584,7 @@
           legendNoiseTitle: 'DEFRA AIRCRAFT NOISE (dB Lden)',
           noiseScale: NOISE_SCALE_DEFRA_LDEN,
           legendNoiseExplainer:
-            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Manchester Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>measured DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: MAN is 0.589 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
+            "<strong>What this is:</strong> The coloured overlay is <strong>DEFRA's Strategic Noise Map</strong> (Round 4, published 2022) around Manchester Airport: the long-term average aircraft noise, modelled from a year of actual flight tracks, not a live feed. <strong>That year is 2021</strong>, when COVID restrictions held air traffic far below normal, so these contours understate a typical year: at Heathrow, where the CAA also modelled 2025, DEFRA's 55 dB contour is about half the CAA's 2025 area. Levels are outdoor, at the facade. The <strong>borough bands</strong> are a separate <strong>estimate</strong>: Greater Manchester's aircraft-noise bands are derived from Manchester Airport's runway alignment and approach geometry. Both runways share one 052/232 alignment, and the prevailing 23 approach tracks in from the north-east over Stockport. Each rung of the distance ladder is scaled by Manchester Airport&rsquo;s own <strong>modelled DEFRA 55&nbsp;dB L<sub>den</sub> footprint</strong>: MAN is 0.589 of Heathrow&rsquo;s, so the bands do not reach as though every airport were the same size. Treat as indicative.",
           legendRoadTitle: 'DEFRA ROAD NOISE',
           legendFloodTitle: 'EA FLOOD RISK',
           legendAqTitle: 'DEFRA BACKGROUND AIR QUALITY',
@@ -8602,7 +8602,7 @@
             MANCHESTER_NEIGHBOURHOOD_VINTAGE +
             ', minimum ' +
             MANCHESTER_NEIGHBOURHOOD_MIN_SALES +
-            ' sales; districts below that are omitted rather than estimated). Aircraft quiet is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published for Greater Manchester, so every district carries the rate of its borough.',
+            ' sales; districts below that are omitted rather than estimated). The Quiet Skies score is computed from the coordinates of each district. No crime modifier is applied: sub-borough crime is not published for Greater Manchester, so every district carries the rate of its borough.',
           airports: () => MANCHESTER_AIRPORTS,
           flightPaths: () => MANCHESTER_FLIGHT_PATHS,
           stations: () => stationsFor('manchester'),
@@ -11383,7 +11383,7 @@
             : ratio >= 1.15
               ? ` - ${ratio.toFixed(1)}x the London median of ${median.toFixed(1)}`
               : ratio <= 0.85
-                ? ` - ${(1 / ratio).toFixed(1)}x lower than the London median of ${median.toFixed(1)}`
+                ? ` - ${Math.round((1 - ratio) * 100)}% below the London median of ${median.toFixed(1)}`
                 : ` - close to the London median of ${median.toFixed(1)}`;
 
         // "Distinctive" means well above the London median for that offence, not
@@ -11834,7 +11834,7 @@
             (sensor ? keyRow('sensor', named(sensor), sensorNote) : '') +
             (monitor ? keyRow('monitor', named(monitor), monitorNote) : '') +
             `</ul>` +
-            `<p class="info-note">They measure in different ways, places and periods, so expect them to differ.</p>` +
+            `<p class="info-note">These figures come from different methods, places and periods, so expect them to differ.</p>` +
             // Only what the rows above do not say already (2026-11-11, the credits audit): each instrument's row names it
             // low-cost and provisional, or ratified, so the paragraph keeps the roadside note and the hours rule.
             `<p class="info-note" style="font-size:11px;">${escapeHtml(m.airNoteList(sensor, monitor).filter((n) => n.key === 'roadside' || n.key === 'capture').map((n) => n.text).join(' '))}</p></details>` +
@@ -11955,7 +11955,7 @@
           // must not read as one. That is what `available: false` above is
           // for.
           status +=
-            '<p class="info-note">Line status could not be checked just now: the TfL status feed did not respond. This is not a report of good service. The stations are unaffected.</p>';
+            '<p class="info-note">Line status could not be checked just now: the TfL status feed did not respond. This is not a report of good service. The station list is unaffected.</p>';
         }
         if (lineStatusRows) {
           status += data.lineStatus
@@ -12029,7 +12029,7 @@
           return;
         }
         if (data.count === 0) {
-          el.innerHTML = '<p class="info-note">No EPC certificates found for this area.</p>';
+          el.innerHTML = '<p class="info-note">No energy certificates found at this postcode.</p>';
           return;
         }
         const s = data.summary;
@@ -13939,11 +13939,13 @@
           if (!districts.length || !body) return;
           const day = new Date(`${until}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
           const links = districts.map((d) => `<a href="/planes-overhead/${encodeURIComponent(d.toLowerCase())}/">${escapeHtml(d)}</a>`).join(', ');
-          // The words name the council as its area page does (fullName), the lookup uses the map's own key (name).
+          // The words name the council as its area page does (fullName), the lookup uses the map's own key (name),
+          // with "the" before a "City of" name inside a sentence: build_area_pages.in_sentence(), held by uk-city-panel.mjs.
+          const named = escapeHtml(fullName.startsWith('City of ') ? `the ${fullName}` : fullName);
           body.innerHTML = (pack
-            ? `<p class="info-note"><strong>Heathrow's expansion consultation is open until ${escapeHtml(day)}.</strong> <a href="${escapeHtmlAttr(pack)}">The planes over ${escapeHtml(fullName)} today, for the consultation</a>, district by district.</p>`
+            ? `<p class="info-note"><strong>Heathrow's expansion consultation is open until ${escapeHtml(day)}.</strong> <a href="${escapeHtmlAttr(pack)}">The planes over ${named} today, for the consultation</a>, district by district.</p>`
             : '')
-            + `<p class="info-note">Planes overhead pages for the postcode districts covering ${escapeHtml(fullName)}: ${links}.</p>`;
+            + `<p class="info-note">Planes overhead pages for the postcode districts covering ${named}: ${links}.</p>`;
           row.hidden = false;
         });
       }
@@ -14443,7 +14445,7 @@
         const sentence = top ? `${top.name} earns the most of the ${show1(pcScore)}${rest}.` : '';
         const rows = parts
           .map(([k, name, v]) => {
-            if (!(weights[k] > 0)) return `<div class="score-row ac-skip"><span class="score-row-label">${name}</span><span class="score-row-value">not counted for this buyer</span></div>`;
+            if (!(weights[k] > 0)) return `<div class="score-row ac-skip"><span class="score-row-label">${name}</span><span class="score-row-value">not counted for this profile</span></div>`;
             if (v === null || v === undefined) return `<div class="score-row ac-skip"><span class="score-row-label">${name}</span><span class="score-row-value">no data here</span></div>`;
             const x = pts.find((q) => q.k === k);
             // The part's OWN score, which no buyer profile changes, and how much it counts for this one (Bill, 2026-11-08:
@@ -14497,7 +14499,7 @@
           + `<text class="ac-mark-t" x="${x(pcScore)}" y="52" text-anchor="${anchor}">${escapeHtml(place)} ${show1(pcScore)}</text>`
           + `<text class="ac-end" x="10" y="52">0</text><text class="ac-end" x="290" y="52" text-anchor="end">10</text></svg>`;
         return `<div class="ac-cmp"><div class="ac-key">How it compares: ${escapeHtml(cityOf(currentCity).label)}’s ${all.length} ${unit}</div>${svg}`
-          + `<p class="ac-cmp-say">${lower} ${unit} score lower and ${higher} higher. They run from ${show1(minV)} (${escapeHtml(named(minV))}) to ${show1(maxV)} (${escapeHtml(named(maxV))}).</p></div>`;
+          + `<p class="ac-cmp-say">${lower} ${lower === 1 ? unit.replace(/s$/, '') : unit} ${lower === 1 ? 'scores' : 'score'} lower and ${higher} higher. They run from ${show1(minV)} (${escapeHtml(named(minV))}) to ${show1(maxV)} (${escapeHtml(named(maxV))}).</p></div>`;
       }
       // The first row a panel list shows, read from that list, so a finding cannot disagree with it.
       function nearestListed(containerId) {
@@ -14946,10 +14948,17 @@
       <p id="badge-copy-result" class="info-note" role="status" aria-live="polite" style="margin-top:4px;"></p>`)
         : ''
     }
-    ${detailRow('Your next steps', `
-      <p class="property-note" style="margin-top:0;">
-        <strong>1. Check noise overlay</strong> - zoom into the map to see official ${cityOf(currentCity).noiseAuthorityPlain} noise contours at your location.<br><br>
-        ${
+    ${detailRow('Your next steps', (() => {
+      /* Numbered as they are drawn (English audit, 2026-11-22): a city with no
+         aircraft noise contours (South Yorkshire, noiseAuthorityPlain 'not
+         applicable') has no overlay step, and the registry's labels are never
+         slotted into a sentence again ("official not applicable noise
+         contours", "official estimated noise contours" both printed). */
+      const steps = [];
+      if (cityOf(currentCity).noiseAuthorityPlain !== 'not applicable') {
+        steps.push('<strong>Check the noise overlay</strong> - zoom into the map to see the aircraft noise contours at your location.');
+      }
+      steps.push(
           /* The Heathrow WebTrak link is LONDON's, and until 2026-08-24 it was
              the copy for every UK city - so a Manchester search's "next steps"
              pointed at Heathrow's flight tracker. Only the links we can vouch
@@ -14960,19 +14969,29 @@
              WebTrak instances are ever verified, this belongs in the registry
              as a field on ALL cities (smoke-local asserts key parity). */
           currentCity === 'nyc'
-            ? '<strong>2. Check FAA data</strong> - review flight tracking tools for JFK, LaGuardia and Newark to see which planes fly over this area.<br><br>'
+            ? '<strong>Check FAA data</strong> - review flight tracking tools for JFK, LaGuardia and Newark to see which planes fly over this area.'
             : currentCity === 'london'
-              ? '<strong>2. Use WebTrak</strong> - <a href="https://webtrak.emsbk.com/lhr6" target="_blank" style="color:var(--orange-text);">Heathrow WebTrak</a> shows exactly which planes fly over this location and how often.<br><br>'
-              : '<strong>2. Check flight tracking</strong> - the airport operator&rsquo;s own flight tracker (or any public ADS-B tracker) shows which planes fly over this location and how often.<br><br>'
-        }
-        <strong>3. Visit at different times</strong> - ${cityOf(currentCity).runwayNote}, so noise changes between morning and afternoon. Visit at least twice.<br><br>
-        <strong>4. Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.
-      </p>`)}
+              ? '<strong>Use WebTrak</strong> - <a href="https://webtrak.emsbk.com/lhr6" target="_blank" style="color:var(--orange-text);">Heathrow WebTrak</a> shows exactly which planes fly over this location and how often.'
+              : '<strong>Check flight tracking</strong> - the airport operator&rsquo;s own flight tracker (or any public ADS-B tracker) shows which planes fly over this location and how often.');
+      /* runwayNote was slotted into "..., so noise changes between morning and
+         afternoon", which only Heathrow's alternation makes true: "no commercial
+         airport operates in South Yorkshire, so noise changes ..." was printed.
+         It now holds the whole cause where there is one, else null. */
+      const runwayNote = cityOf(currentCity).runwayNote;
+      steps.push(runwayNote
+        ? `<strong>Visit at different times</strong> - ${runwayNote}. Visit at least twice.`
+        : '<strong>Visit at different times</strong> - visit at least twice, at different times of day.');
+      steps.push('<strong>Check road noise</strong> - toggle the "Road Noise" layer. Some areas quiet from planes sit on noisy roads.');
+      return `
+      <p class="property-note" style="margin-top:0;">
+        ${steps.map((s, i) => s.replace('<strong>', `<strong>${i + 1}. `)).join('<br><br>\n        ')}
+      </p>`;
+    })())}
     </div>
     </details>
     <div class="sidebar-section notify-block">
       <h3>TELL ME WHEN THIS CHANGES</h3>
-      <p class="info-note" style="margin-top:0;">Scores move when the underlying data is refreshed, roughly quarterly. Leave an email and we will tell you when ${escapeHtml(analysis.postcode || 'this area')} moves.</p>
+      <p class="info-note" style="margin-top:0;">Scores move when the underlying data is refreshed, roughly quarterly. Leave an email and we will tell you when the score for ${escapeHtml(analysis.postcode || 'this area')} moves.</p>
       <!-- method="post": JS handles the submit, but without JS a form with no
            method GETs, putting the email in the URL (history, analytics).
            Found by an OWASP ZAP baseline scan, 2026-09-29. -->
@@ -16313,7 +16332,7 @@
           ` <strong>These scores are too close to rank.</strong> All ${scores.length} ${unit} here fall within ` +
           `${scoreSpread.toFixed(1)} of one another` +
           (tiedCount > 1 ? ` and ${tiedCount} share the same score` : '') +
-          ', so the order below is not a meaningful difference. Compare the individual measurements instead.'
+          ', so the order below shows no meaningful difference. Compare the individual measurements instead.'
         );
       }
 
@@ -16487,7 +16506,7 @@
           '<p class="property-note" style="margin:0;font-size:11px;flex:1;">' +
           (priceLed
             ? `Ranked by <strong>${PERSONAS[currentPersona].label} best value</strong>: ${weightSentence(w)}`
-            : `Ranked by <strong>${PERSONAS[currentPersona].label} Buyer Score</strong>: ${weightSentence(w)}`) +
+            : `Ranked by the <strong>${PERSONAS[currentPersona].label} profile's score</strong>: ${weightSentence(w)}`) +
           (priceLed
             ? ' <strong>This ordering is led by price.</strong> Districts here share their borough&rsquo;s liveability and carry no sub-borough crime figure, which is not published at postcode-district geography, so they differ mainly by price and aircraft noise. Read it as best value, not as which area is best.'
             : '') +
@@ -16727,7 +16746,7 @@
       }
 
       const PLACE_SOURCES =
-        '<p class="property-note" style="margin:10px 0 0;font-size:11px;">Routes: FAA Coded Instrument Flight Procedures, supplied "as is", without warranty; not for navigation. Noise shading: US Bureau of Transportation Statistics, 2022, which BTS says should not be used to judge noise at an individual location. They show where routes are, not how many aircraft use them. <a href="/bay-area/">The Bay Area page</a> has every city.</p>';
+        '<p class="property-note" style="margin:10px 0 0;font-size:11px;">Routes: FAA Coded Instrument Flight Procedures, supplied "as is", without warranty; not for navigation. Noise shading: US Bureau of Transportation Statistics, 2022, which BTS says should not be used to judge noise at an individual location. The lines and the shading show where routes are, not how many aircraft use them. <a href="/bay-area/">The Bay Area page</a> has every city.</p>';
 
       // THE SCORE ON A BAY AREA CARD (2026-11-07, built for review). The API's score for the city, computed
       // here from the API's own record, with every input it rests on, each US scale's California anchor read
@@ -17017,7 +17036,7 @@
         const persona = PERSONAS[currentPersona];
         // Growth is not scored here, so its weight is left out of the sentence (it is shared among the rest).
         const note = scored
-          ? `Ranked by <strong>${escapeHtml(persona.label)} Buyer Score</strong>: ${weightSentence({ ...persona.weights, growth: 0 })} Price growth is not scored here; its weight is shared among the rest. ${escapeHtml(bayUsScales())} The noise-map share is the federal aircraft noise map's, which covers every airfield, not only the three whose routes are drawn.${scoresTooCloseNote(rows.map((r) => r.score).filter((s) => typeof s === 'number'), 'cities')}`
+          ? `Ranked by the <strong>${escapeHtml(persona.label)} profile's score</strong>: ${weightSentence({ ...persona.weights, growth: 0 })} Price growth is not scored here; its weight is shared among the rest. ${escapeHtml(bayUsScales())} The noise-map share is the federal aircraft noise map's, which covers every airfield, not only the three whose routes are drawn.${scoresTooCloseNote(rows.map((r) => r.score).filter((s) => typeof s === 'number'), 'cities')}`
           : `Ordered by how much of each ${what} the federal aircraft noise map shades, as the Bay Area page orders its cities. <strong>Not scored:</strong> ${nhoods ? "a neighbourhood has no score of its own; the cities' scores are on the city list." : 'no score is held.'} That map covers every airfield, not only the three whose routes are drawn.`;
         // What * means, beside the table it marks (Bill, 2026-11-07).
         const starKey =

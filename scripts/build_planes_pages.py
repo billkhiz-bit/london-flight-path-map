@@ -618,7 +618,7 @@ def respond_line(packs: list[tuple[str, str]], until: str) -> str:
     consultation has closed (build() passes none then). Neutral, like the pack: where to find the figures, no view."""
     if not packs:
         return ''
-    links = listed([f'<a href="{e(path)}">the planes over {e(b)}</a>' for b, path in packs])
+    links = listed([f'<a href="{e(path)}">the planes over {e(area.in_sentence(b))}</a>' for b, path in packs])
     return (f"<p class=\"respond\">For Heathrow's expansion consultation, open until {e(day_words(until))}: "
             f'{links}, council by council.</p>\n')
 
@@ -656,20 +656,21 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
             '</table>\n</div>')
     if m['also']:
         sections.append('<p class="note-p">Also counted here: '
-                        + '; '.join(f"{e(a['name'])}, at most {e(a['most'])} over any of its postcodes"
+                        + '; '.join(f"{e(a['name'])}, at most {e(a['most'])} over any postcode in {e(d)}"
                                     for a in m['also']) + '.</p>')
     notes = []
     if m['edge']:
         notes.append('On an edge: the postcode is on the edge of a flight path, where a few metres decide whether a '
-                     'plane counts as overhead, and the fewest and the most within 100 m of it fall in different '
-                     'bands.')
+                     'plane counts as overhead, and the fewest and most planes a day counted within 100 m of it fall in '
+                     'different bands.')
     if m['approx']:
-        notes.append(f"{m['approx']} of its postcodes have a position ONS estimates, so their figures may be for "
+        notes.append(f"{m['approx']} of its postcodes {'has' if m['approx'] == 1 else 'have'} a position ONS estimates, "
+                     f"so {'its' if m['approx'] == 1 else 'their'} figures may be for "
                      'a spot a few hundred metres away.')
     if m['other']:
-        notes.append(f"Over {m['other']} of its postcodes, other flying passes too, from airfields, helicopters and "
-                     'airports we cannot check against official counts, so few planes from the airports we count '
-                     'does not mean a quiet sky there.')
+        notes.append(f"Over {m['other']} of its postcodes, other aircraft pass too: helicopters, and planes from "
+                     'airfields and airports we cannot check against official counts. So a low count from the '
+                     'airports we count does not mean a quiet sky there.')
     note_html = '\n'.join(f'<p class="note-p">{e(n)}</p>' for n in notes)
     area_links = '\n'.join(f'<li><a href="{e(path)}">{e(b)}: noise and liveability score</a></li>'
                            for _, b, path in m['councils'] if path)
@@ -683,7 +684,7 @@ def render(m: dict, packs: list[tuple[str, str]] = (), until: str = '') -> str:
         + ('\n  .warn { max-width:66ch; margin:0 0 20px; padding:10px 14px; background:var(--paper);'
            ' border-left:4px solid var(--orange); }' if warn else ''),
         respond=respond, warn=warn,
-        title=e(area.page_title(f'Planes overhead in {d}: flight paths over {council_names[0]}',
+        title=e(area.page_title(f'Planes overhead in {d}: flight paths over {area.in_sentence(council_names[0])}',
                                 f'Planes overhead in {d}, {council_names[0]}', f'Planes overhead in {d}')),
         description=e(area.fit(
             f'How many planes pass over {d} ({where}) on a day {airports} {fly} west, east or both ways, '
@@ -1036,7 +1037,7 @@ def pack_councils(models: list[dict], index: dict, airport: str = PACK_AIRPORT) 
     return out
 
 
-PACK_LEAD = ('Whatever your view, these are the figures for {borough} now: the planes from Heathrow counted '
+PACK_LEAD = ('These are the figures for {borough} now: the planes from Heathrow counted '
              "over each of its postcode districts, and the borough's noise, air and flood figures from official data. "
              "They are today's flights on today's routes, not those of a third runway. Sky Score takes no side in "
              'the consultation.')
@@ -1089,7 +1090,7 @@ PACK_HUB = HEAD + """<nav class="crumbs" aria-label="Breadcrumb"><a href="/">Sky
 <main>
 <h1>Planes from Heathrow, council by council</h1>
 <p class="sub">For Heathrow's expansion consultation, {state}.</p>
-<p>Whatever your view, each page below sets out the figures for one council now: the planes from Heathrow counted over each of its postcode districts, and the borough's noise, air and flood figures from official data. They are today's flights on today's routes, not those of a third runway. Sky Score takes no side in the consultation.</p>
+<p>Each page below sets out the figures for one council now: the planes from Heathrow counted over each of its postcode districts, and the borough's noise, air and flood figures from official data. They are today's flights on today's routes, not those of a third runway. Sky Score takes no side in the consultation.</p>
 <p class="respond"><a href="{href}">Heathrow's consultation page</a>: how to respond, and Heathrow's own documents.</p>
 <h2>The {count} councils Heathrow's flights cross</h2>
 <p class="note-p">A council is here when one or more of its postcode districts has a planes overhead page counting Heathrow's planes, {period}.</p>
@@ -1121,14 +1122,14 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
     notes = ''
     if any(EDGE in p for t in tables for cell in t['district_cells'] for p in cell):
         notes = ('<p class="note-p">On an edge: the postcode is on the edge of a flight path, where a few metres decide '
-                 'whether a plane counts as overhead, and the fewest and the most within 100 m of it fall in different '
-                 'bands.</p>')
+                 'whether a plane counts as overhead, and the fewest and most planes a day counted within 100 m of it fall in '
+                 'different bands.</p>')
     shown = {f['label']: f for f in (facts or {}).get('facts', [])}
     items, credited = [], []
     for label, source_heads in PACK_FACTS:
         f = shown.get(label)
         if f is None:  # absence is said, never shown as a reading
-            items.append(f'<div><dt>{e(label)}</dt><dd>Not published for {e(borough)}</dd></div>')
+            items.append(f'<div><dt>{e(label)}</dt><dd>Not published for {e(area.in_sentence(borough))}</dd></div>')
             continue
         note = f'<span class="note">{e(f["note"])}</span>' if f.get('note') else ''
         items.append(f'<div><dt>{e(label)}</dt><dd>{e(f["value"])}{note}</dd></div>')
@@ -1137,10 +1138,10 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
     has_area = (REPO / area_path.strip('/') / 'index.html').exists()
     return PACK.format(
         extra_style=EXTRA_STYLE,
-        title=e(area.page_title(f'Planes over {borough} today: Heathrow consultation',
-                                f'Planes over {borough}: Heathrow consultation')),
+        title=e(area.page_title(f'Planes over {area.in_sentence(borough)} today: Heathrow consultation',
+                                f'Planes over {area.in_sentence(borough)}: Heathrow consultation')),
         description=e(area.fit(
-            f'The planes from Heathrow over each postcode district in {borough}, with its official noise, '
+            f'The planes from Heathrow over each postcode district in {area.in_sentence(borough)}, with its official noise, '
             f'air and flood figures: the same for anyone responding to Heathrow\'s expansion '
             f'consultation. Counted from flight tracking, {tables[0]["period"]}.',
             f'The planes from Heathrow over each postcode district in {borough}, with its noise, air and flood '
@@ -1151,7 +1152,7 @@ def render_pack(lad: str, ms: list[dict], c: dict, today: str, facts: dict | Non
         crumbs_ld=area.breadcrumb_ld([('Sky Score', '/'), ('Planes overhead', URL_ROOT),
                                       ('Heathrow consultation', f'{URL_ROOT}{PACK_DIR}/'),
                                       (borough, f'{URL_ROOT}{PACK_DIR}/{area.slug(borough)}/')]),
-        borough=e(borough), state=e(pack_state(c['until'], today)), lead=e(PACK_LEAD.format(borough=borough)),
+        borough=e(borough), state=e(pack_state(c['until'], today)), lead=e(PACK_LEAD.format(borough=area.in_sentence(borough))),
         href=e(c['href']), period=e(tables[0]['period']), cells_said=e(CELLS_SAID), key=band_key(bands_in(cell for t in tables for cell in t['district_cells'])), head=head, rows=rows,
         notes=notes, facts='\n'.join(items),
         area_link=(f'<p><a href="{e(area_path)}">{e(borough)}: every figure we publish, with its score</a></p>'
@@ -1357,7 +1358,7 @@ def home_band(index: dict, today: str) -> list[str]:
         '    <div>',
         "      <p class=\"eyebrow\">Heathrow&#x27;s consultation</p>",
         '      <h2 id="planes-band-h">See the planes over your council.</h2>',
-        f"      <p class=\"lede\">Whatever your view, one page for each of the {n} councils Heathrow&#x27;s flights cross: the "
+        f"      <p class=\"lede\">One page for each of the {n} councils Heathrow&#x27;s flights cross: the "
         "planes counted over each of its postcode districts, and its official noise, air and flood figures. Today&#x27;s "
         f"flights on today&#x27;s routes, not those of a third runway. The consultation is open until {e(day_words(c['until']))}.</p>",
         f'      <a class="pill" href="{e(c["hub"])}">Find your council <i aria-hidden="true"></i></a>',

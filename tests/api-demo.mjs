@@ -401,7 +401,7 @@ console.log('Nothing to show');
     ['SW5 9XX', 'We could not find SW5 9XX. Check it and send it again. Still showing TW9 3PZ.'],
     ['AB1 2CD', 'We hold no noise or NO₂ figure for AB1 2CD. Still showing TW9 3PZ.'],
     ['BB1 1BB', 'The API found no postcode near the map reference for BB1 1BB. Try another. Still showing TW9 3PZ.'],
-    ['IM1 1AD', 'IM1 1AD has no map reference, so there is no point to ask about. The Isle of Man and the Channel Islands have none. Still showing TW9 3PZ.'],
+    ['IM1 1AD', 'IM1 1AD has no map reference, so we cannot look it up on the map. Postcodes in the Isle of Man and the Channel Islands have none. Still showing TW9 3PZ.'],
     ['CC1 1CC', `${sayProblem('failed', 'CC1 1CC', 'TW9 3PZ')}`],
     ['DD1 1DD', `${sayProblem('failed', 'DD1 1DD', 'TW9 3PZ')}`],
     ['EE1 1EE', `${sayProblem('failed', 'EE1 1EE', 'TW9 3PZ')}`],

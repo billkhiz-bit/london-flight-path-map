@@ -122,13 +122,13 @@ export function planesModel(file, info, postcode, names = AIRPORT_NAME, nearest 
     // kind of day reads under 1. The sentence above stays for the surfaces that print one (the map's tile, the report).
     noneKinds: none ? KINDS.map(([kind, label]) => ({ kind, label, text: 'Under 1 a day', share: 'from each airport' })) : null,
     edge: airports.some((a) => a.rows.some((r) => r.range))
-      ? 'A range means this postcode is on the edge of a flight path, where a few metres decide whether a plane counts as overhead: it gives the fewest and the most within 100 m.'
+      ? 'A range means this postcode is on the edge of a flight path, where a few metres decide whether a plane counts as overhead: the range gives the fewest and the most counted within 100 m of where the postcode is placed.'
       : null,
     approx: (file.approx || []).includes(pc)
       ? "This postcode's position is approximate (ONS gives it an estimated one), so these figures may be for a spot a few hundred metres away."
       : null,
     other: (file.other || []).includes(pc)
-      ? 'Other flying passes over here too, from airfields, helicopters and airports we cannot check against official counts, so few planes from the airports we count does not mean a quiet sky.'
+      ? 'Other aircraft pass over here too: helicopters, and planes from airfields and airports we cannot check against official counts. So a low count from the airports we count does not mean a quiet sky.'
       : null,
     uncounted: near ? `${names[near.code] || near.code}, ${near.distance} away, is not one of the ${WORDS[counted] || counted} airports we count.` : null,
     // The large-user rule (2026-11-10) only when the file carries it: a cached older airports.json mid-deploy never
@@ -233,7 +233,7 @@ export function planesWalk(model, steps = []) {
       over: false,
     } : null,
     rows: a.rows.map((r) => ({ kind: r.kind, label: r.label, share: r.share, figure: shortFigure(r.value), bar: r.bar, range: r.range, colour: stepColour(r.value, steps) })),
-    foot: `Planes a day over ${model.postcode} from ${a.name}, ${a.period}. Never an average of the three: no day is average.`,
+    foot: `Planes a day over ${model.postcode} from ${a.name}, ${a.period}. Each kind of day is shown on its own, never averaged together.`,
     how: model.how,
   };
 }

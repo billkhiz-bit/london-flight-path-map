@@ -305,7 +305,7 @@ async function make(raw, check = null) {
       block.className = 'free-copy-check';
       block.innerHTML =
         qr.createSvgTag({ cellSize: CELL, margin: 4 * CELL, alt: 'QR code to check this report' }) +
-        `<p><strong>Reference ${esc(ref)}</strong>, made ${esc(longDate(made))}. To check a copy against the official figures, scan the code or open <a href="${esc(link)}">${esc(link.replace('https://', ''))}</a>.` +
+        `<p><strong>Reference ${esc(ref)}</strong>, made ${esc(longDate(made))}. To check a copy against today's figures, scan the code or open <a href="${esc(link)}">${esc(link.replace('https://', ''))}</a>.` +
         ' <strong>Free copy for personal use, not for use with clients</strong>, under our terms (section 4, skyscore.co.uk/terms). Reports for firms: skyscore.co.uk/pricing.</p>';
       const code = block.querySelector('svg');
       code.dataset.modules = String(qr.getModuleCount() + 8); // the side in modules, quiet zone included
@@ -391,7 +391,7 @@ async function showCheck(check, postcode, airac, env, planes) {
     // A reference proves the postcode and the day, not that a copy's figures were left alone: the copy's
     // figures are never an input here (audit 2026-10-09 M-2), so the reader is told to compare them.
     ? `Reference ${esc(shown)} matches a copy made for ${esc(postcode)} on ${when}. It cannot show that the figures on a copy were left unchanged: compare every figure on your copy with the report below, which a genuine copy states exactly.`
-    : `Reference ${esc(shown)} does not match today's figures for ${esc(postcode)}. Either the official figures have been updated since ${when}, or the copy you were shown was changed. The report below is made from today's official data.`;
+    : `Reference ${esc(shown)} does not match today's figures for ${esc(postcode)}. Either the figures have been updated since ${when}, or the copy you were shown was changed. The report below is made from today's data.`;
   checkResult.hidden = false;
 }
 

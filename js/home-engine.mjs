@@ -148,7 +148,7 @@ function wantCountry(preset = '') {
   const el = byId('want-country');
   if (!el) return;
   const options = WANT_COUNTRIES.map(([c, n]) => `<option value="${c}"${c === preset ? ' selected' : ''}>${esc(n)}</option>`).join('');
-  el.innerHTML = '<label for="want-country-select">Somewhere we do not cover yet? Tell us where you would like next:</label>'
+  el.innerHTML = '<label for="want-country-select">Somewhere we do not cover yet? Tell us where you would like us to cover next:</label>'
     + `<span class="want-row"><select id="want-country-select"><option value="">Choose a country</option>${options}</select>`
     + '<button type="button" class="want-go">Count my vote</button></span>';
   el.hidden = false;
@@ -1972,7 +1972,7 @@ export const FIT_CONDITIONS = [
     says: (v) => `${v}× the WHO guideline`, means: 'Poor air: no worse than 2.5 times the WHO guideline (DEFRA).' },
   { key: 'rail', group: 'want', label: 'a station', short: 'station', miss: 'fewer stations', col: 'rail_within_800m_pct', test: (v) => v >= FIT_CUTS.railShare,
     says: (v) => `${v}% of postcodes within 800 m of one`, means: 'A station: at least half of postcodes within 800 m of a rail, metro or tram stop (NaPTAN).' },
-  { key: 'schools', group: 'want', label: 'good schools', short: 'schools', miss: 'schools below average', col: 'progress8', test: (v) => v > FIT_CUTS.progress8,
+  { key: 'schools', group: 'want', label: 'good schools', short: 'schools', miss: 'schools not above average', col: 'progress8', test: (v) => v > FIT_CUTS.progress8,
     says: (v) => `Progress 8 ${signed(v)}`, means: 'Good schools: Progress 8 above 0, the England average (DfE).' },
 ];
 export const FIT_BUDGETS = [200000, 250000, 300000, 400000, 500000, 600000, 750000, 1000000];
@@ -1996,12 +1996,12 @@ export function fitOf(row, chosen, budget) {
   for (const c of chosen) {
     const v = row[c.col];
     if (v === '' || v == null) unknown.push(c.short);
-    else if (!c.test(Number(v))) missed.push(`${c.miss}: ${c.says(Number(v))}`);
+    else if (!c.test(Number(v))) missed.push(`${c.miss} (${c.says(Number(v))})`);
     else if (c.routes) {
       // Routes the map draws across the area: a region this map does not draw has no count, which is unknown.
       const n = state.crossings?.[row.city]?.get(norm(row.borough));
       if (n == null) unknown.push('flight route');
-      else if (n > 0) missed.push(`flight routes cross it: ${n} on the map`);
+      else if (n > 0) missed.push(n === 1 ? '1 flight route crosses it on the map' : `${n} flight routes cross it on the map`);
     }
   }
   return { missed, unknown };
@@ -2073,7 +2073,7 @@ function updateFit() {
   const lines = [];
   if (maybe.length) {
     const names = maybe.slice(0, 4).map((j) => `${j.r.borough} (no ${j.unknown.join(' or ')} figure)`);
-    lines.push(`${maybe.length} more might fit but do not publish every figure you asked about: ${names.join(', ')}${maybe.length > 4 ? ', and others' : ''}.`);
+    lines.push(`${maybe.length} more might fit but ${maybe.length === 1 ? 'does' : 'do'} not publish every figure you asked about: ${names.join(', ')}${maybe.length > 4 ? ', and others' : ''}.`);
   }
   lines.push('Highest Sky Score first. These are council-area figures and streets differ, so check a postcode before a viewing.');
   // The map can be on a city this list does not hold: say so, and do not offer to "see them" there.

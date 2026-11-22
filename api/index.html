@@ -290,7 +290,7 @@
 
 <main>
   <h1>The Sky Score API</h1>
-  <p class="lead">UK property noise and liveability data, anchored to DEFRA, DfE and ONS, in one JSON call per postcode, with the source of every figure in the response. Free tier of 10,000 requests a month, with self-service signup.</p>
+  <p class="lead">UK property noise and liveability data, anchored to DEFRA, DfE and ONS, in one JSON call per postcode, with the source of every figure in the response. Free tier of 10,000 requests a month, with self-service sign-up.</p>
   <div class="actions">
     <a class="go" href="/score-demo/index.html">Try the live demo</a>
     <a class="go" href="/score-demo/api-docs.html">API reference</a>
@@ -367,11 +367,11 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
 
     <details class="limits">
       <summary>How accurate is the noise estimate, and what are its limits?</summary>
-      <p><strong>Note:</strong> the DEFRA Lden raster tier has been <strong>live</strong> since 6 August 2026. It was bypassed between 3 and 6 August 2026 for the coverage reason below; that bypass was lifted once the consumer site was given the same measurements, so the two surfaces cannot disagree. Four things to know, stated plainly because some were understood only after the first was published:</p>
+      <p><strong>Note:</strong> the DEFRA Lden raster tier has been <strong>live</strong> since 6 August 2026. It was bypassed between 3 and 6 August 2026 for the coverage reason below; that bypass was lifted once the consumer site was given the same DEFRA values, so the two surfaces cannot disagree. Four things to know, stated plainly because some were understood only after the first version was published:</p>
       <ul>
         <li><strong>Coverage.</strong> DEFRA's aircraft contours reach only 10.4% of live London postcodes, and treating the unmapped remainder as quiet flattened the component.</li>
-        <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of every measurement we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
-        <li><strong>Vintage.</strong> DEFRA Round 4 was published in 2022 but maps <strong>2021</strong>, which Heathrow's Noise Action Plan 2024-2028 says shows "a highly anomalous situation" because of COVID travel restrictions. Traffic-suppressed contours understate a year of ordinary traffic, unevenly by airport. <strong>Measured at Heathrow</strong>, where the CAA publishes each year's annual contours: the 2021 55 dB L<sub>den</sub> contour on DEFRA's map covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2025 (as many flights a year as 2019; ERCD Report 2601, Table 12) covers <strong>142.4 km&sup2;</strong>, nearly twice the area. Both are the CAA's model, run on different years, so that is an order of magnitude, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
+        <li><strong>The dB-to-score mapping.</strong> Re-derived on 4 August after measuring the raster directly: it had been reusing a band table built for DEFRA's published reporting bands, which start at 55 dB, against raster values that start at 40 dB. That put 80.4% of the DEFRA values we hold on a single perfect score. Fixed in code, staged behind the bypass.</li>
+        <li><strong>Vintage.</strong> DEFRA Round 4 was published in 2022 but maps <strong>2021</strong>, which Heathrow's Noise Action Plan 2024-2028 says shows "a highly anomalous situation" because of COVID travel restrictions. Traffic-suppressed contours understate a year of ordinary traffic, unevenly by airport. <strong>By area at Heathrow</strong>, where the CAA publishes each year's annual contours: the 2021 55 dB L<sub>den</sub> contour on DEFRA's map covers <strong>75.6 km&sup2;</strong>, the CAA's model of 2025 (as many flights a year as 2019; ERCD Report 2601, Table 12) covers <strong>142.4 km&sup2;</strong>, nearly twice the area. Both are the CAA's model, run on different years, so that is a sense of scale, not a correction, and we apply none. Re-anchoring needs Round 5, expected around 2027.</li>
         <li><strong>Outdoor levels.</strong> L<sub>den</sub> is assessed outdoors, at the most exposed facade. Indoor exposure depends on glazing and ventilation, which no public dataset records per property.</li>
       </ul>
       <p>The geometry tier is documented in full in METHODOLOGY section 4.5. It is not a DEFRA reading and does not inherit the vintage caveat directly, but it is not independent of it either: since v3.8 each airport's distance scale is sized by that airport's measured Round 4 footprint.</p>
@@ -381,7 +381,7 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
         <li><strong>57.2%</strong> land within 1.0 point of the DEFRA value, <strong>88.4%</strong> within 2.0.</li>
         <li><strong>Signed bias &minus;0.29: the estimate reads slightly LOUDER than DEFRA's maps</strong>, so where it is wrong it leans pessimistic about noise rather than optimistic. That is by rule since v5.5: the fit is not allowed to make any city read quieter than DEFRA, and in every city we cover it reads louder. For a noise product that is the safer direction to err, and it is stated here rather than left for you to discover.</li>
       </ul>
-      <p>Two things that figure is <em>not</em>. It describes postcodes <strong>near airports</strong>, because that is the only population where DEFRA published anything to compare against, not a global accuracy figure. And the bias is not purely estimator error: Round 4 maps a COVID-suppressed year, so some share of that &minus;0.29 is real traffic reduction in the measurement rather than overstatement in the estimate. We do not apply a correction for it, because the split is not measurable from the data we hold. The same caveat reaches the fit itself: the corridor penalty's weight and the runway shape were fitted against this 2021 map, so they inherit the understatement, and we treat them as provisional until a normal-year yardstick is available.</p>
+      <p>Two things that figure is <em>not</em>. It describes postcodes <strong>near airports</strong>, not a global accuracy figure, because that is the only population where DEFRA published anything to compare against. And the bias is not purely estimator error: Round 4 maps a COVID-suppressed year, so some share of that &minus;0.29 is real traffic reduction in the map rather than overstatement in the estimate. We do not apply a correction for it, because the split is not measurable from the data we hold. The same caveat reaches the fit itself: the corridor penalty's weight and the runway shape were fitted against this 2021 map, so they inherit the understatement, and we treat them as provisional until a normal-year yardstick is available.</p>
       <p>Reproduce it yourself against our published dataset: <code>python scripts/check_quiet_estimate_error.py</code>.</p>
     </details>
   </section>
@@ -426,7 +426,7 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
       </div>
       <div class="card">
         <h3>Conveyancers and surveyors</h3>
-        <p>Per-property due-diligence data your clients won't find on Rightmove or Zoopla.</p>
+        <p>Per-postcode due-diligence data your clients won't find on Rightmove or Zoopla.</p>
       </div>
       <div class="card">
         <h3>Councils and public bodies</h3>
@@ -453,7 +453,7 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
       <li>If the output is useful, sign up for a free API key on the same page; the <a href="/terms">terms</a> apply to every key.</li>
       <li>Read the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a> - every threshold anchored, every assumption written down.</li>
       <li>Open the <a href="/score-demo/api-docs.html">API reference</a> (OpenAPI 3.0) and integrate.</li>
-      <li>If you need a paid tier, a master agreement, or have integration questions: <a href="https://calendly.com/bilalkhizar-skyscore/30min">book a 30-minute demo call</a> on your own postcodes, or write to <a href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20API%20integration">support@skyscore.co.uk</a>.</li>
+      <li>If you need a paid tier or a master agreement, or have integration questions: <a href="https://calendly.com/bilalkhizar-skyscore/30min">book a 30-minute demo call</a> on your own postcodes, or write to <a href="mailto:support@skyscore.co.uk?subject=Sky%20Score%20API%20integration">support@skyscore.co.uk</a>.</li>
     </ol>
   </section>
 

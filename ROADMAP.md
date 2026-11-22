@@ -26,6 +26,58 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-22)
+>
+> **NEWS BY EMAIL IS LIVE** (`82c23557`, pushed): full preflight on the final tree (one red, `pytest (root)`, was the
+> previous session's mock-up saved as raw `.html` under `.preflight/`: renamed `.html.saved`, the root suite then 3,181 PASS);
+> the reviewed SAM changeset WITH `SignupVerify=on UpdatesList=on` passed explicitly (MailTable, the two unsubscribe routes at
+> 2/5, the function's environment and role, the API's body: nothing else), backend first, then `web-deploy` and `home-deploy`;
+> drift PASS (56 pages, 42 data files, 153 area pages). OPERATIONS s3.10 step 4 from the origin: the live Lambda reads
+> `UPDATES_LIST=on`, `SIGNUP_VERIFY=on`, `MAIL_TABLE=london-flight-map-mail`; a made-up unsubscribe token gets the button page;
+> `source: 'updates'` with a bad postcode answers 400; the strip is on the live front page at 1366 and 390 (no sideways scroll).
+> **Bill's first real sign-up (a Hotmail address) never arrived**: SES says delivered, neither inbox nor Junk. The link
+> pointed at the raw execute-api host. FIXED in the commit after the audit batch: CloudFront `/v1/signup/*` (Bill published
+> it, verified GET and POST through skyscore.co.uk) and `ConfirmUrlBase` (deploy with `ConfirmUrlBase=https://skyscore.co.uk`).
+> LEFT, Bill: sign up again (Hotmail AND Gmail) once that is live; then Claude closes PR #15. SPF alignment (a custom MAIL
+> FROM) is the next lever if Microsoft still hides it. The monthly SENDER is still not built (needed before the first issue only).
+> Gmail DID receive the plain confirmation (Bill, 22 Nov evening), so the pipeline works and the Hotmail loss is Microsoft's filter.
+>
+> **NEWS BY EMAIL v2, BUILT, NOT COMMITTED** (branch `news-v2`, worktree `.claude/worktrees/news-v2`, off `82c23557`; patch in
+> that session's scratchpad). Bill's picks the same evening (ideas claude.ai/artifact/8nXjCvYCzLLjAg5WoP2E7n, Stitch drafts
+> claude.ai/artifact/KC7pRQW3NQzw4LC8S9bavF, as built claude.ai/artifact/V6bK9hnXXBizpZ4svDVUHt): (1) the confirmation email in the
+> blue-grey band, Stitch draft S2, rebuilt as table HTML beside the unchanged plain text (no images, nothing remote, every word
+> escaped; API key emails get the same look); (2) ONE CLICK for news: the confirm page posts its own form as it opens, the CSP
+> allowing that one script by its hash and nothing else (a scanner that only fetches the link changes nothing; API keys and the
+> map's list keep the button: a key is shown once); (3) the pages after the click in the same card ("You're signed up");
+> (4) NEWS ONLY: the strip's postcode box is gone (Bill: "confusing", the page opens on an example), the Lambda drops any postcode
+> for news, consent words `news-v2`; following a place may come back later, from the full map's result only; (5) the name stays
+> "News by email"; (6) "Check your inbox" with the address masked, "Send it again" to the Lambda's three a day, then said in
+> words. Privacy s2a: the postcode sentences out and "Opening the link in that email confirms it." in, APPROVED by Bill; a
+> second dated /changes line (the earlier one stays as the record). Tests: backend 676, the strip 40 (1366, 390, 360), flags 5;
+> nine mutants each red. NEXT: once the audit batch is committed, apply v2 onto master, then CLAUDE.md, OPERATIONS s3.10 and
+> the lesson, a full preflight, the reviewed changeset (pass `ConfirmUrlBase=https://skyscore.co.uk SignupVerify=on
+> UpdatesList=on`), web + home deploy; then Bill's Hotmail and Gmail sign-ups. The map's old "consumer" list is unchanged (2
+> entries, both look like Bill's own tests).
+>
+> **Preflight note:** the advisory "Bay Area flood == FEMA NFHL" check hung twice on 22 Nov (FEMA's live service): stopping
+> that one process lets the run finish; it is advisory and cannot block.
+>
+> **THE ENGLISH AUDIT'S BATCH** (this commit; Bill's "go with recommended", 21 Nov): Part A whole (the map's "Your next steps",
+> every "measured DEFRA", "order of magnitude", the City of London's sources line, which also said its schools "fall back to a
+> curated band" though `score_parts` scores none for an English borough, "Whatever your view", the three sign-up nits, every
+> group-1 measured/modelled slip) and most of Part B (grammar, British forms, count-of-1 plurals, "N% below the London median"
+> in all three holders, the planes caveats in one wording, `in_sentence()` for "the City of", New York's ZIP placeholder, "the
+> Renter profile's score"). Two new rules in `tests/test_public_wording.py`, each red on a planted defect. HELD BACK: #17 (the
+> API's capitals: tests and the provenance patterns key on them), #100 and #103 (their data must be rebuilt), and Bill's two
+> calls ("Reports for an address" or "a postcode"; the planes legend's "CLEAR"). The 25 privacy/terms items go to Bill one by one.
+> Deploy order after preflight: SAM (the score Lambda's sources lines), then data, web, home, demo, area, bay-area, open-data,
+> planes pages. The sample street report is REGENERATED in this commit (its air line said "They measure", DEFRA's model
+> included; reference RWF3-VRTR, made 22 Nov); it regenerates again after 22 Dec, when its consultation line ends.
+>
+> **BREATHE LONDON, for Tue 24 Nov 11:00** (brief: Desktop `breathe-london-meeting-brief-2026-11-24.md`): their new NO2
+> calibration has NOT reached the API. All 143 sensors' NO2 hours are identical across the 19 Oct, 13 Nov and 22 Nov downloads,
+> so every mean the site shows is the old calibration; the next monthly fetch takes the new one in by itself.
+
 > ## START HERE (2026-11-20)
 >
 > **M-3 COMMITTED AND PUSHED** (`cd534073`; preflight PASS once the PC had memory). **Bill's three picks** (claude.ai/artifact/CT9F6yrWJgLCEn17ggoSFw,

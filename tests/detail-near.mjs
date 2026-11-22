@@ -115,7 +115,7 @@ check('the healthcare card counts doctors and clinics, the other kinds under it'
 check('the energy card says which absence it is', () => {
   assert.equal(epcFace(null), null);
   assert.equal(epcFace({ available: false }).v, 'Not loaded');
-  assert.equal(epcFace({ available: false, fullPostcodeOnly: true }).v, 'Full postcode');
+  assert.equal(epcFace({ available: false, fullPostcodeOnly: true }).v, 'Needs a full postcode');
   assert.equal(epcFace({ available: true, count: 0 }).v, 'None yet');
   assert.deepEqual(epcFace({ available: true, count: 3, summary: { averageBand: 'D', averageRating: 62 } }),
     { k: 'Energy rating', v: 'Band D', unit: '', l: '62 out of 100, from 3 certificates' });

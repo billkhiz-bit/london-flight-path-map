@@ -41,7 +41,7 @@ PRO = (
     ('Conveyancers and surveyors', 'Add aircraft noise to the reports you already produce.', 'Use the API', '/api/'),
     ('Islamic home finance', 'Environmental checks with an affordability measure that uses prices only.',
      'Use the API', '/api/'),
-    ("Residents' groups", 'Start a bid from the official baseline.', 'Browse council areas', '/area/'),
+    ("Residents' groups", 'Base your case on the official figures.', 'Browse council areas', '/area/'),
     ('Researchers and journalists', 'One open, documented file.', 'Get the open data', '/open-data/'),
 )
 

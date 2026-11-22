@@ -108,7 +108,10 @@ Or just describe what you need, I have full context of this project.
 - **Wording rules**: never call the whole product "open government data"/OGL (UK routes come from the UK AIP,
   credit "UK AIP (NATS)"); FAA routes carry the FAA's "as is, without warranty" line wherever shown; shares
   are over **postcodes, not addresses**; a DEFRA map figure is **modelled, never "measured"** (only a monitor's reading is
-  measured; the front page said "DEFRA, measured" until 2026-11-03, and `tests/test_public_wording.py` now refuses it); never say **how often planes pass** except for airports that pass
+  measured; the front page said "DEFRA, measured" until 2026-11-03, and `tests/test_public_wording.py` now refuses it, and "measured DEFRA" too
+  since the English audit of 2026-11-22, which also refuses "order of magnitude" for the COVID caveat's x1.9: say "a sense of scale");
+  a registry label is never slotted into a sentence (the map printed "official not applicable noise contours"), a count of 1 takes the
+  singular, and a "City of" council takes "the" (`in_sentence()`, scripts/build_area_pages.py); never say **how often planes pass** except for airports that pass
   `coverage_verdict()`, and only through `js/planes.mjs` from `data/planes/` (`build_planes_overhead.py`, 2026-10-26)
   or the district pages `build_planes_pages.py` BUILDS from the same files (`/planes-overhead/`, 2026-10-28: a cell
   counts postcodes in bands, never a middle figure; since 2026-11-03 it SHOWS the busiest band and draws every band as
@@ -269,7 +272,7 @@ Or just describe what you need, I have full context of this project.
   honest; mock-up claude.ai/artifact/TjVaZ8ZciJuq8VFmnXLhwc). The card: the headline is `answerLead()` (`js/answer-lead.mjs`, ONE holder, re-exported by
   home-sections: the front page's sentence for the same place), only with environment figures the API gave for THIS postcode; pills from `pillsFor()`, under "Worth a look" / "Good here", each with a ! or tick mark and named "Crime, good here" (audit I-3, Bill's pick A, 2026-11-10: never colour alone)
   (watch first; aircraft noise is never "good" beside planes that are a watch item); the score, keeping `.summary-verdict` and five `.score-breakdown
-  .score-row`s (parity and render gates read them), as points earned of points possible, a part with weight 0 "not counted for this buyer", the city's
+  .score-row`s (parity and render gates read them), as points earned of points possible, a part with weight 0 "not counted for this profile", the city's
   council areas from `calcScores()` (never re-derived from rounded parts), the profile chips calling `setPersona()` (one profile everywhere). Each finding
   carries `tile` (face, tone, explanation as data: pictures, short sentences, tip, source) and `tileHtml()` draws it: a picture only of the honest kinds
   (rating strip, 100 squares, bars from zero, ruler, score); a word outside its scale draws none; a source only from the caller (New York is not DEFRA);
@@ -412,7 +415,9 @@ Or just describe what you need, I have full context of this project.
   `.news` is the consultation pill's, and its rules (an orange `b`) landed on the strip when it shared the name. The
   do-not-email list is read before EVERY send, the confirmation included (privacy: "never write to it again"); the button
   ships `disabled` until the module binds it; its count passes `engaged(way, { acts: false })`, or a sign-up before the
-  example lands leaves the answer empty (code review 2026-11-22).
+  example lands leaves the answer empty (code review 2026-11-22). **Every link in our emails says skyscore.co.uk**
+  (`ConfirmUrlBase` -> `CONFIRM_URL_BASE`; CloudFront routes `/v1/signup/*` to the API): the raw execute-api host was
+  delivered to Hotmail and seen nowhere, not even Junk (2026-11-22, `backend/tests/test_confirm_link_host.py`).
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,

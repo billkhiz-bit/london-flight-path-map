@@ -184,7 +184,7 @@ check('walkthrough: Kew in one sentence, then west, both ways, east in the layer
     ['Flying east', '29% of days', '4', null],
   ]);
   assert.deepEqual(w.rows[0].bar, [0, 310 / 400], "the bar is the model's own, on the file's scale");
-  assert.equal(w.foot, 'Planes a day over TW9 3PZ from Heathrow, January to August 2026. Never an average of the three: no day is average.');
+  assert.equal(w.foot, 'Planes a day over TW9 3PZ from Heathrow, January to August 2026. Each kind of day is shown on its own, never averaged together.');
 });
 
 check('the hero\'s tile: the commonest one-way day, its figure from the model, and nothing if that day has no planes', () => {
@@ -357,7 +357,7 @@ check('the block: it leads the one warning box, in bold, other flying after it; 
   assert.equal(both.length, 1, 'one box, never two');
   assert.equal(both[0].kids[0].tag, 'strong');
   assert.equal(flat(both[0].kids[0]).join(''), 'Leeds Bradford, 9.7 km away, is not one of the two airports we count.');
-  assert.match(flat(both[0]).join(''), /we count\. Other flying passes over here too, .* does not mean a quiet sky\.$/);
+  assert.match(flat(both[0]).join(''), /we count\. Other aircraft pass over here too: .* does not mean a quiet sky\.$/);
   const alone = warnings(TW9, 'TW9 9ZZ', LBA_NEAR);
   assert.deepEqual(alone.map((b) => b.kids.map((k) => k.tag)), [['strong']], 'Newcastle and Middlesbrough: no other flying, still said');
   const otherOnly = warnings({ ...TW9, other: ['TW9 9ZZ'] }, 'TW9 9ZZ', null);

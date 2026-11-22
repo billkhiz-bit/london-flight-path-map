@@ -94,7 +94,7 @@ export function roadFinding({ db, belowDb, who, period, council, band, abovePct,
         pill: 'Road noise',
         visual: [
           strip('road', words(band), toneOf(band)),
-          isNum(abovePct) ? { kind: 'share', pct: abovePct, of: `${council} ${spot}s louder than the World Health Organization (WHO) recommends` } : null,
+          isNum(abovePct) ? { kind: 'share', pct: abovePct, of: `${council} ${spot}s are louder than the World Health Organization (WHO) recommends` } : null,
         ],
         say: [whole
           ? `A rating for ${council} as a whole. Search a ${spot} for its own figure: one street can be much louder or quieter.`
@@ -296,7 +296,7 @@ export function crimeFinding({ band, rate, median, comparable = true, area = 'co
   const against = ratio >= 1.15
     ? `${ratio.toFixed(1)} times the London median of ${m}`
     : ratio <= 0.85
-      ? `${(1 / ratio).toFixed(1)} times lower than the London median of ${m}`
+      ? `${Math.round((1 - ratio) * 100)}% below the London median of ${m}`
       : `close to the London median of ${m}`;
   const top = Math.max(rate, median) * 1.12;
   return {
@@ -307,7 +307,7 @@ export function crimeFinding({ band, rate, median, comparable = true, area = 'co
     amounts: [[`This ${area}`, rate, clamp((rate / top) * 100), true], ['London median', m, clamp((median / top) * 100), false]],
     tile: tile(
       [{ kind: 'bars', unit: estimated ? 'crimes a year per 1,000 people, our estimate' : 'recorded crimes a year per 1,000 people', rows: [{ label: council || `This ${area}`, text: String(rate), value: rate, here: true }, { label: 'A typical London borough', text: m, value: median }] }],
-      [per, ratio >= 1.15 ? `That is ${ratio.toFixed(1)} times a typical London borough.` : ratio <= 0.85 ? 'That is lower than a typical London borough.' : 'That is close to a typical London borough.'],
+      [per, ratio >= 1.15 ? `That is ${ratio.toFixed(1)} times the rate of a typical London borough.` : ratio <= 0.85 ? 'That is lower than a typical London borough.' : 'That is close to a typical London borough.'],
     ),
   };
 }
@@ -350,7 +350,7 @@ export function priceFinding({ price, trend, real = null, area = 'council', coun
       stand: isNum(afford) && afford < 3 ? 'watch' : null,
       pill: 'High prices',
       visual: [isNum(afford) ? { kind: 'score', name: 'Affordability', value: afford } : null],
-      say: [`The average price of a home in ${placeName(council, area)}${since ? `, ${since}` : ''}.`,
+      say: [`This is the average price of a home in ${placeName(council, area)}${since ? `: ${since}` : ''}.`,
         realSaid,
         isNum(afford) ? `That gives it an affordability score of ${afford.toFixed(1)} out of 10.` : null].filter(Boolean),
       source: source || null,

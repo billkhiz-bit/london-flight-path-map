@@ -209,7 +209,7 @@ for (const vp of [
       rank.head.includes('On the noise map') &&
       rank.head.some((h) => /^Score/.test(h)) &&
       wrongScores.length === 0 &&
-      /Buyer Score/.test(rank.text) &&
+      /profile's score/.test(rank.text) &&
       /Not comparable with a UK score/.test(rank.text),
     `${L} the ranking lists the ${Object.keys(API_SCORES).length} cities, each with the API's score`,
     JSON.stringify({ head: rank.head, n: rank.n, wrong: wrongScores.slice(0, 3) })
