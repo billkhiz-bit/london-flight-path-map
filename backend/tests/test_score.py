@@ -4771,7 +4771,8 @@ class AviationSourceLineMatchesTierTests(unittest.TestCase):
     """The aviation `sources` line must say which tier scored the address.
 
     Audit C2, 2026-09-13. The eight regional aviation lines were written for
-    the geometry tier and end "NOT a DEFRA sample at this address"; from
+    the geometry tier and end "NOT a DEFRA sample at this address" ("not sampled from DEFRA's map at any one
+    address" since 2026-11-23, English audit #17); from
     2026-08-12 the per-airport DEFRA rasters answered ~7,300 postcodes in
     those cities and the line kept saying it. Verified live on M22 0AD:
     quietResolution "raster", measuredAtLocation true, and that tail in the
@@ -4824,7 +4825,7 @@ class AviationSourceLineMatchesTierTests(unittest.TestCase):
         self.assertEqual(body['context']['quietResolution'], 'raster')
         aviation = [line for line in body['sources'] if line.startswith('Aviation noise context')]
         self.assertEqual(len(aviation), 1, body['sources'])
-        self.assertNotIn('NOT a DEFRA sample', aviation[0])
+        self.assertNotIn("not sampled from DEFRA's map", aviation[0])
         self.assertIn('DEFRA Round 4', aviation[0])
         self.assertIn('sampled at this postcode', aviation[0])
 
@@ -4833,15 +4834,24 @@ class AviationSourceLineMatchesTierTests(unittest.TestCase):
         self.assertEqual(body['context']['quietResolution'], 'postcode')
         aviation = [line for line in body['sources'] if line.startswith('Aviation noise context')]
         self.assertEqual(len(aviation), 1, body['sources'])
-        self.assertIn('ESTIMATED', aviation[0])
-        self.assertIn('NOT a DEFRA sample', aviation[0])
+        self.assertIn('Estimated from', aviation[0])
+        self.assertIn("not sampled from DEFRA's map at any one address", aviation[0])
 
     def test_every_regional_estimate_line_carries_the_marker_the_substitution_keys_on(self):
         """A city whose line drifted off the prefix would keep denying DEFRA on
         the raster tier while this class, probing Manchester alone, stayed
         green. So the marker is asserted across the registry."""
+        # Both directions, as sets (2026-11-23): the filter below once keyed on the old wording, and a filter that
+        # matches nothing passes vacuously. Every UK estimate line carries the phrase, and every line with it the prefix.
+        with_phrase = {city for city, prov in app.CITY_PROVENANCE.items()
+                       if any(isinstance(s, str) and "not sampled from DEFRA's map" in s for s in prov['sources'])}
+        uk_estimates = {city for city, prov in app.CITY_PROVENANCE.items()
+                        if any(isinstance(s, str) and s.startswith(app._AVIATION_ESTIMATE_PREFIX) and 'FAA' not in s
+                               for s in prov['sources'])}
+        self.assertTrue(with_phrase, 'no regional estimate line found: the filter has stopped matching')
+        self.assertEqual(with_phrase, uk_estimates)
         for city, prov in app.CITY_PROVENANCE.items():
-            lines = [s for s in prov['sources'] if isinstance(s, str) and 'NOT a DEFRA sample' in s]
+            lines = [s for s in prov['sources'] if isinstance(s, str) and "not sampled from DEFRA's map" in s]
             for line in lines:
                 with self.subTest(city=city):
                     self.assertTrue(

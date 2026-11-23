@@ -28,6 +28,19 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-11-23)
 >
+> **LIVE `53e9abd9`, 23 Nov ~15:40** (everything in this block but #17): reviewed changeset (Static: ScoreFunction and
+> SignupFunction code only), seven site deploys, drift PASS (56/42/153), 12 checks read from the live site, the merged band
+> captured at 1366 and 390 (7.94 and 9.05 screens), the map's tab "Barking and Dagenham - Sky Score" read in a live browser.
+> **English audit #17 BUILT on branch `audit-17-capitals`, NOT LIVE** (deploy after the 24 Nov meetings): the API's aviation
+> `sources` lines stop shouting and stop naming an address an area page lacks ("Estimated from ...", "; not sampled from
+> DEFRA's map at any one address", "No operating commercial airport ...", "not a measurement at any one address"), with
+> `_AVIATION_ESTIMATE_PREFIX` and the four credit patterns moved in the same step (the raster tier swaps the line by that
+> prefix), six recorded responses, and the 119 area pages that print the lines. Three mutants red (the prefix, a credit
+> pattern, one city drifting off the prefix); the registry test now compares SETS, as its old-wording filter would have
+> passed on nothing. Left as they are, outside #17: the method notes' "PROVISIONAL ESTIMATE ...", New York's "NOT HM Land
+> Registry", the licence note's "does NOT apply", and the map legends' deliberate capitals. FAA cycle 2612 rebased onto
+> `53e9abd9` as `faa-2612-on-53e9abd9` (checks re-derived from CIFP_261126.zip: identical): merge and deploy Thu 26 Nov.
+>
 > **SIGN-UP EMAILS, Bill's picks A, yes, 1** (mock-up claude.ai/artifact/BbnnMwCUrpmkBHcDa4tgSz, every picture rendered from the
 > Lambda's own builders or the live pages): the news and map-alert confirmation emails carry `JUNK_HINT` under the button, both
 > parts ("Found this in Junk or Spam? Mark it as not junk so our next email reaches your inbox."; API key emails do not, nothing
