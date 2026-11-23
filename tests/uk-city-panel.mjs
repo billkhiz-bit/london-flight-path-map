@@ -625,6 +625,19 @@ console.log("A borough's answer card");
     check(`${tag}: no advice anywhere in the panel, the fold included`, !!got && !got.advice, JSON.stringify(got?.where));
     check(`${tag}: it links its own area page, which exists`, !!got && got.link === `/area/${city}/${slug}/`, `link ${got?.link}`);
   }
+  // THE TAB NAMES THE COUNCIL AS THE CARD DOES (2026-11-23). "Barking" is London's key for Barking and Dagenham: the card
+  // said the full name from 2026-11-20, but the tab, the panel heading and the announcement still read "Barking". Waits for
+  // the card's link to name the full council (the redraw once the outlines land), then reads the tab and the heading.
+  await b.goto(`${url}?city=london&borough=Barking`, { waitUntil: 'domcontentloaded' });
+  const named = await b
+    .waitForFunction(() => {
+      if (document.querySelector('#sidebar-content .ac-area-link a')?.getAttribute('href') !== '/area/london/barking-and-dagenham/') return false;
+      return { tab: document.title, heading: document.getElementById('sidebar-title')?.textContent.trim() };
+    }, null, { timeout: 20000 })
+    .then((h) => h.jsonValue())
+    .catch(() => null);
+  check('Barking (london): the tab and the panel heading name Barking and Dagenham, as the card does',
+    !!named && named.tab === 'Barking and Dagenham - Sky Score' && named.heading === 'BARKING AND DAGENHAM', JSON.stringify(named));
   await b.close();
   console.log('');
 }

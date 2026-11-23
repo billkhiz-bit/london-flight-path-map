@@ -724,19 +724,10 @@
       /* On a phone the list of councils was a screen and a half of pills (measured at 390 px): there the button alone,
          to the pack's own page, which lists every council. */
       @media (max-width: 759px) { .band-card { display: none; } }
-      /* Who it is for (2026-10-22): the list is written by scripts/build_who_for.py, the same words the About page
-         carries; here it is a card for choosing a home, the professions as a list, and the founder strip. */
-      section.who .who-label { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--mid); }
-      .who-home { background: var(--paper); border-radius: 18px; padding: clamp(20px, 3vw, 30px); display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px 40px; align-items: end; max-width: 1120px; margin: 0 0 30px; }
-      @media (min-width: 760px) { .who-home { grid-template-columns: minmax(0, 1.4fr) auto; } }
-      .who-home h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 2.4vw, 28px); letter-spacing: -0.02em; margin: 0 0 6px; }
-      section.who .who-home p { margin: 0; font-size: 17px; color: var(--mid); }
-      section.who .who-home p.who-label { margin: 0 0 8px; font-size: 14px; }
-      .who-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-      .who-actions a { display: inline-block; padding: 11px 16px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; box-shadow: inset 0 0 0 1.5px var(--dark); color: var(--dark); }
-      .who-actions a.primary { background: var(--dark); color: #fff; }
-      .who-actions a:hover { text-decoration: underline; text-underline-offset: 4px; }
-      .who-pro { max-width: 1120px; margin: 0 0 30px; }
+      /* Who it is for (2026-10-22; one band since 2026-11-23, Bill's pick A): the list written by scripts/build_who_for.py
+         sits under "Beyond one street", whose rows already say what a person choosing a home can do. */
+      .who-pro { max-width: 1120px; margin: clamp(36px, 5vw, 56px) 0 0; scroll-margin-top: 24px; }
+      .who-pro .who-label { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--mid); }
       ul.who-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
       ul.who-list li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 28px; padding: 14px 2px; border-bottom: 1px solid var(--line); align-items: baseline; }
       @media (min-width: 760px) { ul.who-list li { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) 13em; } ul.who-list a { justify-self: end; } }
@@ -744,7 +735,6 @@
       ul.who-list span { color: var(--mid); font-size: 16px; }
       ul.who-list a { font-weight: 600; font-size: 15px; color: var(--orange-ink); text-decoration: none; white-space: nowrap; }
       ul.who-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
-      section.who h2 { margin-bottom: 30px; }
       /* Questions: plain disclosures. Their + and minus are drawn with empty alt text, so a screen reader reads the
          question alone. */
       .faq { display: grid; gap: 24px 64px; }
@@ -1030,8 +1020,8 @@
         </form>
         <div class="news-sent" id="news-sent" hidden>
           <h3 id="news-sent-h" tabindex="-1">Check your inbox</h3>
-          <p>We sent a link to <b id="news-sent-to"></b>. One click on it and you are signed up; it works for 24 hours.</p>
-          <p class="news-small">Not there after a minute? Look in Junk or Spam, then send it again, or use a different address.</p>
+          <p>We sent a link to <b id="news-sent-to"></b>. It may land in Junk or Spam, so look there too. One click on it and you are signed up; it works for 24 hours.</p>
+          <p class="news-small">Not there after a few minutes? Send it again, or use a different address.</p>
           <div class="news-sent-do"><button type="button" class="news-again" id="news-again">Send it again</button><button type="button" class="news-other" id="news-other">Use a different address</button></div>
           <p class="news-small" id="news-again-said" role="status" aria-live="polite"></p>
         </div>
@@ -1158,6 +1148,18 @@
             <li><span class="way-n" aria-hidden="true">03</span><h3>Data for your business</h3><p>The same figures through an API, in your own system, or as one open file of every UK council area (the file is free for non-commercial use).</p>
               <p class="way-go"><a href="/api/">The API</a><a href="/open-data/">The open data</a></p></li>
           </ol>
+          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
+          <div class="who-pro" id="who">
+            <p class="who-label">Working with homes and places</p>
+            <ul class="who-list">
+              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
+              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Residents&#x27; groups</b><span>Base your case on the official figures.</span><a href="/area/">Browse council areas &rarr;</a></li>
+              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
+            </ul>
+          </div>
+          <!-- WHO-FOR:END -->
         </div>
       </section>
 
@@ -1259,36 +1261,6 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
         </div>
       </section>
       <!-- PLANES-BAND:END -->
-
-      <section class="band who" aria-labelledby="who">
-        <div class="wrap">
-          <p class="eyebrow">Who it is for</p>
-          <h2 id="who">Choosing a home, or working with homes.</h2>
-          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
-          <div class="who-home">
-            <div>
-              <p class="who-label">Choosing a home</p>
-              <h3>Buying or renting</h3>
-              <p>Find the areas that fit your budget, then check a street before a viewing. Free to search.</p>
-            </div>
-            <div class="who-actions">
-              <a class="primary" href="/#check">Search a postcode</a>
-              <a href="/reports/street/">Get a street report</a>
-            </div>
-          </div>
-          <div class="who-pro">
-            <p class="who-label">Working with homes and places</p>
-            <ul class="who-list">
-              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
-              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Residents&#x27; groups</b><span>Base your case on the official figures.</span><a href="/area/">Browse council areas &rarr;</a></li>
-              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
-            </ul>
-          </div>
-          <!-- WHO-FOR:END -->
-        </div>
-      </section>
 
       <!-- QUESTIONS. Book a demo's second spot is here (`faq`, Bill's mock v8: it moved from the business card, which the
            rows above replaced); the first is the closing band below. -->

@@ -121,20 +121,22 @@ def test_every_link_back_to_the_front_page_lands():
     # design/ holds old mock-ups and preview/ test pages: nothing a visitor reaches.
     pages = [REPO / name for name in tracked if not name.startswith(('design/', 'preview/', 'prototype/', 'mobile/'))]
     home_ids = ids_in(HOME)
-    problems, seen = [], 0
+    problems, seen = [], set()
     for page in pages:
         for a, b in HREF.findall(page.read_text(encoding='utf-8')):
             path, query, fragment = split(a or b)
             if path != '/' or not (fragment or query):
                 continue
-            seen += 1
             name = page.relative_to(REPO).as_posix()
+            seen.add((name, a or b))
             if fragment and fragment not in home_ids and fragment not in HASH_ROUTES:
                 problems.append(f'{name}: {a or b}: the front page has no id "{fragment}"')
             unknown = {pair.partition('=')[0] for pair in query.split('&') if pair} - QUERY_KEYS
             if unknown:
                 problems.append(f'{name}: {a or b}: the front page reads no {sorted(unknown)}')
-    assert seen >= 2, 'no link back to the front page found: the pattern has stopped matching'
+    # A named link, not a count (2026-11-23: the front page's own /#check went with "Who it is for"'s card, leaving one).
+    # About's /#who must be found, so a pattern that stops matching fails here, and the check above holds its landing.
+    assert ('about/index.html', '/#who') in seen, f'About\'s link to /#who was not found: the pattern has stopped matching ({sorted(seen)})'
     assert not problems, '\n'.join(problems)
 
 

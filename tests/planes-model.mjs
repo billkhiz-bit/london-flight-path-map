@@ -20,7 +20,7 @@ const INFO = {
   districts: ['TW3', 'TW9', 'E16'],
   bar_full: 400,
   definition: 'Overhead means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA\'s definition of an overflight (CAP 1498).',
-  direction_rule: 'A day counts as one way when 80% of its flights used that way.',
+  direction_rule: 'A day counts as one way when at least 80% of its flights used that way, otherwise as both ways.',
   airports: {
     LHR: { share_pct: { westerly: 56, easterly: 29, mixed: 15 }, months: ['202601', '202608'] },
     LCY: { share_pct: { westerly: 47, easterly: 35, mixed: 18 }, months: ['202601', '202608'] },

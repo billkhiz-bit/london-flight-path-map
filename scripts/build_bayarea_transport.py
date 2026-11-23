@@ -61,8 +61,9 @@ def uk_bands(path=REPO / 'scripts' / 'build_borough_bands.py'):
 # Lower edge of each band, in percent of residents within WALK_M: the UK's own (Bill, 2026-10-22).
 BANDS = uk_bands()
 SOURCE_GAP = {
-    'Emeryville': "its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put "
-                  'back the city reads good, not poor (measured 2026-10-22)',
+    # Reworded 2026-11-23 (English audit #100: "with it put back" read as garden-path English); the figures are unchanged.
+    'Emeryville': "its only rail station, on the Capitol Corridor, is missing from BTS's transit layer; with it "
+                  'included, the city reads good, not poor (measured 2026-10-22)',
 }
 
 

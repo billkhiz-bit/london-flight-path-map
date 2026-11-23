@@ -54,7 +54,7 @@ const info = {
   classes: ['westerly', 'easterly', 'mixed'],
   bar_full: 629,
   definition: OVERHEAD,
-  direction_rule: 'A day counts as one way when 80% of its flights used that way.',
+  direction_rule: 'A day counts as one way when at least 80% of its flights used that way, otherwise as both ways.',
   postcodes_rule: 'PO boxes and other postcodes for organisations that receive a lot of post are left out: they sit at a delivery office or a business, not at homes.',
   credits: ['Flight tracks: adsb.lol (ODbL 1.0)'],
   airports: {

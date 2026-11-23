@@ -81,6 +81,9 @@
          fills transparency with black. status-bar-style "default"
          keeps the status bar light (matches our --bg theme). -->
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- The standard name first: Chrome logs "apple-mobile-web-app-capable is deprecated" on every load of a page that
+         carries only the Apple one (2026-11-23). The Apple name stays for older iOS home-screen launches. -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Sky Score" />
@@ -5257,7 +5260,7 @@
               </div>
               <div class="legend-row">
                 <div class="legend-swatch planes-clear"></div>
-                <span>CLEAR: UNDER 10 FROM EVERY AIRPORT, OR NOT MEASURED</span>
+                <span>NO COLOUR: UNDER 10 FROM EVERY AIRPORT, OR NOT MEASURED</span>
               </div>
             </div>
             <details class="legend-disclosure" id="legend-planes-disclosure" hidden>
@@ -6805,7 +6808,7 @@
         "Daly City": {"impact": "moderate", "avgPrice": 1115000, "priceTopCoded": false, "trend": -0.61, "county": "San Mateo", "crimePer1000Us": 16.0, "crimeFewResidents": false, "transport": "poor", "roadNoiseUsSharePct": 8.5, "floodSfhaPct": 0.0},
         "Dublin": {"impact": "low", "avgPrice": 1317100, "priceTopCoded": false, "trend": -1.91, "county": "Alameda", "crimePer1000Us": 15.1, "crimeFewResidents": false, "transport": "poor", "roadNoiseUsSharePct": 5.5, "floodSfhaPct": 0.28},
         "East Palo Alto": {"impact": "low", "avgPrice": 1102600, "priceTopCoded": false, "trend": -0.61, "county": "San Mateo", "crimePer1000Us": 21.4, "crimeFewResidents": false, "transport": "poor", "roadNoiseUsSharePct": 15.0, "floodSfhaPct": 32.45},
-        "Emeryville": {"impact": "low-moderate", "avgPrice": 604800, "priceTopCoded": false, "trend": -1.91, "county": "Alameda", "crimePer1000Us": 109.1, "crimeFewResidents": true, "transport": null, "roadNoiseUsSharePct": 24.8, "floodSfhaPct": 0.0, "withheld": {"transport": "its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put back the city reads good, not poor (measured 2026-10-22)"}},
+        "Emeryville": {"impact": "low-moderate", "avgPrice": 604800, "priceTopCoded": false, "trend": -1.91, "county": "Alameda", "crimePer1000Us": 109.1, "crimeFewResidents": true, "transport": null, "roadNoiseUsSharePct": 24.8, "floodSfhaPct": 0.0, "withheld": {"transport": "its only rail station, on the Capitol Corridor, is missing from BTS's transit layer; with it included, the city reads good, not poor (measured 2026-10-22)"}},
         "Foster City": {"impact": "moderate", "avgPrice": 1838200, "priceTopCoded": false, "trend": -0.61, "county": "San Mateo", "crimePer1000Us": 8.3, "crimeFewResidents": false, "transport": "poor", "roadNoiseUsSharePct": 6.3, "floodSfhaPct": 2.15},
         "Fremont": {"impact": "low-moderate", "avgPrice": 1403800, "priceTopCoded": false, "trend": -1.91, "county": "Alameda", "crimePer1000Us": 18.1, "crimeFewResidents": false, "transport": "poor", "roadNoiseUsSharePct": 6.9, "floodSfhaPct": 0.63},
         "Gilroy": {"impact": "low", "avgPrice": 1027400, "priceTopCoded": false, "trend": -0.63, "county": "Santa Clara", "crimePer1000Us": 23.1, "crimeFewResidents": false, "transport": "poor", "roadNoiseUsSharePct": 5.9, "floodSfhaPct": null, "withheld": {"floodSfhaPct": "FEMA has not determined the flood risk for 13% of residents (zone D or unmapped)"}},
@@ -13714,8 +13717,14 @@
         if (!redraw) cancelSearch();
         const req = { token: searchSeq };
         panelSubject = { kind: 'borough' };
-        setPanelSubject(data.name);
-        if (!redraw) announceResult('Results loaded for ' + data.name + '.');
+        // The council's full name, as its outline and its area page give it (councilFullName): "Barking" is London's key
+        // for Barking and Dagenham, and /area/london/barking/ never existed (found 2026-11-20 by tests/uk-city-panel.mjs).
+        // Every word a reader sees uses it, the tab title and the announcement too (the tab read "Barking - Sky Score"
+        // until 2026-11-23); `data.name` stays the key for lookups, favourites and redraws.
+        const features = cityOf(currentCity).features() || [];
+        const fullName = councilFullName(data.name, features);
+        setPanelSubject(fullName);
+        if (!redraw) announceResult('Results loaded for ' + fullName + '.');
         if (switchToAnalysis) switchTab('analysis');
         // Audit F-A11Y-4 hook: a result has just landed. On phones the
         // sheet starts in 'peek' so the map stays visible - TODO below
@@ -13726,11 +13735,6 @@
         const area = uk ? 'council' : 'borough';
         const extra = getExtraData(data.name);
         const priceFull = formatPrice(data.avg_price, currentCity);
-        // The council's full name, as its outline and its area page give it (councilFullName): "Barking" is London's key
-        // for Barking and Dagenham, and /area/london/barking/ never existed (found 2026-11-20 by tests/uk-city-panel.mjs).
-        // Every word a reader sees on the card uses it; `data.name` stays the key for lookups, favourites and redraws.
-        const features = cityOf(currentCity).features() || [];
-        const fullName = councilFullName(data.name, features);
         // DRAWN BEFORE THE OUTLINES LANDED (review, 2026-11-20): with no outline to read, the key stands in and the planes
         // row cannot find its codes, so the card is drawn again, through the redraw path (M-3: the visitor's place kept),
         // once the map is built, if this borough's card is still the one on screen and the outlines are there by then.

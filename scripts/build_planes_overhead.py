@@ -191,7 +191,10 @@ def build(arrays, meta, *, skip):
         'bar_full': max(tops, default=1),
         'angle_deg': ANGLE, 'ceiling_ft': ao.CEILING_FT,
         'definition': DEFINITION,
-        'direction_rule': f'A day counts as one way when {ao.DIRECTION_DAY_SHARE:.0%} of its flights used that way.',
+        # "At least", as adsb_overflights.classify_day() tests (>=), and "both ways" defined, since every table uses it
+        # (English audit #103, 2026-11-23). How it works says the same of "the airport's flights".
+        'direction_rule': (f'A day counts as one way when at least {ao.DIRECTION_DAY_SHARE:.0%} of its flights used that '
+                           'way, otherwise as both ways.'),
         'postcodes_rule': POSTCODES_RULE,
         'large_users_left_out': left_out,
         'airports': {code: {'days': dict(zip(pa.CLASSES, days[a].tolist(), strict=True)),

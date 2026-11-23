@@ -259,7 +259,8 @@ Or just describe what you need, I have full context of this project.
   the borough's area page, whose list covers New York too, and `/how-it-works/#credits`). Every UK borough's row is held to its built page
   word for word by `tests/uk-city-panel.mjs`. The environment caveat (`envCaveat`) moved into the card's score; the price tile says the
   change after inflation (`priceFinding({ real })`), which only the old breakdown said. The card names the council as its outline does
-  (`councilFullName()`: "Barking" is the map's key for Barking and Dagenham, whose area link was broken until 2026-11-20); a card drawn
+  (`councilFullName()`: "Barking" is the map's key for Barking and Dagenham, whose area link was broken until 2026-11-20), and so do
+  the tab title, the panel heading and the announcement since 2026-11-23 (`tests/uk-city-panel.mjs` reads them); a card drawn
   before the outlines land is drawn again after `mapBuilt`, through `keepPlace()`.
 - **The full map's postcode panel is findings first** (Bill's pick, 2026-11-04: Stitch's draft): four `.find-group`s, then every earlier section unchanged in
   `#panel-all` ("All the detail"), closed; ids stay, so the loaders fill them there. `js/panel-findings.mjs` words each finding, pure text, null when there is
@@ -425,7 +426,12 @@ Or just describe what you need, I have full context of this project.
   (`ConfirmUrlBase` -> `CONFIRM_URL_BASE`; CloudFront routes `/v1/signup/*` to the API; `backend/tests/test_confirm_link_host.py`),
   and SPF aligns through SES's custom MAIL FROM `mail.skyscore.co.uk` (verified 2026-11-22). Hotmail put the first
   confirmations in JUNK (found there after being called lost: the folder sorted by sender); a new domain's first mail to
-  Outlook lands in Junk until it has a history, so the strip says "Look in Junk or Spam".
+  Outlook lands in Junk until it has a history, so the strip's MAIN sentence says "It may land in Junk or Spam, so look there
+  too.", so does the Lambda's pending reply (/score-demo/ and the map's alert form show it), and the news and map-alert
+  emails carry `JUNK_HINT` under the button, never an API key's (nothing follows it) (Bill's picks A and yes, 2026-11-23,
+  claude.ai/artifact/BbnnMwCUrpmkBHcDa4tgSz). **A member who joins again is told so ONLY on the page after the click**
+  (`subscribe_updates` returns `already-subscribed`, read off the member its write replaces; his pick 1): never by the form,
+  whose one answer for every address is I17's rule.
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,
@@ -517,6 +523,9 @@ Or just describe what you need, I have full context of this project.
 - **`tests/test_home_links.py` holds every link the front page makes and every link back to it** (Bill, 2026-11-04):
   each reaches a tracked file or a page the planes index lists, each fragment an id there (a fragment that misses opens
   the page at the top, with no error). Links to other sites are checked from the live page after a deploy, never there.
+- **"Who it is for" is ONE band with "Beyond one street"** (Bill's pick A, 2026-11-23, claude.ai/artifact/R7xc6qxz6NGonqjUxsd943):
+  `build_who_for.py` writes the five audiences under its three rows, the list keeping `id="who"` (/about/ links /#who); the
+  "Buying or renting" card and its band are gone, as repeats of the hero's search and the Reports row. Don't bring them back.
 - **The front page opens on an example answer** (`#ans-example`, `search(pc, { example: true })`): never in the
   address, never engagement, silent on failure. Its point is HELD (`EXAMPLE`, `js/place-box.mjs`, one holder for `/` and `/api/`; Bill's yes, 2026-11-05), so
   arriving asks our API and postcodes.io nothing, and no `<link>` may open a connection to it either (a preconnect reaches it as surely as a request, and no request event shows it): privacy s2b covers a search, not a lookup nobody asked for. A page naming another example has no point, so no example, silently:

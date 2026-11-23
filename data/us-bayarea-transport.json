@@ -163,7 +163,7 @@
    "residents_within_walk": null,
    "share_within_walk_pct": null,
    "band": null,
-   "withheld": "its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put back the city reads good, not poor (measured 2026-10-22)"
+   "withheld": "its only rail station, on the Capitol Corridor, is missing from BTS's transit layer; with it included, the city reads good, not poor (measured 2026-10-22)"
   },
   {
    "geoid": "0625338",

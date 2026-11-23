@@ -296,6 +296,43 @@ class JoinTests(UpdatesBase):
         self.assertNotEqual(member['unsubToken']['S'], first)
         self.assertIsNone(self.mail('unsub', first), 'the old link no longer works')
 
+    def test_joining_again_says_so_only_on_the_page_after_the_click(self):
+        # Bill's ask, 2026-11-23 (mock-up claude.ai/artifact/BbnnMwCUrpmkBHcDa4tgSz, option 1): a member who signs up again
+        # is told so where only the inbox's owner can see it, the page after the click. The form's answer stays one answer
+        # for every address (I17), or anyone could test whether an address is on the list.
+        first = self.join(area='')
+        self.assertIn('You&#x27;re signed up', first['body'])
+        self.assertNotIn('already', first['body'])
+        member_post = self.app.handler(post({'email': 'a@example.com', 'source': 'updates'}), None)
+        stranger_post = self.app.handler(post({'email': 'b@example.com', 'source': 'updates'}), None)
+        self.assertEqual(member_post['statusCode'], stranger_post['statusCode'])
+        self.assertEqual(member_post['body'], stranger_post['body'], 'the form answers a member as it answers anyone')
+        token = next(t for t, row in self.db.tables[self.app.PENDING_TABLE].items() if row['email']['S'] == 'a@example.com')
+        again = self.app.handler(form_post('/v1/signup/confirm', token), None)
+        self.assertEqual(again['statusCode'], 200, again['body'])
+        self.assertIn('You&#x27;re already signed up', again['body'])
+        self.assertIn('already on the list for Sky Score news', again['body'])
+        self.assertEqual(self.mail('updates', 'a@example.com')['consent']['S'], self.app.consent_wording())
+
+    def test_the_junk_line_goes_where_a_next_email_is_coming(self):
+        # Bill's ask, 2026-11-23: a new domain's first emails to Outlook land in Junk; whoever finds ours there is asked
+        # to mark it, so the next one arrives. News and the map's alerts send a next one; an API key request does not.
+        link = 'https://skyscore.co.uk/v1/signup/confirm?token=' + 'x' * 43
+        for source, want in (('updates', True), ('consumer', True), ('api', False)):
+            self.ses.reset_mock()
+            self.app.send_confirmation_email('a@example.com', source, 'M1 1AE', link)
+            body = self.ses.send_email.call_args.kwargs['Content']['Simple']['Body']
+            self.assertEqual(self.app.JUNK_HINT in body['Text']['Data'], want, source)
+            page = body['Html']['Data']
+            self.assertEqual(self.app.JUNK_HINT in page, want, source)
+            if want:  # under the button, in body text, above the small print
+                self.assertLess(page.index('Confirm my email</a>'), page.index(self.app.JUNK_HINT))
+                self.assertLess(page.index(self.app.JUNK_HINT), page.index(self.app.CONFIRM_SMALL_PRINT))
+
+    def test_the_answer_after_pressing_says_to_look_in_junk(self):
+        r = self.app.handler(post({'email': 'a@example.com', 'source': 'updates'}), None)
+        self.assertIn('It may land in Junk or Spam, so look there too.', json.loads(r['body'])['message'])
+
     def test_a_failed_tidy_up_after_joining_still_says_subscribed(self):
         # Review 2026-11-10: retiring the old token failed after the member was written, and the person was told 503.
         self.join(area='')

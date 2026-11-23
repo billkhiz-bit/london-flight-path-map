@@ -652,7 +652,7 @@
     ],
     [
      "Rail access",
-     "Withheld, not estimated: its only rail station, Capitol Corridor's, is absent from BTS's transit layer, and with it put back the city reads good, not poor (measured 2026-10-22)",
+     "Withheld, not estimated: its only rail station, on the Capitol Corridor, is missing from BTS's transit layer; with it included, the city reads good, not poor (measured 2026-10-22)",
      "BTS National Transit Map, compiled 2026"
     ],
     [

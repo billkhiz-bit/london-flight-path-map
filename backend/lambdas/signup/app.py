@@ -805,9 +805,10 @@ def start_verification(email, name, source, postcode, event):
         201,
         {
             'status': 'pending',
+            # The Junk sentence (Bill's pick, 2026-11-23): /score-demo/ and the full map's alert form show this message as sent.
             'message': (
                 'Check your email for a link to confirm this address. '
-                'The link works for 24 hours.'
+                'The link works for 24 hours. It may land in Junk or Spam, so look there too.'
             ),
         },
         event,
@@ -967,6 +968,12 @@ def send_decision(email):
 
 CONFIRM_SMALL_PRINT = 'The link works for 24 hours. If this was not you, ignore this email and nothing is stored.'
 CONFIRM_FOOTER = 'Sky Score - https://skyscore.co.uk'
+# The Junk line (Bill's ask and pick A, 2026-11-23; mock-up claude.ai/artifact/BbnnMwCUrpmkBHcDa4tgSz: under the button,
+# in body text): a new domain's first emails to Outlook
+# and Hotmail land in Junk (his own did, 22 Nov), and marking one "not junk" is what brings the next one to the inbox.
+# Only where a next email is coming: news and the map's score alerts. An API key request gets no further email.
+JUNK_HINT = 'Found this in Junk or Spam? Mark it as not junk so our next email reaches your inbox.'
+JUNK_HINT_SOURCES = ('updates', 'consumer')
 # Each kind of sign-up's band: its tag, and the strip's promise under the brand where there is one.
 _BAND = {
     'updates': ('News by email', 'New cities and new data. At most one email a month.'),
@@ -983,6 +990,8 @@ def confirmation_html(source, what, link):
     font = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
     e = html.escape
     band_line = (f'<div style="margin-top:4px;font:400 14px/1.45 {font};color:#3a4448">{e(line)}</div>' if line else '')
+    junk_row = (f'<tr><td style="padding:14px 24px 0;font:400 15px/1.5 {font};color:#141414">{e(JUNK_HINT)}</td></tr>'
+                if source in JUNK_HINT_SOURCES else '')
     return (
         '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">'
@@ -1005,6 +1014,7 @@ def confirmation_html(source, what, link):
         'border="0"><tr><td align="center" bgcolor="#141414" style="background:#141414;border-radius:10px">'
         f'<a href="{e(link, quote=True)}" style="display:block;padding:15px 18px;font:700 16px/1.2 {font};'
         'color:#ffffff;text-decoration:none;border-radius:10px">Confirm my email</a></td></tr></table></td></tr>'
+        f'{junk_row}'
         '<tr><td style="padding:20px 24px 0"><div style="border-top:1px solid #dedcd6;font-size:0;line-height:0">'
         '&nbsp;</div></td></tr>'
         f'<tr><td style="padding:14px 24px 0;font:400 14px/1.5 {font};color:#55554f">{e(CONFIRM_SMALL_PRINT)}</td></tr>'
@@ -1040,7 +1050,8 @@ def send_confirmation_email(email, source, postcode, link):
     else:
         subject = 'Confirm your Sky Score API key request'
         what = 'Someone - probably you - asked for a free Sky Score API key. Confirm the address here:'
-    body = f'{what}\n\n{link}\n\n{CONFIRM_SMALL_PRINT}\n\n{CONFIRM_FOOTER}\n'
+    junk = f'{JUNK_HINT}\n\n' if source in JUNK_HINT_SOURCES else ''
+    body = f'{what}\n\n{link}\n\n{junk}{CONFIRM_SMALL_PRINT}\n\n{CONFIRM_FOOTER}\n'
     ses.send_email(
         FromEmailAddress=SES_FROM,
         Destination={'ToAddresses': [email]},
@@ -1241,7 +1252,10 @@ def handle_confirm(event):
             f'<a href="https://skyscore.co.uk/score-demo/api-docs.html">Docs</a>.</p>',
         )
     if status in (200, 201):
-        title = "You're signed up" if source == 'updates' else 'Confirmed'
+        if data.get('status') == 'already-subscribed':
+            title = "You're already signed up"
+        else:
+            title = "You're signed up" if source == 'updates' else 'Confirmed'
         return html_page(200, title, f'<p>{html.escape(data.get("message", "Done."))}</p>')
     if status == 409:
         return html_page(
@@ -1311,6 +1325,21 @@ def subscribe_updates(email, event):
         except (ClientError, BotoCoreError) as e:
             code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
             logger.error('[UPDATES_JOIN_TIDY_FAILED] kind=%s code=%s', kind, code)
+    if old and 'consent' in old:
+        # ALREADY ON THE LIST (Bill's ask and pick 1, 2026-11-23, same mock-up): said here, on the page after the click, which
+        # only the inbox's owner reaches. Never on the form: its one answer for every address is I17's rule. The write
+        # above still replaced the member, so the consent stored is the one agreed with this click.
+        return response(
+            200,
+            {
+                'status': 'already-subscribed',
+                'message': (
+                    'This address was already on the list for Sky Score news, so there is nothing more to do. At most '
+                    'one email a month, and every email has a link to stop them.'
+                ),
+            },
+            event,
+        )
     return response(
         201,
         {

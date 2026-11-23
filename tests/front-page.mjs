@@ -2632,12 +2632,13 @@ const makeReport = async (pc) => {
   await row.locator('a[href="#find"]').click();
   ok((await dp.locator('#tab-find').getAttribute('aria-selected')) === 'true' && await dp.evaluate(() => document.activeElement?.id === 'tab-find'),
     'find: the "Find an area that fits" row opens the tab, with focus on it');
-  // Review 2026-10-23: "Search a postcode" in "Who it is for" (/#check) scrolled to the hidden check panel and did
-  // nothing while Find areas was open. The Find tab is open here (the card above opened it).
-  await dp.locator('section.who a[href="/#check"]').click();
+  // Review 2026-10-23: a link down the page to the search ("Search a postcode" in "Who it is for", /#check) scrolled to
+  // the hidden check panel and did nothing while Find areas was open. That button went with its card on 2026-11-23
+  // (Bill's pick A); the walkthrough's "Check my area" (#pc) takes the same path. The Find tab is open here.
+  await dp.locator('.walk-yours a[href="#pc"]').click();
   ok((await dp.locator('#tab-check').getAttribute('aria-selected')) === 'true' && await dp.locator('#panel-check').isVisible()
     && await dp.evaluate(() => document.activeElement?.id === 'pc'),
-  'find: "Search a postcode" in "Who it is for" brings the check tab back, with focus in the postcode box',
+  'find: the walkthrough\'s "Check my area" brings the check tab back, with focus in the postcode box',
   await dp.evaluate(() => `${document.querySelector('[role="tab"][aria-selected="true"]')?.id}|${document.activeElement?.id}`));
 
   // Review 2026-10-15: an area opened from the list writes ?borough= with #find, and booting from
@@ -2837,7 +2838,7 @@ const makeReport = async (pc) => {
     'airports.json': {
       classes: ['westerly', 'easterly', 'mixed'], districts: ['M22', 'SW5', 'TW3', 'TW9'], bar_full: 400,
       definition: 'Overhead means more than halfway up the sky (48.5 degrees or more) and below 7,000 ft, the CAA\'s definition of an overflight (CAP 1498).',
-      direction_rule: 'A day counts as one way when 80% of its flights used that way.',
+      direction_rule: 'A day counts as one way when at least 80% of its flights used that way, otherwise as both ways.',
       // The builder's POSTCODES_RULE (2026-11-10), as it writes it: the fold sets it as a point, word for word.
       postcodes_rule: 'PO boxes and other postcodes for organisations that receive a lot of post are left out: they sit at a delivery office or a business, not at homes.',
       // London City as the real file counts it (2026-11-17): it is SW5 9HP's nearest airport on the map (16.4 km against

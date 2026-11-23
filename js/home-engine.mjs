@@ -2302,10 +2302,10 @@ function bindFit() {
       hero?.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'start' });
     });
   }
-  // "Search a postcode" in "Who it is for" links /#check (absolute: /about/ carries the same block), and the walkthrough's
-  // "Search yours" links #pc. Here each must bring the check tab back, or with Find areas open it scrolls to a hidden panel
-  // and does nothing (review 2026-10-23).
-  for (const a of document.querySelectorAll('a[href="/#check"], .walk-yours a[href="#pc"]')) {
+  // The walkthrough's "Check my area" links #pc. It must bring the check tab back, or with Find areas open it scrolls to a
+  // hidden panel and does nothing (review 2026-10-23). "Who it is for"'s "Search a postcode" (/#check) went with its card
+  // on 2026-11-23 (Bill's pick A of the front-page review).
+  for (const a of document.querySelectorAll('.walk-yours a[href="#pc"]')) {
     a.addEventListener('click', (ev) => {
       ev.preventDefault();
       setTab('check');

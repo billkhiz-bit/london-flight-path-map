@@ -102,6 +102,8 @@ const panel = (page) => page.evaluate(() => {
     shown: !sent.hidden && sent.getBoundingClientRect().height > 0,
     formShown: !form.hidden && form.getBoundingClientRect().height > 0,
     to: document.getElementById('news-sent-to').textContent,
+    // The panel's FIRST paragraph, the one in body text, names Junk (Bill, 2026-11-23): in the small print it was missed.
+    junkFirst: /Junk or Spam/.test(sent.querySelector('p')?.textContent || ''),
     again: !document.getElementById('news-again').hidden,
     said: document.getElementById('news-again-said').textContent,
     focus: document.activeElement?.id || '',
@@ -202,6 +204,7 @@ try {
     ok(sentPanel.shown && !sentPanel.formShown && sentPanel.to === 's•••••@example.com',
       'a 201 shows "Check your inbox" in the form\'s place, the address mostly hidden', JSON.stringify(sentPanel));
     ok(sentPanel.focus === 'news-sent-h', 'focus moves to the panel, where the change is', sentPanel.focus);
+    ok(sentPanel.junkFirst, '"Check your inbox" says to look in Junk or Spam in its main sentence, not only the small print', JSON.stringify(sentPanel));
     ok(sentPanel.again && signups.length === 1, 'the form is gone, so a second press cannot send; "Send it again" is the one way', JSON.stringify({ again: sentPanel.again, sent: signups.length }));
 
     // The page sends at most the Lambda's three a day to one address, then says so (a capped send answers the same 201).
