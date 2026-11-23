@@ -1126,6 +1126,34 @@ Resources:
   # Rationale: signup logs must expire — the privacy policy promises
   # delete-on-request, and the handler now logs keyIds, never raw emails.
 
+  # --- Lambda Function: News by email's monthly sender (2026-11-23, Bill's picks: layout A, fixed subject) ---
+  # NO Events, on purpose: nothing on the internet can reach it, and the deploy user cannot invoke it. Bill runs it from
+  # the console's Test tab: a preview to one address, then {"mode": "send", "confirm": "send YYYY-MM"} for the confirmed
+  # members (OPERATIONS s3.11). It reads the list and the do-not-email list and writes a sent# row per member, all in
+  # MailTable; it sends through the same SES identity as the signup emails. Its log lines carry counts and the issue's
+  # month, never an address. The Globals' 28 s (ApiGatewayTimeoutCapTests holds every Timeout line): it stops with 5 s in
+  # hand and says so ("stopped_early"), and the next run carries on, the sent# rows keeping every member's copy once only.
+  NewsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/news/
+      Handler: app.handler
+      MemorySize: 256
+      Environment:
+        Variables:
+          MAIL_TABLE: !Ref MailTable
+          SES_FROM: !Ref SignupSenderAddress
+          CONFIRM_URL_BASE: !Ref ConfirmUrlBase
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MailTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+              Resource:
+                - !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/*'
+
   # --- DynamoDB Table, Self-service signup audit log ---
   # Email is the partition key (one signup per email, duplicate signups
   # return 409 since APIGW won't let us re-show the key value after

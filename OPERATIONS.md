@@ -916,11 +916,32 @@ paragraph (given 22 Nov in the session, from his P11 answers: at most monthly, c
 says the list is closed and saves nothing) AND put `hidden` on the strip with the privacy paragraph's removal, as one
 change (`tests/test_news_flags.py` refuses half of it). Members already confirmed stay in the table until removed.
 
-**NOT BUILT, needed before the FIRST email is sent:** the sender. It reads `updates#` members, skips any address with
-a `suppress#` item, sends from SES with `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`
-headers pointing at the member's own `unsub#` token, says who it is from (Cubitt33 Ltd, Sky Score) and why they are
-getting it, includes a member's postcode section only if they ticked it, never more than once a month, and never sends by
-itself (Bill runs it). Collecting sign-ups does not need it; sending does.
+The sender is s3.11 (built 2026-11-23).
+
+### 3.11 - Sending a News by email issue (`NewsFunction`, built 2026-11-23; Bill presses Send)
+
+The monthly issue goes out from `NewsFunction` (`backend/lambdas/news/app.py`), which has NO route: Bill runs it from
+the AWS console, Lambda > the `london-flight-map-NewsFunction-...` function > Test. Layout A, the fixed subject
+"Sky Score news: <Month YYYY>", links tagged `utm_source=news&utm_medium=email&utm_campaign=<YYYY-MM>` (totals only),
+no images, nothing remote (Bill's picks, mock-up claude.ai/artifact/LDJ4ZV7JW5vjSDFwDvDnFn).
+
+1. **Write the issue:** `backend/lambdas/news/issues/<YYYY-MM>.json` with `"approved": false`: id, subject, heading,
+   intro, and items (title, body, a `https://skyscore.co.uk/...` page without a query, a link label). New cities and new
+   data only (the strip's promise); a month with nothing new sends nothing. `tests/test_public_wording.py` reads it like a
+   page. Commit, preflight, deploy the backend (reviewed changeset): the issue ships inside the function.
+2. **Preview:** Test event `{"issue": "YYYY-MM", "mode": "preview", "to": "<your address>"}`. One copy, "[Preview]" in
+   the subject, a dummy unsubscribe link; the list is never read. Check it in Gmail AND Outlook (Junk too).
+3. **Approve:** set `"approved": true` in the file; commit, preflight, deploy again.
+4. **Send:** Test event `{"issue": "YYYY-MM", "mode": "send", "confirm": "send YYYY-MM"}`, in that calendar month only.
+   It answers with counts: `sent`, `already` (had it), `do_not_email`, `no_token` (never sent: no working unsubscribe
+   link), `failed`, and `stopped_early` (it keeps 5 s of its 28 in hand on a long list). If any failed or it stopped early,
+   run the same event again: `sent#<YYYY-MM>#<email>` rows make every member's copy once only.
+
+Each email: confirmed members only (`updates#` with a consent), the do-not-email list read before every send, the
+member's own unsubscribe link and RFC 8058 `List-Unsubscribe` / `List-Unsubscribe-Post` headers (the signup Lambda's
+`/v1/signup/unsubscribe` POST), From `SignupSenderAddress`, Reply-To support@. Held by `backend/tests/test_news_sender.py`
+(10 mutants red, 2026-11-23). OPEN, Bill's call: a company line (this note's earlier spec said the email names "Cubitt33
+Ltd, Sky Score"; UK trading-disclosure rules generally expect a company's name and number on its business email).
 
 ## 4. Disaster Recovery
 
@@ -1059,7 +1080,7 @@ subscription and force a transition, or the alarms are decorative.
 - No external uptime checker (`status.skyscore.co.uk` subdomain
   recommended; not yet provisioned).
 - ~~No DLQ on async Lambdas (audit item I6).~~ **Closed 2026-07-24 as moot** —
-  all 8 Lambdas are APIGW-synchronous, so there is no async invocation for a
+  all 8 API Lambdas are APIGW-synchronous (the 9th, NewsFunction, is run by hand), so there is no async invocation for a
   DLQ to catch.
 - ~~**No log read for the deploy user** (added 2026-07-26).~~ **NOT TRUE as of
   2026-09-02** — re-measured against a real log group and proven by reading
