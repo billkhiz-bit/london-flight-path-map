@@ -890,6 +890,28 @@ s2a promises we never write to it again), and an unreadable list answers 503 rat
 link from an email we sent stops all mail to its address, even one older than a re-join (on purpose: the press wins).
 `backend/tests/test_signup_updates.py`, `tests/news-signup.mjs`, `tests/test_news_flags.py`.
 
+**The way back off the do-not-email list (Bill's pick A, 2026-11-24; privacy s2a `#news-way-back`):** since audit I-1 a
+listed address gets no confirmation for ANY sign-up (news, score updates, an API key), and the form still answers it as any
+other, so the only way back is a request to support@. The code review of 2026-11-24 found nothing said so. By hand, on a
+request, never on our own initiative:
+
+1. **Check that it came from that address.** In Gmail, "Show original" must show SPF or DKIM `PASS` for the address's own
+   domain (a From line alone can be typed by anyone). If it does not, answer the SENDER, never the listed address, that
+   the request must come from the address itself. Nothing else is done.
+2. **Look the entry up, then take it off**, in ONE shell (the key is the address in lower case, as the Lambda stores it):
+   ```sh
+   export MSYS_NO_PATHCONV=1
+   E='someone@example.com'
+   K="{\"pk\":{\"S\":\"suppress#$E\"}}"
+   AWS_PROFILE=flightmap aws dynamodb get-item --region eu-west-2 --table-name london-flight-map-mail --key "$K"
+   AWS_PROFILE=flightmap aws dynamodb delete-item --region eu-west-2 --table-name london-flight-map-mail --key "$K" \
+     --condition-expression 'attribute_exists(pk)'
+   ```
+   An empty `get-item` means the address is not listed: say so in the reply, and delete nothing.
+3. **Reply** in the same thread that it is done and they can sign up again as before. Lifting the entry subscribes no
+   one: the person still confirms from their own inbox. The address stays out of the repo (it is public) and out of
+   every log we write.
+
 **Gates, all met 2026-11-22:** section 3.9 LIVE (DMARC, SES production access, `SignupVerify=on`, the daily ceiling and
 sub-address normalisation, 21 Nov); the ICO fee PAID (ZC299394); Bill's approval of privacy.html s2a's "News by email"
 paragraph (given 22 Nov in the session, from his P11 answers: at most monthly, confirm first).

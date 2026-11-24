@@ -86,6 +86,8 @@ Batches 1 to 3 on branch `audit-fixes-2026-11-23`, to deploy after the 24 Nov me
   after removals that worked; an open card's SAVED survived Delete all and re-saved under a new token; on a phone the
   dark legend's key edge beat the forced-colours one; the chosen profile (Rankings, answer card) and the picked postcode
   suggestion (`/` and `/api/`, which had no forced rule) were fill only. 14 new checks, each proven red on `80c16293`.
-  BILL'S CALL: an address that unsubscribed can never confirm an API key or alert either (I-1 extends news's rule), and
-  nothing offers a way back. LATER: the Bay Area card's aircraft sentence is true but looser than its area page's caption
+  BILL'S PICK A, the same evening: an address that unsubscribed can never confirm an API key or alert either (I-1
+  extends news's rule), and nothing offered a way back; privacy s2a now says so and how to come off the list (email
+  support@ from that address), dated on /changes, with the steps in OPERATIONS s3.10, held by `tests/test_news_flags.py`.
+  No code change. LATER: the Bay Area card's aircraft sentence is true but looser than its area page's caption
   (FAA routes fitted to the SFO/SJC monitors); a proper fix is a registry field on every city.

@@ -47,6 +47,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 > the Lambda's `notDeleted` is empty; privacy s2e and a /changes policy notice (23 Nov). **Found building it: every map load
 > MADE a saved-places token and sent it**, against privacy s2e ("Browsing and scoring never generate one"); now no token, no
 > request (`tests/favourites-delete-all.mjs`, every state, red on master). Before/after: claude.ai/artifact/74Mowen12LYKs78VYGvPzh.
+> **CODE REVIEW of the branch, 24 Nov** (claude.ai/artifact/Xp9R1VBo5s9BttmYR8tk2a): 9 findings, 7 fixed in `42c92334` (14
+> checks red on `80c16293`); Bill's pick A for the 8th: privacy s2a says a listed address hears no email and how to come off
+> the list (support@, by hand, OPERATIONS s3.10), dated on /changes. LATER: the Bay Area card's aircraft sentence (a registry field).
 > **DEPLOY, Wed 25 Nov with the news sender and #17:** one reviewed SAM changeset (signup, favourites, score, chat, + news)
 > BEFORE web (the old favourites Lambda answers a list 400, so the button would say "Nothing was deleted"), then web-deploy,
 > home-deploy, pwa-deploy (sw.js), drift check and live checks. Later pass: M-4 to M-7, M-9, M-10, M-17 to M-23.

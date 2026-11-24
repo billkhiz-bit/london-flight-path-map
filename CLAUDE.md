@@ -433,7 +433,9 @@ Or just describe what you need, I have full context of this project.
   "Send it again" to the Lambda's three a day (`SENDS_PER_DAY` == `SEND_CAP_PER_DAY`). `tests/news-signup.mjs` answers
   `/v1/signup` in the page. Its class is `news-strip`:
   `.news` is the consultation pill's, and its rules (an orange `b`) landed on the strip when it shared the name. The
-  do-not-email list is read before EVERY send, the confirmation included, for EVERY kind of sign-up (audit I-1, 2026-11-23: API keys and score alerts too), a listed address answered as any other, a full day included (M-1) (privacy: "never write to it again"); a re-join KEEPS the old unsubscribe tokens, so every link already sent still works (I-2); the button
+  do-not-email list is read before EVERY send, the confirmation included, for EVERY kind of sign-up (audit I-1, 2026-11-23: API keys and score alerts too), a listed address answered as any other, a full day included (M-1) (privacy: "never write to it again"); it comes off the
+  list only BY HAND, on a request from that inbox (privacy `#news-way-back`, OPERATIONS s3.10; Bill's pick A, 2026-11-24:
+  nothing had said why a listed address hears no email); a re-join KEEPS the old unsubscribe tokens, so every link already sent still works (I-2); the button
   ships `disabled` until the module binds it; its count passes `engaged(way, { acts: false })`, or a sign-up before the
   example lands leaves the answer empty (code review 2026-11-22). **Every link in our emails says skyscore.co.uk**
   (`ConfirmUrlBase` -> `CONFIRM_URL_BASE`; CloudFront routes `/v1/signup/*` to the API; `backend/tests/test_confirm_link_host.py`),
