@@ -29,6 +29,10 @@ RULES = (
     # The postcode box's list: one module (js/place-box.mjs) on both pages.
     '.pc-list', '.pc-list[hidden]', '.pc-head', '.pc-foot', '.pc-foot:first-child', '.pc-opt', '.pc-opt small', '.pc-opt mark',
     ".pc-opt:hover, .pc-opt[aria-selected='true']", '.pc-live',
+    # A Windows contrast theme (forced colours): the selected code tab and suggestion take the theme's highlight
+    # (audit I-5 on the front page; code review 2026-11-24 found /api/ had no rule). Inside @media (forced-colors: active).
+    ".code-tabs button[aria-selected='true'], .pc-opt[aria-selected='true']",
+    ".pc-opt[aria-selected='true'] small, .pc-opt[aria-selected='true'] mark",
 )
 
 # Tokens a held rule reads: a page with its own value would change the band without touching a rule.

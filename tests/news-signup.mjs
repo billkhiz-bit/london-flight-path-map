@@ -245,6 +245,20 @@ try {
     mode = 'down';
     const down = await send(page, 'c@example.com');
     ok(/Check your connection/.test(down.result) && down.formShown && !down.shown, 'a network failure says so, and keeps the form', JSON.stringify(down));
+    // Code review 2026-11-24: the FIRST press still went `disabled` while it sent (M-11 had fixed "Send it again" only), so
+    // on a failure a keyboard user was left on <body> beside the message. Pressed from the keyboard, focus stays put.
+    mode = 'busy';
+    await page.fill('#news-email', 'd@example.com');
+    await page.focus('#news-form button[type=submit]');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => /Busy just now/.test(document.getElementById('news-result').textContent), null, { timeout: 10000 }).catch(() => {});
+    const kept = await page.evaluate(() => ({
+      onButton: document.activeElement?.matches('#news-form button[type=submit]') || false,
+      result: document.getElementById('news-result').textContent,
+      busyLeft: document.querySelector('#news-form button[type=submit]')?.getAttribute('aria-disabled'),
+    }));
+    ok(kept.onButton && /Busy just now/.test(kept.result) && kept.busyLeft === null,
+      'a failed first press keeps focus on the button and leaves it ready again', JSON.stringify(kept));
 
     const gc = await page.evaluate(() => window.__gc.slice());
     const news = gc.filter((p) => p.includes('news'));

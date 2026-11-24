@@ -233,12 +233,15 @@ Or just describe what you need, I have full context of this project.
   cannot see: the map's are measured focused, in the DOM, by `tests/map-focus-rings.mjs` (audit M-13, 2026-11-23).
 - **A pressed control is busy through `aria-disabled`, never `disabled`** (audit M-11, 2026-11-23): a focused button
   that becomes disabled loses focus to `<body>` (Chromium's focus fixup), so "Send it again" dropped a keyboard user on
-  every press. `tests/news-signup.mjs` holds the focus through a send.
+  every press. `tests/news-signup.mjs` holds the focus through a send. So do the strip's FIRST press and Delete all's two
+  buttons (code review 2026-11-24: both still went `disabled`; `tests/favourites-delete-all.mjs` 7).
 - **Windows contrast themes keep the keys and the selections** (audit I-5, 2026-11-23): legend keys
   `forced-color-adjust: none`, edged in `CanvasText`; a selection `Highlight`/`HighlightText`; filled buttons a
   `ButtonText` edge; normal colours untouched. A forced rule goes AFTER the rule it overrides: placed before,
   `.city-btn.active`'s dark fill won the tie, a black box on a black theme. `tests/forced-colours.mjs` reads a light AND a
-  dark theme, each selection 3:1 apart as painted (raw values "differed" by alpha alone on master).
+  dark theme, each selection 3:1 apart as painted (raw values "differed" by alpha alone on master). Since the code review
+  of 2026-11-24 it also reads the chosen profile (Rankings, the answer card), the postcode suggestions on `/` and `/api/`
+  (`/api/` had no rule at all) and the legend at 400 px, where the dark legend's light key edge beat the forced one.
 - **A postcode with no map reference has ONE sentence, `noPointSaid()` (js/place-box.mjs)** for `/` and `/api/` (M-18): never
   pass a null latitude to the API. **An area page's tied price rank says "joint"**, the tie counted from the API's own ranks
   (`price_ranks()`, M-23); /open-data/'s CAA year is read from `data/covid-understatement.json` (M-20), never typed.
@@ -448,6 +451,9 @@ Or just describe what you need, I have full context of this project.
   all asks in place, names the listed places in ONE `DELETE /favourites {postcodes}` (25 at most: one BatchWriteItem,
   inside the hop budget `test_handlers` holds), and forgets the token only when the Lambda's `notDeleted` is empty.
   `tests/favourites-delete-all.mjs` reaches every state; backend before frontend (the old Lambda answers it 400).
+  A save or removal WAITS for a Delete all on its way (`favDeleting`), only what was SENT can leave the list, and every
+  list change redraws the save buttons on screen (`syncFavButtons()`): a save mid-delete was stored under the token the
+  delete then forgot, and a stale SAVED button re-saved the place under a new one (code review 2026-11-24).
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,

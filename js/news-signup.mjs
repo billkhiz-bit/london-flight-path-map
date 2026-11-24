@@ -78,14 +78,20 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
     root.querySelector('#news-sent-h')?.focus();
   };
 
+  // The first press is busy through aria-disabled too (code review 2026-11-24): M-11 fixed "Send it again" but this button
+  // still went `disabled` while it sent, so on any failure (busy, offline) a keyboard user was left on <body> beside the
+  // message. It ships `disabled` only until this module binds it (above).
+  let sending = false;
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    if (button.disabled) return;
-    button.disabled = true;
+    if (sending || button.disabled) return;
+    sending = true;
+    button.setAttribute('aria-disabled', 'true');
     out.textContent = 'Sending...';
     count('news-requested');
     const result = await requestNews(apiBase, email.value, fetchFn);
-    button.disabled = false;
+    sending = false;
+    button.removeAttribute('aria-disabled');
     if (!result.ok) {
       out.textContent = result.message;
       return;

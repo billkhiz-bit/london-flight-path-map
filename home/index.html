@@ -116,7 +116,7 @@
       .news-row input { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 10px 14px; border: 1px solid var(--dark); border-radius: 12px; font: 16px var(--font-body); color: var(--dark); background: #fff; }
       .news-row button { min-height: 44px; padding: 10px 18px; border: 0; border-radius: 12px; background: var(--dark); color: #fff; font: 600 15px var(--font-body); white-space: nowrap; cursor: pointer; }
       .news-row button:hover { background: #33332f; }
-      .news-row button:disabled { cursor: progress; opacity: 0.7; }
+      .news-row button:disabled, .news-row button[aria-disabled='true'] { cursor: progress; opacity: 0.7; }
       .news-row input:focus-visible, .news-row button:focus-visible, .news-sent button:focus-visible, .news-sent h3:focus-visible, .news-small a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
       /* After pressing (Bill's pick, 2026-11-22; claude.ai/artifact/8v4FMpDJ9Eq8N24zEGhVHz): where the link went (the
          address mostly hidden), what to do if it is not there, one way to send it again (the Lambda sends at most three a
@@ -704,9 +704,14 @@
          a selection, and the buttons get an edge. Normal colours are untouched. tests/forced-colours.mjs. */
       @media (forced-colors: active) {
         .legend .ramp { forced-color-adjust: none; outline: 1px solid CanvasText; }
-        .tabs [role="tab"][aria-selected="true"], .walk-steps button[aria-selected='true'], .code-tabs button[aria-selected='true'] {
+        .tabs [role="tab"][aria-selected="true"], .walk-steps button[aria-selected='true'] {
           forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
         form.check button, .news-row button { border: 1px solid ButtonText; }
+        /* The code tabs and the suggestion picked with the arrow keys are /api/'s too, so these two rules are written word
+           for word on both pages (tests/test_dev_band_parity.py). The suggestion was a tint alone (code review 2026-11-24);
+           its small print and match take the highlight's text colour, or they keep their grey and orange on it. */
+        .code-tabs button[aria-selected='true'], .pc-opt[aria-selected='true'] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+        .pc-opt[aria-selected='true'] small, .pc-opt[aria-selected='true'] mark { color: HighlightText; }
       }
       section.dev [role='tabpanel'] + [role='tabpanel'] { margin-top: 10px; }
       section.dev .is-tabbed [role='tabpanel'] + [role='tabpanel'] { margin-top: 0; }

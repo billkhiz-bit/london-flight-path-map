@@ -12,6 +12,12 @@
  *   3. A failed request deletes nothing on screen, keeps the token, says so, and offers the link again.
  *   4. A partial answer (the Lambda names a place back in notDeleted) keeps that place and the token, and says how many.
  *   5. One place takes the singular. 6. At a phone's 390 the controls fit the panel and are at least 24 px tall.
+ *   Code review, 2026-11-24:
+ *   7. While it deletes, the buttons are busy through aria-disabled (never `disabled`, which drops focus) and a second
+ *      press asks nothing; a save made meanwhile WAITS, then goes under a new token, and the list keeps it (it was
+ *      dropped, its token forgotten, the place left stored with nothing pointing at it).
+ *   8. After a failed Delete all, a removal that works takes the "Nothing was deleted" note away.
+ *   9. A save button on screen follows the list: SAVE after Delete all, never a stale SAVED that saves again.
  *
  * Serves the WORKING TREE. RED-PROOF: `SKY_INDEX=<path>` serves that file as /index.html instead.
  * Run: node tests/favourites-delete-all.mjs
@@ -22,7 +28,7 @@ import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { chromium } from 'playwright';
 
-/* global switchTab -- a page function, called inside page.evaluate */
+/* global switchTab, saveFavourite -- page functions, called inside page.evaluate */
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const PORT = 8943;
@@ -59,19 +65,24 @@ const check = (name, ok, detail = '') => {
 const browser = await chromium.launch();
 
 /** A fresh map with `saved` behind the stub; `answer(body)` gives the DELETE's reply. */
-async function open({ saved = THREE, token = TOKEN, answer = () => ({ status: 200, body: { notDeleted: [] } }), width = 1366, height = 768 } = {}) {
+async function open({ saved = THREE, token = TOKEN, answer = () => ({ status: 200, body: { notDeleted: [] } }), hold = null, width = 1366, height = 768 } = {}) {
   const context = await browser.newContext({ viewport: { width, height }, isMobile: width < 500, hasTouch: width < 500 });
   if (token) await context.addInitScript((t) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('flightmap_device_token', t); sessionStorage.setItem('seeded', '1'); } }, token);
   const page = await context.newPage();
-  const seen = { gets: 0, deletes: [], tokens: [] };
+  const seen = { gets: 0, deletes: [], posts: [], tokens: [] };
   await page.route((u) => /\/favourites$/.test(u.pathname), async (route) => {
     const req = route.request();
     seen.tokens.push(req.headers()['x-device-token'] || null);
     if (req.method() === 'DELETE') {
       const body = JSON.parse(req.postData() || '{}');
       seen.deletes.push(body);
+      if (hold && body.postcodes) await hold; // a Delete all answers only when the test lets it
       const out = answer(body);
       return route.fulfill({ status: out.status, contentType: 'application/json', body: JSON.stringify(out.body) });
+    }
+    if (req.method() === 'POST') {
+      seen.posts.push({ token: req.headers()['x-device-token'] || null, body: JSON.parse(req.postData() || '{}') });
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ saved: true }) });
     }
     seen.gets += 1;
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ favourites: saved }) });
@@ -189,6 +200,70 @@ console.log('6. A phone');
   const buttons = m.slice(0, -1);
   check('both buttons show inside the panel, each at least 24 px tall', buttons.length === 2 && buttons.every((b) => b.visible && b.inside && b.h >= 24), JSON.stringify(m));
   check('and nothing scrolls sideways', m.at(-1).scroll, JSON.stringify(m.at(-1)));
+  await context.close();
+}
+
+console.log('7. A save while Delete all is on its way');
+{
+  let release;
+  const hold = new Promise((r) => { release = r; });
+  const { context, page, seen } = await open({ hold });
+  await waitRows(page, 3);
+  await page.click('[data-fav-all="ask"]');
+  await page.click('[data-fav-all="yes"]');
+  await page.waitForFunction(() => document.querySelector('[data-fav-all="yes"]')?.getAttribute('aria-disabled') === 'true', null, { timeout: 5000 }).catch(() => {});
+  const busy = await page.evaluate(() => {
+    const b = [...document.querySelectorAll('#favourites-delete-all button')];
+    return { aria: b.map((x) => x.getAttribute('aria-disabled')), disabled: b.some((x) => x.disabled), focus: document.activeElement?.id, text: b[0]?.textContent };
+  });
+  check('while it deletes, both buttons are busy through aria-disabled, never disabled, focus on the question',
+    busy.aria.length === 2 && busy.aria.every((a) => a === 'true') && !busy.disabled && busy.focus === 'fav-confirm-q' && busy.text === 'Deleting…', JSON.stringify(busy));
+  // A press while busy (a script click: Playwright will not click an aria-disabled button) asks nothing more.
+  await page.evaluate(() => document.querySelector('[data-fav-all="yes"]')?.click());
+  const saving = page.evaluate(() => saveFavourite('LS1 4DY', 'Leeds', 'low', 6));
+  await page.waitForTimeout(800);
+  check('the save waits: nothing is posted while the delete is on its way', seen.posts.length === 0, JSON.stringify(seen.posts));
+  release();
+  const ok = await saving;
+  await page.waitForFunction(() => /LS1 4DY/.test(document.getElementById('favourites-list')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
+  const s = await state(page);
+  check('then it is posted under a NEW token, never the one the delete forgot', ok === true && seen.posts.length === 1
+    && !!seen.posts[0].token && seen.posts[0].token !== TOKEN && seen.posts[0].token === s.token, JSON.stringify({ ok, posts: seen.posts, token: s.token }));
+  check('and the list holds it', s.rows === 1 && /LS1 4DY/.test(s.list), JSON.stringify(s));
+  check('a press while busy sent no second delete', seen.deletes.length === 1, JSON.stringify(seen.deletes));
+  await context.close();
+}
+
+console.log('8. After a failed Delete all, a removal that works clears the note');
+{
+  const { context, page } = await open({ answer: (body) => (body.postcodes ? { status: 503, body: { error: 'Storage backend temporarily unavailable.' } } : { status: 200, body: {} }) });
+  await waitRows(page, 3);
+  await page.click('[data-fav-all="ask"]');
+  await page.click('[data-fav-all="yes"]');
+  await page.waitForSelector('#fav-delete-note', { timeout: 10000 }).catch(() => {});
+  await page.click('[data-fav-remove="TW9 3PZ"]');
+  await waitRows(page, 2);
+  const s = await state(page);
+  check('the "Nothing was deleted" note is gone and the link stays', s.rows === 2 && s.box === 'Delete all saved places', JSON.stringify(s));
+  await context.close();
+}
+
+console.log('9. A save button on screen says what the list says');
+{
+  const { context, page } = await open();
+  await waitRows(page, 3);
+  // The postcode card's button in its builder's markup (index.html `.fav-btn`, data-fav-postcode), drawn SAVED: a card
+  // needs a scored search, and the rule under test is the list's, so the button is placed and the list is changed.
+  await page.evaluate(() => document.getElementById('sidebar-content')?.insertAdjacentHTML('beforeend',
+    '<button class="fav-btn saved" id="fc-fav" data-fav-postcode="TW9 3PZ" data-fav-borough="Richmond upon Thames" data-fav-impact="LOW" data-fav-score="6.4">SAVED</button>'));
+  await page.click('[data-fav-all="ask"]');
+  await page.click('[data-fav-all="yes"]');
+  await page.waitForFunction(() => /Deleted\./.test(document.getElementById('favourites-list')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
+  const b = await page.evaluate(() => {
+    const x = document.getElementById('fc-fav');
+    return x ? { saved: x.classList.contains('saved'), text: x.textContent.trim() } : null;
+  });
+  check("after Delete all, the card's button says SAVE, not SAVED", !!b && !b.saved && b.text === 'SAVE', JSON.stringify(b));
   await context.close();
 }
 

@@ -80,3 +80,12 @@ Batches 1 to 3 on branch `audit-fixes-2026-11-23`, to deploy after the 24 Nov me
   s2e ("Browsing and scoring never generate one"); with Bill's pick A for "Delete all saved places" the same day,
   dated on /changes.
 - **Later pass:** M-4, M-5, M-6, M-7, M-9, M-10, M-17 to M-23 (design choices or tidy-ups).
+- **Code review of the fixes (2026-11-24, on `80c16293`):** 9 findings, each read in the code first. FIXED: a save
+  during Delete all was dropped from the list and stored under the token the delete then forgot (it now waits); Delete
+  all's buttons and the news strip's first press went `disabled` (M-11's own defect); a failed Delete all's note stayed
+  after removals that worked; an open card's SAVED survived Delete all and re-saved under a new token; on a phone the
+  dark legend's key edge beat the forced-colours one; the chosen profile (Rankings, answer card) and the picked postcode
+  suggestion (`/` and `/api/`, which had no forced rule) were fill only. 14 new checks, each proven red on `80c16293`.
+  BILL'S CALL: an address that unsubscribed can never confirm an API key or alert either (I-1 extends news's rule), and
+  nothing offers a way back. LATER: the Bay Area card's aircraft sentence is true but looser than its area page's caption
+  (FAA routes fitted to the SFO/SJC monitors); a proper fix is a registry field on every city.

@@ -21,10 +21,13 @@ import { extname, join } from 'node:path';
 import { chromium } from 'playwright';
 import { stubLiveApi } from './stub-live-api.mjs';
 
+/* global switchTab -- a page function, called inside page.evaluate */
+
 const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const PORT = 8944;
 const MAP = process.env.SKY_INDEX || join(ROOT, 'index.html');
 const HOME = process.env.SKY_HOME || join(ROOT, 'home', 'index.html');
+const API = process.env.SKY_API || join(ROOT, 'api', 'index.html');
 const TYPES = {
   '.html': 'text/html', '.js': 'application/javascript', '.mjs': 'application/javascript', '.json': 'application/json',
   '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.csv': 'text/csv',
@@ -32,7 +35,7 @@ const TYPES = {
 };
 const server = createServer(async (req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  const file = url === '/' ? HOME : url === '/map/' || url === '/index.html' ? MAP : join(ROOT, url);
+  const file = url === '/' ? HOME : url === '/map/' || url === '/index.html' ? MAP : url === '/api/' ? API : join(ROOT, url);
   try {
     const buf = await readFile(file);
     res.writeHead(200, { 'content-type': TYPES[extname(file)] || 'application/octet-stream' });
@@ -78,12 +81,13 @@ const PAINTED = `window.__painted = (c) => {
 };`;
 
 /** Each probe's computed styles in one page, read once with forced colours off and once on. */
-async function readBoth(path, ready, probe) {
-  const page = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+async function readBoth(path, ready, probe, { width = 1366, height = 900, setup = null } = {}) {
+  const page = await browser.newPage({ viewport: { width, height } });
   await page.addInitScript(() => { try { localStorage.setItem('skipgc', 't'); } catch { /* none */ } });
   await stubLiveApi(page); // js/count.mjs counts nothing from localhost, so it is served as it is
   await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(ready, null, { timeout: 30000 }).catch(() => {});
+  if (setup) await setup(page); // reaches the state to read (a tab, a typed word) once, before either reading
   await page.evaluate(PAINTED);
   // Each read waits out the controls' own transitions (the city buttons ease 0.15 s): read at once, the active city
   // was caught part-way from its dark fill to the highlight.
@@ -105,17 +109,35 @@ async function readBoth(path, ready, probe) {
 console.log('The full map');
 {
   const { normal, themes } = await readBoth('/map/', () => document.querySelectorAll('.noise-scale-bar > span').length > 0
-    && document.querySelector('.city-btn.active'), () => {
+    && document.querySelector('.city-btn.active') && document.querySelector('#persona-bar .persona-btn.active'), () => {
     const cs = (el, p) => (el ? getComputedStyle(el)[p] : null);
     const active = document.querySelector('.city-btn.active');
     const other = [...document.querySelectorAll('.city-btn')].find((b) => b !== active && b.offsetParent);
+    const bg = (el) => window.__painted(cs(el, 'backgroundColor'));
+    const onOff = (sel, on) => {
+      const all = [...document.querySelectorAll(sel)];
+      const a = all.find((b) => b.classList.contains(on));
+      const b = all.find((x) => !x.classList.contains(on));
+      return { on: bg(a), off: bg(b), found: !!a && !!b };
+    };
     return {
       line: cs(document.querySelector('.legend-line'), 'borderTopColor'),
       heli: cs(document.querySelector('#legend-heli-row .legend-dot'), 'backgroundColor'),
       scale: [...document.querySelectorAll('.noise-scale-bar > span')].map((s) => cs(s, 'backgroundColor')),
       steps: [...document.querySelectorAll('#legend-planes-group .legend-swatch[style*="background"]')].map((s) => cs(s, 'backgroundColor')),
-      activeBg: window.__painted(cs(active, 'backgroundColor')), otherBg: window.__painted(cs(other, 'backgroundColor')),
+      activeBg: bg(active), otherBg: bg(other),
+      persona: onOff('#persona-bar .persona-btn', 'active'),
+      card: onOff('#fc-probe-card .ac-prof', 'on'),
     };
+  }, {
+    // Rankings' profile chips are the page's own; the answer card's are drawn only after a search, so one card is added
+    // in the markup its builder writes (index.html, `.ac-profs` / `.ac-prof`): the rule under test is the CSS.
+    setup: (page) => page.evaluate(() => {
+      switchTab('ranking');
+      document.getElementById('sidebar-content')?.insertAdjacentHTML('beforeend', '<div class="answer-card" id="fc-probe-card"><div class="ac-profs">'
+        + '<button type="button" class="ac-prof on" aria-pressed="true">Family</button>'
+        + '<button type="button" class="ac-prof" aria-pressed="false">Commuter</button></div></div>');
+    }),
   });
   for (const [theme, forced] of Object.entries(themes)) {
     const t = `(${theme} theme)`;
@@ -127,6 +149,28 @@ console.log('The full map');
       JSON.stringify(forced.steps));
     check(`${t} the active city stands 3:1 apart from the others`, apart(forced.activeBg, forced.otherBg),
       `active ${forced.activeBg}, other ${forced.otherBg}, ${contrast(forced.activeBg, forced.otherBg).toFixed(2)}:1`);
+    for (const [name, p] of [["Rankings' chosen profile", forced.persona], ["the answer card's chosen profile", forced.card]]) {
+      check(`${t} ${name} stands 3:1 apart from the others`, p.found && apart(p.on, p.off), `${JSON.stringify(p)} ${contrast(p.on, p.off).toFixed(2)}:1`);
+    }
+  }
+}
+
+console.log('The full map on a small phone (400 px)');
+{
+  // The dark legend's light key edge (M-14) lives in @media (max-width: 480px), more specific than the forced edge:
+  // placed after it, it won, and on a LIGHT contrast theme the keys' edge was near-white on the theme's white.
+  const { themes } = await readBoth('/map/', () => document.querySelectorAll('.map-legend .legend-swatch').length > 0, () => {
+    const probe = document.createElement('div');
+    probe.style.backgroundColor = 'Canvas';
+    document.body.append(probe);
+    const canvas = window.__painted(getComputedStyle(probe).backgroundColor);
+    probe.remove();
+    const sw = document.querySelector('.map-legend .legend-swatch');
+    return { edge: window.__painted(sw ? getComputedStyle(sw).borderTopColor : null), canvas };
+  }, { width: 400, height: 844 });
+  for (const [theme, forced] of Object.entries(themes)) {
+    check(`(${theme} theme) a legend key's edge stands 3:1 from the theme's background`, apart(forced.edge, forced.canvas),
+      `edge ${forced.edge} on ${forced.canvas}, ${contrast(forced.edge, forced.canvas).toFixed(2)}:1`);
   }
 }
 
@@ -145,18 +189,60 @@ console.log('The front page');
     return {
       ramp: [...document.querySelectorAll('.legend .ramp b')].map((b) => cs(b, 'backgroundColor')),
       tabs: pair('.tabs [role="tab"]'), walk: pair('.walk-steps button'), code: pair('.code-tabs button'),
+      pick: pair('#pc-list [role="option"]'),
       check: edge(document.querySelector('form.check button')), news: edge(document.querySelector('.news-row button')),
     };
+  }, {
+    // The postcode box's suggestions, reached as a visitor reaches them: "man" offers Manchester and Greater Manchester
+    // from the page's own places, and the arrow key picks the first.
+    setup: async (page) => {
+      await page.click('#pc');
+      await page.keyboard.type('man');
+      await page.waitForFunction(() => document.querySelectorAll('#pc-list [role="option"]').length > 1, null, { timeout: 15000 }).catch(() => {});
+      await page.keyboard.press('ArrowDown');
+    },
   });
   for (const [theme, forced] of Object.entries(themes)) {
     const t = `(${theme} theme)`;
     check(`${t} the map's noise ramp keeps every colour`, normal.ramp.length > 3 && JSON.stringify(forced.ramp) === JSON.stringify(normal.ramp),
       `${normal.ramp.length} steps; first ${normal.ramp[0]} -> ${forced.ramp[0]}`);
-    for (const [name, p] of [['Check a postcode / Find areas', forced.tabs], ["the walkthrough's steps", forced.walk], ['curl / Python / JavaScript', forced.code]]) {
+    for (const [name, p] of [['Check a postcode / Find areas', forced.tabs], ["the walkthrough's steps", forced.walk], ['curl / Python / JavaScript', forced.code],
+      ["the postcode box's suggestions", forced.pick]]) {
       check(`${t} the selected tab of ${name} stands 3:1 apart from the others`, p.found && apart(p.on, p.off), `${JSON.stringify(p)} ${contrast(p.on, p.off).toFixed(2)}:1`);
     }
     for (const [name, e] of [['"Check my area"', forced.check], ['"Sign me up"', forced.news]]) {
       check(`${t} ${name} has a visible edge`, !!e && e.s !== 'none' && parseFloat(e.w) >= 1, JSON.stringify(e));
+    }
+  }
+}
+
+console.log('The API page');
+{
+  // /api/ carries the front page's code tabs and postcode box but had no forced-colours rule at all (code review
+  // 2026-11-24). Its box offers only real postcodes from postcodes.io, which a test must not ask, so two rows are placed
+  // in its list in the markup js/place-box.mjs writes: the rule under test is the CSS.
+  const { themes } = await readBoth('/api/', () => document.querySelector('.code-tabs button[aria-selected="true"]'), () => {
+    const bg = (el) => window.__painted(el ? getComputedStyle(el).backgroundColor : null);
+    const pair = (sel) => {
+      const all = [...document.querySelectorAll(sel)];
+      const on = all.find((b) => b.getAttribute('aria-selected') === 'true');
+      const off = all.find((b) => b.getAttribute('aria-selected') !== 'true');
+      return { on: bg(on), off: bg(off), found: !!on && !!off };
+    };
+    return { code: pair('.code-tabs button'), pick: pair('#try-list [role="option"]') };
+  }, {
+    setup: (page) => page.evaluate(() => {
+      const list = document.getElementById('try-list');
+      if (!list) return;
+      list.hidden = false;
+      list.innerHTML = '<div role="option" class="pc-opt" aria-selected="true"><span><mark>TW9</mark> 3PZ</span><small>Richmond upon Thames</small></div>'
+        + '<div role="option" class="pc-opt" aria-selected="false"><span><mark>TW9</mark> 3PA</span><small>Richmond upon Thames</small></div>';
+    }),
+  });
+  for (const [theme, forced] of Object.entries(themes)) {
+    for (const [name, p] of [['curl / Python / JavaScript', forced.code], ["the postcode box's suggestions", forced.pick]]) {
+      check(`(${theme} theme) the selected one of ${name} stands 3:1 apart from the others`, p.found && apart(p.on, p.off),
+        `${JSON.stringify(p)} ${contrast(p.on, p.off).toFixed(2)}:1`);
     }
   }
 }
