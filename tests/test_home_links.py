@@ -138,6 +138,10 @@ def test_every_link_back_to_the_front_page_lands():
     # About's /#who must be found, so a pattern that stops matching fails here, and the check above holds its landing.
     assert ('about/index.html', '/#who') in seen, f'About\'s link to /#who was not found: the pattern has stopped matching ({sorted(seen)})'
     assert not problems, '\n'.join(problems)
+    # ...and the list it lands on is NAMED by a heading of its own (audit M-12, 2026-11-23): a <p> label left the five
+    # audiences in the outline under "Data for your business", the card before it.
+    who = HOME.read_text(encoding='utf-8').split('id="who"', 1)[1].split('</ul>', 1)[0]
+    assert re.match(r'>\s*<h3 class="who-label">[^<]+</h3>', who), f'the audience list opens with no heading: {who[:120]!r}'
 
 
 def test_the_fragments_the_engine_reads_are_still_read():

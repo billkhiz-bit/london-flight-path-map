@@ -66,6 +66,8 @@ await new Promise((r) => server.listen(PORT, r));
 const browser = await chromium.launch();
 // axe-core/playwright rejects the implicit context browser.newPage() creates.
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+// A browser that has SAVED holds a token; since 2026-11-23 one that never saved asks for no list at all (privacy s2e).
+await context.addInitScript(() => localStorage.setItem('flightmap_device_token', '550e8400-e29b-41d4-a716-446655440000'));
 const page = await context.newPage();
 
 // The favourites API is answered locally: the list LOADS from it when the tab

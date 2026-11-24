@@ -97,20 +97,30 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
     showSent();
   });
 
+  // BUSY, NOT `disabled` (audit M-11, 2026-11-23): a focused button that becomes disabled loses focus to <body>
+  // (Chromium's focus fixup), so every press of "Send it again" dropped a keyboard user's place while it sent.
+  // aria-disabled says the same to a screen reader and keeps focus where it was.
+  let busy = false;
   again.addEventListener('click', async () => {
-    if (again.disabled || sends >= SENDS_PER_DAY) return;
-    again.disabled = true;
+    if (busy || sends >= SENDS_PER_DAY) return;
+    busy = true;
+    again.setAttribute('aria-disabled', 'true');
     said.textContent = 'Sending...';
     count('news-resend');
     const result = await requestNews(apiBase, address, fetchFn);
-    again.disabled = false;
+    busy = false;
+    again.removeAttribute('aria-disabled');
     if (!result.ok) {
       said.textContent = result.message;
       return;
     }
     sends += 1;
     if (sends >= SENDS_PER_DAY) {
+      // Hiding the button that has focus dropped focus to <body> (audit M-11, 2026-11-23: WCAG 2.4.3), at the moment
+      // the strip says "three today". Focus goes to what is left to do: a different address.
+      const hadFocus = again.ownerDocument.activeElement === again;
       again.hidden = true;
+      if (hadFocus) other.focus();
       said.textContent = 'Sent again. That is three today, the most we send to one address. If none arrives, try a different address or come back tomorrow.';
     } else {
       said.textContent = 'Sent again.';

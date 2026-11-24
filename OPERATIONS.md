@@ -1000,13 +1000,15 @@ other two.
   2026-09-08** — verified absent in `us-east-1`, the only region billing
   metrics publish to. See §3.4.
 
-**Alarms, created 2026-09-02 (CLI, `flightmap-dev`); two RETUNED 2026-10-27 (Bill ran it):**
+**Alarms, created 2026-09-02 (CLI, `flightmap-dev`); two RETUNED 2026-10-27 (Bill ran it); the two SES ones added 2026-11-23 (audit I-4: why their bars sit AT SES's review levels is in the script's header; Bill ran it with `--test` at 22:08 that day and all four emails arrived):**
 
 | Alarm | Metric | Fires when |
 |---|---|---|
 | `london-flight-map-lambda-errors` | `AWS/Lambda` `Errors`, Sum, no dimension | any error across all 8 functions, >0 in 5 min (unchanged: one error a month in October, a real signal; a timeout counts as an error) |
 | `london-flight-map-lambda-duration` | `AWS/Lambda` `Duration`, Maximum, no dimension | >25 s in **3 consecutive** 5-min windows: sustained slowness near the **29 s API Gateway integration cap** |
 | `london-flight-map-api-5xx` | metric math over 15 min: `IF(e5 >= 2, e5 / req, 0)`, `e5` = `5XXError` Sum, `req` = `Count` Sum, `ApiName=london-flight-map` | **>= 0.5**: at least 2 failed AND at least half of all requests: an outage, not a blip |
+| `london-flight-map-ses-bounce-rate` | `AWS/SES` `Reputation.BounceRate`, Maximum per hour, no dimension | **>= 5%**, SES's review level (audit I-4, 2026-11-23; Bill runs `scripts/create_ses_alarms.sh`) |
+| `london-flight-map-ses-complaint-rate` | `AWS/SES` `Reputation.ComplaintRate`, Maximum per hour, no dimension | **>= 0.1%**, SES's review level: anyone marking our email as spam |
 
 **Why retuned (2026-10-27).** AWS emailed that October had used 858 of the
 account's 1,000 free alert emails. Both alarms fired on ONE bad 5-min window and
@@ -1023,8 +1025,8 @@ alarms). The rest wait for traffic: no 5xx alarm can see an outage nobody asks.
 script Bill runs; the replay scripts and the pre-change config were in that
 session's scratchpad (`alarms-before-2026-10-27.json` for rollback).
 
-All three notify **`arn:aws:sns:eu-west-2:<AWS_ACCOUNT_ID>:sky-score-alerts`** (email
-to Bill) on BOTH `ALARM` and `OK`, and all three use
+All five notify **`arn:aws:sns:eu-west-2:<AWS_ACCOUNT_ID>:sky-score-alerts`** (email
+to Bill) on BOTH `ALARM` and `OK`, and all five use
 `--treat-missing-data notBreaching` so a quiet API does not page anyone.
 
 **The `london-flight-map-` prefix is load-bearing.** The `FlightMapObservability`

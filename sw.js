@@ -231,7 +231,9 @@
 // both (preflight: "service worker activates state=timeout-waiting"). The
 // atomic list keeps / and /index.html: the map in the app and the repo, the
 // front page on the web, which is harmless to hold.
-const VERSION = 'v1.0.37';
+// v1.0.38 (2026-11-23): /v1/ on this origin is no longer intercepted (audit M-2): the bump also deletes the old shell
+// cache, which may hold a confirm or unsubscribe page stored with its token.
+const VERSION = 'v1.0.38';
 const SHELL_CACHE = `sky-score-shell-${VERSION}`;
 const MAP_SHELL = '/map/';
 const RUNTIME_CACHE = `sky-score-runtime-${VERSION}`;
@@ -352,6 +354,11 @@ self.addEventListener('fetch', (event) => {
   // API origins: don't intercept at all. The browser handles them as if
   // there were no SW — which is what we want for fresh data.
   if (NEVER_CACHE_ORIGINS.includes(url.origin)) return;
+
+  // Same-origin /v1/: never intercepted (audit M-2, 2026-11-23). Since 2026-11-22 CloudFront serves /v1/signup/* on
+  // this origin, and the navigation rule below stored the confirm and unsubscribe pages, each with its token in a hidden
+  // field (Cache Storage ignores their no-store). It sits BEFORE the navigation rule, as /v1/ pages are navigations.
+  if (url.origin === self.location.origin && url.pathname.startsWith('/v1/')) return;
 
   // Navigations / same-origin HTML: network-first.
   if (

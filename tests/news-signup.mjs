@@ -211,8 +211,12 @@ try {
     const second = await resend(page);
     ok(second.said === 'Sent again.' && second.again && signups.length === 2 && bodyOf(signups[1]).email === 'someone@example.com',
       '"Send it again" sends the same address again', JSON.stringify({ second, sent: signups.length }));
+    // M-11 again: while it sent, the button was `disabled`, and a disabled focused button loses focus to <body>.
+    ok(second.focus === 'news-again', 'focus stays on "Send it again" through the send', second.focus);
     const third = await resend(page);
     ok(/three today/.test(third.said) && !third.again && signups.length === 3, 'after the third, it says so and offers no more', JSON.stringify({ third, sent: signups.length }));
+    // Audit M-11 (2026-11-23): hiding the pressed (so focused) button dropped focus to <body>; it goes to what is left to do.
+    ok(third.focus === 'news-other', 'and focus moves to "Use a different address", never to the page', third.focus);
     await page.evaluate(() => document.getElementById('news-again').click());
     await page.waitForTimeout(300);
     ok(signups.length === 3, 'a hidden button sends nothing', String(signups.length));

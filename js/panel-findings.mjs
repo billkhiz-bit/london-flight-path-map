@@ -370,7 +370,17 @@ export const AIRCRAFT_BAND_TONE = { low: 'good', high: 'bad', severe: 'bad' };
  * The council's aircraft noise band as a tile (CITY_DATA `impact`: low, low-moderate, moderate, moderate-high, high,
  * severe). A band, not a figure: no picture, since its words are not one of SCALES' (a word outside its scale draws none).
  */
-export function councilAircraftFinding({ band, council, area = 'council', note, source } = {}) {
+// What a council's aircraft band is estimated from, by city (audit I-3, 2026-11-23): the area page's caption rule
+// (build_area_pages aircraft_note, from the Lambda's _defra_contour_status). DEFRA is named only where DEFRA maps one of
+// the city's airports: the card said "DEFRA noise map" for Teesside (unmapped), South Yorkshire (no airport) and New York.
+export const AIRCRAFT_BASIS = {
+  mapped: ", estimated from its distance to the airports and their routes, scaled by the size of each airport's DEFRA noise map.",
+  unmapped: ", estimated from its distance to the airport and its routes; DEFRA's noise maps do not cover this airport.",
+  none: '. There is no commercial airport in this city region.',
+  us: ', estimated from its distance to the airports and their routes.',
+};
+
+export function councilAircraftFinding({ band, council, area = 'council', note, source, basis = 'us' } = {}) {
   const w = band ? words(band) : '';
   if (!w || w === 'unknown') return null;
   const tone = AIRCRAFT_BAND_TONE[w] || null;
@@ -386,7 +396,7 @@ export function councilAircraftFinding({ band, council, area = 'council', note, 
       stand: standOf(tone),
       pill: 'Aircraft noise',
       visual: [],
-      say: [`A band for ${placeName(council, area)} as a whole, estimated from its distance to the airports and their routes, scaled by the size of each airport's DEFRA noise map.`,
+      say: [`A band for ${placeName(council, area)} as a whole${AIRCRAFT_BASIS[basis] ?? AIRCRAFT_BASIS.us}`,
         'Search a postcode for its own figure: one street can be much quieter or louder than its council area.'],
       notes: note ? [note] : [],
       source: source || null,

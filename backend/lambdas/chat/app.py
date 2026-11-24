@@ -360,7 +360,7 @@ def _handle(event, context):
 
     try:
         payload = json.loads(raw)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError):  # audit M-3: deep nesting
         return response(400, {'error': 'Invalid or missing JSON body.'})
     # A valid-JSON NON-OBJECT (`[1]`, `"x"`, `123`) raised AttributeError on
     # `.get` below and escaped the handler - and this is the one Lambda of

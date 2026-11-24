@@ -77,7 +77,7 @@ Or just describe what you need, I have full context of this project.
   cross-project state is `%USERPROFILE%\OneDrive\Desktop\NOW.md`** (imported by the global CLAUDE.md): when
   a Sky Score item listed there closes or changes, update its line, then add one dated line to the "Daily
   Progress Log" of `90_DAY_ROADMAP.md` (strategic only; search it, never read all 278 KB).
-- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-19.md`; suggest `/audit` when it is >7 days old.
+- **Weekly audit**: the current one is `AUDIT_REPORT_2026-11-23.md`; suggest `/audit` when it is >7 days old.
 
 ## The product, in facts safe to repeat
 
@@ -229,6 +229,16 @@ Or just describe what you need, I have full context of this project.
   A REDRAW is not a result: `setPersona()` passes `reveal: false` (I-18: a phone was thrown from Rankings to Search). One key,
   one effect: the Layers popover's Escape marks the key used and the result card's Escape steps aside (M-14).
 - **Every outline focus ring on a page that defines `--focus` is drawn in it** (M-16, `tests/test_focus_ring_contrast.py`).
+  A control with NO ring of its own falls back to the browser's (amber 1.87:1 on Chromium's phone theme), which that test
+  cannot see: the map's are measured focused, in the DOM, by `tests/map-focus-rings.mjs` (audit M-13, 2026-11-23).
+- **A pressed control is busy through `aria-disabled`, never `disabled`** (audit M-11, 2026-11-23): a focused button
+  that becomes disabled loses focus to `<body>` (Chromium's focus fixup), so "Send it again" dropped a keyboard user on
+  every press. `tests/news-signup.mjs` holds the focus through a send.
+- **Windows contrast themes keep the keys and the selections** (audit I-5, 2026-11-23): legend keys
+  `forced-color-adjust: none`, edged in `CanvasText`; a selection `Highlight`/`HighlightText`; filled buttons a
+  `ButtonText` edge; normal colours untouched. A forced rule goes AFTER the rule it overrides: placed before,
+  `.city-btn.active`'s dark fill won the tie, a black box on a black theme. `tests/forced-colours.mjs` reads a light AND a
+  dark theme, each selection 3:1 apart as painted (raw values "differed" by alpha alone on master).
 - **A postcode with no map reference has ONE sentence, `noPointSaid()` (js/place-box.mjs)** for `/` and `/api/` (M-18): never
   pass a null latitude to the API. **An area page's tied price rank says "joint"**, the tie counted from the API's own ranks
   (`price_ranks()`, M-23); /open-data/'s CAA year is read from `data/covid-understatement.json` (M-20), never typed.
@@ -402,7 +412,7 @@ Or just describe what you need, I have full context of this project.
   (a footer change re-dates them all in the sitemap); counted `<page>-linkedin`; `tests/test_linkedin_company_link.py`
   holds every copy, so at the rename change the holder and it names what is left.
 - **`sw.js`**: `SHELL_ASSETS` is atomic (`cache.addAll`), so a precached file missing at the origin stops the
-  worker installing everywhere; `/data/` and `/reports/` (the report picture keeps one name, M-26) are network-first; `/badge` passes through; every `no-cache` upload in
+  worker installing everywhere; `/data/` and `/reports/` (the report picture keeps one name, M-26) are network-first; `/badge` and same-origin `/v1/` pass through (`/v1/signup/*` pages carry a token: audit M-2, 2026-11-23); every `no-cache` upload in
   the Makefile must be network-first (`tests/test_sw_no_cache_prefixes.py`).
 - **News by email has ONE holder, `js/news-signup.mjs`** (Bill, 2026-11-22; mock-up claude.ai/artifact/XFr75aGp5ziqBEeFFNCCmu v6,
   colour A; it replaced the area updates card of 2026-11-10): the front page's strip straight AFTER the hero, never inside it (the
@@ -420,7 +430,7 @@ Or just describe what you need, I have full context of this project.
   "Send it again" to the Lambda's three a day (`SENDS_PER_DAY` == `SEND_CAP_PER_DAY`). `tests/news-signup.mjs` answers
   `/v1/signup` in the page. Its class is `news-strip`:
   `.news` is the consultation pill's, and its rules (an orange `b`) landed on the strip when it shared the name. The
-  do-not-email list is read before EVERY send, the confirmation included (privacy: "never write to it again"); the button
+  do-not-email list is read before EVERY send, the confirmation included, for EVERY kind of sign-up (audit I-1, 2026-11-23: API keys and score alerts too), a listed address answered as any other, a full day included (M-1) (privacy: "never write to it again"); a re-join KEEPS the old unsubscribe tokens, so every link already sent still works (I-2); the button
   ships `disabled` until the module binds it; its count passes `engaged(way, { acts: false })`, or a sign-up before the
   example lands leaves the answer empty (code review 2026-11-22). **Every link in our emails says skyscore.co.uk**
   (`ConfirmUrlBase` -> `CONFIRM_URL_BASE`; CloudFront routes `/v1/signup/*` to the API; `backend/tests/test_confirm_link_host.py`),
@@ -432,6 +442,12 @@ Or just describe what you need, I have full context of this project.
   claude.ai/artifact/BbnnMwCUrpmkBHcDa4tgSz). **A member who joins again is told so ONLY on the page after the click**
   (`subscribe_updates` returns `already-subscribed`, read off the member its write replaces; his pick 1): never by the form,
   whose one answer for every address is I17's rule.
+- **Saved places: no token, no request; "Delete all" under the list** (Bill's pick A, 2026-11-23,
+  claude.ai/artifact/86m9oyizi3kZiuDpUSdZx4): `loadFavourites()` asks for nothing when the browser holds no token (every
+  page load MINTED one and sent it until then, against privacy s2e's "Browsing and scoring never generate one"). Delete
+  all asks in place, names the listed places in ONE `DELETE /favourites {postcodes}` (25 at most: one BatchWriteItem,
+  inside the hop budget `test_handlers` holds), and forgets the token only when the Lambda's `notDeleted` is empty.
+  `tests/favourites-delete-all.mjs` reaches every state; backend before frontend (the old Lambda answers it 400).
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,

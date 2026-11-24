@@ -116,6 +116,49 @@ class FavouritesHandlerTests(unittest.TestCase):
         )
         self.assertEqual(canonical, 'a' * 32)
 
+    # DELETE ALL SAVED PLACES (Bill's pick A, 2026-11-23): a list in ONE BatchWriteItem, keyed on the caller's own token.
+    def _delete(self, body, unprocessed=None):
+        from unittest.mock import MagicMock, patch
+        ddb = MagicMock()
+        ddb.batch_write_item.return_value = {'UnprocessedItems': unprocessed or {}}
+        event = {'httpMethod': 'DELETE', 'body': json.dumps(body), 'headers': {'X-Device-Token': 'b' * 32}}
+        with patch.object(self.app, 'dynamodb', ddb), patch.object(self.app, 'table', MagicMock()) as table:
+            result = self.app.handler(event, None)
+        return result, ddb, table
+
+    def test_a_list_is_deleted_in_one_call_under_the_callers_own_token(self):
+        result, ddb, table = self._delete({'postcodes': ['TW9 3PZ', 'M22 5RX', 'TW9 3PZ']})
+        self.assertEqual(result['statusCode'], 200, result['body'])
+        self.assertEqual(json.loads(result['body'])['deleted'], 2)
+        ddb.batch_write_item.assert_called_once()
+        keys = [r['DeleteRequest']['Key'] for r in ddb.batch_write_item.call_args.kwargs['RequestItems'][self.app.TABLE_NAME]]
+        self.assertEqual(keys, [{'userId': 'b' * 32, 'postcode': 'TW9 3PZ'}, {'userId': 'b' * 32, 'postcode': 'M22 5RX'}],
+                         'every key is the caller token, and a repeat is sent once (DynamoDB refuses a repeated key)')
+        table.delete_item.assert_not_called()
+
+    def test_a_bad_list_is_the_callers_400_and_deletes_nothing(self):
+        for postcodes in ([], ['A1'] * 26, 'TW9 3PZ', [3], [''], ['x' * 65], None):
+            with self.subTest(postcodes=postcodes):
+                result, ddb, _ = self._delete({'postcodes': postcodes})
+                self.assertEqual(result['statusCode'], 400, result['body'])
+                ddb.batch_write_item.assert_not_called()
+
+    def test_a_place_left_unprocessed_is_named_back(self):
+        left = {self.app.TABLE_NAME: [{'DeleteRequest': {'Key': {'userId': 'b' * 32, 'postcode': 'M22 5RX'}}}]}
+        result, _, _ = self._delete({'postcodes': ['TW9 3PZ', 'M22 5RX']}, unprocessed=left)
+        body = json.loads(result['body'])
+        self.assertEqual((body['deleted'], body['notDeleted']), (1, ['M22 5RX']))
+
+    def test_an_unreachable_table_is_a_503(self):
+        from unittest.mock import MagicMock, patch
+
+        from botocore.exceptions import ClientError
+        ddb = MagicMock()
+        ddb.batch_write_item.side_effect = ClientError({'Error': {'Code': 'ProvisionedThroughputExceededException', 'Message': ''}}, 'BatchWriteItem')
+        event = {'httpMethod': 'DELETE', 'body': json.dumps({'postcodes': ['TW9 3PZ']}), 'headers': {'X-Device-Token': 'b' * 32}}
+        with patch.object(self.app, 'dynamodb', ddb):
+            self.assertEqual(self.app.handler(event, None)['statusCode'], 503)
+
 
 # ---------- Signup, POST creates key, idempotent on email ----------
 

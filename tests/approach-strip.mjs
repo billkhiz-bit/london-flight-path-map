@@ -84,6 +84,18 @@ for (const [w, h, motion] of [[1366, 900, 'no-preference'], [390, 844, 'no-prefe
     `${tag}: a pill for every section after the strip, in page order (${linked.length}), each to a section on the page`,
     JSON.stringify({ linked, sections: layout.sections, pills: layout.pills }));
   ok(layout.still === (motion === 'reduce'), `${tag}: reduced motion ${motion === 'reduce' ? 'stills' : 'does not still'} the strip`);
+  // WCAG 2.2.2 ON ARRIVAL (audit M-15, 2026-11-23): motion that starts by itself must stop within 5 s, and the plane,
+  // in the air on arrival, bobbed for as long as the page was open (iterations Infinity). Read here, before anything
+  // moves it, because once it lands nothing bobs and the check would pass on any tree.
+  if (motion !== 'reduce') {
+    const moving = await page.evaluate(() => document.getAnimations()
+      .filter((a) => a.effect?.target?.closest?.('.approach'))
+      .map((a) => ({ name: a.animationName || 'unnamed', iterations: a.effect.getComputedTiming().iterations,
+        ms: a.effect.getComputedTiming().endTime })));
+    const endless = moving.filter((a) => a.iterations === Infinity || a.ms > 5000);
+    ok(moving.some((a) => a.name === 'bob') && endless.length === 0,
+      `${tag}: the plane bobs on arrival, and nothing in the strip moves past 5 s`, JSON.stringify(moving));
+  }
   // Counted on arrival, before the plane is moved: flown end to end, every tile rightly comes into view.
   const onArrival = tiles.size;
   ok(onArrival > 0 && onArrival < 22, `${tag}: on arrival, only the tiles near the plane are fetched (${onArrival} of 22)`, [...tiles].join(','));
@@ -399,10 +411,8 @@ for (const [w, h, motion] of [[1366, 900, 'no-preference'], [390, 844, 'no-prefe
   }
   ok(covered.length === 0, `${tag}: at every "Go to" place, no card covers the plane`, covered.join(', '));
 
-  if (motion !== 'reduce') {
-    const anim = await page.evaluate(() => document.getAnimations().length);
-    ok(anim >= 0, `${tag}: animations run (${anim})`);
-  } else {
+  // (An `animations run` check here read `anim >= 0`, which no tree could fail; the arrival check above replaced it.)
+  if (motion === 'reduce') {
     const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running'
       && a.effect?.target?.closest?.('.approach')).length);
     ok(running === 0, `${tag}: nothing in the strip animates`, `${running} running`);

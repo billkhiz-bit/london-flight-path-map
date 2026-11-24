@@ -129,6 +129,7 @@
       .news-sent-do { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-top: 8px; }
       .news-again { min-height: 40px; padding: 8px 14px; border: 1.5px solid var(--dark); border-radius: 12px; background: transparent; color: var(--dark); font: 600 14px var(--font-body); cursor: pointer; }
       .news-again[hidden] { display: none; }
+      .news-again[aria-disabled='true'] { cursor: progress; opacity: 0.7; } /* busy sending: aria-disabled keeps focus (M-11) */
       .news-other { min-height: 40px; padding: 0; border: 0; background: none; color: var(--dark); font: 500 14px var(--font-body); text-decoration: underline; cursor: pointer; }
       .news-result { margin: 8px 0 0; font: 500 14px/1.4 var(--font-body); color: var(--dark); }
       .news-result:empty { display: none; }
@@ -696,6 +697,17 @@
       .code-tabs button { min-height: 32px; padding: 6px 12px; border: 1px solid #5a5a56; border-radius: 8px; background: none; color: #d9d7d0; font: 500 13px var(--font-mono); cursor: pointer; }
       .code-tabs button:hover { border-color: #d9d7d0; }
       .code-tabs button[aria-selected='true'] { border-color: #f3f1ec; background: #f3f1ec; color: var(--dark); }
+      /* WINDOWS CONTRAST THEMES (audit I-5, 2026-11-23). Forced colours repaint fills and borders in the theme's few
+         colours: the map's noise ramp went blank, every selected tab (Check a postcode / Find areas, the walkthrough's
+         steps, curl / Python / JavaScript) looked like the rest, and the two filled buttons, border 0, read as plain text.
+         The ramp keeps its colours (a key IS its colour), a selected tab takes the theme's highlight as the system marks
+         a selection, and the buttons get an edge. Normal colours are untouched. tests/forced-colours.mjs. */
+      @media (forced-colors: active) {
+        .legend .ramp { forced-color-adjust: none; outline: 1px solid CanvasText; }
+        .tabs [role="tab"][aria-selected="true"], .walk-steps button[aria-selected='true'], .code-tabs button[aria-selected='true'] {
+          forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+        form.check button, .news-row button { border: 1px solid ButtonText; }
+      }
       section.dev [role='tabpanel'] + [role='tabpanel'] { margin-top: 10px; }
       section.dev .is-tabbed [role='tabpanel'] + [role='tabpanel'] { margin-top: 0; }
       section.dev pre { margin: 0; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #000; color: #f3f1ec; font: 13px/1.6 var(--font-mono); overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -1150,7 +1162,7 @@
           </ol>
           <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
           <div class="who-pro" id="who">
-            <p class="who-label">Working with homes and places</p>
+            <h3 class="who-label">Working with homes and places</h3>
             <ul class="who-list">
               <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
               <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>

@@ -873,6 +873,13 @@ check "panel says what it measured"  node tests/panel-caveat.mjs
 # Enter on the x switched city and re-ran the search. Loads the rows through
 # a stubbed favourites API, so it spends nothing and needs no device token.
 check "favourites: keyboard + not nested" node tests/favourites-keyboard.mjs
+# Delete all saved places (Bill's pick A, 2026-11-23): every state reached on purpose against a stubbed API, and a
+# browser that never saved makes no token and asks for no list (privacy s2e; every load used to make one).
+check "favourites: delete all, every state" node tests/favourites-delete-all.mjs
+# Audit 2026-11-23 batch 4: Windows contrast themes (legends keep their keys, a selection stands 3:1 apart, light and
+# dark), and the map's rings, dark-legend edges and footer landmark, each read in the DOM; axe sees none of them.
+check "forced colours: keys kept, selections marked" node tests/forced-colours.mjs
+check "map: focus rings, legend edges, footer landmark" node tests/map-focus-rings.mjs
 # The borough ranking must not claim an order its scores cannot support.
 # Methodology v5.0 took affordability national, which removed spread that
 # within-city min-max had MANUFACTURED: composite spread fell in twelve of
