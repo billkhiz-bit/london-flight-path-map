@@ -1,0 +1,27 @@
+{
+  "id": "2026-12",
+  "approved": false,
+  "subject": "Sky Score news: December 2026",
+  "heading": "What's new this month",
+  "intro": "Three changes to the data since last month.",
+  "items": [
+    {
+      "title": "Planes overhead now runs to September 2026",
+      "body": "The counts of planes passing over each postcode now cover January to September 2026, at nine airports.",
+      "link": "https://skyscore.co.uk/planes-overhead/",
+      "label": "See the planes over your area"
+    },
+    {
+      "title": "House prices updated to September 2026",
+      "body": "Every UK council area's prices and price trend now use the UK House Price Index for September.",
+      "link": "https://skyscore.co.uk/area/",
+      "label": "Browse council areas"
+    },
+    {
+      "title": "Measured air quality beside the model",
+      "body": "A postcode's answer now shows the nearest air-quality monitor within 5 km, measured, beside DEFRA's modelled figure for its square.",
+      "link": "https://skyscore.co.uk/map/",
+      "label": "Open the full map"
+    }
+  ]
+}

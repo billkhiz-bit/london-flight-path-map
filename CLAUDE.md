@@ -456,6 +456,11 @@ Or just describe what you need, I have full context of this project.
   A save or removal WAITS for a Delete all on its way (`favDeleting`), only what was SENT can leave the list, and every
   list change redraws the save buttons on screen (`syncFavButtons()`): a save mid-delete was stored under the token the
   delete then forgot, and a stale SAVED button re-saved the place under a new one (code review 2026-11-24).
+- **News by email's issues go out from `NewsFunction`, which BILL runs** (no route; the console's Test tab; OPERATIONS s3.11;
+  Bill's picks 2026-11-23: layout A, the fixed subject "Sky Score news: <Month YYYY>", links tagged for totals only). An issue is
+  `backend/lambdas/news/issues/<YYYY-MM>.json`, read by the wording gate like a page; the list gets it only once `"approved":
+  true`, with `"confirm": "send YYYY-MM"`, in that month, once per member (`sent#` rows), the do-not-email list read before each
+  send, never without the member's own unsubscribe link (`backend/tests/test_news_sender.py`). Claude writes issues and never sends one.
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,
@@ -654,7 +659,7 @@ Or just describe what you need, I have full context of this project.
   front page `home/index.html` + `js/home-engine.mjs`, B2B pages `api/`, `pricing.html`, `privacy.html`,
   `terms.html`, `changes.html`, `score-demo/` (Swagger, `openapi.yaml`), 102 generated `area/` pages,
   `bay-area/`, `open-data/`.
-- **Backend**: `backend/template.yaml` (SAM), 8 Lambdas in `backend/lambdas/<name>/app.py`: `score`
+- **Backend**: `backend/template.yaml` (SAM), 9 Lambdas in `backend/lambdas/<name>/app.py` (`news`, the monthly sender, has no route: OPERATIONS s3.11): `score`
   (`/v1/score` + batch, key-gated; `/v1/regions`, `/v1/changes`, `/v1/environment`, `/badge` open),
   `chat` (retrieval-only; `verify_answer()` discards unsupported numbers: never "simplify" it), `signup`,
   `favourites`, `epc`, `sold_prices`, `transport`, `nhs`. Handlers are `lambda_handler(event, context)` with

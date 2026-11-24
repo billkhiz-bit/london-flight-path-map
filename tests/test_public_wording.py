@@ -285,8 +285,15 @@ def shown(path):
     return _SHOWN[path]
 
 
+def news_issues():
+    """News by email's issues (backend/lambdas/news/issues, 2026-11-23): never uploaded, but every word is emailed to
+    the list, so each faces the same rules as a page (measured/modelled, no prices, no "AI", no figure typed in)."""
+    return sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'backend' / 'lambdas' / 'news' / 'issues').glob('*.json'))
+
+
 def everything():
-    return published_pages() + published_pdfs() + published_modules() + published_texts() + published_json()
+    return (published_pages() + published_pdfs() + published_modules() + published_texts() + published_json()
+            + news_issues())
 
 
 def allowed_for(path, allowed):
