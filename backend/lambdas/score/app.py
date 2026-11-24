@@ -7775,9 +7775,9 @@ CITY_PROVENANCE = {
             'Borough metadata: curated from public New York City sources',
             'Crime: NYPD CompStat-derived offence rates per 1,000, against New York City population denominators',
             'Prices: curated New York borough median sale prices, in USD',
-            'Aviation noise context: ESTIMATED from the FAA routes of JFK, LaGuardia, Newark and Teterboro, '
+            'Aviation noise context: Estimated from the FAA routes of JFK, LaGuardia, Newark and Teterboro, '
             'fitted to the Port Authority of New York and New Jersey noise-monitor readings for January-July '
-            '2026; NOT a measurement at this address',
+            '2026; not a measurement at any one address',
             'Borough aircraft band: the same estimate averaged over residents by 2020 ZIP Code Tabulation '
             'Area, weighted by US Census Bureau ACS 2020-2024 population (public domain)',
             'Licence note: Open Government Licence v3.0 covers UK Crown copyright and does NOT apply to any data in this response',
@@ -7803,7 +7803,7 @@ CITY_PROVENANCE = {
     'westmidlands': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Birmingham Airport runway geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Birmingham Airport runway geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7816,7 +7816,7 @@ CITY_PROVENANCE = {
     'westyorkshire': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Leeds Bradford Airport (LBA) runway 14/32 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Leeds Bradford Airport (LBA) runway 14/32 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7829,7 +7829,7 @@ CITY_PROVENANCE = {
     'leicester': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7850,7 +7850,7 @@ CITY_PROVENANCE = {
     'teesside': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Teesside International Airport (MME) runway 05/23 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the traffic threshold at which DEFRA maps airports; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Teesside International Airport (MME) runway 05/23 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the traffic threshold at which DEFRA maps airports; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0. Cleveland for four authorities and Durham for Darlington, this city region spanning two forces',
             _live_sources_line,
         ],
@@ -7870,7 +7870,7 @@ CITY_PROVENANCE = {
     'southyorkshire': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: NO operating commercial airport in the city region; Doncaster Sheffield closed to commercial flights in 2022',
+            'Aviation noise context: No operating commercial airport in the city region; Doncaster Sheffield closed to commercial flights in 2022',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7883,7 +7883,7 @@ CITY_PROVENANCE = {
     'merseyside': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Liverpool John Lennon Airport (LPL) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Liverpool John Lennon Airport (LPL) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7896,7 +7896,7 @@ CITY_PROVENANCE = {
     'tyneandwear': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Newcastle Airport (NCL) runway 07/25 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Newcastle Airport (NCL) runway 07/25 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7909,7 +7909,7 @@ CITY_PROVENANCE = {
     'bristol': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Bristol Airport (BRS) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Bristol Airport (BRS) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7922,7 +7922,7 @@ CITY_PROVENANCE = {
     'cardiff': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Cardiff Airport (CWL) runway 12/30 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the traffic threshold at which DEFRA maps airports; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Cardiff Airport (CWL) runway 12/30 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the traffic threshold at which DEFRA maps airports; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7935,7 +7935,7 @@ CITY_PROVENANCE = {
     'norwich': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Norwich International Airport (NWI) runway 09/27 final approaches as published in the UK AIP, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the traffic threshold at which DEFRA maps airports; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Norwich International Airport (NWI) runway 09/27 final approaches as published in the UK AIP, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the traffic threshold at which DEFRA maps airports; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0. Norfolk force, one Community Safety Partnership row per authority',
             _live_sources_line,
         ],
@@ -7956,7 +7956,7 @@ CITY_PROVENANCE = {
     'nottingham': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from East Midlands Airport (EMA) runway 09/27 geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, CITY OF NOTTINGHAM ONLY, Open Government Licence v3.0',
             _live_sources_line,
         ],
@@ -7985,7 +7985,7 @@ CITY_PROVENANCE = {
     'manchester': {
         'sources': [
             _hpi_source_line,
-            'Aviation noise context: ESTIMATED from Manchester Airport runway geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; NOT a DEFRA sample at this address',
+            'Aviation noise context: Estimated from Manchester Airport runway geometry, with the distance ladder scaled by its modelled DEFRA Round 4 55 dB Lden footprint; not sampled from DEFRA\'s map at any one address',
             'Schools: Department for Education, Key Stage 4 Progress 8, 2023/24, Open Government Licence v3.0',
             f'Crime: ONS Crime in England and Wales, Police Force Area data tables, {CRIME_EDITION_LABEL}, Open Government Licence v3.0',
             'Transport: NaPTAN (DfT National Public Transport Access Nodes), Open Government Licence v3.0', 'Healthcare: NHS Organisation Data Service, Open Government Licence v3.0',
@@ -8045,9 +8045,9 @@ CITY_PROVENANCE = {
             _live_sources_line,
             'Residents: US Census Bureau, 2020 Census block population (P.L. 94-171), public domain; the frame '
             "every Bay Area share and each city's aircraft band are worked out over",
-            'Aviation noise context: ESTIMATED from the FAA routes of San Francisco, Oakland and San Jose '
+            'Aviation noise context: Estimated from the FAA routes of San Francisco, Oakland and San Jose '
             "airports, fitted to SFO's 29 noise monitors (DataSF, PDDL 1.0) and San Jose airport's 13 (its "
-            'quarterly noise report to Caltrans), July 2025-June 2026; NOT a measurement at this address',
+            'quarterly noise report to Caltrans), July 2025-June 2026; not a measurement at any one address',
             'Licence note: Open Government Licence v3.0 covers UK Crown copyright and does NOT apply to any data in this response',
         ],
         'breakdown': {
@@ -8390,7 +8390,8 @@ del _prov, _city_key
 
 
 # The eight regional aviation lines in CITY_PROVENANCE describe the GEOMETRY
-# tier and end "NOT a DEFRA sample at this address". That was true of every
+# tier and end "not sampled from DEFRA's map at any one address" (until 2026-11-23, English audit #17: "NOT a DEFRA
+# sample at this address"). That was true of every
 # postcode until 2026-08-12, when the per-airport DEFRA rasters were loaded
 # for seven airports and the raster tier began answering ~7,300 postcodes in
 # those cities - and the line kept saying it. build_sources() had no way to
@@ -8399,7 +8400,7 @@ del _prov, _city_key
 # credited nowhere (2026-09-13 audit, C2; verified live on M22 0AD:
 # quietResolution "raster", measuredAtLocation true, and this tail in the
 # same body). The prefix is the marker build_sources substitutes on.
-_AVIATION_ESTIMATE_PREFIX = 'Aviation noise context: ESTIMATED from '
+_AVIATION_ESTIMATE_PREFIX = 'Aviation noise context: Estimated from '
 _AVIATION_RASTER_LINE = (
     'Aviation noise context: DEFRA Round 4 strategic noise mapping, Lden sampled at '
     'this postcode (Open Government Licence v3.0); the airport-geometry estimate '
@@ -10967,13 +10968,13 @@ PROVENANCE_LINE_IDS = (
     (r'Transport: NaPTAN', ('dft-naptan',)),
     (r'Healthcare: NHS Organisation Data Service', ('nhs-ods',)),
     (r'Postcode resolution: postcodes\.io', ('postcodes-io',)),
-    (r'Aviation noise context: ESTIMATED from .*published in the UK AIP', ('uk-aip', 'defra-noise-aircraft')),
-    (r'Aviation noise context: ESTIMATED from .*runway \S+ geometry', ('ourairports', 'defra-noise-aircraft')),
+    (r'Aviation noise context: Estimated from .*published in the UK AIP', ('uk-aip', 'defra-noise-aircraft')),
+    (r'Aviation noise context: Estimated from .*runway \S+ geometry', ('ourairports', 'defra-noise-aircraft')),
     (r'Flight routes: FAA Coded Instrument Flight Procedures', ('faa-cifp',)),
     (r'Runway use: counted by Sky Score from aircraft positions', ('adsb-runway-use',)),
     (r'Aviation noise context: DEFRA', ('defra-noise-aircraft',)),
-    (r'Aviation noise context: ESTIMATED from the FAA routes of JFK', ('nyc-faa-estimate',)),
-    (r'Aviation noise context: ESTIMATED from the FAA routes of San Francisco', ('bayarea-faa-estimate',)),
+    (r'Aviation noise context: Estimated from the FAA routes of JFK', ('nyc-faa-estimate',)),
+    (r'Aviation noise context: Estimated from the FAA routes of San Francisco', ('bayarea-faa-estimate',)),
     (r'Borough aircraft band: .*Census', ('census-acs',)),
     (r'Flight routes: UK Aeronautical Information Publication', ('uk-aip',)),
     (r'Air quality: DEFRA background', ('defra-pcm',)),

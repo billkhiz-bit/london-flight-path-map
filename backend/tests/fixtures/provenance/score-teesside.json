@@ -74,7 +74,7 @@
  "generatedAt": "2026-10-23T20:20:43.621584+00:00",
  "sources": [
   "Prices: HM Land Registry UK House Price Index, August 2026 vintage, Open Government Licence v3.0",
-  "Aviation noise context: ESTIMATED from Teesside International Airport (MME) runway 05/23 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the threshold DEFRA maps at all; NOT a DEFRA sample at this address",
+  "Aviation noise context: Estimated from Teesside International Airport (MME) runway 05/23 geometry, with the distance ladder floored at the smallest published DEFRA Round 4 footprint because this airport is below the threshold DEFRA maps at all; not sampled from DEFRA's map at any one address",
   "Crime: ONS Crime in England and Wales, Police Force Area data tables, year ending March 2026, Open Government Licence v3.0. Cleveland for four authorities and Durham for Darlington, this city region spanning two forces",
   "Liveability (4 of 4 inputs): DfE Key Stage 4 Progress 8, 2023/24 Revised; ONS Crime in England and Wales, Table C4; NaPTAN rail, metro and tram access within 800 m; NHS Organisation Data Service GP practices within 500 m. Any absent input has its weight redistributed, not defaulted",
   "Air quality: DEFRA background pollution maps (PCM), Open Government Licence v3.0",
