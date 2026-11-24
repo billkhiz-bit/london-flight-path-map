@@ -199,7 +199,9 @@
       .approach .plane .body { filter: drop-shadow(0 0 1px rgba(10, 20, 26, .6)) drop-shadow(0 3px 4px rgba(10, 20, 26, .3));
         transform-origin: 50% 70%; }
       .approach .plane img { width: 100%; height: auto; display: block; }
-      .approach.flying .plane .body { animation: bob 2.6s ease-in-out infinite; }
+      /* ONE bob as it takes to the air, never a loop (audit M-15, 2026-11-23: WCAG 2.2.2, motion that starts by itself
+         stops within 5 s; it bobbed for as long as the page was open). Also owed to strip_page.py in the Blender repo. */
+      .approach.flying .plane .body { animation: bob 2.6s ease-in-out 1; }
       .approach .plane.bump .body { animation: squash .5s var(--spring); }
       @keyframes bob { 0%, 100% { transform: translateY(-2px) rotate(-.6deg); } 50% { transform: translateY(2px) rotate(.6deg); } }
       @keyframes squash { 0% { transform: scale(1, 1); } 30% { transform: scale(1.07, .84); } 65% { transform: scale(.97, 1.05); }

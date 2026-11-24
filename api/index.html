@@ -218,6 +218,14 @@
   .code-tabs button { min-height: 32px; padding: 6px 12px; border: 1px solid #5a5a56; border-radius: 8px; background: none; color: #d9d7d0; font: 500 13px var(--font-mono); cursor: pointer; }
   .code-tabs button:hover { border-color: #d9d7d0; }
   .code-tabs button[aria-selected='true'] { border-color: #f3f1ec; background: #f3f1ec; color: var(--dark); }
+  /* WINDOWS CONTRAST THEMES (audit I-5 fixed the front page; code review 2026-11-24 found this page had no rule): the
+     selected code tab and the suggestion picked with the arrow keys were drawn by fill alone, so in a contrast theme they
+     looked like the rest. They take the theme's highlight, as the system marks a selection, AFTER the rules they
+     override. tests/forced-colours.mjs. */
+  @media (forced-colors: active) {
+    .code-tabs button[aria-selected='true'], .pc-opt[aria-selected='true'] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+    .pc-opt[aria-selected='true'] small, .pc-opt[aria-selected='true'] mark { color: HighlightText; }
+  }
   section.dev [role='tabpanel'] + [role='tabpanel'] { margin-top: 10px; }
   section.dev .is-tabbed [role='tabpanel'] + [role='tabpanel'] { margin-top: 0; }
   section.dev pre { margin: 0; padding: 12px; border: 1px solid #333; border-radius: 10px; background: #000; color: #f3f1ec; font: 13px/1.6 var(--font-mono); overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -427,3 +427,17 @@ rebuilt by hand as tables with inline styles (Stitch's own code is never used), 
 pixels first; the plain text is unchanged beside it. After pressing, the strip shows the address masked and "Send it
 again" up to `SEND_CAP_PER_DAY`, counted by the page because a capped send answers the same 201. Proven red: five
 front-end and four backend mutants.
+
+**A PROMISE KEPT WITH NO WAY BACK (code review of the audit fixes, 2026-11-24; Bill's pick A).** Audit I-1 made the
+do-not-email list block the confirmation for EVERY kind of sign-up, as privacy s2a promises ("so we never write to it
+again"). The review saw what that leaves: someone who unsubscribed and changes their mind, or later wants an API key,
+presses Sign me up, hears "check your email" (the form must answer every address alike, I17 and M-1) and waits for an
+email that never comes, with nothing anywhere saying why or what to do. Three ways were weighed: a way back by hand
+through support (A), treating a new request as fresh consent (B: anyone could then make us write once to an address
+that asked us to stop, which is what I-1 closed), or nothing (C). A: no code; privacy s2a's `#news-way-back` sentence
+says a listed address gets no confirmation for any sign-up and how to come off the list, /changes dates it, and
+OPERATIONS s3.10 holds the steps: check SPF or DKIM passes for the address's own domain (a From line can be typed),
+look the `suppress#<address in lower case>` item up, delete it only if it is there, reply. Lifting it subscribes no one.
+`tests/test_news_flags.py` holds the sentence, the notice, and the runbook's table and key against the Lambda's own
+(five mutants red: each of the three holders at HEAD, the wrong table, the delete without its condition). Lesson: when
+a fix makes something refuse silently, as a privacy rule must, ask where a person who is refused can find out why.

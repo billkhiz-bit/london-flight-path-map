@@ -47,7 +47,9 @@ PRO = (
 def rendered(indent: str) -> str:
     """The block, one line per element, every line at `indent` (the BEGIN marker's own indentation)."""
     e = html.escape
-    lines = ['<div class="who-pro" id="who">', f'  <p class="who-label">{e(PRO_LABEL)}</p>', '  <ul class="who-list">']
+    # The label is a HEADING (audit M-12, 2026-11-23): as a <p> after "Data for your business", the five audiences sat
+    # under that card in the outline, and About's "Who it is for" link landed on a list nothing named.
+    lines = ['<div class="who-pro" id="who">', f'  <h3 class="who-label">{e(PRO_LABEL)}</h3>', '  <ul class="who-list">']
     for who, gives, cta, href in PRO:
         lines.append(f'    <li><b>{e(who)}</b><span>{e(gives)}</span><a href="{href}">{e(cta)} &rarr;</a></li>')
     lines += ['  </ul>', '</div>']

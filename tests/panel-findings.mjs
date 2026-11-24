@@ -459,6 +459,15 @@ check('every tile escapes what it is given', () => {
     assert.equal(T.councilAircraftFinding({ band: 'Severe', council: 'Hounslow' }).tile.level, 'Severe');
     assert.deepEqual(T.councilAircraftFinding({ band: 'severe', council: 'Hounslow' }).tile.visual, [], 'a band is not a figure: no picture');
   });
+  check("the council's aircraft band names DEFRA only where DEFRA maps the city's airport (audit I-3)", () => {
+    const say = (basis) => T.councilAircraftFinding({ band: 'low', council: 'Middlesbrough', basis }).tile.say[0];
+    assert.match(say('mapped'), /scaled by the size of each airport's DEFRA noise map\.$/);
+    assert.match(say('unmapped'), /DEFRA's noise maps do not cover this airport\.$/);
+    assert.match(say('none'), /as a whole\. There is no commercial airport in this city region\.$/);
+    for (const basis of ['unmapped', 'none', 'us', undefined, 'nonsense']) {
+      assert.doesNotMatch(say(basis), /DEFRA noise map/, `${basis}: no DEFRA map where there is none`);
+    }
+  });
   check("the card's headline: two worth a look, then two good in a buyer's order; none when nothing stands out", () => {
     const hounslow = [
       { key: 'aircraft', stand: 'watch', word: 'Severe' }, { key: 'flood', stand: 'good', word: 'Low' },

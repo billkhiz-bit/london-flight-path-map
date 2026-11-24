@@ -638,6 +638,26 @@ console.log("A borough's answer card");
     .catch(() => null);
   check('Barking (london): the tab and the panel heading name Barking and Dagenham, as the card does',
     !!named && named.tab === 'Barking and Dagenham - Sky Score' && named.heading === 'BARKING AND DAGENHAM', JSON.stringify(named));
+  // THE AIRCRAFT TILE NAMES DEFRA ONLY WHERE THE AREA PAGE DOES (audit I-3, 2026-11-23): the card said "each airport's
+  // DEFRA noise map" in every city. The expected sentence is read off the built page's caption (aircraft_note, from the
+  // Lambda's _defra_contour_status), one city of each kind: mapped, unmapped, no airport, and New York (no caption).
+  for (const [city, borough] of [['london', 'Hounslow'], ['teesside', 'Middlesbrough'], ['southyorkshire', 'Sheffield'], ['nyc', 'Brooklyn']]) {
+    const slug = borough.toLowerCase();
+    const page = (await readFile(join(ROOT, 'area', city, slug, 'index.html'), 'utf-8')).replace(/&#x27;/g, "'");
+    const want = page.includes('scaled by the size of its DEFRA noise map') ? "DEFRA noise map."
+      : page.includes("DEFRA's noise maps do not cover this airport") ? "DEFRA's noise maps do not cover this airport."
+        : page.includes('No commercial airport in this city region') ? 'There is no commercial airport in this city region.'
+          : 'estimated from its distance to the airports and their routes.';
+    await b.goto(`${url}?city=${city}&borough=${encodeURIComponent(borough)}`, { waitUntil: 'domcontentloaded' });
+    const said = await b
+      .waitForFunction(() => document.querySelector('#sidebar-content .find-group [data-find="aircraft"] .t-say')?.textContent || false,
+        null, { timeout: 20000 })
+      .then((h) => h.jsonValue())
+      .catch(() => null);
+    const defraOk = want === 'DEFRA noise map.' || !/DEFRA noise map/.test(said || '');
+    check(`${borough} (${city}): the aircraft tile says what the area page's caption says ("${want}")`,
+      !!said && said.endsWith(want) && defraOk, `said: "${said}"`);
+  }
   await b.close();
   console.log('');
 }

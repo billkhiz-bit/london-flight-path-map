@@ -871,6 +871,23 @@
         background: transparent;
         border-color: currentColor;
       }
+      /* WINDOWS CONTRAST THEMES (audit I-5, 2026-11-23). Forced colours repaint every background and border in the
+         theme's few colours, so the legend's keys (the DEFRA scale, the flight-path lines, the heliport marks, the
+         planes steps) read as empty boxes beside a map that keeps its own colours. A key IS its colour, so it keeps it,
+         boxed in the theme's text colour so it shows on any theme's background. The active city takes the theme's own
+         highlight, the way the system marks a selection. Normal colours are untouched. tests/forced-colours.mjs. */
+      @media (forced-colors: active) {
+        .legend-line,
+        .legend-dot,
+        .legend-swatch,
+        .noise-scale-bar {
+          forced-color-adjust: none;
+        }
+        .legend-swatch,
+        .noise-scale-bar {
+          border-color: CanvasText;
+        }
+      }
       #legend-planes-group a {
         color: inherit;
       }
@@ -3373,6 +3390,30 @@
         background: var(--dark);
         color: var(--white);
       }
+      /* THE SITE'S RING, NOT THE BROWSER'S (audit M-13, 2026-11-23): these had no ring of their own, and Chromium's phone
+         ring is amber #E59700, 1.87:1 on the map's grey, under WCAG 1.4.11's 3:1. tests/map-focus-rings.mjs. */
+      .city-btn:focus-visible,
+      .site-footer a:focus-visible,
+      .sheet-footer a:focus-visible,
+      .sheet-footer summary:focus-visible,
+      .fav-btn:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      /* The active city, and the chosen profile in Rankings and on the answer card (code review 2026-11-24: drawn by fill
+         alone, both looked like their neighbours), in a Windows contrast theme (audit I-5): the theme's own highlight, as
+         the system marks a selection. AFTER .city-btn.active (and .persona-btn.active, .ac-prof.on) on purpose: placed before it, the dark fill won the tie, and with
+         forced-color-adjust off that drew a black box on a black theme (tests/forced-colours.mjs saw it). */
+      @media (forced-colors: active) {
+        .city-btn.active,
+        .persona-btn.active,
+        .ac-prof.on {
+          forced-color-adjust: none;
+          background: Highlight;
+          color: HighlightText;
+          border-color: Highlight;
+        }
+      }
 
       /* Favourite button */
       .fav-btn {
@@ -3468,6 +3509,80 @@
       }
       .fav-remove:hover {
         color: var(--orange-text); /* 2.38:1 as --orange on the button ground */
+      }
+      /* Delete all saved places (Bill's pick A, 2026-11-23): a quiet link under the list, then the question in place,
+         one filled button and one outlined (the map's one button style), 12 px at least (audit M-18's floor). */
+      .fav-delete-all:empty {
+        display: none;
+      }
+      .fav-delete-all {
+        margin-top: 10px;
+      }
+      .fav-delete-link {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--dark);
+        background: none;
+        border: 0;
+        padding: 8px 0;
+        min-height: 32px;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        cursor: pointer;
+      }
+      .fav-delete-all .info-note {
+        margin: 4px 0 2px;
+      }
+      .fav-confirm {
+        border-top: 1px solid var(--light);
+        padding-top: 12px;
+      }
+      .fav-confirm p {
+        font-size: 13px;
+        line-height: 1.45;
+        margin: 0 0 10px;
+        color: var(--dark);
+      }
+      .fav-confirm-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .fav-btn-dark,
+      .fav-btn-line {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 8px 12px;
+        min-height: 36px;
+        border: 1px solid var(--dark);
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .fav-btn-dark {
+        background: var(--dark);
+        color: var(--white);
+      }
+      .fav-btn-line {
+        background: transparent;
+        color: var(--dark);
+      }
+      .fav-btn-dark:disabled,
+      .fav-btn-line:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+      .fav-delete-link:focus-visible,
+      .fav-btn-dark:focus-visible,
+      .fav-btn-line:focus-visible,
+      .fav-confirm p:focus-visible,
+      .fav-delete-all .info-note:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
       }
 
       /* Audit F-A11Y-4: bottom-sheet sidebar on phones. Replaces the
@@ -3838,6 +3953,13 @@
         .map-legend .legend-toggle {
           color: var(--white);
         }
+        /* A LIGHT EDGE ON THE DARK LEGEND (audit M-14, 2026-11-23): the planes steps' darkest swatches read 1.38:1
+           ("200 or more", #662809) and 2.36:1 against the panel's #252524, and their rgba(0,0,0,0.2) edge vanished on
+           it. This edge composites to about #a0a0a0, 6.6:1, so every swatch's box shows whatever its fill. */
+        .map-legend .legend-swatch,
+        .map-legend .noise-scale-bar {
+          border-color: rgba(255, 255, 255, 0.6);
+        }
         /* INHERIT WHITE FROM THE PANEL, so a new element type does not have to
            be remembered (2026-08-24).
            The list below whitens a hand-written set of descendants, and the
@@ -3907,6 +4029,16 @@
         .map-controls {
           top: 8px;
           right: 8px;
+        }
+      }
+      /* The legend keys' theme edge on a small phone too (code review 2026-11-24): the dark legend's light edge above
+         (M-14, 0,2,0) beat the forced-colours `.legend-swatch` edge (0,1,0, placed earlier), so on a light contrast
+         theme the keys sat near-white on the theme's white. A forced rule goes AFTER the rule it overrides.
+         tests/forced-colours.mjs reads it at 400 px wide. */
+      @media (forced-colors: active) {
+        .map-legend .legend-swatch,
+        .map-legend .noise-scale-bar {
+          border-color: CanvasText;
         }
       }
 
@@ -5389,7 +5521,9 @@
         >
           <title>Sky Score borough map</title>
         </svg>
-        <footer class="site-footer" aria-label="Sky Score links">
+        <!-- A <nav>, not a <footer> (audit M-16, 2026-11-23): a footer inside <main> or <aside> is no landmark, and
+             naming one is not allowed, so its "Sky Score links" was dropped. Classes and contents are unchanged. -->
+        <nav class="site-footer" aria-label="Sky Score links">
           <!-- The way back (audit 2026-10-06, I1): every "Full map" link and the installed app land
                here, and the footer reached neither the front page nor reports nor open data. -->
           <a href="/">Front page</a>
@@ -5449,7 +5583,7 @@
           <a href="/terms">Terms</a>
           <span class="sep">·</span>
           <span title="UK figures: mostly the Open Government Licence v3.0; UK flight routes: the UK Aeronautical Information Publication (NATS); US routes and noise: the FAA and the US DOT">Sources: OGL v3.0, UK AIP (NATS), FAA</span>
-        </footer>
+        </nav>
       </main>
 
       <aside class="sidebar" id="sidebar">
@@ -5621,6 +5755,8 @@
             <div id="favourites-list" tabindex="-1">
               <p class="info-note">No saved locations yet. Search an area and click the bookmark icon to save it.</p>
             </div>
+            <!-- Delete all saved places (Bill's pick A, 2026-11-23): drawn by renderDeleteAll(), empty until a list loads. -->
+            <div id="favourites-delete-all" class="fav-delete-all"></div>
           </div>
         </div>
         <div class="disclaimer">
@@ -5642,7 +5778,9 @@
              the map, through the Luton and Stansted labels. The two legal links stay
              one tap away (tests/mobile-legal-links.mjs); the other seven open from
              "More". The front page carries the full set. -->
-        <footer class="sheet-footer" aria-label="Sky Score links">
+        <!-- Named apart from the desktop's "Sky Score links" (html-validate's unique-landmark): only one shows at a time,
+             but two landmarks of one name cannot be told apart. This one holds Privacy, Terms and More. -->
+        <nav class="sheet-footer" aria-label="Privacy, terms and more">
           <a href="/privacy">Privacy</a>
           <span class="sep">·</span>
           <a href="/terms">Terms</a>
@@ -5704,7 +5842,7 @@
           <span class="sep">·</span>
           <a href="/bay-area/" data-event="bayarea-footer-click" title="Flight paths over 50 San Francisco Bay Area cities">Bay Area</a>
           </details>
-        </footer>
+        </nav>
       </aside>
 
       <!-- Mobile bottom navigation (Option A). Visible only ≤900px; the
@@ -11657,6 +11795,16 @@
         return cityOf(cityKey).country === 'United Kingdom';
       }
 
+      // Which AIRCRAFT_BASIS sentence a council's aircraft band takes (audit I-3, 2026-11-23): the Lambda's
+      // _defra_contour_status, read the same way, from the city's airports against AIRPORT_NOISE_SCALE (its keys are
+      // exactly the airports DEFRA mapped). Outside the UK DEFRA has no remit.
+      function aircraftBasis(cityKey) {
+        if (!isUkCity(cityKey)) return 'us';
+        const codes = (cityOf(cityKey).airports() || []).map((ap) => ap.code);
+        if (!codes.length) return 'none';
+        return codes.some((c) => c in AIRPORT_NOISE_SCALE) ? 'mapped' : 'unmapped';
+      }
+
       function nearestStations(lat, lon, limit) {
         if (typeof lat !== 'number' || typeof lon !== 'number') return [];
         const list = cityOf(currentCity).stations() || [];
@@ -13827,7 +13975,7 @@
           const council = fullName; // the reader's name for it (data.name stays the lookup key)
           const schoolText = extra ? schoolBadge(extra).text : null;
           const findings = [
-            ['aircraft', m.councilAircraftFinding({ band: data.impact, council, area, note: data.note || null, source: uk ? 'Sky Score estimate from published flight routes' : null })],
+            ['aircraft', m.councilAircraftFinding({ band: data.impact, council, area, note: data.note || null, source: uk ? 'Sky Score estimate from published flight routes' : null, basis: aircraftBasis(currentCity) })],
             ['road', m.roadFinding({ council, band: extra && extra.roadNoise, abovePct: extra && extra.roadNoiseAboveWhoPct, area, spot: uk ? 'postcode' : 'ZIP code', source: uk ? 'DEFRA noise map (modelled)' : null, whole: true })],
             ['air', m.ratingFinding('air', 'Air quality', extra && extra.airQuality, { council, area, source: uk ? 'DEFRA air quality model' : null })],
             ['flood', m.ratingFinding('flood', 'Flood risk', extra && extra.flood, {
@@ -15161,7 +15309,22 @@
       // absence published as a measurement, in the panel where it costs the
       // most trust. Fifth instance of that shape in this file's history.
       let favouritesLoadState = 'unloaded';
+      // Declared here, before anything renders the list: renderFavouritesList() reads it (Delete all, below it).
+      let favDeleteState = 'idle'; // idle | confirm | busy | failed | done
+      let favDeleteNote = '';
+      let favDeleting = null; // the Delete all on its way, if any: saves and removals wait for it
       async function loadFavourites() {
+        // NO TOKEN, NO LIST, NO REQUEST (2026-11-23, found building Delete all). This ran on every page load through
+        // _favHeaders() -> getDeviceToken(), which MADE a token for every visitor and sent it, though privacy s2e says
+        // "It is created only when you save something. Browsing and scoring never generate one." A browser that never
+        // saved, or whose list was deleted, holds no list: it is said as an empty list, with nothing sent.
+        const held = readFlag('flightmap_device_token');
+        if (!held || !_UUID_RE.test(held)) {
+          userFavourites = [];
+          favouritesLoadState = 'loaded';
+          renderFavouritesList();
+          return;
+        }
         try {
           const resp = await fetch(`${API_BASE}/favourites`, { headers: _favHeaders() });
           if (!resp.ok) {
@@ -15173,6 +15336,7 @@
           const data = await resp.json();
           userFavourites = data.favourites || [];
           favouritesLoadState = 'loaded';
+          if (favDeleteState === 'failed') favDeleteState = 'idle'; // a fresh list: the old failure note says nothing of it
           renderFavouritesList();
         } catch (e) {
           console.warn('Favourites load failed:', e);
@@ -15185,6 +15349,10 @@
       // result to keep the button + local state truthful - never assume success
       // (audit I-0521-1: the UI used to show "SAVED" even on a 4xx/5xx).
       async function saveFavourite(postcode, borough, noiseLevel, buyerScore) {
+        // A save WAITS for a Delete all on its way (code review 2026-11-24): sent meanwhile, it landed under the token the
+        // delete then forgot, stored with nothing pointing at it. After the wait it goes under whatever token is current,
+        // a new one if the delete forgot the old.
+        if (favDeleting) await favDeleting.catch(() => {});
         try {
           const resp = await fetch(`${API_BASE}/favourites`, {
             method: 'POST',
@@ -15195,6 +15363,9 @@
             console.warn('Save favourite failed: HTTP', resp.status);
             return false;
           }
+          // A new save starts a new list: its empty state is no longer "Deleted", nor a note about an old failure. Never
+          // while the question is asked: it is redrawn with the new count.
+          if (favDeleteState === 'done' || favDeleteState === 'failed') favDeleteState = 'idle';
           userFavourites.push({ postcode, borough, noiseLevel, buyerScore: String(buyerScore), city: currentCity });
           renderFavouritesList();
           return true;
@@ -15205,6 +15376,12 @@
       }
 
       async function removeFavourite(postcode) {
+        if (favDeleting) await favDeleting.catch(() => {});
+        // Gone already (a Delete all took it while this waited): nothing to ask, and no token made to ask it with.
+        if (!isFavourite(postcode)) {
+          renderFavouritesList();
+          return true;
+        }
         try {
           const resp = await fetch(`${API_BASE}/favourites`, {
             method: 'DELETE',
@@ -15216,6 +15393,8 @@
             return false;
           }
           userFavourites = userFavourites.filter((f) => f.postcode !== postcode);
+          // A Delete all's failure note is stale once anything has gone since (code review 2026-11-24).
+          if (favDeleteState === 'failed') favDeleteState = 'idle';
           renderFavouritesList();
           return true;
         } catch (e) {
@@ -15228,7 +15407,22 @@
         return userFavourites.some((f) => f.postcode === postcode);
       }
 
+      // A SAVE BUTTON ON SCREEN SAYS WHAT THE LIST SAYS (code review 2026-11-24): after Delete all, or a removal from the
+      // Saved list, an open card still read SAVED, and pressing it SAVED the place again, under a new token: the button
+      // did the opposite of its word. Run by every list change (renderFavouritesList); a button already right is left
+      // alone, so a press's own flip and its FAILED word are untouched. The key is the one toggleFavourite() saves under.
+      const FAV_SVG = '<svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>';
+      function syncFavButtons() {
+        document.querySelectorAll('.fav-btn[data-fav-postcode], .fav-btn[data-fav-name]').forEach((btn) => {
+          const saved = isFavourite(btn.dataset.favPostcode || btn.dataset.favName);
+          if (btn.classList.contains('saved') === saved) return;
+          btn.classList.toggle('saved', saved);
+          btn.innerHTML = FAV_SVG + (saved ? 'SAVED' : 'SAVE');
+        });
+      }
+
       function renderFavouritesList() {
+        syncFavButtons();
         const el = document.getElementById('favourites-list');
         if (!el) return;
         if (userFavourites.length === 0) {
@@ -15238,7 +15432,10 @@
           el.innerHTML =
             favouritesLoadState === 'failed'
               ? '<p class="info-note">Your saved locations could not be loaded just now, so this list may be incomplete. Nothing has been deleted - reload to try again.</p>'
-              : '<p class="info-note">No saved locations yet. Search an area and click the bookmark icon to save it.</p>';
+              : favDeleteState === 'done'
+                ? '<p class="info-note">Deleted. Nothing is saved for this browser on our server any more.</p>'
+                : '<p class="info-note">No saved locations yet. Search an area and click the bookmark icon to save it.</p>';
+          renderDeleteAll();
           return;
         }
         // Use textContent / dataset, not template-string interpolation, so a
@@ -15343,6 +15540,119 @@
             const next = remaining[Math.min(index, remaining.length - 1)];
             (next || el).focus();
           });
+        });
+        renderDeleteAll();
+      }
+
+      // DELETE ALL SAVED PLACES (Bill's pick A, 2026-11-23; mock-up claude.ai/artifact/86m9oyizi3kZiuDpUSdZx4). Under the
+      // list, asked once IN PLACE (never a browser dialog), offered only for a list that LOADED with something in it. The
+      // Lambda deletes a named list in one call (favourites delete_many, FAV_DELETE_BATCH a request), keyed on this
+      // browser's token, and names back anything it left; the token is forgotten only when NOTHING is left, so a failure
+      // never leaves places stored that nothing points at any more. Privacy s2e points here. tests/favourites-delete-all.mjs.
+      const FAV_DELETE_BATCH = 25; // the Lambda's MAX_DELETE_BATCH (DynamoDB's BatchWriteItem limit)
+
+      function deleteAllFavourites() {
+        favDeleting = _deleteAllFavourites();
+        return favDeleting.finally(() => {
+          favDeleting = null;
+        });
+      }
+      async function _deleteAllFavourites() {
+        const postcodes = userFavourites.map((f) => f.postcode);
+        const sent = new Set(postcodes);
+        const left = [];
+        for (let i = 0; i < postcodes.length; i += FAV_DELETE_BATCH) {
+          try {
+            const resp = await fetch(`${API_BASE}/favourites`, {
+              method: 'DELETE',
+              headers: _favHeaders({ 'Content-Type': 'application/json' }),
+              body: JSON.stringify({ postcodes: postcodes.slice(i, i + FAV_DELETE_BATCH) }),
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            // Only the Lambda's own answer can say what went: a 200 without its list is not "all deleted".
+            if (!Array.isArray(data.notDeleted)) throw new Error('no notDeleted list');
+            left.push(...data.notDeleted);
+          } catch (e) {
+            console.warn('Delete all saved places failed:', e);
+            left.push(...postcodes.slice(i));
+            break;
+          }
+        }
+        // Only what was SENT can have gone (code review 2026-11-24): a list read again while this ran keeps anything it
+        // was never asked to delete, and the token is forgotten only when the list is truly empty, never while it still
+        // points at a stored place.
+        userFavourites = userFavourites.filter((f) => !sent.has(f.postcode) || left.includes(f.postcode));
+        if (!userFavourites.length) {
+          try {
+            localStorage.removeItem('flightmap_device_token');
+          } catch (_) {
+            // Storage refused: the token stays, pointing at an empty list. Nothing is left to reach.
+          }
+        }
+        return { total: postcodes.length, left: left.length };
+      }
+
+      function renderDeleteAll() {
+        const box = document.getElementById('favourites-delete-all');
+        if (!box) return;
+        const n = userFavourites.length;
+        if (favouritesLoadState !== 'loaded' || n === 0) {
+          box.innerHTML = '';
+          return;
+        }
+        if (favDeleteState === 'confirm' || favDeleteState === 'busy') {
+          const busy = favDeleteState === 'busy';
+          // BUSY THROUGH aria-disabled, never `disabled` (audit M-11; code review 2026-11-24): the handlers below refuse a
+          // press while busy, and focus is never on an element the browser must move it off.
+          const off = busy ? ' aria-disabled="true"' : '';
+          box.innerHTML =
+            `<div class="fav-confirm" role="group" aria-labelledby="fav-confirm-q">` +
+            `<p id="fav-confirm-q" tabindex="-1">${n === 1 ? 'Delete your saved place? It goes' : `Delete all ${n} saved places? They go`} from our server too, and this can't be undone.</p>` +
+            `<div class="fav-confirm-btns"><button type="button" class="fav-btn-dark" data-fav-all="yes"${off}>${busy ? 'Deleting…' : 'Delete all'}</button>` +
+            `<button type="button" class="fav-btn-line" data-fav-all="no"${off}>${n === 1 ? 'Keep it' : 'Keep them'}</button></div></div>`;
+        } else {
+          box.innerHTML =
+            (favDeleteState === 'failed' ? `<p class="info-note" id="fav-delete-note" tabindex="-1">${escapeHtml(favDeleteNote)}</p>` : '') +
+            `<button type="button" class="fav-delete-link" data-fav-all="ask">Delete all saved places</button>`;
+        }
+        const say = (text) => {
+          const status = document.getElementById('favourites-status');
+          if (status) status.textContent = text;
+        };
+        box.querySelector('[data-fav-all="ask"]')?.addEventListener('click', () => {
+          favDeleteState = 'confirm';
+          renderDeleteAll();
+          document.getElementById('fav-confirm-q')?.focus();
+        });
+        box.querySelector('[data-fav-all="no"]')?.addEventListener('click', () => {
+          if (favDeleteState === 'busy') return;
+          favDeleteState = 'idle';
+          renderDeleteAll();
+          box.querySelector('[data-fav-all="ask"]')?.focus();
+        });
+        box.querySelector('[data-fav-all="yes"]')?.addEventListener('click', async () => {
+          if (favDeleteState === 'busy') return;
+          // The question takes focus as the buttons are redrawn busy: the pressed one is gone from the page.
+          favDeleteState = 'busy';
+          renderDeleteAll();
+          document.getElementById('fav-confirm-q')?.focus();
+          const { total, left } = await deleteAllFavourites();
+          if (!left) {
+            favDeleteState = 'done';
+            renderFavouritesList();
+            say(total === 1 ? 'Deleted your saved place.' : `Deleted all ${total} saved places.`);
+            document.getElementById('favourites-list')?.focus();
+            return;
+          }
+          favDeleteState = 'failed';
+          favDeleteNote =
+            left === total
+              ? "Nothing was deleted: we couldn't reach our server. Try again in a moment."
+              : `${total - left} of ${total} were deleted; ${left === 1 ? '1 is' : `${left} are`} still saved. Try again in a moment.`;
+          renderFavouritesList();
+          say(favDeleteNote);
+          document.getElementById('fav-delete-note')?.focus();
         });
       }
 
@@ -17160,11 +17470,10 @@
       // ============================================================
       async function toggleFavourite(postcode, borough, noiseLevel, buyerScore) {
         const btn = document.querySelector('.fav-btn');
-        const SVG = '<svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>';
         const setBtn = (saved, label) => {
           if (!btn) return;
           btn.classList.toggle('saved', saved);
-          btn.innerHTML = SVG + label;
+          btn.innerHTML = FAV_SVG + label;
         };
         const wasFav = isFavourite(postcode);
         // Optimistic flip for instant feedback…

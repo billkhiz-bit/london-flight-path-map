@@ -890,6 +890,28 @@ s2a promises we never write to it again), and an unreadable list answers 503 rat
 link from an email we sent stops all mail to its address, even one older than a re-join (on purpose: the press wins).
 `backend/tests/test_signup_updates.py`, `tests/news-signup.mjs`, `tests/test_news_flags.py`.
 
+**The way back off the do-not-email list (Bill's pick A, 2026-11-24; privacy s2a `#news-way-back`):** since audit I-1 a
+listed address gets no confirmation for ANY sign-up (news, score updates, an API key), and the form still answers it as any
+other, so the only way back is a request to support@. The code review of 2026-11-24 found nothing said so. By hand, on a
+request, never on our own initiative:
+
+1. **Check that it came from that address.** In Gmail, "Show original" must show SPF or DKIM `PASS` for the address's own
+   domain (a From line alone can be typed by anyone). If it does not, answer the SENDER, never the listed address, that
+   the request must come from the address itself. Nothing else is done.
+2. **Look the entry up, then take it off**, in ONE shell (the key is the address in lower case, as the Lambda stores it):
+   ```sh
+   export MSYS_NO_PATHCONV=1
+   E='someone@example.com'
+   K="{\"pk\":{\"S\":\"suppress#$E\"}}"
+   AWS_PROFILE=flightmap aws dynamodb get-item --region eu-west-2 --table-name london-flight-map-mail --key "$K"
+   AWS_PROFILE=flightmap aws dynamodb delete-item --region eu-west-2 --table-name london-flight-map-mail --key "$K" \
+     --condition-expression 'attribute_exists(pk)'
+   ```
+   An empty `get-item` means the address is not listed: say so in the reply, and delete nothing.
+3. **Reply** in the same thread that it is done and they can sign up again as before. Lifting the entry subscribes no
+   one: the person still confirms from their own inbox. The address stays out of the repo (it is public) and out of
+   every log we write.
+
 **Gates, all met 2026-11-22:** section 3.9 LIVE (DMARC, SES production access, `SignupVerify=on`, the daily ceiling and
 sub-address normalisation, 21 Nov); the ICO fee PAID (ZC299394); Bill's approval of privacy.html s2a's "News by email"
 paragraph (given 22 Nov in the session, from his P11 answers: at most monthly, confirm first).
@@ -1000,13 +1022,15 @@ other two.
   2026-09-08** — verified absent in `us-east-1`, the only region billing
   metrics publish to. See §3.4.
 
-**Alarms, created 2026-09-02 (CLI, `flightmap-dev`); two RETUNED 2026-10-27 (Bill ran it):**
+**Alarms, created 2026-09-02 (CLI, `flightmap-dev`); two RETUNED 2026-10-27 (Bill ran it); the two SES ones added 2026-11-23 (audit I-4: why their bars sit AT SES's review levels is in the script's header; Bill ran it with `--test` at 22:08 that day and all four emails arrived):**
 
 | Alarm | Metric | Fires when |
 |---|---|---|
 | `london-flight-map-lambda-errors` | `AWS/Lambda` `Errors`, Sum, no dimension | any error across all 8 functions, >0 in 5 min (unchanged: one error a month in October, a real signal; a timeout counts as an error) |
 | `london-flight-map-lambda-duration` | `AWS/Lambda` `Duration`, Maximum, no dimension | >25 s in **3 consecutive** 5-min windows: sustained slowness near the **29 s API Gateway integration cap** |
 | `london-flight-map-api-5xx` | metric math over 15 min: `IF(e5 >= 2, e5 / req, 0)`, `e5` = `5XXError` Sum, `req` = `Count` Sum, `ApiName=london-flight-map` | **>= 0.5**: at least 2 failed AND at least half of all requests: an outage, not a blip |
+| `london-flight-map-ses-bounce-rate` | `AWS/SES` `Reputation.BounceRate`, Maximum per hour, no dimension | **>= 5%**, SES's review level (audit I-4, 2026-11-23; Bill runs `scripts/create_ses_alarms.sh`) |
+| `london-flight-map-ses-complaint-rate` | `AWS/SES` `Reputation.ComplaintRate`, Maximum per hour, no dimension | **>= 0.1%**, SES's review level: anyone marking our email as spam |
 
 **Why retuned (2026-10-27).** AWS emailed that October had used 858 of the
 account's 1,000 free alert emails. Both alarms fired on ONE bad 5-min window and
@@ -1023,8 +1047,8 @@ alarms). The rest wait for traffic: no 5xx alarm can see an outage nobody asks.
 script Bill runs; the replay scripts and the pre-change config were in that
 session's scratchpad (`alarms-before-2026-10-27.json` for rollback).
 
-All three notify **`arn:aws:sns:eu-west-2:<AWS_ACCOUNT_ID>:sky-score-alerts`** (email
-to Bill) on BOTH `ALARM` and `OK`, and all three use
+All five notify **`arn:aws:sns:eu-west-2:<AWS_ACCOUNT_ID>:sky-score-alerts`** (email
+to Bill) on BOTH `ALARM` and `OK`, and all five use
 `--treat-missing-data notBreaching` so a quiet API does not page anyone.
 
 **The `london-flight-map-` prefix is load-bearing.** The `FlightMapObservability`

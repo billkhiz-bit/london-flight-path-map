@@ -280,7 +280,9 @@ def parse_body(event):
         return None
     try:
         return json.loads(raw)
-    except json.JSONDecodeError:
+    except (ValueError, RecursionError):
+        # Audit M-3, 2026-11-23: deep nesting raises RecursionError and a 4,300+ digit integer a plain ValueError
+        # (JSONDecodeError is one); both had reached the 500 guard on an anonymous route.
         return None
 
 
@@ -813,19 +815,24 @@ def start_verification(email, name, source, postcode, event):
         },
         event,
     )
-    if source == 'updates':
-        # The do-not-email list comes first, before a counter is touched: an address that unsubscribed is never
-        # written to again (privacy s2a), not even to confirm. The SAME 201, so the list cannot be probed. An
-        # unreadable list fails CLOSED: sending without knowing could break that promise.
-        try:
-            listed = 'Item' in ddb.get_item(TableName=MAIL_TABLE, Key=_mail_key('suppress', email), ConsistentRead=True)
-        except (ClientError, BotoCoreError) as e:
-            code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
-            logger.error('[UPDATES_SUPPRESS_LOOKUP_FAILED] code=%s', code)
-            return response(503, {'error': 'Could not start the signup. Please try again later.'}, event)
-        if listed:
-            logger.info('[UPDATES_SUPPRESSED] no confirmation sent to an address on the do-not-email list')
-            return accepted
+    # The do-not-email list comes first, for EVERY kind of sign-up (audit I-1, 2026-11-23: it was read for news only, so
+    # an address that unsubscribed still got API-key and score-alert confirmations if anyone typed it in): an address
+    # that unsubscribed is never written to again (privacy s2a), not even to confirm. An unreadable list fails CLOSED:
+    # sending without knowing could break that promise.
+    try:
+        listed = 'Item' in ddb.get_item(TableName=MAIL_TABLE, Key=_mail_key('suppress', email), ConsistentRead=True)
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[UPDATES_SUPPRESS_LOOKUP_FAILED] code=%s', code)
+        return response(503, {'error': 'Could not start the signup. Please try again later.'}, event)
+    if listed:
+        logger.info('[UPDATES_SUPPRESSED] no confirmation sent to an address on the do-not-email list')
+        # The answer any other address would get (audit M-1, 2026-11-23): once the day's ceiling is full every
+        # address hears the 503, so a 201 for a listed one would say it is on the list. Read only: nothing is sent.
+        today = _count_now(SEND_CEILING_ROW, datetime.now(UTC).strftime('%Y-%m-%d'))
+        if today is not None and today >= SEND_CEILING_PER_DAY:
+            return response(503, {'error': SEND_CEILING_MESSAGE}, event)
+        return accepted
     decision = send_decision(email)
     if decision == 'full':
         # Said in words, because the person asking is most likely real: a
@@ -1254,6 +1261,9 @@ def handle_confirm(event):
     if status in (200, 201):
         if data.get('status') == 'already-subscribed':
             title = "You're already signed up"
+        elif data.get('status') == 'already-registered':
+            # Audit M-8, 2026-11-23: an API-key holder's score-alert sign-up is refused, and the page said "Confirmed".
+            title = 'Nothing was saved'
         else:
             title = "You're signed up" if source == 'updates' else 'Confirmed'
         return html_page(200, title, f'<p>{html.escape(data.get("message", "Done."))}</p>')
@@ -1288,12 +1298,14 @@ def subscribe_updates(email, event):
     drops a news-v1 member's postcode.
 
     A new token for every confirmed sign-up, written BEFORE the member that names it, so a failure part-way leaves at
-    most a token nobody holds, never a member whose emails could carry no working unsubscribe link. A previous token is
-    retired. The do-not-email entry goes: a confirmed sign-up is fresh consent from the person who owns the address.
+    most a token nobody holds, never a member whose emails could carry no working unsubscribe link. A previous token
+    STAYS (audit I-2, 2026-11-23): emails already sent carry it, and their unsubscribe links must keep working; it can
+    only unsubscribe the address it names. The do-not-email entry goes: a confirmed sign-up is fresh consent from the
+    person who owns the address.
 
-    Once the member is written the person IS subscribed, so the two tidy-ups after it are best effort, logged, and the
-    answer stays 201 (2026-11-10 review: a failed retire used to answer 503 to someone already on the list). A stale
-    token left behind can only unsubscribe the address it names; a do-not-email entry left behind only stops emails.
+    Once the member is written the person IS subscribed, so the tidy-up after it is best effort, logged, and the answer
+    stays 201 (2026-11-10 review: a failed tidy-up used to answer 503 to someone already on the list). A do-not-email
+    entry left behind only stops emails.
     The list's flag is read again here, because a link emailed while it was open can be pressed after it closes.
     """
     if not UPDATES_LIST:
@@ -1317,8 +1329,9 @@ def subscribe_updates(email, event):
         code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
         logger.error('[UPDATES_JOIN_FAILED] code=%s', code)
         return response(503, {'error': 'Could not save. Please try again later.'}, event)
-    old_token = (old or {}).get('unsubToken', {}).get('S')
-    tidy = [('suppress', email)] + ([('unsub', old_token)] if old_token and old_token != token else [])
+    # The old token STAYS (audit I-2, 2026-11-23): every email already sent carries it, and its unsubscribe link must
+    # keep working after a re-join (OPERATIONS s3.10, PECR). A stale token can only stop mail to the address it names.
+    tidy = [('suppress', email)]
     for kind, value in tidy:
         try:
             ddb.delete_item(TableName=MAIL_TABLE, Key=_mail_key(kind, value))

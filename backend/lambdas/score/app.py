@@ -12330,7 +12330,7 @@ def handle_batch(event, context=None):
 
     try:
         payload = json.loads(raw_body) if raw_body else {}
-    except json.JSONDecodeError:
+    except (ValueError, RecursionError):  # audit M-3: deep nesting, 4,300+ digit integers
         return response(400, {'error': 'Invalid JSON body'})
 
     # A valid-JSON non-object (`[]`, `"x"`, `1`) raised AttributeError on

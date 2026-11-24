@@ -288,13 +288,18 @@ class JoinTests(UpdatesBase):
         mail_puts = [w[2] for w in self.db.writes if w[0] == 'put' and w[1] == self.app.MAIL_TABLE]
         self.assertTrue(mail_puts[0].startswith('unsub#') and mail_puts[1].startswith('updates#'), mail_puts)
 
-    def test_joining_again_retires_the_old_token(self):
+    def test_joining_again_keeps_the_old_unsubscribe_link_working(self):
+        # Audit I-2, 2026-11-23: a re-join used to delete the old token, so the unsubscribe link in every email already
+        # sent answered "You are not on the list" and the mail kept coming. Every link we ever sent must still stop it.
         self.join(area='')
         first = self.mail('updates', 'a@example.com')['unsubToken']['S']
         self.join(area='')
-        member = self.mail('updates', 'a@example.com')
-        self.assertNotEqual(member['unsubToken']['S'], first)
-        self.assertIsNone(self.mail('unsub', first), 'the old link no longer works')
+        self.assertNotEqual(self.mail('updates', 'a@example.com')['unsubToken']['S'], first)
+        self.assertEqual(self.mail('unsub', first)['email']['S'], 'a@example.com', 'the old link still names its address')
+        page = self.app.handler(form_post('/v1/signup/unsubscribe', first), None)
+        self.assertEqual(page['statusCode'], 200, page['body'])
+        self.assertIsNone(self.mail('updates', 'a@example.com'), 'pressing the OLD link took the member off')
+        self.assertIsNotNone(self.mail('suppress', 'a@example.com'))
 
     def test_joining_again_says_so_only_on_the_page_after_the_click(self):
         # Bill's ask, 2026-11-23 (mock-up claude.ai/artifact/BbnnMwCUrpmkBHcDa4tgSz, option 1): a member who signs up again
@@ -313,6 +318,20 @@ class JoinTests(UpdatesBase):
         self.assertIn('You&#x27;re already signed up', again['body'])
         self.assertIn('already on the list for Sky Score news', again['body'])
         self.assertEqual(self.mail('updates', 'a@example.com')['consent']['S'], self.app.consent_wording())
+
+    def test_a_refused_alert_signup_says_nothing_was_saved(self):
+        # Audit M-8, 2026-11-23: an API-key holder's score-alert sign-up is refused (already-registered), and the page's
+        # heading said "Confirmed" over a message saying nothing was saved.
+        token = 'T' * 43
+        self.db.tables[self.app.PENDING_TABLE][token] = {
+            'token': {'S': token}, 'email': {'S': 'k@example.com'}, 'source': {'S': 'consumer'},
+            'postcode': {'S': 'M1 1AE'}, 'expiresAt': {'N': str(int(time.time()) + 3600)}}
+        refused = self.app.response(200, {'status': 'already-registered',
+                                          'error': 'This email already holds a Sky Score API key; use a different address.'})
+        with patch.object(self.app, 'complete_signup', return_value=refused):
+            page = self.app.handler(form_post('/v1/signup/confirm', token), None)
+        self.assertIn('Nothing was saved', page['body'])
+        self.assertNotIn('Confirmed', page['body'])
 
     def test_the_junk_line_goes_where_a_next_email_is_coming(self):
         # Bill's ask, 2026-11-23: a new domain's first emails to Outlook land in Junk; whoever finds ours there is asked
@@ -334,10 +353,11 @@ class JoinTests(UpdatesBase):
         self.assertIn('It may land in Junk or Spam, so look there too.', json.loads(r['body'])['message'])
 
     def test_a_failed_tidy_up_after_joining_still_says_subscribed(self):
-        # Review 2026-11-10: retiring the old token failed after the member was written, and the person was told 503.
+        # Review 2026-11-10: a tidy-up failed after the member was written, and the person was told 503. Since 2026-11-23
+        # the only tidy-up is clearing the do-not-email entry (old tokens stay).
         self.join(area='')
         first = self.mail('updates', 'a@example.com')['unsubToken']['S']
-        self.db.fail.add(('delete', f'unsub#{first}'))
+        self.db.fail.add(('delete', 'suppress#a@example.com'))
         page = self.join(area='')
         self.assertEqual(page['statusCode'], 200, page['body'])
         self.assertIn('one email a month', page['body'])
@@ -395,6 +415,37 @@ class DoNotEmailTests(UpdatesBase):
         self.ses.send_email.assert_not_called()
         self.assertEqual(self.db.tables[self.app.PENDING_TABLE], {}, 'no link exists to press')
         self.assertEqual(self.db.counted, counted, 'no send counter is touched for an address we will not write to')
+
+    def test_every_kind_of_signup_reads_the_list(self):
+        # Audit I-1, 2026-11-23: the list was read for news only, so an address that unsubscribed still got API-key and
+        # score-alert confirmations when anyone typed it in. Each kind now answers a listed address as it answers anyone.
+        for source in ('consumer', 'api', 'updates'):
+            with self.subTest(source=source):
+                self.db.tables[self.app.PENDING_TABLE].clear()
+                fresh = self.app.handler(post({'email': f'new-{source}@example.com', 'source': source, 'postcode': 'M1 1AE'}), None)
+                self.ses.reset_mock()
+                self.db.tables[self.app.PENDING_TABLE].clear()
+                self.listed()
+                r = self.app.handler(post({'email': 'a@example.com', 'source': source, 'postcode': 'M1 1AE'}), None)
+                self.assertEqual((r['statusCode'], r['body']), (fresh['statusCode'], fresh['body']))
+                self.ses.send_email.assert_not_called()
+                self.assertEqual(self.db.tables[self.app.PENDING_TABLE], {}, 'no link exists to press')
+
+    def test_a_listed_address_hears_a_full_day_like_anyone(self):
+        # Audit M-1, 2026-11-23: once the day's ceiling is full every address hears the 503; a 201 for a listed one alone
+        # would say it is on the list.
+        import datetime as _dt
+        day = _dt.datetime.now(_dt.UTC).strftime('%Y-%m-%d')
+        self.db.tables[self.app.PENDING_TABLE][f'{self.app.SEND_COUNTER_PREFIX}{self.app.SEND_CEILING_ROW}#{day}'] = {
+            'token': {'S': f'{self.app.SEND_COUNTER_PREFIX}{self.app.SEND_CEILING_ROW}#{day}'},
+            'sends': {'N': str(self.app.SEND_CEILING_PER_DAY)}}
+        self.listed()
+        with patch.object(self.app, 'send_decision', return_value='full'):
+            stranger = self.app.handler(post({'email': 'new@example.com', 'source': 'updates'}), None)
+        listed = self.app.handler(post({'email': 'a@example.com', 'source': 'updates'}), None)
+        self.assertEqual(stranger['statusCode'], 503)
+        self.assertEqual((listed['statusCode'], listed['body']), (stranger['statusCode'], stranger['body']))
+        self.ses.send_email.assert_not_called()
 
     def test_the_list_is_read_before_anything_else(self):
         self.app.handler(post({'email': 'a@example.com', 'source': 'updates', 'postcode': ''}), None)

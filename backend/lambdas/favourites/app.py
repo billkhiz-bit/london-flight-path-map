@@ -224,8 +224,8 @@ def handler(event, context):
         if method == 'POST':
             try:
                 body = json.loads(event.get('body') or '{}')
-            except json.JSONDecodeError as exc:
-                logger.warning('Invalid JSON body on POST: %s', exc)
+            except (ValueError, RecursionError) as exc:  # audit M-3: deep nesting, 4,300+ digit integers
+                logger.warning('Invalid JSON body on POST: %s', type(exc).__name__)
                 return response(400, {'error': 'Invalid JSON body.'})
             if not isinstance(body, dict):
                 return response(400, {'error': 'JSON body must be an object.'})
@@ -259,8 +259,8 @@ def handler(event, context):
         if method == 'DELETE':
             try:
                 body = json.loads(event.get('body') or '{}')
-            except json.JSONDecodeError as exc:
-                logger.warning('Invalid JSON body on DELETE: %s', exc)
+            except (ValueError, RecursionError) as exc:  # audit M-3: deep nesting, 4,300+ digit integers
+                logger.warning('Invalid JSON body on DELETE: %s', type(exc).__name__)
                 return response(400, {'error': 'Invalid JSON body.'})
             # A non-object body raised on `.get`, and a non-string postcode
             # reached delete_item as a key of the wrong type - both answered
@@ -268,6 +268,8 @@ def handler(event, context):
             # bad request (audit M3).
             if not isinstance(body, dict):
                 return response(400, {'error': 'JSON body must be an object.'})
+            if 'postcodes' in body:
+                return delete_many(token, body['postcodes'])
             postcode = body.get('postcode', '')
             if not isinstance(postcode, str) or not postcode.strip():
                 return response(400, {'error': 'Postcode is required and must be a string'})
@@ -287,6 +289,30 @@ def handler(event, context):
     except Exception as exc:  # pragma: no cover, final guard
         logger.exception('Unhandled exception in favourites handler: %s', exc)
         return response(500, {'error': 'Internal server error'})
+
+
+MAX_DELETE_BATCH = 25  # DynamoDB's BatchWriteItem limit: one call, so one hop (_SEQUENTIAL_HOPS)
+
+
+def delete_many(token, postcodes):
+    """DELETE ALL SAVED PLACES (Bill's pick A, 2026-11-23, mock-up claude.ai/artifact/86m9oyizi3kZiuDpUSdZx4).
+
+    The map names every place it listed, up to MAX_DELETE_BATCH a request, and they go in ONE BatchWriteItem: one
+    DynamoDB call, inside the hop budget test_handlers holds against the function's timeout (a server-side "all" would
+    Query and then write: two hops). Every key is built HERE from the caller's own token, so a list can only ever delete
+    that token's places. A place DynamoDB leaves unprocessed is named back in `notDeleted`, so the map never says
+    "deleted" over a place still stored; the map forgets its token only when that list is empty."""
+    if (not isinstance(postcodes, list) or not 1 <= len(postcodes) <= MAX_DELETE_BATCH
+            or not all(isinstance(p, str) and p.strip() and len(p) <= MAX_LOCATION_LEN for p in postcodes)):
+        return response(400, {'error': f'postcodes must be a list of 1 to {MAX_DELETE_BATCH} postcodes, each a string '
+                                       f'of at most {MAX_LOCATION_LEN} characters.'})
+    unique = list(dict.fromkeys(postcodes))  # a repeated key in one batch is DynamoDB's ValidationException
+    out = dynamodb.batch_write_item(RequestItems={
+        TABLE_NAME: [{'DeleteRequest': {'Key': {'userId': token, 'postcode': p}}} for p in unique]})
+    left = [r['DeleteRequest']['Key']['postcode'] for r in (out.get('UnprocessedItems') or {}).get(TABLE_NAME, [])]
+    if left:
+        logger.warning('Delete many: %d of %d unprocessed', len(left), len(unique))
+    return response(200, {'message': 'Deleted', 'deleted': len(unique) - len(left), 'notDeleted': left})
 
 
 def response(status, body):

@@ -936,7 +936,8 @@ Resources:
             TableName: !Ref SignupPendingTable
         # News by email, its unsubscribe tokens and the do-not-email list (2026-11-10). Crud, because it READS
         # (GetItem: the do-not-email list before every send, the token on unsubscribe), WRITES (PutItem, the member's
-        # with ReturnValues ALL_OLD) and DELETES (DeleteItem: the old token, the member, the list entry). A write-only
+        # with ReturnValues ALL_OLD) and DELETES (DeleteItem: the member, the list entry; an old token STAYS since audit
+        # I-2, 2026-11-23, so links in emails already sent keep working). A write-only
         # policy breaks every sign-up and unsubscribe (code review 2026-11-22 corrected this comment's reason).
         - DynamoDBCrudPolicy:
             TableName: !Ref MailTable

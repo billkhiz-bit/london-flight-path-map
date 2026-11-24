@@ -445,6 +445,10 @@ class SendCeilingTests(unittest.TestCase):
             return {'Attributes': {'sends': {'N': str(n)}}}
 
         def get_item(**kw):
+            # Every kind of sign-up reads the do-not-email list first (audit I-1, 2026-11-23): not listed here.
+            if kw['TableName'] == self.app.MAIL_TABLE:
+                self.assertTrue(kw['Key']['pk']['S'].startswith('suppress#'), 'only the do-not-email list is read there')
+                return {}
             self.assertTrue(kw['Key']['token']['S'].startswith(day_row), 'only the day row is ever read')
             return {'Item': {'sends': {'N': str(day)}}} if day else {}
 
@@ -497,7 +501,15 @@ class SendCeilingTests(unittest.TestCase):
     def test_an_unreadable_day_row_fails_open(self):
         err = ClientError({'Error': {'Code': 'ProvisionedThroughputExceededException', 'Message': ''}}, 'GetItem')
         self._rows(inbox=self.app.SEND_CAP_PER_DAY + 1, day=0)
-        self.ddb.get_item.side_effect = err
+
+        def day_read_fails(**kw):
+            # Only the DAY ROW is unreadable; the do-not-email list (read first since audit I-1) answers "not listed",
+            # since an unreadable list fails CLOSED on purpose (DoNotEmailTests).
+            if kw['TableName'] == self.app.MAIL_TABLE:
+                return {}
+            raise err
+
+        self.ddb.get_item.side_effect = day_read_fails
         self.assertEqual(self._ask()['statusCode'], 201, 'a capped inbox stays the silent 201')
 
         def day_fails(**kw):
