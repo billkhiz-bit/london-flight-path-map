@@ -578,6 +578,39 @@ for (const [what, q, want] of [['a postcode', 'TW9 3PZ', /TW9 3PZ/], ['a borough
     'a profile change says the new score, not "Results loaded"', why || prof.said);
   ok(reached && asked.length === askedProfile, 'a profile change asks no route again', why || asked.slice(askedProfile).join(', '));
 
+  // AN ALERT ALREADY ASKED FOR (audit M-7, 2026-11-25): a profile change redraws the panel, and its form came back with
+  // the sent address put back in it (keepPlace keeps typed text, rightly, for a form NOT yet sent). Asked for, it stays
+  // asked for: the form hidden, the field empty, the reply still there. /v1/signup is answered here, never sent on.
+  const alertPosts = [];
+  const isSignup = (url) => url.pathname.endsWith('/v1/signup');
+  await page.route(isSignup, (route) => {
+    alertPosts.push(route.request().method());
+    return route.fulfill({ status: 201, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ status: 'pending', message: 'Check your inbox: we sent a link to confirm.' }) });
+  });
+  await page.evaluate(() => {
+    document.getElementById('notify-email').value = 'alert@example.com';
+    document.getElementById('notify-form').requestSubmit();
+  });
+  const sentOnce = await page.waitForFunction(() => /Check your inbox/.test(document.getElementById('notify-result')?.textContent || ''),
+    null, { timeout: 8000 }).then(() => true, () => false);
+  await page.evaluate(() => setPersona('investor'));
+  await page.waitForTimeout(800);
+  const alerted = await page.evaluate(() => {
+    const form = document.getElementById('notify-form');
+    return {
+      persona: currentPersona,
+      formShown: !!form && getComputedStyle(form).display !== 'none',
+      email: document.getElementById('notify-email')?.value,
+      said: document.getElementById('notify-result')?.textContent,
+    };
+  });
+  ok(reached && sentOnce && alerted.persona === 'investor' && !alerted.formShown && !alerted.email && /Check your inbox/.test(alerted.said || '')
+    && alertPosts.filter((m) => m === 'POST').length === 1,
+    'an alert already asked for stays asked for after a profile change: no form, no address put back, the reply kept (audit M-7)',
+    why || JSON.stringify({ sentOnce, alertPosts, ...alerted }));
+  await page.unroute(isSignup);
+
   // A redraw while a NEWER search is on its way (the review, 19 Nov): the answer on screen redraws whole, its tiles drawn
   // and not left waiting, and nothing kept for it reaches the next answer when that lands. The next postcode's lookup is
   // held until the profile change is made.

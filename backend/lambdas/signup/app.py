@@ -833,7 +833,8 @@ def start_verification(email, name, source, postcode, event):
         if today is not None and today >= SEND_CEILING_PER_DAY:
             return response(503, {'error': SEND_CEILING_MESSAGE}, event)
         return accepted
-    decision = send_decision(email)
+    day = datetime.now(UTC).strftime('%Y-%m-%d')  # one day for the counts and any give-back (M-5)
+    decision = send_decision(email, day)
     if decision == 'full':
         # Said in words, because the person asking is most likely real: a
         # silent 201 would leave them waiting for an email that never comes.
@@ -866,6 +867,7 @@ def start_verification(email, name, source, postcode, event):
     except (ClientError, BotoCoreError) as e:
         code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
         logger.error('[SIGNUP_PENDING_WRITE_FAILED] code=%s', code)
+        give_back_send(email, day)
         return response(503, {'error': 'Could not start the signup. Please try again later.'}, event)
 
     link = f'{confirm_url_base(event)}/v1/signup/confirm?token={token}'
@@ -879,6 +881,7 @@ def start_verification(email, name, source, postcode, event):
             ddb.delete_item(TableName=PENDING_TABLE, Key={'token': {'S': token}})
         except (ClientError, BotoCoreError):
             logger.warning('[SIGNUP_PENDING_ORPHAN] a pending row outlives a failed send; the TTL takes it')
+        give_back_send(email, day)
         return response(
             503, {'error': 'Could not send the confirmation email. Please try again later.'}, event
         )
@@ -943,7 +946,33 @@ def _count_now(row, day):
     return int(((out.get('Item') or {}).get('sends') or {}).get('N', '0'))
 
 
-def send_decision(email):
+def _count_back(row, day):
+    """Take back one count for a send that did not go out (audit M-5, 2026-11-25). Never creates a row (one with no
+    expiresAt would outlive the TTL), and best effort: a failure here leaves the count one high, as it always was."""
+    try:
+        ddb.update_item(
+            TableName=PENDING_TABLE,
+            Key=_counter_key(row, day),
+            UpdateExpression='ADD sends :minus',
+            ConditionExpression='attribute_exists(sends)',
+            ExpressionAttributeValues={':minus': {'N': '-1'}},
+        )
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        if code != 'ConditionalCheckFailedException':
+            logger.warning('[SIGNUP_SEND_COUNTER_GIVEBACK_FAILED] code=%s', code)
+
+
+def give_back_send(email, day):
+    """Both counts send_decision() added for a send that then failed (the pending row or the email): an outage must not
+    use up a visitor's three a day, nor the day's ceiling for everyone (audit M-5, 2026-11-25)."""
+    import hashlib
+
+    _count_back(hashlib.sha256(mailbox_key(email).encode('utf-8')).hexdigest(), day)
+    _count_back(SEND_CEILING_ROW, day)
+
+
+def send_decision(email, day=None):
     """'send', 'skip' (this inbox has had SEND_CAP_PER_DAY today: the same 201,
     no email) or 'full' (SEND_CEILING_PER_DAY emails have gone today: a 503
     that says so).
@@ -963,7 +992,7 @@ def send_decision(email):
     """
     import hashlib
 
-    day = datetime.now(UTC).strftime('%Y-%m-%d')
+    day = day or datetime.now(UTC).strftime('%Y-%m-%d')
     digest = hashlib.sha256(mailbox_key(email).encode('utf-8')).hexdigest()
     sends = _count_one(digest, day)
     if sends is not None and sends > SEND_CAP_PER_DAY:

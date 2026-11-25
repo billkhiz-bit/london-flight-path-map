@@ -157,12 +157,26 @@ class VerifyOnPostTests(unittest.TestCase):
         self.assertNotIn('MessageRejected', r['body'])
         token = self.ddb.put_item.call_args.kwargs['Item']['token']['S']
         self.assertEqual(self.ddb.delete_item.call_args.kwargs['Key'], {'token': {'S': token}})
+        self.assertCountsGivenBack()
 
     def test_a_failed_pending_write_is_a_503_and_sends_nothing(self):
         self.ddb.put_item.side_effect = ClientError({'Error': {'Code': 'AccessDeniedException', 'Message': 'no'}}, 'PutItem')
         r = self.app.handler(post({'email': 'a@example.com'}), None)
         self.assertEqual(r['statusCode'], 503)
         self.ses.send_email.assert_not_called()
+        self.assertCountsGivenBack()
+
+    def assertCountsGivenBack(self):
+        # Audit M-5 (2026-11-25): send_decision() counts BEFORE the send, so a failed one took one of the visitor's three
+        # a day, and one of the day's ceiling, for an email that never went. Both come back, the same rows, never made new.
+        calls = [c.kwargs for c in self.ddb.update_item.call_args_list]
+        added = [c['Key'] for c in calls if c['ExpressionAttributeValues'].get(':one') == {'N': '1'}]
+        back = [c for c in calls if c['ExpressionAttributeValues'].get(':minus') == {'N': '-1'}]
+        self.assertEqual(len(added), 2, calls)
+        self.assertEqual(sorted(json.dumps(c['Key'], sort_keys=True) for c in back),
+                         sorted(json.dumps(k, sort_keys=True) for k in added), 'each count added is given back once')
+        for c in back:
+            self.assertEqual(c['ConditionExpression'], 'attribute_exists(sends)')
 
     def test_validation_still_precedes_the_pending_write(self):
         r = self.app.handler(post({'email': 'not-an-email'}), None)

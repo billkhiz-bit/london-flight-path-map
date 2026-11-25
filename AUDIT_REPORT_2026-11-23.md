@@ -79,7 +79,13 @@ Batches 1 to 3 on branch `audit-fixes-2026-11-23`, to deploy after the 24 Nov me
 - **Found while fixing, fixed:** the map made a saved-places token on EVERY page load and sent it, against privacy
   s2e ("Browsing and scoring never generate one"); with Bill's pick A for "Delete all saved places" the same day,
   dated on /changes.
-- **Later pass:** M-4, M-5, M-6, M-7, M-9, M-10, M-17 to M-23 (design choices or tidy-ups).
+- **Fixed 2026-11-25 (branch `signup-fixes-2026-11-26`, Bill: "run the order"), each check proven red without its fix:**
+  M-5 (a failed send gives both counts back, `give_back_send`, never creating a row; `backend/tests/test_signup_verify.py`),
+  M-6 (the strip counts sends by INBOX, `mailboxKey()` held equal to the Lambda's `mailbox_key()` by
+  `backend/tests/test_mailbox_key_parity.py`; `tests/news-signup.mjs`), M-7 (an alert already asked for stays asked
+  for through a redraw; `tests/search-guide.mjs`), M-20 (the masked address said in words to a screen reader;
+  `tests/news-signup.mjs`). M-5 ships with a reviewed SAM changeset (signup).
+- **Later pass:** M-4, M-9, M-10, M-17 to M-19, M-21 to M-23 (design choices or tidy-ups).
 - **Code review of the fixes (2026-11-24, on `80c16293`):** 9 findings, each read in the code first. FIXED: a save
   during Delete all was dropped from the list and stored under the token the delete then forgot (it now waits); Delete
   all's buttons and the news strip's first press went `disabled` (M-11's own defect); a failed Delete all's note stayed
