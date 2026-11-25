@@ -17,6 +17,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / 'scripts'))
 sys.path.insert(0, str(REPO / 'backend' / 'lambdas' / 'score'))
@@ -136,3 +138,19 @@ def test_no_borough_record_carries_a_school_note():
     assert not back, f'{len(back)} school notes are back in data/borough-extra.json, e.g. {back[:3]}'
     assert 'schoolNote' not in MAP, 'the map reads a school note again'
     assert 'schoolNote' not in (REPO / 'backend' / 'lambdas' / 'score' / 'app.py').read_text(encoding='utf-8')
+
+
+CURATED_NOTES = ('floodNote', 'aqNote', 'healthcareNote', 'transportNote')
+
+
+@pytest.mark.parametrize('key', CURATED_NOTES)
+def test_no_borough_record_carries_a_curated_note(key):
+    # The 152 curated notes (38 of each key: London's 33, New York's 5) were deleted on Bill's yes, 2026-11-25. Nothing on
+    # the site or in the API read them, yet data/borough-extra.json served them, and four London flood notes contradicted
+    # the Environment Agency's own figure beside them ("High flood risk along Thames" for Hammersmith and Fulham, whose
+    # floodMediumOrHighPct is 0.0). scripts/build_borough_bands.py --check refuses each key too (FOREIGN_KEYS).
+    extra = json.loads((REPO / 'data' / 'borough-extra.json').read_text(encoding='utf-8'))
+    back = list(_keys_anywhere(extra, key))
+    assert not back, f'{len(back)} {key}s are back in data/borough-extra.json, e.g. {back[:3]}'
+    assert key not in MAP, f'the map reads {key} again'
+    assert key not in (REPO / 'backend' / 'lambdas' / 'score' / 'app.py').read_text(encoding='utf-8')
