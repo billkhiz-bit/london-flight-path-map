@@ -695,15 +695,16 @@
       .walk-cta a { display: inline-block; padding: 4px 0; color: var(--dark); }
       .walk-cta a.walk-btn { padding: 9px 14px; border-radius: 999px; background: var(--dark); color: #fff; text-decoration: none; }
 
-      /* See it from above: the film's still, and the way to the approach strip on /how-it-works/. */
-      .above { display: grid; gap: 24px 56px; align-items: center; }
-      @media (min-width: 900px) { .above { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
-      .above-shot { min-width: 0; margin: 0; padding: 10px; color: #d9d7d0; background: #000; border-radius: 18px; }
-      .above-shot img { display: block; width: 100%; height: auto; border-radius: 10px; }
-      .above-key { display: flex; align-items: center; gap: 8px; margin: 8px 4px 0; font: 500 11.5px var(--font-body); }
-      .above-key i { flex: 0 1 180px; height: 8px; border-radius: 2px; background: linear-gradient(90deg, #e7d7bd, #efb56f, #e27a4c, #c73e2e, #8b1a1a); }
-      .above-shot figcaption { margin: 8px 4px 2px; font-size: 11.5px; line-height: 1.45; }
-      .above .lede { margin: 16px 0 24px; }
+      /* Beyond one street as ONE band (Bill's pick A, 2026-11-25): the rows and the developers' request side by side from
+         900 px, the page's one breakpoint, each row then compact (number, then its words) as the rows are on a phone. */
+      .beyond { display: grid; gap: 40px 56px; margin-top: 36px; }
+      .beyond .ways { margin: 0; }
+      @media (min-width: 900px) {
+        .beyond { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); align-items: start; }
+        .beyond .ways li { grid-template-columns: 34px minmax(0, 1fr); gap: 6px 14px; }
+        .beyond .ways li > p { grid-column: 2; }
+        .beyond .ways p.way-go { flex-direction: row; flex-wrap: wrap; gap: 2px 18px; }
+      }
 
       /* Beyond one street: numbered rows, in the order a buyer meets them. */
       .ways { margin: 36px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--dark); }
@@ -754,7 +755,9 @@
       section.dev .lede { margin: 16px 0 0; }
       section.dev .go-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 24px 0 0; }
       section.dev a.also { display: inline-block; padding: 4px 0; font-size: 15px; font-weight: 600; color: var(--orange-ink); }
-      @media (min-width: 900px) { section.dev .split { align-items: start; } }
+      /* Inside Beyond one street since 2026-11-25: a heading of the band, so an h3, and its words above the code box. */
+      section.dev h3 { margin: 14px 0 0; font-family: var(--font-display); font-weight: 600; font-size: clamp(24px, 2.4vw, 30px); line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+      .beyond section.dev .code { margin-top: 24px; }
 
       /* The dark band, written by scripts/build_planes_pages.py (Heathrow's consultation while it is open, the planes
          pages after). On #141414: headings #fff, words #d9d7d0, the eyebrow #b9b6ae (9:1), the orange pill's ink 6.8:1. */
@@ -794,11 +797,12 @@
       .faq details[open] summary::after { content: '\2212' / ''; }
       .faq details p { margin: 10px 0 0; max-width: 62ch; font-size: 15px; line-height: 1.6; color: var(--mid); }
       .faq details a { color: var(--orange-ink); font-weight: 600; }
-      /* Book a demo's closing band (2026-11-02; a light card since 2026-11-03, the dark band being the consultation's),
-         then the founder line. */
+      /* Book a demo's card (2026-11-02; a light card since 2026-11-03, the dark band being the consultation's), then the
+         founder line: the page's closing band until 2026-11-25, now the foot of Beyond one street, so its heading is an h3. */
+      .who-pro + .book-band { margin-top: clamp(36px, 5vw, 56px); }
+      .book-band h3 { margin: 12px 0 0; font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 2.8vw, 36px); line-height: 1.08; letter-spacing: -0.025em; text-wrap: balance; }
       .book-band { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px 40px; align-items: center; padding: clamp(24px, 4vw, 48px); border: 1px solid var(--line); border-radius: 20px; background: var(--paper); }
       @media (min-width: 760px) { .book-band { grid-template-columns: minmax(0, 1.4fr) auto; } }
-      .book-band h2 { margin-top: 12px; }
       .book-band .lede { margin-top: 14px; }
       .founder { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 22px; }
       .founder img { width: 48px; height: 48px; border-radius: 50%; flex: none; }
@@ -1161,31 +1165,19 @@
         </div>
       </section>
 
-      <!-- SEE IT FROM ABOVE: a still from the Blender film (about/film-still-battersea.webp), linking to the approach strip.
-           After the rename a short silent loop of the film may take its place (Bill, 3 Nov; NOW.md's Blender line). -->
-      <section class="band" aria-labelledby="above-h">
-        <div class="wrap above">
-          <figure class="above-shot">
-            <img src="/about/hounslow-noise-render.webp" width="1100" height="602" loading="lazy" decoding="async" alt="A model of Hounslow from above, its buildings coloured by aircraft noise, redder where it is louder, with the Great West Road, the Piccadilly line and Hounslow East station named." />
-            <p class="above-key" aria-hidden="true"><span>Aircraft noise</span><i></i><span>louder</span></p>
-            <figcaption>Hounslow, each building coloured by DEFRA&rsquo;s modelled aircraft noise (Round 4). Contains OS data &copy; Crown copyright 2026; &copy; OpenStreetMap contributors; building heights &copy; Environment Agency copyright and/or database right 2022. All rights reserved.</figcaption>
-          </figure>
-          <div>
-            <p class="eyebrow">London from above</p>
-            <h2 id="above-h">Fly Heathrow&rsquo;s approach over London.</h2>
-            <p class="lede">Follow the planes in over London and watch the noise rise, street by street, to Hounslow.</p>
-            <a class="pill dark" href="/how-it-works/#see-it">Fly the approach <i aria-hidden="true"></i></a>
-          </div>
-        </div>
-      </section>
-
-      <!-- BEYOND ONE STREET: numbered, in the order a buyer meets them. -->
+      <!-- BEYOND ONE STREET: numbered, in the order a buyer meets them. Since 2026-11-25 (Bill's pick A of
+           claude.ai/artifact/PHWDmGY8nLBD8CcBpcnAL9) the one band past a search: the rows and the developers' request side by
+           side, then who it is for, then Book a demo and the founder line, every sentence moved word for word. It merged
+           three bands, and "Fly Heathrow's approach" left the page (How it works keeps the strip): below the hero, 7 sections
+           became 4. The developers part stays a <section class="dev">, so js/dev-demo.mjs and every section.dev rule (held
+           equal to /api/'s by tests/test_dev_band_parity.py) find it unchanged. -->
       <section class="band band-paper" aria-labelledby="beyond-h">
         <div class="wrap">
           <div class="split">
             <div><p class="eyebrow">More ways in</p><h2 id="beyond-h">Beyond one street.</h2></div>
             <p class="lede">Whole areas, a page to keep, and the same figures for your own system.</p>
           </div>
+          <div class="beyond">
           <ol class="ways">
             <li><span class="way-n" aria-hidden="true">01</span><h3>Find an area that fits</h3><p>Set a budget and what you want to avoid or be near, such as aircraft noise, busy roads, flood risk or a station, and see which council areas fit, shaded on the map.</p>
               <!-- #find opens the Find areas tab above (js/home-engine.mjs), and /#find works from anywhere. -->
@@ -1195,35 +1187,16 @@
             <li><span class="way-n" aria-hidden="true">03</span><h3>Data for your business</h3><p>The same figures through an API, in your own system, or as one open file of every UK council area (the file is free for non-commercial use).</p>
               <p class="way-go"><a href="/api/">The API</a><a href="/open-data/">The open data</a></p></li>
           </ol>
-          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
-          <div class="who-pro" id="who">
-            <h3 class="who-label">Working with homes and places</h3>
-            <ul class="who-list">
-              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
-              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
-              <li><b>Residents&#x27; groups</b><span>Base your case on the official figures.</span><a href="/area/">Browse council areas &rarr;</a></li>
-              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
-            </ul>
-          </div>
-          <!-- WHO-FOR:END -->
-        </div>
-      </section>
-
-      <!-- FOR DEVELOPERS (2026-10-19; light, with three languages, since 2026-11-03 after Stripe's): the open request a
+          <!-- FOR DEVELOPERS (2026-10-19; light, with three languages, since 2026-11-03 after Stripe's): the open request a
            developer can paste, in curl, Python and JavaScript, with a Copy button. The URL was tried before it was written
            here (200, no key), and the host is held to js/api-base.js by scripts/check_api_url_drift.sh. Tabs once
            js/home-sections.mjs runs; without it the curl request shows alone. -->
-      <section class="band dev" aria-labelledby="dev">
-        <div class="wrap">
-          <div class="split">
-            <div>
-              <p class="eyebrow">For developers</p>
-              <h2 id="dev">The same figures, one request away.</h2>
-              <p class="lede">Send a postcode or a point and get every figure back with its source, as JSON. Noise and air at any point need no key.</p>
-              <p class="dev-free"><b>10,000</b> lookups a month on the free tier</p>
-              <p class="go-row"><a class="pill dark" href="/api/">Get a key and read the docs <i aria-hidden="true"></i></a><a class="also" href="/score-demo/api-docs.html">Full API reference</a></p>
-            </div>
+          <section class="dev" aria-labelledby="dev">
+            <p class="eyebrow">For developers</p>
+            <h3 id="dev">The same figures, one request away.</h3>
+            <p class="lede">Send a postcode or a point and get every figure back with its source, as JSON. Noise and air at any point need no key.</p>
+            <p class="dev-free"><b>10,000</b> lookups a month on the free tier</p>
+            <p class="go-row"><a class="pill dark" href="/api/">Get a key and read the docs <i aria-hidden="true"></i></a><a class="also" href="/score-demo/api-docs.html">Full API reference</a></p>
             <div class="code">
               <div class="code-tabs" role="tablist" aria-label="Language" hidden>
                 <button type="button" role="tab" id="code-tab-curl" aria-controls="code-curl" aria-selected="true">curl</button>
@@ -1254,6 +1227,30 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
               <p class="code-foot"><button type="button" class="copy" data-copy="dev-env" aria-label="Copy the curl request">Copy</button><button type="button" class="copy" id="dev-replay" aria-label="Replay the request and its answer" hidden>Replay</button><span class="copy-status" id="copy-status" aria-live="polite"></span></p>
               <p class="code-note">Noise and air at a point in Kew: no key needed.</p>
             </div>
+          </section>
+          </div>
+          <!-- WHO-FOR:BEGIN (scripts/build_who_for.py --write; never edit by hand) -->
+          <div class="who-pro" id="who">
+            <h3 class="who-label">Working with homes and places</h3>
+            <ul class="who-list">
+              <li><b>Buying agents and relocation firms</b><span>A sourced answer before the client asks.</span><a href="/pricing">See pricing &rarr;</a></li>
+              <li><b>Conveyancers and surveyors</b><span>Add aircraft noise to the reports you already produce.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Islamic home finance</b><span>Environmental checks with an affordability measure that uses prices only.</span><a href="/api/">Use the API &rarr;</a></li>
+              <li><b>Residents&#x27; groups</b><span>Base your case on the official figures.</span><a href="/area/">Browse council areas &rarr;</a></li>
+              <li><b>Researchers and journalists</b><span>One open, documented file.</span><a href="/open-data/">Get the open data &rarr;</a></li>
+            </ul>
+          </div>
+          <!-- WHO-FOR:END -->
+          <!-- BOOK A DEMO (Bill, 2026-11-02, after arcive.ai): one clear button, counted by its data-book-place (`band`).
+               The foot of this band since 2026-11-25 (the page's closing band until then); outside WHO-FOR on purpose. -->
+          <div class="book-band">
+            <div><p class="eyebrow">Book a demo</p><h3 id="book-h">Bring your own postcodes.</h3><p class="lede">In 30 minutes we go through the places you work with: the figures for each, and where every one comes from. Nothing to prepare.</p></div>
+            <a class="pill dark" href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="band">Book a 30-minute demo <i aria-hidden="true"></i></a>
+          </div>
+          <div class="founder">
+            <img src="/about/bill-headshot.webp" width="56" height="56" alt="" />
+            <p>Built by Bilal Khizar, so you can make a more informed decision when choosing where to live.</p>
+            <a href="/about/#why">Our story &rarr;</a>
           </div>
         </div>
       </section>
@@ -1310,7 +1307,7 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
       <!-- PLANES-BAND:END -->
 
       <!-- QUESTIONS. Book a demo's second spot is here (`faq`, Bill's mock v8: it moved from the business card, which the
-           rows above replaced); the first is the closing band below. -->
+           rows above replaced); the other is the foot of Beyond one street, above. -->
       <section class="band band-paper" aria-labelledby="faq-h">
         <div class="wrap faq">
           <div><p class="eyebrow">Questions</p><h2 id="faq-h">Before you search.</h2></div>
@@ -1323,22 +1320,6 @@ console.log(environment.no2AnnualMeanUgm3, environment.roadNoiseLdenDb);</pre></
             <details id="faq-cover"><summary>Which places does it cover?</summary><p id="cover-figure">97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.</p></details>
             <details><summary>Is it free?</summary><p>Searching is free. Reports and the API have free and paid options: see <a href="/pricing">Pricing</a>.</p></details>
             <details><summary>Can I use it for my business?</summary><p>Yes: through the API, in your own system, or as one open file of every UK council area (the file is free for non-commercial use). <a href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="faq">Book a demo</a> to go through your own postcodes.</p></details>
-          </div>
-        </div>
-      </section>
-
-      <!-- BOOK A DEMO (Bill, 2026-11-02, after arcive.ai): the page ends on one clear button, counted by its data-book-place.
-           Outside WHO-FOR on purpose: the link belongs to this page. -->
-      <section class="band" aria-labelledby="book-h">
-        <div class="wrap">
-          <div class="book-band">
-            <div><p class="eyebrow">Book a demo</p><h2 id="book-h">Bring your own postcodes.</h2><p class="lede">In 30 minutes we go through the places you work with: the figures for each, and where every one comes from. Nothing to prepare.</p></div>
-            <a class="pill dark" href="https://calendly.com/bilalkhizar-skyscore/30min" data-book-place="band">Book a 30-minute demo <i aria-hidden="true"></i></a>
-          </div>
-          <div class="founder">
-            <img src="/about/bill-headshot.webp" width="56" height="56" alt="" />
-            <p>Built by Bilal Khizar, so you can make a more informed decision when choosing where to live.</p>
-            <a href="/about/#why">Our story &rarr;</a>
           </div>
         </div>
       </section>
