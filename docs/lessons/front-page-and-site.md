@@ -1398,3 +1398,21 @@ A session's own visits count. The screenshots of the live map taken after the de
 about 6 map views and 9 tile opens. The read had closed at 11:00, so it was untouched, but a live check DURING a read
 would have moved it. `js/count.mjs` skips a browser whose `localStorage.skipgc` is `'t'` (`skipped()`, GoatCounter's own
 convention), so open `/llms.txt` first (it loads no counter), set it there, then visit the counted pages.
+
+**THE EXAMPLE "STILL TAKES A SHORT WHILE TO LOAD" (Bill, 2026-11-24; claude.ai/artifact/6YLLSd4tsN3WEtDsBytQBF).** Measured
+before touching anything, in a FRESH browser (no cache, no service worker; Bill's own browser served everything from cache in
+0.8 s and showed nothing): the tiles filled at 0.5 s on a desktop and 1.3-1.4 s on a phone (4G, CPU 4x), with the API warm. The
+score Lambda's own logs gave the rest: 156 of 2,512 requests in three days started cold, init 0.23 s but the FIRST REQUEST 0.64 s
+(clients, connections and caches set up on first use), so a ping that only returns would warm nothing; a warm-up must run the real
+`/v1/environment` path. Its schedule needs EventBridge rule rights FlightMapDeployPolicy does not hold: an IAM step for Bill first.
+I first said the tiles waited for the map's noise PICTURE (they finished together); the code said otherwise (`show()` awaits only
+the outlines, the picture loads by itself): on a 4x-slowed CPU the page was busy drawing, and the two simply coincided. The phone
+waterfall showed the real chain: the HTML, then the module graph in THREE rounds (home-engine, then its imports, then
+panel-findings), and no data asked for until 0.93 s. Three tries, each measured on a local server under the same throttle:
+(1) modulepreload for the 12 modules AND preload for the 11 data files: 1.83 s, WORSE than 1.44 s (the data took d3's bandwidth,
+and d3 is what every module waits for); (2) modulepreload alone: 1.14 s, but `tests/front-page.mjs` reddened on layout shift
+0.0248 (over 0.02), from the FONT SWAP: with twelve modules asked for at once, the fonts missed the first paint; (3) the three
+fonts preloaded first, then the modules: 1.15 s and a shift of 0.0003. Lessons: measure a hint, never assume it (two of three
+"obvious" speed-ups were slower or broke a gate); a preload competes for the same pipe; a font preload needs `crossorigin` or it is
+fetched twice. `tests/test_load_hints.py` holds the module list to the import graph, the fonts to fonts.css and first, and refuses a
+data preload, each proven red on its own defect.

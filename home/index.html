@@ -54,6 +54,29 @@
       }
     </script>
     <link rel="stylesheet" href="/fonts/fonts.css" />
+    <!-- MODULE PRELOADS (2026-11-24; Bill: the example "still takes a short while to load"). Without them a phone on 4G
+         found the scripts in three rounds (each module's imports only once it arrived), so it asked for no data until
+         0.93 s in. With every module the page imports named here, the example's tiles filled 0.3 s sooner on a throttled
+         phone (1.44 s to 1.14 s, measured). Data files are deliberately NOT preloaded: tried the same night, they took the
+         bandwidth d3 needed and the tiles came 0.4 s LATER. The three fonts the page draws come first: with the modules
+         asked for at once, the fonts could miss the first paint, and their swap moved the page (layout shift 0.0245 on a
+         phone, over the 0.02 tests/front-page.mjs allows). tests/test_load_hints.py holds this list to the import graph
+         and each font to fonts.css. -->
+    <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/geist.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="modulepreload" href="/js/home-engine.mjs" />
+    <link rel="modulepreload" href="/js/home-sections.mjs" />
+    <link rel="modulepreload" href="/js/count.mjs" />
+    <link rel="modulepreload" href="/js/place-box.mjs" />
+    <link rel="modulepreload" href="/js/find-words.mjs" />
+    <link rel="modulepreload" href="/js/news-signup.mjs" />
+    <link rel="modulepreload" href="/js/planes.mjs" />
+    <link rel="modulepreload" href="/js/flight_geometry.mjs" />
+    <link rel="modulepreload" href="/js/street_report.mjs" />
+    <link rel="modulepreload" href="/js/panel-findings.mjs" />
+    <link rel="modulepreload" href="/js/answer-lead.mjs" />
+    <link rel="modulepreload" href="/js/dev-demo.mjs" />
     <style>
       :root {
         --bg: #f4f3ef;
@@ -281,7 +304,14 @@
       .ans-tiles { container-type: inline-size; }
       /* Two lines kept for every line, the skeleton's too, so the frame never changes height when the figures arrive. */
       .ans-yard { display: block; min-height: calc(2.6em + 7px); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
-      .ans-yard.is-over { font-weight: 600; color: var(--orange-ink); }
+      /* The one verdict (Bill's pick A, 2026-11-24: "more colour cohesive"): every yardstick line is the same grey, and the
+         verdict reads dark and bold behind an orange mark, its words ("Over ...") still saying it. It was the only
+         orange-ink line on the card. The mark is decoration: its alt text is empty, and a transparent edge lets a Windows
+         contrast theme draw it as a ring when it drops the fill. */
+      .ans-yard.is-over { font-weight: 600; color: var(--dark); }
+      .ans-yard.is-over::before { content: "!"; content: "!" / ""; display: inline-grid; place-items: center; width: 1.25em; height: 1.25em;
+        margin-right: 5px; border: 1px solid transparent; border-radius: 50%; background: var(--orange); color: var(--dark);
+        font: 700 0.85em/1 var(--font-body); vertical-align: 0.05em; }
       .ans-yard .yd-s { display: none; }
       @container (max-width: 420px) { .ans-yard .yd-l { display: none; } .ans-yard .yd-s { display: inline; } }
       /* THREE LINES KEPT IN A NARROW ROW (audit M-4, measured 2026-11-20): the short forms wrap to three lines once the row
