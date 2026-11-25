@@ -43,6 +43,7 @@ USAGE
 from __future__ import annotations
 
 import argparse
+import calendar
 import functools
 import html
 import json
@@ -1728,6 +1729,12 @@ OPEN_DATA_PAGE = """<!doctype html>
 
 <h2>Read before using</h2>
 <p>These are borough-wide figures; a single address can differ, and aircraft noise especially varies by 10 to 15 dB within a borough. DEFRA's noise maps describe 2021, a lockdown year: their Heathrow 55 dB contour is about half the area of the Civil Aviation Authority's {caa_year} figure. Blank cells mean a figure is not published for that area, never zero. The method behind every column is in the <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/METHODOLOGY.md">methodology</a>, and the same measures are available per postcode through the <a href="/api/">API</a>.</p>
+
+<h2 id="planes">Planes overhead, under the ODbL</h2>
+<p>The counts behind the <a href="/planes-overhead/">planes overhead pages</a>, for every postcode in the {planes_districts} postcode districts they cover: from each of {planes_airports} airports ({planes_names}), the average number of planes overhead on each kind of day, {planes_months}.</p>
+<p><a class="dl" href="/open-data/{planes_zip}" download>Download {planes_zip} (a CSV and a README)</a></p>
+<p>The counts are built from adsb.lol's flight tracks, which are under the <a href="https://opendatacommons.org/licenses/odbl/1-0/">Open Database License (ODbL) 1.0</a>, so this file is under the ODbL too: free to use, share and adapt, commercially as well, if you credit "aircraft positions via adsb.lol (ODbL)" and "Sky Score (skyscore.co.uk)" and offer any database you make from it under the ODbL. The Creative Commons licence above is for the council-area file only. The README says what every column means, airport by airport.</p>
+<p>{planes_definition}</p>
 </main>
 <footer>
 <p><a href="/">Sky Score</a> &middot; <a href="/map/">Full map</a> &middot; <a href="/reports/">Reports</a> &middot; <a href="/area/">All areas</a> &middot; <a href="/how-it-works/">How it works</a> &middot; <a href="/about/">About</a> &middot; <a href="/api/">For developers</a> &middot; <a href="/privacy">Privacy</a> &middot; <a href="/terms">Terms</a></p>
@@ -1761,6 +1768,36 @@ def caa_contour_year() -> int:
     return int(json.loads((REPO / 'data' / 'covid-understatement.json').read_text(encoding='utf-8'))['caa_year'])
 
 
+def planes_offer() -> dict[str, str]:
+    """What /open-data/ says about the planes counts' ODbL download (2026-11-25), READ from data/planes/airports.json,
+    the file the download is built from (scripts/build_planes_open_data.py): districts, airports, months, definition.
+    The zip itself is not tracked; `open-data-deploy` builds it before uploading. No figure of planes per day here."""
+    meta = json.loads((REPO / 'data' / 'planes' / 'airports.json').read_text(encoding='utf-8'))
+    if str(REPO / 'scripts') not in sys.path:  # tests load this file by path, with scripts/ off the import path
+        sys.path.insert(0, str(REPO / 'scripts'))
+    from build_planes_open_data import OUT as PLANES_ZIP
+    from build_planes_pages import airport_names
+    names = airport_names()
+    codes = sorted(meta['airports'], key=lambda c: names.get(c, c))
+    firsts = sorted(meta['airports'][c]['months'][0] for c in codes)
+    lasts = sorted(meta['airports'][c]['months'][-1] for c in codes)
+
+    def month(yyyymm: str) -> str:
+        return f'{calendar.month_name[int(yyyymm[4:])]} {yyyymm[:4]}'
+
+    span = (f'{calendar.month_name[int(firsts[0][4:])]} to {month(lasts[-1])}' if firsts[0][:4] == lasts[-1][:4]
+            else f'{month(firsts[0])} to {month(lasts[-1])}')
+    in_words = {7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve'}
+    return {
+        'planes_districts': f'{len(meta["districts"]):,}',
+        'planes_airports': in_words.get(len(codes), str(len(codes))),
+        'planes_names': e(', '.join(names.get(c, c) for c in codes[:-1]) + ' and ' + names.get(codes[-1], codes[-1])),
+        'planes_months': e(span),
+        'planes_definition': e(meta['definition']),
+        'planes_zip': PLANES_ZIP.name,
+    }
+
+
 def open_data_files() -> dict[str, str]:
     rows = open_data_rows()
     columns = '\n'.join(f'<tr><td><code>{e(c)}</code></td><td>{e(d)}</td></tr>' for c, d in OPEN_DATA_COLUMNS)
@@ -1768,7 +1805,7 @@ def open_data_files() -> dict[str, str]:
         n=len(rows), c=len({r[0] for r in rows}), site=SITE, csv=OPEN_DATA_CSV,
         vintage=e(app.SNAPSHOT_VINTAGE_LABEL), methodology=e(app.METHODOLOGY_VERSION),
         licence=OPEN_DATA_LICENCE, columns=columns, caa_year=caa_contour_year(),
-        crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Open data', '/open-data/')]))
+        crumbs_ld=breadcrumb_ld([('Sky Score', '/'), ('Open data', '/open-data/')]), **planes_offer())
     return {OPEN_DATA_CSV: open_data_csv(rows), 'index.html': page}
 
 
