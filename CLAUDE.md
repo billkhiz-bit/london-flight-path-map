@@ -280,6 +280,12 @@ Or just describe what you need, I have full context of this project.
   (`councilFullName()`: "Barking" is the map's key for Barking and Dagenham, whose area link was broken until 2026-11-20), and so do
   the tab title, the panel heading and the announcement since 2026-11-23 (`tests/uk-city-panel.mjs` reads them); a card drawn
   before the outlines land is drawn again after `mapBuilt`, through `keepPlace()`.
+- **A Bay Area city opens on its answer too** (Bill's pick A, 2026-11-26, claude.ai/artifact/EqrNDgsAhwsrPo51KMAMcE): ONE rule,
+  `build_bayarea_records.answer()` (each US share against California's figure: within x1.25 either way not said, x2 or /2 "far";
+  the CITY named, a ZIP being scored as its city; few-residents crime and withheld inputs never lead; no published route leads:
+  OAK 10R carried 1.7% of Oakland's landings), written into `data/us-bayarea-front.json` and index.html's `BAYAREA_ANSWERS` (above
+  `BAYAREA_RECORDS`: the parity test reads the records to the block's last `};`), read by `build_area_pages.py`;
+  `tests/test_bayarea_answer.py` reads it back out of all three. A new Bay Area result resets the panel's scroll (`renderPlaceFacts`).
 - **The full map's postcode panel is findings first** (Bill's pick, 2026-11-04: Stitch's draft): four `.find-group`s, then every earlier section unchanged in
   `#panel-all` ("All the detail"), closed; ids stay, so the loaders fill them there. `js/panel-findings.mjs` words each finding, pure text, null when there is
   nothing true to say (`tests/panel-findings.mjs`); `fillFindings()` places them. Road noise leads with the council's rating over the postcode's own figure

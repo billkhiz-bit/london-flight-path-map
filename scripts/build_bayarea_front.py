@@ -75,6 +75,13 @@ def document() -> dict:
             'withheld': sorted(rec.get('withheld') or {}),
             'facts': [list(f) for f in records.input_facts(name, rec, anchors, sources, app.US_PRICE_TOP_CODE,
                                                            ctx.get('crimeNote'))],
+            # The answer first (Bill's pick A, 2026-11-26): the headline, pills and California comparisons the full
+            # map and the area page open on too, from the records builder's one rule.
+            'answer': records.answer(name, rec, anchors),
+            # The record's own values the front page's tiles show as their big figure (each tile's words are the facts').
+            'glance': {'transport': rec['transport'], 'impact': rec['impact'],
+                       'price': (f'${app.US_PRICE_TOP_CODE / 1_000_000:g}M+' if rec['priceTopCoded']
+                                 else f"${rec['avgPrice'] / 1_000_000:.2f}M")},
             'area_page': f'/area/{CITY}/{slug(name)}/',
         })
     return {

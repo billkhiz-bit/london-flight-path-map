@@ -1038,6 +1038,8 @@ function openCard(html, { announce = true } = {}) {
   // Read once (M-15): when focus moves to its heading, focus reads the card, so the region stays quiet.
   card.setAttribute('aria-live', announce ? 'polite' : 'off');
   card.innerHTML = html;
+  // A Bay Area city's card carries its headline (its h2's data-lead): the hero's heading says it while the card is open.
+  card.dataset.lead = card.querySelector('h2[data-lead]')?.dataset.lead || '';
   card.classList.add('is-open');
   // Option C: a card takes the answer's place, so no lead is on its way for this heading any more.
   waitLead(false);
@@ -1133,17 +1135,51 @@ function bayScoreHtml(row, zip) {
 }
 const bayInputsHtml = (row) =>
   row.facts.map(([label, figure, source]) => `<div><dt>${esc(label)}</dt><dd>${esc(figure)} <small>${esc(source)}</small></dd></div>`).join('');
+// THE ANSWER FIRST, ON US SCALES (Bill's pick A, 2026-11-26; mock-up claude.ai/artifact/EqrNDgsAhwsrPo51KMAMcE): a Bay Area
+// city's card opens on its headline (the hero's h1, as a UK postcode's does), then each US share against California's own
+// figure, a bar from a true zero to double California's (the US scale's 0) with California marked in the middle, then
+// tiles, the score, and every input with its source and year folded under "All the detail". The headline and the
+// comparisons are the row's `answer`, written by build_bayarea_records.py: the full map and the area page say the same.
+const VS_CA_LABEL = { road: 'Road noise, 45 dB or louder', crime: 'Crime, per 1,000 a year', flood: 'In the 1% flood zone' };
+const VS_CA_FACT = { road: 'Road noise', crime: 'Crime', flood: 'Flood risk' };
+function bayCompareHtml(row) {
+  const cs = row.answer?.compare || [];
+  if (!cs.length) return '';
+  const rows = cs.map((c) => {
+    const fig = (v) => `${v}${c.unit}`;
+    const width = Math.min(100, (c.value / (2 * c.anchor)) * 100);
+    const few = c.few ? '; few residents, so it reads high' : '';
+    return `<div class="row"><span>${esc(VS_CA_LABEL[c.key])}</span><span class="bar" role="img" aria-label="${esc(`${row.borough} ${fig(c.value)}; California as a whole ${fig(c.anchor)}`)}"><i style="width:${width}%"></i><b style="left:50%"></b></span><span class="val">${esc(fig(c.value))}<small>California ${esc(fig(c.anchor))}${few}</small></span></div>`;
+  }).join('');
+  const sources = cs.map((c) => row.facts.find(([label]) => label === VS_CA_FACT[c.key])?.[2]).filter(Boolean);
+  return `<div class="rows vs-ca">${rows}</div>
+    <p class="where vs-ca-key">The line is California as a whole, the figure each US scale is set against.${sources.length ? ` ${esc(sources.join('; '))}.` : ''}</p>`;
+}
+const titleWord = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : '');
+function bayGlanceHtml(row) {
+  const g = row.glance || {};
+  const fact = (fig, k, text) => `<div class="fact" data-fig="${esc(fig)}"><span class="k">${esc(k)}</span><span>${esc(text)}</span></div>`;
+  const priceSaid = row.facts.find(([label]) => label === 'Median home value');
+  const tiles = [
+    g.transport ? fact(titleWord(g.transport), 'Rail access', 'The share of residents within 800 m of a rail, metro or light-rail station') : '',
+    g.impact ? fact(titleWord(g.impact), 'Aircraft noise', "Estimated from the FAA's published routes over the city's residents, not measured") : '',
+    g.price && priceSaid ? fact(g.price, 'Home value', `Median ${priceSaid[1]} (${priceSaid[2]})`) : '',
+  ].join('');
+  return tiles ? `<div class="nearby bay-glance"><h3>At a glance</h3>${tiles}</div>` : '';
+}
 function placeCardHtml(f, zip) {
   const name = featureName(f);
   const ring = mainRing(f);
   const lat = d3.mean(ring, (p) => p[1]), lon = d3.mean(ring, (p) => p[0]);
   const near = nearestRunway(state.usProc, lat, lon);
   const row = state.bayFront?.rows.find((r) => r.borough === name);
+  const lead = row?.answer?.lead || '';
+  const facts = `<dl class="facts">${row ? bayInputsHtml(row) : ''}${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div>${routesFactHtml(f)}</dl>`;
   return `${closeButton}
-    <h2 tabindex="-1">${esc(name)}</h2>
+    <h2 tabindex="-1"${lead ? ` data-lead="${esc(lead)}"` : ''}>${esc(name)}</h2>
     <p class="where">${esc(f.properties.county)} County, California.${row ? '' : ' Its score could not be loaded just now.'}</p>
-    ${row ? bayScoreHtml(row, zip) : ''}
-    <dl class="facts">${row ? bayInputsHtml(row) : ''}${zip ? zipFactsHtml(zip) : airfieldFactHtml(lat, lon, 'the city centre')}<div><dt>Nearest of SFO, OAK and SJC</dt><dd>${near ? esc(`${near.name} ${near.rwy}, ${km(near.dist)} to the ${near.dir} of the city centre`) : `none within ${AIRPORT_SCOPE_KM} km`}</dd></div>${routesFactHtml(f)}</dl>
+    ${row ? `${bayCompareHtml(row)}${bayGlanceHtml(row)}<h3 class="bay-score-h">Its Sky Score</h3>${bayScoreHtml(row, zip)}` : ''}
+    ${row ? `<details class="ans-fold bay-detail"><summary data-hint="Every figure with its source and year, and the flight paths">All the detail</summary>${facts}</details>` : facts}
     <p class="more">${row ? `<a href="${esc(row.area_page)}">Full scorecard</a> &middot; ` : ''}<a href="${MAP_PATH}?city=bayarea&amp;borough=${encodeURIComponent(name)}">Open on the full map</a> &middot; <a href="/bay-area/">The Bay Area page</a></p>`;
 }
 // The routes on the map are SFO's, OAK's and SJC's, but the FAA holds 23 more
@@ -1383,16 +1419,21 @@ function fitLead() {
 function syncLead() {
   const p = headline();
   if (!p) return;
-  const on = Boolean(lead.text && answer?.classList.contains('is-open') && !byId('borough')?.classList.contains('is-open')
-    && !p.h1.closest('.panel')?.classList.contains('is-find'));
-  const key = on ? `${lead.example ? 'example' : 'own'}\n${lead.text}` : '';
+  const card = byId('borough');
+  const finding = p.h1.closest('.panel')?.classList.contains('is-find');
+  // A card's own headline (a Bay Area city's, 2026-11-26) while that card is open; otherwise the answer's, as before.
+  const cardLead = card?.classList.contains('is-open') && !finding ? card.dataset.lead || '' : '';
+  const on = Boolean(cardLead) || Boolean(lead.text && answer?.classList.contains('is-open') && !card?.classList.contains('is-open') && !finding);
+  const text = cardLead || lead.text;
+  const example = !cardLead && lead.example;
+  const key = on ? `${example ? 'example' : 'own'}\n${text}` : '';
   if (key !== lead.shown) {
     lead.shown = key;
     p.h1.classList.toggle('has-lead', on);
     p.a.hidden = !on;
     p.a.replaceChildren();
-    if (on && lead.example) p.a.append(Object.assign(document.createElement('span'), { className: 'h1-ex', textContent: 'Example: ' }));
-    if (on) p.a.append(lead.text);
+    if (on && example) p.a.append(Object.assign(document.createElement('span'), { className: 'h1-ex', textContent: 'Example: ' }));
+    if (on) p.a.append(text);
   }
   fitLead();
 }

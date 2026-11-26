@@ -26,6 +26,22 @@ in `data/breathe-london-sensors.json`, nothing shown yet); earlier, 2026-10-18 (
 four of the Lambda's five by-name New York branches retired, FAA cycle 2611 built on branch `faa-2611`, FEMA's
 flood fetch blocked; earlier the same day - Bay Area release 2's crime and road readers built over a 2020 Census resident frame, the flood reader waiting on FEMA's US-runner fetch; previously 2026-10-17 - batch 2 (`e71ec13`: the phone layout below 500 px of height, seven of the 9 Oct Minors, the Bay Area trend and station readers) is LIVE and verified; New York's January-July runway sample is downloading again after the laptop shut down mid-run; `CLAUDE.md` was cut from 272 KB to a 18 KB core, its stories moved verbatim to `docs/lessons/`. Earlier reviews, newest first, are in `archive/ROADMAP_last_reviewed_history.md`.
 
+> ## START HERE (2026-11-26, evening)
+>
+> **`bayarea-answer-first`, shipped on Bill's "go"** (preflight PASS 44 min; fast-forward to master; deployed with
+> data, web, home, area and meta; the origin checks are in the `project-start-here-2026-11-26` memory). Bill: "Build
+> recommended", option A of the San Francisco review
+> claude.ai/artifact/QqKyCpzTYiknHpVYha3ioz; mock-up claude.ai/artifact/EqrNDgsAhwsrPo51KMAMcE). Every Bay Area city opens on
+> its answer on all three surfaces, from ONE rule, `build_bayarea_records.answer()`: each US share against California's figure
+> (x1.25 either way not said, x2 or /2 "far"), the city named, few-residents crime and withheld inputs never leading, no
+> published route leading (OAK 10R: 1.7% of Oakland's landings). Written into `data/us-bayarea-front.json` and index.html's
+> `BAYAREA_ANSWERS`; `build_area_pages.py` reads it (50 Bay Area pages re-built, no UK page moved);
+> `tests/test_bayarea_answer.py` reads it back out of all three (proven red on a threshold mutant). Found on the way: a new Bay
+> Area result on a phone opened where the last was scrolled (live; fixed in `renderPlaceFacts`). Also on master since the
+> block below: iOS 1.0.22 ready (`ad4434a0`) and legal batch 2 LIVE (`136146c1`, all 31). Screenshots of the build:
+> claude.ai/artifact/UsaurNw4Dbe52tUm5ppTot. **Next:** option B (planes overhead for SFO, OAK and SJC: counts, a gate
+> against the FAA's movement totals, then pages) and C (EPA air quality nearby); Fri iOS 1.0.22.
+>
 > ## START HERE (2026-11-26)
 >
 > **LIVE `cdf70f9f`, 26 Nov ~13:45** (Bill: "A", ship the lot together; master fast-forwarded and pushed). On

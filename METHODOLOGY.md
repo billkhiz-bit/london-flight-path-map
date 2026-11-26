@@ -1117,6 +1117,14 @@ double or more (`us_anchored_to_score`), the shape of the UK's own road and crim
 California's published figures, recomputed from their sources by the builders, never the cohort's range. **None
 of these scales is comparable with a UK score.**
 
+**How a city's card words them** (2026-11-26): the headline on a Bay Area city's card (front page, full map, area page)
+sets each held share against the same California anchor. Within a quarter of it either way (a ratio from 0.8 to 1.25) it
+is not called more or less and is not said; at 1.25 or above it is "more" and at 0.8 or below "less"; at double or more
+(the scale's 0) or half or less it is "far" more or less. A withheld input is not compared, and a crime rate the reader
+marks as few residents (a city whose visitors outnumber its residents) is shown but never leads. The pills add rail
+access by the UK's transport bands and the aircraft band at its ends (low, high, severe). This is wording only: no score
+moves. `scripts/build_bayarea_records.py` `answer()` is the one rule.
+
 **Missing inputs follow the UK rule** (Bill, 2026-10-22): an input that cannot be measured is WITHHELD, never
 estimated, and a component below its two-input floor is dropped and its weight redistributed. Withheld: flood
 for 9 Santa Clara cities (FEMA has not determined the risk for over 5% of their residents), crime for the 5 cities

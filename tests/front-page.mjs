@@ -1076,6 +1076,22 @@ ok(/^SJC 12R, [\d.]+ km to the/.test(await fact('Nearest of SFO, OAK and SJC')),
   const scoreShown = (await page.locator('#borough .score strong').textContent()).trim();
   ok(scoreShown === Number(palo.score).toFixed(1) && card.includes(front.us_scales) && (await fact('Crime')).includes(crime[2]) && !/Not scored/.test(card),
     "Palo Alto's card carries the engine's score, the US-scales line, and each input with its source and year", `${scoreShown} / ${card.slice(0, 160)}`);
+  // The answer first (Bill's pick A, 2026-11-26): the hero's heading says the city's headline while its card is open, at the
+  // heading's own size (a card without one shrinks it to 22px), each compared share is a row against California's, and the
+  // heading gives way to the question when the card closes.
+  const said = await page.evaluate(() => {
+    const h1 = document.querySelector('.panel h1');
+    const a = h1.querySelector('.h1-a');
+    return { lead: a && !a.hidden ? a.textContent : null, size: parseFloat(getComputedStyle(h1).fontSize), rows: document.querySelectorAll('#borough .rows.vs-ca .row').length };
+  });
+  ok(Boolean(palo.answer.lead) && said.lead === palo.answer.lead && said.size > 22 && said.rows === palo.answer.compare.length,
+    "Palo Alto's card puts its headline in the hero's heading, full size, and a row per share against California's", JSON.stringify({ said, want: palo.answer.lead }));
+  await page.locator('#borough-close').click();
+  const after = await page.evaluate(() => ({ lead: document.querySelector('.panel h1 .h1-a:not([hidden])')?.textContent || null, has: document.querySelector('.panel h1').classList.contains('has-lead') }));
+  ok(after.lead === null && !after.has, 'closing the card gives the heading back to the question', JSON.stringify(after));
+  await page.fill('#pc', 'Palo Alto');
+  await page.press('#pc', 'Enter');
+  await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Palo Alto', null, { timeout: 15000 });
 }
 // The Bay Area's lines are the GENERATED routes file's (2026-10-07), the same records the live map
 // draws: so the map draws one path per record of each kind, arrivals included, and nothing from the

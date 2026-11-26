@@ -212,7 +212,8 @@
       /* A council area's card takes the panel: the question makes way for it so the card stays on one screen. A postcode's
          answer no longer does (option C, Bill 2026-11-07: a visitor's own headline has the example's size and treatment, so
          the lead, the promises and the pill stay with it, and a search moves nothing above the answer). */
-      .panel:has(#borough.is-open) h1 { font-size: 22px; margin-bottom: 8px; }
+      /* A card shrinks the question; a card WITH a headline (a Bay Area city's, 2026-11-26) keeps the heading's size for it. */
+      .panel:has(#borough.is-open) h1:not(.has-lead) { font-size: 22px; margin-bottom: 8px; }
       .panel:has(#borough.is-open) .lead, .panel:has(#borough.is-open) .promises, .panel:has(#borough.is-open) .news { display: none; }
       /* OPTION C, the answer as the headline (review prototype, 2026-11-07). The question and the answer's lead share one
          grid cell, each its own height (align-self: start), so the heading is as tall as the taller and never moves what is
@@ -493,17 +494,24 @@
       /* One column of tiles, figure on the left (measured 10 Nov: the real approach and sensor lines are long, so a two-column
          grid left the airport and the station each alone on half a row; packing them with `dense` would split seen order
          from read order, as the full map's cards found on 2026-11-09). */
-      .answer .nearby { display: grid; gap: 8px; }
-      .answer .nearby > h3 { margin-bottom: 0; }
+      /* The answer's tiles, and a Bay Area city card's "At a glance" (.bay-glance, 2026-11-26): one look, one set of rules. */
+      .answer .nearby, .borough .bay-glance { display: grid; gap: 8px; }
+      .answer .nearby > h3, .borough .bay-glance > h3 { margin-bottom: 0; }
       .answer #ans-routes, .answer #ans-air-near { display: contents; }
-      .answer .nearby .fact { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); column-gap: 12px; row-gap: 1px; align-items: start; padding: 10px 12px; border-radius: 12px; background: var(--tint); font-size: 13px; line-height: 1.35; }
+      .answer .nearby .fact, .borough .bay-glance .fact { display: grid; grid-template-columns: 7.25rem minmax(0, 1fr); column-gap: 12px; row-gap: 1px; align-items: start; padding: 10px 12px; border-radius: 12px; background: var(--tint); font-size: 13px; line-height: 1.35; }
       .answer .nearby .fact[hidden] { display: none; }
-      .answer .nearby .fact[data-fig]::before { content: attr(data-fig) / ""; grid-row: 1 / span 2; grid-column: 1; align-self: center; font: 700 19px/1.15 var(--font-display); letter-spacing: -0.01em; color: var(--dark); overflow-wrap: anywhere; }
-      .answer .nearby .fact .k, .answer .nearby .fact > :last-child { grid-column: 2; }
+      .answer .nearby .fact[data-fig]::before, .borough .bay-glance .fact[data-fig]::before { content: attr(data-fig) / ""; grid-row: 1 / span 2; grid-column: 1; align-self: center; font: 700 19px/1.15 var(--font-display); letter-spacing: -0.01em; color: var(--dark); overflow-wrap: anywhere; }
+      .answer .nearby .fact .k, .answer .nearby .fact > :last-child, .borough .bay-glance .fact .k, .borough .bay-glance .fact > :last-child { grid-column: 2; }
       .answer .nearby .fact:not([data-fig]) { grid-template-columns: minmax(0, 1fr); }
       .answer .nearby .fact:not([data-fig]) .k, .answer .nearby .fact:not([data-fig]) > :last-child { grid-column: 1; }
-      .answer .nearby .fact .k { font-weight: 600; color: var(--mid); }
-      .answer .nearby .fact > :last-child { color: var(--dark); }
+      .answer .nearby .fact .k, .borough .bay-glance .fact .k { font-weight: 600; color: var(--mid); }
+      .answer .nearby .fact > :last-child, .borough .bay-glance .fact > :last-child { color: var(--dark); }
+      /* The rest of a Bay Area city's card: its California rows, the score's heading, and the detail folded below. */
+      .borough .vs-ca { margin: 4px 0 0; }
+      .borough .vs-ca-key { margin: 8px 0 0; font-size: 12.5px; }
+      .borough .bay-score-h { margin: 16px 0 8px; padding-top: 12px; border-top: 1px solid var(--line); font: 600 16px/1.3 var(--font-display); letter-spacing: -0.01em; }
+      .borough .bay-detail { margin-top: 12px; }
+      .borough .bay-detail .facts { margin: 4px 0 10px; }
       .answer .area { display: grid; gap: 6px; margin: 12px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
       .answer .area:empty { display: none; }
       .answer .area .area-k { font-size: 12.5px; color: var(--mid); }

@@ -508,6 +508,9 @@ def gather(city: str, borough: str) -> dict | None:
         # The answer card's crime pill reads the band the full map's crime pill reads (crimeFinding: its council band),
         # never a tone re-derived from the rate. Not a fact: the page prints the rate, as before.
         'crime_band': painted.get('crime') if uk and not us_scaled else None,
+        # A US-scaled city's card (Bill's pick A, 2026-11-26): its headline and pills from the records builder's one rule,
+        # the words its front-page card and the full map open on.
+        'bay_answer': bay_records.answer(borough, scoring, anchors) if us_scaled else None,
     }
 
 
@@ -894,7 +897,11 @@ FINDING_ID = {
     'Aircraft noise band': 'aircraft-noise', 'Road noise': 'road-noise', 'Air quality': 'air-quality',
     'Flood risk': 'flood-risk', 'Recorded crime': 'crime', 'Crime': 'crime', 'Progress 8': 'schools',
     'Transport access': 'transport', 'Healthcare access': 'healthcare', 'Average price': 'price', 'Median home value': 'price',
+    'Rail access': 'rail-access',
 }
+# A Bay Area pill's finding, by the records builder's keys (build_bayarea_records.answer_pills).
+BAY_PILL_FINDING = {'road': 'Road noise', 'crime': 'Crime', 'flood': 'Flood risk', 'rail': 'Rail access',
+                    'aircraft': 'Aircraft noise band'}
 
 
 def finding(f: dict, uk: bool, strip: str = '', bars: str = '') -> str:
@@ -1058,6 +1065,12 @@ def render(data: dict) -> str:
     scores, groups = findings_html(data['facts'], data['uk'], visuals(data, city_label, data['uk']))
     items = card_items(data)
     lead = card_lead(items)
+    if data.get('bay_answer'):
+        # On US scales the card says what the front page and the full map say for this city, word for word: each share
+        # against California's own figure (the UK's council bands mean nothing here).
+        items = [{'key': p['key'], 'pill': p['pill'], 'id': FINDING_ID[BAY_PILL_FINDING[p['key']]], 'stand': p['stand']}
+                 for p in data['bay_answer']['pills']]
+        lead = data['bay_answer']['lead']
     of_n = len(app.CITIES[data['city']]['boroughs'])
     unit = ("of New York's 5 boroughs" if data['city'] == 'nyc' else f'of {of_n} Bay Area cities' if data.get('us_scales')
             else f'of {of_n} {city_label} council areas')

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-11-26 - The Bay Area's cities answer first
+
+- **Every Bay Area city opens on its answer**, as a UK postcode does: a headline saying how its road noise, crime and
+  flood risk stand against California as a whole ("San Francisco has more road noise and crime than California as a
+  whole, and far less flood risk"), with "Worth a look" and "Good here" pills. The same sentence heads the city's card on
+  the front page, the full map and its area page, from one rule: a share within a quarter of California's figure either
+  way is not called more or less, and double or half is "far" more or less. A ZIP's headline names its city, because a
+  ZIP is scored as the city where half or more of its residents live.
+- **Each share beside California's figure**: the front page draws a bar per share with California marked; the full map's
+  tiles draw the city's figure and California's from zero. Every input, with its source and year, is still there under
+  "All the detail" on the front page and below the tiles on the map.
+- **No headline leads with a flight path**: a published route says where planes may fly, not how often they do.
+- **A new Bay Area result opens at its top on a phone**: the last card's scroll position used to carry over to the next.
+
+## 2026-11-26 - The terms and privacy policy say what the site does today
+
+- The terms and privacy policy were brought up to date with the site: news by email, reports sent by email, the people
+  we contact about our work and how we choose them, the data sources each part of the site uses, and the subprocessors
+  that handle data for us. `/changes` carries the notice.
+
 ## 2026-11-26 - The FAA's November procedures, a shorter front page, and the planes counts as open data
 
 - **US flight procedures, cycle 2612**: New York's and the Bay Area's flight paths now come from the FAA's cycle 2612
@@ -19,6 +39,21 @@
 - **Sign-up fixes**: a sign-up email that fails to send no longer uses up one of the day's sends; "Use a different
   address" no longer offers a send the server would refuse; the map's score alert stays sent when the profile changes;
   and a screen reader now reads the masked email address out in words.
+
+## 2026-11-24 - Delete all saved places, and the 23 November audit's fixes
+
+- **Saved places: "Delete all"** under the list, which asks in place and removes them in one request; a browser that has
+  saved nothing sends nothing.
+- **The 23 November audit's fixes**: focus kept on buttons while they are busy, focus rings measured on the map,
+  Windows contrast themes keeping legend keys and selections, and a way off the do-not-email list on request.
+- **The API's aviation source lines** are in sentence case and name no address an area page lacks.
+
+## 2026-11-22 - News by email
+
+- **News by email** on the front page: news only, at most one email a month, confirmed with one click from the email,
+  whose links all say skyscore.co.uk. The page says a first email may land in Junk or Spam.
+- **"Who it is for"** is one band with the other ways in.
+- The English audit's wording fixes; "measured" is never said of a DEFRA map figure.
 
 ## 2026-11-20 - A council area's detail says what its area page adds, and no school claims
 

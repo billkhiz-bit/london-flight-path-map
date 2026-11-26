@@ -305,5 +305,11 @@ def test_every_card_holds_the_score_and_every_pill_reaches_its_finding():
             assert all(target in ids for _, target in links), (city, borough)
             # Never colour alone: each pill says its verdict in words, and a page with no pill has no headline.
             assert card.group(2).count('class="visually-hidden"') == len(links)
-            assert ('card-lead' in card.group(2)) == bool(links), (city, borough)
+            # A UK headline is made from the pills, so it stands exactly where they do. A US-scaled city's is made from its
+            # California comparisons alone (build_bayarea_records.answer_lead, 2026-11-26), so it stands exactly where the
+            # one rule writes one: Gilroy has rail and aircraft pills and every share close to California's, so no headline.
+            want_lead = bool(data['bay_answer']['lead']) if data.get('bay_answer') else bool(links)
+            assert ('card-lead' in card.group(2)) == want_lead, (city, borough)
+            if data.get('bay_answer') and want_lead:
+                assert f'<p class="card-lead">{pages.e(data["bay_answer"]["lead"])}</p>' in card.group(2), (city, borough)
     assert built > 100

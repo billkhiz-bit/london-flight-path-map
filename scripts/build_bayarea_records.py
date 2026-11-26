@@ -193,6 +193,104 @@ def input_facts(name, rec, anchors, sources, top_code, crime_note=None):
     return out
 
 
+# THE ANSWER FIRST, ON US SCALES (Bill's pick A, 2026-11-26; mock-up claude.ai/artifact/EqrNDgsAhwsrPo51KMAMcE): the
+# headline and pills a Bay Area city opens on, in the same words on the front page (data/us-bayarea-front.json), the full
+# map (BAYAREA_ANSWERS in index.html) and its area page (build_area_pages.py), all from here. Each US share is set against
+# California's own figure, the anchor its US scale is built on (10 at none, 5 at the anchor, 0 at double): within a
+# quarter of it either way it is neither more nor less and is said nowhere; at double or more, or half or less, it is
+# "far" more or less. A ZIP is scored as its city, so the sentence names the CITY. A withheld input is not compared, and
+# crime leaves the headline and the pills where its reader marks few residents (its rate per resident reads high, by the
+# API's own note). No published route leads: a published approach is not a busy one (Oakland's 10R carried 1.7% of
+# Oakland's landings in July-August 2026, data/us-runway-use.json), so planes wait for counts of their own.
+COMPARED = (
+    ('roadNoiseUsSharePct', 'road', 'road noise', 'Road noise', '%'),
+    ('crimePer1000Us', 'crime', 'crime', 'Crime', ''),
+    ('floodSfhaPct', 'flood', 'flood risk', 'Flood risk', '%'),
+)
+LEVEL = 1.25  # within this ratio of California's figure, either way, a share is close to it: not said
+FAR = 2.0  # at this ratio or past it, either way: "far" more or less (double is the US scale's 0)
+# The pills beyond the comparisons, by the UK pages' own rules (build_area_pages.py card_items): rail access is banded as
+# the UK's transport access is and toned as it is; the aircraft band is a verdict only at its ends.
+RAIL_STAND = {'excellent': 'good', 'good': 'good', 'poor': 'watch'}
+AIRCRAFT_STAND = {'low': 'good', 'high': 'watch', 'severe': 'watch'}
+
+
+def compare_word(value, anchor):
+    """'far more', 'more', 'less' or 'far less' than California's figure; None when close to it or not held."""
+    if not isinstance(value, (int, float)) or not isinstance(anchor, (int, float)) or anchor <= 0:
+        return None
+    ratio = value / anchor
+    if ratio >= FAR:
+        return 'far more'
+    if ratio >= LEVEL:
+        return 'more'
+    if ratio <= 1 / FAR:
+        return 'far less'
+    if ratio <= 1 / LEVEL:
+        return 'less'
+    return None
+
+
+def california_comparisons(rec, anchors):
+    """[{key, label, pill, value, anchor, unit, word, few}] for each US share the city holds, in the cards' order."""
+    out = []
+    for field, key, label, pill, unit in COMPARED:
+        value = rec.get(field)
+        if isinstance(value, (int, float)):
+            out.append({'key': key, 'label': label, 'pill': pill, 'value': value, 'anchor': anchors[field],
+                        'unit': unit, 'word': compare_word(value, anchors[field]),
+                        'few': key == 'crime' and bool(rec.get('crimeFewResidents'))})
+    return out
+
+
+def _said(c):
+    """A comparison the headline and the pills may use: off California's figure, and not a few-residents rate."""
+    return c['word'] is not None and not c['few']
+
+
+def answer_pills(rec, anchors):
+    """[{key, pill, stand}]: worth a look first, then good here, each in the cards' order."""
+    items = [{'key': c['key'], 'pill': c['pill'], 'stand': 'watch' if c['word'].endswith('more') else 'good'}
+             for c in california_comparisons(rec, anchors) if _said(c)]
+    rail = RAIL_STAND.get(str(rec.get('transport') or '').lower())
+    if rail:
+        items.append({'key': 'rail', 'pill': 'Rail access', 'stand': rail})
+    aircraft = AIRCRAFT_STAND.get(str(rec.get('impact') or '').lower())
+    if aircraft:
+        items.append({'key': 'aircraft', 'pill': 'Aircraft noise', 'stand': aircraft})
+    return [i for i in items if i['stand'] == 'watch'] + [i for i in items if i['stand'] == 'good']
+
+
+def _and(words):
+    return words[0] if len(words) == 1 else f"{', '.join(words[:-1])} and {words[-1]}"
+
+
+def _side(comparisons):
+    """'more road noise and crime' where one word serves; else each topic its own: 'more crime and far more flood risk'."""
+    words = {c['word'] for c in comparisons}
+    if len(words) == 1:
+        return f"{words.pop()} {_and([c['label'] for c in comparisons])}"
+    return _and([f"{c['word']} {c['label']}" for c in comparisons])
+
+
+def answer_lead(name, rec, anchors):
+    """The headline: how the city's held shares stand against California's; None when none stands off it."""
+    said = [c for c in california_comparisons(rec, anchors) if _said(c)]
+    more = [c for c in said if c['word'].endswith('more')]
+    less = [c for c in said if c['word'].endswith('less')]
+    if more and less:
+        return f'{name} has {_side(more)} than California as a whole, and {_side(less)}'
+    if more or less:
+        return f'{name} has {_side(more or less)} than California as a whole'
+    return None
+
+
+def answer(name, rec, anchors):
+    """{lead, pills, compare}: what a Bay Area city's card opens on, on every surface."""
+    return {'lead': answer_lead(name, rec, anchors), 'pills': answer_pills(rec, anchors),
+            'compare': california_comparisons(rec, anchors)}
+
+
 def render(anchors, rows):
     lines = [START, f'US_CALIFORNIA_ANCHORS = {anchors!r}', 'BAYAREA_BOROUGHS = {']
     for name, rec in rows:
@@ -228,8 +326,12 @@ def render_site(anchors, rows, constants):
         f"      const BAYAREA_CRIME_FEW_RESIDENTS_NOTE = {dump(constants['_CRIME_FEW_RESIDENTS_NOTE'])};",
         f'      const BAYAREA_INPUT_SOURCES = {dump(input_sources())};',
         f'      const BAYAREA_US_SCALES = {dump(us_scales(len(rows)))};',
-        '      const BAYAREA_RECORDS = {',
+        # Before the records, which close the block: tests/test_borough_data_parity.py reads them up to its last "};".
+        '      const BAYAREA_ANSWERS = {',
     ]
+    for name, rec in rows:
+        lines.append(f'        {dump(name)}: {dump(answer(name, rec, anchors))},')
+    lines += ['      };', '      const BAYAREA_RECORDS = {']
     for name, rec in rows:
         lines.append(f'        {dump(name)}: {dump(rec)},')
     lines += ['      };', SITE_END]

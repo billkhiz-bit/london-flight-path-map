@@ -49,6 +49,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Alameda has more road noise, more crime and far more flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 13.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 39.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 7.04,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "high",
+    "price": "$1.24M"
+   },
    "area_page": "/area/bayarea/alameda/"
   },
   {
@@ -96,6 +163,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Albany has more road noise than California as a whole, and far less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 10.2,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 25.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.20M"
+   },
    "area_page": "/area/bayarea/albany/"
   },
   {
@@ -143,6 +272,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Atherton has far less road noise, crime and flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 1.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 8.6,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/atherton/"
   },
   {
@@ -190,6 +386,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Belmont has less road noise, less crime and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 5.4,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 13.2,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 1.4,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/belmont/"
   },
   {
@@ -237,6 +495,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Berkeley has more road noise and far more crime than California as a whole, and far less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 11.2,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 46.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "moderate",
+    "impact": "low-moderate",
+    "price": "$1.41M"
+   },
    "area_page": "/area/bayarea/berkeley/"
   },
   {
@@ -284,6 +599,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Brisbane has far less crime and flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 7.0,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 9.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.62,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "moderate",
+    "price": "$1.23M"
+   },
    "area_page": "/area/bayarea/brisbane/"
   },
   {
@@ -331,6 +703,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Burlingame has more road noise than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 11.8,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 20.4,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 3.38,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": null,
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "moderate",
+    "impact": "moderate-high",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/burlingame/"
   },
   {
@@ -380,6 +799,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Campbell has more road noise and crime than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 11.7,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 27.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "moderate",
+    "impact": "low",
+    "price": "$1.62M"
+   },
    "area_page": "/area/bayarea/campbell/"
   },
   {
@@ -427,6 +893,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Colma has far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 8.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 469.3,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far more",
+      "few": true
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "excellent",
+    "impact": "moderate",
+    "price": "$1.06M"
+   },
    "area_page": "/area/bayarea/colma/"
   },
   {
@@ -476,6 +994,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Cupertino has less crime than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 7.4,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 15.2,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/cupertino/"
   },
   {
@@ -523,6 +1088,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Daly City has less crime and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 8.5,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 16.0,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "moderate",
+    "price": "$1.11M"
+   },
    "area_page": "/area/bayarea/daly-city/"
   },
   {
@@ -570,6 +1192,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Dublin has less road noise, less crime and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 5.5,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 15.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.28,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.32M"
+   },
    "area_page": "/area/bayarea/dublin/"
   },
   {
@@ -617,6 +1306,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "East Palo Alto has far more road noise and flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 15.0,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 21.4,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 32.45,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.10M"
+   },
    "area_page": "/area/bayarea/east-palo-alto/"
   },
   {
@@ -666,6 +1417,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Emeryville has far more road noise than California as a whole, and far less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 24.8,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 109.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far more",
+      "few": true
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": null,
+    "impact": "low-moderate",
+    "price": "$0.60M"
+   },
    "area_page": "/area/bayarea/emeryville/"
   },
   {
@@ -713,6 +1516,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Foster City has far less crime and less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 6.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 8.3,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 2.15,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "moderate",
+    "price": "$1.84M"
+   },
    "area_page": "/area/bayarea/foster-city/"
   },
   {
@@ -760,6 +1620,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Fremont has far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 6.9,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 18.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.63,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.40M"
+   },
    "area_page": "/area/bayarea/fremont/"
   },
   {
@@ -809,6 +1721,48 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": null,
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 5.9,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 23.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.03M"
+   },
    "area_page": "/area/bayarea/gilroy/"
   },
   {
@@ -858,6 +1812,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Half Moon Bay has less road noise and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 3.8,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.27,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.55M"
+   },
    "area_page": "/area/bayarea/half-moon-bay/"
   },
   {
@@ -905,6 +1906,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Hayward has more road noise and crime than California as a whole, and less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 11.1,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 30.7,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 2.02,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "moderate",
+    "price": "$0.85M"
+   },
    "area_page": "/area/bayarea/hayward/"
   },
   {
@@ -952,6 +2015,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Hillsborough has less road noise, far less crime and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 3.5,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 5.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/hillsborough/"
   },
   {
@@ -999,6 +2124,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Livermore has less road noise and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 4.8,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 19.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 1.06,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.11M"
+   },
    "area_page": "/area/bayarea/livermore/"
   },
   {
@@ -1048,6 +2235,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Los Altos has less road noise and far less crime than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 4.6,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 10.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/los-altos/"
   },
   {
@@ -1097,6 +2336,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Los Altos Hills has far less road noise and crime than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 2.6,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 3.8,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/los-altos-hills/"
   },
   {
@@ -1146,6 +2437,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Los Gatos has less crime than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 7.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 13.7,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/los-gatos/"
   },
   {
@@ -1193,6 +2531,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Menlo Park has far more flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 7.8,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 17.2,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 14.83,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/menlo-park/"
   },
   {
@@ -1242,6 +2637,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Millbrae has more road noise than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 12.1,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 3.2,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": null,
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "high",
+    "price": "$1.93M"
+   },
    "area_page": "/area/bayarea/millbrae/"
   },
   {
@@ -1291,6 +2733,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Milpitas has more road noise and crime than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 10.0,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 31.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.25M"
+   },
    "area_page": "/area/bayarea/milpitas/"
   },
   {
@@ -1338,6 +2827,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Monte Sereno has far less road noise, crime and flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 0.9,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 4.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/monte-sereno/"
   },
   {
@@ -1387,6 +2943,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Morgan Hill has far less road noise and less crime than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 2.6,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 16.3,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.21M"
+   },
    "area_page": "/area/bayarea/morgan-hill/"
   },
   {
@@ -1434,6 +3042,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Mountain View has more road noise and crime than California as a whole, and far less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 8.6,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 26.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.05,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.93M"
+   },
    "area_page": "/area/bayarea/mountain-view/"
   },
   {
@@ -1481,6 +3156,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Newark has more crime than California as a whole, and less flood risk",
+    "pills": [
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 5.7,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 32.4,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 2.36,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.14M"
+   },
    "area_page": "/area/bayarea/newark/"
   },
   {
@@ -1528,6 +3260,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Oakland has far more road noise and crime than California as a whole, and far less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 17.0,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 67.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.81,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$0.93M"
+   },
    "area_page": "/area/bayarea/oakland/"
   },
   {
@@ -1575,6 +3369,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Pacifica has less road noise, less crime and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 4.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 10.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 1.56,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "moderate-high",
+    "price": "$1.25M"
+   },
    "area_page": "/area/bayarea/pacifica/"
   },
   {
@@ -1622,6 +3478,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Palo Alto has more crime and far more flood risk than California as a whole, and less road noise",
+    "pills": [
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 5.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 30.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 22.59,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/palo-alto/"
   },
   {
@@ -1669,6 +3592,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Piedmont has far less road noise and flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 2.8,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 20.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/piedmont/"
   },
   {
@@ -1716,6 +3696,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Pleasanton has more flood risk than California as a whole, and less crime",
+    "pills": [
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 6.2,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 14.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 4.08,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$1.54M"
+   },
    "area_page": "/area/bayarea/pleasanton/"
   },
   {
@@ -1765,6 +3807,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Portola Valley has more flood risk than California as a whole, and far less road noise",
+    "pills": [
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 1.6,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 4.58,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/portola-valley/"
   },
   {
@@ -1812,6 +3906,63 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Redwood City has more road noise and far more flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 9.2,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 18.3,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 12.83,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.80M"
+   },
    "area_page": "/area/bayarea/redwood-city/"
   },
   {
@@ -1859,6 +4010,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "San Bruno has more road noise and flood risk than California as a whole, and less crime",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 11.0,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 16.4,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 3.95,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "high",
+    "price": "$1.21M"
+   },
    "area_page": "/area/bayarea/san-bruno/"
   },
   {
@@ -1908,6 +4126,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "San Carlos has far less road noise and less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 3.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 1.63,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/san-carlos/"
   },
   {
@@ -1955,6 +4225,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "San Francisco has more road noise and crime than California as a whole, and far less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 12.2,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 33.7,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.29,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "good",
+    "impact": "low-moderate",
+    "price": "$1.39M"
+   },
    "area_page": "/area/bayarea/san-francisco/"
   },
   {
@@ -2004,6 +4336,48 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "San Jose has more crime than California as a whole",
+    "pills": [
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 7.6,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 28.9,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.23M"
+   },
    "area_page": "/area/bayarea/san-jose/"
   },
   {
@@ -2051,6 +4425,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "San Leandro has more road noise, more crime and far more flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 10.4,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 34.4,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 7.11,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "high",
+    "price": "$0.84M"
+   },
    "area_page": "/area/bayarea/san-leandro/"
   },
   {
@@ -2098,6 +4539,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "San Mateo has far more road noise than California as a whole, and less crime",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 16.4,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 16.4,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 2.92,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": null,
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "moderate",
+    "impact": "moderate",
+    "price": "$1.62M"
+   },
    "area_page": "/area/bayarea/san-mateo/"
   },
   {
@@ -2145,6 +4638,68 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Santa Clara has more crime and flood risk than California as a whole, and less road noise",
+    "pills": [
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "watch"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 4.1,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 27.6,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 5.42,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.58M"
+   },
    "area_page": "/area/bayarea/santa-clara/"
   },
   {
@@ -2192,6 +4747,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Saratoga has less road noise, far less crime and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 5.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 5.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "far less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.85,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/saratoga/"
   },
   {
@@ -2239,6 +4861,73 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "South San Francisco has more road noise than California as a whole, and less crime and far less flood risk",
+    "pills": [
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "watch"
+     },
+     {
+      "key": "crime",
+      "pill": "Crime",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 10.4,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "more",
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 15.1,
+      "anchor": 21.39,
+      "unit": "",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 1.5,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "severe",
+    "price": "$1.19M"
+   },
    "area_page": "/area/bayarea/south-san-francisco/"
   },
   {
@@ -2286,6 +4975,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Sunnyvale has far more flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "watch"
+     },
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 6.4,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 20.4,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 8.12,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far more",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low-moderate",
+    "price": "$1.80M"
+   },
    "area_page": "/area/bayarea/sunnyvale/"
   },
   {
@@ -2333,6 +5074,53 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": null,
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 7.7,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "crime",
+      "label": "crime",
+      "pill": "Crime",
+      "value": 22.5,
+      "anchor": 21.39,
+      "unit": "",
+      "word": null,
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 3.67,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": null,
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "moderate",
+    "price": "$1.10M"
+   },
    "area_page": "/area/bayarea/union-city/"
   },
   {
@@ -2382,6 +5170,58 @@
      "FEMA National Flood Hazard Layer, as read October 2026"
     ]
    ],
+   "answer": {
+    "lead": "Woodside has less road noise and far less flood risk than California as a whole",
+    "pills": [
+     {
+      "key": "rail",
+      "pill": "Rail access",
+      "stand": "watch"
+     },
+     {
+      "key": "road",
+      "pill": "Road noise",
+      "stand": "good"
+     },
+     {
+      "key": "flood",
+      "pill": "Flood risk",
+      "stand": "good"
+     },
+     {
+      "key": "aircraft",
+      "pill": "Aircraft noise",
+      "stand": "good"
+     }
+    ],
+    "compare": [
+     {
+      "key": "road",
+      "label": "road noise",
+      "pill": "Road noise",
+      "value": 4.3,
+      "anchor": 6.88,
+      "unit": "%",
+      "word": "less",
+      "few": false
+     },
+     {
+      "key": "flood",
+      "label": "flood risk",
+      "pill": "Flood risk",
+      "value": 0.0,
+      "anchor": 3.14,
+      "unit": "%",
+      "word": "far less",
+      "few": false
+     }
+    ]
+   },
+   "glance": {
+    "transport": "poor",
+    "impact": "low",
+    "price": "$2M+"
+   },
    "area_page": "/area/bayarea/woodside/"
   }
  ]

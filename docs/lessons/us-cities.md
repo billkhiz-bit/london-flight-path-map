@@ -425,3 +425,34 @@ cards, `/bay-area/` (balanced, under each city's name) and 50 area pages (`/area
   Area city's ...") made the whole inline script a SyntaxError, which only compiling the script caught. Compile it.
 - **Python heredocs: a backslash before a newline inside a triple-quoted string joins the lines.** A Makefile patch
   written that way failed to match its continuation lines; write such patches to a file with raw strings.
+
+## The Bay Area answers first (2026-11-26)
+
+Bill: San Francisco "still feels unfinished". The cause was design drift, not missing data: from 4 November the UK's three
+surfaces (the front page's answer, the full map's panel, the area pages) moved to answer first, a headline, pills and
+tiles, and every redesign was gated by UK-shaped tests (Kew, Hounslow, TW4 6EX), so the Bay Area's own code paths kept the
+score-first layout and nothing failed. A side-by-side screenshot of 94103 against TW9 3PZ is what showed it
+(claude.ai/artifact/QqKyCpzTYiknHpVYha3ioz). Bill picked option A (answer first from the data held), mock-up
+claude.ai/artifact/EqrNDgsAhwsrPo51KMAMcE, drawn by redrawing the LIVE pages with the UK card's own markup.
+
+- **A published route is not a reading.** The first draft headline was "Planes on Oakland's 10R approach pass over ZIP
+  94103". `data/us-runway-use.json` (the file whose purpose line says "A published runway is not a busy one") shows OAK 10R
+  carried 1.7% of Oakland's landings in July-August 2026. The headline is now the California comparison, and
+  `tests/test_bayarea_answer.py` refuses approach, runway, departure, planes or flights in any Bay Area headline. Planes-led
+  US headlines wait for counts of their own (option B) and their gate.
+- **One rule, three holders.** `answer()` in `scripts/build_bayarea_records.py` writes the headline, pills and comparisons;
+  `build_bayarea_front.py` puts them in `data/us-bayarea-front.json` (with a `glance`: rail band, aircraft band, the price's
+  short form), `render_site()` puts `BAYAREA_ANSWERS` in index.html, and `build_area_pages.py` reads `answer()` in `gather()`.
+  The test reads each holder back independently; a threshold mutant (LEVEL 1.2) reddened the edge cases and all three.
+- **The new constant went ABOVE the records** in the generated block: `tests/test_borough_data_parity.py` reads
+  `BAYAREA_RECORDS` up to the block's LAST `};`, and a constant after it made the parity test a JSON error.
+- **A UK card's headline is made from its pills; a Bay Area card's is not.** `test_area_findings.py` held "a headline
+  exactly where there are pills". Gilroy and Union City have rail and aircraft pills and every share within a quarter of
+  California's, so no headline: the test now says the US rule beside the UK one, rather than loosening it.
+- **The front page's heading**: a card used to shrink the hero's h1 to 22 px (`.panel:has(#borough.is-open) h1`); a card
+  with a headline (`h2[data-lead]`, copied to `#borough`'s `data-lead` by `openCard()`) keeps the heading's size, and
+  `syncLead()` shows the card's lead while it is open. Closing the card gives the heading back to the question.
+- **Found on the way, live since the cards were scored**: on a phone a NEW Bay Area result opened where the previous card was
+  scrolled (`#tab-analysis` kept 685 px; UK results reset). Pressing a pill made it easy to hit; `renderPlaceFacts()` now
+  resets the scroll for a new result, and a redraw keeps its place through `keepPlace()`. `tests/bayarea-map.mjs`'s panel
+  helper reads the card's place line (`.ac-where`), the panel's real first line.

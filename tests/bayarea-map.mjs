@@ -90,7 +90,9 @@ const panel = (page) =>
   page.evaluate(() => {
     const content = document.getElementById('sidebar-content');
     const box = content.getBoundingClientRect();
-    const first = content.querySelector('p');
+    // The panel's first line: a scored city's answer card opens on its place line (.ac-where, 2026-11-26), any other card
+    // on its first paragraph.
+    const first = content.querySelector('.ac-where, p');
     const r = first?.getClientRects()[0];
     const top = r ? document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) : null;
     return {
@@ -234,6 +236,27 @@ for (const vp of [
     `${L} ZIP 94301 typed on London's map opens Palo Alto with its ZIP line, scored as the city`,
     `${zip.title} / ${zip.text.slice(0, 160)}`
   );
+  // 4z. The answer first (Bill's pick A, 2026-11-26): the card opens on the headline and pills the front page and the area
+  // page say, read here from the FRONT PAGE'S file (the other holder of build_bayarea_records.answer()), each compared share
+  // drawn beside California's, and a pill opens the tile it names.
+  {
+    const front = JSON.parse(await readFile(join(ROOT, 'data', 'us-bayarea-front.json'), 'utf8'));
+    const want = front.rows.find((r) => r.borough === 'Palo Alto').answer;
+    const card = await page.evaluate(() => ({
+      head: document.querySelector('#sidebar-content .answer-card .ac-head')?.textContent.trim(),
+      pills: [...document.querySelectorAll('#sidebar-content .ac-pill')].map((b) => b.dataset.pillKey),
+      bars: document.querySelectorAll('#sidebar-content details.tile .t-bars').length,
+    }));
+    ok(
+      Boolean(want.lead) && card.head === want.lead && JSON.stringify(card.pills) === JSON.stringify(want.pills.map((x) => `${x.key}|${x.pill}`)) && card.bars === want.compare.length,
+      `${L} Palo Alto's card opens on the answer's headline and pills, each compared share beside California's`,
+      JSON.stringify({ card, lead: want.lead })
+    );
+    const first = want.pills[0];
+    await page.locator(`#sidebar-content .ac-pill[data-pill-key="${first.key}|${first.pill}"]`).click();
+    const opened = await page.evaluate((k) => document.querySelector(`#sidebar-content details.tile[data-finding="${k}"]`)?.open === true, first.key);
+    ok(opened, `${L} the "${first.pill}" pill opens its tile`, `tile ${first.key} open: ${opened}`);
+  }
 
   // 4a. The ZIP tier: its own AREA's facts and outline, then its city's (layer 1, 2026-10-05).
   await page.evaluate(() => switchCity('london'));
