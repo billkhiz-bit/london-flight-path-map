@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-11-26 - The FAA's November procedures, a shorter front page, and the planes counts as open data
+
+- **US flight procedures, cycle 2612**: New York's and the Bay Area's flight paths now come from the FAA's cycle 2612
+  (effective 26 November 2026). No route changed at any of the seven airports, so no score moved; the credit line names
+  the new cycle on the API, the full map and the Bay Area page.
+- **The example answer, easier to read**: the front page's example card is one grey, with one dark verdict marked "!"
+  where a figure is over its WHO guideline. The page also names the scripts and fonts it needs up front, so the example
+  fills in sooner on a phone (1.44 s to 1.14 s, measured on a throttled phone).
+- **A shorter front page**: the sections below the walkthrough are one band: the other ways in (find areas, reports,
+  data), the developers' request beside them, who it is for, and Book a demo. The approach strip's section is gone from
+  the front page; it stays on How it works.
+- **The planes counts as open data**: the planes overhead counts are offered as a download on the open data page under
+  the Open Database Licence, as their source, adsb.lol's flight tracks, requires.
+- **Unused notes removed**: 152 hand-written council notes on flood, air, healthcare and transport (London and New
+  York) that no page showed were deleted from the data file. Four London flood notes had contradicted the Environment
+  Agency's own figures.
+- **Sign-up fixes**: a sign-up email that fails to send no longer uses up one of the day's sends; "Use a different
+  address" no longer offers a send the server would refuse; the map's score alert stays sent when the profile changes;
+  and a screen reader now reads the masked email address out in words.
+
 ## 2026-11-20 - A council area's detail says what its area page adds, and no school claims
 
 - **"All the detail" for a council area, rebuilt**: on the full map, a council area's "All the detail" repeated the
