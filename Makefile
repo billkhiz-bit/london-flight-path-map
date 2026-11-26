@@ -689,12 +689,20 @@ open-data-deploy:
 	# area pages. Its own target because area-deploy forces text/html on every
 	# file, which would serve the CSV as a web page. Rebuild with the area pages
 	# after every vintage roll; --check reds while either is stale.
+	# The planes overhead counts under the ODbL (2026-11-25): a derivative of adsb.lol's ODbL tracks, so offered
+	# under the same licence. Built here from data/planes/ (not tracked: a binary that moves with every planes roll),
+	# deterministic, so the copy uploaded is the one --check proves. Run this target after every planes roll. Built
+	# FIRST: if it fails, the page that links it is not uploaded either.
+	python scripts/build_planes_open_data.py --write
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp open-data/index.html \
 		s3://$(S3_BUCKET)/open-data/index.html \
 		--content-type "text/html" --cache-control "no-cache" --region $(AWS_REGION)
 	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp open-data/sky-score-boroughs.csv \
 		s3://$(S3_BUCKET)/open-data/sky-score-boroughs.csv \
 		--content-type "text/csv; charset=utf-8" --cache-control "no-cache" --region $(AWS_REGION)
+	AWS_PROFILE=$(AWS_PROFILE_NAME) aws s3 cp open-data/sky-score-planes-overhead.zip \
+		s3://$(S3_BUCKET)/open-data/sky-score-planes-overhead.zip \
+		--content-type "application/zip" --cache-control "no-cache" --region $(AWS_REGION)
 	MSYS_NO_PATHCONV=1 AWS_PROFILE=$(AWS_PROFILE_NAME) aws cloudfront create-invalidation \
 		--distribution-id $(CF_DISTRIBUTION) \
 		--paths '/open-data/*'

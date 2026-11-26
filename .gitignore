@@ -322,3 +322,6 @@ design/vendor/
 # Written by scripts/preflight.sh on every run: its whole output (last.log), its
 # exit code (last.exit) and how long it took (last.ms). Local only.
 .preflight/
+
+# The planes overhead ODbL download (2026-11-25): built by open-data-deploy from data/planes/, never committed.
+/open-data/*.zip

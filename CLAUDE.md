@@ -195,6 +195,10 @@ Or just describe what you need, I have full context of this project.
 - **`check_flood_georef.py` re-samples a small-sample miss on 64 cells a class at 92% before failing** (2026-11-05): at preflight's
   4 a class one boundary cell is 75%, under the 80% bar, all day, and 16 at 90% was too small to say so too (`docs/lessons/flood.md`). Judge a
   change here per city on the real sampler, never on a formula: the binomial called 48 at 90% an improvement, and three cities' bad edges got easier. Repeat draws in `spread_samples` are on purpose.
+- **The planes counts are OFFERED under the ODbL** (they derive from adsb.lol's ODbL tracks; built 2026-11-25, four weeks
+  after going live): `/open-data/#planes` links `sky-score-planes-overhead.zip`, which `open-data-deploy` BUILDS from
+  `data/planes/` (`scripts/build_planes_open_data.py`, deterministic, never committed); after every planes roll run
+  `open-data-deploy` too. `tests/test_planes_open_data.py` holds the offer while `airports.json` names the ODbL.
 - **A download's 200 is not the product**: test its magic bytes (FEMA's portal answered a missing county
   product with its page template, 2026-10-20; `docs/lessons/us-cities.md`).
 - **A tile service's 404 is "not cached", never "quiet"**: measure which levels a cache holds before reading
@@ -263,7 +267,8 @@ Or just describe what you need, I have full context of this project.
   AREA PAGE says, word for word (`tests/test_borough_card.py` runs it on every borough against `card_lead()`; `tests/uk-city-panel.mjs` reads five built
   pages). No advice: `getVerdict()` is gone, the curated `property` notes are DELETED (38: London's 33, New York's 5; Bill, 2026-11-19)
   and so are the curated `schoolNote`s (38, "Best state schools in London" and the like; Bill, 2026-11-20; `tests/test_borough_card.py`
-  refuses either back, `build_borough_bands.py --check` the key), and no `note` may advise or claim an ungated superlative (audit I-1).
+  refuses either back, `build_borough_bands.py --check` the key), and the 152 `floodNote`/`aqNote`/`healthcareNote`/`transportNote`s
+  (Bill's yes, 2026-11-25: read by nothing but still served; Hammersmith and Fulham's said "High flood risk" beside the EA's 0.0%), and no `note` may advise or claim an ungated superlative (audit I-1).
   It `cancelSearch()`es first: its slots would otherwise take a postcode's late answers.
   **Its "All the detail" is option A** (Bill's pick, 2026-11-20, claude.ai/artifact/CT9F6yrWJgLCEn17ggoSFw): the old sections repeated the tiles
   and are GONE; two `drow`s hold what the AREA PAGE has and the tiles do not: "Planes overhead, district by district" (`councilPlanes()`: the

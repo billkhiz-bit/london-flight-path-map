@@ -899,13 +899,12 @@ FOREIGN_KEYS = frozenset(
         'schoolsVintage',
         # Curated London/NYC editorial, hand-written, no script behind them. `schoolNote` is NOT here: the 38 were
         # deleted on Bill's word, 2026-11-20 ("Best state schools in London" and the like, claims no gate held), so
-        # --check now refuses one coming back as an unknown key (tests/test_borough_card.py too).
-        'aqNote',
+        # --check now refuses one coming back as an unknown key (tests/test_borough_card.py too). Nor are `floodNote`,
+        # `aqNote`, `healthcareNote` and `transportNote`: 152 deleted on Bill's yes, 2026-11-25. No page or the API read
+        # them any more, yet the file served them, and four London flood notes said "High" or "Significant" where the
+        # EA's own share of postcodes at medium or high risk was 0.0 to 1.2% (Hammersmith and Fulham: "High", 0.0%).
         'crime',
-        'floodNote',
-        'healthcareNote',
         'schools',
-        'transportNote',
     }
 )
 

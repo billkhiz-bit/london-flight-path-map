@@ -1834,9 +1834,10 @@ const BOOK_WANT = {
   '/pricing': ['book-demo-pricing-bar', 'book-demo-pricing-page'],
   '/api/': ['book-demo-api-bar', 'book-demo-api-page'],
   '/score-demo/index.html': ['book-demo-score-demo-page'],
-  // The front page: the "Can I use it for my business?" answer, then the closing band, each named by its data-book-place
-  // (front-page-v3, Bill's mock v8, 2026-11-03; the business card's button, `card`, from 2026-11-02 until then).
-  '/': ['book-demo-home-faq', 'book-demo-home-band'],
+  // The front page: the foot of Beyond one street, then the "Can I use it for my business?" answer, each named by its
+  // data-book-place (front-page-v3, Bill's mock v8, 2026-11-03; the business card's button, `card`, from 2026-11-02 until
+  // then). `band` was the page's closing band until 2026-11-25 (Bill's pick A), when it became that band's foot.
+  '/': ['book-demo-home-band', 'book-demo-home-faq'],
 };
 for (const [path, want] of Object.entries(BOOK_WANT)) {
   const inBar = want.some((w) => w.endsWith('-bar'));
