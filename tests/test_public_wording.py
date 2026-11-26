@@ -374,6 +374,9 @@ AI_ALLOWED = [
      'where AI is not used'),
     ('talks/how-sky-score-works.pdf', r'No artificial intelligence is involved anywhere on the website',
      'where AI is not used'),
+    # Legal batch 2, A4 (Bill's yes, 2026-11-26): the subprocessor that writes the API assistant's answers, named because
+    # UK GDPR requires it (SUBPROCESSORS.md row 18 has since 2026-09-07). A disclosure, not how the product works.
+    ('privacy.html', r'Amazon Web Services \(Bedrock\)', 'a privacy disclosure of a subprocessor'),
 ]
 # Bill ruled on 2026-10-25 on the two write-ups once pinned here: "The 57 checks" was archived (repo `archive/`,
 # its two S3 copies deleted), and "How Sky Score works" says only that the assistant's question is processed

@@ -233,19 +233,19 @@
           </nav>
         </div>
         <h1>Privacy Policy</h1>
-        <p class="updated">Last updated: 2026-11-24 · Effective: 2026-05-09</p>
+        <p class="updated">Last updated: 2026-11-26 · Effective: 2026-05-09</p>
       </header>
 
       <main>
 
       <div class="tldr">
-        <p><strong>TL;DR</strong></p>
+        <p><strong>In short</strong></p>
         <p>Browsing and scoring collect no personal data and need no account. If you SAVE a place, your browser generates a random device token so your own saved list comes back to you - it identifies a device, not a person, and it is never used for tracking or advertising. See &sect;2e.</p>
         <p>The exceptions are all optional, and &sect;2a lists every one. For example, if you request a free API key, we store the email address you give us to issue and manage that key.</p>
-        <p>Booking a demo (for businesses) happens on Calendly, a US company, which receives the name, email address and answer you enter there. See &sect;2a.</p>
-        <p>We don't sell anything to anyone.</p>
+        <p>Booking a demo (for businesses) happens on Calendly, a US company, which receives the name, email address and the answer to its one question that you enter there. See &sect;2a.</p>
+        <p>We don't sell your data to anyone.</p>
         <p>Your location stays on your device unless you tap "Score where I am" - then it's used once to find your postcode and discarded.</p>
-        <p>Anonymous analytics (no cookies, no profiles) tell us roughly how many people use the app.</p>
+        <p>Anonymous analytics (no cookies, no profiles) tell us roughly how many people use the site and the app.</p>
       </div>
 
       <h2>1. Who we are</h2>
@@ -281,11 +281,11 @@
         We use it for that single purpose: to send you a short note when the underlying data is refreshed, which happens roughly
         quarterly. Lawful basis: consent (UK GDPR Article 6(1)(a)), which you give by pressing Confirm on the page our email links to
         and can withdraw at any time by replying to any message or emailing us. An address that is not confirmed within 24 hours
-        can no longer be confirmed and never joins the list: the pending request stops working at 24 hours and the count at the
-        end of its day, and both are deleted automatically within a few days (pressing Confirm deletes the request at once).
-        Opening the link alone confirms nothing, so a mail scanner that follows it cannot sign you up. It is never sold, never shared, and never used for marketing anything else.
-        Until you confirm, the request is held in a separate pending table in the same account; once you do, the address is
-        stored in the signup register (DynamoDB) in our AWS account in <code>eu-west-2</code> (London), marked with the source
+        can no longer be confirmed and never joins the list. The pending request stops working at 24 hours, and the count
+        at the end of its day; both are deleted automatically within a few days (pressing Confirm deletes the request at once).
+        Opening the link alone confirms nothing, so a mail scanner that follows it cannot sign you up. Your email address is never sold, never shared, and never used for marketing anything else.
+        Until you confirm, the request is held in a separate pending table in our AWS account; once you do, the address is
+        stored in the signup register (DynamoDB) in <code>eu-west-2</code> (London), marked with the source
         <code>consumer</code> so it is distinguishable from an API key signup. Kept until you ask us to remove it.
         Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> and we delete the record within 30 days.
         <strong>These notes are sent by hand.</strong> We say so because the alternative is implying an automated alerting service
@@ -316,11 +316,11 @@
         usual way.</span>
       </p>
       <p>
-        <strong>API key signup (optional):</strong> if you request a free API key on the
+        <strong>API key sign-up (optional):</strong> if you request a free API key on the
         <a href="/score-demo/index.html">developer demo page</a>, we collect the email address you enter (and a display name if you
         choose to give one). We use it solely to issue your key, enforce the one-key-per-email limit, contact you about your key if
         we ever need to (for example abuse or deprecation notices), and revoke the key on request. Lawful basis: performance of a
-        contract (UK GDPR Article 6(1)(b)), you are asking us to issue and operate the key, with our legitimate interest in
+        contract (UK GDPR Article 6(1)(b)): you are asking us to issue and operate the key, with our legitimate interest in
         preventing abuse (Article 6(1)(f)) for the rate-limit and one-key-per-email checks. We first email you a confirmation
         link; until you press Confirm on the page it opens, the address, any display name and a random token are held in a
         separate pending table and no key is issued. Pressing Confirm deletes the request at once; one that is not confirmed
@@ -333,6 +333,15 @@
         days.
         Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> to delete your address; we revoke the key and remove the
         record within 30 days.
+      </p>
+      <!-- Added 2026-11-26 (legal batch 2, A4): SUBPROCESSORS.md row 18 has named Bedrock since 2026-09-07; this page
+           had not. backend/lambdas/chat/app.py: Amazon Nova 2 Lite, in Amazon\'s US regions; it logs a question\'s length,
+           never its text. -->
+      <p>
+        <strong>The API assistant (for API customers; added 26 November 2026):</strong> if you use the API&rsquo;s
+        assistant (<code>/v1/chat</code>), your question and the postcode are sent to Amazon in the United States to write
+        the answer. Amazon does not keep them or use them to train its models, and we ask for nothing personal: do not
+        include personal details in a question. Our own logs record how long the question was, never its text.
       </p>
       <!-- Added 2026-10-29 with the Book a demo buttons (js/count.mjs DEMO_BOOKING_URL). The booking form's one
            question is Bill's choice of 2026-10-30: "What would you like to get out of the call? Add a postcode or two
@@ -348,22 +357,25 @@
         add as a guest, and passes them to us; the
         invitation reaches our Google calendar and the call is held on Google Meet. We use them only to arrange the call and
         to prepare for it (we look up your postcodes beforehand). Lawful basis: steps taken at your request before entering
-        into a contract (UK GDPR Article 6(1)(b)). It is never sold, never shared beyond the services named here, and never
+        into a contract (UK GDPR Article 6(1)(b)). Your booking is never sold, never shared beyond the services named here, and never
         used for marketing anything else. We keep a booking for up to 12 months after the call, so we can follow up on
         anything agreed, then delete it. Email <a href="mailto:support@skyscore.co.uk">support@skyscore.co.uk</a> and we
         delete it from Calendly and our calendar sooner, within 30 days.
       </p>
 
-      <h3>2b. Data the app uses temporarily, on your device only</h3>
+      <h3>2b. Data the app uses temporarily, and does not store</h3>
       <p><strong>Postcode lookups.</strong> Whenever you search a postcode on the website, and as you type in the search box, the text you enter is sent to <a href="https://api.postcodes.io">api.postcodes.io</a> to resolve it to a location. It is not stored by us. Corrected 2026-09-07: this section previously described that lookup as something only the native app did.</p>
-      <p>When you tap <strong>"Score where I am"</strong> in the native iOS or Android app:</p>
+      <p>When you tap <strong>"Score where I am"</strong> in the native iOS app (an Android version is not yet published):</p>
       <ul>
         <li>Your device's GPS coordinates (latitude + longitude) are read by the app</li>
-        <li>The coordinates are sent to <a href="https://api.postcodes.io">api.postcodes.io</a> (a free UK government postcode lookup service operated under the Open Government Licence)</li>
+        <li>The coordinates are sent to <a href="https://api.postcodes.io">api.postcodes.io</a> (a free postcode lookup service built on UK government open data, under the Open Government Licence)</li>
         <li>The response (your nearest UK postcode) is shown to you and used to fetch a Sky Score</li>
         <li>The coordinates are <strong>not</strong> stored, logged, profiled, or shared anywhere else</li>
       </ul>
       <p>If you deny the location permission, the rest of the app works normally - you just have to type a postcode manually.</p>
+      <p><strong>Street reports.</strong> Making a street report sends your postcode to postcodes.io and to our noise
+        service. The report is made in your browser; we store nothing about it.</p>
+
 
       <h3>2c. Anonymous usage analytics</h3>
       <p>
@@ -410,12 +422,30 @@
         The token has existed for as long as saving has, and it is stored server-side, so those
         statements were wrong for anyone who had saved a place.
       </p>
+      <h3 id="reports-by-email">2f. Reports you order by email</h3>
+      <p>
+        If you or your firm email us to order a report, we use the addresses and details you send only to make that report
+        and invoice it. We keep the email and the invoice for six years, as UK accounting rules require, and delete the
+        addresses of the properties once the report has been delivered and paid for.
+      </p>
+
+      <h3 id="people-we-contact">2g. People we contact</h3>
+      <p>
+        If you run or represent an organisation we contact about Sky Score (a residents&rsquo; association, a council team or a
+        firm), we hold the organisation&rsquo;s name and the contact details it publishes, such as a role email address or
+        office phone number, which we find on its own website or on a public register (the Charity Commission or Companies
+        House). We use them only to tell the organisation about Sky Score and to follow up at most twice, because we have a
+        legitimate interest in letting organisations know about a free, relevant service. We do not buy contact lists. We
+        keep these details for 12 months after our last contact, or less if you ask. If you would rather not hear from us,
+        reply to say so: we will stop, and keep only a note of the address so that we never contact it again.
+      </p>
+
 
       <h2>3. What data we do NOT collect</h2>
       <ul>
         <li>We do not track you across other apps or websites</li>
         <li>We do not build advertising profiles</li>
-        <li>We do not sell, rent, or license any data to third parties</li>
+        <li>We do not sell, rent, or license any personal data to third parties</li>
         <li>We do not use third-party analytics that profile users (no Google Analytics, no Facebook Pixel, no Mixpanel, no Segment)</li>
         <li>We do not use cross-app identifiers (no IDFA, no ADID, no device fingerprinting)</li>
         <li>We do not access your messages, photos, contacts, calendar, microphone, or camera</li>
@@ -446,9 +476,15 @@
               <td>Multi-region</td>
             </tr>
             <tr>
+              <td>Amazon Web Services (Bedrock)</td>
+              <td>Writes the answer for the API assistant (<code>/v1/chat</code>), from the score&rsquo;s own numbers</td>
+              <td>The question text and the postcode an API customer sends</td>
+              <td>United States (Amazon&rsquo;s US regions), covered by the AWS Data Processing Addendum</td>
+            </tr>
+            <tr>
               <td>api.postcodes.io</td>
-              <td>Postcode lookup from coordinates</td>
-              <td>Lat/lon (transient)</td>
+              <td>Postcode lookup from typed text or coordinates</td>
+              <td>Search text or lat/lon (transient)</td>
               <td>UK</td>
             </tr>
             <tr>
@@ -516,7 +552,7 @@
             </tr>
             <tr>
               <td>FEMA, US EPA, and the US Department of Transportation (its noise map is served from Esri's ArcGIS Online, tiles.arcgis.com)</td>
-              <td>Flood, air quality and noise map layers, New York view only</td>
+              <td>Flood, air quality and noise map layers, New York and Bay Area views of the full map</td>
               <td>Your IP address and the map area you are viewing</td>
               <td>US</td>
             </tr>
@@ -533,8 +569,8 @@
       <p>
         Everything in the "transient" rows above is passed straight through to answer your search and is never
         stored by Sky Score. The rows marked US or Germany are the ones worth noting if you need UK-only
-        processing: the healthcare lookup goes to a server in Germany, your browser loads fonts and the
-        New York map layers from US-hosted services, and a demo booking is held by Calendly in the US. We correct this table when the code changes, and on
+        processing: the healthcare lookup goes to a server in Germany, your browser loads the
+        New York and Bay Area map layers from US-hosted services (fonts come from our own site), and a demo booking is held by Calendly in the US. We correct this table when the code changes, and on
         2026-08-04 we corrected it because it had been incomplete rather than because the code had changed.
       </p>
       <p>
@@ -555,11 +591,13 @@
              and NHS ODS since v3.7, both of which the API already credits per component in `sourceBreakdown`; DEFRA
              background maps and EA RoFRS drive the air quality and flood map layers. This paragraph had not been
              revisited since those landed, so the page understated what the product is built from. -->
-        <strong>Two are not, and this page previously said otherwise (corrected 2026-08-03):</strong>
+        <strong>Some are not, and this page previously said otherwise (corrected 2026-08-03):</strong>
         nearby-facility data comes from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> under the
-        <a href="https://opendatacommons.org/licenses/odbl/">Open Database Licence 1.0</a>, which is share-alike rather than
-        permissive, and <a href="https://tfl.gov.uk/info-for/open-data-users/our-open-data">TfL Open Data</a> carries its own
-        licence and its own attribution requirement. Full per-source detail is in
+        <a href="https://opendatacommons.org/licenses/odbl/">Open Database License 1.0</a>, which is share-alike rather than
+        permissive; <a href="https://tfl.gov.uk/info-for/open-data-users/our-open-data">TfL Open Data</a> carries its own
+        licence and its own attribution requirement; the flight routes come from the UK Aeronautical Information Publication (NATS), which is not openly
+        licensed; and the planes overhead counts are built from adsb.lol&rsquo;s aircraft positions, under the Open
+        Database License. Full per-source detail is in
         <a href="https://github.com/billkhiz-bit/london-flight-path-map/blob/master/LICENSING.md">LICENSING.md</a>.
         We don't request data about you from any of these sources.
       </p>
@@ -567,7 +605,9 @@
       <h2>6. Your rights (UK GDPR)</h2>
       <p>Even though we hold very little data about you, your UK GDPR rights apply. You can:</p>
       <ul>
-        <li>Ask what data we hold about you. For most visitors this is nothing; if you have saved a place it is that list and its device token (&sect;2e), if you requested an API key it is your email address, and if you booked a demo it is that booking (&sect;2a)</li>
+        <li>Ask what data we hold about you. For most visitors this is nothing; if you have saved a place it is that list and its device token (&sect;2e); if you joined news by email it is
+        your email address; if you joined the score-update list it is your email address and the postcode you asked about;
+        if you requested an API key it is your email address; and if you booked a demo it is that booking (&sect;2a)</li>
         <li>Ask us to delete any data we do hold (we'll do it within 30 days)</li>
         <li>Withdraw consent to anything we're processing under consent (uninstalling the app revokes location consent)</li>
         <li>Lodge a complaint with the Information Commissioner's Office: <a href="https://ico.org.uk">ico.org.uk</a></li>
@@ -576,7 +616,7 @@
 
       <h2>7. Children</h2>
       <p>
-        Sky Score has no minimum age requirement and does not knowingly collect data from anyone, including children. The iOS app is
+        Sky Score has no minimum age requirement and does not knowingly collect data from children. The iOS app is
         rated 4+ on the App Store.
       </p>
 
