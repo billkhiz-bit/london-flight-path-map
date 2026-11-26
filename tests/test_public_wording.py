@@ -27,6 +27,11 @@ import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 
+try:
+    from .test_llms_txt import COVERAGE  # the coverage sentence's pattern: one holder, read, never retyped
+except ImportError:  # loaded by its bare name, as tests/test_llms_txt.py does to read this gate's file list
+    from test_llms_txt import COVERAGE
+
 ROOT = Path(__file__).resolve().parents[1]
 
 # Attributes whose value a visitor reads, or a search engine / link preview shows.
@@ -291,9 +296,20 @@ def news_issues():
     return sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / 'backend' / 'lambdas' / 'news' / 'issues').glob('*.json'))
 
 
+def store_texts():
+    """The App Store listing and the notes Apple's reviewer reads (mobile/fastlane/metadata/ios; joined 2026-11-26): the
+    Makefile never uploads them, so this gate never read them, and the listing kept May's claims ("2022 data", "any UK
+    postcode", every source under the OGL) through every audit. submit_for_review uploads them (skip_metadata: false),
+    so they face the same rules as a page. Android's listing (metadata/android) still holds May's text: it joins here
+    when its text is rewritten for the first Play submission."""
+    base = ROOT / 'mobile' / 'fastlane' / 'metadata' / 'ios'
+    files = list((base / 'en-GB').glob('*.txt')) + [base / 'review_information' / 'notes.txt']
+    return sorted(p.relative_to(ROOT).as_posix() for p in files)
+
+
 def everything():
     return (published_pages() + published_pdfs() + published_modules() + published_texts() + published_json()
-            + news_issues())
+            + news_issues() + store_texts())
 
 
 def allowed_for(path, allowed):
@@ -550,6 +566,30 @@ class WordingTests(unittest.TestCase):
         self.assertEqual(found, {}, 'how often planes pass, which only coverage_verdict() airports may say:\n'
                          + fmt(found))
 
+    def test_liveability_is_spelt_the_british_way(self):
+        # The App Store listing and review notes said "livable" and "livability" until 2026-11-26, read by no gate.
+        found = hits(r'\blivab(?:le|ility|ilities)\b', everything(), re.I)
+        self.assertEqual(found, {}, 'the US spelling of liveability (British English everywhere):\n' + fmt(found))
+
+
+STORE_DESCRIPTION = 'mobile/fastlane/metadata/ios/en-GB/description.txt'
+
+
+class StoreListingTests(unittest.TestCase):
+    """The App Store listing says coverage as the site does (2026-11-26): May's listing said "any UK postcode" while
+    the site scored 97 council areas in 13 UK city regions, and no gate read it."""
+
+    def test_the_description_says_the_sites_coverage_sentence(self):
+        site = COVERAGE.search((ROOT / 'how-it-works' / 'index.html').read_text(encoding='utf-8'))
+        ours = COVERAGE.search(shown(STORE_DESCRIPTION)[0])
+        self.assertIsNotNone(site, 'how-it-works no longer says the coverage sentence: find its holder first')
+        self.assertIsNotNone(ours, 'the App Store description must say the coverage sentence, word for word')
+        self.assertEqual(ours.groups(), site.groups(), 'the listing\'s coverage figures differ from the site\'s')
+
+    def test_no_store_text_claims_all_of_the_uk(self):
+        found = hits(r'\b(?:any|every|all)\s+UK\s+postcodes?\b|\banywhere in the UK\b', store_texts(), re.I)
+        self.assertEqual(found, {}, 'the store text claims all of the UK (say the coverage sentence):\n' + fmt(found))
+
 
 class RulesCatchTheirDefectsTests(unittest.TestCase):
     """Each rule, shown the defect it exists for, must fail: a pattern loosened later turns this red. Each defect
@@ -602,6 +642,13 @@ class RulesCatchTheirDefectsTests(unittest.TestCase):
          '<p>Both are the CAA\'s model, so that is an order of magnitude, not a correction.</p>'),
         (WordingTests, 'test_no_page_says_how_often_planes_pass', 'data/aircraft-quiet-regions.json',
          '{"airports":[{"code":"LHR","rules":["About 120 planes a day pass over."]}]}'),
+        # The App Store text is read too (2026-11-26), as plain text: May's listing, word for word.
+        (WordingTests, 'test_liveability_is_spelt_the_british_way', 'mobile/fastlane/metadata/ios/review_information/notes.txt',
+         'postcode-level scores on aircraft noise, affordability, growth, and overall livability.'),
+        (StoreListingTests, 'test_no_store_text_claims_all_of_the_uk', STORE_DESCRIPTION,
+         'Search any UK postcode to see aircraft noise.'),
+        (StoreListingTests, 'test_the_description_says_the_sites_coverage_sentence', STORE_DESCRIPTION,
+         'Covers 33 London boroughs and New York.'),
     ]
 
     def test_each_rule_fails_on_its_defect(self):

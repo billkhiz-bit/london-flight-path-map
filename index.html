@@ -6030,12 +6030,44 @@
         // High-accuracy mode requested (we want the postcode the user
         // is *in*, not the borough centre); 10s timeout because GPS
         // cold-starts can take a few seconds on mobile.
+        // Every way it can end is SAID (iOS 1.0.22, Bill's yes 2026-11-26): it went quiet when no UK postcode was
+        // found or anything failed, the reason only in the console, which is all a reviewer outside the UK would see.
+        // The words go in the hint under the search box (the input's own description) and the status line screen
+        // readers hear, the first-visit guide ending first (it hides the hint on phones); the hint comes back as soon
+        // as the box is typed in. A postcodes.io error is a failure, not "no postcode here" (it answers JSON either
+        // way). Busy is aria-disabled, never disabled: a focused button that becomes disabled drops focus to <body>
+        // (audit M-11). tests/native-locate-me.mjs reaches each ending.
+        const LOCATE_SAID = {
+          none: 'Score where I am works in the UK. Search a place or postcode instead.',
+          failed: 'Your location could not be read. Search a place or postcode instead.',
+        };
+        const searchInput = document.getElementById('search-input');
+        const sayLocate = (msg) => {
+          if (typeof endSearchGuide === 'function') endSearchGuide();
+          const hint = document.getElementById('search-hint');
+          if (hint) {
+            if (!('locateDefault' in hint.dataset)) hint.dataset.locateDefault = hint.textContent;
+            hint.textContent = msg;
+          }
+          const status = document.getElementById('result-status');
+          if (status) status.textContent = msg;
+        };
+        if (searchInput) {
+          searchInput.addEventListener('input', () => {
+            const hint = document.getElementById('search-hint');
+            if (hint && 'locateDefault' in hint.dataset) {
+              hint.textContent = hint.dataset.locateDefault;
+              delete hint.dataset.locateDefault;
+            }
+          });
+        }
         const locateBtn = document.getElementById('locate-me');
         if (locateBtn) {
           locateBtn.addEventListener('click', async () => {
+            if (locateBtn.getAttribute('aria-disabled') === 'true') return;
             const original = locateBtn.textContent;
             locateBtn.textContent = '…';
-            locateBtn.disabled = true;
+            locateBtn.setAttribute('aria-disabled', 'true');
             try {
               const { Geolocation } = cap.Plugins;
               const pos = await Geolocation.getCurrentPosition({
@@ -6044,20 +6076,21 @@
               });
               const { latitude, longitude } = pos.coords;
               const r = await fetch(`https://api.postcodes.io/postcodes?lon=${longitude}&lat=${latitude}&limit=1`);
+              if (!r.ok) throw new Error(`postcodes.io answered ${r.status}`);
               const data = await r.json();
               const pc = data && data.result && data.result[0] && data.result[0].postcode;
               if (pc) {
-                const inp = document.getElementById('search-input');
-                if (inp) inp.value = pc;
+                if (searchInput) searchInput.value = pc;
                 if (typeof triggerSearch === 'function') triggerSearch(pc);
               } else {
-                console.warn('[Sky Score] No UK postcode at this location');
+                sayLocate(LOCATE_SAID.none);
               }
             } catch (e) {
               console.error('[Sky Score] Locate-me failed:', e);
+              sayLocate(LOCATE_SAID.failed);
             } finally {
               locateBtn.textContent = original;
-              locateBtn.disabled = false;
+              locateBtn.removeAttribute('aria-disabled');
             }
           });
         }

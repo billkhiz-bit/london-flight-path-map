@@ -472,6 +472,9 @@ Or just describe what you need, I have full context of this project.
   true`, with `"confirm": "send YYYY-MM"`, in that month, once per member (`sent#` rows), the do-not-email list read before each
   send, never without the member's own unsubscribe link (`backend/tests/test_news_sender.py`). Claude writes issues and never sends one.
 - **The phone footer links the same places as the desktop footer**: add a link to both or neither.
+- **The app DOES read location** (`#locate-me`, native only, in May's build too): App Privacy declares Precise Location.
+  Every ending of "Score where I am" is SAID (`LOCATE_SAID`: no UK postcode, failed) in `#search-hint` and `#result-status`;
+  busy is `aria-disabled` (2026-11-26, `tests/native-locate-me.mjs`, proven red on master). Store story: `docs/lessons/submissions-and-store.md`.
 - **No street basemap on the live map** (decided; the OS trial lives on the front page only).
 - **The approach strip on `/how-it-works/` comes from the Blender repo** (`strip_page.py`): picture paths ABSOLUTE,
   a new render is a new folder (`strip_v8`), and `js/approach.mjs`'s two "EMBED FIXES" must reach `strip_page.py`.
@@ -597,6 +600,9 @@ Or just describe what you need, I have full context of this project.
   the deploy it waits for; a check of an undeployed change goes in a local test (2026-11-11: the map heading's
   name reddened preflight; `docs/lessons/quality-gates.md`).
 - **Prove every new gate red on the defect itself** before trusting it green. Assert SETS, not counts.
+- **The App Store text is read by the wording gate** (`store_texts()`, 2026-11-26: the iOS listing and Apple's review notes,
+  which no gate read). Adding a file to a gate is not holding it: the old listing PASSED every existing rule, so it got its
+  own (the description says THE coverage sentence; no "any/every UK postcode"; "liveability" British everywhere).
 - **Measure the DOM, not the flag that should change it**; poll for the state you want, never one already true;
   reach edge states on purpose (a state reached by chance is not gated).
 - **A Playwright look is a user gesture** (`waitForSelector`, `evaluate`, `waitForFunction`: measured 2026-11-14): a test of

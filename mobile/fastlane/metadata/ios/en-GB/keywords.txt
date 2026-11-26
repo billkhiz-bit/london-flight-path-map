@@ -1,1 +1,1 @@
-postcode,noise,property,livability,uk,london,flight,aircraft,affordability,score,buyer,renter
+postcode,noise,property,liveability,uk,london,flight,aircraft,planes,air quality,flood,buyer,renter

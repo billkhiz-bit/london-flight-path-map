@@ -1,30 +1,28 @@
-Sky Score is the property data tool listings sites have a structural reason not to show you. Search any UK postcode, area, or borough — or tap your current location — and get an honest, independent score on the four things that actually shape life in a property: how quiet the skies are, how affordable it is, whether prices are growing, and how livable the area is overall.
-
-WHY USE SKY SCORE
-
-Estate agents and listings sites earn from completed transactions. Showing you that a flat is on a Heathrow descent path doesn't help close the deal, so they don't show it. Sky Score is built outside that incentive. The data is public — DEFRA Strategic Noise Maps, HM Land Registry Price Paid Data, EPC certificates, NHS/TfL — and our job is to combine it into a postcode-level score you can trust.
+Sky Score shows what the official figures say about a place: aircraft and road noise, air quality, flood risk and the planes overhead, beside prices, crime, schools, transport and healthcare. Search a postcode, a place or a council area. Every figure names its source and its year.
 
 WHAT YOU GET
 
-• Score from 1–10 based on quiet skies, affordability, growth and liveability
-• Personalised by buyer profile (family, first-time buyer, later-life downsizer, etc.)
-• Aircraft noise overlay from DEFRA's Strategic Noise Map (Round 4, 2022 data)
-• Road noise, flood risk, air quality, transport, and labels as toggleable layers
-• Tap any postcode for the precise dB at that spot
-• 'Score where I am' button uses your phone's GPS for instant feedback on your current location
+• An answer card for each postcode and council area: what stands out first, then the figures as tiles you can open.
+• Aircraft and road noise from DEFRA's strategic noise maps (Round 4, mapped for 2021), modelled for the postcode and set against the WHO guideline. Where DEFRA does not map aircraft noise, an estimate from the published flight routes, labelled as one.
+• Planes overhead: the planes counted over each postcode district, at airports whose counts pass a check against the CAA's monthly totals.
+• Air quality: DEFRA's modelled figure for the postcode's own 1 km square, beside the nearest monitor and sensor readings.
+• Flood risk from the Environment Agency's maps.
+• Map layers for aircraft noise, road noise, flood risk, air quality, flight routes and the planes overhead.
+• A score out of 10 for quiet skies, affordability, price growth and liveability, weighted for the profile you choose: Balanced, Family, Investor, First-Time, Quiet Life or Renter.
+• Rankings of council areas, and a Saved list for the places you want to come back to.
 
-INDEPENDENT, OPEN, REPRODUCIBLE
+COVERAGE
 
-We don't sell ads, push leads, or tilt scores toward sponsors. The methodology is published openly and the underlying data sources are cited at every step. If you doubt a score, you can read exactly how it was computed.
+97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.
 
-UK COVERAGE
+HOW IT WORKS
 
-Greater London plus expanding national coverage. Heathrow, Gatwick, London City, Stansted, Luton, and minor aerodromes. New York metro is included as a comparison surface.
+The method and every source are published at skyscore.co.uk/how-it-works. A modelled figure is called modelled; only a monitor's reading is called measured. This is information, not advice: not a survey, a valuation or a conveyancing search.
 
 PRIVACY
 
-We don't track you across the web, build advertising profiles, or sell your data. Your location, when you use the 'Score where I am' button, is sent to api.postcodes.io to find the nearest postcode, then discarded. See our privacy policy for the full breakdown.
+No ads, and no tracking across apps or websites. If you ask for score updates by email, we keep your address and the postcode you follow; we email you once to confirm, and nothing more until you do. The privacy policy has the full detail.
 
-DATA SOURCES
+SOURCES
 
-DEFRA · Office for National Statistics · HM Land Registry · Department for Energy Security and Net Zero · Ministry of Housing, Communities & Local Government · Transport for London · NHS · Open Government Licence v3.0
+Every figure names its source in the app. Among them: DEFRA, the Environment Agency, the Office for National Statistics, HM Land Registry, the Department for Education, the NHS, the Department for Transport, the UK AIP (NATS), the Civil Aviation Authority, adsb.lol flight tracks (ODbL) and Breathe London; in the US, the FAA (provided "as is", without warranty), FEMA and the US Census Bureau.

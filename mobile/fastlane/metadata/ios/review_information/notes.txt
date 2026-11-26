@@ -1,70 +1,28 @@
 Hi Apple Review Team,
 
-Thanks for taking the time to review Sky Score. A few notes that might help:
+Thank you for reviewing Sky Score 1.0.22. This update brings the app in line with our website.
 
 1. WHAT THE APP DOES
+Sky Score shows what official figures say about a place: aircraft and road noise, air quality, flood risk and the planes overhead, beside prices, crime, schools, transport and healthcare. It covers 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities. Every figure names its source and its year.
 
-Sky Score is a UK property data tool that gives postcode-level scores on aircraft noise, affordability, growth, and overall livability. The data is sourced from public datasets (DEFRA Strategic Noise Maps, HM Land Registry, EPC certificates, NHS/TfL, Ministry of Housing data) under the Open Government Licence v3.0.
+2. SECTION 4.2 (MINIMUM FUNCTIONALITY)
+- Score where I am: a location button on the map, shown only in the app, finds the UK postcode you are standing in and opens its answer in one tap: for viewing a home or walking an area without knowing the postcode.
+- A layout made for the app: tabs and the map as the background, used only in the native app.
+- A native splash screen and status bar.
 
-The user value is letting people see noise and livability data that listings sites have a structural reason to hide — the data is public but it's not surfaced anywhere consumer-friendly.
+3. HOW TO TRY IT
+No account or login is needed. Search a UK postcode, for example TW4 6EX (under the Heathrow approach), a council area such as Hounslow, or a Bay Area city such as Palo Alto. Score where I am finds UK postcodes; outside the UK it says so and suggests searching instead.
 
-2. SECTION 4.2 — MINIMUM FUNCTIONALITY
+4. LOCATION
+Location is read only when you tap Score where I am ("When In Use"). The coordinates go to api.postcodes.io, a free UK postcode lookup, to find the nearest postcode, and are not stored. If permission is denied, everything else works.
 
-Sky Score is more than a website wrapper. The native app provides a feature that the web version cannot deliver as effectively:
-
-   • "Score where I am" button — uses the device's GPS via CoreLocation
-     (through @capacitor/geolocation) to identify the user's current
-     UK postcode and return an instant noise+livability score for their
-     exact location. This is meaningfully different from typing a
-     postcode into the web form, because users frequently want a
-     score for "here, right now" — for example when viewing a flat
-     in person, walking through a neighbourhood, or visiting a
-     property. The native GPS path makes that one tap; the web path
-     requires the user to know their postcode first.
-
-   • Native splash screen, status bar styling, and standalone display —
-     gives the experience native ergonomics rather than browser chrome.
-
-   • Native share sheet integration via @capacitor/share — users can
-     share a score using the OS share sheet rather than copy-paste.
-
-3. NO LOGIN REQUIRED
-
-The app does not require an account. All features are immediately
-accessible. Demo credentials are not needed — please tap any feature
-freely.
-
-4. LOCATION PERMISSION
-
-The "Score where I am" feature requests "When in Use" location access.
-The location is sent to api.postcodes.io (a free UK government postcode
-lookup service operated under the Open Government Licence) to identify
-the nearest postcode, then discarded. We do not store, log, or share
-location data anywhere. If the user denies the permission, the rest of
-the app continues to function normally — they can still search for
-postcodes manually.
-
-5. DATA + PRIVACY
-
-The full privacy policy is at https://skyscore.co.uk/privacy. Key points:
-- No accounts, no email collection, no tracking IDs
-- Anonymous analytics via GoatCounter (privacy-respecting, no cookies)
-- All API calls go to skyscore.co.uk's own AWS API Gateway, plus
-  api.postcodes.io for postcode lookups
-- No third-party SDKs for advertising, analytics, or tracking
+5. PRIVACY
+The privacy policy is at https://skyscore.co.uk/privacy. No ads, no tracking, and no advertising or analytics SDKs; the app records no usage analytics. No account. If someone asks for score updates by email, we keep their email address and the postcode they follow, once they confirm by email.
 
 6. AGE RATING
-
-The app contains no age-restricted content. We've completed the
-questionnaire as 4+ / suitable for all ages.
+No age-restricted content: 4+.
 
 7. CONTACT
+support@skyscore.co.uk · https://skyscore.co.uk/
 
-If you have any questions or need clarification:
-- Email: support@skyscore.co.uk
-- Web: https://skyscore.co.uk/
-
-Thanks again for the review.
-
-— Bilal Khizar
-   Sky Score
+Bilal Khizar, Sky Score

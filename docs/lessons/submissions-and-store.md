@@ -26,3 +26,29 @@ Related separate project (not in this repo): **LedgerAgent** is a semi-finalist 
 - **iOS — v1.0.21 (mobile redesign) LIVE on the GB App Store.** <https://apps.apple.com/gb/app/sky-score/id6768118116> (App Store ID `6768118116`). Build 21 / version `1.0.21` — the native-only mobile redesign (web/native split; built via Codemagic from commit `4af9bc5`, iPhone-only to sidestep iPad review) — was submitted 2026-05-29 and subsequently approved; the public listing showed v1.0.21 (updated 1 Jun 2026, 1 rating at 5.0) per the 2026-07-19 store-listing audit. Screenshots at 1242×2688 (`store-screenshots/`); "What's New" in `mobile/fastlane/metadata/ios/en-GB/release_notes.txt`. Verify live anytime via `curl "https://itunes.apple.com/lookup?bundleId=uk.co.skyscore.app&country=gb"`. **The site footer links the listing since 2026-07-23** (trust-fix bundle, `appstore-footer-click` GoatCounter event).
 - **Android — pending.** AAB stale relative to master; rebuild via `npm run build:android` (now fixed for Windows — uses `gradlew.bat`; needs `JAVA_HOME` = Android Studio JBR + `SKY_SCORE_KEYSTORE_PATH`/`SKY_SCORE_KEYSTORE_PASSWORD` env vars, password in Bitwarden) to carry the iPad fix + mobile redesign, then resume the Play Console flow in `HANDOFF_2026_05_16_play_submission.md`.
 
+## iOS 1.0.22: the store text, the review notes and Score where I am (2026-11-26)
+
+- **The prep was wrong about location.** On 25 Nov it said neither May's build nor today's read location, and advised
+  removing Precise Location from App Privacy. Both do: index.html's native-only `#locate-me` (behind
+  `isNativePlatform()`, so it never runs on the website) calls `@capacitor/geolocation`, then postcodes.io. Found on
+  26 Nov by searching the code the app runs (`getCurrentPosition`) in master and in May's `4af9bc5`. App Privacy keeps
+  Precise Location (App Functionality, not linked, not tracking); Product Interaction goes (the app's origin is
+  `capacitor://localhost`, which `js/count.mjs` skips); Email Address is added (the map's score-update form).
+- **The review notes were untrue** and no gate read them: a native share sheet (`window.shareScore` exists, nothing calls
+  it), "no email collection", "anonymous analytics via GoatCounter", the data "under the Open Government Licence",
+  "livability". Rewritten (Bill's yes): Score where I am, the app-only layout, splash and status bar for 4.2; examples a
+  reviewer can search (TW4 6EX, Hounslow, Palo Alto; not "Kew", which the map's list has as Kew Gardens, Queens).
+- **The location purpose strings said "never stored or shared"** (codemagic.yaml's PlistBuddy lines), though the point goes
+  to postcodes.io. Now: read only on the tap, looked up with postcodes.io, not stored.
+- **Score where I am failed silently**: no UK postcode (anywhere a US reviewer stands), a refused permission, a postcodes.io
+  error: the button went back to itself, the reason only in the console. Every ending is now said (`LOCATE_SAID`) in the
+  search hint and the screen-reader status; a postcodes.io error is a failure, not "no postcode here" (it answers JSON
+  either way, so `r.ok` is checked); busy is `aria-disabled` (audit M-11). `tests/native-locate-me.mjs`: 21 checks, 9
+  red on master's page.
+- **Adding the store text to the wording gate held nothing at first**: May's listing passed every existing rule. Its faults
+  were coverage ("any UK postcode"), the US spelling and claims no pattern covered. Three rules now, each proven red on
+  May's text and listed in `DEFECTS`: the description says THE coverage sentence (`COVERAGE` from test_llms_txt), no
+  store text says any/every/all UK postcodes or "anywhere in the UK", and "livab(le|ility)" is refused everywhere.
+- The three length-limited fields (subtitle 30/30, keywords 99/100, promotional text) are written without a trailing
+  newline, safe whether or not fastlane trims. Dependabot's Capacitor 7.6.9 PRs (#17, #19) were closed: master already
+  held 7.6.9 in package.json and the lock file.

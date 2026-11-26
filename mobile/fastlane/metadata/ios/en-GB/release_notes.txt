@@ -1,7 +1,8 @@
-A redesigned mobile experience, built for one hand.
+This update brings the app in line with the Sky Score website.
 
-• New bottom navigation — switch instantly between Search, Rankings and Saved.
-• Map-first home: the map fills the screen with a floating search bar on top, so you can explore or look up any postcode the moment you open the app.
-• Tap a place to see its full score card slide up over the map; tap × to close it and keep exploring.
-• A cleaner, edge-to-edge layout that fits every iPhone, with proper spacing around the home indicator.
-• Assorted fixes and polish.
+• More places: 97 council areas in 13 UK city regions, plus New York's 5 boroughs and 50 Bay Area cities.
+• An answer card for every postcode and council area: what stands out first, then the figures as tiles you can open.
+• Planes overhead: the planes counted over each postcode district, at airports whose counts pass a check against the CAA's monthly totals.
+• Air quality nearby: DEFRA's modelled figure for the postcode's own 1 km square, beside the nearest monitor and sensor readings.
+• Every figure names its source and its year.
+• Security and stability updates.

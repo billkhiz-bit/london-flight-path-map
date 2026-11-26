@@ -762,6 +762,10 @@ check "map fits its box"              node tests/map-fit.mjs
 #
 # No network and no server: it loads index.html over file://.
 check "web/native layout split"       node tests/native-sim-render.mjs
+# The app's "Score where I am" says how every tap ended (iOS 1.0.22, 2026-11-26): no UK postcode, GPS refused, a
+# postcodes.io outage, a postcode found; busy through aria-disabled with focus kept. Under a Capacitor shim over
+# file://, postcodes.io answered in the page, nothing else reached. Proven red on master's page (9 checks).
+check "app: Score where I am says why"  node tests/native-locate-me.mjs
 # Types a real postcode in a NON-LONDON city, which nothing had ever done.
 # "every city switches" clicks the chip and checks the MAP;
 # borough-score-parity compares SCORES. Both passed while nine UK cities
