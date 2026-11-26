@@ -494,6 +494,8 @@ Or just describe what you need, I have full context of this project.
   (`planesWalk().lead`). A narrow row of tiles shows the short forms by a container query on `.ans-tiles`, never the screen; every line,
   the skeleton's too, keeps two lines of room, THREE in a row of 330 px or less (audit M-4, 2026-11-20: a 390 px phone's row is 305 and its
   short forms took three), or the frame grows when the figures land; `tests/front-page.mjs` holds each line to the skeleton's at six widths.
+  ONE colour per job (Bill's pick A, 2026-11-24, claude.ai/artifact/6YLLSd4tsN3WEtDsBytQBF): every line `--mid`, the one verdict
+  (`.is-over`) `--dark` and bold behind an orange "!" drawn in CSS (alt text empty; its words still say "Over"), never orange-ink text.
 - **The answer's folds are pictures and points, not paragraphs** (Bill, 2026-11-11: "still text heavy"; mock-up
   claude.ai/artifact/26UkCjWZSzhmQr28Loe2GK v2; planes fold 162 words to 92, air 97 to 75). Planes: `planesChart()` (js/planes.mjs,
   the air chart's twin, banded and coloured by the planes layer's index.json steps), the overhead rule beside `overheadConeSvg()`
@@ -531,6 +533,12 @@ Or just describe what you need, I have full context of this project.
 - **The front page arrives in place** (2026-11-04: phone layout shift 0.133 to 0.008): `.panel.is-loading` shows `.ans-skeleton`, the
   example's frame, until `endLoading()`; hidden tabs keep their room. Anything that fills in later keeps its place from the first
   frame. Held in `tests/front-page.mjs`, on a phone with the example held back.
+  **Its head names every module it imports (`modulepreload`) and its three fonts, the fonts first; never a data file**
+  (2026-11-24, Bill: "still takes a short while"): a throttled phone found the scripts in three rounds and asked for no data until
+  0.93 s; with the hints the example filled 0.3 s sooner (1.44 to 1.14 s). Data preloads measured 0.4 s SLOWER (they starved d3);
+  modules without the fonts made the fonts miss the first paint (layout shift 0.0245, over 0.02). `tests/test_load_hints.py`.
+  The rest of the wait is the score Lambda's cold start (init 0.23 s + a first request 0.64 s; 6% of requests): a warm-up schedule
+  needs EventBridge rights the deploy user lacks (`docs/lessons/front-page-and-site.md`).
 - **The developers band's animation shows only what was answered** (Bill's pick C, 2026-11-04): `devAnswer()` builds the
   JSON and tiles from the example's own response, and `writeAnswer()` rewrites the three samples to that answer's point, so the
   request on show is the one answered and no lookup is added. Once on arriving, about 4 s (under WCAG 2.2.2's five), never a
