@@ -28,6 +28,33 @@ export function maskAddress(address) {
   return `${text.slice(0, 1)}•••••${text.slice(at)}`;
 }
 
+/** The same address as a screen reader should say it (audit M-20, 2026-11-25): the dots were read aloud as "bullet bullet
+ *  bullet". The masked form stays on screen, hidden from the reader; this goes beside it, hidden from the eye. */
+export function spokenAddress(address) {
+  const text = String(address || '').trim();
+  const at = text.lastIndexOf('@');
+  if (at < 1) return '';
+  return `your address beginning ${text.slice(0, 1)}, at ${text.slice(at + 1)}`;
+}
+
+// The inbox an address reaches, as the Lambda counts its three sends a day (signup/app.py mailbox_key, audit M-6,
+// 2026-11-25): lower case, any +tag dropped, and Gmail's dots ignored. "Use a different address" reset the page's count,
+// so typing the same inbox again let the strip offer sends the Lambda then skipped while it said "Sent again".
+// backend/tests/test_mailbox_key_parity.py holds this equal to the Lambda's on the same addresses.
+export const DOT_BLIND_DOMAINS = { 'gmail.com': 'gmail.com', 'googlemail.com': 'gmail.com' };
+export function mailboxKey(address) {
+  const text = String(address || '').trim().toLowerCase();
+  const at = text.lastIndexOf('@');
+  if (at < 0) return text;
+  let local = text.slice(0, at).split('+', 1)[0];
+  let domain = text.slice(at + 1);
+  if (Object.hasOwn(DOT_BLIND_DOMAINS, domain)) {
+    local = local.replaceAll('.', '');
+    domain = DOT_BLIND_DOMAINS[domain];
+  }
+  return `${local}@${domain}`;
+}
+
 /** Ask to join: the address goes in the POST body, never a URL, and nothing else goes with it. Resolves to
  *  { ok, message } in words for the visitor; never throws. `fetchFn` is the browser's fetch, replaceable in tests. */
 export async function requestNews(apiBase, email, fetchFn = globalThis.fetch) {
@@ -65,11 +92,17 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
   const said = root.querySelector('#news-again-said');
   let address = '';
   let sends = 0;
+  // Sends this page has made, by inbox (M-6): "Use a different address" starts a new address, never a new count.
+  const sentTo = new Map();
   button.disabled = false;
   email.addEventListener('input', () => { out.textContent = ''; });
 
   const showSent = () => {
-    to.textContent = maskAddress(address);
+    // Masked on screen, said in words to a screen reader (M-20).
+    const shown = Object.assign(document.createElement('span'), { textContent: maskAddress(address) });
+    shown.setAttribute('aria-hidden', 'true');
+    const spoken = Object.assign(document.createElement('span'), { className: 'sr', textContent: spokenAddress(address) });
+    to.replaceChildren(shown, spoken);
     said.textContent = '';
     again.hidden = sends >= SENDS_PER_DAY;
     form.hidden = true;
@@ -85,6 +118,11 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (sending || button.disabled) return;
+    if ((sentTo.get(mailboxKey(email.value)) || 0) >= SENDS_PER_DAY) {
+      // This page has already sent this inbox the most the Lambda sends in a day; sending would answer 201 and send nothing.
+      out.textContent = 'We have sent that address three links today, the most we send. Look in Junk or Spam, or come back tomorrow.';
+      return;
+    }
     sending = true;
     button.setAttribute('aria-disabled', 'true');
     out.textContent = 'Sending...';
@@ -98,7 +136,8 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
     }
     out.textContent = '';
     address = email.value.trim();
-    sends = 1;
+    sends = (sentTo.get(mailboxKey(address)) || 0) + 1;
+    sentTo.set(mailboxKey(address), sends);
     count('news-link-sent');
     showSent();
   });
@@ -121,6 +160,7 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
       return;
     }
     sends += 1;
+    sentTo.set(mailboxKey(address), sends);
     if (sends >= SENDS_PER_DAY) {
       // Hiding the button that has focus dropped focus to <body> (audit M-11, 2026-11-23: WCAG 2.4.3), at the moment
       // the strip says "three today". Focus goes to what is left to do: a different address.
@@ -138,7 +178,7 @@ export function wireNews(root, { apiBase, count = () => {}, fetchFn } = {}) {
     form.hidden = false;
     email.value = '';
     address = '';
-    sends = 0;
+    sends = 0; // the next address's count comes from sentTo when it is sent (M-6)
     email.focus();
   });
 }

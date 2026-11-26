@@ -101,7 +101,10 @@ const panel = (page) => page.evaluate(() => {
   return {
     shown: !sent.hidden && sent.getBoundingClientRect().height > 0,
     formShown: !form.hidden && form.getBoundingClientRect().height > 0,
-    to: document.getElementById('news-sent-to').textContent,
+    // What the eye sees and what a screen reader says, apart (audit M-20): the dots are hidden from the reader.
+    to: document.querySelector('#news-sent-to [aria-hidden="true"]')?.textContent ?? document.getElementById('news-sent-to').textContent,
+    spoken: [...document.getElementById('news-sent-to').childNodes]
+      .filter((n) => !(n.nodeType === 1 && n.getAttribute('aria-hidden') === 'true')).map((n) => n.textContent).join(''),
     // The panel's FIRST paragraph, the one in body text, names Junk (Bill, 2026-11-23): in the small print it was missed.
     junkFirst: /Junk or Spam/.test(sent.querySelector('p')?.textContent || ''),
     again: !document.getElementById('news-again').hidden,
@@ -203,6 +206,8 @@ try {
       'news only, even after a search: the address and the list, no postcode', first.body);
     ok(sentPanel.shown && !sentPanel.formShown && sentPanel.to === 's•••••@example.com',
       'a 201 shows "Check your inbox" in the form\'s place, the address mostly hidden', JSON.stringify(sentPanel));
+    ok(sentPanel.spoken === 'your address beginning s, at example.com' && !/•/.test(sentPanel.spoken),
+      'a screen reader hears the address in words, never "bullet bullet" (audit M-20)', JSON.stringify(sentPanel.spoken));
     ok(sentPanel.focus === 'news-sent-h', 'focus moves to the panel, where the change is', sentPanel.focus);
     ok(sentPanel.junkFirst, '"Check your inbox" says to look in Junk or Spam in its main sentence, not only the small print', JSON.stringify(sentPanel));
     ok(sentPanel.again && signups.length === 1, 'the form is gone, so a second press cannot send; "Send it again" is the one way', JSON.stringify({ again: sentPanel.again, sent: signups.length }));
@@ -237,6 +242,13 @@ try {
     const back = await panel(page);
     const field = await page.evaluate(() => ({ value: document.getElementById('news-email').value, focus: document.activeElement?.id }));
     ok(!back.shown && back.formShown && field.value === '' && field.focus === 'news-email', '"Use a different address" brings the form back, empty and focused', JSON.stringify({ back, field }));
+    // Audit M-6 (2026-11-25): "Use a different address" reset the page's count, so the same inbox typed again (here with a
+    // +tag, which reaches the same inbox, as the Lambda counts it) was offered a fourth send the Lambda would skip. It sends
+    // nothing and says why.
+    const sameInbox = await send(page, 'Someone+news@example.com');
+    ok(signups.length === 3 && sameInbox.formShown && !sameInbox.shown && /three links today/.test(sameInbox.result),
+      'the same inbox typed again after three sends is not sent a fourth, and is told why (audit M-6)', JSON.stringify({ sameInbox, sent: signups.length }));
+    await page.fill('#news-email', '');
 
     mode = 'busy';
     ok(/Busy just now/.test((await send(page, 'a@example.com')).result), 'a 429 says busy');

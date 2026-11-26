@@ -461,6 +461,11 @@ Or just describe what you need, I have full context of this project.
   A save or removal WAITS for a Delete all on its way (`favDeleting`), only what was SENT can leave the list, and every
   list change redraws the save buttons on screen (`syncFavButtons()`): a save mid-delete was stored under the token the
   delete then forgot, and a stale SAVED button re-saved the place under a new one (code review 2026-11-24).
+- **A sign-up's sends are counted by INBOX and only when they go** (audit M-5/M-6, 2026-11-25): a failed pending write
+  or email gives both counts back (`give_back_send`, never creating a counter row); the strip keeps its own count by
+  `mailboxKey()`, which `backend/tests/test_mailbox_key_parity.py` holds equal to the Lambda's `mailbox_key()`, so
+  "Use a different address" cannot offer an inbox a send the Lambda would skip. The map's alert, once asked for, stays
+  asked for through a redraw (`notifyAsked`, M-7); the masked address is said in words to a screen reader (M-20).
 - **News by email's issues go out from `NewsFunction`, which BILL runs** (no route; the console's Test tab; OPERATIONS s3.11;
   Bill's picks 2026-11-23: layout A, the fixed subject "Sky Score news: <Month YYYY>", links tagged for totals only). An issue is
   `backend/lambdas/news/issues/<YYYY-MM>.json`, read by the wording gate like a page; the list gets it only once `"approved":

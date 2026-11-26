@@ -11738,11 +11738,23 @@
       // no SES in the stack: outbound mail is currently a person and Gmail. A
       // capture form that promises instant alerts would be storing addresses
       // against a promise the infrastructure cannot keep.
+      // ASKED FOR STAYS ASKED FOR (audit M-7, 2026-11-25): the panel is rebuilt on every redraw (a profile change, the
+      // borough data landing), and keepPlace() rightly puts back an email typed and NOT yet sent, so a form already sent
+      // came back with its address in it, inviting a second send. A postcode asked about keeps its reply instead, for the
+      // life of the page, shown quietly: the redraw has nothing new to announce.
+      const notifyAsked = new Map();
       function wireNotifyForm(postcode) {
         const form = document.getElementById('notify-form');
         if (!form) return;
         const out = document.getElementById('notify-result');
         const btn = document.getElementById('notify-btn');
+        if (postcode && notifyAsked.has(postcode)) {
+          form.style.display = 'none';
+          out.removeAttribute('role');
+          out.removeAttribute('aria-live');
+          out.textContent = notifyAsked.get(postcode);
+          return;
+        }
         form.addEventListener('submit', async (ev) => {
           ev.preventDefault();
           const email = (document.getElementById('notify-email').value || '').trim();
@@ -11769,6 +11781,9 @@
               // existing one, and two copies of that wording would drift.
               out.textContent = data.message || 'Thanks, you are on the list.';
               form.style.display = 'none';
+              // Nothing typed is left for keepPlace() to put back, and a redraw shows this reply, not the form (M-7).
+              document.getElementById('notify-email').value = '';
+              if (postcode) notifyAsked.set(postcode, out.textContent);
               // With verification-first signup on (OPERATIONS.md s3.9) a 201
               // is only a request: nobody is subscribed until the emailed
               // link is clicked, and counting it as a subscription would
