@@ -6080,7 +6080,9 @@
                 timeout: 10000,
               });
               const { latitude, longitude } = pos.coords;
-              const r = await fetch(`https://api.postcodes.io/postcodes?lon=${longitude}&lat=${latitude}&limit=1`);
+              // radius=2000 (audit 2026-11-27), as the district lookup below asks: postcodes.io's reverse lookup reaches
+              // only 100 m by default, so a walker in Richmond Park (745 m from TW10 5HR) was told "works in the UK".
+              const r = await fetch(`https://api.postcodes.io/postcodes?lon=${longitude}&lat=${latitude}&limit=1&radius=2000`);
               if (!r.ok) throw new Error(`postcodes.io answered ${r.status}`);
               const data = await r.json();
               const pc = data && data.result && data.result[0] && data.result[0].postcode;

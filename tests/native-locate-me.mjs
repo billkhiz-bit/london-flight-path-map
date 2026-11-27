@@ -18,7 +18,14 @@ const fileUrl = pathToFileURL(resolve(process.env.TEST_INDEX || 'index.html')).h
 const iPhone = devices['iPhone 13'];
 const NONE = 'Score where I am works in the UK. Search a place or postcode instead.';
 const FAILED = 'Your location could not be read. Search a place or postcode instead.';
-const POINTS = { cupertino: { latitude: 37.3349, longitude: -122.009 }, hounslow: { latitude: 51.4638, longitude: -0.4071 } };
+const POINTS = {
+  cupertino: { latitude: 37.3349, longitude: -122.009 },
+  hounslow: { latitude: 51.4638, longitude: -0.4071 },
+  // Audit 2026-11-27: a UK point more than 100 m from any postcode's centre. postcodes.io's reverse lookup reaches
+  // 100 m unless asked for more, so the app told a walker in Richmond Park "Score where I am works in the UK".
+  // Read live that day: no radius -> result null; radius=2000 -> TW10 5HR at 745 m.
+  richmondPark: { latitude: 51.443, longitude: -0.275 },
+};
 
 let failures = 0;
 const expect = (ok, what) => {
@@ -53,7 +60,8 @@ async function run(name, { gps, postcodes, hold = false }) {
     const url = route.request().url();
     if (url.startsWith('file:')) return route.continue();
     if (url.startsWith('https://api.postcodes.io/postcodes?')) {
-      return route.fulfill({ status: postcodes.status, contentType: 'application/json', body: JSON.stringify(postcodes.body) });
+      const answer = typeof postcodes === 'function' ? postcodes(url) : postcodes;
+      return route.fulfill({ status: answer.status, contentType: 'application/json', body: JSON.stringify(answer.body) });
     }
     return route.abort();
   });
@@ -118,6 +126,22 @@ await saidCase('busy', { gps: 'cupertino', postcodes: { status: 200, body: { sta
   expect(after.box === 'TW4 6EX', `found: the box holds TW4 6EX (got "${after.box}")`);
   expect(after.hint !== NONE && after.hint !== FAILED, 'found: no locate words in the hint');
   expect(hintBefore.length > 0, 'found: the page had a hint to begin with');
+}
+
+// park: a UK point 745 m from the nearest postcode is found, never told it is outside the UK. The stub answers as
+// postcodes.io does: nothing within its default 100 m, TW10 5HR when the request reaches 745 m or more.
+{
+  const { after } = await run('park', {
+    gps: 'richmondPark',
+    postcodes: (url) => {
+      const radius = Number(new URL(url).searchParams.get('radius') || 100);
+      return radius >= 745
+        ? { status: 200, body: { status: 200, result: [{ postcode: 'TW10 5HR', distance: 745 }] } }
+        : { status: 200, body: { status: 200, result: null } };
+    },
+  });
+  expect(after.box === 'TW10 5HR', `park: a UK point 745 m from a postcode finds TW10 5HR (got "${after.box}")`);
+  expect(after.hint !== NONE, 'park: never told "works in the UK" while in the UK');
 }
 
 // restore: typing in the box brings the usual hint back.
