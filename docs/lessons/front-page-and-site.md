@@ -1416,3 +1416,11 @@ fonts preloaded first, then the modules: 1.15 s and a shift of 0.0003. Lessons: 
 "obvious" speed-ups were slower or broke a gate); a preload competes for the same pipe; a font preload needs `crossorigin` or it is
 fetched twice. `tests/test_load_hints.py` holds the module list to the import graph, the fonts to fonts.css and first, and refuses a
 data preload, each proven red on its own defect.
+
+## A card can carry the hero's headline (2026-11-26)
+
+- **The hero's h1 says a lead while an answer OR a card with one is open.** `syncLead()` shows `#borough`'s `data-lead` (copied by
+  `openCard()` from the card's `h2[data-lead]`; only a Bay Area city's card has one) in preference to the answer's lead; a card
+  without one still shrinks the heading to 22 px (`.panel:has(#borough.is-open) h1:not(.has-lead)`), and closing the card gives
+  the heading back to the question. Held by `tests/front-page.mjs` (Palo Alto). The story: `docs/lessons/us-cities.md`, "The Bay
+  Area answers first".

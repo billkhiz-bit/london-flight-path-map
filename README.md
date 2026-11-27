@@ -88,9 +88,9 @@ curl 'https://2gjfdzg20c.execute-api.eu-west-2.amazonaws.com/prod/v1/score?postc
 | Reports (samples; their prices are on /pricing) | <https://skyscore.co.uk/reports/> |
 | Pricing (every price since 2026-10-06: councils, platforms, firms' reports) | <https://skyscore.co.uk/pricing> |
 | Privacy policy | <https://skyscore.co.uk/privacy> |
-| Area pages (152: 102 UK and New York, 50 Bay Area cities; static, findings first with bars and rating strips) | <https://skyscore.co.uk/area/> |
+| Area pages (152: 102 UK and New York, 50 Bay Area cities; static, opening on an answer card (a headline and pills, since 2026-11-13; the Bay Area's since 2026-11-26), then findings with bars and rating strips) | <https://skyscore.co.uk/area/> |
 | Open data (every council area's figures in one CSV) | <https://skyscore.co.uk/open-data/> |
-| Bay Area: 50 cities scored on US scales (since 2026-11-08), and the flight paths of San Francisco, Oakland and San Jose | <https://skyscore.co.uk/bay-area/> |
+| Bay Area: 50 cities scored on US scales (since 2026-11-08), each opening on its answer against California's own figures on the front page, the full map and its area page (since 2026-11-26), and the flight paths of San Francisco, Oakland and San Jose | <https://skyscore.co.uk/bay-area/> |
 | Sky Score Radar (3D prototype) | <https://skyscore.co.uk/prototype/> |
 | API landing page (send a real request from the page) | <https://skyscore.co.uk/api/> |
 | API browser demo | <https://skyscore.co.uk/score-demo/index.html> |

@@ -28,8 +28,9 @@ flood fetch blocked; earlier the same day - Bay Area release 2's crime and road 
 
 > ## START HERE (2026-11-26, evening)
 >
-> **`bayarea-answer-first`, shipped on Bill's "go"** (preflight PASS 44 min; fast-forward to master; deployed with
-> data, web, home, area and meta; the origin checks are in the `project-start-here-2026-11-26` memory). Bill: "Build
+> **LIVE `be25b5fd`, 26 Nov night: the Bay Area answers first** (Bill's "go"; preflight PASS 44 min; fast-forward to master,
+> pushed; deployed data, web, home, area, meta; drift PASS 56/42/153, area freshness 152/152, score sanity 29, site-API
+> parity 6; the live front page, map and area page read the same sentence at 1366 and 390). Bill: "Build
 > recommended", option A of the San Francisco review
 > claude.ai/artifact/QqKyCpzTYiknHpVYha3ioz; mock-up claude.ai/artifact/EqrNDgsAhwsrPo51KMAMcE). Every Bay Area city opens on
 > its answer on all three surfaces, from ONE rule, `build_bayarea_records.answer()`: each US share against California's figure

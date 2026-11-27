@@ -96,4 +96,7 @@ Batches 1 to 3 on branch `audit-fixes-2026-11-23`, to deploy after the 24 Nov me
   extends news's rule), and nothing offered a way back; privacy s2a now says so and how to come off the list (email
   support@ from that address), dated on /changes, with the steps in OPERATIONS s3.10, held by `tests/test_news_flags.py`.
   No code change. LATER: the Bay Area card's aircraft sentence is true but looser than its area page's caption
-  (FAA routes fitted to the SFO/SJC monitors); a proper fix is a registry field on every city.
+  (FAA routes fitted to the SFO/SJC monitors); a proper fix is a registry field on every city. PARTLY DONE 26 Nov
+  (`be25b5fd`, the Bay Area answer first): the full map's Bay Area card now has an Aircraft noise tile in its area page's
+  words (estimated from the FAA's published routes, fitted to SFO's and San Jose's noise monitors); the front page's "At a
+  glance" tile says FAA routes and "not measured" without the monitors. The registry field for every city stays LATER.
