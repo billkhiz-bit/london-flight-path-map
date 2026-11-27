@@ -1333,11 +1333,28 @@ function renderSoldPrices(result, listing) {
 // surface that displays it — TfL Open Data requires credit, and OpenStreetMap
 // is ODbL, which requires attribution on any Produced Work. The Lambdas already
 // return the correct strings in `sources`; our only job is not to drop them.
+//
+// /v1/environment sends no `sources` list: since per-field provenance went live (2026-10-29) it names each source
+// in `sourceIndex` (publisher, dataset, licence). Until 2026-11-27 this read only `sources`, so the Environment
+// section showed no OGL line while its EPC, sold-price and NHS siblings did (LICENSING.md, "Attribution surfacing").
+// A response that has its own `sources` list keeps it: the index is the fallback, never a second copy.
+function sourceIndexLine(s) {
+  if (!s || typeof s.publisher !== 'string' || typeof s.dataset !== 'string') return null;
+  return typeof s.licence === 'string' && s.licence ? `${s.publisher}: ${s.dataset}. ${s.licence}` : `${s.publisher}: ${s.dataset}`;
+}
+
 function renderSources(payloads) {
   const seen = new Set();
   for (const p of payloads) {
     if (!p?.ok) continue;
-    for (const s of p.data.sources || []) seen.add(s);
+    const listed = p.data.sources || [];
+    for (const s of listed) seen.add(s);
+    if (!listed.length) {
+      for (const s of Object.values(p.data.sourceIndex || {})) {
+        const line = sourceIndexLine(s);
+        if (line) seen.add(line);
+      }
+    }
   }
   if (!seen.size) return null;
 

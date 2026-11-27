@@ -606,6 +606,10 @@ Or just describe what you need, I have full context of this project.
   the deploy it waits for; a check of an undeployed change goes in a local test (2026-11-11: the map heading's
   name reddened preflight; `docs/lessons/quality-gates.md`).
 - **Prove every new gate red on the defect itself** before trusting it green. Assert SETS, not counts.
+- **A test reads gitignored data (`data/planes/`, `data/adsb/`, `data/caa/` ...) only behind a skip that names it, never at
+  import**: a missing file stops pytest's collection of the WHOLE root suite on GitHub, where CI ran none of its 1,886 root
+  tests from 26 to 27 Nov (`test_planes_open_data.py`, the third such outage). Prove a CI fix in a fresh clone
+  (`git clone --depth 1 file://...`), and read a red `gh run list` at session start: it can mean nothing ran.
 - **The App Store text is read by the wording gate** (`store_texts()`, 2026-11-26: the iOS listing and Apple's review notes,
   which no gate read). Adding a file to a gate is not holding it: the old listing PASSED every existing rule, so it got its
   own (the description says THE coverage sentence; no "any/every UK postcode"; "liveability" British everywhere).

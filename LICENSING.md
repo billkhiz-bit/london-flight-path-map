@@ -219,10 +219,13 @@ an absolute claim that three live endpoints falsify.
 - **`/v1/environment`**: **the response gap is CLOSED** since per-field
   provenance went live (2026-10-29): every answer carries `sourceIndex`, each
   source's publisher, dataset and licence (read live 2026-11-27). **The
-  browser extension's gap is NOT**: its `renderSources()`
-  (`extension/content/panel.js`) reads only `sources`, which this route does
-  not send, so its Environment section still shows no OGL line while its EPC,
-  sold-price and NHS siblings do (read 2026-11-27). See the action items.
+  browser extension's gap is closed too (2026-11-27)**: its `renderSources()`
+  (`extension/content/panel.js`) read only `sources`, which this route does
+  not send, so its Environment section showed no OGL line while its EPC,
+  sold-price and NHS siblings did; it now credits each `sourceIndex` entry
+  ("DEFRA: Background pollution maps (PCM)... Open Government Licence v3.0")
+  when a response has no `sources` list. `tests/extension-panel-render.mjs`
+  holds it, proven red on the old footer.
 - **`/v1/regions`** returns ONS-derived borough lists with no `sources` key
   (still so, read live 2026-11-27: `apiVersion`, `cities`, `generatedAt`,
   `methodologyUrl`, `methodologyVersion`).
@@ -325,7 +328,7 @@ block files in the API table. Their text moved with them; the dated history is i
 | 🟡 Hygiene | Rotate MHCLG EPC bearer token (already noted in CLAUDE.md; Bill's job on the board) |
 | 🟢 None | DEFRA + ONS + Land Registry + TfL all OGL v3.0; nothing to do |
 | 🟡 Hygiene (2026-11-27) | Ship the OFL 1.1 text beside the four self-hosted fonts (`fonts/OFL.txt`, uploaded with `fonts-deploy`): their copyright notices and licence URL travel in the files, the licence text does not |
-| 🟡 Hygiene (2026-11-27) | The browser extension: make `renderSources()` also read `sourceIndex`, so its Environment section credits DEFRA and the OGL as its EPC, sold-price and NHS sections do (the route has carried the credits since 2026-10-29) |
+| ~~🟡 Hygiene (2026-11-27)~~ | ~~The browser extension: make `renderSources()` also read `sourceIndex`~~ DONE 2026-11-27: the Environment section's footer now credits DEFRA and the OGL from `sourceIndex` (`tests/extension-panel-render.mjs`) |
 | 🟡 Open (2026-11-26) | `data/flight-procedures.json` (the UK AIP extraction) is served publicly because the map computes its paths in the browser: see the UK AIP row |
 | ⚪ Bill's call (2026-10-16) | Whether the 29 OpenStreetMap-snapped New York monitor positions want a response-level credit too (see the US noise monitors row) |
 

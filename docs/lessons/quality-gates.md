@@ -152,3 +152,23 @@ The fix in `tests/search-guide.mjs` step 4: an init script watches `.search-box`
 reached on purpose. Proven: green with the hold, red on a map that always remembers. Rule: a test of what a page does
 without activation (sticky activation, autoplay, a popup, `requestFullscreen`, clipboard writes) must not touch the page
 before the page has acted; let the page say when.
+
+## CI ran no root tests for two days, and only "Run failed" emails said so (2026-11-27)
+
+`tests/test_planes_open_data.py` (built 2026-11-25, live with `cdf70f9f` on 26 Nov) read `data/planes/airports.json` at
+import. `data/planes/` is gitignored, so on GitHub the file is absent, and pytest stopped collecting the whole root suite
+("Interrupted: 1 error during collection"): six red master runs, none of the 1,886 root tests run, while local preflight
+stayed green because the data is on this PC. Found on 27 Nov only because a GitHub "Run failed" email sat in the inbox
+during an unrelated Gmail task. It is the third outage of this shape: ci.yml records 31 Aug (numpy, pillow, then pyproj)
+and 3-19 Nov (scipy), each "unseen". The fix (`8e122fb7`): the four checks that need the planes files are
+`unittest.skipUnless(HAVE_PLANES, NO_PLANES)`, saying why; the page, Makefile and git checks run everywhere. Proven both ways
+in a fresh clone (`git clone --depth 1 file://<repo> <scratch>/ci-sim`, which has no gitignored data, as CI has none): the
+old file reproduced CI's collection error, the new one gave 3 passed and 4 skipped, and the whole root suite 1,886 passed,
+9 skipped; then the real run on GitHub. Rules: a test reads gitignored data only behind a skip that names it, never at
+import; prove a CI fix where CI's inputs are, not where yours are; and read `gh run list --branch master` at session start,
+because a red run can mean that nothing ran at all.
+
+The same day showed the reach of the wording gate: `scripts/area_summary.mjs` printed "no measured aircraft level exists"
+of DEFRA's contours (a DEFRA figure is modelled, never measured), unseen since September because
+`tests/test_public_wording.py` reads what the Makefile UPLOADS, and the one-pagers leave by email. Reworded, and its prose
+now gives road noise to one decimal, as its table does ("is 53" beside a guideline of 53 had been 52.8).

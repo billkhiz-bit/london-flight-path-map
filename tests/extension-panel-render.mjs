@@ -243,6 +243,24 @@ async function nearbyView(env) {
     && v.foldText.includes(elsewhere.sensor.source) && v.foldText.includes(elsewhere.monitor.source), JSON.stringify(v.links));
 }
 
+{
+  // 2026-11-27 (the LICENSING.md review): /v1/environment sends no `sources` list. Since per-field provenance went live
+  // (2026-10-29) it names each source in `sourceIndex`, but the footer read only `sources`, so the Environment section
+  // showed no OGL line while its EPC, sold-price and NHS siblings did.
+  const foot = await page.evaluate(() => {
+    const env = { ok: true, data: { environment: {}, sourceIndex: {
+      'defra-pcm': { publisher: 'DEFRA', dataset: 'Background pollution maps (PCM), annual mean NO2 and PM2.5', licence: 'Open Government Licence v3.0', method: 'modelled' },
+      'who-aq-2021': { publisher: 'World Health Organization', dataset: 'Global air quality guidelines (2021)', method: 'reference' },
+    } } };
+    const epc = { ok: true, data: { sources: ['EPC data: MHCLG, Open Government Licence v3.0'], sourceIndex: { x: { publisher: 'Not this', dataset: 'a response with its own sources list' } } } };
+    const f = renderSources([env, epc]);
+    return f ? [...f.children].map((d) => d.textContent) : null;
+  });
+  check('footer: /v1/environment is credited from its sourceIndex', !!foot && foot.includes('DEFRA: Background pollution maps (PCM), annual mean NO2 and PM2.5. Open Government Licence v3.0'), JSON.stringify(foot));
+  check('footer: a source with no licence is named, never given one', !!foot && foot.includes('World Health Organization: Global air quality guidelines (2021)'), JSON.stringify(foot));
+  check("footer: a response's own sources list is used, not its sourceIndex", !!foot && foot.includes('EPC data: MHCLG, Open Government Licence v3.0') && !foot.some((l) => l.startsWith('Not this')), JSON.stringify(foot));
+}
+
 await browser.close();
 
 let failed = 0;

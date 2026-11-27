@@ -26,11 +26,14 @@
  *
  * --aircraft adds what the published runway data says about each point: how
  * far the nearest runway is, whether the point sits under an approach line,
- * and DEFRA's measured aircraft level where one exists. Geometry and
- * measurements only: it never prints the estimated Quiet Skies figure, because
+ * and DEFRA's modelled aircraft level where its map has one. Geometry and
+ * published figures only: it never prints the estimated Quiet Skies figure, because
  * a sheet handed to a residents' group should not lead with an estimate.
+ * A DEFRA figure is MODELLED, never "measured" (only a monitor's reading is): this
+ * sheet said "no measured aircraft level exists" until 2026-11-27, unseen because
+ * the wording gate reads uploaded pages and these PDFs leave by email.
  *
- * Only publishes what is measured: a point with no reading says so, a city
+ * Only publishes what the sources hold: a point with no figure says so, a city
  * with one borough gets no rank, and the limits note is always printed.
  * No em dashes in the output, matching the site's rule.
  */
@@ -206,7 +209,7 @@ function page(spec, rows, ctx, vintage, nat, air) {
 
   const over = (v, g) => (typeof v === 'number' && v > g ? ' over' : '');
   // Aircraft columns exist only with --aircraft, and the decibel column only
-  // where DEFRA measured at least one of the points: a column of "not mapped"
+  // where DEFRA's map covers at least one of the points: a column of "not mapped"
   // from top to bottom is said once, in a sentence, instead.
   const anyDb = Boolean(air) && rows.some((r) => typeof r.aircraftDb === 'number');
   const airCells = (r) =>
@@ -249,7 +252,7 @@ function page(spec, rows, ctx, vintage, nat, air) {
   if (roads.length >= 2 && roads[0].road - roads[roads.length - 1].road >= 5) {
     const [hi, lo] = [roads[0], roads[roads.length - 1]];
     bullets.push(
-      `<strong>Road noise varies street by street far more than air does.</strong> ${esc(hi.label)} reaches ${Math.round(hi.road)} dB Lden; ${esc(lo.label)} is ${Math.round(lo.road)}.`,
+      `<strong>Road noise varies street by street far more than air does.</strong> ${esc(hi.label)} reaches ${fmt(hi.road)} dB Lden; ${esc(lo.label)} is ${fmt(lo.road)}.`,
     );
   }
   if (ctx && ctx.no2.of > 1) {
@@ -286,12 +289,12 @@ function page(spec, rows, ctx, vintage, nat, air) {
           .map((r) => `${esc(r.label)} is ${fmt(r.air.under.dist)} km from the approach line to runway ${esc(r.air.under.rwy)}, where landing aircraft are at about ${ft(r.air.under)}`)
           .join('; ') + '.'
       : `None of them is within ${AIRCRAFT.underKm} km of a published approach line.`;
-    const unmeasured = anyDb
+    const unmapped = anyDb
       ? ''
       : air.unmapped.includes(first.air.near.code)
         ? ` The government's noise mapping does not cover ${esc(airport)} Airport, so there is no official aircraft noise figure for anywhere in this area.`
-        : ` These points lie outside the aircraft noise contours the government publishes for ${esc(airport)} Airport, so no measured aircraft level exists for them.`;
-    bullets.push(`<strong>${esc(airport)} Airport's runway is ${span}.</strong> ${underText}${unmeasured}`);
+        : ` These points lie outside the aircraft noise contours the government publishes for ${esc(airport)} Airport, so the official map gives no aircraft noise figure for them.`;
+    bullets.push(`<strong>${esc(airport)} Airport's runway is ${span}.</strong> ${underText}${unmapped}`);
   }
 
   return `<!doctype html>
