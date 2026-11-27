@@ -65,8 +65,10 @@ const check = (name, ok, detail = '') => {
 const browser = await chromium.launch();
 
 /** A fresh map with `saved` behind the stub; `answer(body)` gives the DELETE's reply. */
-async function open({ saved = THREE, token = TOKEN, answer = () => ({ status: 200, body: { notDeleted: [] } }), hold = null, width = 1366, height = 768 } = {}) {
+async function open({ saved = THREE, token = TOKEN, answer = () => ({ status: 200, body: { notDeleted: [] } }), hold = null, width = 1366, height = 768, refuse = false } = {}) {
   const context = await browser.newContext({ viewport: { width, height }, isMobile: width < 500, hasTouch: width < 500 });
+  // A browser that refuses site storage (blocked site data): touching localStorage throws, as it does there.
+  if (refuse) await context.addInitScript(() => Object.defineProperty(window, 'localStorage', { configurable: true, get() { throw new DOMException('The operation is insecure.', 'SecurityError'); } }));
   if (token) await context.addInitScript((t) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('flightmap_device_token', t); sessionStorage.setItem('seeded', '1'); } }, token);
   const page = await context.newPage();
   const seen = { gets: 0, deletes: [], posts: [], tokens: [] };
@@ -245,6 +247,29 @@ console.log('8. After a failed Delete all, a removal that works clears the note'
   await waitRows(page, 2);
   const s = await state(page);
   check('the "Nothing was deleted" note is gone and the link stays', s.rows === 2 && s.box === 'Delete all saved places', JSON.stringify(s));
+  await context.close();
+}
+
+console.log('10. A browser that refuses site storage');
+{
+  // Audit I-4, 2026-11-27: with storage refused, getDeviceToken() made a NEW token on every call, so a place saved under
+  // one went undeleted by a Delete all sent under another, which then said "Deleted. Nothing is saved for this browser on
+  // our server any more." The token is kept for the page's life now, so the delete names what the save stored.
+  const { context, page, seen } = await open({ token: null, refuse: true });
+  // eslint-disable-next-line no-undef -- a page function
+  const pair = await page.evaluate(() => [getDeviceToken(), getDeviceToken()]);
+  check('two asks for the token give ONE token, though storage is refused', pair[0] === pair[1], JSON.stringify(pair));
+  const ok = await page.evaluate(() => saveFavourite('TW9 3PZ', 'Richmond upon Thames', 'moderate', 6.4));
+  await page.evaluate(() => switchTab('favourites'));
+  await waitRows(page, 3);
+  await page.click('[data-fav-all="ask"]').catch(() => {});
+  await page.click('[data-fav-all="yes"]').catch(() => {});
+  await page.waitForFunction(() => /Deleted\./.test(document.getElementById('favourites-list')?.textContent || ''), null, { timeout: 10000 }).catch(() => {});
+  const saved = seen.posts[0]?.token || null;
+  const deleteToken = seen.tokens[seen.tokens.length - 1];
+  check('the save went under a token', ok === true && !!saved, JSON.stringify({ ok, posts: seen.posts }));
+  check('and the Delete all names the SAME token, so it deletes what was saved', seen.deletes.length === 1 && deleteToken === saved,
+    JSON.stringify({ saved, deleteToken, tokens: seen.tokens }));
   await context.close();
 }
 

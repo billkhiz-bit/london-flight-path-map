@@ -53,6 +53,11 @@ def load_signup():
     return mod
 
 
+# What DynamoDB answers a do-not-email read for an address that is not listed (audit I-2, 2026-11-27: the list is read
+# by the address and its inbox in one BatchGetItem). A bare MagicMock would answer a truthy mock, i.e. "listed".
+NOT_LISTED = {'Responses': {}, 'UnprocessedKeys': {}}
+
+
 def post(body):
     return {
         'httpMethod': 'POST',
@@ -88,6 +93,7 @@ class VerifyOnPostTests(unittest.TestCase):
     def setUp(self):
         self.app = load_signup()
         self.ddb = MagicMock()
+        self.ddb.batch_get_item.return_value = NOT_LISTED
         self.ddb.update_item.return_value = {'Attributes': {'sends': {'N': '1'}}}
         self.ses = MagicMock()
         self.patches = [
@@ -189,6 +195,7 @@ class ConfirmTests(unittest.TestCase):
     def setUp(self):
         self.app = load_signup()
         self.ddb = MagicMock()
+        self.ddb.batch_get_item.return_value = NOT_LISTED
         self.patches = [
             patch.object(self.app, 'SIGNUP_VERIFY', True),
             patch.object(self.app, 'ddb', self.ddb),
@@ -282,6 +289,7 @@ class ScannerSafeConfirmTests(unittest.TestCase):
     def setUp(self):
         self.app = load_signup()
         self.ddb = MagicMock()
+        self.ddb.batch_get_item.return_value = NOT_LISTED
         self.patches = [
             patch.object(self.app, 'SIGNUP_VERIFY', True),
             patch.object(self.app, 'ddb', self.ddb),
@@ -333,6 +341,7 @@ class SendCapTests(unittest.TestCase):
     def setUp(self):
         self.app = load_signup()
         self.ddb = MagicMock()
+        self.ddb.batch_get_item.return_value = NOT_LISTED
         self.ses = MagicMock()
         self.patches = [
             patch.object(self.app, 'SIGNUP_VERIFY', True),
@@ -421,6 +430,7 @@ class MailboxKeyTests(unittest.TestCase):
         app = load_signup()
         ddb, ses = MagicMock(), MagicMock()
         ddb.update_item.return_value = {'Attributes': {'sends': {'N': '1'}}}
+        ddb.batch_get_item.return_value = NOT_LISTED
         with patch.object(app, 'SIGNUP_VERIFY', True), patch.object(app, 'ddb', ddb), patch.object(app, 'ses', ses):
             app.handler(post({'email': 'B.ill+News@gmail.com'}), None)
         self.assertEqual(ses.send_email.call_args.kwargs['Destination']['ToAddresses'], ['b.ill+news@gmail.com'])
@@ -435,6 +445,7 @@ class SendCeilingTests(unittest.TestCase):
     def setUp(self):
         self.app = load_signup()
         self.ddb = MagicMock()
+        self.ddb.batch_get_item.return_value = NOT_LISTED
         self.ses = MagicMock()
         self.patches = [
             patch.object(self.app, 'SIGNUP_VERIFY', True),

@@ -884,10 +884,13 @@ signups table's one-row-per-email rules are not touched), stores the words agree
 Bill's S2 design beside the plain text, with `Reply-To: support@`; one click confirms (the page posts itself, one hashed
 script; API keys keep their button), and
 every email's unsubscribe link is `GET/POST /v1/signup/unsubscribe?token=` (the GET shows a button; the POST, or a mail
-client's RFC 8058 one-click, removes the member and adds the address to the do-not-email list). The do-not-email list
-is read before EVERY send, the confirmation email included: a listed address gets the same 201 and no email (privacy
-s2a promises we never write to it again), and an unreadable list answers 503 rather than risk it. ANY unsubscribe
-link from an email we sent stops all mail to its address, even one older than a re-join (on purpose: the press wins).
+client's RFC 8058 one-click, removes the member and EVERY unsubscribe token of the address, and adds the address to the
+do-not-email list). The do-not-email list holds the address AND, when it differs, the INBOX it reaches (`mailbox_key()`:
+`name+tag@` reaches `name@`, Gmail ignores dots; audit I-2, 2026-11-27), and is read by both before EVERY send, the
+confirmation email included: a listed address gets the same 201 and no email (privacy s2a promises we never write to it
+again), and an unreadable list answers 503 rather than risk it. ANY unsubscribe link from an email we sent stops all mail
+to its address, even one older than a re-join (on purpose: the press wins). The news sender's `sent#<issue>#<hash>` rows
+name no address (a sha256 of it) and expire a week after the issue's month (MailTable's TTL on `expiresAt`; audit I-3).
 `backend/tests/test_signup_updates.py`, `tests/news-signup.mjs`, `tests/test_news_flags.py`.
 
 **The way back off the do-not-email list (Bill's pick A, 2026-11-24; privacy s2a `#news-way-back`):** since audit I-1 a
@@ -898,16 +901,21 @@ request, never on our own initiative:
 1. **Check that it came from that address.** In Gmail, "Show original" must show SPF or DKIM `PASS` for the address's own
    domain (a From line alone can be typed by anyone). If it does not, answer the SENDER, never the listed address, that
    the request must come from the address itself. Nothing else is done.
-2. **Look the entry up, then take it off**, in ONE shell (the key is the address in lower case, as the Lambda stores it):
+2. **Look the entry up, then take it off**, in ONE shell (the key is the address in lower case, as the Lambda stores it).
+   Since 2026-11-27 an address can have TWO entries: itself, and its inbox when that differs (`name+tag@` -> `name@`;
+   at gmail.com and googlemail.com also without dots, as `gmail.com`). Look up and delete each that exists:
    ```sh
    export MSYS_NO_PATHCONV=1
-   E='someone@example.com'
-   K="{\"pk\":{\"S\":\"suppress#$E\"}}"
-   AWS_PROFILE=flightmap aws dynamodb get-item --region eu-west-2 --table-name london-flight-map-mail --key "$K"
-   AWS_PROFILE=flightmap aws dynamodb delete-item --region eu-west-2 --table-name london-flight-map-mail --key "$K" \
-     --condition-expression 'attribute_exists(pk)'
+   for E in 'someone+tag@example.com' 'someone@example.com'; do
+     K="{\"pk\":{\"S\":\"suppress#$E\"}}"
+     AWS_PROFILE=flightmap aws dynamodb get-item --region eu-west-2 --table-name london-flight-map-mail --key "$K"
+     AWS_PROFILE=flightmap aws dynamodb delete-item --region eu-west-2 --table-name london-flight-map-mail --key "$K" \
+       --condition-expression 'attribute_exists(pk)'
+   done
    ```
-   An empty `get-item` means the address is not listed: say so in the reply, and delete nothing.
+   An empty `get-item` means that form is not listed (its delete then fails its condition, which is fine). If neither is
+   listed, say so in the reply. Taking off the inbox entry lets every alias of that inbox sign up again: do it only when
+   the request comes from the inbox itself.
 3. **Reply** in the same thread that it is done and they can sign up again as before. Lifting the entry subscribes no
    one: the person still confirms from their own inbox. The address stays out of the repo (it is public) and out of
    every log we write.
@@ -957,7 +965,8 @@ no images, nothing remote (Bill's picks, mock-up claude.ai/artifact/LDJ4ZV7JW5vj
 4. **Send:** Test event `{"issue": "YYYY-MM", "mode": "send", "confirm": "send YYYY-MM"}`, in that calendar month only.
    It answers with counts: `sent`, `already` (had it), `do_not_email`, `no_token` (never sent: no working unsubscribe
    link), `failed`, and `stopped_early` (it keeps 5 s of its 28 in hand on a long list). If any failed or it stopped early,
-   run the same event again: `sent#<YYYY-MM>#<email>` rows make every member's copy once only.
+   run the same event again: each member's copy is CLAIMED (`sent#<YYYY-MM>#<hash>`, a conditional write) before it is
+   sent, so nothing goes twice, and a failed send gives its claim back for the next run (audit M-2, 2026-11-27).
 
 Each email: confirmed members only (`updates#` with a consent), the do-not-email list read before every send, the
 member's own unsubscribe link and RFC 8058 `List-Unsubscribe` / `List-Unsubscribe-Post` headers (the signup Lambda's

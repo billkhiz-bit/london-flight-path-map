@@ -1092,6 +1092,17 @@ ok(/^SJC 12R, [\d.]+ km to the/.test(await fact('Nearest of SFO, OAK and SJC')),
   await page.fill('#pc', 'Palo Alto');
   await page.press('#pc', 'Enter');
   await page.waitForFunction(() => document.querySelector('#borough.is-open h2')?.textContent === 'Palo Alto', null, { timeout: 15000 });
+  // Audit I-5, 2026-11-27: the "At a glance" verdicts ("Poor", "Low") were drawn by CSS alone (content: attr(data-fig)
+  // / "", empty alt text) and in none of the tile's words, so a screen reader never heard them (WCAG 1.3.1, F87).
+  const glance = await page.evaluate(() => [...document.querySelectorAll('#borough .bay-glance .fact[data-fig]')]
+    .map((f) => ({ fig: f.dataset.fig, words: f.textContent.replace(/\s+/g, ' ').trim() })));
+  ok(glance.length >= 2 && glance.every((g) => g.words.includes(g.fig)),
+    "every Bay Area glance tile's verdict is in its words, not only drawn by CSS (audit I-5)", JSON.stringify(glance));
+  // Audit M-7, 2026-11-27: the card's headline went into the hero's heading silently; it is said in #lead-said, as a
+  // postcode's lead is.
+  const leadSaid = await page.evaluate(() => document.getElementById('lead-said')?.textContent || '');
+  ok(leadSaid === `${palo.answer.lead}.`, "opening a Bay Area city's card says its headline in #lead-said (audit M-7)",
+    JSON.stringify({ leadSaid, want: palo.answer.lead }));
 }
 // The Bay Area's lines are the GENERATED routes file's (2026-10-07), the same records the live map
 // draws: so the map draws one path per record of each kind, arrivals included, and nothing from the

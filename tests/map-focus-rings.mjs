@@ -113,6 +113,21 @@ console.log('Phone, 390');
   await page.close();
 }
 
+console.log('Phone, 390: a Bay Area city card');
+{
+  // Audit M-8, 2026-11-27: the Bay Area card's "Change profile" (an inline-styled button) and its link to /bay-area/ had
+  // no ring of their own, so a phone showed the browser's amber (1.96:1 on the card), the defect M-13 fixed elsewhere.
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await page.goto(`${BASE}?city=bayarea&borough=Palo%20Alto`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.bay-change-profile', { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  for (const [name, sel] of [["the Bay Area card's Change profile", '.bay-change-profile'], ["the Bay Area card's link to /bay-area/", '#sidebar-content a[href="/bay-area/"]']]) {
+    const r = await ring(page, sel);
+    check(`${name} takes the site's focus ring (audit M-8)`, isSiteRing(r), JSON.stringify(r));
+  }
+  await page.close();
+}
+
 await browser.close();
 server.close();
 console.log('');

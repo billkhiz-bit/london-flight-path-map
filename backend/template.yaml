@@ -935,9 +935,11 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref SignupPendingTable
         # News by email, its unsubscribe tokens and the do-not-email list (2026-11-10). Crud, because it READS
-        # (GetItem: the do-not-email list before every send, the token on unsubscribe), WRITES (PutItem, the member's
-        # with ReturnValues ALL_OLD) and DELETES (DeleteItem: the member, the list entry; an old token STAYS since audit
-        # I-2, 2026-11-23, so links in emails already sent keep working). A write-only
+        # (BatchGetItem: the do-not-email list by the address and its inbox before every send; GetItem: the token on
+        # unsubscribe; Scan: the address's older tokens), WRITES (PutItem, the member's with ReturnValues ALL_OLD;
+        # BatchWriteItem: both do-not-email entries) and DELETES (DeleteItem: the member, the list entry; BatchWriteItem:
+        # every token of an address that unsubscribes, audit I-3, 2026-11-27; a re-join still keeps the old token, so
+        # links in emails already sent keep working until then). A write-only
         # policy breaks every sign-up and unsubscribe (code review 2026-11-22 corrected this comment's reason).
         - DynamoDBCrudPolicy:
             TableName: !Ref MailTable
@@ -1155,6 +1157,18 @@ Resources:
               Resource:
                 - !Sub 'arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/*'
 
+  # NewsFunction's log group, made HERE with privacy's 30 days (audit M-1, 2026-11-27). The function has never run, so
+  # no group exists yet and CloudFormation can own this one; its first run would otherwise make a group that never
+  # expires (Lambda's default), against privacy s2d, and turn preflight's "log retention == privacy.html" red. Every
+  # older function's group was made by Lambda first and so takes its 30 days out of band (the note above SignupFunction).
+  NewsLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${NewsFunction}'
+      RetentionInDays: 30
+
   # --- DynamoDB Table, Self-service signup audit log ---
   # Email is the partition key (one signup per email, duplicate signups
   # return 409 since APIGW won't let us re-show the key value after
@@ -1183,10 +1197,11 @@ Resources:
         PointInTimeRecoveryEnabled: true
 
   # --- DynamoDB Table, news by email (2026-11-10; news since 2026-11-22) ---
-  # One table, keyed by `pk`, for three kinds of item (signup/app.py MAIL_TABLE): updates#<email> (a member, who
-  # confirmed by email), unsub#<token> (the unsubscribe link's token -> email) and suppress#<email> (the do-not-email
-  # list). Kept apart from SignupsTable so its one-row-per-email rules are untouched. Retained and PITR-backed like
-  # SignupsTable: it holds consent records and the list that stops us emailing people who said stop.
+  # One table, keyed by `pk`, for four kinds of item (signup/app.py MAIL_TABLE): updates#<email> (a member, who
+  # confirmed by email), unsub#<token> (the unsubscribe link's token -> email), suppress#<email> (the do-not-email
+  # list, by the address and by its inbox) and the news sender's sent#<issue>#<hash>. Kept apart from SignupsTable so
+  # its one-row-per-email rules are untouched. Retained and PITR-backed like SignupsTable: it holds consent records and
+  # the list that stops us emailing people who said stop.
   MailTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
@@ -1202,6 +1217,11 @@ Resources:
       BillingMode: PAY_PER_REQUEST
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      # Only the news sender's sent# rows carry expiresAt (a week after their issue's month; audit I-3, 2026-11-27), so
+      # only they expire: members, tokens and the do-not-email list carry none and stay until the code removes them.
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
 
   # --- DynamoDB Table, PENDING signups awaiting an emailed confirmation ---
   # I17 (2026-09-15). One row per unconfirmed request, keyed by the random

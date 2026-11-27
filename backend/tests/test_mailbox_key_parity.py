@@ -62,6 +62,18 @@ class MailboxKeyParityTests(unittest.TestCase):
         lambda_keys = [self.app.mailbox_key(a.strip().lower()) for a in ADDRESSES]
         self.assertEqual(self.site['keys'], lambda_keys)
 
+    def test_the_news_sender_reads_the_do_not_email_list_by_the_same_inbox(self):
+        # Audit I-2, 2026-11-27: the sign-up writes the do-not-email entries by the address and its inbox, and the news
+        # sender reads them by its OWN copy of mailbox_key: the two must agree, or an alias slips past the list.
+        spec = importlib.util.spec_from_file_location('news_app_mailbox_parity', os.path.join(LAMBDAS_DIR, 'news', 'app.py'))
+        news = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(news)
+        self.assertEqual(news.DOT_BLIND_DOMAINS, self.app.DOT_BLIND_DOMAINS)
+        for a in ADDRESSES:
+            email = a.strip().lower()
+            self.assertEqual(news.mailbox_key(email), self.app.mailbox_key(email), email)
+            self.assertEqual(news.suppress_keys(email), self.app.suppress_keys(email), email)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -109,9 +109,12 @@ def test_the_do_not_email_list_has_a_way_back_and_its_runbook_reads_what_the_lam
     assert 'href="/privacy#news-way-back"' in read('changes.html'), 'the change is dated on /changes'
     app = read('backend', 'lambdas', 'signup', 'app.py')
     table = re.search(r"^MAIL_TABLE = os\.environ\.get\('MAIL_TABLE', '([^']+)'\)", app, re.M).group(1)
-    assert "Key=_mail_key('suppress', email)" in app, 'the Lambda reads suppress#<email>'
+    # Since audit I-2 (2026-11-27) the list is read by the address AND its inbox (suppress_keys), so the runbook must
+    # take off both forms, or an alias of a restored inbox stays blocked.
+    assert "_mail_key('suppress', k) for k in suppress_keys(email)" in app, 'the Lambda reads suppress#<address> and its inbox'
     assert "email = (body.get('email') or '').strip().lower()" in app, 'the key is the address in lower case'
     ops = read('OPERATIONS.md')
     step = ops[ops.index('**The way back off the do-not-email list'):ops.index('**Gates, all met 2026-11-22:**')]
     assert f'--table-name {table} ' in step and 'suppress#$E' in step, 'the runbook names the table and key the Lambda reads'
+    assert 'its inbox' in step and 'for E in' in step, 'the runbook takes off the address AND its inbox entry'
     assert 'attribute_exists(pk)' in step, 'the delete removes only an entry that is there'

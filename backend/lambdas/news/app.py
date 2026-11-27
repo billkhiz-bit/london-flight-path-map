@@ -12,7 +12,8 @@ WHAT IT PROMISES, each held by backend/tests/test_news_sender.py:
   - every email carries its member's own working unsubscribe link and the RFC 8058 one-click headers; a member without a
     token gets no email, because an email we cannot stop must never go;
   - at most one email a month: the issue's id IS its month, a send is refused outside that month, and a `sent#<issue>#`
-    row per member makes a second run send nothing twice (so a run cut short is finished by running it again);
+    row per member, CLAIMED before the send and keyed by a hash of the address, makes a second run send nothing twice
+    (so a run cut short is finished by running it again); the rows expire a week after the month (audit I-3, M-2);
   - only an issue whose file says "approved": true is sent to the list (Bill sets it, in the repo, after the preview);
   - layout A (the letter), the fixed subject "Sky Score news: <Month YYYY>", every link on skyscore.co.uk with the
     campaign tags js/count.mjs allows (totals only, never who), no images, nothing remote, no tracking pixel;
@@ -20,8 +21,10 @@ WHAT IT PROMISES, each held by backend/tests/test_news_sender.py:
 """
 from __future__ import annotations
 
+import calendar
 import datetime as dt
 import email.policy
+import hashlib
 import html
 import json
 import logging
@@ -58,8 +61,47 @@ FOOTER = "You're getting this because you signed up for Sky Score news at skysco
 FONT = "-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 
 _BOTO = Config(connect_timeout=5, read_timeout=10, retries={'max_attempts': 2, 'mode': 'standard'})
+# SES is NOT retried (audit M-2, 2026-11-27): a SendEmail that timed out may already have been taken, and a retry would
+# send the member a second copy. A failed send gives its claim back instead, so the next run sends it once.
+# total_max_attempts, NOT max_attempts: botocore reads `max_attempts: N` as N RETRIES (it stores N + 1 as the total;
+# botocore/args.py), so `max_attempts: 1` would still have retried once. One attempt in all is `total_max_attempts: 1`.
+_SES_BOTO = Config(connect_timeout=5, read_timeout=10, retries={'total_max_attempts': 1, 'mode': 'standard'})
 ddb = boto3.client('dynamodb', region_name=AWS_REGION, config=_BOTO)
-ses = boto3.client('sesv2', region_name=AWS_REGION, config=_BOTO)
+ses = boto3.client('sesv2', region_name=AWS_REGION, config=_SES_BOTO)
+
+# The INBOX an address reaches, mirrored from the signup Lambda's mailbox_key() (backend/tests/test_mailbox_key_parity.py
+# holds the two equal): `name+tag@` reaches `name@` everywhere, and Gmail ignores dots. The do-not-email list is read by
+# the address AND its inbox (audit I-2, 2026-11-27), so `alice+news@gmail.com` hears nothing once `alice@gmail.com` asked.
+DOT_BLIND_DOMAINS = {'gmail.com': 'gmail.com', 'googlemail.com': 'gmail.com'}
+
+
+def mailbox_key(email: str) -> str:
+    local, _, domain = email.rpartition('@')
+    local = local.split('+', 1)[0]
+    if domain in DOT_BLIND_DOMAINS:
+        local = local.replace('.', '')
+        domain = DOT_BLIND_DOMAINS[domain]
+    return f'{local}@{domain}'
+
+
+def suppress_keys(email: str) -> list[str]:
+    inbox = mailbox_key(email)
+    return [email] if inbox == email else [email, inbox]
+
+
+def sent_key(iid: str, email: str) -> str:
+    """The record that this member has this issue, keyed by a one-way hash, never the address (audit I-3, 2026-11-27):
+    privacy s2a keeps nothing but the do-not-email entry once someone unsubscribes, and these rows outlived them."""
+    return f'{iid}#{hashlib.sha256(email.encode("utf-8")).hexdigest()[:32]}'
+
+
+def sent_expires(iid: str) -> int:
+    """An issue can only go out in its own month (send() refuses any other), so its records are needed until that month
+    ends: they expire a week after it (MailTable's TTL on expiresAt), and nothing about a member outlives the month."""
+    year, month = (int(p) for p in iid.split('-'))
+    last = calendar.monthrange(year, month)[1]
+    end = dt.datetime(year, month, last, tzinfo=dt.UTC) + dt.timedelta(days=8)
+    return int(end.timestamp())
 
 
 class Refused(Exception):
@@ -218,12 +260,14 @@ def preview(issue: dict, to: str) -> dict:
     return {'mode': 'preview', 'issue': issue['id'], 'sent': 1}
 
 
-STOP_WITH_MS_LEFT = 5000  # the function's 28 s: stop before the next send could be cut off between SES and its sent# row
+STOP_WITH_MS_LEFT = 5000  # the function's 28 s: stop before the next send could be cut off between its claim and SES
 
 
 def send(issue: dict, confirm: str, today: dt.date | None = None, pause: float = 0.1, ms_left=None) -> dict:
     """`ms_left` is the Lambda context's get_remaining_time_in_millis: with under STOP_WITH_MS_LEFT left the run stops,
-    says so, and the next run carries on (a send cut off after SES but before its sent# row could go twice)."""
+    says so, and the next run carries on. Each member's copy is CLAIMED (a conditional sent# write) before SES is asked,
+    so nothing is ever sent twice; a run cut off between the claim and the send would leave that member without the
+    month's issue, the safer side for a list of people who asked for at most one email a month (audit M-2, 2026-11-27)."""
     iid = issue['id']
     if confirm != f'send {iid}':
         raise Refused(f'to send to the list, "confirm" must be exactly "send {iid}"')
@@ -239,22 +283,32 @@ def send(issue: dict, confirm: str, today: dt.date | None = None, pause: float =
             counts['stopped_early'] = True
             logger.warning('[NEWS_STOPPED_EARLY] issue=%s: run the same event again to carry on', iid)
             break
+        claimed = None
         try:
-            # The do-not-email list before EVERY send, then the issue's own record of who already has it.
-            if _exists('suppress', email):
+            # The do-not-email list before EVERY send, by the address and by its inbox (audit I-2, 2026-11-27).
+            if any(_exists('suppress', k) for k in suppress_keys(email)):
                 counts['do_not_email'] += 1
-                continue
-            if _exists('sent', f'{iid}#{email}'):
-                counts['already'] += 1
                 continue
             if not TOKEN.match(m['token']):
                 counts['no_token'] += 1
                 logger.error('[NEWS_NO_TOKEN] issue=%s', iid)
                 continue
+            # CLAIM the member's copy BEFORE sending (audit M-2, 2026-11-27): a conditional write, so two runs at once,
+            # or a run after a write that failed, can never send twice. Until then the record was written after SES
+            # took the email, unconditionally, so a failed write meant a second copy on the re-run.
+            key = sent_key(iid, email)
+            try:
+                ddb.put_item(TableName=MAIL_TABLE, Item={**_key('sent', key), 'expiresAt': {'N': str(sent_expires(iid))}},
+                             ConditionExpression='attribute_not_exists(pk)')
+            except ClientError as err:
+                if err.response.get('Error', {}).get('Code') == 'ConditionalCheckFailedException':
+                    counts['already'] += 1
+                    continue
+                raise
+            claimed = key
             subject, text, page = render(issue, m['token'])
             _send(email, message(email, subject, text, page, unsubscribe_url(m['token'])))
-            ddb.put_item(TableName=MAIL_TABLE, Item={**_key('sent', f'{iid}#{email}'),
-                                                     'sentAt': {'S': dt.datetime.now(dt.UTC).isoformat()}})
+            claimed = None
             counts['sent'] += 1
             if pause:
                 time.sleep(pause)  # well under SES's send rate
@@ -262,6 +316,13 @@ def send(issue: dict, confirm: str, today: dt.date | None = None, pause: float =
             code = getattr(err, 'response', {}).get('Error', {}).get('Code', type(err).__name__)
             logger.error('[NEWS_SEND_FAILED] issue=%s code=%s', iid, code)
             counts['failed'] += 1
+            if claimed:
+                # The send failed, so the claim is given back and the next run sends this member once.
+                try:
+                    ddb.delete_item(TableName=MAIL_TABLE, Key=_key('sent', claimed))
+                except (ClientError, BotoCoreError) as undo:
+                    undo_code = getattr(undo, 'response', {}).get('Error', {}).get('Code', type(undo).__name__)
+                    logger.error('[NEWS_CLAIM_NOT_GIVEN_BACK] issue=%s code=%s', iid, undo_code)
     logger.info('[NEWS_SENT] issue=%s %s', iid, json.dumps(counts, sort_keys=True))
     return {'mode': 'send', 'issue': iid, **counts}
 

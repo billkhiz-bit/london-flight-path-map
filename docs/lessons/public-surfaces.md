@@ -322,7 +322,11 @@ Why its own table: the signups table holds one row per address under rules that 
 the score-change list is told to contact support for an API key); a list member there would trip them both ways. So
 `london-flight-map-mail` holds `updates#<email>` (the member, the consent wording version and when), `unsub#<token>`
 (the link carries a token, never the address) and `suppress#<email>` (the do-not-email list; cleared only by a new
-confirmed sign-up). The token is written BEFORE the member that names it. The unsubscribe GET changes nothing (mail
+confirmed sign-up). Since audit I-2 (2026-11-27) an unsubscribe writes `suppress#` for the address AND, when it differs,
+its inbox (`mailbox_key()`: `name+tag@` -> `name@`, Gmail without dots), every sign-up reads both in one BatchGetItem and
+the news sender reads both too, because the exact address alone let `alice+news@gmail.com` past an `alice@gmail.com` that
+said stop; the same unsubscribe deletes every `unsub#` token of the address (I-3), and the news sender's
+`sent#<issue>#<sha256>` rows expire a week after their month. The token is written BEFORE the member that names it. The unsubscribe GET changes nothing (mail
 scanners prefetch links, audit I-5 of 25 Sep); the POST, or a mail client's RFC 8058 one-click, does the work.
 
 Proven red: removing the closed-list guard, and dropping the do-not-email write, each failed two tests. On Windows the

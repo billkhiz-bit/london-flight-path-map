@@ -243,6 +243,9 @@ _BOTO_CONFIG = Config(
 # (the member's PutItem returns the old member, so no separate read). Six hops
 # at a 4s budget (read_timeout 3 -> 2: DynamoDB and SES answer in tens of ms)
 # is 24, under the 28s Timeout; InnerClientBudgetTests holds it there.
+# Still 6 after audit I-2/I-3 (2026-11-27): the POST reads the address AND its inbox in ONE BatchGetItem; the
+# unsubscribe is the token's GetItem, one BatchWriteItem for both do-not-email entries, the member's DeleteItem, a Scan
+# for the address's older tokens, one BatchWriteItem deleting them, and the presented token's DeleteItem last.
 _SEQUENTIAL_HOPS = 6
 apigw = boto3.client('apigateway', region_name=AWS_REGION, config=_BOTO_CONFIG)
 ddb = boto3.client('dynamodb', region_name=AWS_REGION, config=_BOTO_CONFIG)
@@ -819,8 +822,9 @@ def start_verification(email, name, source, postcode, event):
     # an address that unsubscribed still got API-key and score-alert confirmations if anyone typed it in): an address
     # that unsubscribed is never written to again (privacy s2a), not even to confirm. An unreadable list fails CLOSED:
     # sending without knowing could break that promise.
+    # By the address AND its inbox (audit I-2, 2026-11-27), in ONE call, so the path stays within _SEQUENTIAL_HOPS.
     try:
-        listed = 'Item' in ddb.get_item(TableName=MAIL_TABLE, Key=_mail_key('suppress', email), ConsistentRead=True)
+        listed = _listed(email)
     except (ClientError, BotoCoreError) as e:
         code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
         logger.error('[UPDATES_SUPPRESS_LOOKUP_FAILED] code=%s', code)
@@ -889,9 +893,54 @@ def start_verification(email, name, source, postcode, event):
     return accepted
 
 
+def _listed(email):
+    """True when the do-not-email list holds the address or its inbox. One BatchGetItem for both; a key it could not
+    read is an unreadable list, which fails CLOSED like any other error (the caller answers 503)."""
+    keys = [_mail_key('suppress', k) for k in suppress_keys(email)]
+    got = ddb.batch_get_item(RequestItems={MAIL_TABLE: {'Keys': keys, 'ConsistentRead': True, 'ProjectionExpression': 'pk'}})
+    if (got.get('UnprocessedKeys') or {}).get(MAIL_TABLE):
+        raise ClientError({'Error': {'Code': 'UnprocessedKeys', 'Message': 'do-not-email list not fully read'}}, 'BatchGetItem')
+    return bool((got.get('Responses') or {}).get(MAIL_TABLE))
+
+
+def _forget_tokens(email, keep):
+    """Delete every unsubscribe token that names this address except `keep` (deleted last by the caller). Audit I-3,
+    2026-11-27: since a re-join keeps the old token (23 Nov's I-2), an unsubscribe left those rows, each holding the
+    address, forever, against privacy s2a ("we then delete it, keeping only the address on a do-not-email list"). Best
+    effort and logged: the do-not-email entry is already written, and a token left behind can only stop mail."""
+    try:
+        pks, kw = [], {}
+        while True:
+            page = ddb.scan(TableName=MAIL_TABLE, ProjectionExpression='pk',
+                            FilterExpression='begins_with(pk, :p) AND email = :e',
+                            ExpressionAttributeValues={':p': {'S': 'unsub#'}, ':e': {'S': email}}, ConsistentRead=True, **kw)
+            pks += [i['pk']['S'] for i in page.get('Items', []) if i['pk']['S'] != f'unsub#{keep}']
+            if 'LastEvaluatedKey' not in page:
+                break
+            kw = {'ExclusiveStartKey': page['LastEvaluatedKey']}
+        for at in range(0, len(pks), 25):
+            batch = [{'DeleteRequest': {'Key': {'pk': {'S': pk}}}} for pk in pks[at:at + 25]]
+            left = ddb.batch_write_item(RequestItems={MAIL_TABLE: batch}).get('UnprocessedItems') or {}
+            if left.get(MAIL_TABLE):
+                logger.error('[UPDATES_UNSUB_TOKENS_LEFT] count=%d', len(left[MAIL_TABLE]))
+    except (ClientError, BotoCoreError) as e:
+        code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)
+        logger.error('[UPDATES_UNSUB_TOKENS_FAILED] code=%s', code)
+
+
+def suppress_keys(email):
+    """The do-not-email entries that stop mail to this address: the address itself and, when it differs, the INBOX it
+    reaches (mailbox_key). Audit I-2, 2026-11-27: the list matched the exact address only, so `alice+news@gmail.com` or
+    `a.lice@gmail.com` still got confirmation emails after `alice@gmail.com` unsubscribed, though the send cap already
+    counted them as one inbox. An unsubscribe writes both; a sign-up and the news sender read both. Over-matching (two
+    people sharing a base on a system that treats `+` literally) is the safe side for a list of people who said stop."""
+    inbox = mailbox_key(email)
+    return [email] if inbox == email else [email, inbox]
+
+
 def mailbox_key(email):
-    """The address as the INBOX it reaches, for counting sends and nothing else:
-    never for sending, storing, or matching a signup to the register.
+    """The address as the INBOX it reaches, for counting sends and, since audit I-2 of 2026-11-27, for the do-not-email
+    list (suppress_keys): never for sending, storing a member, or matching a signup to the register.
 
     `name+anything@` reaches `name@` at Gmail, Outlook, iCloud, Fastmail and
     Proton, so the tag is dropped for every domain; at worst two people on a
@@ -1360,7 +1409,7 @@ def subscribe_updates(email, event):
         return response(503, {'error': 'Could not save. Please try again later.'}, event)
     # The old token STAYS (audit I-2, 2026-11-23): every email already sent carries it, and its unsubscribe link must
     # keep working after a re-join (OPERATIONS s3.10, PECR). A stale token can only stop mail to the address it names.
-    tidy = [('suppress', email)]
+    tidy = [('suppress', k) for k in suppress_keys(email)]
     for kind, value in tidy:
         try:
             ddb.delete_item(TableName=MAIL_TABLE, Key=_mail_key(kind, value))
@@ -1435,11 +1484,15 @@ def handle_unsubscribe(event):
         if not old:
             return html_page(200, *_UNSUB_UNKNOWN)
         email = old['email']['S']
-        ddb.put_item(
-            TableName=MAIL_TABLE,
-            Item={**_mail_key('suppress', email), 'email': {'S': email}, 'suppressedAt': {'S': datetime.now(UTC).isoformat()}},
-        )
+        # The address AND its inbox (audit I-2, 2026-11-27), in one write: both or a 503 and a safe retry.
+        now = datetime.now(UTC).isoformat()
+        puts = [{'PutRequest': {'Item': {**_mail_key('suppress', k), 'email': {'S': email}, 'suppressedAt': {'S': now}}}}
+                for k in suppress_keys(email)]
+        left = ddb.batch_write_item(RequestItems={MAIL_TABLE: puts}).get('UnprocessedItems') or {}
+        if left.get(MAIL_TABLE):
+            raise ClientError({'Error': {'Code': 'UnprocessedItems', 'Message': 'do-not-email entry not written'}}, 'BatchWriteItem')
         ddb.delete_item(TableName=MAIL_TABLE, Key=_mail_key('updates', email))
+        _forget_tokens(email, keep=token)  # every older token too (audit I-3); best effort
         ddb.delete_item(TableName=MAIL_TABLE, Key=_mail_key('unsub', token))
     except (ClientError, BotoCoreError) as e:
         code = getattr(e, 'response', {}).get('Error', {}).get('Code', type(e).__name__)

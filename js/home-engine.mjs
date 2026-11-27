@@ -1040,6 +1040,12 @@ function openCard(html, { announce = true } = {}) {
   card.innerHTML = html;
   // A Bay Area city's card carries its headline (its h2's data-lead): the hero's heading says it while the card is open.
   card.dataset.lead = card.querySelector('h2[data-lead]')?.dataset.lead || '';
+  // ...and #lead-said says it, as it says a postcode's lead (audit M-7, 2026-11-27): the heading changed silently, and
+  // focus goes to the card's h2, which holds the city's name, not its headline.
+  if (card.dataset.lead) {
+    const said = byId('lead-said');
+    if (said) said.textContent = `${card.dataset.lead}.`;
+  }
   card.classList.add('is-open');
   // Option C: a card takes the answer's place, so no lead is on its way for this heading any more.
   waitLead(false);
@@ -1158,7 +1164,9 @@ function bayCompareHtml(row) {
 const titleWord = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : '');
 function bayGlanceHtml(row) {
   const g = row.glance || {};
-  const fact = (fig, k, text) => `<div class="fact" data-fig="${esc(fig)}"><span class="k">${esc(k)}</span><span>${esc(text)}</span></div>`;
+  // The verdict is said in the words too (audit I-5, 2026-11-27): data-fig is drawn by CSS with empty alt text, so a
+  // screen reader never heard "Poor" or "Low". The Nearby tiles can rely on CSS alone because their words carry the figure.
+  const fact = (fig, k, text) => `<div class="fact" data-fig="${esc(fig)}"><span class="k">${esc(k)}<span class="vh">: ${esc(fig)}.</span></span><span>${esc(text)}</span></div>`;
   const priceSaid = row.facts.find(([label]) => label === 'Median home value');
   const tiles = [
     g.transport ? fact(titleWord(g.transport), 'Rail access', 'The share of residents within 800 m of a rail, metro or light-rail station') : '',

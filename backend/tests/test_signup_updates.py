@@ -93,6 +93,35 @@ class FakeDdb:
         self.writes.append(('delete', TableName, self._key(TableName, Key)))
         return {'Attributes': old} if (old and ReturnValues == 'ALL_OLD') else {}
 
+    # The do-not-email list is read by the address AND its inbox in one call, and written the same way (audit I-2,
+    # 2026-11-27); an unsubscribe finds the address's older tokens with a scan and deletes them in a batch (I-3).
+    def batch_get_item(self, RequestItems, **_):
+        out, left = {}, {}
+        for table, spec in RequestItems.items():
+            for key in spec['Keys']:
+                k = self._key(table, key)
+                self.reads.append((table, k))
+                self._maybe_fail('get', k)
+                if k in self.tables[table]:
+                    out.setdefault(table, []).append({self.KEYS[table]: {'S': k}})
+        return {'Responses': out, 'UnprocessedKeys': left}
+
+    def batch_write_item(self, RequestItems, **_):
+        for table, ops in RequestItems.items():
+            for op in ops:
+                if 'PutRequest' in op:
+                    self.put_item(TableName=table, Item=op['PutRequest']['Item'])
+                else:
+                    self.delete_item(TableName=table, Key=op['DeleteRequest']['Key'])
+        return {'UnprocessedItems': {}}
+
+    def scan(self, TableName, ExpressionAttributeValues, **_):
+        prefix, email = ExpressionAttributeValues[':p']['S'], ExpressionAttributeValues[':e']['S']
+        attr = self.KEYS[TableName]
+        items = [{attr: {'S': k}} for k, row in sorted(self.tables[TableName].items())
+                 if k.startswith(prefix) and row.get('email', {}).get('S') == email]
+        return {'Items': items}
+
     def update_item(self, **_):
         self.counted += 1
         return {'Attributes': {'sends': {'N': '1'}}}  # the send-cap counter
@@ -431,6 +460,21 @@ class DoNotEmailTests(UpdatesBase):
                 self.ses.send_email.assert_not_called()
                 self.assertEqual(self.db.tables[self.app.PENDING_TABLE], {}, 'no link exists to press')
 
+    def test_a_tagged_or_dotted_form_of_a_listed_inbox_gets_no_email(self):
+        # Audit I-2, 2026-11-27: the list matched the exact address, so `alice+news@gmail.com` or `a.lice@gmail.com`
+        # still got confirmation emails (every kind of sign-up) after `alice@gmail.com` said stop, though the send cap
+        # already counted them as one inbox. Read by the address AND its inbox now.
+        self.listed('alice@gmail.com')
+        for source in ('updates', 'api'):
+            for typed in ('alice+news@gmail.com', 'a.lice@gmail.com', 'A.Lice+x@googlemail.com'):
+                with self.subTest(source=source, typed=typed):
+                    self.ses.reset_mock()
+                    self.db.tables[self.app.PENDING_TABLE].clear()
+                    r = self.app.handler(post({'email': typed, 'source': source, 'postcode': 'M1 1AE'}), None)
+                    self.assertEqual(r['statusCode'], 201, r['body'])
+                    self.ses.send_email.assert_not_called()
+                    self.assertEqual(self.db.tables[self.app.PENDING_TABLE], {}, 'no link exists to press')
+
     def test_a_listed_address_hears_a_full_day_like_anyone(self):
         # Audit M-1, 2026-11-23: once the day's ceiling is full every address hears the 503; a 201 for a listed one alone
         # would say it is on the list.
@@ -490,6 +534,37 @@ class UnsubscribeTests(UpdatesBase):
         self.assertIsNone(self.mail('updates', 'a@example.com'))
         self.assertIsNone(self.mail('unsub', self.token))
         self.assertEqual(self.mail('suppress', 'a@example.com')['email']['S'], 'a@example.com')
+
+    def rows_naming(self, email):
+        return sorted(k for k, row in self.db.tables[self.app.MAIL_TABLE].items()
+                      if row.get('email', {}).get('S') == email and not k.startswith('suppress#'))
+
+    def test_an_unsubscribe_forgets_every_token_of_the_address(self):
+        # Audit I-3, 2026-11-27: a re-join keeps the old token (23 Nov's I-2), and an unsubscribe used to leave it, with
+        # the address in it, for ever, against privacy s2a ("we then delete it, keeping only the address on a
+        # do-not-email list"). Now nothing but the do-not-email entry names the address afterwards.
+        old = self.token
+        self.join()
+        new = self.mail('updates', 'a@example.com')['unsubToken']['S']
+        self.assertNotEqual(old, new)
+        self.assertEqual(self.rows_naming('a@example.com'), sorted([f'unsub#{old}', f'unsub#{new}', 'updates#a@example.com']))
+        page = self.app.handler(form_post('/v1/signup/unsubscribe', new), None)
+        self.assertEqual(page['statusCode'], 200, page['body'])
+        self.assertEqual(self.rows_naming('a@example.com'), [], 'only the do-not-email entry may name the address')
+        self.assertIsNotNone(self.mail('suppress', 'a@example.com'))
+
+    def test_an_unsubscribe_lists_the_inbox_too(self):
+        # Audit I-2, 2026-11-27: so the plain address, or any other alias of that inbox, hears nothing either.
+        self.join(email='a.lice+news@gmail.com')
+        token = self.mail('updates', 'a.lice+news@gmail.com')['unsubToken']['S']
+        self.assertEqual(self.app.handler(form_post('/v1/signup/unsubscribe', token), None)['statusCode'], 200)
+        self.assertIsNotNone(self.mail('suppress', 'a.lice+news@gmail.com'))
+        self.assertEqual(self.mail('suppress', 'alice@gmail.com')['email']['S'], 'a.lice+news@gmail.com')
+        self.ses.reset_mock()
+        self.db.tables[self.app.PENDING_TABLE].clear()
+        r = self.app.handler(post({'email': 'alice@gmail.com', 'source': 'updates', 'postcode': ''}), None)
+        self.assertEqual(r['statusCode'], 201, r['body'])
+        self.ses.send_email.assert_not_called()
 
     def test_a_mail_clients_one_click_post_works(self):
         event = {'httpMethod': 'POST', 'path': '/v1/signup/unsubscribe', 'body': 'List-Unsubscribe=One-Click',

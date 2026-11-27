@@ -60,9 +60,18 @@ class FakeMail:
         row = self.rows.get(Key['pk']['S'])
         return {'Item': row} if row else {}
 
-    def put_item(self, TableName, Item, **_):
-        self.log.append(('put', Item['pk']['S']))
-        self.rows[Item['pk']['S']] = Item
+    def put_item(self, TableName, Item, ConditionExpression=None, **_):
+        pk = Item['pk']['S']
+        self.log.append(('put', pk))
+        # A member's copy is CLAIMED with a conditional write (audit M-2, 2026-11-27), refused as DynamoDB refuses it.
+        if ConditionExpression == 'attribute_not_exists(pk)' and pk in self.rows:
+            raise ClientError({'Error': {'Code': 'ConditionalCheckFailedException'}}, 'PutItem')
+        self.rows[pk] = Item
+        return {}
+
+    def delete_item(self, TableName, Key, **_):
+        self.log.append(('delete', Key['pk']['S']))
+        self.rows.pop(Key['pk']['S'], None)
         return {}
 
     def member(self, email, token='', consent=True):
@@ -243,11 +252,14 @@ class SendTests(NewsBase):
         self.db.member('d@example.com', '')
         self.db.member('e@example.com', TOKEN_E)
 
+    def sent_row(self, who):
+        return f"sent#{self.app.sent_key('2026-12', who)}"
+
     def test_confirmed_members_only_once_each(self):
         out = self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
         self.assertEqual([to for to, _ in self.sent()], ['a@example.com', 'e@example.com'])
         self.assertEqual((out['sent'], out['do_not_email'], out['no_token'], out['already'], out['failed']), (2, 1, 1, 0, 0))
-        self.assertIn('sent#2026-12#a@example.com', self.db.rows)
+        self.assertIn(self.sent_row('a@example.com'), self.db.rows)
         again = self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
         self.assertEqual((again['sent'], again['already']), (0, 2), 'a re-run sends nothing twice')
         self.assertEqual(len(self.sent()), 2)
@@ -257,8 +269,44 @@ class SendTests(NewsBase):
         for who in ('a@example.com', 'e@example.com'):
             reads = [k for op, k in self.db.log if op == 'get']
             self.assertIn(f'suppress#{who}', reads)
-            put_at = self.db.log.index(('put', f'sent#2026-12#{who}'))
+            put_at = self.db.log.index(('put', self.sent_row(who)))
             self.assertLess(self.db.log.index(('get', f'suppress#{who}')), put_at)
+
+    def test_a_listed_inbox_stops_its_other_forms(self):
+        # Audit I-2, 2026-11-27: the list is read by the address AND its inbox, so a tagged or dotted Gmail form of an
+        # address that said stop hears nothing either.
+        self.db.member('a.lice+news@gmail.com', 'F' * 43)
+        self.db.rows['suppress#alice@gmail.com'] = {'pk': {'S': 'suppress#alice@gmail.com'}}
+        out = self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
+        self.assertNotIn('a.lice+news@gmail.com', [to for to, _ in self.sent()])
+        self.assertEqual(out['do_not_email'], 2)
+
+    def test_the_sent_record_names_no_address_and_expires_after_the_month(self):
+        # Audit I-3, 2026-11-27: these rows outlived an unsubscribe with the address in them. Now a hash, gone a week
+        # after the issue's month (MailTable's TTL on expiresAt).
+        self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
+        sent = {k: r for k, r in self.db.rows.items() if k.startswith('sent#')}
+        self.assertEqual(len(sent), 2)
+        for key, row in sent.items():
+            self.assertNotIn('@', key, 'a sent record must not hold the address')
+            self.assertNotIn('email', row)
+            self.assertEqual(int(row['expiresAt']['N']),
+                             int(dt.datetime(2027, 1, 8, tzinfo=dt.UTC).timestamp()), key)
+
+    def test_a_copy_already_claimed_is_never_sent_again(self):
+        # Audit M-2, 2026-11-27: the claim comes BEFORE SES, so a run alongside another, or after a write that failed,
+        # can never send a second copy.
+        self.db.rows[self.sent_row('a@example.com')] = {'pk': {'S': self.sent_row('a@example.com')}}
+        order = []
+        self.ses.send_email.side_effect = lambda **kw: order.append(('ses', kw['Destination']['ToAddresses'][0])) or {}
+        out = self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
+        self.assertEqual([to for _, to in order], ['e@example.com'])
+        self.assertEqual((out['sent'], out['already']), (1, 1))
+        claim_at = self.db.log.index(('put', self.sent_row('e@example.com')))
+        self.assertLess(claim_at, len(self.db.log), 'the claim is written')
+        # botocore reads max_attempts as RETRIES (N + 1 in all), so "never retried" is total_max_attempts 1.
+        self.assertEqual(self.app._SES_BOTO.retries, {'total_max_attempts': 1, 'mode': 'standard'},
+                         'SES is never retried: a timed-out send may have gone')
 
     def test_each_member_gets_their_own_link_and_the_one_click_headers(self):
         self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
@@ -295,7 +343,7 @@ class SendTests(NewsBase):
         self.ses.send_email.side_effect = flaky
         out = self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
         self.assertEqual((out['sent'], out['failed']), (1, 1))
-        self.assertNotIn('sent#2026-12#a@example.com', self.db.rows, 'a failed send leaves no record, so a re-run sends it')
+        self.assertNotIn(self.sent_row('a@example.com'), self.db.rows, 'a failed send gives its claim back, so a re-run sends it')
         self.ses.send_email.side_effect = None
         again = self.app.send(ISSUE, 'send 2026-12', today=DECEMBER, pause=0)
         self.assertEqual((again['sent'], again['already']), (1, 1))
@@ -317,3 +365,15 @@ class TemplateTests(unittest.TestCase):
         self.assertIn('TableName: !Ref MailTable', b)
         for other in ('SignupsTable', 'SignupPendingTable', 'apigateway:', 'bedrock:', 'lambda:InvokeFunction'):
             self.assertNotIn(other, b, other)
+
+    def test_its_logs_expire_as_privacy_says_and_its_records_expire(self):
+        # Audit M-1, 2026-11-27: made by the template with 30 days BEFORE the first run (Lambda's own group never
+        # expires); and I-3: MailTable expires the sent# rows on expiresAt.
+        text = TEMPLATE.read_text(encoding='utf-8')
+        group = re.search(r'\n  NewsLogGroup:\n(.*?)(?=\n  [A-Za-z]+:\n|\n\n  #)', text, re.S)
+        self.assertIsNotNone(group, 'NewsLogGroup is missing: its first run would make a log group that never expires')
+        self.assertIn("LogGroupName: !Sub '/aws/lambda/${NewsFunction}'", group.group(1))
+        self.assertIn('RetentionInDays: 30', group.group(1))
+        mail = re.search(r'\n  MailTable:\n(.*?)(?=\n  [A-Za-z]+:\n|\n\n  #)', text, re.S)
+        self.assertIsNotNone(mail)
+        self.assertRegex(mail.group(1), r'TimeToLiveSpecification:\s+AttributeName: expiresAt\s+Enabled: true')

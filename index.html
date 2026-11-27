@@ -689,6 +689,9 @@
       .planes-card .pc-close { position: absolute; top: 4px; right: 4px; width: 32px; height: 32px; border: 0;
         border-radius: 8px; background: none; font-size: 18px; line-height: 1; cursor: pointer; color: #141414; }
       .planes-card .pc-close:focus-visible, .planes-card a:focus-visible { outline: 3px solid var(--focus, #d35a12); outline-offset: 2px; }
+      /* The Bay Area card's "Change profile" and its links to /bay-area/ (audit M-8, 2026-11-27): with no ring of their
+         own a phone showed the browser's amber, 1.96:1 on the card. tests/map-focus-rings.mjs reaches both. */
+      .bay-change-profile:focus-visible, .bay-page-link:focus-visible { outline: 3px solid var(--focus, #d35a12); outline-offset: 2px; }
       .map-legend {
         position: absolute;
         /* Same footer band as .layer-toggles above - see the note there. */
@@ -15364,8 +15367,15 @@
       // alternative (accepting any string as a "userId") is the IDOR the audit
       // flagged. Pre-launch, this trade-off is acceptable.
       const _UUID_RE = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+      // The token for this page's life as well as in storage (audit I-4, 2026-11-27). Where storage is refused (blocked
+      // site data) readFlag answers null every time, so each call made a NEW token: a place saved under one was left
+      // stored by a Delete all sent under another, which then said "Deleted". Held here, one token serves the visit;
+      // Delete all forgets this copy with the stored one. tests/favourites-delete-all.mjs 10.
+      let _pageToken = null;
       function getDeviceToken() {
         let id = readFlag('flightmap_device_token');
+        if (id && _UUID_RE.test(id)) return (_pageToken = id);
+        if (_pageToken) return _pageToken;
         if (!id || !_UUID_RE.test(id)) {
           id =
             (crypto.randomUUID && crypto.randomUUID()) ||
@@ -15391,6 +15401,7 @@
             // browser that supports the rest of this page.
             Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
           writeFlag('flightmap_device_token', id);
+          _pageToken = id;
         }
         return id;
       }
@@ -15425,7 +15436,7 @@
         // _favHeaders() -> getDeviceToken(), which MADE a token for every visitor and sent it, though privacy s2e says
         // "It is created only when you save something. Browsing and scoring never generate one." A browser that never
         // saved, or whose list was deleted, holds no list: it is said as an empty list, with nothing sent.
-        const held = readFlag('flightmap_device_token');
+        const held = readFlag('flightmap_device_token') || _pageToken;
         if (!held || !_UUID_RE.test(held)) {
           userFavourites = [];
           favouritesLoadState = 'loaded';
@@ -15691,10 +15702,11 @@
         // points at a stored place.
         userFavourites = userFavourites.filter((f) => !sent.has(f.postcode) || left.includes(f.postcode));
         if (!userFavourites.length) {
+          _pageToken = null; // the page's copy goes with the stored one (audit I-4)
           try {
             localStorage.removeItem('flightmap_device_token');
           } catch (_) {
-            // Storage refused: the token stays, pointing at an empty list. Nothing is left to reach.
+            // Storage refused: nothing was stored, and the page's copy is gone above. Nothing is left to reach.
           }
         }
         return { total: postcodes.length, left: left.length };
@@ -17167,7 +17179,7 @@
       }
 
       const PLACE_SOURCES =
-        '<p class="property-note" style="margin:10px 0 0;font-size:11px;">Routes: FAA Coded Instrument Flight Procedures, supplied "as is", without warranty; not for navigation. Noise shading: US Bureau of Transportation Statistics, 2022, which BTS says should not be used to judge noise at an individual location. The lines and the shading show where routes are, not how many aircraft use them. <a href="/bay-area/">The Bay Area page</a> has every city.</p>';
+        '<p class="property-note" style="margin:10px 0 0;font-size:11px;">Routes: FAA Coded Instrument Flight Procedures, supplied "as is", without warranty; not for navigation. Noise shading: US Bureau of Transportation Statistics, 2022, which BTS says should not be used to judge noise at an individual location. The lines and the shading show where routes are, not how many aircraft use them. <a class="bay-page-link" href="/bay-area/">The Bay Area page</a> has every city.</p>';
 
       // THE SCORE ON A BAY AREA CARD (2026-11-07, built for review). The API's score for the city, computed
       // here from the API's own record, with every input it rests on, each US scale's California anchor read
@@ -17643,7 +17655,7 @@
         document.getElementById('sidebar-content').innerHTML = `
       <div class="empty-state">
         <p><strong>ZIP ${escapeHtml(code)}</strong> is in ${escapeHtml(z.county)} County, California. ${escapeHtml(z.place ? zipShareText(zip) : 'None of its residents live in a city or community the map holds.')} No city holds half of its residents, so it opens no city's figures.</p>
-        <p><a href="/bay-area/">The Bay Area page</a> names the unincorporated communities a route passes over.</p>
+        <p><a class="bay-page-link" href="/bay-area/">The Bay Area page</a> names the unincorporated communities a route passes over.</p>
       </div>`;
         revealSheetIfMobile();
         return true;
