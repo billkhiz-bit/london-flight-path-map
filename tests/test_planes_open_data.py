@@ -22,7 +22,14 @@ spec = importlib.util.spec_from_file_location('build_planes_open_data', REPO / '
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
 
-META = json.loads((REPO / 'data' / 'planes' / 'airports.json').read_text(encoding='utf-8'))
+# data/planes/ is gitignored (the counts are built locally from the tracks), so a fresh checkout, CI's included, has
+# none. Reading it at import stopped pytest's collection of the whole root suite, so CI ran NONE of its root tests from
+# cdf70f9f (26 Nov) until this guard (27 Nov), the third such outage (ci.yml records 31 Aug and 3-19 Nov). The checks
+# that need the files skip without them, saying why; the page, Makefile and git checks below run everywhere.
+AIRPORTS = REPO / 'data' / 'planes' / 'airports.json'
+HAVE_PLANES = AIRPORTS.exists()
+NO_PLANES = 'data/planes/ is gitignored and absent here (a fresh checkout, as in CI): these run in local preflight'
+META = json.loads(AIRPORTS.read_text(encoding='utf-8')) if HAVE_PLANES else None
 PAGE = (REPO / 'open-data' / 'index.html').read_text(encoding='utf-8')
 ZIP = builder.OUT.name
 
@@ -35,6 +42,7 @@ def recipe(target):
 
 
 class OfferTests(unittest.TestCase):
+    @unittest.skipUnless(HAVE_PLANES, NO_PLANES)
     def test_the_source_is_odbl(self):
         # If this ever stops being true, the offer below is no longer owed: change these tests with the licence.
         self.assertIn('ODbL', META['licence'])
@@ -61,6 +69,7 @@ class OfferTests(unittest.TestCase):
         self.assertEqual(ignored.returncode, 0, f'open-data/{ZIP} is not ignored by git')
 
 
+@unittest.skipUnless(HAVE_PLANES, NO_PLANES)
 class ZipTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
